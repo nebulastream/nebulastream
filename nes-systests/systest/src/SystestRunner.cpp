@@ -80,7 +80,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                .inputFormatterConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
                 .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}}});
         });
 
@@ -104,7 +104,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                .inputFormatterConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}, {"isAsync", "false"}},
                 .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}}});
 
 

@@ -17,14 +17,24 @@
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/AsyncInputFormatterTask.hpp>
+#include <InputFormatters/SyncInputFormatterTask.hpp>
+#include <Util/Notifier.hpp>
 
 namespace NES::InputFormatters::InputFormatterProvider
 {
-std::unique_ptr<InputFormatterTask> provideInputFormatterTask(
+std::unique_ptr<AsyncInputFormatterTask> provideAsyncInputFormatterTask(
     OriginId originId,
-    const std::string& parserType,
+    const std::string& inputFormatterType,
     std::shared_ptr<Schema> schema,
     std::string tupleDelimiter,
     std::string fieldDelimiter);
+
+std::unique_ptr<SyncInputFormatterTask> provideSyncInputFormatterTask(
+    OriginId originId,
+    const std::string& inputFormatterType,
+    std::shared_ptr<Schema> schema,
+    std::string tupleDelimiter,
+    std::string fieldDelimiter,
+    std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier);
 }

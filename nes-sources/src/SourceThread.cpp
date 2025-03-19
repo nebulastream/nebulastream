@@ -29,6 +29,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Notifier.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -42,11 +43,13 @@ SourceThread::SourceThread(
     OriginId originId,
     std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , sourceImplementation(std::move(sourceImplementation))
+    , syncInputFormatterTaskNotifier(std::move(syncInputFormatterTaskNotifier))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -105,9 +108,24 @@ struct SourceHandle
 };
 
 SourceImplementationTermination dataSourceThreadRoutine(
-    const std::stop_token& stopToken, Source& source, Memory::AbstractBufferProvider& bufferProvider, const EmitFn& emit)
+    const std::stop_token& stopToken,
+    Source& source,
+    Memory::AbstractBufferProvider& bufferProvider,
+    const EmitFn& emit,
+    std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier)
 {
     const SourceHandle sourceHandle(source);
+
+    /// Process first buffer
+    auto emptyBuffer = bufferProvider.getBufferBlocking();
+    auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
+
+    if (numReadBytes != 0)
+    {
+        emptyBuffer.setNumberOfTuples(numReadBytes);
+        emit(emptyBuffer, true);
+    }
+
     while (!stopToken.stop_requested())
     {
         /// 4 Things that could happen:
@@ -119,15 +137,6 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exits with `EndOfStream`
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
-        auto emptyBuffer = bufferProvider.getBufferBlocking();
-        auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
-
-        if (numReadBytes != 0)
-        {
-            emptyBuffer.setNumberOfTuples(numReadBytes);
-            emit(emptyBuffer, true);
-        }
-
         if (stopToken.stop_requested())
         {
             return {SourceImplementationTermination::StopRequested};
@@ -136,6 +145,19 @@ SourceImplementationTermination dataSourceThreadRoutine(
         if (numReadBytes == 0)
         {
             return {SourceImplementationTermination::EndOfStream};
+        }
+        emptyBuffer = bufferProvider.getBufferBlocking();
+        numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
+
+        if (numReadBytes != 0)
+        {
+            emptyBuffer.setNumberOfTuples(numReadBytes);
+            /// For all buffers, starting from the second ingested buffer, wait for the InputFormatter to notify that the next thread can start.
+            if (syncInputFormatterTaskNotifier.has_value())
+            {
+                syncInputFormatterTaskNotifier.value()->waitForNotifierThread();
+            }
+            emit(emptyBuffer, true);
         }
     }
     return {SourceImplementationTermination::StopRequested};
@@ -153,7 +175,8 @@ void dataSourceThread(
     Source* source,
     SourceReturnType::EmitFunction emit,
     OriginId originId,
-    std::optional<std::shared_ptr<Memory::AbstractBufferProvider>> bufferProvider)
+    std::optional<std::shared_ptr<Memory::AbstractBufferProvider>> bufferProvider,
+    std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier)
 {
     threadSetup(originId);
     if (!bufferProvider)
@@ -176,7 +199,7 @@ void dataSourceThread(
 
     try
     {
-        result.set_value(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, dataEmit));
+        result.set_value(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, dataEmit, syncInputFormatterTaskNotifier));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{});
@@ -206,10 +229,11 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::jthread sourceThread(
         detail::dataSourceThread,
         std::move(terminationPromise),
-        sourceImplementation.get(),
+        this->sourceImplementation.get(),
         std::move(emitFunction),
-        originId,
-        localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers));
+        this->originId,
+        this->localBufferManager->createFixedSizeBufferPool(this->numSourceLocalBuffers),
+        this->syncInputFormatterTaskNotifier);
     thread = std::move(sourceThread);
     return true;
 }

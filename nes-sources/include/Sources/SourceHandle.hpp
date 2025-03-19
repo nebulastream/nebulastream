@@ -19,6 +19,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Util/Notifier.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -40,7 +41,8 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
         size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier);
 
     ~SourceHandle();
 

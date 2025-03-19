@@ -16,13 +16,13 @@ logical:
         type: UINT64
 physical:
   - logical: csv_source
-    parserConfig:
+    inputFormatterConfig:
       type: CSV
     sourceConfig:
       type: File
       filePath: oneToThirtyOneDoubleColumn.csv
   - logical: csv_source
-    parserConfig:
+    inputFormatterConfig:
       type: CSV
     sourceConfig:
       type: File

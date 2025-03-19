@@ -41,6 +41,7 @@
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/ranges.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
@@ -158,7 +159,7 @@ struct convert<NES::CLI::PhysicalSource>
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
         rhs.logical = node["logical"].as<std::string>();
-        rhs.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
+        rhs.inputFormatterConfig = node["inputFormatterConfig"].as<std::unordered_map<std::string, std::string>>();
         rhs.sourceConfig = node["sourceConfig"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
@@ -181,44 +182,58 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+Sources::InputFormatterConfig
+validateAndFormatInputFormatterConfig(const std::unordered_map<std::string, std::string>& inputFormatterConfig)
 {
-    auto validParserConfig = Sources::ParserConfig{};
-    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
+    auto validInputFormatterConfig = Sources::InputFormatterConfig{};
+    if (const auto inputFormatterType = inputFormatterConfig.find("type"); inputFormatterType != inputFormatterConfig.end())
     {
-        validParserConfig.parserType = parserType->second;
+        validInputFormatterConfig.type = inputFormatterType->second;
     }
     else
     {
-        throw InvalidConfigParameter("Parser configuration must contain: type");
+        throw InvalidConfigParameter("InputFormatter configuration must contain: type");
     }
-    if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
+    if (const auto inputFormatterIsAsync = inputFormatterConfig.find("isAsync"); inputFormatterIsAsync != inputFormatterConfig.end())
+    {
+        if (const auto isAsync = Util::from_chars<bool>(inputFormatterIsAsync->second); isAsync.has_value())
+        {
+            validInputFormatterConfig.isAsync = isAsync.value();
+        }
+        else
+        {
+            throw InvalidConfigParameter(
+                "InputFormatter configuration contained isAsync field, but it was not a supported boolean value: {}",
+                inputFormatterIsAsync->second);
+        }
+    }
+    if (const auto tupleDelimiter = inputFormatterConfig.find("tupleDelimiter"); tupleDelimiter != inputFormatterConfig.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
         PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
-        validParserConfig.tupleDelimiter = tupleDelimiter->second;
+        validInputFormatterConfig.tupleDelimiter = tupleDelimiter->second;
     }
     else
     {
-        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
-        validParserConfig.tupleDelimiter = '\n';
+        NES_DEBUG("InputFormatter configuration did not contain: tupleDelimiter, using default: \\n");
+        validInputFormatterConfig.tupleDelimiter = '\n';
     }
-    if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
+    if (const auto fieldDelimiter = inputFormatterConfig.find("fieldDelimiter"); fieldDelimiter != inputFormatterConfig.end())
     {
-        validParserConfig.fieldDelimiter = fieldDelimiter->second;
+        validInputFormatterConfig.fieldDelimiter = fieldDelimiter->second;
     }
     else
     {
-        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
-        validParserConfig.fieldDelimiter = ",";
+        NES_DEBUG("InputFormatter configuration did not contain: fieldDelimiter, using default: ,");
+        validInputFormatterConfig.fieldDelimiter = ",";
     }
-    return validParserConfig;
+    return validInputFormatterConfig;
 }
 
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
     std::shared_ptr<Schema> schema,
-    const std::unordered_map<std::string, std::string>& parserConfig,
+    const std::unordered_map<std::string, std::string>& inputFormatterConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
     PRECONDITION(
@@ -227,10 +242,10 @@ Sources::SourceDescriptor createSourceDescriptor(
     auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
     NES_DEBUG("Source type is: {}", sourceType);
 
-    auto validParserConfig = validateAndFormatParserConfig(parserConfig);
+    auto validInputFormatterConfig = validateAndFormatInputFormatterConfig(inputFormatterConfig);
     auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
     return Sources::SourceDescriptor(
-        std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
+        std::move(schema), std::move(logicalSourceName), sourceType, std::move(validInputFormatterConfig), std::move(validSourceConfig));
 }
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
@@ -273,10 +288,10 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     }
 
     /// Add physical sources to corresponding logical sources.
-    for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
+    for (auto [logicalSourceName, inputFormatterConfig, sourceConfig] : config.physical)
     {
         auto sourceDescriptor = createSourceDescriptor(
-            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
+            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), inputFormatterConfig, std::move(sourceConfig));
         sourceCatalog->addPhysicalSource(
             logicalSourceName,
             Catalogs::Source::SourceCatalogEntry::create(

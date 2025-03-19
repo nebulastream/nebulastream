@@ -1004,11 +1004,12 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
 
     /// Serialize parser config.
-    auto* const serializedParserConfig = ParserConfig().New();
-    serializedParserConfig->set_type(sourceDescriptor.parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(sourceDescriptor.parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(sourceDescriptor.parserConfig.fieldDelimiter);
-    serializedSourceDescriptor->set_allocated_parserconfig(serializedParserConfig);
+    auto* const serializedInputFormatterConfig = InputFormatterConfig().New();
+    serializedInputFormatterConfig->set_type(sourceDescriptor.inputFormatterConfig.type);
+    serializedInputFormatterConfig->set_tupledelimiter(sourceDescriptor.inputFormatterConfig.tupleDelimiter);
+    serializedInputFormatterConfig->set_fielddelimiter(sourceDescriptor.inputFormatterConfig.fieldDelimiter);
+    serializedInputFormatterConfig->set_isasync(sourceDescriptor.inputFormatterConfig.isAsync);
+    serializedSourceDescriptor->set_allocated_inputformatterconfig(serializedInputFormatterConfig);
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
     for (const auto& [key, value] : sourceDescriptor.config)
@@ -1059,11 +1060,12 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     auto sourceType = sourceDescriptor.sourcetype();
 
     /// Deserialize the parser config.
-    const auto& serializedParserConfig = sourceDescriptor.parserconfig();
-    auto deserializedParserConfig = Sources::ParserConfig{};
-    deserializedParserConfig.parserType = serializedParserConfig.type();
-    deserializedParserConfig.tupleDelimiter = serializedParserConfig.tupledelimiter();
-    deserializedParserConfig.fieldDelimiter = serializedParserConfig.fielddelimiter();
+    const auto& serializedInputFormatterConfig = sourceDescriptor.inputformatterconfig();
+    auto deserializedInputFormatterConfig = Sources::InputFormatterConfig{};
+    deserializedInputFormatterConfig.type = serializedInputFormatterConfig.type();
+    deserializedInputFormatterConfig.tupleDelimiter = serializedInputFormatterConfig.tupledelimiter();
+    deserializedInputFormatterConfig.fieldDelimiter = serializedInputFormatterConfig.fielddelimiter();
+    deserializedInputFormatterConfig.isAsync = serializedInputFormatterConfig.isasync();
 
     /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
     Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
@@ -1076,7 +1078,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
         std::move(schema),
         std::move(logicalSourceName),
         std::move(sourceType),
-        std::move(deserializedParserConfig),
+        std::move(deserializedInputFormatterConfig),
         std::move(SourceDescriptorConfig));
 }
 

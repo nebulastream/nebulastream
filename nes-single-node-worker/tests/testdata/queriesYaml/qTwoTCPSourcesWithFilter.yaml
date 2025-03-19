@@ -14,7 +14,7 @@ logical:
         type: UINT64
 physical:
   - logical: tcp_source
-    parserConfig:
+    inputFormatterConfig:
       type: CSV
     sourceConfig:
       type: TCP
@@ -26,7 +26,7 @@ physical:
       flushIntervalMS: 100
       connectTimeoutSeconds: 60
   - logical: tcp_source
-    parserConfig:
+    inputFormatterConfig:
       type: CSV
     sourceConfig:
       type: TCP

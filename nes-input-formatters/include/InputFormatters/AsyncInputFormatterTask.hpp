@@ -54,7 +54,7 @@ class FieldOffsetIterator;
 /// raw buffer and its successor (the InputFormatterTask) and writes it to the task queue of the QueryEngine.
 /// The QueryEngine concurrently executes InputFormatterTask. Thus, even if the source writes the InputFormatterTasks to the task queue sequentially,
 /// the QueryEngine may still execute them in any order.
-class InputFormatterTask final : public NES::Runtime::Execution::ExecutablePipelineStage
+class AsyncInputFormatterTask final : public NES::Runtime::Execution::ExecutablePipelineStage
 {
 public:
     using CastFunctionSignature = std::function<void(
@@ -63,18 +63,18 @@ public:
         Memory::AbstractBufferProvider& bufferProvider,
         Memory::TupleBuffer& tupleBufferFormatted)>;
 
-    explicit InputFormatterTask(
+    explicit AsyncInputFormatterTask(
         OriginId originId,
         std::string tupleDelimiter,
         std::string fieldDelimiter,
         std::shared_ptr<Schema> schema,
         std::unique_ptr<InputFormatter> inputFormatter);
-    ~InputFormatterTask() override;
+    ~AsyncInputFormatterTask() override;
 
-    InputFormatterTask(const InputFormatterTask&) = delete;
-    InputFormatterTask& operator=(const InputFormatterTask&) = delete;
-    InputFormatterTask(InputFormatterTask&&) = delete;
-    InputFormatterTask& operator=(InputFormatterTask&&) = delete;
+    AsyncInputFormatterTask(const AsyncInputFormatterTask&) = delete;
+    AsyncInputFormatterTask& operator=(const AsyncInputFormatterTask&) = delete;
+    AsyncInputFormatterTask(AsyncInputFormatterTask&&) = delete;
+    AsyncInputFormatterTask& operator=(AsyncInputFormatterTask&&) = delete;
 
     void start(Runtime::Execution::PipelineExecutionContext&) override { /* noop */ }
 
@@ -145,4 +145,4 @@ private:
 
 
 }
-FMT_OSTREAM(NES::InputFormatters::InputFormatterTask);
+FMT_OSTREAM(NES::InputFormatters::AsyncInputFormatterTask);

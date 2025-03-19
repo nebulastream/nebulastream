@@ -18,7 +18,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Util/Notifier.hpp>
 
 namespace NES::Sources
 {
@@ -40,6 +40,7 @@ public:
         OriginId originId,
         const SourceDescriptor& sourceDescriptor,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
+        std::optional<std::shared_ptr<Notifier>> syncInputFormatterTaskNotifier,
         int numberOfLocalBuffersInSource = NUM_SOURCE_LOCAL_BUFFERS);
 
     ~SourceProvider() = default;

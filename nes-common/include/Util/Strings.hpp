@@ -42,7 +42,7 @@ namespace NES::Util
 template <typename T>
 std::optional<T> from_chars(std::string_view input) = delete;
 
-/// Default implementation falls back to std::from_chars if it is availble for T
+/// Default implementation falls back to std::from_chars if it is available for T
 template <typename T>
 std::optional<T> from_chars(std::string_view input)
 requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + input.size(), value); })

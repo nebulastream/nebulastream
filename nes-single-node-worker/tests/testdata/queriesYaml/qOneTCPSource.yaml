@@ -14,7 +14,7 @@ logical:
         type: UINT64
 physical:
   - logical: tcp_source
-    parserConfig:
+    inputFormatterConfig:
       type: CSV
       tupleDelimiter: "\n"
       fieldDelimiter: ","

@@ -15,26 +15,27 @@
 #pragma once
 
 #include <string>
-#include <API/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::InputFormatters
 {
 
-using InputFormatterRegistryReturnType = InputFormatter;
-/// A InputFormatter requires a schema, a tuple separator and a field delimiter.
-struct InputFormatterRegistryArguments
+using AsyncInputFormatterRegistryReturnType = InputFormatter;
+struct AsyncInputFormatterRegistryArguments
 {
 };
 
-class InputFormatterRegistry
-    : public BaseRegistry<InputFormatterRegistry, std::string, InputFormatterRegistryReturnType, InputFormatterRegistryArguments>
+class AsyncInputFormatterRegistry : public BaseRegistry<
+                                        AsyncInputFormatterRegistry,
+                                        std::string,
+                                        AsyncInputFormatterRegistryReturnType,
+                                        AsyncInputFormatterRegistryArguments>
 {
 };
 
 }
 
 #define INCLUDED_FROM_SOURCE_PARSER_REGISTRY
-#include <InputFormatterGeneratedRegistrar.inc>
+#include <AsyncInputFormatterGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SOURCE_PARSER_REGISTRY

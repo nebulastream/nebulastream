@@ -83,10 +83,12 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
         }
     }
 
-    for (auto [id, descriptor, successors] : compiledQueryPlan.sources)
+    for (auto [id, descriptor, successors, syncInputFormatterTaskNotifier] : compiledQueryPlan.sources)
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[id], std::back_inserter(successors));
-        instantiatedSources.emplace_back(NES::Sources::SourceProvider::lower(id, *descriptor, poolProvider), std::move(successors));
+        instantiatedSources.emplace_back(
+            NES::Sources::SourceProvider::lower(id, *descriptor, poolProvider, std::move(syncInputFormatterTaskNotifier)),
+            std::move(successors));
     }
 
 
