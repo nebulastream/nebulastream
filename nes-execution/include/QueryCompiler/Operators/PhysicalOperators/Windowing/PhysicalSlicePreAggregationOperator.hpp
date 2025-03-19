@@ -14,6 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICEPREAGGREGATIONOPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICEPREAGGREGATIONOPERATOR_HPP_
 
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
@@ -26,17 +27,22 @@ namespace NES::QueryCompilation::PhysicalOperators {
 class PhysicalSlicePreAggregationOperator : public PhysicalWindowOperator, public AbstractEmitOperator {
   public:
     PhysicalSlicePreAggregationOperator(OperatorId id,
-                                        StatisticId statisticId,
-                                        SchemaPtr inputSchema,
-                                        SchemaPtr outputSchema,
-                                        Windowing::LogicalWindowDescriptorPtr windowDefinition);
+                                       StatisticId statisticId,
+                                       SchemaPtr inputSchema,
+                                       SchemaPtr outputSchema,
+                                       Windowing::LogicalWindowDescriptorPtr windowDefinition,
+                                       Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr preAggHandler);
     static PhysicalOperatorPtr create(OperatorId id,
                                       StatisticId statisticId,
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
-                                      const Windowing::LogicalWindowDescriptorPtr& windowDefinition);
+                                      const Windowing::LogicalWindowDescriptorPtr& windowDefinition,
+                                       Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr preAggHandler);
     std::string toString() const override;
     OperatorPtr copy() override;
+  Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr getPreAggregationHandler() const;
+private:
+  Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr preAggHandler;
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 

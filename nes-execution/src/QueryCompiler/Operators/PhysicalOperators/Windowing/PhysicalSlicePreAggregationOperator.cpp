@@ -21,17 +21,19 @@ PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(OperatorId id,
                                                                 StatisticId statisticId,
                                                                 const SchemaPtr& inputSchema,
                                                                 const SchemaPtr& outputSchema,
-                                                                const Windowing::LogicalWindowDescriptorPtr& windowDefinition) {
-    return std::make_shared<PhysicalSlicePreAggregationOperator>(id, statisticId, inputSchema, outputSchema, windowDefinition);
+                                                                const Windowing::LogicalWindowDescriptorPtr& windowDefinition,
+                                       Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr preAggHandler) {
+    return std::make_shared<PhysicalSlicePreAggregationOperator>(id, statisticId, inputSchema, outputSchema, windowDefinition, preAggHandler);
 }
 
 PhysicalSlicePreAggregationOperator::PhysicalSlicePreAggregationOperator(OperatorId id,
                                                                          StatisticId statisticId,
                                                                          SchemaPtr inputSchema,
                                                                          SchemaPtr outputSchema,
-                                                                         Windowing::LogicalWindowDescriptorPtr windowDefinition)
+                                                                         Windowing::LogicalWindowDescriptorPtr windowDefinition,
+                                       Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr preAggHandler)
     : Operator(id),
-      PhysicalWindowOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
+      PhysicalWindowOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)), preAggHandler(preAggHandler) {};
 
 std::string PhysicalSlicePreAggregationOperator::toString() const {
     std::stringstream out;
@@ -42,7 +44,10 @@ std::string PhysicalSlicePreAggregationOperator::toString() const {
 }
 
 OperatorPtr PhysicalSlicePreAggregationOperator::copy() {
-    return create(id, statisticId, inputSchema, outputSchema, windowDefinition);
+    return create(id, statisticId, inputSchema, outputSchema, windowDefinition, preAggHandler);
 }
 
+Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr PhysicalSlicePreAggregationOperator::getPreAggregationHandler() const {
+    return preAggHandler;
+}
 }// namespace NES::QueryCompilation::PhysicalOperators

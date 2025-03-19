@@ -117,6 +117,7 @@
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
+#include <Util/CompilerConstants.hpp>
 #include <Util/Core.hpp>
 #include <Util/Execution.hpp>
 #include <cstddef>
@@ -731,6 +732,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         valueSize = valueSize + function->getSize();
     }
 
+
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction =
         std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(aggregationFunctions,
                                                                                startTs,
@@ -1008,14 +1010,15 @@ LowerPhysicalToNautilusOperators::lowerKeyedPreAggregationOperator(
 
     if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
 
-        auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
-            timeWindow->getSize().getTime(),
-            timeWindow->getSlide().getTime(),
-            windowDefinition->getInputOriginIds());
+        auto physicalPreAgg =
+    physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
+        auto preAggHandler = physicalPreAgg->getPreAggregationHandler();
+        // now push it into operatorHandlers
+        operatorHandlers.push_back(preAggHandler);
+        auto handlerIndex = operatorHandlers.size()-1;
 
-        operatorHandlers.emplace_back(handler);
         auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
-            operatorHandlers.size() - 1,
+            handlerIndex,
             std::move(timeFunction),
             keyReadExpressions,
             keyDataTypes,

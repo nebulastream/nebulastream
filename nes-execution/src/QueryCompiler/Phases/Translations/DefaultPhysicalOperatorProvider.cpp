@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
 #include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
+#include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowOperatorHandler.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -57,6 +58,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperatorsForwardDeclaration.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -82,7 +84,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunction.hpp>
 #include <utility>
-#include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowOperatorHandler.hpp>
 
 namespace NES::QueryCompilation {
 
@@ -179,6 +180,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
         operatorNode->replace(physicalFilterOperator);
     } else if (operatorNode->instanceOf<WindowOperator>()) {
         lowerWindowOperator(operatorNode, decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryId(), operatorHandlerStore);
+        NES_DEBUG("SSSS", decomposedQueryPlan->toString());
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperator>()) {
         lowerWatermarkAssignmentOperator(operatorNode);
     } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
@@ -734,22 +736,16 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
     windowDefinition->setInputOriginIds(windowOperator->getInputOriginIds());
 
-    auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(getNextOperatorId(),
-                                                                                                 operatorNode->getStatisticId(),
-                                                                                                 windowInputSchema,
-                                                                                                 windowOutputSchema,
-                                                                                                 windowDefinition);
-    operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
     // if we have a sliding window and use slicing we have to create another slice merge operator
+    PhysicalOperators::PhysicalOperatorPtr mergingOperator;
     if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>()
         && options->getWindowingStrategy() == WindowingStrategy::SLICING) {
-        auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(getNextOperatorId(),
+            mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(getNextOperatorId(),
                                                                                        operatorNode->getStatisticId(),
                                                                                        windowInputSchema,
                                                                                        windowOutputSchema,
                                                                                        windowDefinition);
-        operatorNode->insertBetweenThisAndChildNodes(mergingOperator);
     }
     auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(getNextOperatorId(),
                                                                             operatorNode->getStatisticId(),
@@ -763,6 +759,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
     auto operatorId = any_cast<OperatorId>(windowOperator->getProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY));
     auto migrationFlagVal = windowOperator->getProperty(MIGRATION_FLAG);
     // check if operator handler for this operator was already created before
+    PhysicalOperators::PhysicalOperatorPtr preAggregationOperator;
     if (operatorHandlerStore->contains(queryId, planId, operatorId) && migrationFlagVal.has_value()
         && std::any_cast<bool>(migrationFlagVal)) {
         // use already created operator handler
@@ -779,12 +776,23 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
             const auto& windowSlide = TimeBasedWindowType->getSlide().getTime();
 
             windowOperatorHandler = std::make_unique<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(windowSize, windowSlide, windowOperator->getInputOriginIds());
+            preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(getNextOperatorId(),
+                                                                                             operatorNode->getStatisticId(),
+                                                                                             windowInputSchema,
+                                                                                             windowOutputSchema,
+                                                                                             windowDefinition,
+                                                                                             windowOperatorHandler);
+            preAggregationOperator->addProperty(MIGRATION_FLAG, window_migration_flag);
             operatorHandlerStore->storeOperatorHandler(queryId, planId, operatorId, windowOperatorHandler);
         }
-
-    windowSink->addProperty(MIGRATION_FLAG, window_migration_flag);
-
-    operatorNode->replace(windowSink);
+    if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>()
+        && options->getWindowingStrategy() == WindowingStrategy::SLICING) {
+        preAggregationOperator->insertBetweenThisAndChildNodes(mergingOperator);
+        mergingOperator->insertBetweenThisAndChildNodes(windowSink);
+    } else {
+        operatorNode->replace(windowSink);
+        windowSink->insertBetweenThisAndChildNodes(preAggregationOperator);
+    }
 }
 
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorPtr& operatorNode,
