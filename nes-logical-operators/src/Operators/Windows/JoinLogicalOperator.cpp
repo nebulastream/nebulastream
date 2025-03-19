@@ -15,22 +15,35 @@
 #include <memory>
 #include <unordered_set>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <ErrorHandling.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+
+#include <Functions/LogicalFunction.hpp>
+#include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
 
-JoinLogicalOperator::JoinLogicalOperator(LogicalFunction joinFunction,
-                                         std::shared_ptr<Windowing::WindowType> windowType,
+JoinLogicalOperator::JoinLogicalOperator(std::unique_ptr<LogicalFunction> joinFunction,
+                                         std::unique_ptr<Windowing::WindowType> windowType,
                                          uint64_t numberOfInputEdgesLeft,
                                          uint64_t numberOfInputEdgesRight,
-                                         JoinType joinType)
-    :  joinFunction(joinFunction), windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft), numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType)
+                                         JoinType joinType,
+                                         const OriginId originId)
+    :  Operator(), BinaryLogicalOperator(), OriginIdsTrait(originId), joinFunction(std::move(joinFunction)),
+    windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft), numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType)
 {
 }
 
@@ -39,7 +52,12 @@ std::string_view JoinLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-bool JoinLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
+bool JoinLogicalOperator::isIdentical(const Operator& rhs) const
+{
+    return *this == rhs && dynamic_cast<const JoinLogicalOperator*>(&rhs)->id == id;
+}
+
+bool JoinLogicalOperator::operator==(Operator const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const JoinLogicalOperator*>(&rhs)) {
         return (getWindowType() == rhsOperator->getWindowType())
@@ -60,36 +78,12 @@ std::string JoinLogicalOperator::toString() const
         getJoinFunction());
 }
 
-
-bool JoinLogicalOperator::inferSchema(Schema)
+bool JoinLogicalOperator::inferSchema()
 {
-    std::vector<Schema> distinctSchemas;
-
-    /// Infer schema of all child operators
-    for (auto& child : children)
+    if (!BinaryLogicalOperator::inferSchema())
     {
-        if (!child.inferSchema(outputSchema))
-        {
-            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
-        }
+        return false;
     }
-
-    /// Identify different type of schemas from children operators
-    for (const auto& child : children)
-    {
-        auto childOutputSchema = child.getInputSchemas()[0];
-        auto found = std::find_if(
-            distinctSchemas.begin(),
-            distinctSchemas.end(),
-            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
-        if (found == distinctSchemas.end())
-        {
-            distinctSchemas.push_back(childOutputSchema);
-        }
-    }
-
-    ///validate that only two different type of schema were present
-    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
 
     ///validate that only two different type of schema were present
     if (distinctSchemas.size() != 2)
@@ -98,8 +92,8 @@ bool JoinLogicalOperator::inferSchema(Schema)
     }
 
     ///reset left and right schema
-    this->leftSourceSchema.clear();
-    this->rightSourceSchema.clear();
+    leftInputSchema.clear();
+    rightInputSchema.clear();
 
     /// Finds the join schema that contains the joinKey and copies the fields to the input schema, if found
     auto findSchemaInDistinctSchemas = [&](FieldAccessLogicalFunction& joinKey, Schema& inputSchema)
@@ -120,7 +114,7 @@ bool JoinLogicalOperator::inferSchema(Schema)
         }
         return false;
     };
-/*
+
     NES_DEBUG("JoinLogicalOperator: Iterate over all LogicalFunction to check if join field is in schema.");
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<LogicalFunction*> visitedFunctions;
@@ -202,53 +196,25 @@ bool JoinLogicalOperator::inferSchema(Schema)
     setOutputSchema(outputSchema);
     updateSchemas(leftInputSchema, rightInputSchema);
     return true;
-    */
-    return true;
 }
 
-Optimizer::TraitSet JoinLogicalOperator::getTraitSet() const
+std::unique_ptr<Operator> JoinLogicalOperator::clone() const
 {
-    return {};
-}
-
-void JoinLogicalOperator::setChildren(std::vector<LogicalOperator> children)
-{
-    this->children = children;
-}
-
-std::vector<Schema> JoinLogicalOperator::getInputSchemas() const
-{
-    return {leftSourceSchema, rightSourceSchema};
-};
-
-Schema JoinLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
-}
-
-std::vector<std::vector<OriginId>> JoinLogicalOperator::getInputOriginIds() const
-{
-    return inputOriginIds;
-}
-
-std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-void JoinLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
-{
-    outputOriginIds = ids;
-}
-
-void JoinLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
-{
-    inputOriginIds = ids;
-}
-
-std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
-{
-    return children;
+    auto copy = std::make_unique<JoinLogicalOperator>(
+        std::move(joinFunction),
+        windowType,
+        numberOfInputEdgesLeft,
+        numberOfInputEdgesRight,
+        joinType);
+    copy->setLeftInputOriginIds(leftInputOriginIds);
+    copy->setRightInputOriginIds(rightInputOriginIds);
+    copy->setLeftInputSchema(leftInputSchema);
+    copy->setRightInputSchema(rightInputSchema);
+    copy->setOutputSchema(outputSchema);
+    copy->setOriginId(originId);
+    copy->windowEndFieldName = windowEndFieldName;
+    copy->windowStartFieldName = windowStartFieldName;
+    return copy;
 }
 
 Schema JoinLogicalOperator::getLeftSchema() const
@@ -266,6 +232,26 @@ Windowing::WindowType& JoinLogicalOperator::getWindowType() const
     return *windowType;
 }
 
+JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const {
+    return joinType;
+}
+
+void JoinLogicalOperator::updateSchemas(Schema leftSourceSchema, Schema rightSourceSchema)
+{
+    this->leftSourceSchema = leftSourceSchema;
+    this->rightSourceSchema = rightSourceSchema;
+}
+
+Schema JoinLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+OriginId JoinLogicalOperator::getOriginId() const
+{
+    return originId;
+}
+
 std::string JoinLogicalOperator::getWindowStartFieldName() const {
     return windowStartFieldName;
 }
@@ -274,9 +260,19 @@ std::string JoinLogicalOperator::getWindowEndFieldName() const {
     return windowEndFieldName;
 }
 
-LogicalFunction JoinLogicalOperator::getJoinFunction() const
+std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
 {
-    return joinFunction;
+    return OriginIdAssignmentOperator::getOutputOriginIds();
+}
+
+void JoinLogicalOperator::setOriginId(const OriginId originId)
+{
+    OriginIdAssignmentOperator::setOriginId(originId);
+}
+
+LogicalFunction& JoinLogicalOperator::getJoinFunction() const
+{
+    return *joinFunction;
 }
 
 SerializableOperator JoinLogicalOperator::serialize() const
@@ -286,7 +282,7 @@ SerializableOperator JoinLogicalOperator::serialize() const
     auto* opDesc = new SerializableOperator_LogicalOperator();
     opDesc->set_operatortype(NAME);
     serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
+    serializedOperator.add_childrenids(children[0]->id.getRawValue());
 
     /// TODO we need to serialize the window type as a trait
 
@@ -302,18 +298,17 @@ SerializableOperator JoinLogicalOperator::serialize() const
 
     auto* binaryOpDesc = new SerializableOperator_BinaryLogicalOperator();
     auto* leftInputSchema = new SerializableSchema();
-    auto inputSchemas = this->getInputSchemas();
-    SchemaSerializationUtil::serializeSchema(inputSchemas[0], leftInputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getLeftInputSchema(), leftInputSchema);
     binaryOpDesc->set_allocated_leftinputschema(leftInputSchema);
 
     auto* rightInputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(inputSchemas[1], rightInputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getRightInputSchema(), rightInputSchema);
     binaryOpDesc->set_allocated_rightinputschema(rightInputSchema);
 
-    for (const auto& originId : this->getInputOriginIds()[0]) {
+    for (const auto& originId : this->getRightInputOriginIds()) {
         binaryOpDesc->add_rightoriginids(originId.getRawValue());
     }
-    for (const auto& originId : this->getInputOriginIds()[1]) {
+    for (const auto& originId : this->getLeftInputOriginIds()) {
         binaryOpDesc->add_leftoriginids(originId.getRawValue());
     }
     opDesc->set_allocated_binaryoperator(binaryOpDesc);
@@ -325,11 +320,11 @@ SerializableOperator JoinLogicalOperator::serialize() const
     return serializedOperator;
 }
 
-LogicalOperatorRegistryReturnType
+std::unique_ptr<LogicalOperator>
 LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
     // TODO
-    throw UnknownLogicalOperator();
+    return nullptr;
 }
 
 }

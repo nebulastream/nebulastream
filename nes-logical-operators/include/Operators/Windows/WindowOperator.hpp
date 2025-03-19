@@ -18,24 +18,21 @@
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/OriginIdAssignmentOperator.hpp>
 #include <Operators/UnaryLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <Traits/OriginIdTrait.hpp>
 
 namespace NES
 {
 
-class WindowOperator : public UnaryLogicalOperator, public OriginIdAssignmentOperator
+class WindowOperator : public UnaryLogicalOperator
 {
 public:
     WindowOperator(OriginId originId);
     WindowOperator();
     std::string_view getName() const noexcept override;
-
-    std::vector<OriginId> getOutputOriginIds() const override;
-    void setOriginId(OriginId originId) override;
 
     [[nodiscard]] bool isKeyed() const;
 
@@ -55,6 +52,10 @@ public:
     const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
+    Optimizer::OriginIdTrait& get() {
+        return originIds;
+    }
+
 protected:
     static constexpr std::string_view NAME = "Window";
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
@@ -62,7 +63,7 @@ protected:
     std::vector<std::shared_ptr<FieldAccessLogicalFunction>> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
-    OriginId originId = INVALID_ORIGIN_ID;
+    Optimizer::OriginIdTrait originIds;
 };
 
 }

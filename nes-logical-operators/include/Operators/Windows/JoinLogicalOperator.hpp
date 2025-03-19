@@ -16,20 +16,19 @@
 
 #include <cstdint>
 #include <memory>
-#include "API/Schema.hpp"
+#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
-#include "Functions/LogicalFunction.hpp"
+#include <Abstract/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include "Operators/BinaryLogicalOperator.hpp"
-#include <Operators/OriginIdAssignmentOperator.hpp>
-#include "WindowOperator.hpp"
-#include "WindowTypes/Types/WindowType.hpp"
+#include <Operators/BinaryLogicalOperator.hpp>
+#include <Operators/Windows/WindowOperator.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES
 {
 class SerializableOperator;
 
-class JoinLogicalOperator : public BinaryLogicalOperator, public OriginIdAssignmentOperator
+class JoinLogicalOperator : public BinaryLogicalOperator
 {
 public:
     enum class JoinType : uint8_t
@@ -42,18 +41,13 @@ public:
                                  std::unique_ptr<Windowing::WindowType> windowType,
                                  uint64_t numberOfInputEdgesLeft,
                                  uint64_t numberOfInputEdgesRight,
-                                 JoinType joinType,
-                                 OriginId originId = INVALID_ORIGIN_ID);
+                                 JoinType joinType);
     std::string_view getName() const noexcept override;
 
 
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     bool inferSchema() override;
-    std::unique_ptr<Operator> clone() const override;
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
-
-    std::vector<OriginId> getOutputOriginIds() const override;
-    void setOriginId(OriginId originId) override;
 
     [[nodiscard]] LogicalFunction& getJoinFunction() const;
     [[nodiscard]] Schema getLeftSchema() const;
@@ -97,6 +91,9 @@ public:
     [[nodiscard]] SerializableOperator serialize() const override;
 
     [[nodiscard]] std::string toString() const override;
+
+protected:
+    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
 
 private:
     static constexpr std::string_view NAME = "Join";

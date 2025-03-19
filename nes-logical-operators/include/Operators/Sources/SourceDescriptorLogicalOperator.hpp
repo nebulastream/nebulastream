@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <Operators/OriginIdAssignmentOperator.hpp>
 #include <Operators/UnaryLogicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Traits/OriginIdTrait.hpp>
 
 namespace NES
 {
@@ -26,7 +26,7 @@ namespace NES
 /// The logical source is then used as key to a multimap, with all descriptors that name the logical source as values.
 /// In the LogicalSourceExpansionRule, we take the keys from SourceNameLogicalOperator operators, get all corresponding (physical) source
 /// descriptors from the catalog, construct SourceDescriptorLogicalOperators from the descriptors and attach them to the query plan.
-class SourceDescriptorLogicalOperator final : public UnaryLogicalOperator, public OriginIdAssignmentOperator
+class SourceDescriptorLogicalOperator final : public UnaryLogicalOperator
 {
 public:
     explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor);
@@ -41,17 +41,21 @@ public:
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
-    std::unique_ptr<Operator> clone() const override;
-    void inferInputOrigins() override;
     std::vector<OriginId> getOutputOriginIds() const override;
+
+    Optimizer::OriginIdTrait& getOriginIds();
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
     [[nodiscard]] std::string toString() const override;
 
+protected:
+    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
+
 private:
     static constexpr std::string_view NAME = "SourceDescriptor";
     const Sources::SourceDescriptor sourceDescriptor;
+    Optimizer::OriginIdTrait originIds;
 };
 
 }

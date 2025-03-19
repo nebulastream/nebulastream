@@ -73,7 +73,7 @@ void OperatorSerializationUtil::serializeSourceOperator(
     auto* sourceDetails = new SerializableOperator_SourceDescriptorLogicalOperator();
     const auto& sourceDescriptor = sourceOperator.getSourceDescriptor();
     serializeSourceDescriptor(sourceDescriptor, *sourceDetails);
-    sourceDetails->set_sourceoriginid(sourceOperator.getOriginId().getRawValue());
+    sourceDetails->set_sourceoriginid(sourceOperator.get().getRawValue());
 
     serializedOperator.set_allocated_source(sourceDetails);
 }

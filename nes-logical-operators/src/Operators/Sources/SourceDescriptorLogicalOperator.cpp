@@ -24,12 +24,12 @@
 namespace NES
 {
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    Sources::SourceDescriptor sourceDescriptor) : Operator(), UnaryLogicalOperator(), OriginIdAssignmentOperator(), sourceDescriptor(std::move(sourceDescriptor))
+    Sources::SourceDescriptor sourceDescriptor) : Operator(), UnaryLogicalOperator(), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
     Sources::SourceDescriptor sourceDescriptor, const OriginId originId)
-    : Operator(), UnaryLogicalOperator(), OriginIdAssignmentOperator(originId), sourceDescriptor(std::move(sourceDescriptor))
+    : Operator(), UnaryLogicalOperator(), sourceDescriptor(std::move(sourceDescriptor)), originIds(originId)
 {
 }
 
@@ -54,14 +54,18 @@ bool SourceDescriptorLogicalOperator::operator==(Operator const& rhs) const
 std::string SourceDescriptorLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << sourceDescriptor << ")";
-
+    ss << "SOURCE(opId: " << id << ": originid: " << originIds.toString() << ", " << sourceDescriptor << ")";
     return ss.str();
 }
 
 Sources::SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 {
     return sourceDescriptor;
+}
+
+Optimizer::OriginIdTrait& SourceDescriptorLogicalOperator::getOriginIds()()
+{
+    return originIds;
 }
 
 bool SourceDescriptorLogicalOperator::inferSchema()
@@ -75,19 +79,14 @@ std::unique_ptr<Operator> SourceDescriptorLogicalOperator::clone() const
 {
     auto sourceDescriptorPtrCopy = sourceDescriptor;
     auto result = std::make_unique<SourceDescriptorLogicalOperator>(std::move(sourceDescriptorPtrCopy));
-    result->setOriginId(originId);
+    result->get(originIds);
     result->inferSchema();
     return result;
 }
 
-void SourceDescriptorLogicalOperator::inferInputOrigins()
-{
-    /// Data sources have no input origins.
-    NES_INFO("Data sources have no input origins. Therefore, we do not infer any input origins!");
-}
 std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() const
 {
-    return OriginIdAssignmentOperator::getOutputOriginIds();
+    return originIds;
 }
 
 [[nodiscard]] SerializableOperator SourceDescriptorLogicalOperator::serialize() const

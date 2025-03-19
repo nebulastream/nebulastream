@@ -15,7 +15,6 @@ add_subdirectory(Sources)
 add_subdirectory(Windows)
 
 add_source_files(nes-logical-operators
-        OriginIdAssignmentOperator.cpp
         UnaryLogicalOperator.cpp
         BinaryLogicalOperator.cpp
         LogicalOperator.cpp

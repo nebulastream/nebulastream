@@ -146,7 +146,7 @@ Source processSource(std::unique_ptr<Pipeline> pipeline, const PipelinedQueryPla
     std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
     for (auto& successor : pipeline->successorPipelines)
     {
-        if (auto executableSuccessor = processSuccessor(pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->getOriginId(),
+        if (auto executableSuccessor = processSuccessor(pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->getOriginIds(),
                                                         std::move(successor),
                                                         pipelineQueryPlan,
                                                         loweringContext))

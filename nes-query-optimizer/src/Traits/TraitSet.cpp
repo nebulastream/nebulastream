@@ -12,31 +12,20 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <string>
-#include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {
 
-/// Holds the query representation of the query subtree as string
-class QueryForSubtree
+PhysicalOperatorTraitSet::PhysicalOperatorTraitSet(std::vector<NES::PhysicalOperatorWithSchema> ops)
+    : operators(std::move(ops)) {}
+
+
+// TODO
+void* PhysicalOperatorTraitSet::get(std::type_index)
 {
-    const std::string str;
-
-public:
-    explicit QueryForSubtree(std::string str) : str(std::move(str)) { }
-    bool operator==(const QueryForSubtree&) const { return true; }
-    std::string toString() const {
-        return str;
-    }
-
-    const std::string& getQuery() const {
-        return str;
-    }
-};
-
-static_assert(Trait<QueryForSubtree>);
+    return nullptr;
+}
 
 }

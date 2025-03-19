@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
 #include <span>
@@ -37,13 +36,22 @@ struct Operator {
     [[nodiscard]] std::span<const std::unique_ptr<Operator>> getChildren() const;
     /// Transfers ownership of children
     [[nodiscard]] std::vector<std::unique_ptr<Operator>> releaseChildren() const;
-    /// Creates a new owing instance
-    virtual std::unique_ptr<Operator> clone() const = 0;
+    /// Creates a new owing instance. Clone has a new operator id.
+    [[nodiscard]] std::unique_ptr<Operator> clone() const;
     /// Unique identifier for the operator during runtime
     const OperatorId id;
     /// A operator owns it children and has non-owning pointers to its parents
     std::vector<Operator*> parents;
     std::vector<std::unique_ptr<Operator>> children;
+
+    static std::string getName()
+    {
+        return "Operator";
+    }
+
+protected:
+    /// Each derived operator implements this to clone its own state
+    virtual std::unique_ptr<Operator> cloneImpl() const = 0;
 };
 }
 FMT_OSTREAM(NES::Operator);

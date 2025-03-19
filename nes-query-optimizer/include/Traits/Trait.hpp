@@ -40,7 +40,7 @@ concept Trait = requires(T trait, T other) {
     /// require equality
     /// { trait == other } -> std::convertible_to<bool>; // Equality will not work for virtual ==ops as here trait and other have differnt types
     /// require toString()
-    { trait.toString() } -> std::same_as<std::string>;
+    { trait.getName() } -> std::same_as<std::string>;
 };
 
 template <typename T>
