@@ -20,6 +20,8 @@
 namespace NES::DataTypeProvider
 {
 
+std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type);
+
 /// @return a shared pointer to a logical data type
 /// @param type name of the logical data type
 /// @brief Currently supported are the types BOOLEAN, CHAR, FLOAT32, FLOAT64, INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, VARSIZED and UNDEFINED.

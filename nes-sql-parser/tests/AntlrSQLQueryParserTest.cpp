@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <regex>
@@ -56,7 +57,7 @@ TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
     /// 'Query::from("window").map(Attribute("new_id").project(Attribute("new_id"))' is diffuclt/impossible to create using the SQL syntax.
     /// Given that a projection first should be more efficient, this seems to be ok for now.
     {
-        const std::string antlrQueryString = "SELECT (id*3) AS new_id FROM window INTO File";
+        const std::string antlrQueryString = "SELECT (id * INT32(3)) AS new_id FROM window INTO File";
         const auto internalLogicalQuery
             = Query::from("window").map(Attribute("new_id") = Attribute("id") * 3).project(Attribute("new_id")).sink("File");
         EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
@@ -77,25 +78,41 @@ TEST_F(AntlrSQLQueryParserTest, multipleFieldsProjectionTest)
 {
     {
         const auto inputQuery = "SELECT "
-                                "(i8 == 1) and ((i16 == 1) and (i32 == 1)) AS a, "
-                                "(i32 == 1) and ((i64 == 1) and (u8 == 2)) AS b, "
-                                "(u8 == 2) and ((u16 == 1) and (u32 == 2)) AS c, "
-                                "(u8 == 2) and ((u16 == 1) and (u32 == 2)) AS d, "
-                                "(i8 == 1) and not ((i16 == 1) and (i32 == 1)) AS e, "
-                                "(i32 == 1) and not ((i64 == 1) and (u8 == 2)) AS f, "
-                                "(u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS g, "
-                                "(u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS h "
+                                "(i8 == INT8(1)) and ((i16 == INT16(1)) and (i32 == INT32(1))) AS a, "
+                                "(i32 == INT32(1)) and ((i64 == INT64(1)) and (u8 == UINT8(2))) AS b, "
+                                "(u8 == UINT8(2)) and ((u16 == UINT16(1)) and (u32 == UINT32(2))) AS c, "
+                                "(u8 == UINT8(2)) and ((u16 == UINT16(1)) and (u32 == UINT32(2))) AS d, "
+                                "(i8 == INT8(1)) and not ((i16 == INT16(1)) and (i32 == INT32(1))) AS e, "
+                                "(i32 == INT32(1)) and not ((i64 == INT64(1)) and (u8 == UINT8(2))) AS f, "
+                                "(u8 == UINT8(2)) and not ((u16 == UINT16(1)) and (u32 == UINT32(2))) AS g, "
+                                "(u8 == UINT8(2)) and not ((u16 == UINT16(1)) and (u32 == UINT32(2))) AS h "
                                 "FROM stream INTO Print"s;
         const auto internalLogicalQuery
             = Query::from("stream")
-                  .map(Attribute("a") = Attribute("i8") == 1 && ((Attribute("i16") == 1) && (Attribute("i32") == 1)))
-                  .map(Attribute("b") = Attribute("i32") == 1 && ((Attribute("i64") == 1) && (Attribute("u8") == 2)))
-                  .map(Attribute("c") = Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
-                  .map(Attribute("d") = Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
-                  .map(Attribute("e") = Attribute("i8") == 1 && !(Attribute("i16") == 1 && Attribute("i32") == 1))
-                  .map(Attribute("f") = Attribute("i32") == 1 && !(Attribute("i64") == 1 && Attribute("u8") == 2))
-                  .map(Attribute("g") = Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
-                  .map(Attribute("h") = Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
+                  .map(
+                      Attribute("a") = Attribute("i8") == static_cast<int8_t>(1)
+                          && ((Attribute("i16") == static_cast<int16_t>(1)) && (Attribute("i32") == static_cast<int32_t>(1))))
+                  .map(
+                      Attribute("b") = Attribute("i32") == static_cast<int32_t>(1)
+                          && ((Attribute("i64") == static_cast<int64_t>(1)) && (Attribute("u8") == static_cast<uint8_t>(2))))
+                  .map(
+                      Attribute("c") = Attribute("u8") == static_cast<uint8_t>(2)
+                          && ((Attribute("u16") == static_cast<uint16_t>(1)) && (Attribute("u32") == static_cast<uint32_t>(2))))
+                  .map(
+                      Attribute("d") = Attribute("u8") == static_cast<uint8_t>(2)
+                          && ((Attribute("u16") == static_cast<uint16_t>(1)) && (Attribute("u32") == static_cast<uint32_t>(2))))
+                  .map(
+                      Attribute("e") = Attribute("i8") == static_cast<int8_t>(1)
+                          && !(Attribute("i16") == static_cast<int16_t>(1) && Attribute("i32") == static_cast<int32_t>(1)))
+                  .map(
+                      Attribute("f") = Attribute("i32") == static_cast<int32_t>(1)
+                          && !(Attribute("i64") == static_cast<int64_t>(1) && Attribute("u8") == static_cast<uint8_t>(2)))
+                  .map(
+                      Attribute("g") = Attribute("u8") == static_cast<uint8_t>(2)
+                          && !(Attribute("u16") == static_cast<uint16_t>(1) && Attribute("u32") == static_cast<uint32_t>(2)))
+                  .map(
+                      Attribute("h") = Attribute("u8") == static_cast<uint8_t>(2)
+                          && !(Attribute("u16") == static_cast<uint16_t>(1) && Attribute("u32") == static_cast<uint32_t>(2)))
                   .project(
                       Attribute("a"),
                       Attribute("b"),
@@ -113,13 +130,23 @@ TEST_F(AntlrSQLQueryParserTest, multipleFieldsProjectionTest)
 TEST_F(AntlrSQLQueryParserTest, selectionTest)
 {
     {
-        const auto inputQuery = "SELECT f1 FROM StreamName WHERE f1 == 30 INTO Print"s;
+        const auto inputQuery = "SELECT f1 FROM StreamName WHERE f1 == INT32(30) INTO Print"s;
         const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 30).project(Attribute("f1")).sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
 
     {
-        const auto inputQuery = "select * from StreamName where (f1 == 10 AND f2 != 10) INTO Print"s;
+        const auto inputQuery = "SELECT f1 + INT32(5) AS f1Plus5 FROM StreamName WHERE f1 == INT32(30) INTO Print"s;
+        const auto internalLogicalQuery = Query::from("StreamName")
+                                              .selection(Attribute("f1") == 30)
+                                              .map(Attribute("f1Plus5") = Attribute("f1") + 5)
+                                              .project(Attribute("f1Plus5"))
+                                              .sink("Print");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    }
+
+    {
+        const auto inputQuery = "select * from StreamName where (f1 == INT32(10) AND f2 != INT32(10)) INTO Print"s;
         const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 10 && Attribute("f2") != 10).sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
@@ -131,18 +158,15 @@ TEST_F(AntlrSQLQueryParserTest, selectionTest)
     }
 
     {
-        const auto inputQuery = "SELECT f1 + 1 AS f1_new FROM StreamName WHERE f1 == 30 INTO Print"s;
-        const auto internalLogicalQuery = Query::from("StreamName")
-                                              .selection(Attribute("f1") == 30)
-                                              .map(Attribute("f1_new") = Attribute("f1") + 1)
-                                              .project(Attribute("f1_new"))
-                                              .sink("Print");
+        const auto inputQuery = "SELECT f1 + INT32(1) AS f1_new FROM StreamName INTO Print"s;
+        const auto internalLogicalQuery
+            = Query::from("StreamName").map(Attribute("f1_new") = Attribute("f1") + 1).project(Attribute("f1_new")).sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
 
     {
         /// Checks implicit creation of field names if the user does not specify 'AS'
-        const auto inputQuery = "SELECT f1 + 1 FROM StreamName WHERE f1 == 30 INTO Print"s;
+        const auto inputQuery = "SELECT f1 + INT32(1) FROM StreamName WHERE f1 == INT32(30) INTO Print"s;
         const auto internalLogicalQuery = Query::from("StreamName")
                                               .selection(Attribute("f1") == 30)
                                               .map(Attribute("f1_0") = Attribute("f1") + 1)
@@ -262,7 +286,7 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindowsWithFilter)
         /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
         const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) "
                                          "on userId = userId1234 "
-                                         "window sliding (timestamp, size 9876 days, advance by 3 ms) WHERE field > 0 INTO PRINT"s;
+                                         "window sliding (timestamp, size 9876 days, advance by 3 ms) WHERE field > INT32(0) INTO PRINT"s;
         const auto queryEventTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("userId1234"))
@@ -273,7 +297,7 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindowsWithFilter)
 
         const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) "
                                              "on userId = userId1234 "
-                                             "window sliding (size 10 ms, advance by 5 ms) WHERE field > 1234 INTO PRINT"s;
+                                             "window sliding (size 10 ms, advance by 5 ms) WHERE field > INT32(1234) INTO PRINT"s;
         const auto queryIngestionTime = Query::from("purchases")
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("userId1234"))
@@ -618,8 +642,9 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
 {
     /// Todo #440: the grammar currently does not support a mixture of '*' and projections, therefore, we opted for using a projection in the test
     const auto inputQueryEventTime
-        = "select (id2 + 1) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == id "
-          "window sliding (timestamp, size 10 sec, advance by 5 ms)) where field >=23 and field2 <=12 into PRINT"s;
+        = "select (id2 + INT32(1)) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == "
+          "id "
+          "window sliding (timestamp, size 10 sec, advance by 5 ms)) where field >= INT32(23) and field2 <= INT32(12) into PRINT"s;
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") == Attribute("id"))
@@ -632,8 +657,9 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
 
     /// Todo #440: the grammar currently does not support a mixture of '*' and projections, therefore, we opted for using a projection in the test
     const auto inputQueryIngestionTime
-        = "select (id2 + 1) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == id "
-          "window sliding (size 10 sec, advance by 5 ms)) where field >=23 or field2 <=12 into PRINT"s;
+        = "select (id2 + INT32(1)) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == "
+          "id "
+          "window sliding (size 10 sec, advance by 5 ms)) where field >= INT32(23) or field2 <= INT32(12) into PRINT"s;
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("id"))
@@ -695,7 +721,7 @@ TEST_F(AntlrSQLQueryParserTest, keyedWindowTest)
 TEST_F(AntlrSQLQueryParserTest, multipleKeyedWindowTestWithHaving)
 {
     const auto inputQueryEventTime
-        = "select avg(id) as average_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3)  window tumbling (timestamp, size 10 days) HAVING average_id > 24 and average_id < 100 INTO PRINT"s;
+        = "select avg(id) as average_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3)  window tumbling (timestamp, size 10 days) HAVING average_id > INT32(24) and average_id < INT32(100) INTO PRINT"s;
     const auto queryEventTime = Query::from("StreamName")
                                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Days(10)))
                                     .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
@@ -705,7 +731,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedWindowTestWithHaving)
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
     const auto inputQueryIngestionTime
-        = "select avg(id) as average_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance by 5 ms) HAVING 24 < average_id and average_id < 100 INTO PRINT"s;
+        = "select avg(id) as average_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance by 5 ms) HAVING INT32(24) < average_id and average_id < INT32(100) INTO PRINT"s;
     const auto queryIngestionTime = Query::from("StreamName")
                                         .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
                                         .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
@@ -718,7 +744,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedWindowTestWithHaving)
 TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithHaving)
 {
     const auto inputQueryEventTime
-        = "select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (timestamp, size 10 sec, advance by 5 ms) HAVING average_id > 24 and max_id < 100 INTO PRINT"s;
+        = "select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (timestamp, size 10 sec, advance by 5 ms) HAVING average_id > INT32(24) and max_id < INT32(100) INTO PRINT"s;
     const auto queryEventTime
         = Query::from("StreamName")
               .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
@@ -730,7 +756,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
     const auto inputQueryIngestionTime
-        = "select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance by 5 ms) HAVING average_id > 24 and max_id < 100 INTO PRINT"s;
+        = "select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance by 5 ms) HAVING average_id > INT32(24) and max_id < INT32(100) INTO PRINT"s;
     const auto queryIngestionTime
         = Query::from("StreamName")
               .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
@@ -747,7 +773,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
     const auto inputQueryEventTime
         = "select * from (select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY "
           "(grouped_field_1, grouped_field_2, grouped_field_3) window sliding (timestamp, size 10 sec, advance "
-          "by 5 ms) HAVING average_id > 24 and max_id < 100)"
+          "by 5 ms) HAVING average_id > INT32(24) and max_id < INT32(100))"
           " INNER JOIN (select * from stream2) ON average_id = id2 window tumbling (timestamp, size 1 day) INTO PRINT"s;
     const auto queryEventTime
         = Query::from("StreamName")
@@ -765,7 +791,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
     const auto inputQueryIngestionTime
         = "select * from (select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY "
           "(grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance "
-          "by 5 ms) HAVING average_id > 24 and max_id < 100)"
+          "by 5 ms) HAVING average_id > INT32(24) and max_id < INT32(100))"
           " INNER JOIN (select * from stream2) ON average_id = id2 window tumbling (timestamp, size 12 day) INTO PRINT"s;
     const auto queryIngestionTime
         = Query::from("StreamName")
@@ -786,7 +812,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
     const auto inputQueryEventTime
         = "select avg(id) as average_id, sum(id2), max(id3) as max_id from (select * from (select * from stream1) INNER JOIN "
           "(select * from stream2) ON id = id2 window tumbling(timestamp, size 1 hour))"
-          " GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (timestamp, size 10 sec, advance by 5 ms) HAVING average_id > 24 and max_id < 123 INTO PRINT"s;
+          " GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (timestamp, size 10 sec, advance by 5 ms) HAVING average_id > INT32(24) and max_id < INT32(123) INTO PRINT"s;
     const auto queryEventTime
         = Query::from("stream1")
               .joinWith(Query::from("stream2"))
@@ -803,7 +829,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
     const auto inputQueryIngestionTime
         = "select avg(id) as average_id, sum(id2), max(id3) as max_id from (select * from (select * from stream1) INNER JOIN "
           "(select * from stream2) ON id = id2 window tumbling(timestamp, size 1 hour))"
-          " GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance by 5 ms) HAVING average_id > 24 and max_id >= 456 INTO PRINT"s;
+          " GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance by 5 ms) HAVING average_id > INT32(24) and max_id >= INT32(456) INTO PRINT"s;
     const auto queryIngestionTime
         = Query::from("stream1")
               .joinWith(Query::from("stream2"))

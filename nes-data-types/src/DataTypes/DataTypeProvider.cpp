@@ -25,6 +25,15 @@
 namespace NES::DataTypeProvider
 {
 
+std::optional<DataType> tryProvideDataType(const std::string& type)
+{
+    auto args = DataTypeRegistryArguments{};
+    if (auto dataType = DataTypeRegistry::instance().create(type, args))
+    {
+        return dataType;
+    }
+    return std::nullopt;
+}
 DataType provideDataType(const std::string& type)
 {
     /// Empty argument struct, since we do not have data types that take arguments at the moment.

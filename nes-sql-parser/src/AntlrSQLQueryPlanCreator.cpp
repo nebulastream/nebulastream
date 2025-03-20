@@ -17,6 +17,9 @@
 #include <optional>
 #include <regex>
 #include <string>
+#include <utility>
+#include <fmt/format.h>
+
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
 #include <ParserRuleContext.h>
@@ -48,7 +51,6 @@
 #include <Types/TumblingWindow.hpp>
 #include <Util/Common.hpp>
 #include <Util/Strings.hpp>
-#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::Parsers
@@ -875,8 +877,8 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     helpers.pop();
     AntlrSQLHelper& parentHelper = helpers.top();
 
-    const auto funcName = Util::toLowerCase(context->children[0]->getText());
-    auto tokenType = context->getStart()->getType();
+    const auto funcName = Util::toUpperCase(context->children[0]->getText());
+    const auto tokenType = context->getStart()->getType();
 
     switch (tokenType) /// TODO #619: improve this switch case
     {
@@ -899,7 +901,16 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
             break;
         default:
-            if (funcName == "concat")
+            /// Check if the function is a constructor for a datatype
+            if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
+            {
+                const auto value = std::move(helper.constantBuilder.back());
+                helper.constantBuilder.pop_back();
+                auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(*dataType, std::move(value)));
+                parentHelper.functionBuilder.push_back(constFunctionItem);
+                break;
+            }
+            if (funcName == "CONCAT")
             {
                 INVARIANT(helper.functionBuilder.size() == 2, "Concat requires two arguments, but got {}", helper.functionBuilder.size());
                 const auto rightFunction = helper.functionBuilder.back();
