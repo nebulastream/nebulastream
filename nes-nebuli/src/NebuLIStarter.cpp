@@ -23,6 +23,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <argparse/argparse.hpp>
+#include <cpptrace/from_current.hpp>
 #include <google/protobuf/text_format.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
@@ -150,78 +151,71 @@ public:
 
 int main(int argc, char** argv)
 {
-    using argparse::ArgumentParser;
-    NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
-    ArgumentParser program("nebuli");
-    program.add_argument("-d", "--debug").flag().help("Dump the Query plan and enable debug logging");
-
-    ArgumentParser registerQuery("register");
-    registerQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
-    registerQuery.add_argument("-i", "--input").default_value("-").help("Read the query description. Use - for stdin which is the default");
-    registerQuery.add_argument("-x").flag();
-
-    ArgumentParser startQuery("start");
-    startQuery.add_argument("queryId").scan<'i', size_t>();
-    startQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
-
-    ArgumentParser stopQuery("stop");
-    stopQuery.add_argument("queryId").scan<'i', size_t>();
-    stopQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
-
-    ArgumentParser unregisterQuery("unregister");
-    unregisterQuery.add_argument("queryId").scan<'i', size_t>();
-    unregisterQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
-
-    ArgumentParser dump("dump");
-    dump.add_argument("-o", "--output").default_value("-").help("Write the DecomposedQueryPlan to file. Use - for stdout");
-    dump.add_argument("-i", "--input").default_value("-").help("Read the query description. Use - for stdin which is the default");
-
-    program.add_subparser(registerQuery);
-    program.add_subparser(startQuery);
-    program.add_subparser(stopQuery);
-    program.add_subparser(unregisterQuery);
-    program.add_subparser(dump);
-
-    try
+    CPPTRACE_TRY
     {
+        NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
+        using argparse::ArgumentParser;
+        ArgumentParser program("nebuli");
+        program.add_argument("-d", "--debug").flag().help("Dump the Query plan and enable debug logging");
+
+        ArgumentParser registerQuery("register");
+        registerQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+        registerQuery.add_argument("-i", "--input")
+            .default_value("-")
+            .help("Read the query description. Use - for stdin which is the default");
+        registerQuery.add_argument("-x").flag();
+
+        ArgumentParser startQuery("start");
+        startQuery.add_argument("queryId").scan<'i', size_t>();
+        startQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+
+        ArgumentParser stopQuery("stop");
+        stopQuery.add_argument("queryId").scan<'i', size_t>();
+        stopQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+
+        ArgumentParser unregisterQuery("unregister");
+        unregisterQuery.add_argument("queryId").scan<'i', size_t>();
+        unregisterQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+
+        ArgumentParser dump("dump");
+        dump.add_argument("-o", "--output").default_value("-").help("Write the DecomposedQueryPlan to file. Use - for stdout");
+        dump.add_argument("-i", "--input").default_value("-").help("Read the query description. Use - for stdin which is the default");
+
+        program.add_subparser(registerQuery);
+        program.add_subparser(startQuery);
+        program.add_subparser(stopQuery);
+        program.add_subparser(unregisterQuery);
+        program.add_subparser(dump);
+
         program.parse_args(argc, argv);
-    }
-    catch (const std::exception& err)
-    {
-        std::cerr << err.what() << std::endl;
-        std::cerr << program;
-        std::exit(1);
-    }
 
-    if (program.get<bool>("-d"))
-    {
-        NES::Logger::getInstance()->changeLogLevel(NES::LogLevel::LOG_DEBUG);
-    }
-
-    bool handled = false;
-    for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (GRPCClient::*)(size_t) const>>{
-             {"start", &GRPCClient::start}, {"unregister", &GRPCClient::unregister}, {"stop", &GRPCClient::stop}})
-    {
-        if (program.is_subcommand_used(name))
+        if (program.get<bool>("-d"))
         {
-            auto& parser = program.at<ArgumentParser>(name);
-            auto serverUri = parser.get<std::string>("-s");
-            GRPCClient client(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-            auto queryId = parser.get<size_t>("queryId");
-            (client.*fn)(queryId);
-            handled = true;
-            break;
+            NES::Logger::getInstance()->changeLogLevel(NES::LogLevel::LOG_DEBUG);
         }
-    }
 
-    if (handled)
-    {
-        return 0;
-    }
+        bool handled = false;
+        for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (GRPCClient::*)(size_t) const>>{
+                 {"start", &GRPCClient::start}, {"unregister", &GRPCClient::unregister}, {"stop", &GRPCClient::stop}})
+        {
+            if (program.is_subcommand_used(name))
+            {
+                auto& parser = program.at<ArgumentParser>(name);
+                auto serverUri = parser.get<std::string>("-s");
+                GRPCClient client(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
+                auto queryId = parser.get<size_t>("queryId");
+                (client.*fn)(queryId);
+                handled = true;
+                break;
+            }
+        }
 
-    std::shared_ptr<NES::DecomposedQueryPlan> decomposedQueryPlan;
-    try
-    {
+        if (handled)
+        {
+            return 0;
+        }
+
+        std::shared_ptr<NES::DecomposedQueryPlan> decomposedQueryPlan;
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
         if (input == "-")
@@ -232,60 +226,60 @@ int main(int argc, char** argv)
         {
             decomposedQueryPlan = NES::CLI::loadFromYAMLFile(input);
         }
+
+        std::string output;
+        NES::SerializableDecomposedQueryPlan serialized;
+        NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(*decomposedQueryPlan, &serialized);
+        google::protobuf::TextFormat::PrintToString(serialized, &output);
+        NES_INFO("GRPC QueryPlan: {}", output);
+        if (program.is_subcommand_used("dump"))
+        {
+            auto& dumpArgs = program.at<ArgumentParser>("dump");
+            auto outputPath = dumpArgs.get<std::string>("-o");
+            std::ostream* output = nullptr;
+            std::ofstream file;
+            if (outputPath == "-")
+            {
+                output = &std::cout;
+            }
+            else
+            {
+                file = std::ofstream(outputPath);
+                if (!file)
+                {
+                    NES_FATAL_ERROR("Could not open output file: {}", outputPath);
+                    return 1;
+                }
+                output = &file;
+            }
+            if (!serialized.SerializeToOstream(output))
+            {
+                NES_FATAL_ERROR("Failed to write message to file.");
+                return -1;
+            }
+
+            if (outputPath == "-")
+            {
+                NES_INFO("Wrote protobuf to {}", outputPath);
+            }
+        }
+        else if (program.is_subcommand_used("register"))
+        {
+            auto& registerArgs = program.at<ArgumentParser>("register");
+            const GRPCClient client(grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
+            auto queryId = client.registerQuery(*decomposedQueryPlan);
+            if (registerArgs.is_used("-x"))
+            {
+                client.start(queryId);
+            }
+            std::cout << queryId;
+        }
+
+        return 0;
     }
-    catch (...)
+    CPPTRACE_CATCH(...)
     {
         NES::tryLogCurrentException();
-        exit(1);
+        return NES::getCurrentExceptionCode();
     }
-
-    std::string output;
-    NES::SerializableDecomposedQueryPlan serialized;
-    NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(*decomposedQueryPlan, &serialized);
-    google::protobuf::TextFormat::PrintToString(serialized, &output);
-    NES_INFO("GRPC QueryPlan: {}", output);
-    if (program.is_subcommand_used("dump"))
-    {
-        auto& dumpArgs = program.at<ArgumentParser>("dump");
-        auto outputPath = dumpArgs.get<std::string>("-o");
-        std::ostream* output = nullptr;
-        std::ofstream file;
-        if (outputPath == "-")
-        {
-            output = &std::cout;
-        }
-        else
-        {
-            file = std::ofstream(outputPath);
-            if (!file)
-            {
-                NES_FATAL_ERROR("Could not open output file: {}", outputPath);
-                return 1;
-            }
-            output = &file;
-        }
-        if (!serialized.SerializeToOstream(output))
-        {
-            NES_FATAL_ERROR("Failed to write message to file.");
-            return -1;
-        }
-
-        if (outputPath == "-")
-        {
-            NES_INFO("Wrote protobuf to {}", outputPath);
-        }
-    }
-    else if (program.is_subcommand_used("register"))
-    {
-        auto& registerArgs = program.at<ArgumentParser>("register");
-        const GRPCClient client(grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
-        auto queryId = client.registerQuery(*decomposedQueryPlan);
-        if (registerArgs.is_used("-x"))
-        {
-            client.start(queryId);
-        }
-        std::cout << queryId;
-    }
-
-    return 0;
 }
