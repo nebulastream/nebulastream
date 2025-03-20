@@ -673,7 +673,7 @@ TEST_P(StatefulQueryRedeploymentIntegrationTest, testMultiplePlannedReconnectsFr
                                  ->addField("id2", BasicType::UINT64)
                                  ->addField("value2", BasicType::UINT64)
                                  ->addField("secretValue2", BasicType::UINT64)
-                                 ->addField("timestamp2", BasicType::UINT64);
+                                 ->addField("timestamp", BasicType::UINT64);
     crd->getSourceCatalog()->addLogicalSource(logicalSource2, schema2);
     crd->getSourceCatalog()->addLogicalSource("fake_migration_source", schema2);
 
@@ -707,7 +707,7 @@ TEST_P(StatefulQueryRedeploymentIntegrationTest, testMultiplePlannedReconnectsFr
     crd->getTopology()->print();
     auto fileSinkDescriptor = FileSinkDescriptor::create(testFile, "CSV_FORMAT", "APPEND");
     auto query = Query::from(logicalSource2)
-                    .window(TumblingWindow::of(EventTime(Attribute("id2")), Seconds(1)))
+                    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1)))
                     .byKey(Attribute("id2"))
                     .apply(Sum(Attribute("value2")))
                     .sink(fileSinkDescriptor);

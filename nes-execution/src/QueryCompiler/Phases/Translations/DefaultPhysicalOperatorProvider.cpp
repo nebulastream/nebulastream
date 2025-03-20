@@ -713,11 +713,12 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const Log
     operatorNode->replace(physicalWatermarkAssignment);
 }
 
-void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode,
-                                                                   SharedQueryId queryId,
-                                                                   DecomposedQueryId planId,
-                                                                   OperatorHandlerStorePtr& operatorHandlerStore) {
-
+void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(
+    const LogicalOperatorPtr& operatorNode,
+    SharedQueryId queryId,
+    DecomposedQueryId planId,
+    OperatorHandlerStorePtr& operatorHandlerStore)
+{
     NES_DEBUG("Create Thread local window aggregation");
     auto windowOperator = operatorNode->as<WindowOperator>();
     auto windowInputSchema = windowOperator->getInputSchema();
@@ -729,71 +730,106 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
         WindowOperatorProperties(windowOperator, windowInputSchema, windowOutputSchema, windowDefinition);
 
     if (windowOperator->getInputOriginIds().empty()) {
-        throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
+        throw QueryCompilationException(
+            "The number of input origin IDs for a window operator should not be zero.");
     }
 
     // TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
     windowDefinition->setInputOriginIds(windowOperator->getInputOriginIds());
 
-
-    // if we have a sliding window and use slicing we have to create another slice merge operator
     PhysicalOperators::PhysicalOperatorPtr mergingOperator;
     if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>()
-        && options->getWindowingStrategy() == WindowingStrategy::SLICING) {
-            mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(getNextOperatorId(),
-                                                                                       operatorNode->getStatisticId(),
-                                                                                       windowInputSchema,
-                                                                                       windowOutputSchema,
-                                                                                       windowDefinition);
+        && options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    {
+        mergingOperator =
+            PhysicalOperators::PhysicalSliceMergingOperator::create(getNextOperatorId(),
+                                                                    operatorNode->getStatisticId(),
+                                                                    windowInputSchema,
+                                                                    windowOutputSchema,
+                                                                    windowDefinition);
     }
-    auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(getNextOperatorId(),
-                                                                            operatorNode->getStatisticId(),
-                                                                            windowInputSchema,
-                                                                            windowOutputSchema,
-                                                                            windowDefinition);
+
+    auto windowSink =
+        PhysicalOperators::PhysicalWindowSinkOperator::create(getNextOperatorId(),
+                                                              operatorNode->getStatisticId(),
+                                                              windowInputSchema,
+                                                              windowOutputSchema,
+                                                              windowDefinition);
 
     Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr windowOperatorHandler;
-    auto window_migration_flag = false;
+    bool window_migration_flag = false;
 
-    auto operatorId = any_cast<OperatorId>(windowOperator->getProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY));
+    auto operatorId =
+        any_cast<OperatorId>(windowOperator->getProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY));
     auto migrationFlagVal = windowOperator->getProperty(MIGRATION_FLAG);
-    // check if operator handler for this operator was already created before
+
     PhysicalOperators::PhysicalOperatorPtr preAggregationOperator;
-    if (operatorHandlerStore->contains(queryId, planId, operatorId) && migrationFlagVal.has_value()
-        && std::any_cast<bool>(migrationFlagVal)) {
-        // use already created operator handler
-        auto windowOH = std::dynamic_pointer_cast<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
-            operatorHandlerStore->getOperatorHandler(queryId, planId, operatorId));
+    if (operatorHandlerStore->contains(queryId, planId, operatorId)
+        && migrationFlagVal.has_value()
+        && std::any_cast<bool>(migrationFlagVal))
+    {
+        auto windowOH = std::dynamic_pointer_cast<
+            Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+                operatorHandlerStore->getOperatorHandler(queryId, planId, operatorId));
+
+        if (!windowOH) {
+            throw QueryCompilationException(
+                "Expected KeyedSlicePreAggregationHandler but got a different handler type.");
+        }
+
         windowOperatorHandler = windowOH;
         windowOH->migrating = true;
-        // mark window to be migrated
         window_migration_flag = true;
-        } else {
-            // create new operator handler and store it
-            const auto TimeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
-            const auto& windowSize = TimeBasedWindowType->getSize().getTime();
-            const auto& windowSlide = TimeBasedWindowType->getSlide().getTime();
 
-            windowOperatorHandler = std::make_unique<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(windowSize, windowSlide, windowOperator->getInputOriginIds());
-            preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(getNextOperatorId(),
-                                                                                             operatorNode->getStatisticId(),
-                                                                                             windowInputSchema,
-                                                                                             windowOutputSchema,
-                                                                                             windowDefinition,
-                                                                                             windowOperatorHandler);
-            preAggregationOperator->addProperty(MIGRATION_FLAG, window_migration_flag);
-            operatorHandlerStore->storeOperatorHandler(queryId, planId, operatorId, windowOperatorHandler);
-        }
+        preAggregationOperator =
+            PhysicalOperators::PhysicalSlicePreAggregationOperator::create(
+                getNextOperatorId(),
+                operatorNode->getStatisticId(),
+                windowInputSchema,
+                windowOutputSchema,
+                windowDefinition,
+                windowOperatorHandler);
+
+        preAggregationOperator->addProperty(MIGRATION_FLAG, window_migration_flag);
+    }
+    else {
+        const auto TimeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        const auto& windowSize = TimeBasedWindowType->getSize().getTime();
+        const auto& windowSlide = TimeBasedWindowType->getSlide().getTime();
+
+        windowOperatorHandler =
+            std::make_unique<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+                windowSize,
+                windowSlide,
+                windowOperator->getInputOriginIds());
+
+        operatorHandlerStore->storeOperatorHandler(queryId, planId, operatorId, windowOperatorHandler);
+
+        preAggregationOperator =
+            PhysicalOperators::PhysicalSlicePreAggregationOperator::create(
+                getNextOperatorId(),
+                operatorNode->getStatisticId(),
+                windowInputSchema,
+                windowOutputSchema,
+                windowDefinition,
+                windowOperatorHandler);
+
+        preAggregationOperator->addProperty(MIGRATION_FLAG, window_migration_flag);
+    }
+
     if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>()
-        && options->getWindowingStrategy() == WindowingStrategy::SLICING) {
+        && options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    {
         preAggregationOperator->insertBetweenThisAndChildNodes(mergingOperator);
         mergingOperator->insertBetweenThisAndChildNodes(windowSink);
-    } else {
+    }
+    else {
+        operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
         operatorNode->replace(windowSink);
-        windowSink->insertBetweenThisAndChildNodes(preAggregationOperator);
     }
 }
+
 
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorPtr& operatorNode,
                                                           SharedQueryId queryId,

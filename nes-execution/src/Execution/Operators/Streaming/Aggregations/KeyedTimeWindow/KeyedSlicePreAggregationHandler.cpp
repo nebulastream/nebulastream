@@ -36,12 +36,14 @@ KeyedSlicePreAggregationHandler::KeyedSlicePreAggregationHandler(uint64_t window
 void KeyedSlicePreAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx,
                                             uint64_t keySize,
                                             uint64_t valueSize) {
-    NES_ASSERT(threadLocalSliceStores.empty(), "The thread local slice store must be empty");
-    for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
-        auto threadLocal = std::make_unique<KeyedThreadLocalSliceStore>(keySize, valueSize, windowSize, windowSlide);
-        threadLocalSliceStores.emplace_back(std::move(threadLocal));
+    if(!migrating) {
+        NES_ASSERT(threadLocalSliceStores.empty(), "The thread local slice store must be empty");
+        for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++) {
+            auto threadLocal = std::make_unique<KeyedThreadLocalSliceStore>(keySize, valueSize, windowSize, windowSlide);
+            threadLocalSliceStores.emplace_back(std::move(threadLocal));
+        }
+        setBufferManager(ctx.getBufferManager());
     }
-    setBufferManager(ctx.getBufferManager());
 }
 
 void KeyedSlicePreAggregationHandler::recreate() {
