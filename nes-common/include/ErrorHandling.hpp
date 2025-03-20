@@ -90,9 +90,8 @@ private:
     /// - \u001B[0m is the ANSI escape code for "color reset"
     /// - we call NES::Logger::getInstance()->shutdown() to ensure that async logger completely flushes. c.f. https://github.com/gabime/spdlog/wiki/7.-Flush-policy
 
-    /// A precondition is a condition that must be true at the beginning of a function. If a precondition got violated, this usually means that
-    /// the caller of the functions made an error.
-    /// @param condition The condition that should be true
+    /// This documents (and checks) requirements for calling a function. If violated, the function was called incorrectly.
+    /// @param condition must be true to correctly call function guarded by precondition
     /// @param formatString can contain `{}` to reference varargs. Must not contain positional referencen like `{0}`.
     #define PRECONDITION(condition, formatString, ...) \
         do \
@@ -106,9 +105,8 @@ private:
             } \
         } while (false)
 
-    /// @brief An invariant is a condition that is always true at a particular point in a program. If an invariant gets violated, this usually
-    /// means that there is a bug in the program.
-    /// @param condition The condition that should be true
+    /// This documents what is assumed to be true at this particular point in a program. If violated, there is a misunderstanding and maybe a bug.
+    /// @param condition is assumed to be true
     /// @param formatString can contain `{}` to reference varargs. Must not contain positional referencen like `{0}`.
     #define INVARIANT(condition, formatString, ...) \
         do \
