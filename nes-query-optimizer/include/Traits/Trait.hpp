@@ -15,13 +15,42 @@
 #pragma once
 
 #include <memory>
-#include <string>
-#include <vector>
+#include <set>
 
 namespace NES::Optimizer
 {
 
-struct AbstractTrait { };
-using TraitSet = std::vector<std::unique_ptr<AbstractTrait>>;
+struct AbstractTrait
+{
+    virtual ~AbstractTrait() = default;
+    virtual bool operator==(const AbstractTrait& other) const = 0;
+};
+
+using TraitSet = std::set<std::unique_ptr<AbstractTrait>>;
+
+template <typename T>
+bool hasTrait(const TraitSet& traitSet)
+{
+    return std::any_of(traitSet.begin(), traitSet.end(),
+                       [](const auto& trait) {
+                           return dynamic_cast<T*>(trait.get()) != nullptr;
+                       });
+}
+
+template <typename... TraitTypes>
+bool hasTraits(const TraitSet& traitSet)
+{
+    return (hasTrait<TraitTypes>(traitSet) && ...);
+}
+
+/*
+bool isSuperSet(const TraitSet& superset, const TraitSet& subset) {
+    return std::all_of(subset.begin(), subset.end(), [&superset](const auto& subTrait) {
+       return std::any_of(superset.begin(), superset.end(), [&subTrait](const auto& superTrait) {
+          return *superTrait == *subTrait;
+      });
+   });
+}
+*/
 
 }

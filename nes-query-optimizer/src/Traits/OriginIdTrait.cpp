@@ -12,22 +12,35 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <string>
-#include <vector>
-#include <Traits/Trait.hpp>
-#include <Identifiers/Identifiers.hpp>
+#include <memory>
+#include <ostream>
+#include <Traits/OriginIdTrait.hpp>
 
 namespace NES::Optimizer
 {
 
-struct OriginIdTrait : public AbstractTrait
+bool OriginIdTrait::operator==(const AbstractTrait& other) const
 {
-    std::vector<OriginId> originIds;
+    if (auto otherTrait = dynamic_cast<const OriginIdTrait*>(&other))
+    {
+        return std::ranges::equal(otherTrait->originIds, this->originIds);
+    }
+    return false;
+}
 
-    bool operator==(const AbstractTrait& other) const override;
-    [[nodiscard]] std::string toString() const;
-};
-
+std::string OriginIdTrait::toString() const
+{
+    std::ostringstream oss;
+    oss << "[";
+    for (size_t i = 0; i < originIds.size(); ++i)
+    {
+        if (i != 0)
+        {
+            oss << ", ";
+        }
+        oss << originIds[i];
+    }
+    oss << "]";
+    return oss.str();
+}
 }

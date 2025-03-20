@@ -81,21 +81,6 @@ namespace NES::LegacyOptimizer
 class LogicalSourceExpansionRule
 {
 public:
-    static std::shared_ptr<LogicalSourceExpansionRule>
-    create(const std::shared_ptr<Catalogs::Source::SourceCatalog>&);
-
-    /**
-     * @brief Apply Logical source expansion rule on input query plan
-     * @param queryPlan: the original non-expanded query plan
-     * @return expanded logical query plan
-     */
-    void apply(QueryPlan& queryPlan);
-
-    virtual ~LogicalSourceExpansionRule() = default;
-
-private:
-    explicit LogicalSourceExpansionRule(const std::shared_ptr<Catalogs::Source::SourceCatalog>&);
-
-    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
+    static void apply(QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& catalog);
 };
 }

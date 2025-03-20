@@ -14,9 +14,12 @@
 
 #pragma once
 
+#include <string>
+#include <string_view>
 #include <Operators/UnaryLogicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/OriginIdTrait.hpp>
+#include <Plans/Operator.hpp>
 
 namespace NES
 {
@@ -32,7 +35,7 @@ public:
     explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor);
     [[nodiscard]] std::string_view getName() const noexcept override;
 
-    Sources::SourceDescriptor getSourceDescriptor() const;
+    [[nodiscard]] Sources::SourceDescriptor getSourceDescriptor() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;

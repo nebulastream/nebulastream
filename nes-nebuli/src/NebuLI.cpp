@@ -229,16 +229,13 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
     /// TODO: AntlrSQLQueryParser creates query from source to sink -> no flip required
     auto queryplan = std::move(query).flip();
-    auto logicalSourceExpansionRule = LegacyOptimizer::LogicalSourceExpansionRule::create(sourceCatalog);
     auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
-    auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase::create();
-
     std::cout << queryplan->toString() << "\n";
 
     validateAndSetSinkDescriptors(*queryplan, config);
-    logicalSourceExpansionRule->apply(*queryplan);
+    LegacyOptimizer::LogicalSourceExpansionRule::apply(*queryplan, *sourceCatalog);
     query = typeInference->performTypeInferenceQuery(*queryplan);
-    query = originIdInferencePhase->execute(*queryplan);
+    LegacyOptimizer::OriginIdInferencePhase::apply(*queryplan);
     query = typeInference->performTypeInferenceQuery(*queryplan);
 
     NES_INFO("QEP:\n {}", queryplan->toString());

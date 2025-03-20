@@ -73,6 +73,31 @@ public:
         return false;
     }
 
+    template <typename... TraitTypes>
+    std::vector<LogicalOperator *> getOperatorsWithTraits()
+    {
+        std::vector<LogicalOperator *> operators;
+        std::set<OperatorId> visitedOpIds;
+        for (const auto& rootOperator : rootOperators)
+        {
+            for (Operator* op : BFSRange<Operator>(rootOperator.get()))
+            {
+                if (!visitedOpIds.contains(op->id))
+                {
+                    visitedOpIds.insert(op->id);
+                    if (auto* logicalOperator = dynamic_cast<LogicalOperator*>(op))
+                    {
+                        if (hasTraits<TraitTypes...>(logicalOperator->traitSet))
+                        {
+                            operators.emplace_back(logicalOperator);
+                        }
+                    }
+                }
+            }
+        }
+        return operators;
+    }
+
     bool replaceOperator(Operator* target, std::unique_ptr<Operator> replacement)
     {
         bool replaced = false;
@@ -102,9 +127,9 @@ public:
     }
 
     template <class T>
-    std::vector<T*> getOperatorByType() const
+    std::vector<T> getOperatorByType() const
     {
-        std::vector<T*> operators;
+        std::vector<T> operators;
         std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
@@ -117,7 +142,7 @@ public:
                 visitedOpIds.insert(op->id);
                 if (T* casted = dynamic_cast<T*>(op))
                 {
-                    operators.push_back(casted);
+                    operators.push_back(*casted);
                 }
             }
         }

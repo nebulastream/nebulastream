@@ -18,6 +18,7 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <Plans/Operator.hpp>
+#include <Traits/Trait.hpp>
 
 namespace NES
 {
@@ -48,6 +49,9 @@ public:
 
     virtual bool operator==(Operator const& rhs) const = 0;
     virtual bool isIdentical(Operator const& rhs) const = 0;
+
+    /// Holds physical operator properties
+    std::vector<std::unique_ptr<Optimizer::AbstractTrait>> traitSet;
 
 protected:
     /// The output schema of this operator

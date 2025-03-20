@@ -38,15 +38,18 @@ public:
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
-    std::unique_ptr<Operator> clone() const override;
     void inferInputOrigins() override;
 
     [[nodiscard]] Schema getSchema() const;
     void setSchema(const Schema& schema);
 
     [[nodiscard]] SerializableOperator serialize() const override;
-
     [[nodiscard]] std::string toString() const override;
+
+    [[nodiscard]] std::string getLogicalSourceName() const;
+
+protected:
+    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
 
 private:
     std::string logicalSourceName;

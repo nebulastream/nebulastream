@@ -17,37 +17,22 @@
 #include <unordered_set>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Operators/UnionLogicalOperator.hpp>
 #include <LegacyOptimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/QueryPlan.hpp>
-#include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::LegacyOptimizer
 {
 
-LogicalSourceExpansionRule::LogicalSourceExpansionRule(
-    const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
-    : sourceCatalog(sourceCatalog)
-{
-}
-
-std::shared_ptr<LogicalSourceExpansionRule>
-LogicalSourceExpansionRule::create(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
-{
-    return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(sourceCatalog));
-}
-
-void LogicalSourceExpansionRule::apply(QueryPlan& queryPlan)
+void LogicalSourceExpansionRule::apply(QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog)
 {
     auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
 
-    for (SourceNameLogicalOperator* sourceOp : sourceOperators)
+    for (SourceNameLogicalOperator sourceOp : sourceOperators)
     {
-        std::string logicalSourceName(sourceOp->getName());
-        auto sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
+        std::string logicalSourceName(sourceOp.getName());
+        auto sourceCatalogEntries = sourceCatalog.getPhysicalSources(logicalSourceName);
         if (sourceCatalogEntries.empty())
         {
             auto ex = PhysicalSourceNotFoundInQueryDescription();
@@ -56,9 +41,9 @@ void LogicalSourceExpansionRule::apply(QueryPlan& queryPlan)
         }
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
-            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(sourceOp->getSchema());
+            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(sourceOp.getSchema());
             auto logicalDescOp = std::make_unique<SourceDescriptorLogicalOperator>(*sourceDescriptor);
-            queryPlan.replaceOperator(sourceOp, std::move(logicalDescOp));
+            queryPlan.replaceOperator(&sourceOp, std::move(logicalDescOp));
         }
     }
 }

@@ -104,6 +104,9 @@ private:
     /// means that there is a bug in the program.
     /// @param condition The condition that should be true
     /// @param message The message that should be printed if the condition is false
+    /// Note
+    ///
+    /// asdfasd
     #define INVARIANT(condition, formatString, ...) \
         do \
         { \
