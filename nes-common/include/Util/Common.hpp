@@ -28,14 +28,6 @@ namespace NES::Util
 */
 std::string escapeJson(const std::string& str);
 
-/// this method checks if the object is null
-template <typename T>
-std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, USED_IN_DEBUG const std::string& errorMessage)
-{
-    INVARIANT(ptr, errorMessage);
-    return ptr;
-}
-
 /// Update the source names by sorting and then concatenating the source names from the sub- and query plan
 std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed);
 
