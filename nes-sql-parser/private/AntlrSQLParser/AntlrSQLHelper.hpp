@@ -73,6 +73,7 @@ public:
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>> windowAggs;
     std::vector<std::shared_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
+    std::vector<std::string> constantBuilder;
     std::vector<std::shared_ptr<NodeFunction>> functionBuilder;
     std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> mapBuilder;
     std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByFields;

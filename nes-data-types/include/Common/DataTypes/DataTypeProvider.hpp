@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -43,6 +44,8 @@ enum class LogicalType : uint8_t
 
 namespace NES::DataTypeProvider
 {
+
+std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type);
 
 /// @return a shared pointer to a logical data type
 /// @param type name of the logical data type
