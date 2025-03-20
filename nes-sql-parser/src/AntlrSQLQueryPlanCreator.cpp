@@ -365,9 +365,18 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             /// (we handle cases where the user did not specify a name via 'AS' in 'exitNamedExpression')
             const auto attribute = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
-            const auto renamedAttribute = Attribute(context->getText()) = attribute;
-            helper.addProjectionField(renamedAttribute->getField());
-            helper.mapBuilder.push_back(renamedAttribute);
+            if (const auto functionItemPtr = Util::as_if<FunctionItem>(attribute))
+            {
+                auto functionItem = functionItemPtr->as(context->getText());
+                helper.functionBuilder.push_back(functionItem);
+            }
+            else
+            {
+                /// renaming an function (mapBuilder) and adding a projection (functionBuilder) on the renamed function.
+                const auto renamedAttribute = Attribute(context->getText()) = attribute;
+                helper.functionBuilder.push_back(renamedAttribute);
+                helper.mapBuilder.push_back(renamedAttribute);
+            }
         }
     }
     else if (helper.isInAggFunction() and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)
@@ -607,8 +616,8 @@ void AntlrSQLQueryPlanCreator::enterNamedExpression(AntlrSQLParser::NamedExpress
 void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    /// If the current functions consist of a single field access, the user simply specified a field/attribute to access
-    if (helper.functionBuilder.size() == 1 and Util::instanceOf<NodeFunctionFieldAccess>(helper.functionBuilder.back()))
+    /// handle implicit maps when no "AS" is supplied, but a rename is needed
+    if (helper.isInFunctionCall() and helper.isSelect and helper.identCountHelper > 1 and context->children.size() == 1)
     {
         /// Project onto the specified field and remove the field access from the active functions.
         helper.addProjectionField(Util::as<NodeFunctionFieldAccess>(helper.functionBuilder.back()));
