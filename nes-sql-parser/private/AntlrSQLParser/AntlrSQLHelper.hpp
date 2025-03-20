@@ -61,12 +61,13 @@ public:
     bool isWindow = false;
     bool isArithmeticBinary = false;
     bool isJoinRelation = false;
-    bool isFunctionCall = false;
     bool isSimpleCondition = true;
     bool isTimeBasedWindow = true;
     bool isSetOperation = false;
     bool isGroupBy = false;
     bool hasMultipleAttributes = false;
+    bool isInFunctionCall() const { return not functionBuilder.empty(); }
+    bool isInAggFunction() const { return not windowAggs.empty(); }
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;
