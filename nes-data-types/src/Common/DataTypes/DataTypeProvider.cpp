@@ -26,6 +26,17 @@
 namespace NES::DataTypeProvider
 {
 
+std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type)
+{
+    auto args = DataTypeRegistryArguments{};
+    if (auto dataType = DataTypeRegistry::instance().create(type, args))
+    {
+        std::shared_ptr<DataType> sharedType = std::move(dataType.value());
+        return {sharedType};
+    }
+    return std::nullopt;
+}
+
 std::shared_ptr<DataType> provideDataType(const std::string& type)
 {
     /// Empty argument struct, since we do not have data types that take arguments at the moment.
