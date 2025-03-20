@@ -132,6 +132,7 @@ TEST_F(SchemaTest, addFieldTest)
 
 TEST_F(SchemaTest, removeFieldsTest)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     constexpr auto NUM_FIELDS = 10_u64;
     auto rndFields = getRandomFields(NUM_FIELDS);
     auto testSchema = Schema::create();

@@ -184,6 +184,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
@@ -234,6 +235,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
  */
 TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     const std::shared_ptr<Schema> schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
