@@ -49,14 +49,13 @@ TEST_F(SpecificSequenceTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
-        .numThreads = 1,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
-        = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"},
-           /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "789"}}});
+        = {/* buffer 1 */ {SequenceNumber(1), "123456789,123456"},
+           /* buffer 2 */ {SequenceNumber(2), "789"}}});
 }
 
 /// Each thread should share the same InputFormatterTask, meaning that we need to check that threads don't interfere with each other's state
@@ -67,14 +66,13 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOnTwoDifferentThreads)
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffers for raw data, 1 buffer for results
-        .numThreads = 2,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
-        = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"},
-           /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(1), "789"}}});
+        = {/* buffer 1 */ {SequenceNumber(1), "123456789,123456"},
+           /* buffer 2 */ {SequenceNumber(2), "789"}}});
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
@@ -85,14 +83,13 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOnTwoDifferentThreadsOutOf
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffers for raw data, 1 buffer for results
-        .numThreads = 2,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 123456789)}}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
-        = {/* buffer 1 */ {SequenceNumber(2), WorkerThreadId(1), "789"},
-           /* buffer 2 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}}});
+        = {/* buffer 1 */ {SequenceNumber(2), "789"},
+           /* buffer 2 */ {SequenceNumber(1), "123456789,123456"}}});
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
@@ -103,14 +100,13 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
-        .numThreads = 1,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
         .rawBytesPerThread
-        = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,12345\n"},
-           /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,123456789\n"}}});
+        = {/* buffer 1 */ {SequenceNumber(1), "123456789,12345\n"},
+           /* buffer 2 */ {SequenceNumber(2), "12345,123456789\n"}}});
 }
 
 TEST_F(SpecificSequenceTest, testDelimiterThatIsMoreThanOneCharacter)
@@ -120,14 +116,13 @@ TEST_F(SpecificSequenceTest, testDelimiterThatIsMoreThanOneCharacter)
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
-        .numThreads = 1,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "--", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
-        .expectedResults = {WorkerThreadResults<TestTuple>{0, {{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
         .rawBytesPerThread
-        = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,1234--"},
-           /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "12345,12345678--"}}});
+        = {/* buffer 1 */ {SequenceNumber(1), "123456789,1234--"},
+           /* buffer 2 */ {SequenceNumber(2), "12345,12345678--"}}});
 }
 
 TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
@@ -137,19 +132,17 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
     using TestTuple = std::tuple<int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 6, /// 2 buffers for raw data, 4 buffers for results
-        .numThreads = 1,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{
-            0,
             {{TestTuple{1}, TestTuple{2}, TestTuple{3}, TestTuple{4}},
              {TestTuple{5}, TestTuple{6}, TestTuple{7}, TestTuple{8}},
              {TestTuple{1234}, TestTuple{5678}, TestTuple{1001}},
              {TestTuple{1}}}}},
         .rawBytesPerThread
-        = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "1\n2\n3\n4\n5\n6\n7\n8\n"},
-           /* buffer 2 */ {SequenceNumber(2), WorkerThreadId(0), "1234\n5678\n1001\n1"}}});
+        = {/* buffer 1 */ {SequenceNumber(1), "1\n2\n3\n4\n5\n6\n7\n8\n"},
+           /* buffer 2 */ {SequenceNumber(2), "1234\n5678\n1001\n1"}}});
 }
 
 /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
@@ -161,16 +154,13 @@ TEST_F(SpecificSequenceTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter
     using TestTuple = std::tuple<int32_t, int32_t, int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 3 buffers for raw data, 1 buffer from results
-        .numThreads = 3,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
-        .expectedResults = {WorkerThreadResults<TestTuple>{2, {{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
         /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
         .rawBytesPerThread
-        = {{SequenceNumber(3), WorkerThreadId(0), "3456789\n"},
-           {SequenceNumber(1), WorkerThreadId(1), "123456789,123456"},
-           {SequenceNumber(2), WorkerThreadId(2), "789,123456789,12"}}});
+        = {{SequenceNumber(3), "3456789\n"}, {SequenceNumber(1), "123456789,123456"}, {SequenceNumber(2), "789,123456789,12"}}});
 }
 
 /// As long as we set the number of bytes in a buffer correctly, it should not matter whether it is only partially full
@@ -181,18 +171,17 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
     using TestTuple = std::tuple<int32_t, int32_t, int32_t, int32_t>;
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 6, /// 4 buffers for raw data, 2 buffer from results
-        .numThreads = 3,
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
         .expectedResults
-        = {WorkerThreadResults<TestTuple>{2, {{TestTuple(123, 123, 123, 123)}}},
-           WorkerThreadResults<TestTuple>{0, {{TestTuple(123, 123, 123, 456789)}}}},
+        = {WorkerThreadResults<TestTuple>{{{TestTuple(123, 123, 123, 123)}}},
+           WorkerThreadResults<TestTuple>{{{TestTuple(123, 123, 123, 456789)}}}},
         .rawBytesPerThread
-        = {{SequenceNumber(4), WorkerThreadId(0), ",456789"},
-           {SequenceNumber(1), WorkerThreadId(1), "123,123,"},
-           {SequenceNumber(2), WorkerThreadId(2), "123,123\n123,123"}, /// only full buffer
-           {SequenceNumber(3), WorkerThreadId(1), ",123"}}});
+        = {{SequenceNumber(4), ",456789"},
+           {SequenceNumber(1), "123,123,"},
+           {SequenceNumber(2), "123,123\n123,123"}, /// only full buffer
+           {SequenceNumber(3), ",123"}}});
 }
 
 }

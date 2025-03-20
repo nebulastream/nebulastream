@@ -133,7 +133,7 @@ public:
                 pipelineTasks.emplace_back(std::move(pipelineTask));
                 ++bufferIdx;
             }
-            auto taskQueue = std::make_unique<Runtime::Execution::ConcurrentTestTaskQueue>(
+            auto taskQueue = std::make_unique<Runtime::Execution::MultiThreadedTestTaskQueue>(
                 testConfig.numberOfThreads, pipelineTasks, testBufferManager, resultBuffers);
             taskQueue->startProcessing();
             taskQueue->waitForCompletion();
