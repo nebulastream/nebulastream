@@ -13,9 +13,33 @@
 */
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
-#include <DataTypes/DataType.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataType.hpp>
+
+namespace NES
+{
+/// Enum containing our logical data types
+enum class LogicalType : uint8_t
+{
+    INT8,
+    UINT8,
+    INT16,
+    UINT16,
+    INT32,
+    UINT32,
+    INT64,
+    FLOAT32,
+    UINT64,
+    FLOAT64,
+    BOOLEAN,
+    CHAR,
+    VARSIZED,
+    UNDEFINED,
+};
+}
 
 namespace NES::DataTypeProvider
 {

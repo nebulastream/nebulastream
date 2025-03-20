@@ -799,75 +799,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
 void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    if (const auto valueAsNumeric = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant()))
-    {
-        const auto concreteValue = valueAsNumeric->number();
-        DataType dataType{};
-        /// Signed Integers
-        if (dynamic_cast<AntlrSQLParser::TinyIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::INT8);
-        }
-        else if (dynamic_cast<AntlrSQLParser::SmallIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::INT16);
-        }
-        else if (dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::INT32);
-        }
-        else if (dynamic_cast<AntlrSQLParser::BigIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::INT64);
-        }
-
-        /// Unsigned Integers
-        else if (dynamic_cast<AntlrSQLParser::UnsignedTinyIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::INT8);
-        }
-        else if (dynamic_cast<AntlrSQLParser::UnsignedSmallIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::INT16);
-        }
-        else if (dynamic_cast<AntlrSQLParser::UnsignedIntegerLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::INT32);
-        }
-        else if (dynamic_cast<AntlrSQLParser::UnsignedBigIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::INT64);
-        }
-
-        /// Floating Point
-        else if (dynamic_cast<AntlrSQLParser::DoubleLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
-        }
-        else if (dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT32);
-        }
-        else
-        {
-            throw InvalidQuerySyntax("Unknown numerical data type: {}", concreteValue->getText());
-        }
-        /// Getting the constant value without the type,e .g., 42.0_D, 42.0_F, 42_U or 42_I --> 42.0, 42.0, 42, 42
-        const auto constantText = context->getText();
-        auto constFunctionItem
-            = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText.substr(0, constantText.find('_'))));
-        helper.functionBuilder.push_back(constFunctionItem);
-    }
-    else if (dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->constant()) != nullptr)
-    {
-        const auto constantText = std::string(Util::trimCharacters(context->getText(), '\"'));
-
-        const auto dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
-        auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));
-
-        helper.functionBuilder.push_back(constFunctionItem);
-    }
-
+    helper.constantBuilder.push_back(context->getText());
     poppush(helper);
 }
 
@@ -904,7 +836,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
-                auto value = std::move(helper.constantBuilder.back());
+                const auto value = std::move(helper.constantBuilder.back());
                 helper.constantBuilder.pop_back();
                 auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(*dataType, std::move(value)));
                 parentHelper.functionBuilder.push_back(constFunctionItem);
