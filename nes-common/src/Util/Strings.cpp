@@ -136,19 +136,18 @@ std::string replaceFirst(std::string_view origin, const std::string_view search,
     return std::string(origin);
 }
 
+
 namespace
 {
-constexpr void verifyAsciiString(USED_IN_DEBUG std::string_view input)
+USED_IN_DEBUG constexpr bool isAsciiString(std::string_view input)
 {
-    PRECONDITION(
-        std::ranges::all_of(input, [](const auto& character) { return isascii(character) != 0; }),
-        "Support for non ascii character is not implemented");
+    return std::ranges::all_of(input, [](const auto& character) { return isascii(character) != 0; });
 }
 }
 
 void toUpperCaseInplace(std::string& modified)
 {
-    verifyAsciiString(modified);
+    PRECONDITION(isAsciiString(modified), "Support for non-ascii character not implemented");
     for (char& character : modified)
     {
         character = static_cast<char>(::toupper(character));
@@ -157,7 +156,7 @@ void toUpperCaseInplace(std::string& modified)
 
 void toLowerCaseInplace(std::string& modified)
 {
-    verifyAsciiString(modified);
+    PRECONDITION(isAsciiString(modified), "Support for non-ascii character not implemented");
     for (char& character : modified)
     {
         character = static_cast<char>(::tolower(character));
@@ -166,13 +165,13 @@ void toLowerCaseInplace(std::string& modified)
 
 std::string toUpperCase(std::string_view input)
 {
-    verifyAsciiString(input);
+    PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
     return input | std::views::transform(::toupper) | ranges::to<std::string>();
 }
 
 std::string toLowerCase(std::string_view input)
 {
-    verifyAsciiString(input);
+    PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
     return input | std::views::transform(::tolower) | ranges::to<std::string>();
 }
 
