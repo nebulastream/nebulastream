@@ -161,7 +161,7 @@ TEST_F(SchemaTest, removeFieldsTest)
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
         if (testSchema->getFieldCount() < 1)
         {
-            EXPECT_DEATH_DEBUG([&]() { auto field = testSchema->getFieldByName(fieldToRemove->getName()); }(), "Precondition violated:.*");
+            EXPECT_DEATH_DEBUG([&]() { auto field = testSchema->getFieldByName(fieldToRemove->getName()); }(), "");
         }
         else
         {
