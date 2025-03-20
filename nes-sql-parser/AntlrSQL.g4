@@ -116,16 +116,13 @@ tableAlias
     : (AS? identifier identifierList?)?
     ;
 
-multipartIdentifierList
-    : multipartIdentifier (',' multipartIdentifier)*
-    ;
-
 multipartIdentifier
     : parts+=errorCapturingIdentifier ('.' parts+=errorCapturingIdentifier)*
     ;
 
 namedExpression
-    : expression (AS? (name=errorCapturingIdentifier | identifierList))?
+    : expression AS name=identifier
+    | expression
     ;
 
 identifier: strictIdentifier;
