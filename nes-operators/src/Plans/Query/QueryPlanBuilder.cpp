@@ -155,6 +155,30 @@ QueryPlanPtr QueryPlanBuilder::addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr
     return leftQueryPlan;
 }
 
+QueryPlanPtr QueryPlanBuilder::addUnion(QueryPlanPtr leftQueryPlan, std::vector<QueryPlanPtr> subQueryPlans) {
+    NES_DEBUG("QueryPlanBuilder: unionWith the subQuery to current query plan");
+    if (subQueryPlans.size()<2) {
+        NES_THROW_RUNTIME_ERROR("At least two subqueries are required for a union expression");
+    }
+    OperatorPtr op = LogicalOperatorFactory::createUnionOperator();
+    std::string newSourceName;
+    //we add the root of the right query plan as root of the left query plan
+    // thus, children of the binary join operator are
+    // [0] left and [1] right
+    for (size_t i=0; i< subQueryPlans.size(); i++) {
+        leftQueryPlan->addRootOperator(subQueryPlans[i]->getRootOperators()[0]);
+        if (newSourceName.empty()) {
+            newSourceName = Util::updateSourceName(leftQueryPlan->getSourceConsumed(), subQueryPlans[i]->getSourceConsumed());
+        }else {
+            newSourceName = Util::updateSourceName(newSourceName, subQueryPlans[i]->getSourceConsumed());
+        }
+    }
+    leftQueryPlan->appendOperatorAsNewRoot(op);
+    NES_DEBUG("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
+    leftQueryPlan->setSourceConsumed(newSourceName);
+    return leftQueryPlan;
+}
+
 QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(Windowing::WindowTypePtr window,
                                                          Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
                                                          Statistic::StatisticMetricHash metricHash,
@@ -435,7 +459,7 @@ QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(QueryPlanPtr query
 QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode,
                                                                 QueryPlanPtr leftQueryPlan,
                                                                 QueryPlanPtr rightQueryPlan) {
-    //we add the root of th right query plan as root of the left query plan
+    //we add the root of the right query plan as root of the left query plan
     // thus, children of the binary join operator are
     // [0] left and [1] right
     leftQueryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);

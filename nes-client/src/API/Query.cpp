@@ -324,6 +324,12 @@ Query& Query::unionWith(const Query& subQuery) {
     return *this;
 }
 
+Query& Query::unionWith2(const std::vector<QueryPlanPtr>& subQueries) {
+    NES_DEBUG("Query: unionWith the subQuery to current query");
+    this->queryPlan = QueryPlanBuilder::addUnion( this->queryPlan, subQueries);
+    return *this;
+}
+
 Query& Query::joinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType) {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinExpression);
     auto newFilter = QueryPlanBuilder::findFilter(joinExpression);
@@ -447,6 +453,20 @@ Query& Query::sink(const SinkDescriptorPtr sinkDescriptor, WorkerId workerId) {
     NES_DEBUG("Query: add sink operator to query");
     this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor, workerId);
     return *this;
+}
+
+Query Query::sink2(const SinkDescriptorPtr sinkDescriptor, const std::vector<Query>& subQueries, WorkerId workerId) {
+    NES_DEBUG("Query: add sink operator to query");
+    auto queryPlan = QueryPlan::create();
+
+    OperatorPtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, workerId);
+    for (auto& subQuery : subQueries) {
+        for (auto& rootOperator : subQuery.getQueryPlan()->getRootOperators()) {
+            op->addChild(rootOperator);
+        }
+    }
+    queryPlan->appendOperatorAsNewRoot(op);
+    return {queryPlan};
 }
 
 Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {

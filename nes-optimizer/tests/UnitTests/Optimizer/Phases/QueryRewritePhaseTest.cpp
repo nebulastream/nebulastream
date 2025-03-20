@@ -101,6 +101,53 @@ TEST_F(QueryRewritePhaseTest, applyRewritePhaseToFilterDominatedQuery) {
     EXPECT_EQ(actualFilter->getPredicate()->toString(), expectedPredicate->toString());
 }
 
+TEST_F(QueryRewritePhaseTest, applyRewritePhaseToMultiJoinQuery) {
+    auto inputSchema = NES::Schema::create()
+                           ->addField("m", BasicType::UINT64)
+                           ->addField("n", BasicType::UINT64)
+                           ->addField("o", BasicType::UINT64)
+                           ->addField("p", BasicType::UINT64)
+                           ->addField("q", BasicType::UINT64)
+                           ->addField("r", BasicType::UINT64)
+                           ->addField("time1", BasicType::UINT64)
+                           ->addField("time2", BasicType::UINT64);
+
+    Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    auto sourceName1 = "example1";
+    auto sourceName2 = "example2";
+    auto sourceName3 = "example3";
+    auto sourceName4 = "example4";
+    auto sourceName5 = "example5";
+    auto sourceName6 = "example6";
+    sourceCatalog->addLogicalSource(sourceName1, inputSchema);
+    sourceCatalog->addLogicalSource(sourceName2, inputSchema);
+    sourceCatalog->addLogicalSource(sourceName3, inputSchema);
+    sourceCatalog->addLogicalSource(sourceName4, inputSchema);
+    sourceCatalog->addLogicalSource(sourceName5, inputSchema);
+    sourceCatalog->addLogicalSource(sourceName6, inputSchema);
+
+    auto query = Query::sink2(NullOutputSinkDescriptor::create(),
+                              {Query::from(sourceName1).joinWith(Query::from(sourceName2))
+                              .where(Attribute("m") == Attribute("m"))
+                              .window(TumblingWindow::of(EventTime(Attribute("time1")), Milliseconds(500))),//join 1
+                              Query::from(sourceName3).joinWith(Query::from(sourceName4))
+                              .where(Attribute("m") == Attribute("m"))
+                              .window(TumblingWindow::of(EventTime(Attribute("time1")), Milliseconds(500))),//join 2
+                              Query::from(sourceName5).joinWith(Query::from(sourceName6))
+                              .where(Attribute("m") == Attribute("m"))
+                              .window(TumblingWindow::of(EventTime(Attribute("time1")), Milliseconds(500)))});//join 3
+
+    auto plan = query.getQueryPlan();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+    auto resultPlan = typeInferencePhase->execute(plan);
+
+    auto cordConfig = Configurations::CoordinatorConfiguration::createDefault();
+    auto rewritePhase = Optimizer::QueryRewritePhase::create(cordConfig);
+    resultPlan = rewritePhase->execute(resultPlan);
+    EXPECT_TRUE(resultPlan);
+}
+
+
 /**
  * @brief In this test we try to apply rewrite phase to same query multiple time.
  */

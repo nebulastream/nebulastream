@@ -521,6 +521,18 @@ class Query {
     */
     Query& unionWith(const Query& subQuery);
 
+  /**
+    * This looks ugly, but we can't reference to QueryPtr at this line.
+    * @param subQueries sub Queries to be unioned
+    * @return the query
+    */
+    template<typename... Args>
+    auto unionWith2(Args&&... subQueries)->std::enable_if_t<std::conjunction_v<std::is_constructible<Query, Args>...>, Query&> {
+      return unionWith2({std::forward<Args>(subQueries).getQueryPlan()...});
+    }
+
+    Query& unionWith2(const std::vector<QueryPlanPtr>& subQueries);
+
     /**
      * @brief this call projects out the attributes in the parameter list
      * @param attribute list
@@ -602,10 +614,19 @@ class Query {
     /**
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
-     * @param sinkDescriptor
+     * @param sinkDescriptor:
      * @param workerId: location where sink is to be placed
      */
-    virtual Query& sink(SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
+    Query& sink(SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
+
+    /**
+     * create a sink with multiple subqueries writing data to
+     * @param sinkDescriptor sink descriptor of the sink
+     * @param subQueries query sub plans
+     * @param workerId worker id
+     * @return query object
+     */
+    static Query sink2(SinkDescriptorPtr sinkDescriptor, const std::vector<Query>& subQueries, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Gets the query plan from the current query.

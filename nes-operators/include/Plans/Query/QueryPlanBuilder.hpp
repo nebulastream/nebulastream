@@ -126,6 +126,14 @@ class QueryPlanBuilder {
     static QueryPlanPtr addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
 
     /**
+    * @brief UnionOperator to combine two query plans
+    * @param leftQueryPlan the left query plan to combine by the union
+    * @param subQueryPlans sub query plans
+    * @return the updated queryPlan combining all sub query plans with union
+    */
+    static QueryPlanPtr addUnion(QueryPlanPtr leftQueryPlan, std::vector<QueryPlanPtr> subQueryPlans);
+
+    /**
      * @brief This methods add the join operator to a query
      * @param leftQueryPlan the left query plan to combine by the join
      * @param rightQueryPlan the right query plan to combine by the join

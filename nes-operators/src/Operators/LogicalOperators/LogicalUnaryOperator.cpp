@@ -33,7 +33,7 @@ bool LogicalUnaryOperator::inferSchema() {
     }
 
     auto childSchema = children[0]->as<Operator>()->getOutputSchema();
-    for (const auto& child : children) {
+    /*for (const auto& child : children) {
         if (!child->as<Operator>()->getOutputSchema()->equals(childSchema)) {
             NES_ERROR("UnaryOperator: infer schema failed. The schema has to be the same across all child operators."
                       "this op schema= {} child schema={}",
@@ -41,7 +41,7 @@ bool LogicalUnaryOperator::inferSchema() {
                       childSchema->toString());
             return false;
         }
-    }
+    }*/
 
     //Reset and reinitialize the input and output schemas
     inputSchema->clear();
