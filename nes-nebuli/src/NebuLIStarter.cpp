@@ -19,7 +19,9 @@
 #include <utility>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 #include <argparse/argparse.hpp>
 #include <google/protobuf/text_format.h>
 #include <grpcpp/create_channel.h>
@@ -149,6 +151,7 @@ public:
 int main(int argc, char** argv)
 {
     using argparse::ArgumentParser;
+    NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
     ArgumentParser program("nebuli");
     program.add_argument("-d", "--debug").flag().help("Dump the Query plan and enable debug logging");
 
@@ -192,11 +195,7 @@ int main(int argc, char** argv)
 
     if (program.get<bool>("-d"))
     {
-        NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_DEBUG);
-    }
-    else
-    {
-        NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
+        NES::Logger::getInstance()->changeLogLevel(NES::LogLevel::LOG_DEBUG);
     }
 
     bool handled = false;
