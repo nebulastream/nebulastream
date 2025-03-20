@@ -355,7 +355,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         /// get main source name
         helper.setSource(context->getText());
     }
-    else if (AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex and not helper.isFunctionCall and not helper.isJoinRelation)
+    else if (AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex and helper.isInFunctionCall() and not helper.isJoinRelation)
     {
         /// handle renames of identifiers
         if (helper.isArithmeticBinary)
@@ -366,11 +366,9 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         {
             const std::shared_ptr<NodeFunction> attr = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
-            if (helper.identCountHelper == 1)
+            if (const auto functionItemPtr = Util::as_if<FunctionItem>(attr))
             {
-                /// rename of a single attribute
-                auto functionItem = static_cast<FunctionItem>(attr);
-                functionItem = functionItem.as(context->getText());
+                auto functionItem = functionItemPtr->as(context->getText());
                 helper.functionBuilder.push_back(functionItem);
             }
             else
@@ -382,7 +380,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             }
         }
     }
-    else if (helper.isFunctionCall and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+    else if (helper.isInAggFunction() and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         if (!helper.windowAggs.empty())
         {
@@ -629,8 +627,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 {
     AntlrSQLHelper helper = helpers.top();
     /// handle implicit maps when no "AS" is supplied, but a rename is needed
-    if (!helper.isFunctionCall && !helper.functionBuilder.empty() && helper.isSelect && helper.identCountHelper > 1
-        && context->children.size() == 1)
+    if (helper.isInFunctionCall() and helper.isSelect and helper.identCountHelper > 1 and context->children.size() == 1)
     {
         std::string implicitFieldName;
         const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
@@ -652,7 +649,6 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 
         helper.implicitMapCountHelper++;
     }
-    helper.isFunctionCall = false;
     poppush(helper);
 
     AntlrSQLBaseListener::exitNamedExpression(context);
@@ -660,10 +656,8 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 
 void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
-    helpers.top().isFunctionCall = true;
     AntlrSQLHelper helper = helpers.top();
     helper.functionBuilder.clear();
-    helper.isFunctionCall = true;
     helpers.push(helper);
     AntlrSQLBaseListener::enterFunctionCall(context);
 }
