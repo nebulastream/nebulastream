@@ -82,49 +82,20 @@ std::ostream& TestablePipelineStage::toString(std::ostream& os) const
     return os;
 }
 
-SequentialTestTaskQueue::SequentialTestTaskQueue(
-    const size_t numThreads,
+SingleThreadedTestTaskQueue::SingleThreadedTestTaskQueue(
     std::shared_ptr<NES::Memory::BufferManager> bufferProvider,
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
-    : numberOfWorkerThreads(numThreads)
-    , bufferProvider(std::move(bufferProvider))
-    , resultBuffers(std::move(resultBuffers))
-    , threadData(std::vector<ThreadLocalData>(numThreads))
+    : bufferProvider(std::move(bufferProvider)), resultBuffers(std::move(resultBuffers))
 {
 }
 
-void SequentialTestTaskQueue::threadFunction(const size_t threadIdx)
-{
-    auto& data = threadData[threadIdx];
-
-    while (not(data.stop and data.tasks.empty()))
-    {
-        WorkTask currentTask;
-        {
-            std::unique_lock lock(data.mtx);
-            data.cv.wait(lock, [&data] { return not(data.tasks.empty()) or data.stop; });
-            /// If the main thread requested 'stop', break out of the loop
-            if (data.stop)
-            {
-                break;
-            }
-            /// Otherwise, get the next task and execute it without locking
-            currentTask = std::move(data.tasks.front());
-            data.tasks.pop();
-        }
-        currentTask.task.execute(*currentTask.pipelineExecutionContext);
-        waitCV.notify_all();
-    }
-}
-
-void SequentialTestTaskQueue::processTasks(std::vector<TestablePipelineTask> pipelineTasks)
+void SingleThreadedTestTaskQueue::processTasks(std::vector<TestablePipelineTask> pipelineTasks)
 {
     enqueueTasks(std::move(pipelineTasks));
-    runTasksOnThreads();
-    stopAllThreads();
+    runTasks();
 }
 
-void SequentialTestTaskQueue::enqueueTasks(std::vector<TestablePipelineTask> pipelineTasks)
+void SingleThreadedTestTaskQueue::enqueueTasks(std::vector<TestablePipelineTask> pipelineTasks)
 {
     PRECONDITION(not pipelineTasks.empty(), "Test tasks must not be empty.");
     this->eps = pipelineTasks.front().eps;
@@ -141,87 +112,29 @@ void SequentialTestTaskQueue::enqueueTasks(std::vector<TestablePipelineTask> pip
         {
             const auto pecFromWeakCapturedPtr = weakPipelineExecutionContext.lock();
             PRECONDITION(pecFromWeakCapturedPtr != nullptr, "The pipelineExecutionContext must be valid in the repeat callback function");
-            threadTasks.emplace(WorkTask{.task = testTask, .pipelineExecutionContext = pecFromWeakCapturedPtr});
+            tasks.emplace(WorkTask{.task = testTask, .pipelineExecutionContext = pecFromWeakCapturedPtr});
         };
         pipelineExecutionContext->setRepeatTaskCallback(std::move(repeatTaskCallback));
-        threadTasks.emplace(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
+        tasks.emplace(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
     }
 }
 
-void SequentialTestTaskQueue::runTasksOnThreads()
+void SingleThreadedTestTaskQueue::runTasks()
 {
-    for (size_t i = 0; i < numberOfWorkerThreads; ++i)
+    while (not tasks.empty())
     {
-        threads.emplace_back([this, i] { threadFunction(i); });
+        const auto [task, pipelineExecutionContext] = std::move(tasks.front());
+        tasks.pop();
+        task.execute(*pipelineExecutionContext);
     }
-
-    while (not threadTasks.empty())
-    {
-        auto threadTask = std::move(threadTasks.front());
-        const auto threadId = threadTask.task.workerThreadId.getRawValue();
-        threadTasks.pop();
-        assignWorkToThread(std::move(threadTask), threadId);
-        waitForCompletion();
-    }
-    waitForCompletion();
 
     /// Process final tuple
     const auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers);
     eps->stop(*pipelineExecutionContext);
 }
 
-void SequentialTestTaskQueue::stopAllThreads()
-{
-    for (auto& data : threadData)
-    {
-        {
-            const std::lock_guard lock(data.mtx);
-            data.stop = true;
-        }
-        data.cv.notify_one();
-    }
-}
 
-void SequentialTestTaskQueue::assignWorkToThread(WorkTask task, const size_t threadIdx)
-{
-    PRECONDITION(
-        threadIdx < threadData.size(),
-        "Tried to assign work to thread {}, but only {} threads are available",
-        threadIdx + 1,
-        threadData.size());
-
-    auto& data = threadData[threadIdx];
-    {
-        const std::lock_guard lock(data.mtx);
-        data.tasks.push(std::move(task));
-    }
-    data.cv.notify_one();
-}
-
-void SequentialTestTaskQueue::waitForCompletion()
-{
-    std::unique_lock waitLock(waitMutex);
-    waitCV.wait(
-        waitLock,
-        [this]()
-        {
-            /// Check if there is at least one thread that still has work to do.
-            for (auto& data : threadData)
-            {
-                const std::lock_guard lock(data.mtx);
-                if (not data.tasks.empty())
-                {
-                    /// There still is a thread with at least one remaining task.
-                    return false;
-                }
-            }
-            /// All threads finished all of their tasks.
-            return true;
-        });
-}
-
-
-ConcurrentTestTaskQueue::ConcurrentTestTaskQueue(
+MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     const size_t numberOfThreads,
     const std::vector<TestablePipelineTask>& testTasks,
     std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider,
@@ -254,7 +167,7 @@ ConcurrentTestTaskQueue::ConcurrentTestTaskQueue(
         threadTasks.blockingWrite(WorkTask{.task = testTask, .pipelineExecutionContext = pipelineExecutionContext});
     }
 }
-void ConcurrentTestTaskQueue::startProcessing()
+void MultiThreadedTestTaskQueue::startProcessing()
 {
     timer.start();
     for (size_t i = 0; i < numberOfWorkerThreads; ++i)
@@ -263,7 +176,7 @@ void ConcurrentTestTaskQueue::startProcessing()
     }
 }
 
-void ConcurrentTestTaskQueue::waitForCompletion()
+void MultiThreadedTestTaskQueue::waitForCompletion()
 {
     completionLatch.wait();
     const auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers);
@@ -272,7 +185,7 @@ void ConcurrentTestTaskQueue::waitForCompletion()
     NES_DEBUG("Final time to process all tasks: {}ms", timer.getPrintTime());
 }
 
-void ConcurrentTestTaskQueue::threadFunction(const size_t threadIdx)
+void MultiThreadedTestTaskQueue::threadFunction(const size_t threadIdx)
 {
     WorkTask workTask{};
     while (threadTasks.readIfNotEmpty(workTask))

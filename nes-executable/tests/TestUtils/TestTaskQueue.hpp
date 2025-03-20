@@ -166,59 +166,37 @@ struct WorkTask
 /// Processes TestablePipelineTasks sequentially. May use more than one thread to process the tasks. Allows to verify
 /// that a specific order of tasks leads to the correct result and different threads influence their state in an
 /// expected way.
-class SequentialTestTaskQueue
+class SingleThreadedTestTaskQueue
 {
-private:
-    struct ThreadLocalData
-    {
-        std::mutex mtx;
-        std::condition_variable cv;
-        std::queue<WorkTask> tasks;
-        bool stop = false;
-    };
-
 public:
-    SequentialTestTaskQueue(
-        size_t numThreads,
+    SingleThreadedTestTaskQueue(
         std::shared_ptr<Memory::BufferManager> bufferProvider,
         std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers);
 
-    ~SequentialTestTaskQueue() = default;
+    ~SingleThreadedTestTaskQueue() = default;
 
     /// Sequentially processes pipeline tasks on respective threads. Stops all threads.
     void processTasks(std::vector<TestablePipelineTask> pipelineTasks);
 
 private:
-    uint64_t numberOfWorkerThreads;
-    std::queue<WorkTask> threadTasks;
+    std::queue<WorkTask> tasks;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers;
 
-    std::vector<ThreadLocalData> threadData;
     std::shared_ptr<ExecutablePipelineStage> eps;
-    std::vector<std::jthread> threads;
-    std::mutex waitMutex;
-    std::condition_variable waitCV;
 
     /// Sets up all tasks for the threads.
     void enqueueTasks(std::vector<TestablePipelineTask> pipelineTasks);
     /// Executes tasks on respective threads.
-    void runTasksOnThreads();
-    void stopAllThreads();
-    void threadFunction(size_t threadIdx);
-    /// Moves task into queue of respective thread.
-    void assignWorkToThread(WorkTask task, size_t threadIdx);
-    /// Waits until all threads completed their work and there are no more tasks.
-    /// @Note assumes all tasks were already assigned to their respective threads.
-    void waitForCompletion();
+    void runTasks();
 };
 
 /// Takes TestablePipelineTask and a number of threads. Creates WorkTasks from the TestablePipelineTasks and writes the WorkTasks into an
 /// MPMC queue. On calling, 'startProcessing()' the threads start to concurrently process WorkTasks from the MPMC queue, until it is empty.
-class ConcurrentTestTaskQueue
+class MultiThreadedTestTaskQueue
 {
 public:
-    ConcurrentTestTaskQueue(
+    MultiThreadedTestTaskQueue(
         size_t numberOfThreads,
         const std::vector<TestablePipelineTask>& testTasks,
         std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
