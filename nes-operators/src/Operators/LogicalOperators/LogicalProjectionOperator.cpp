@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <cstddef>
 #include <ranges>
 #include <utility>
 #include <DataTypes/Schema.hpp>
@@ -62,10 +63,17 @@ bool LogicalProjectionOperator::isIdentical(const std::shared_ptr<Node>& rhs) co
 
 bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
-    if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
+    if (const auto projection = NES::Util::as_if<LogicalProjectionOperator>(rhs);
+        (projection != nullptr) and (this->functions.size() == projection->getFunctions().size()))
     {
-        const auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
-        return (this->functions.size() == projection->getFunctions().size()) and *outputSchema == *projection->outputSchema;
+        for (size_t i = 0; const auto& function : this->functions)
+        {
+            if (not function->equal(projection->getFunctions()[i++]))
+            {
+                return false;
+            }
+        }
+        return *outputSchema == *projection->outputSchema;
     }
     return false;
 };
