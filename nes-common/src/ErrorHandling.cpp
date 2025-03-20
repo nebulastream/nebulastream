@@ -18,6 +18,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <from_current.hpp>
 
 /// formater for cpptrace::nullable
 namespace fmt
@@ -108,6 +109,17 @@ std::string formatLogMessage(const Exception& e)
         e.trace().to_string(true));
 }
 
+std::string formatLogMessage(const std::exception& e)
+{
+    if constexpr (not logWithStacktrace)
+    {
+        return fmt::format("failed to process with error : {}", e.what());
+    }
+    constexpr auto ansiColorReset = "\u001B[0m";
+    const auto& trace = cpptrace::from_current_exception().to_string(true);
+    return fmt::format("failed to process with error : {}\n{}{}", e.what(), ansiColorReset, trace);
+}
+
 void tryLogCurrentException()
 {
     try
@@ -120,7 +132,7 @@ void tryLogCurrentException()
     }
     catch (const std::exception& e)
     {
-        NES_ERROR("failed to process with error : {}\n", e.what())
+        NES_ERROR("{}", formatLogMessage(e));
     }
     catch (...)
     {

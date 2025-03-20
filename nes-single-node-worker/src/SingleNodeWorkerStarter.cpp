@@ -14,6 +14,7 @@
 
 #include <Configurations/Util.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cpptrace/from_current.hpp>
 #include <grpcpp/server_builder.h>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
@@ -22,7 +23,7 @@
 
 int main(const int argc, const char* argv[])
 {
-    try
+    CPPTRACE_TRY
     {
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
         auto configuration = NES::Configurations::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc, argv);
@@ -42,13 +43,9 @@ int main(const int argc, const char* argv[])
         server->Wait();
         return 0;
     }
-    catch (const NES::Exception& e)
+    CPPTRACE_CATCH(...)
     {
         NES::tryLogCurrentException();
         return NES::getCurrentExceptionCode();
-    }
-    catch (...)
-    {
-        return NES::ErrorCode::UnknownException;
     }
 }
