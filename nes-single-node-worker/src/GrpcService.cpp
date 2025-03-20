@@ -30,10 +30,7 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
 {
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
     context->AddTrailingMetadata("what", exception.what());
-    if (auto where = exception.where())
-    {
-        context->AddTrailingMetadata("where", where->to_string());
-    }
+    context->AddTrailingMetadata("trace", exception.trace().to_string());
     return {grpc::INTERNAL, exception.what()};
 }
 
