@@ -396,7 +396,7 @@ SystestParser::CSVSource SystestParser::expectCSVSource() const
     {
         throw SLTUnexpectedToken("failed to read the first word in: " + line);
     }
-    INVARIANT(discard == CSVSourceToken, "Expected first word to be `" + CSVSourceToken + "` for csv source statement");
+    INVARIANT(discard == CSVSourceToken, "Expected first word to be `{}` for csv source statement", CSVSourceToken);
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))

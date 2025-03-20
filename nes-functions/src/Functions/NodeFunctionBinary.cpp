@@ -41,13 +41,13 @@ void NodeFunctionBinary::setChildren(const std::shared_ptr<NodeFunction>& left, 
 
 std::shared_ptr<NodeFunction> NodeFunctionBinary::getLeft() const
 {
-    INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: " + std::to_string(children.size()));
+    INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: {}", std::to_string(children.size()));
     return Util::as<NodeFunction>(children[0]);
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionBinary::getRight() const
 {
-    INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: " + std::to_string(children.size()));
+    INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: {}", std::to_string(children.size()));
     return Util::as<NodeFunction>(children[1]);
 }
 
