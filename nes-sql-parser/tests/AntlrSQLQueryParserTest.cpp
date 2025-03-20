@@ -129,6 +129,35 @@ TEST_F(AntlrSQLQueryParserTest, selectionTest)
         const auto internalLogicalQuery = Query::from("default_logical").sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
+
+    {
+        const auto inputQuery = "SELECT f1 + 1 AS f1_new FROM StreamName WHERE f1 == 30 INTO Print"s;
+        const auto internalLogicalQuery = Query::from("StreamName")
+                                              .selection(Attribute("f1") == 30)
+                                              .map(Attribute("f1_new") = Attribute("f1") + 1)
+                                              .project(Attribute("f1_new"))
+                                              .sink("Print");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    }
+
+    {
+        /// Checks implicit creation of field names if the user does not specify 'AS'
+        const auto inputQuery = "SELECT f1 + 1 FROM StreamName WHERE f1 == 30 INTO Print"s;
+        const auto internalLogicalQuery = Query::from("StreamName")
+                                              .selection(Attribute("f1") == 30)
+                                              .map(Attribute("f1_0") = Attribute("f1") + 1)
+                                              .project(Attribute("f1_0"))
+                                              .sink("Print");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    }
+
+    {
+        /// Check that a simply rename works
+        const auto inputQuery = "SELECT f1 AS f1_new FROM StreamName INTO Print"s;
+        const auto internalLogicalQuery
+            = Query::from("StreamName").map(Attribute("f1_new") = Attribute("f1")).project(Attribute("f1_new")).sink("Print");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    }
 }
 
 TEST_F(AntlrSQLQueryParserTest, simpleJoinTestTumblingWindow)

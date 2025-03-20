@@ -207,10 +207,6 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
 void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    for (const std::shared_ptr<NodeFunction>& selectFunction : helper.functionBuilder)
-    {
-        helper.addProjectionField(selectFunction);
-    }
     helper.functionBuilder.clear();
     poppush(helper);
     helpers.top().isSelect = false;
@@ -336,7 +332,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
 
     /// Get Index of Parent Rule to check type of parent rule in conditions
     std::optional<size_t> parentRuleIndex;
-    if (const auto parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parentContext != nullptr)
+    if (const auto* const parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parentContext != nullptr)
     {
         parentRuleIndex = parentContext->getRuleIndex();
     }
@@ -347,7 +343,6 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
-        /// add identifiers in select, window, where and having clauses to the function builder list
         helper.functionBuilder.push_back(Attribute(context->getText()));
     }
     else if (helper.isFrom and not helper.isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
@@ -355,7 +350,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         /// get main source name
         helper.setSource(context->getText());
     }
-    else if (AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex and helper.isInFunctionCall() and not helper.isJoinRelation)
+    else if (AntlrSQLParser::RuleNamedExpression == parentRuleIndex and helper.isInFunctionCall() and not helper.isJoinRelation)
     {
         /// handle renames of identifiers
         if (helper.isArithmeticBinary)
@@ -364,38 +359,23 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         }
         if ((helper.isWhereOrHaving || helper.isSelect))
         {
-            const std::shared_ptr<NodeFunction> attr = helper.functionBuilder.back();
+            /// The user specified named expression (field access or function) with 'AS THE_NAME'
+            /// (we handle cases where the user did not specify a name via 'AS' in 'exitNamedExpression')
+            const auto attribute = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
-            if (const auto functionItemPtr = Util::as_if<FunctionItem>(attr))
-            {
-                auto functionItem = functionItemPtr->as(context->getText());
-                helper.functionBuilder.push_back(functionItem);
-            }
-            else
-            {
-                /// renaming an function (mapBuilder) and adding a projection (functionBuilder) on the renamed function.
-                const auto renamedAttribute = Attribute(context->getText()) = attr;
-                helper.functionBuilder.push_back(renamedAttribute);
-                helper.mapBuilder.push_back(renamedAttribute);
-            }
+            const auto renamedAttribute = Attribute(context->getText()) = attribute;
+            helper.addProjectionField(renamedAttribute->getField());
+            helper.mapBuilder.push_back(renamedAttribute);
         }
     }
-    else if (helper.isInAggFunction() and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+    else if (helper.isInAggFunction() and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)
     {
-        if (!helper.windowAggs.empty())
+        if (not helper.windowAggs.empty())
         {
             auto aggFunc = helper.windowAggs.back();
             helper.windowAggs.pop_back();
             aggFunc = aggFunc->as(Attribute(context->getText()));
             helper.windowAggs.push_back(aggFunc);
-        }
-        else
-        {
-            auto projection = helper.functionBuilder.back();
-            helper.functionBuilder.pop_back();
-            auto renamedAttribute = Attribute(context->getText()) = projection;
-            helper.functionBuilder.push_back(renamedAttribute);
-            helper.mapBuilder.push_back(renamedAttribute);
         }
     }
     else if (helper.isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
@@ -469,7 +449,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     /// We handle projections AFTER map functions, because:
     /// SELECT (id * 3) as new_id FROM ...
     ///     we project on new_id, but new_id is the result of an function, so we need to execute the function before projecting.
-    if (!helper.getProjectionFields().empty() && helper.windowType == nullptr)
+    if (not helper.getProjectionFields().empty() && helper.windowType == nullptr)
     {
         queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
     }
@@ -618,7 +598,6 @@ void AntlrSQLQueryPlanCreator::exitThresholdBasedWindow(AntlrSQLParser::Threshol
 void AntlrSQLQueryPlanCreator::enterNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    helper.identCountHelper = 0;
     poppush(helper);
     AntlrSQLBaseListener::enterNamedExpression(context);
 }
@@ -626,31 +605,32 @@ void AntlrSQLQueryPlanCreator::enterNamedExpression(AntlrSQLParser::NamedExpress
 void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    /// handle implicit maps when no "AS" is supplied, but a rename is needed
-    if (helper.isInFunctionCall() and helper.isSelect and helper.identCountHelper > 1 and context->children.size() == 1)
+    /// If the current functions consist of a single field access, the user simply specified a field/attribute to access
+    if (helper.functionBuilder.size() == 1 and Util::instanceOf<NodeFunctionFieldAccess>(helper.functionBuilder.back()))
     {
-        std::string implicitFieldName;
-        const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
-        /// there must be a field access function node in mapFunction.
-        for (size_t countNodeFieldAccess = 0; const auto& child : mapFunction->getChildren())
-        {
-            if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
-            {
-                const auto fieldAccessNode = NES::Util::as<NodeFunctionFieldAccess>(child);
-                implicitFieldName = fmt::format("{}_{}", fieldAccessNode->getFieldName(), helper.implicitMapCountHelper);
-                ++countNodeFieldAccess;
-                INVARIANT(
-                    countNodeFieldAccess < 2, "The function of a named function must only have one child that is a field access function.");
-            }
-        }
-        INVARIANT(not implicitFieldName.empty(), "");
+        /// Project onto the specified field and remove the field access from the active functions.
+        helper.addProjectionField(Util::as<NodeFunctionFieldAccess>(helper.functionBuilder.back()));
         helper.functionBuilder.pop_back();
-        helper.mapBuilder.push_back(Attribute(implicitFieldName) = mapFunction);
-
-        helper.implicitMapCountHelper++;
+    }
+    /// The user either specified a '*', in which case the functionBuilder should be empty, or a function on the attribute
+    /// (e.g., SELECT id + 2 ...). If the user did not specify a name (... AS THE_NAME), we need to generate a name.
+    else if (context->name == nullptr and not helper.functionBuilder.empty())
+    {
+        const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
+        auto fieldAccessFunctions
+            = mapFunction->getChildren() | std::views::filter([](auto& child) { return Util::instanceOf<NodeFunctionFieldAccess>(child); });
+        INVARIANT(
+            std::ranges::distance(fieldAccessFunctions.begin(), fieldAccessFunctions.end()) == 1,
+            "A named function must have exactly one FieldAccessNode child.");
+        const auto fieldAccessNode = NES::Util::as_if<NodeFunctionFieldAccess>(*fieldAccessFunctions.begin());
+        const auto implicitFieldName = fmt::format("{}_{}", fieldAccessNode->getFieldName(), helper.implicitMapCountHelper++);
+        const auto mapFunctionWithFieldAssignment = Attribute(implicitFieldName) = mapFunction;
+        helper.mapBuilder.push_back(mapFunctionWithFieldAssignment);
+        /// Projections always follow map functions. Thus, we need to project on the field assigned by the map function.
+        helper.addProjectionField(mapFunctionWithFieldAssignment->getField());
+        helper.functionBuilder.pop_back();
     }
     poppush(helper);
-
     AntlrSQLBaseListener::exitNamedExpression(context);
 }
 
@@ -945,7 +925,6 @@ void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::Thr
 void AntlrSQLQueryPlanCreator::enterValueExpressionDefault(AntlrSQLParser::ValueExpressionDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    helper.identCountHelper++;
     poppush(helper);
     AntlrSQLBaseListener::enterValueExpressionDefault(context);
 }
