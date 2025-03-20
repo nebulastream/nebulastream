@@ -118,6 +118,8 @@ Logger::~Logger()
     shutdown();
 }
 
+/// As we are using the async logger, this flushes async and does not block!
+/// shutdown the logger to ensure all msgs are sent before calling e.g. abort()
 void Logger::forceFlush()
 {
     if (impl)

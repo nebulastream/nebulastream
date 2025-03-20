@@ -16,9 +16,10 @@
 
 #include <cstdint>
 #include <cstdlib>
-#include <iostream>
 #include <optional>
 #include <string>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp> /// NOLINT(misc-include-cleaner) used in macro for NES::Logger::{getInstance(), shutdown()}
 #include <cpptrace/cpptrace.hpp>
 #include <fmt/core.h>
 
@@ -84,18 +85,23 @@ private:
     #define INVARIANT(condition, formatString, ...) ((void)0)
 #else
     #define USED_IN_DEBUG
+    /// Note:
+    /// - it is not possible to use positional args since formatString is combined with the fmt string containing {}
+    /// - \u001B[0m is the ANSI escape code for "color reset"
+    /// - we call NES::Logger::getInstance()->shutdown() to ensure that async logger completely flushes. c.f. https://github.com/gabime/spdlog/wiki/7.-Flush-policy
+
     /// A precondition is a condition that must be true at the beginning of a function. If a precondition got violated, this usually means that
     /// the caller of the functions made an error.
     /// @param condition The condition that should be true
-    /// @param message The message that should be printed if the condition is false
+    /// @param formatString can contain `{}` to reference varargs. Must not contain positional referencen like `{0}`.
     #define PRECONDITION(condition, formatString, ...) \
         do \
         { \
             if (!(condition)) \
             { \
-                std::cerr << "Precondition violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
-                          << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
-                cpptrace::generate_trace().print(); \
+                auto trace = cpptrace::generate_trace().to_string(true); \
+                NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
+                NES::Logger::getInstance()->shutdown(); \
                 std::terminate(); \
             } \
         } while (false)
@@ -103,15 +109,15 @@ private:
     /// @brief An invariant is a condition that is always true at a particular point in a program. If an invariant gets violated, this usually
     /// means that there is a bug in the program.
     /// @param condition The condition that should be true
-    /// @param message The message that should be printed if the condition is false
+    /// @param formatString can contain `{}` to reference varargs. Must not contain positional referencen like `{0}`.
     #define INVARIANT(condition, formatString, ...) \
         do \
         { \
             if (!(condition)) \
             { \
-                std::cerr << "Invariant violated: (" #condition ") at " << __FILE__ << ":" << __LINE__ << " : " \
-                          << fmt::format(fmt::runtime(formatString) __VA_OPT__(, ) __VA_ARGS__) << "\n"; \
-                cpptrace::generate_trace().print(); \
+                auto trace = cpptrace::generate_trace().to_string(true); \
+                NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
+                NES::Logger::getInstance()->shutdown(); \
                 std::terminate(); \
             } \
         } while (false)
