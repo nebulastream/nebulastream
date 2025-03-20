@@ -65,8 +65,8 @@ void NodeFunctionAnd::inferStamp(const Schema& schema)
     /// delegate stamp inference of children
     NodeFunction::inferStamp(schema);
     /// check if children stamp is correct
-    INVARIANT(getLeft()->isPredicate(), "the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
-    INVARIANT(getRight()->isPredicate(), "the stamp of right child must be boolean, but was: " + getRight()->getStamp()->toString());
+    INVARIANT(getLeft()->isPredicate(), "the stamp of left child must be boolean, but was: {}", getLeft()->getStamp()->toString());
+    INVARIANT(getRight()->isPredicate(), "the stamp of right child must be boolean, but was: {}", getRight()->getStamp()->toString());
 }
 std::shared_ptr<NodeFunction> NodeFunctionAnd::deepCopy()
 {
