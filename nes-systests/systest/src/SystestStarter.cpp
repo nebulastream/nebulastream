@@ -35,6 +35,7 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
+#include <from_current.hpp>
 
 using namespace std::literals;
 
@@ -303,7 +304,7 @@ int main(int argc, const char** argv)
 
     setupLogging();
 
-    try
+    CPPTRACE_TRY
     {
         /// Read the configuration
         auto config = Systest::readConfiguration(argc, argv);
@@ -373,7 +374,7 @@ int main(int argc, const char** argv)
         std::cout << outputMessage.str() << '\n';
         return 0;
     }
-    catch (...)
+    CPPTRACE_CATCH(...)
     {
         tryLogCurrentException();
         return getCurrentExceptionCode();

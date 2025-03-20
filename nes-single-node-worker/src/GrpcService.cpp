@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
-#include <chrono>
+#include <exception>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <cpptrace/basic.hpp>
+#include <cpptrace/from_current.hpp>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
@@ -26,6 +28,15 @@
 
 namespace NES
 {
+
+grpc::Status handleError(const std::exception& exception, grpc::ServerContext* context)
+{
+    context->AddTrailingMetadata("code", std::to_string(ErrorCode::UnknownException));
+    context->AddTrailingMetadata("what", exception.what());
+    context->AddTrailingMetadata("trace", cpptrace::from_current_exception().to_string());
+    return {grpc::INTERNAL, exception.what()};
+}
+
 grpc::Status handleError(const Exception& exception, grpc::ServerContext* context)
 {
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
@@ -37,61 +48,81 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
 {
     auto fullySpecifiedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&request->decomposedqueryplan());
-    try
+    CPPTRACE_TRY
     {
         auto queryId = delegate.registerQuery(fullySpecifiedQueryPlan);
         response->set_queryid(queryId.getRawValue());
         return grpc::Status::OK;
     }
-    catch (...)
+    CPPTRACE_CATCH(const Exception& e)
     {
-        return handleError(wrapExternalException(), context);
+        return handleError(e, context);
     }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
 }
 grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
-    try
+    CPPTRACE_TRY
     {
         delegate.unregisterQuery(queryId);
         return grpc::Status::OK;
     }
-    catch (...)
+    CPPTRACE_CATCH(const Exception& e)
     {
-        return handleError(wrapExternalException(), context);
+        return handleError(e, context);
     }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
 }
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
-    try
+    CPPTRACE_TRY
     {
         delegate.startQuery(queryId);
         return grpc::Status::OK;
     }
-    catch (...)
+    CPPTRACE_CATCH(const Exception& e)
     {
-        return handleError(wrapExternalException(), context);
+        return handleError(e, context);
     }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
 }
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
     auto terminationType = static_cast<Runtime::QueryTerminationType>(request->terminationtype());
-    try
+    CPPTRACE_TRY
     {
         delegate.stopQuery(queryId, terminationType);
         return grpc::Status::OK;
     }
-    catch (...)
+    CPPTRACE_CATCH(const Exception& e)
     {
-        return handleError(wrapExternalException(), context);
+        return handleError(e, context);
     }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
 }
 
 grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const QuerySummaryRequest* request, QuerySummaryReply* reply)
 {
-    try
+    CPPTRACE_TRY
     {
         auto queryId = QueryId(request->queryid());
         auto summary = delegate.getQuerySummary(queryId);
@@ -126,15 +157,20 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
         }
         return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
     }
-    catch (...)
+    CPPTRACE_CATCH(const Exception& e)
     {
-        return handleError(wrapExternalException(), context);
+        return handleError(e, context);
     }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
 }
 
 grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* reply)
 {
-    try
+    CPPTRACE_TRY
     {
         auto queryId = QueryId(request->queryid());
         auto log = delegate.getQueryLog(queryId);
@@ -163,10 +199,15 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
         }
         return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
     }
-    catch (...)
+    CPPTRACE_CATCH(const Exception& e)
     {
-        return handleError(wrapExternalException(), context);
+        return handleError(e, context);
     }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unkown exception"};
 }
 
 }
