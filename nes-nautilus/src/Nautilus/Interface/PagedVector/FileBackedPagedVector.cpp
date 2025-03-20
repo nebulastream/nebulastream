@@ -266,14 +266,17 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
         {
             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
             {
-                if (fileReader.readKey(lastPagePtr, fieldSize) == 0 && keyPagePtr != nullptr)
+                if (fileReader.readKey(lastPagePtr, fieldSize) == 0)
                 {
-                    std::memcpy(lastPagePtr, keyPagePtr, fieldSize);
-                    keyPagePtr += fieldSize;
-                }
-                else
-                {
-                    return;
+                    if (keyPagePtr != nullptr)
+                    {
+                        std::memcpy(lastPagePtr, keyPagePtr, fieldSize);
+                        keyPagePtr += fieldSize;
+                    }
+                    else
+                    {
+                        return;
+                    }
                 }
             }
             else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)

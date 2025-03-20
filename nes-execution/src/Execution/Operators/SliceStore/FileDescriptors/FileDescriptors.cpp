@@ -45,7 +45,9 @@ FileWriter::FileWriter(
 FileWriter::~FileWriter()
 {
     flushBuffer();
+    file.close();
     deallocate(writeBuffer);
+    keyFile.close();
     deallocate(writeKeyBuffer);
 }
 

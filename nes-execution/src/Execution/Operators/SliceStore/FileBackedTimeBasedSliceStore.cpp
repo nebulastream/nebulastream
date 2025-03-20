@@ -359,7 +359,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     /// Read files in order by WorkerThreadId as all pagedVectorKeys have already been combined
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
-        while (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), WorkerThreadId(threadId), joinBuildSide))
+        if (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), WorkerThreadId(threadId), joinBuildSide))
         {
             slice->readFromFile(bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(threadId), *fileReader, USE_FILE_LAYOUT);
         }
