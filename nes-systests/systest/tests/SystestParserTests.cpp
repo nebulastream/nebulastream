@@ -208,6 +208,7 @@ TEST_F(SystestParserTest, testSubstitutionRule)
 
 TEST_F(SystestParserTest, testRegisterSubstitutionKeywordTwoTimes)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     const SystestParser::SubstitutionRule rule1{.keyword = "SINK", .ruleFunction = [](std::string& input) { input = "TestSink()"; }};
     const SystestParser::SubstitutionRule rule2{.keyword = "SINK", .ruleFunction = [](std::string& input) { input = "AnotherTestSink()"; }};
 
