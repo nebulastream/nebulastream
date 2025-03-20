@@ -74,7 +74,7 @@ void QueryPlan::appendOperatorAsNewRoot(const std::shared_ptr<Operator>& operato
     for (const auto& rootOperator : rootOperators)
     {
         const auto result = rootOperator->addParent(operatorNode);
-        PRECONDITION(result, "QueryPlan: Unable to add operator {0} as parent to {0}", *operatorNode);
+        PRECONDITION(result, "QueryPlan: Unable to add operator {} as parent to {}", *operatorNode, *operatorNode);
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
     clearRootOperators();
