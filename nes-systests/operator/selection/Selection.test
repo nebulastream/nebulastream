@@ -35,14 +35,14 @@ Source stream UINT64 id UINT64 value UINT64 timestamp
 SINK sinkWindow UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
 
 # Filter equal
-SELECT * FROM stream WHERE value == 1 INTO sinkWindow
+SELECT * FROM stream WHERE value == UINT64(1) INTO sinkWindow
 ----
 1,1,1000
 12,1,1001
 4,1,1002
 
 # Filter not equal
-SELECT * FROM stream WHERE value != 1 INTO sinkWindow
+SELECT * FROM stream WHERE value != UINT64(1) INTO sinkWindow
 ----
 1,2,2000
 11,2,2001

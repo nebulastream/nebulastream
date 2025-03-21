@@ -17,7 +17,7 @@ SINK streamSinkWithNew2 UINT64 stream$id UINT64 stream$value UINT64 stream$times
 SINK sinkOnlyIdAndNew2 UINT64 stream$new2 UINT64 stream$id
 
 # Map with add function touches one field
-SELECT id + 1 AS id, value, timestamp FROM stream INTO streamSink
+SELECT id + UINT64(1) AS id, value, timestamp FROM stream INTO streamSink
 ----
 2,1,1000
 3,1,1001
@@ -51,7 +51,7 @@ SELECT id, value, timestamp, id + value AS new FROM stream INTO streamSinkWithNe
 
 # Two maps after each other that both touch the same fields
 # Todo: SELECT id + 1 AS new_id, new_id + value AS id <--- does not work 'field new_id does not exist'
-SELECT id + 1 + value AS id, value, timestamp FROM stream INTO streamSink
+SELECT id + UINT64(1) + value AS id, value, timestamp FROM stream INTO streamSink
 ----
 3,1,1000
 4,1,1001
@@ -62,7 +62,7 @@ SELECT id + 1 + value AS id, value, timestamp FROM stream INTO streamSink
 29,21,21000
 
 # Three maps after each other that use a newly created field to create another field
-SELECT id + 1 AS id, value, timestamp, id + value AS new, new + value AS new2 FROM stream INTO streamSinkWithNew2
+SELECT id + UINT64(1) AS id, value, timestamp, id + value AS new, new + value AS new2 FROM stream INTO streamSinkWithNew2
 ----
 2,1,1000,3,4
 3,1,1001,4,5
@@ -74,7 +74,7 @@ SELECT id + 1 AS id, value, timestamp, id + value AS new, new + value AS new2 FR
 
 # Four maps that use a newly created field to create another field,
 # but we keep id, and new2 only. We also add id and new2 together in the end.
-SELECT value + (id + 1) + value AS new2, (id + 1) + new2 AS id FROM stream INTO sinkOnlyIdAndNew2
+SELECT value + (id + UINT64(1)) + value AS new2, (id + UINT64(1)) + new2 AS id FROM stream INTO sinkOnlyIdAndNew2
 ----
 4,6
 5,8

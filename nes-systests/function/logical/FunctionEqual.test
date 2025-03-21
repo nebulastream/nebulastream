@@ -12,18 +12,18 @@ SINK sink20Booleans BOOLEAN stream$bool1 BOOLEAN stream$bool2 BOOLEAN stream$boo
 # Since equals is commutative, e.g., 'i8 == f32' equals 'f32 == i8', so we check only one direction.
 # Check if different numeric types support the equals operation
 SELECT
-    i8 == 42 AS bool1,
-    i16 == 42 AS bool2,
-    i32 == 42 AS bool3,
-    i64 == 42 AS bool4,
+    i8 == INT32(42) AS bool1,
+    i16 == INT32(42) AS bool2,
+    i32 == INT32(42) AS bool3,
+    i64 == INT32(42) AS bool4,
 
-    u8 == 42_U AS bool5,
-    u16 == 42_U AS bool6,
-    u32 == 42_U AS bool7,
-    u64 == 42_U AS bool8,
+    u8 == UINT32(42) AS bool5,
+    u16 == UINT32(42) AS bool6,
+    u32 == UINT32(42) AS bool7,
+    u64 == UINT32(42) AS bool8,
 
-    f32 == 42.42_F AS bool9,
-    f64 == 42.42_D AS bool10
+    f32 == FLOAT32(42.42) AS bool9,
+    f64 == FLOAT64(42.42) AS bool10
 FROM stream INTO sink10Booleans
 ----
 0,0,0,0,1,0,0,0,0,1
@@ -32,27 +32,27 @@ FROM stream INTO sink10Booleans
 SELECT
     # signed
     i8 == i8 AS bool1,
-    i8 == i8 + 1 AS bool2,
+    i8 == i8 + INT8(1) AS bool2,
     i8 == i16 AS bool3,
-    i8 == i16 + 1 AS bool4,
+    i8 == i16 + INT16(1) AS bool4,
     i8 == i32 AS bool5,
-    i8 == i32 + 1 AS bool6,
+    i8 == i32 + INT32(1) AS bool6,
     i8 == i64 AS bool7,
-    i8 == i64 + 1 AS bool8,
+    i8 == i64 + INT64(1) AS bool8,
     # unsigned
     i8 == u8 AS bool9,
-    i8 == u8 + 1_U AS bool10,
+    i8 == u8 + UINT8(1) AS bool10,
     i8 == u16 AS bool11,
-    i8 == u16 + 1_U AS bool12,
+    i8 == u16 + UINT16(1) AS bool12,
     i8 == u32 AS bool13,
-    i8 == u32 + 1_U AS bool14,
+    i8 == u32 + UINT32(1) AS bool14,
     i8 == u64 AS bool15,
-    i8 == u64 + 1_U AS bool16,
+    i8 == u64 + UINT64(1) AS bool16,
     # float
     i8 == f32 AS bool17,
-    i8 == f32 + 1_F AS bool18,
+    i8 == f32 + FLOAT32(1) AS bool18,
     i8 == f64 AS bool19,
-    i8 == f64 + 1_D AS bool20
+    i8 == f64 + FLOAT64(1) AS bool20
 FROM stream INTO sink20Booleans
 ----
 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -61,27 +61,27 @@ FROM stream INTO sink20Booleans
 SELECT
     # signed
     i16 == i8 AS bool1,
-    i16 == i8 + 1 AS bool2,
+    i16 == i8 + INT8(1) AS bool2,
     i16 == i16 AS bool3,
-    i16 == i16 + 1 AS bool4,
+    i16 == i16 + INT16(1) AS bool4,
     i16 == i32 AS bool5,
-    i16 == i32 + 1 AS bool6,
+    i16 == i32 + INT32(1) AS bool6,
     i16 == i64 AS bool7,
-    i16 == i64 + 1 AS bool8,
+    i16 == i64 + INT64(1) AS bool8,
     # unsigned
     i16 == u8 AS bool9,
-    i16 == u8 + 1_U AS bool10,
+    i16 == u8 + UINT8(1) AS bool10,
     i16 == u16 AS bool11,
-    i16 == u16 + 1_U AS bool12,
+    i16 == u16 + UINT16(1) AS bool12,
     i16 == u32 AS bool13,
-    i16 == u32 + 1_U AS bool14,
+    i16 == u32 + UINT32(1) AS bool14,
     i16 == u64 AS bool15,
-    i16 == u64 + 1_U AS bool16,
+    i16 == u64 + UINT64(1) AS bool16,
     # float
     i16 == f32 AS bool17,
-    i16 == f32 + 1_F AS bool18,
+    i16 == f32 + FLOAT32(1) AS bool18,
     i16 == f64 AS bool19,
-    i16 == f64 + 1_D AS bool20
+    i16 == f64 + FLOAT64(1) AS bool20
 FROM stream INTO sink20Booleans
 ----
 0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -90,27 +90,27 @@ FROM stream INTO sink20Booleans
 SELECT
     # signed
     i32 == i8 AS bool1,
-    i32 == i8 + 1 AS bool2,
+    i32 == i8 + INT8(1) AS bool2,
     i32 == i16 AS bool3,
-    i32 == i16 + 1 AS bool4,
+    i32 == i16 + INT16(1) AS bool4,
     i32 == i32 AS bool5,
-    i32 == i32 + 1 AS bool6,
+    i32 == i32 + INT32(1) AS bool6,
     i32 == i64 AS bool7,
-    i32 == i64 + 1 AS bool8,
+    i32 == i64 + INT64(1) AS bool8,
     # unsigned
     i32 == u8 AS bool9,
-    i32 == u8 + 1_U AS bool10,
+    i32 == u8 + UINT8(1) AS bool10,
     i32 == u16 AS bool11,
-    i32 == u16 + 1_U AS bool12,
+    i32 == u16 + UINT16(1) AS bool12,
     i32 == u32 AS bool13,
-    i32 == u32 + 1_U AS bool14,
+    i32 == u32 + UINT32(1) AS bool14,
     i32 == u64 AS bool15,
-    i32 == u64 + 1_U AS bool16,
+    i32 == u64 + UINT64(1) AS bool16,
     # float
     i32 == f32 AS bool17,
-    i32 == f32 + 1_F AS bool18,
+    i32 == f32 + FLOAT32(1) AS bool18,
     i32 == f64 AS bool19,
-    i32 == f64 + 1_D AS bool20
+    i32 == f64 + FLOAT64(1) AS bool20
 FROM stream INTO sink20Booleans
 ----
 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -119,27 +119,27 @@ FROM stream INTO sink20Booleans
 SELECT
     # signed
     i64 == i8 AS bool1,
-    i64 == i8 + 1 AS bool2,
+    i64 == i8 + INT8(1) AS bool2,
     i64 == i16 AS bool3,
-    i64 == i16 + 1 AS bool4,
+    i64 == i16 + INT16(1) AS bool4,
     i64 == i32 AS bool5,
-    i64 == i32 + 1 AS bool6,
+    i64 == i32 + INT32(1) AS bool6,
     i64 == i64 AS bool7,
-    i64 == i64 + 1 AS bool8,
+    i64 == i64 + INT64(1) AS bool8,
     # unsigned
     i64 == u8 AS bool9,
-    i64 == u8 + 1_U AS bool10,
+    i64 == u8 + UINT8(1) AS bool10,
     i64 == u16 AS bool11,
-    i64 == u16 + 1_U AS bool12,
+    i64 == u16 + UINT16(1) AS bool12,
     i64 == u32 AS bool13,
-    i64 == u32 + 1_U AS bool14,
+    i64 == u32 + UINT32(1) AS bool14,
     i64 == u64 AS bool15,
-    i64 == u64 + 1_U AS bool16,
+    i64 == u64 + UINT64(1) AS bool16,
     # float
     i64 == f32 AS bool17,
-    i64 == f32 + 1_F AS bool18,
+    i64 == f32 + FLOAT32(1) AS bool18,
     i64 == f64 AS bool19,
-    i64 == f64 + 1_D AS bool20
+    i64 == f64 + FLOAT64(1) AS bool20
 FROM stream INTO sink20Booleans
 ----
 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0

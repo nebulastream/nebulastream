@@ -51,27 +51,27 @@ SINK sinkStreamWithText UINT64 streamWithText$id UINT64 streamWithText$value VAR
 SINK sinkId UINT64 stream$id
 
 # Filter equal
-SELECT id FROM stream WHERE value == 1 INTO sinkId
+SELECT id FROM stream WHERE value == UINT64(1) INTO sinkId
 ----
 1
 12
 4
 
 # Filter equal with non-existing value
-SELECT * FROM stream WHERE value == 1234 INTO sinkWindow
+SELECT * FROM stream WHERE value == UINT64(1234) INTO sinkWindow
 ----
 
 # Two filters after each other
-SELECT * FROM stream WHERE value == 1 AND id == 12 INTO sinkWindow
+SELECT * FROM stream WHERE value == UINT64(1) AND id == UINT64(12) INTO sinkWindow
 ----
 12,1,1001
 
 # Two filters after each other with no results
-SELECT * FROM stream WHERE value == 1 AND id == 1234 INTO sinkWindow
+SELECT * FROM stream WHERE value == UINT64(1) AND id == UINT64(1234) INTO sinkWindow
 ----
 
 # Filter equal with text
-SELECT * FROM streamWithText WHERE text1 == "test1" INTO sinkStreamWithText
+SELECT * FROM streamWithText WHERE text1 == VARSIZED("test1") INTO sinkStreamWithText
 ----
 1,1,test1,test1
 12,1,test1,test2
@@ -84,7 +84,7 @@ SELECT * FROM streamWithText WHERE text1 == "test1" INTO sinkStreamWithText
 8,5,test1,test2
 
 # Filter with text and multiple fields and comparison of two text fields
-SELECT * FROM streamWithText WHERE text1 != "test3" AND text1 == text2 AND id < 11 INTO sinkStreamWithText
+SELECT * FROM streamWithText WHERE text1 != VARSIZED("test3") AND text1 == text2 AND id < UINT64(11) INTO sinkStreamWithText
 ----
 1,1,test1,test1
 4,1,test2,test2
@@ -92,12 +92,12 @@ SELECT * FROM streamWithText WHERE text1 != "test3" AND text1 == text2 AND id < 
 2,3,test1,test1
 
 # Filter with text and multiple fields
-SELECT * FROM streamWithText WHERE text1 == "test3" AND text2 == "test1" AND id == 11 INTO sinkStreamWithText
+SELECT * FROM streamWithText WHERE text1 == VARSIZED("test3") AND text2 == VARSIZED("test1") AND id == UINT64(11) INTO sinkStreamWithText
 ----
 11,3,test3,test1
 
 # Filter with text concatenation
-SELECT * FROM streamWithText WHERE CONCAT(text1, text2) == "test1test1" INTO sinkStreamWithText
+SELECT * FROM streamWithText WHERE CONCAT(text1, text2) == VARSIZED("test1test1") INTO sinkStreamWithText
 ----
 1,1,test1,test1
 1,2,test1,test1
@@ -105,7 +105,7 @@ SELECT * FROM streamWithText WHERE CONCAT(text1, text2) == "test1test1" INTO sin
 2,3,test1,test1
 
 # Filter with text concatenation and multiple fields
-SELECT * FROM streamWithText WHERE CONCAT(text2, text1) == "test2test1" AND id > 2 INTO sinkStreamWithText
+SELECT * FROM streamWithText WHERE CONCAT(text2, text1) == VARSIZED("test2test1") AND id > UINT64(2) INTO sinkStreamWithText
 ----
 12,1,test1,test2
 3,3,test1,test2
