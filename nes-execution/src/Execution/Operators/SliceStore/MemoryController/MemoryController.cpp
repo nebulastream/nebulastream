@@ -111,50 +111,8 @@ MemoryController::~MemoryController()
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const PipelineId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    return getFileWriterFromMap(constructFilePath(sliceEnd, threadId, joinBuildSide).string());
-}
-
-std::shared_ptr<FileReader> MemoryController::getFileReader(
-    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
-{
-    return getFileReaderAndEraseWriter(constructFilePath(sliceEnd, threadId, joinBuildSide).string());
-}
-
-void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
-{
     const std::lock_guard lock(fileWritersMutex);
-
-    for (const std::string& sideStr : {"left", "right"})
-    {
-        const std::string prefix
-            = fmt::format("memory_controller_{}_{}_{}_{}_", queryId.getRawValue(), originId.getRawValue(), sideStr, sliceEnd.getRawValue());
-        const auto end = fileWriters.upper_bound(prefix + "\xFF");
-        auto it = fileWriters.lower_bound(prefix);
-        while (it != end)
-        {
-            removeFileSystem(it++);
-        }
-    }
-}
-
-std::filesystem::path MemoryController::constructFilePath(
-    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide) const
-{
-    const std::string sideStr = joinBuildSide == QueryCompilation::JoinBuildSideType::Left ? "left" : "right";
-    return workingDir
-        / std::filesystem::path(
-               fmt::format(
-                   "memory_controller_{}_{}_{}_{}_{}",
-                   queryId.getRawValue(),
-                   originId.getRawValue(),
-                   sideStr,
-                   sliceEnd.getRawValue(),
-                   threadId.getRawValue()));
-}
-
-std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::string& filePath)
-{
-    const std::lock_guard lock(fileWritersMutex);
+    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
 
     /// Search for matching fileWriter to avoid attempting to open a file twice
     if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
@@ -168,9 +126,11 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriterFromMap(const std::st
     return fileWriter;
 }
 
-std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const std::string& filePath)
+std::shared_ptr<FileReader> MemoryController::getFileReader(
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     const std::lock_guard lock(fileWritersMutex);
+    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
 
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
     if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
@@ -178,7 +138,40 @@ std::shared_ptr<FileReader> MemoryController::getFileReaderAndEraseWriter(const 
         fileWriters.erase(it);
         return std::make_shared<FileReader>(filePath, [this] { return allocateReadBuffer(); }, [](char*) {}, bufferSize);
     }
+
     return nullptr;
+}
+
+void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
+{
+    const std::lock_guard lock(fileWritersMutex);
+
+    for (const auto joinBuildSide : {QueryCompilation::JoinBuildSideType::Left, QueryCompilation::JoinBuildSideType::Right})
+    {
+        const auto filePathPrefix = constructFilePath(sliceEnd, joinBuildSide);
+        const auto end = fileWriters.upper_bound(filePathPrefix + "\xFF");
+        auto it = fileWriters.lower_bound(filePathPrefix);
+        while (it != end)
+        {
+            removeFileSystem(it++);
+        }
+    }
+}
+
+std::string MemoryController::constructFilePath(const SliceEnd sliceEnd, const QueryCompilation::JoinBuildSideType joinBuildSide) const
+{
+    const std::string sideStr = joinBuildSide == QueryCompilation::JoinBuildSideType::Left ? "left" : "right";
+    return (workingDir
+            / std::filesystem::path(
+                fmt::format(
+                    "memory_controller_{}_{}_{}_{}_", queryId.getRawValue(), originId.getRawValue(), sideStr, sliceEnd.getRawValue())))
+        .string();
+}
+
+std::string MemoryController::constructFilePath(
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide) const
+{
+    return constructFilePath(sliceEnd, joinBuildSide) + std::to_string(threadId.getRawValue());
 }
 
 void MemoryController::removeFileSystem(const std::map<std::string, std::shared_ptr<FileWriter>>::iterator it)
