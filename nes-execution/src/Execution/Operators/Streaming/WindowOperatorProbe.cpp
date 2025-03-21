@@ -92,4 +92,14 @@ void WindowOperatorProbe::close(ExecutionContext& executionCtx, RecordBuffer& re
     /// Now close for all children
     Operator::close(executionCtx, recordBuffer);
 }
+
+void WindowOperatorProbe::terminate(ExecutionContext& executionCtx) const
+{
+    /// Delete all slices as the query has ended
+    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    invoke(deleteAllSlicesAndWindowsProxy, operatorHandlerMemRef);
+
+    /// Now terminate for all children
+    Operator::terminate(executionCtx);
+}
 }

@@ -69,11 +69,6 @@ Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerT
 
 void NLJSlice::combinePagedVectors()
 {
-    /// Due to the out-of-order nature of our execution engine, it might happen that we call this code here from multiple worker threads.
-    /// For example, if different worker threads are emitting the same slice for different windows.
-    /// To ensure correctness, we use a lock here
-    std::scoped_lock lock(combinePagedVectorsMutex);
-
     /// Append all PagedVectors on the left join side and erase all items except for the first one
     /// We do this to ensure that we have only one PagedVector for each side during the probing phase
     if (leftPagedVectors.size() > 1)

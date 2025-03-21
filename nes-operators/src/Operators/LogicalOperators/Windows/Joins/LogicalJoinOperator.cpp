@@ -53,9 +53,8 @@ bool LogicalJoinOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
 std::string LogicalJoinOperator::toString() const
 {
     return fmt::format(
-        "Join({}-{}, windowType = {}, joinFunction = {})",
+        "Join({}, windowType = {}, joinFunction = {})",
         id,
-        originId,
         joinDefinition->getWindowType()->toString(),
         *joinDefinition->getJoinFunction());
 }

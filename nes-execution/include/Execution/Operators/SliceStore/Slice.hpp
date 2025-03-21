@@ -33,13 +33,13 @@ namespace NES::Runtime::Execution
 /// ----------------------------------------------------------------------------------------------
 /// Start                        | Create Slice                      | WINDOW_FILLING
 /// WINDOW_FILLING               | Global Watermark Ts > WindowEnd   | EMITTED_TO_PROBE
-/// WINDOW_FILLING               | Left or Right Pipeline Terminated | WAITING_ON_TERMINATION
-/// WAITING_ON_TERMINATION       | Query/Pipeline Terminated         | EMITTED_TO_PROBE
+/// WINDOW_FILLING               | Left or Right Pipeline Terminated | ONCE_SEEN_DURING_TERMINATION
+/// ONCE_SEEN_DURING_TERMINATION | Query/Pipeline Terminated         | EMITTED_TO_PROBE
 /// EMITTED_TO_PROBE             | Tuples join in Probe              | CAN_BE_DELETED
 enum class WindowInfoState : uint8_t
 {
     WINDOW_FILLING,
-    WAITING_ON_TERMINATION,
+    ONCE_SEEN_DURING_TERMINATION,
     EMITTED_TO_PROBE
 };
 

@@ -46,10 +46,5 @@ public:
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
-
-    /// Due to the out-of-order nature of our execution engine, it might happen that we call combinePagedVectors from multiple worker threads.
-    /// For example, if different worker threads are emitting the same slice for different windows.
-    /// To ensure correctness, we need to synchronize the access to the PagedVectors for combinePagedVectors()
-    std::mutex combinePagedVectorsMutex;
 };
 }

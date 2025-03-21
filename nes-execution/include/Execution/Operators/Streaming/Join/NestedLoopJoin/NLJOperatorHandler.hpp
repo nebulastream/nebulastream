@@ -56,8 +56,9 @@ private:
     void emitSliceIdsToProbe(
         Slice& sliceLeft,
         Slice& sliceRight,
-        const WindowInfo& windowInfo,
-        const SequenceData& sequenceData,
+        const WindowInfoAndSequenceNumber& windowInfoAndSeqNumber,
+        const ChunkNumber& chunkNumber,
+        bool isLastChunk,
         PipelineExecutionContext* pipelineCtx) override;
 
     /// We store as a pair the average number of tuples left/right and the number of samples left/right

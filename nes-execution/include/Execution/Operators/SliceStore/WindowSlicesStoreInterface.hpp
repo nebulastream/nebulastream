@@ -57,8 +57,7 @@ public:
         = 0;
 
     /// Retrieves all slices that can be triggered by the given global watermark
-    /// This method returns all slices for each window that can be triggered. It returns the slices for all windows that have been filled and have a window end smaller than the global watermark
-    /// Additionally, it returns a sequence number per window that is incremented for each window and thus, it can be used to set it in the emitted tuple buffer for the probe operator.
+    /// This method returns for each window all slices that can be triggered
     virtual std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getTriggerableWindowSlices(Timestamp globalWatermark)
         = 0;
 
@@ -67,7 +66,6 @@ public:
 
     /// Retrieves all current non-deleted slices that have not been triggered yet
     /// This method returns for each window all slices that have not been triggered yet, regardless of any watermark timestamp
-    /// Additionally, it returns a sequence number per window that is incremented for each window and thus, it can be used to set it in the emitted tuple buffer for the probe operator.
     virtual std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() = 0;
 
     /// Garbage collect all slices and windows that are not valid anymore
