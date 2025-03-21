@@ -13,11 +13,17 @@
 */
 
 #include <fstream>
+#include <initializer_list>
+#include <iostream>
+#include <ostream>
+#include <utility>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <argparse/argparse.hpp>
 #include <google/protobuf/text_format.h>
 #include <grpcpp/create_channel.h>
+#include <grpcpp/security/credentials.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
@@ -142,8 +148,7 @@ public:
 
 int main(int argc, char** argv)
 {
-    using namespace NES;
-    using namespace argparse;
+    using argparse::ArgumentParser;
     ArgumentParser program("nebuli");
     program.add_argument("-d", "--debug").flag().help("Dump the Query plan and enable debug logging");
 
@@ -215,11 +220,11 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan;
+    std::shared_ptr<NES::DecomposedQueryPlan> decomposedQueryPlan;
     try
     {
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
-        auto input = program.at<ArgumentParser>(command).get("-i");
+        auto input = program.at<argparse::ArgumentParser>(command).get("-i");
         if (input == "-")
         {
             decomposedQueryPlan = NES::CLI::loadFrom(std::cin);
@@ -231,13 +236,13 @@ int main(int argc, char** argv)
     }
     catch (...)
     {
-        tryLogCurrentException();
+        NES::tryLogCurrentException();
         exit(1);
     }
 
     std::string output;
-    SerializableDecomposedQueryPlan serialized;
-    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(*decomposedQueryPlan, &serialized);
+    NES::SerializableDecomposedQueryPlan serialized;
+    NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(*decomposedQueryPlan, &serialized);
     google::protobuf::TextFormat::PrintToString(serialized, &output);
     NES_INFO("GRPC QueryPlan: {}", output);
     if (program.is_subcommand_used("dump"))
@@ -256,7 +261,7 @@ int main(int argc, char** argv)
             if (!file)
             {
                 NES_FATAL_ERROR("Could not open output file: {}", outputPath);
-                std::exit(1);
+                return 1;
             }
             output = &file;
         }
@@ -274,7 +279,7 @@ int main(int argc, char** argv)
     else if (program.is_subcommand_used("register"))
     {
         auto& registerArgs = program.at<ArgumentParser>("register");
-        GRPCClient client(grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
+        const GRPCClient client(grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
         auto queryId = client.registerQuery(*decomposedQueryPlan);
         if (registerArgs.is_used("-x"))
         {

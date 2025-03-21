@@ -18,7 +18,6 @@
 #include <filesystem>
 #include <format>
 #include <iostream>
-#include <utility>
 #include <vector>
 #include <Configurations/Util.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -33,6 +32,7 @@
 #include <nlohmann/json.hpp>
 
 #include <ErrorHandling.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
 
@@ -42,15 +42,17 @@ namespace NES::Systest
 {
 Configuration::SystestConfiguration readConfiguration(int argc, const char** argv)
 {
-    using namespace argparse;
+    using argparse::ArgumentParser;
     ArgumentParser program("systest");
 
     /// test discovery
     program.add_argument("-t", "--testLocation")
         .help("directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
               "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
-    program.add_argument("-g", "--groups").help("run a specific test groups").nargs(nargs_pattern::at_least_one);
-    program.add_argument("-e", "--exclude-groups").help("ignore groups, takes precedence over -g").nargs(nargs_pattern::at_least_one);
+    program.add_argument("-g", "--groups").help("run a specific test groups").nargs(argparse::nargs_pattern::at_least_one);
+    program.add_argument("-e", "--exclude-groups")
+        .help("ignore groups, takes precedence over -g")
+        .nargs(argparse::nargs_pattern::at_least_one);
 
     /// list queries
     program.add_argument("-l", "--list").flag().help("list all discovered tests and test groups");
@@ -245,16 +247,8 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
             argv_.push_back(const_cast<char*>(arg.c_str()));
         }
 
-        try
-        {
-            config.singleNodeWorkerConfig
-                = NES::Configurations::loadConfiguration<Configuration::SingleNodeWorkerConfiguration>(argc_, argv_.data());
-        }
-        catch (const std::exception& e)
-        {
-            tryLogCurrentException();
-            std::exit(1);
-        }
+        config.singleNodeWorkerConfig
+            = NES::Configurations::loadConfiguration<Configuration::SingleNodeWorkerConfiguration>(argc_, argv_.data());
     }
 
     /// Setup Working Directory
@@ -306,7 +300,6 @@ void setupLogging()
 int main(int argc, const char** argv)
 {
     using namespace NES;
-    int returnCode = 0;
 
     setupLogging();
 
@@ -326,7 +319,7 @@ int main(int argc, const char** argv)
             outputMessage << "No queries were run.";
             NES_ERROR("{}", outputMessage.str());
             std::cout << outputMessage.str() << '\n';
-            std::exit(1);
+            return 1;
         }
 
 
@@ -366,27 +359,23 @@ int main(int argc, const char** argv)
                 failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
             }
         }
-        if (failedQueries.empty())
-        {
-            std::stringstream outputMessage;
-            outputMessage << '\n' << "All queries passed.";
-            NES_INFO("{}", outputMessage.str());
-            std::cout << outputMessage.str() << '\n';
-            std::exit(0);
-        }
-        else
+        if (not failedQueries.empty())
         {
             std::stringstream outputMessage;
             outputMessage << fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
             NES_ERROR("{}", outputMessage.str());
             std::cout << '\n' << outputMessage.str() << '\n';
-            std::exit(1);
+            return 1;
         }
+        std::stringstream outputMessage;
+        outputMessage << '\n' << "All queries passed.";
+        NES_INFO("{}", outputMessage.str());
+        std::cout << outputMessage.str() << '\n';
+        return 0;
     }
     catch (...)
     {
         tryLogCurrentException();
-        std::exit(1);
+        return getCurrentExceptionCode();
     }
-    return returnCode;
 }
