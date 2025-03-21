@@ -46,7 +46,7 @@ jobs:
           echo "# Compile Time Summary for branch ${{ inputs.ref }}" >> $GITHUB_STEP_SUMMARY
           echo '## CMake Configuration Time' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          bash -c "time cmake -GNinja -DENABLE_FTIME_TRACE=ON -DUSE_CCACHE_IF_AVAILABLE=OFF -DNES_LOG_LEVEL=DEBUG -B build --profiling-output=/tmp/compile-time-logs/cmake-trace.json --profiling-format=google-trace" 2>> $GITHUB_STEP_SUMMARY
+          bash -c "time cmake -GNinja -DENABLE_FTIME_TRACE=ON -DUSE_CCACHE_IF_AVAILABLE=OFF -B build --profiling-output=/tmp/compile-time-logs/cmake-trace.json --profiling-format=google-trace" 2>> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           
           ClangBuildAnalyzer --start build

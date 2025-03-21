@@ -67,7 +67,7 @@ jobs:
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         run: |
           mkdir -p build
-          cmake -GNinja -DNES_LOG_LEVEL=DEBUG -DCODE_COVERAGE=ON -B build
+          cmake -GNinja -DCODE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
           cmake --build build --target ccov-all-export
           mkdir -p /tmp/cov-cache/
