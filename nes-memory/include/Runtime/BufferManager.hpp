@@ -181,7 +181,7 @@ private:
 
     folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
     std::atomic<size_t> numOfAvailableBuffers;
-    std::map<uint8_t*, UnpooledBufferHolder> unpooledBuffers;
+    std::vector<UnpooledBufferHolder> unpooledBuffers;
 
     mutable std::recursive_mutex availableBuffersMutex;
     std::condition_variable_any availableBuffersCvar;
