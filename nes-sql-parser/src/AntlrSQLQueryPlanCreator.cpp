@@ -799,7 +799,18 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
 void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    helper.constantBuilder.push_back(context->getText());
+    INVARIANT(context->children.size() == 1, "When exiting a constant, there must be exactly one children in the context");
+    if (const auto stringLiteralContext = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->children.at(0)))
+    {
+        INVARIANT(
+            stringLiteralContext->getText().size() > 2,
+            "A constant string literal must contain at least two quotes and must not be empty.");
+        helper.constantBuilder.push_back(context->getText().substr(1, stringLiteralContext->getText().size() - 2));
+    }
+    else
+    {
+        helper.constantBuilder.push_back(context->getText());
+    }
     poppush(helper);
 }
 
@@ -836,7 +847,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
-                const auto value = std::move(helper.constantBuilder.back());
+                auto value = std::move(helper.constantBuilder.back());
                 helper.constantBuilder.pop_back();
                 auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(*dataType, std::move(value)));
                 parentHelper.functionBuilder.push_back(constFunctionItem);

@@ -548,6 +548,17 @@ STRING
     | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
     ;
 
+// Todo: remove type-specific literals
+/// Signed integer literals.
+BIGINT_LITERAL
+    : DIGIT+ '_L'
+    ;
+SMALLINT_LITERAL
+    : DIGIT+ '_S'
+    ;
+TINYINT_LITERAL
+    : DIGIT+ '_Y'
+    ;
 INTEGER_VALUE
     : DIGIT+
     ;
@@ -578,9 +589,21 @@ fragment LETTER
     : ('a'..'z'|'A'..'Z'|'_')
     ;
 
+SIMPLE_COMMENT
+    : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
+    ;
+
+BRACKETED_COMMENT
+    : '/*' {!isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
+    ;
+
 WS
     : [ \r\n\t]+ -> channel(HIDDEN)
     ;
+
+
+FOUR_OCTETS: OCTET '.' OCTET '.' OCTET '.' OCTET;
+OCTET: [0-2][0-9]?[0-9]?;
 
 /// Catch-all for anything we can't recognize.
 /// We use this to be able to ignore and recover all the text
