@@ -33,8 +33,11 @@
 #include <Util/Strings.hpp>
 #include <fmt/ostream.h>
 #include <folly/MPMCQueue.h>
+#include <grpcpp/create_channel.h>
+#include <grpcpp/security/credentials.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>

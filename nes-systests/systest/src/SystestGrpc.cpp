@@ -15,6 +15,7 @@
 
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <grpcpp/channel.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestGrpc.hpp>
