@@ -98,12 +98,12 @@ void BufferManager::destroy()
         {
             if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0)
             {
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+                #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
                 if (holder.segment)
                 {
                     holder.segment->controlBlock->dumpOwningThreadInfo();
                 }
-#endif
+                #endif
                 INVARIANT(
                     false,
                     "Deletion of unpooled buffer invoked on used memory segment size={} refcnt={}",
@@ -235,6 +235,7 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
+
     /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
     auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
@@ -254,7 +255,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
         ptr);
     auto* leakedMemSegment = memSegment.get();
 
-    const std::unique_lock lock(unpooledBuffersMutex);
+    std::unique_lock lock(unpooledBuffersMutex);
     unpooledBuffers[leakedMemSegment->ptr] = {std::move(memSegment), alignedBufferSize};
     if (leakedMemSegment->controlBlock->prepare(shared_from_this()))
     {

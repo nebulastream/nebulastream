@@ -23,7 +23,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators

@@ -63,6 +63,7 @@ endif (NOT CODE_COVERAGE)
 
 
 if (ENABLE_LARGE_TESTS)
+    # until PR 623 is merged, we can not run multiple queries simultaneously. Therefore, we use --sequential
     ExternalData_Add_Test(TEST_DATA
             NAME systest_large
             COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data DATA{../testdata/,RECURSE:,REGEX:.*} --groups large -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=10)

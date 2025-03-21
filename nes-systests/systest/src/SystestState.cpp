@@ -20,7 +20,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
@@ -120,6 +119,7 @@ std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path
     uint64_t loadedFiles = 0;
     for (auto& [testname, testfile] : testmap)
     {
+
         std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
         try
         {
@@ -224,8 +224,7 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
             }
             if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(group); }))
             {
-                std::cout << fmt::format(
-                    "Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);
+                std::cout << fmt::format("Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);
                 return true;
             }
             return false;

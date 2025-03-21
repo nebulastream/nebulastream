@@ -46,6 +46,7 @@ INTO CHECKSUM;
 
 
 # Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
+
 SELECT start, end, timestamp, auctionId, bidder, datetime, price, timestamp, id, initialbid, reserve, expires, seller, category
     FROM (SELECT * FROM bid)
 INNER JOIN

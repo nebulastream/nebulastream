@@ -15,13 +15,11 @@
 #include <iostream>
 #include <memory>
 #include <optional>
-#include <ranges>
 #include <string>
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
@@ -125,7 +123,7 @@ std::optional<std::shared_ptr<AttributeField>> Schema::getFieldByName(const std:
     /// If the fieldName is fully qualified, we can directly search for the field
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
     {
-        if (const auto it = std::ranges::find(fields, fieldName, &AttributeField::getName); it != fields.end())
+        if(const auto it = std::ranges::find(fields, fieldName, &AttributeField::getName); it != fields.end())
         {
             return *it;
         }
@@ -166,8 +164,7 @@ std::optional<std::shared_ptr<AttributeField>> Schema::getFieldByName(const std:
     /// Otherwise, we return the first field and log a warning.
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
     {
-        potentialMatches = potentialMatches | std::views::filter([&fieldName](const auto& field) { return field->getName() == fieldName; })
-            | NES::ranges::to<std::vector>();
+        potentialMatches = potentialMatches | std::views::filter([&fieldName](const auto& field) { return field->getName() == fieldName; }) | NES::ranges::to<std::vector>();
     }
 
     /// Check how many matching fields were found and raise appropriate exception

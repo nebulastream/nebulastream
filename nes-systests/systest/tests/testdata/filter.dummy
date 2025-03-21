@@ -50,10 +50,10 @@ Query::from("window")
     .filter(Attribute("id") >= 10)
     .SINK;
 ----
-12, 1,1001
-11, 2,2001
-16, 2,2002
-11, 3,3001
+12,1,1001
+11,2,2001
+16,2,2002
+11,3,3001
 
 # Filter less than or equal
 Query::from("window")
