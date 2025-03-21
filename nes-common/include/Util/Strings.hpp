@@ -35,9 +35,6 @@ namespace NES::Util
 /// This does not modify the underlying data!
 [[nodiscard]] std::string_view trimCharacters(std::string_view input, char c);
 
-/// Removes all double spaces from the input string.
-void removeDoubleSpaces(std::string& input);
-
 
 /// From chars attempts to extract a T from string_view after removing surrounding whitespaces.
 /// Note: Implementation of T = string or string_view will return the string without performing any trimming.

@@ -122,10 +122,6 @@ std::string replaceAll(std::string_view origin, const std::string_view search, c
     return stringBuilder.str();
 }
 
-void replaceAllInplace(std::string& origin, std::string_view search, std::string_view replace)
-{
-}
-
 std::string replaceFirst(std::string_view origin, const std::string_view search, const std::string_view replace)
 {
     if (search.empty())
@@ -205,12 +201,6 @@ std::string_view trimCharsRight(std::string_view input, char character)
     }
     input.remove_suffix(input.size() - lastNotC - 1);
     return input;
-}
-
-void removeDoubleSpaces(std::string& input)
-{
-    const auto newEnd = std::ranges::unique(input, [](const char lhs, const char rhs) { return (lhs == rhs) && (lhs == ' '); }).begin();
-    input.erase(newEnd, input.end());
 }
 
 }
