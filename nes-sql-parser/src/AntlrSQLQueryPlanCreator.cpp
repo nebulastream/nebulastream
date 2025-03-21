@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <regex>
 #include <string>
 #include <utility>
@@ -48,6 +49,7 @@
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Util/Common.hpp>
+#include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -619,13 +621,14 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
     else if (context->name == nullptr and not helper.functionBuilder.empty())
     {
         const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
-        auto fieldAccessFunctions
-            = mapFunction->getChildren() | std::views::filter([](auto& child) { return Util::instanceOf<NodeFunctionFieldAccess>(child); });
-        INVARIANT(
-            std::ranges::distance(fieldAccessFunctions.begin(), fieldAccessFunctions.end()) == 1,
-            "A named function must have exactly one FieldAccessNode child.");
-        const auto fieldAccessNode = NES::Util::as_if<NodeFunctionFieldAccess>(*fieldAccessFunctions.begin());
-        const auto implicitFieldName = fmt::format("{}_{}", fieldAccessNode->getFieldName(), helper.implicitMapCountHelper++);
+        const auto fieldAccessFunctions = mapFunction->getChildren()
+            | std::views::transform([](auto& child) { return Util::as_if<NodeFunctionFieldAccess>(child); }) | ranges::to<std::vector>();
+
+        if (std::ranges::count_if(fieldAccessFunctions, [](const auto& fieldAccessNode) { return fieldAccessNode.get() != nullptr; }) != 1)
+        {
+            throw InvalidQuerySyntax("A named function must have exactly one valid FieldAccessNode child.");
+        }
+        const auto implicitFieldName = fmt::format("{}_{}", fieldAccessFunctions.front()->getFieldName(), helper.implicitMapCountHelper++);
         const auto mapFunctionWithFieldAssignment = Attribute(implicitFieldName) = mapFunction;
         helper.mapBuilder.push_back(mapFunctionWithFieldAssignment);
         /// Projections always follow map functions. Thus, we need to project on the field assigned by the map function.
@@ -798,7 +801,18 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
 void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    helper.constantBuilder.push_back(context->getText());
+    INVARIANT(context->children.size() == 1, "When exiting a constant, there must be exactly one children in the context");
+    if (const auto stringLiteralContext = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->children.at(0)))
+    {
+        INVARIANT(
+            stringLiteralContext->getText().size() > 2,
+            "A constant string literal must contain at least two quotes and must not be empty.");
+        helper.constantBuilder.push_back(context->getText().substr(1, stringLiteralContext->getText().size() - 2));
+    }
+    else
+    {
+        helper.constantBuilder.push_back(context->getText());
+    }
     poppush(helper);
 }
 
@@ -835,7 +849,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
-                const auto value = std::move(helper.constantBuilder.back());
+                auto value = std::move(helper.constantBuilder.back());
                 helper.constantBuilder.pop_back();
                 auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(*dataType, std::move(value)));
                 parentHelper.functionBuilder.push_back(constFunctionItem);

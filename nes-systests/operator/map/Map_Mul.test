@@ -16,7 +16,7 @@ SINK streamSinkWithNew INT64 stream$id INT64 stream$value INT64 stream$timestamp
 
 
 # Map with mul function touches one field
-SELECT id * 3 AS id, value, timestamp FROM stream INTO streamSink
+SELECT id * UINT32(3) AS id, value, timestamp FROM stream INTO streamSink
 ----
 3,1,1000
 6,1,1001
@@ -49,7 +49,7 @@ SELECT id, value, timestamp, id * value AS new FROM stream INTO streamSinkWithNe
 7,21,21000,147
 
 # Two maps after each other that both touch the same fields
-SELECT id * 3 AS id, id * value AS value, timestamp FROM stream INTO streamSink
+SELECT id * UINT32(3) AS id, id * value AS value, timestamp FROM stream INTO streamSink
 ----
 3,3,1000
 6,6,1001

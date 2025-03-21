@@ -32,7 +32,7 @@ SINK q2Sink UINT64 monitoringLightsaber$start UINT64 monitoringLightsaber$end FL
 # Query 2 with "original" data
 SELECT start, end, SUM(cpu) AS totalCpu, jobId
 FROM monitoringClusterData
-WHERE eventType == 3
+WHERE eventType == INT16(3)
 GROUP BY jobId
 WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
 INTO CHECKSUM;
@@ -42,7 +42,7 @@ INTO CHECKSUM;
 # Query 2 with Lightsaber data
 SELECT start, end, SUM(cpu) AS totalCpu, jobId
 FROM monitoringLightsaber
-WHERE eventType == 3
+WHERE eventType == INT16(3)
 GROUP BY jobId
 WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
 INTO CHECKSUM;
