@@ -170,7 +170,7 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
         nautilus::val<bool> null = false;
         if (type->type->nullable)
         {
-            const auto memRefNull = memRef + nautilus::val<uint64_t>(type->size());
+            const auto memRefNull = memRef + nautilus::val<uint64_t>(type->getRawSizeInBytes());
             null = Util::readValueFromMemRef<bool>(memRefNull);
         }
         switch (basicType->nativeType)
