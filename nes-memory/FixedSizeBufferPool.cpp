@@ -117,6 +117,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
     INVARIANT(memSegment, "null memory segment");
     if (isDestroyed)
     {
+        NES_TRACE("Recycling buffer to global buffer manager");
         bufferManager->recyclePooledBuffer(memSegment);
     }
     else
@@ -127,6 +128,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
             memSegment->controlBlock->getReferenceCount());
 
         /// add back an exclusive buffer to the local pool
+        NES_TRACE("Recycling buffer to FixedSizeBufferPool");
         exclusiveBuffers.write(memSegment);
     }
 }

@@ -498,10 +498,9 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWitho
     for (auto spanningTupleIndex = spanningTuple.spanStart; spanningTupleIndex <= spanningTuple.spanEnd; ++spanningTupleIndex)
     {
         const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-        auto currentBuffer = this->stagedBuffers[adjustedSpanningTupleIndex];
         /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
         const auto newUses = --(*this->stagedBufferUses[adjustedSpanningTupleIndex]);
-        auto returnBuffer = (newUses == 0) ? std::move(currentBuffer) : currentBuffer;
+        auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex]) : this->stagedBuffers[adjustedSpanningTupleIndex];
         spanningTupleBuffers.emplace_back(std::move(returnBuffer));
     }
 
@@ -549,11 +548,10 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
     for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
     {
         const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-        auto currentBuffer = this->stagedBuffers[adjustedSpanningTupleIndex];
         /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
         const auto newUses = (returningMoreThanOnlyBufferOfSequenceNumber) ? --(*this->stagedBufferUses[adjustedSpanningTupleIndex])
                                                                            : this->stagedBufferUses[adjustedSpanningTupleIndex]->load();
-        auto returnBuffer = (newUses == 0) ? std::move(currentBuffer) : currentBuffer;
+        auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex]) :  this->stagedBuffers[adjustedSpanningTupleIndex];
         returnBuffers.emplace_back(std::move(returnBuffer));
     }
 

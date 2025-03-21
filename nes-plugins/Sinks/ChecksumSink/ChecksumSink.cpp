@@ -88,6 +88,9 @@ void ChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Exec
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     const std::string formatted = formatter->getFormattedBuffer(inputBuffer);
     checksum.add(formatted);
+    std::stringstream ss;
+    ss << checksum;
+    NES_TRACE("ChecksumSink: {}", ss.str());
 }
 
 Configurations::DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)

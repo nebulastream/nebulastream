@@ -267,7 +267,7 @@ void setupLogging()
     const auto now = std::chrono::system_clock::now();
     const auto pid = ::getpid();
     const auto logFileName = fmt::format("/nes-systests/SystemTest_{:%H:%M:%S}_{}.log", now, pid);
-    NES::Logger::setupLogging(fmt::format("{}{}", PATH_TO_BINARY_DIR, logFileName), NES::LogLevel::LOG_DEBUG, false);
+    NES::Logger::setupLogging(fmt::format("{}{}", PATH_TO_BINARY_DIR, logFileName), NES::LogLevel::LOG_TRACE, false);
 
     if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
     {

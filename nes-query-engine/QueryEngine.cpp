@@ -235,8 +235,8 @@ public:
             node->id,
             node,
             buffer,
-            injectReferenceCountReducer(node, std::move(complete)),
-            injectQueryFailure(node, injectReferenceCountReducer(node, std::move(failure))));
+            injectReferenceCountReducer(qid, node, std::move(complete)),
+            injectQueryFailure(node, injectReferenceCountReducer(qid, node, std::move(failure))));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread
@@ -251,12 +251,12 @@ public:
             addTaskOrDoItInPlace(std::move(task));
             return true;
         }
-        if (internalTaskQueue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::seconds(1), std::move(task)))
+        if (addTaskOrDoNextTask(std::move(task)))
         {
             return true;
         }
         node->pendingTasks.fetch_sub(1);
-        ENGINE_LOG_DEBUG("TaskQueue is full, could not write within 1 second.");
+        ENGINE_LOG_DEBUG("Could not write task to TaskQueue");
         return false;
     }
 
@@ -367,32 +367,35 @@ private:
         }
     }
 
-    void addTaskOrDoNextTask(Task&& task, uint64_t stackLevel = 0)
+    bool addTaskOrDoNextTask(Task&& task, uint64_t stackLevel = 0)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
 
         /// It might happen that the task queue is full and we are not able to write the task into the queue.
         /// If this happens for a lot of cases, we would end up in a stack overflow, as we recursively call this function.
-        /// To mitigate this, we will check if we have reached a certain stack level and if so, we will fail the task.
+        /// To mitigate this, we will check if we have reached a certain stack level and if so, we will drop the task.
         if (constexpr auto MAX_STACK_LEVEL = 5000; stackLevel >= MAX_STACK_LEVEL)
         {
-            failTask(
-                task, TooMuchWork("TaskQueue is always full. We have tried for {} times to write the task into the queue", stackLevel));
-            return;
+            ENGINE_LOG_ERROR(
+                "TaskQueue is always full. We have tried for {} times to write the task into the queue. We will drop this task now...",
+                stackLevel);
+            return false;
         }
 
-
-        if (not internalTaskQueue.write(std::move(task)))
+        if (not internalTaskQueue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::seconds(1), std::move(task)))
         {
             /// The order below is important. We want to make sure that we pick up a next task before we write the current task into the queue.
             Task nextTask;
             const auto hasNextTask = internalTaskQueue.read(nextTask);
-            addTaskOrDoNextTask(std::move(task), stackLevel + 1); /// NOLINT no move will happen if tryWriteUntil has failed
+            bool result = addTaskOrDoNextTask(std::move(task), stackLevel + 1); /// NOLINT no move will happen if tryWriteUntil has failed
             if (hasNextTask)
             {
                 addTaskOrDoItInPlace(std::move(nextTask));
+                return true;
             }
+            return result;
         }
+        return true;
     }
 
     /// Order of destruction matters: TaskQueue has to outlive the pool

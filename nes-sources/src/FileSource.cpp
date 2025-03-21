@@ -47,6 +47,8 @@ void FileSource::open()
     {
         throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), std::strerror(errno));
     }
+    const auto fileSize = std::filesystem::file_size(realCSVPath.get());
+    NES_TRACE("Opened file: {} has a total size of {} bytes", this->filePath, fileSize);
 }
 
 void FileSource::close()
@@ -55,9 +57,17 @@ void FileSource::close()
 }
 size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
 {
+    /// If the eof has been reached in the last read, we do not read again but rather return 0
+    if (this->inputFile.rdstate() == std::ios::eofbit)
+    {
+        NES_TRACE("End of stream reached for source");
+        return 0;
+    }
+
     this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
     const auto numBytesRead = this->inputFile.gcount();
     this->totalNumBytesRead += numBytesRead;
+    NES_TRACE("Read {} bytes and total bytes {} from file: {}", numBytesRead, totalNumBytesRead, this->filePath);
     return numBytesRead;
 }
 

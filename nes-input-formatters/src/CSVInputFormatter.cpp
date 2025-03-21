@@ -75,7 +75,7 @@ public:
         , originId(originId)
         , tupleDelimiter(std::move(tupleDelimiter))
         , tupleSizeInBytes(tupleSizeInBytes)
-        , numSchemaFields(numberOfSchemaFields) {};
+        , numSchemaFields(numberOfSchemaFields){};
 
     ~ProgressTracker() = default;
 
@@ -141,8 +141,7 @@ public:
             setNumberOfTuplesInTBFormatted();
             NES_TRACE("emitting TupleBuffer with {} tuples.", numTuplesInTBFormatted);
             /// true triggers adding sequence number, etc.
-            pipelineExecutionContext.emitBuffer(
-                getTupleBufferFormatted(), NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+            pipelineExecutionContext.emitBuffer(getTupleBufferFormatted());
             chunkNumber = ChunkNumber(chunkNumber.getRawValue() + 1);
             setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
             currentFieldOffsetTBFormatted = 0;
@@ -514,8 +513,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         }
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(progressTracker.getNumTuplesInTBFormatted());
-        pipelineExecutionContext.emitBuffer(
-            finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        pipelineExecutionContext.emitBuffer(finalFormattedBuffer);
     }
     else
     {
@@ -538,8 +536,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         processPartialTuple(0, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
-        pipelineExecutionContext.emitBuffer(
-            finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        pipelineExecutionContext.emitBuffer(finalFormattedBuffer);
     }
 }
 
@@ -606,8 +603,7 @@ void CSVInputFormatter::flushFinalTuple(
     {
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
-        pipelineExecutionContext.emitBuffer(
-            finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        pipelineExecutionContext.emitBuffer(finalFormattedBuffer);
     }
 }
 size_t CSVInputFormatter::getSizeOfTupleDelimiter()
