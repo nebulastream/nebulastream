@@ -68,7 +68,7 @@ std::shared_ptr<QueryPlan> FilterMergeRule::apply(std::shared_ptr<QueryPlan> que
                 NES_DEBUG("FilterMergeRule: Fix references, the parent of new filter are the parents of the filter chain");
                 for (auto& filterChainParent : filterChainParents)
                 {
-                    combinedFilter->addParent(filterChainParent);
+                    combinedFilter->addParent(filterChainParent.lock());
                 }
                 NES_DEBUG("FilterMergeRule: Fix references, the chain children have only one parent, which is the new combined filter");
                 for (auto& filterChainChild : filterChainChildren)

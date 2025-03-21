@@ -232,7 +232,7 @@ std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlan::copy() const
         /// 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
         for (const auto& parentNode : operatorNode->getParents())
         {
-            auto parentOperator = NES::Util::as<Operator>(parentNode);
+            auto parentOperator = NES::Util::as<Operator>(parentNode.lock());
             OperatorId parentOperatorId = parentOperator->getId();
             if (operatorIdToOperatorMap.contains(parentOperatorId))
             {
@@ -256,7 +256,7 @@ std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlan::copy() const
             bool processedAllParent = true;
             for (const auto& parentOperator : parentOperators)
             {
-                if (!operatorIdToOperatorMap.contains(NES::Util::as<Operator>(parentOperator)->getId()))
+                if (!operatorIdToOperatorMap.contains(NES::Util::as<Operator>(parentOperator.lock())->getId()))
                 {
                     processedAllParent = false;
                     break;

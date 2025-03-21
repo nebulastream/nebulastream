@@ -79,7 +79,7 @@ bool Node::removeChild(const std::shared_ptr<Node>& node)
             /// remove this from nodeItr's parents
             for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++)
             {
-                if ((*it).get() == this)
+                if (it->lock().get() == this)
                 {
                     (*nodeItr)->parents.erase(it);
                     break;
@@ -134,20 +134,23 @@ bool Node::insertBetweenThisAndParentNodes(const std::shared_ptr<Node>& newNode)
 
     ///replace this with the new node in all its parent
     NES_DEBUG("Node: Create temporary copy of this nodes parents.");
-    const std::vector<std::shared_ptr<Node>> copyOfParents = parents;
+    const std::vector<std::weak_ptr<Node>> copyOfParents = parents;
 
     for (auto& parent : copyOfParents)
     {
-        for (uint64_t i = 0; i < parent->children.size(); i++)
+        if (auto p = parent.lock())
         {
-            if (parent->children[i] == shared_from_this())
+            for (uint64_t i = 0; i < p->children.size(); i++)
             {
-                parent->children[i] = newNode;
-                NES_DEBUG("Node: Add copy of this nodes parent as parent to the input node.");
-                if (!newNode->addParent(parent))
+                if (p->children[i] == shared_from_this())
                 {
-                    NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
-                    return false;
+                    p->children[i] = newNode;
+                    NES_DEBUG("Node: Add copy of this nodes parent as parent to the input node.");
+                    if (!newNode->addParent(p))
+                    {
+                        NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+                        return false;
+                    }
                 }
             }
         }
@@ -210,7 +213,7 @@ void Node::removeAllParent()
     auto nodeItr = parents.begin();
     while (nodeItr != parents.end())
     {
-        if (!this->removeParent(*nodeItr))
+        if (!this->removeParent(nodeItr->lock()))
         {
             ++nodeItr;
         }
@@ -243,13 +246,13 @@ bool Node::removeParent(const std::shared_ptr<Node>& node)
     /// check all parents.
     for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr)
     {
-        if ((*nodeItr).get() == node.get())
+        if (nodeItr->lock().get() == node.get())
         {
-            for (auto it = (*nodeItr)->children.begin(); it != (*nodeItr)->children.end(); it++)
+            for (auto it = nodeItr->lock()->children.begin(); it != nodeItr->lock()->children.end(); it++)
             {
                 if ((*it).get() == this)
                 {
-                    (*nodeItr)->children.erase(it);
+                    nodeItr->lock()->children.erase(it);
                     break;
                 }
             }
@@ -316,7 +319,7 @@ bool Node::replace(const std::shared_ptr<Node>& newNode, const std::shared_ptr<N
         parents.push_back(newNode);
         for (auto&& currentNode : oldNode->parents)
         {
-            newNode->addParent(currentNode);
+            newNode->addParent(currentNode.lock());
         }
         return true; ///TODO: I think this is wrong
     }
@@ -336,12 +339,15 @@ bool Node::swap(const std::shared_ptr<Node>& newNode, const std::shared_ptr<Node
     /// detecting if newNode is one of oldNode's siblings
     for (auto&& parent : node->parents)
     {
-        for (auto&& child : parent->children)
+        if (auto p = parent.lock())
         {
-            if (child == newNode)
+            for (auto&& child : p->children)
             {
-                /// we don't want to handle this case
-                return false;
+                if (child == newNode)
+                {
+                    /// we don't want to handle this case
+                    return false;
+                }
             }
         }
     }
@@ -352,14 +358,16 @@ bool Node::swap(const std::shared_ptr<Node>& newNode, const std::shared_ptr<Node
     while (node->parents.size() > criteria)
     {
         auto parent = node->parents[criteria];
-        if (parent.get() == newNode.get())
+        if (auto p = parent.lock())
         {
-            criteria = 1;
-            continue;
+            if (p.get() == newNode.get())
+            {
+                criteria = 1;
+                continue;
+            }
+            newNode->addParent(p);
+            node->removeParent(p);
         }
-
-        newNode->addParent(parent);
-        node->removeParent(parent);
     }
 
     return true;
@@ -417,18 +425,18 @@ bool Node::removeAndJoinParentAndChildren()
         NES_DEBUG("Node: Joining parents with children");
 
         const std::vector<std::shared_ptr<Node>> childCopy = this->children;
-        const std::vector<std::shared_ptr<Node>> parentCopy = this->parents;
+        const std::vector<std::weak_ptr<Node>> parentCopy = this->parents;
         for (auto& parent : parentCopy)
         {
             for (auto& child : childCopy)
             {
                 NES_DEBUG("Node: Add child of this node as child of this node's parent");
-                parent->addChild(child);
+                parent.lock()->addChild(child);
 
                 NES_DEBUG("Node: remove this node as parent of the child");
                 child->removeParent(shared_from_this());
             }
-            parent->removeChild(shared_from_this());
+            parent.lock()->removeChild(shared_from_this());
             NES_DEBUG("Node: remove this node as child of this node's parents");
         }
         return true;
@@ -463,7 +471,7 @@ bool Node::containAsGrandParent(const std::shared_ptr<Node>& node)
     for (auto& parent : parents)
     {
         NES_TRACE("Node: Get this node, all its parents, and Ancestors");
-        std::vector<std::shared_ptr<Node>> parentAndAncestors = parent->getAndFlattenAllAncestors();
+        std::vector<std::shared_ptr<Node>> parentAndAncestors = parent.lock()->getAndFlattenAllAncestors();
         NES_TRACE("Node: Add them to the result");
         ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }
@@ -490,7 +498,7 @@ bool Node::containAsGrandChild(const std::shared_ptr<Node>& node)
     return vectorContainsTheNode(grandChildren, std::move(node));
 }
 
-const std::vector<std::shared_ptr<Node>>& Node::getParents() const
+const std::vector<std::weak_ptr<Node>>& Node::getParents() const
 {
     return parents;
 }
@@ -508,17 +516,17 @@ std::vector<std::shared_ptr<Node>> Node::getAllRootNodes()
 
     for (auto& parent : parents)
     {
-        if (parent->getParents().empty())
+        if (parent.lock()->getParents().empty())
         {
             NES_DEBUG("Node: Inserting root node to the collection");
-            rootNodes.push_back(parent);
+            rootNodes.push_back(parent.lock());
         }
         else
         {
             NES_DEBUG("Node: Iterating over all parents to find more root nodes");
-            for (const auto& parentOfParent : parent->getParents())
+            for (const auto& parentOfParent : parent.lock()->getParents())
             {
-                std::vector<std::shared_ptr<Node>> parentNodes = parentOfParent->getAllRootNodes();
+                std::vector<std::shared_ptr<Node>> parentNodes = parentOfParent.lock()->getAllRootNodes();
                 NES_DEBUG("Node: inserting parent nodes into the collection of parent nodes");
                 rootNodes.insert(rootNodes.end(), parentNodes.begin(), parentNodes.end());
             }
@@ -561,6 +569,11 @@ std::vector<std::shared_ptr<Node>> Node::getAllLeafNodes()
     return leafNodes;
 }
 
+bool Node::vectorContainsTheNode(const std::vector<std::weak_ptr<Node>>& nodes, const std::shared_ptr<NES::Node>& nodeToFind)
+{
+    return find(nodes, nodeToFind) != nullptr;
+}
+
 bool Node::vectorContainsTheNode(const std::vector<std::shared_ptr<Node>>& nodes, const std::shared_ptr<NES::Node>& nodeToFind)
 {
     return find(nodes, nodeToFind) != nullptr;
@@ -579,6 +592,17 @@ std::shared_ptr<Node> Node::find(const std::vector<std::shared_ptr<Node>>& nodes
         if (nodeToFind->equal(currentNode))
         { /// TODO: need to check this when merge is used. nodeToFind.get() == currentNode.get()
             return currentNode;
+        }
+    }
+    return nullptr;
+}
+std::shared_ptr<Node> Node::find(const std::vector<std::weak_ptr<Node>>& nodes, const std::shared_ptr<Node>& nodeToFind)
+{
+    for (auto&& currentNode : nodes)
+    {
+        if (nodeToFind->equal(currentNode.lock()))
+        { /// TODO #1: need to check this when merge is used. nodeToFind.get() == currentNode.get()
+            return currentNode.lock();
         }
     }
     return nullptr;
@@ -663,9 +687,9 @@ bool Node::equalWithAllParentsHelper(const std::shared_ptr<Node>& node1, const s
         auto y = node2->parents.begin();
         while (y != node2->parents.end())
         {
-            if ((*x)->equal(*y))
+            if (x->lock()->equal(y->lock()))
             {
-                if (!equalWithAllParentsHelper(*x, *y))
+                if (!equalWithAllParentsHelper(x->lock(), y->lock()))
                 {
                     return false;
                 }
@@ -706,8 +730,8 @@ std::vector<std::shared_ptr<Node>> Node::split(const std::shared_ptr<Node>& spli
     while (!node->parents.empty())
     {
         auto p = node->parents[0];
-        result.push_back(p);
-        node->removeParent(p);
+        result.push_back(p.lock());
+        node->removeParent(p.lock());
     }
     result.push_back(node);
     return result;
@@ -754,7 +778,7 @@ std::vector<std::shared_ptr<Node>> Node::getAndFlattenAllAncestors()
     for (auto& parent : parents)
     {
         NES_TRACE("Node: Get this node, all its parents, and Ancestors");
-        std::vector<std::shared_ptr<Node>> parentAndAncestors = parent->getAndFlattenAllAncestors();
+        std::vector<std::shared_ptr<Node>> parentAndAncestors = parent.lock()->getAndFlattenAllAncestors();
         NES_TRACE("Node: Add them to the result");
         result.insert(result.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }

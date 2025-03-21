@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -71,8 +72,12 @@ std::shared_ptr<Operator> Operator::duplicate()
     NES_DEBUG("Operator: copy all parents");
     for (const auto& parent : getParents())
     {
-        const auto success = copyOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent)));
-        INVARIANT(success, "Unable to add parent ({}) to copy ({})", NES::Util::as<Operator>(parent)->toString(), copyOperator->toString());
+        const auto success = copyOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent.lock())));
+        INVARIANT(
+            success,
+            "Unable to add parent ({}) to copy ({})",
+            NES::Util::as<Operator>(parent.lock())->toString(),
+            copyOperator->toString());
     }
 
     NES_DEBUG("Operator: copy all children");
@@ -97,7 +102,7 @@ std::shared_ptr<Operator> Operator::getDuplicateOfParent(const std::shared_ptr<O
     NES_TRACE("Operator: For all parents get copy of the ancestor and add as parent to the copy of the input operator");
     for (const auto& parent : operatorNode->getParents())
     {
-        copyOfOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent)));
+        copyOfOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent.lock())));
     }
     NES_TRACE("Operator: return copy of the input operator");
     return copyOfOperator;
@@ -168,11 +173,11 @@ bool Operator::addParent(const std::shared_ptr<Node>& newNode)
         return false;
     }
 
-    std::vector<std::shared_ptr<Node>> currentParents = getParents();
+    std::vector<std::weak_ptr<Node>> currentParents = getParents();
     const auto found = std::ranges::find_if(
         currentParents,
-        [&](const std::shared_ptr<Node>& child)
-        { return NES::Util::as<Operator>(child)->getId() == NES::Util::as<Operator>(newNode)->getId(); });
+        [&](const std::weak_ptr<Node>& child)
+        { return NES::Util::as<Operator>(child.lock())->getId() == NES::Util::as<Operator>(newNode)->getId(); });
 
     if (found == currentParents.end())
     {
@@ -246,17 +251,26 @@ bool Operator::containAsGrandParent(const std::shared_ptr<Node>& operatorNode)
 {
     auto operatorIdToCheck = NES::Util::as<Operator>(operatorNode)->getId();
     /// populate all ancestors
-    std::vector<std::shared_ptr<Node>> ancestors{};
+    std::vector<std::weak_ptr<Node>> ancestors{};
     for (const auto& parent : parents)
     {
-        std::vector<std::shared_ptr<Node>> parentAndAncestors = parent->getAndFlattenAllAncestors();
-        ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
+        if (auto p = parent.lock())
+        {
+            std::vector<std::shared_ptr<Node>> parentAndAncestors = p->getAndFlattenAllAncestors();
+            ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
+        }
     }
     ///Check if an operator with the id exists as ancestor
     return std::ranges::any_of(
         ancestors,
-        [operatorIdToCheck](const std::shared_ptr<Node>& ancestor)
-        { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
+        [operatorIdToCheck](const std::weak_ptr<Node>& ancestor)
+        {
+            if (auto a = ancestor.lock())
+            {
+                return NES::Util::as<Operator>(a)->getId() == operatorIdToCheck;
+            }
+            return false;
+        });
 }
 void Operator::addAllProperties(const OperatorProperties& properties)
 {

@@ -60,7 +60,7 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
         {
             for (auto& downStreamOp : sourceOperator->getParents())
             {
-                blockingOperators[NES::Util::as<Operator>(downStreamOp)->getId()] = NES::Util::as<Operator>(downStreamOp);
+                blockingOperators[NES::Util::as<Operator>(downStreamOp.lock())->getId()] = NES::Util::as<Operator>(downStreamOp.lock());
             }
         }
     }
@@ -107,11 +107,11 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
             for (const auto& downStreamOperator : sourceOperator->getParents())
             {
                 /// If downStreamOperator is blocking then remove source operator as its upstream operator.
-                auto success = downStreamOperator->removeChild(sourceOperator);
+                auto success = downStreamOperator.lock()->removeChild(sourceOperator);
                 INVARIANT(success, "Unable to remove non-blocking upstream operator from the blocking operator");
 
                 /// Add information about blocking operator to the source operator
-                addBlockingDownStreamOperator(sourceOperator, NES::Util::as<Operator>(downStreamOperator)->getId());
+                addBlockingDownStreamOperator(sourceOperator, NES::Util::as<Operator>(downStreamOperator.lock())->getId());
             }
         }
         NES_TRACE(
@@ -203,19 +203,19 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const std::sha
     for (const auto& downStreamOperator : downStreamOperators)
     {
         /// Check if the downStreamOperator operator is a blocking operator or not
-        if (!isBlockingOperator(downStreamOperator))
+        if (!isBlockingOperator(downStreamOperator.lock()))
         {
-            removeConnectedBlockingOperators(downStreamOperator);
+            removeConnectedBlockingOperators(downStreamOperator.lock());
         }
         else
         {
             /// If downStreamOperator is blocking then remove current operator as its upstream operator.
-            auto success = downStreamOperator->removeChild(operatorNode);
+            auto success = downStreamOperator.lock()->removeChild(operatorNode);
             INVARIANT(success, "Unable to remove non-blocking upstream operator from the blocking operator");
 
             /// Add to the current operator information about operator id of the removed downStreamOperator.
             /// We will use this information post expansion to re-add the connection later.
-            addBlockingDownStreamOperator(operatorNode, NES::Util::as_if<Operator>(downStreamOperator)->getId());
+            addBlockingDownStreamOperator(operatorNode, NES::Util::as_if<Operator>(downStreamOperator.lock())->getId());
         }
     }
 }

@@ -45,7 +45,7 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                 "PredicateReorderingRule: Filter {} has {} consecutive filters as children", filter->getId(), consecutiveFilters.size());
             if (consecutiveFilters.size() >= 2)
             {
-                const std::vector<std::shared_ptr<Node>> filterChainParents = consecutiveFilters.front()->getParents();
+                const std::vector<std::weak_ptr<Node>> filterChainParents = consecutiveFilters.front()->getParents();
                 const std::vector<std::shared_ptr<Node>> filterChainChildren = consecutiveFilters.back()->getChildren();
                 NES_TRACE("PredicateReorderingRule: If the filters are already sorted, no change is needed");
                 auto already_sorted = std::is_sorted(
@@ -81,7 +81,7 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                               "parents will be the chain parents'");
                     for (auto& filterChainParent : filterChainParents)
                     {
-                        leastSelectiveFilter->addParent(filterChainParent);
+                        leastSelectiveFilter->addParent(filterChainParent.lock());
                     }
                     NES_TRACE("PredicateReorderingRule: Most selective filter goes to the bottom (closer to the source), his "
                               "new children will be the chain children");

@@ -243,7 +243,7 @@ public:
      * @brief get direct parents.
      * @return vector of parents.
      */
-    const std::vector<std::shared_ptr<Node>>& getParents() const;
+    const std::vector<std::weak_ptr<Node>>& getParents() const;
 
     /**
      * Get all the root nodes
@@ -291,7 +291,7 @@ protected:
      * @brief the parents of this node. There is no equal nodes
      *        in this vector
      */
-    std::vector<std::shared_ptr<Node>> parents;
+    std::vector<std::weak_ptr<Node>> parents;
     /**
      * @brief the children of this node. There is no equal nodes
      *        in this vector
@@ -329,6 +329,7 @@ private:
      * @return return true if the given node is found, otherwise false
      */
     static bool vectorContainsTheNode(const std::vector<std::shared_ptr<Node>>& nodes, const std::shared_ptr<Node>& nodeToFind);
+    static bool vectorContainsTheNode(const std::vector<std::weak_ptr<Node>>& nodes, const std::shared_ptr<Node>& nodeToFind);
 
     /**
      * @brief check if an node is in given vector and returns it
@@ -337,6 +338,7 @@ private:
      * @return return node if the given node is found, otherwise nullpointer
      */
     static std::shared_ptr<Node> find(const std::vector<std::shared_ptr<Node>>& nodes, const std::shared_ptr<Node>& nodeToFind);
+    static std::shared_ptr<Node> find(const std::vector<std::weak_ptr<Node>>& nodes, const std::shared_ptr<Node>& nodeToFind);
 
     /********************************************************************************
      *                   Helper functions                                           *

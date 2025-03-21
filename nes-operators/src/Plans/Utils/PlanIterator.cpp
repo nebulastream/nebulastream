@@ -94,7 +94,7 @@ PlanIterator::Iterator& PlanIterator::Iterator::operator++()
             INVARIANT(!child->getParents().empty(), "A child node must have a parent");
 
             /// check if current node is last parent of child.
-            if (child->getParents().back() == current)
+            if (child->getParents().back().lock() == current)
             {
                 workStack.push(child);
             }

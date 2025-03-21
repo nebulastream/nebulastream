@@ -261,7 +261,7 @@ std::shared_ptr<QueryPlan> QueryPlan::copy()
         /// 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
         for (const auto& parentNode : operatorNode->getParents())
         {
-            auto parentOperator = NES::Util::as<Operator>(parentNode);
+            auto parentOperator = NES::Util::as<Operator>(parentNode.lock());
             auto parentOperatorId = parentOperator->getId();
             if (operatorIdToOperatorMap[parentOperatorId])
             {
