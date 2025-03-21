@@ -114,7 +114,7 @@ void CountAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t CountAggregationFunction::getSizeOfStateInBytes() const
 {
-    return resultType->size();
+    return resultType->getSizeInBytes();
 }
 
 }

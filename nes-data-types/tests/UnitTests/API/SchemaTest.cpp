@@ -313,7 +313,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
                 defaultPhysicalTypeFactory
                     .getPhysicalType(
                         DataTypeProvider::provideBasicType(basicTypeVal, testSchema->getFieldByIndex(0)->getDataType()->nullable))
-                    ->size());
+                    ->getSizeInBytes());
         }
     }
 
