@@ -904,7 +904,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
-                const auto value = std::move(helper.constantBuilder.back());
+                auto value = std::move(helper.constantBuilder.back());
                 helper.constantBuilder.pop_back();
                 auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(*dataType, std::move(value)));
                 parentHelper.functionBuilder.push_back(constFunctionItem);

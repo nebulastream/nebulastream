@@ -566,6 +566,7 @@ STRING
     | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
     ;
 
+// Todo: remove type-specific literals
 /// Signed integer literals.
 BIGINT_LITERAL
     : DIGIT+ '_L'

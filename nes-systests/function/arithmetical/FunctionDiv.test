@@ -21,18 +21,18 @@ SINK sinkF64 FLOAT64 stream$f64_i8 FLOAT64 stream$f64_i8_plus_1 FLOAT64 stream$f
 # Check if the values are divided correctly with a constant
 SELECT
     # signed
-    i8 / 42 AS i8,
-    i16 / 42 AS i16,
-    i32 / 42 AS i32,
-    i64 / 42 AS i64,
+    i8 / INT32(42) AS i8,
+    i16 / INT32(42) AS i16,
+    i32 / INT32(42) AS i32,
+    i64 / INT32(42) AS i64,
     # unsigned
-    u8 / 42 AS u8,
-    u16 / 42 AS u16,
-    u32 / 42 AS u32,
-    u64 / 42 AS u64,
+    u8 / INT32(42) AS u8,
+    u16 / INT32(42) AS u16,
+    u32 / INT32(42) AS u32,
+    u64 / INT32(42) AS u64,
     # float
-    f32 / 42.000000_F AS f32,
-    f64 / 42.000000_D AS f64
+    f32 / FLOAT32(42.000000) AS f32,
+    f64 / FLOAT64(42.000000) AS f64
 FROM stream INTO sinkConstant
 ----
 -1,-3,-780,-51130563,1,6,1560,102261126,0.547619,0.547619
@@ -41,27 +41,27 @@ FROM stream INTO sinkConstant
 SELECT
     # signed
     i8 / i8 AS i8_i8,
-    i8 / (i8 + 1) AS i8_i8_plus_1,
+    i8 / (i8 + INT8(1)) AS i8_i8_plus_1,
     i8 / i16 AS i8_i16,
-    i8 / (i16 + 1) AS i8_i16_plus_1,
+    i8 / (i16 + INT16(1)) AS i8_i16_plus_1,
     i8 / i32 AS i8_i32,
-    i8 / (i32 + 1) AS i8_i32_plus_1,
+    i8 / (i32 + INT32(1)) AS i8_i32_plus_1,
     i8 / i64 AS i8_i64,
-    i8 / (i64 + 1) AS i8_i64_plus_1,
+    i8 / (i64 + INT64(1)) AS i8_i64_plus_1,
     # unsigned
     i8 / u8 AS i8_u8,
-    i8 / (u8 + 1) AS i8_u8_plus_1,
+    i8 / (u8 + UINT8(1)) AS i8_u8_plus_1,
     i8 / u16 AS i8_u16,
-    i8 / (u16 + 1) AS i8_u16_plus_1,
+    i8 / (u16 + UINT16(1)) AS i8_u16_plus_1,
     i8 / u32 AS i8_u32,
-    i8 / (u32 + 1) AS i8_u32_plus_1,
+    i8 / (u32 + UINT32(1)) AS i8_u32_plus_1,
     i8 / u64 AS i8_u64,
-    i8 / (u64 + 1) AS i8_u64_plus_1,
+    i8 / (u64 + UINT64(1)) AS i8_u64_plus_1,
     # float
     i8 / f32 AS i8_f32,
-    i8 / (f32 + 1) AS i8_f32_plus_1,
+    i8 / (f32 + FLOAT32(1)) AS i8_f32_plus_1,
     i8 / f64 AS i8_f64,
-    i8 / (f64 + 1) AS i8_f64_plus_1
+    i8 / (f64 + FLOAT64(1)) AS i8_f64_plus_1
 FROM stream INTO sinkI8
 ----
 1,1,0,0,0,0,0,0,-1,0,0,0,65535,65534,4294967295,4294967294,-1.826087,-1.750000,-1.826087,-1.750000
@@ -70,27 +70,27 @@ FROM stream INTO sinkI8
 SELECT
     # signed
     i16 / i8 AS i16_i8,
-    i16 / (i8 + 1) AS i16_i8_plus_1,
+    i16 / (i8 + INT8(1)) AS i16_i8_plus_1,
     i16 / i16 AS i16_i16,
-    i16 / (i16 + 1) AS i16_i16_plus_1,
+    i16 / (i16 + INT16(1)) AS i16_i16_plus_1,
     i16 / i32 AS i16_i32,
-    i16 / (i32 + 1) AS i16_i32_plus_1,
+    i16 / (i32 + INT32(1)) AS i16_i32_plus_1,
     i16 / i64 AS i16_i64,
-    i16 / (i64 + 1) AS i16_i64_plus_1,
+    i16 / (i64 + INT64(1)) AS i16_i64_plus_1,
     # unsigned
     i16 / u8 AS i16_u8,
-    i16 / (u8 + 1) AS i16_u8_plus_1,
+    i16 / (u8 + UINT8(1)) AS i16_u8_plus_1,
     i16 / u16 AS i16_u16,
-    i16 / (u16 + 1) AS i16_u16_plus_1,
+    i16 / (u16 + UINT16(1)) AS i16_u16_plus_1,
     i16 / u32 AS i16_u32,
-    i16 / (u32 + 1) AS i16_u32_plus_1,
+    i16 / (u32 + UINT32(1)) AS i16_u32_plus_1,
     i16 / u64 AS i16_u64,
-    i16 / (u64 + 1) AS i16_u64_plus_1,
+    i16 / (u64 + UINT64(1)) AS i16_u64_plus_1,
     # float
     i16 / f32 AS i16_f32,
-    i16 / (f32 + 1) AS i16_f32_plus_1,
+    i16 / (f32 + FLOAT32(1)) AS i16_f32_plus_1,
     i16 / f64 AS i16_f64,
-    i16 / (f64 + 1) AS i16_f64_plus_1
+    i16 / (f64 + FLOAT64(1)) AS i16_f64_plus_1
 FROM stream INTO sinkI16
 ----
 3,3,1,1,0,0,0,0,-3,-3,0,0,65535,65534,4294967295,4294967294,-5.608696,-5.375000,-5.608696,-5.375000
@@ -100,27 +100,27 @@ FROM stream INTO sinkI16
 SELECT
     # signed
     i32 / i8 AS i32_i8,
-    i32 / (i8 + 1) AS i32_i8_plus_1,
+    i32 / (i8 + INT8(1)) AS i32_i8_plus_1,
     i32 / i16 AS i32_i16,
-    i32 / (i16 + 1) AS i32_i16_plus_1,
+    i32 / (i16 + INT16(1)) AS i32_i16_plus_1,
     i32 / i32 AS i32_i32,
-    i32 / (i32 + 1) AS i32_i32_plus_1,
+    i32 / (i32 + INT32(1)) AS i32_i32_plus_1,
     i32 / i64 AS i32_i64,
-    i32 / (i64 + 1) AS i32_i64_plus_1,
+    i32 / (i64 + INT64(1)) AS i32_i64_plus_1,
     # unsigned
     i32 / u8 AS i32_u8,
-    i32 / (u8 + 1) AS i32_u8_plus_1,
+    i32 / (u8 + UINT8(1)) AS i32_u8_plus_1,
     i32 / u16 AS i32_u16,
-    i32 / (u16 + 1) AS i32_u16_plus_1,
+    i32 / (u16 + UINT16(1)) AS i32_u16_plus_1,
     i32 / u32 AS i32_u32,
-    i32 / (u32 + 1) AS i32_u32_plus_1,
+    i32 / (u32 + UINT32(1)) AS i32_u32_plus_1,
     i32 / u64 AS i32_u64,
-    i32 / (u64 + 1) AS i32_u64_plus_1,
+    i32 / (u64 + UINT64(1)) AS i32_u64_plus_1,
     # float
     i32 / f32 AS i32_f32,
-    i32 / (f32 + 1) AS i32_f32_plus_1,
+    i32 / (f32 + FLOAT32(1)) AS i32_f32_plus_1,
     i32 / f64 AS i32_f64,
-    i32 / (f64 + 1) AS i32_f64_plus_1
+    i32 / (f64 + FLOAT64(1)) AS i32_f64_plus_1
 FROM stream INTO sinkI32
 ----
 780,799,254,256,1,1,0,0,-780,-762,-128,-127,65535,65534,4294967295,4294967294,-1424.739136,-1365.375000,-1424.739130,-1365.375000
@@ -130,27 +130,27 @@ FROM stream INTO sinkI32
 SELECT
     # signed
     i64 / i8 AS i64_i8,
-    i64 / (i8 + 1) AS i64_i8_plus_1,
+    i64 / (i8 + INT8(1)) AS i64_i8_plus_1,
     i64 / i16 AS i64_i16,
-    i64 / (i16 + 1) AS i64_i16_plus_1,
+    i64 / (i16 + INT16(1)) AS i64_i16_plus_1,
     i64 / i32 AS i64_i32,
-    i64 / (i32 + 1) AS i64_i32_plus_1,
+    i64 / (i32 + INT32(1)) AS i64_i32_plus_1,
     i64 / i64 AS i64_i64,
-    i64 / (i64 + 1) AS i64_i64_plus_1,
+    i64 / (i64 + INT64(1)) AS i64_i64_plus_1,
     # unsigned
     i64 / u8 AS i64_u8,
-    i64 / (u8 + 1) AS i64_u8_plus_1,
+    i64 / (u8 + UINT8(1)) AS i64_u8_plus_1,
     i64 / u16 AS i64_u16,
-    i64 / (u16 + 1) AS i64_u16_plus_1,
+    i64 / (u16 + UINT16(1)) AS i64_u16_plus_1,
     i64 / u32 AS i64_u32,
-    i64 / (u32 + 1) AS i64_u32_plus_1,
+    i64 / (u32 + UINT32(1)) AS i64_u32_plus_1,
     i64 / u64 AS i64_u64,
-    i64 / (u64 + 1) AS i64_u64_plus_1,
+    i64 / (u64 + UINT64(1)) AS i64_u64_plus_1,
     # float
     i64 / f32 AS i64_f32,
-    i64 / (f32 + 1) AS i64_f32_plus_1,
+    i64 / (f32 + FLOAT32(1)) AS i64_f32_plus_1,
     i64 / f64 AS i64_f64,
-    i64 / (f64 + 1) AS i64_f64_plus_1
+    i64 / (f64 + FLOAT64(1)) AS i64_f64_plus_1
 FROM stream INTO sinkI64
 ----
 51130563,52377649,16647160,16777216,65534,65536,1,1,-51130563,-49941480,-8388608,-8355967,-32768,-32767,4294967295,4294967294,-93368856.000000,-89478488.000000,-93368854.304348,-89478485.375000
@@ -160,27 +160,27 @@ FROM stream INTO sinkI64
 SELECT
     # signed
     u8 / i8 AS u8_i8,
-    u8 / (i8 + 1) AS u8_i8_plus_1,
+    u8 / (i8 + INT8(1)) AS u8_i8_plus_1,
     u8 / i16 AS u8_i16,
-    u8 / (i16 + 1) AS u8_i16_plus_1,
+    u8 / (i16 + INT16(1)) AS u8_i16_plus_1,
     u8 / i32 AS u8_i32,
-    u8 / (i32 + 1) AS u8_i32_plus_1,
+    u8 / (i32 + INT32(1)) AS u8_i32_plus_1,
     u8 / i64 AS u8_i64,
-    u8 / (i64 + 1) AS u8_i64_plus_1,
+    u8 / (i64 + INT64(1)) AS u8_i64_plus_1,
     # unsigned
     u8 / u8 AS u8_u8,
-    u8 / (u8 + 1) AS u8_u8_plus_1,
+    u8 / (u8 + UINT8(1)) AS u8_u8_plus_1,
     u8 / u16 AS u8_u16,
-    u8 / (u16 + 1) AS u8_u16_plus_1,
+    u8 / (u16 + UINT16(1)) AS u8_u16_plus_1,
     u8 / u32 AS u8_u32,
-    u8 / (u32 + 1) AS u8_u32_plus_1,
+    u8 / (u32 + UINT32(1)) AS u8_u32_plus_1,
     u8 / u64 AS u8_u64,
-    u8 / (u64 + 1) AS u8_u64_plus_1,
+    u8 / (u64 + UINT64(1)) AS u8_u64_plus_1,
     # float
     u8 / f32 AS u8_f32,
-    u8 / (f32 + 1) AS u8_f32_plus_1,
+    u8 / (f32 + FLOAT32(1)) AS u8_f32_plus_1,
     u8 / f64 AS u8_f64,
-    u8 / (f64 + 1) AS u8_f64_plus_1
+    u8 / (f64 + FLOAT64(1)) AS u8_f64_plus_1
 FROM stream INTO sinkU8
 ----
 -1,-1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1.826087,1.750000,1.826087,1.750000
@@ -190,27 +190,27 @@ FROM stream INTO sinkU8
 SELECT
     # signed
     u16 / i8 AS u16_i8,
-    u16 / (i8 + 1) AS u16_i8_plus_1,
+    u16 / (i8 + INT8(1)) AS u16_i8_plus_1,
     u16 / i16 AS u16_i16,
-    u16 / (i16 + 1) AS u16_i16_plus_1,
+    u16 / (i16 + INT16(1)) AS u16_i16_plus_1,
     u16 / i32 AS u16_i32,
-    u16 / (i32 + 1) AS u16_i32_plus_1,
+    u16 / (i32 + INT32(1)) AS u16_i32_plus_1,
     u16 / i64 AS u16_i64,
-    u16 / (i64 + 1) AS u16_i64_plus_1,
+    u16 / (i64 + INT64(1)) AS u16_i64_plus_1,
     # unsigned
     u16 / u8 AS u16_u8,
-    u16 / (u8 + 1) AS u16_u8_plus_1,
+    u16 / (u8 + UINT8(1)) AS u16_u8_plus_1,
     u16 / u16 AS u16_u16,
-    u16 / (u16 + 1) AS u16_u16_plus_1,
+    u16 / (u16 + UINT16(1)) AS u16_u16_plus_1,
     u16 / u32 AS u16_u32,
-    u16 / (u32 + 1) AS u16_u32_plus_1,
+    u16 / (u32 + UINT32(1)) AS u16_u32_plus_1,
     u16 / u64 AS u16_u64,
-    u16 / (u64 + 1) AS u16_u64_plus_1,
+    u16 / (u64 + UINT64(1)) AS u16_u64_plus_1,
     # float
     u16 / f32 AS u16_f32,
-    u16 / (f32 + 1) AS u16_f32_plus_1,
+    u16 / (f32 + FLOAT32(1)) AS u16_f32_plus_1,
     u16 / f64 AS u16_f64,
-    u16 / (f64 + 1) AS u16_f64_plus_1
+    u16 / (f64 + FLOAT64(1)) AS u16_f64_plus_1
 FROM stream INTO sinkU16
 ----
 -6,-6,-1,-2,0,0,0,0,6,5,1,0,0,0,0,0,11.130435,10.666667,11.130435,10.666667
@@ -220,27 +220,27 @@ FROM stream INTO sinkU16
 SELECT
     # signed
     u32 / i8 AS u32_i8,
-    u32 / (i8 + 1) AS u32_i8_plus_1,
+    u32 / (i8 + INT8(1)) AS u32_i8_plus_1,
     u32 / i16 AS u32_i16,
-    u32 / (i16 + 1) AS u32_i16_plus_1,
+    u32 / (i16 + INT16(1)) AS u32_i16_plus_1,
     u32 / i32 AS u32_i32,
-    u32 / (i32 + 1) AS u32_i32_plus_1,
+    u32 / (i32 + INT32(1)) AS u32_i32_plus_1,
     u32 / i64 AS u32_i64,
-    u32 / (i64 + 1) AS u32_i64_plus_1,
+    u32 / (i64 + INT64(1)) AS u32_i64_plus_1,
     # unsigned
     u32 / u8 AS u32_u8,
-    u32 / (u8 + 1) AS u32_u8_plus_1,
+    u32 / (u8 + UINT8(1)) AS u32_u8_plus_1,
     u32 / u16 AS u32_u16,
-    u32 / (u16 + 1) AS u32_u16_plus_1,
+    u32 / (u16 + UINT16(1)) AS u32_u16_plus_1,
     u32 / u32 AS u32_u32,
-    u32 / (u32 + 1) AS u32_u32_plus_1,
+    u32 / (u32 + UINT32(1)) AS u32_u32_plus_1,
     u32 / u64 AS u32_u64,
-    u32 / (u64 + 1) AS u32_u64_plus_1,
+    u32 / (u64 + UINT64(1)) AS u32_u64_plus_1,
     # float
     u32 / f32 AS u32_f32,
-    u32 / (f32 + 1) AS u32_f32_plus_1,
+    u32 / (f32 + FLOAT32(1)) AS u32_f32_plus_1,
     u32 / f64 AS u32_f64,
-    u32 / (f64 + 1) AS u32_f64_plus_1
+    u32 / (f64 + FLOAT64(1)) AS u32_f64_plus_1
 FROM stream INTO sinkU32
 ----
 0,0,0,0,0,0,0,0,1560,1524,256,255,1,0,0,0,2849.391357,2730.666504,2849.391304,2730.666667
@@ -249,27 +249,27 @@ FROM stream INTO sinkU32
 SELECT
     # signed
     u64 / i8 AS u64_i8,
-    u64 / (i8 + 1) AS u64_i8_plus_1,
+    u64 / (i8 + INT8(1)) AS u64_i8_plus_1,
     u64 / i16 AS u64_i16,
-    u64 / (i16 + 1) AS u64_i16_plus_1,
+    u64 / (i16 + INT16(1)) AS u64_i16_plus_1,
     u64 / i32 AS u64_i32,
-    u64 / (i32 + 1) AS u64_i32_plus_1,
+    u64 / (i32 + INT32(1)) AS u64_i32_plus_1,
     u64 / i64 AS u64_i64,
-    u64 / (i64 + 1) AS u64_i64_plus_1,
+    u64 / (i64 + INT64(1)) AS u64_i64_plus_1,
     # unsigned
     u64 / u8 AS u64_u8,
-    u64 / (u8 + 1) AS u64_u8_plus_1,
+    u64 / (u8 + UINT8(1)) AS u64_u8_plus_1,
     u64 / u16 AS u64_u16,
-    u64 / (u16 + 1) AS u64_u16_plus_1,
+    u64 / (u16 + UINT16(1)) AS u64_u16_plus_1,
     u64 / u32 AS u64_u32,
-    u64 / (u32 + 1) AS u64_u32_plus_1,
+    u64 / (u32 + UINT32(1)) AS u64_u32_plus_1,
     u64 / u64 AS u64_u64,
-    u64 / (u64 + 1) AS u64_u64_plus_1,
+    u64 / (u64 + UINT64(1)) AS u64_u64_plus_1,
     # float
     u64 / f32 AS u64_f32,
-    u64 / (f32 + 1) AS u64_f32_plus_1,
+    u64 / (f32 + FLOAT32(1)) AS u64_f32_plus_1,
     u64 / f64 AS u64_f64,
-    u64 / (f64 + 1) AS u64_f64_plus_1
+    u64 / (f64 + FLOAT64(1)) AS u64_f64_plus_1
 FROM stream INTO sinkU64
 ----
 0,0,0,0,0,0,0,0,102261126,99882960,16777216,16711935,65536,65535,1,0,186737712.000000,178956976.000000,186737708.521739,178956970.666667
@@ -278,27 +278,27 @@ FROM stream INTO sinkU64
 SELECT
     # signed
     f32 / i8 AS f32_i8,
-    f32 / (i8 + 1) AS f32_i8_plus_1,
+    f32 / (i8 + INT8(1)) AS f32_i8_plus_1,
     f32 / i16 AS f32_i16,
-    f32 / (i16 + 1) AS f32_i16_plus_1,
+    f32 / (i16 + INT16(1)) AS f32_i16_plus_1,
     f32 / i32 AS f32_i32,
-    f32 / (i32 + 1) AS f32_i32_plus_1,
+    f32 / (i32 + INT32(1)) AS f32_i32_plus_1,
     f32 / i64 AS f32_i64,
-    f32 / (i64 + 1) AS f32_i64_plus_1,
+    f32 / (i64 + INT64(1)) AS f32_i64_plus_1,
     # unsigned
     f32 / u8 AS f32_u8,
-    f32 / (u8 + 1) AS f32_u8_plus_1,
+    f32 / (u8 + UINT8(1)) AS f32_u8_plus_1,
     f32 / u16 AS f32_u16,
-    f32 / (u16 + 1) AS f32_u16_plus_1,
+    f32 / (u16 + UINT16(1)) AS f32_u16_plus_1,
     f32 / u32 AS f32_u32,
-    f32 / (u32 + 1) AS f32_u32_plus_1,
+    f32 / (u32 + UINT32(1)) AS f32_u32_plus_1,
     f32 / u64 AS f32_u64,
-    f32 / (u64 + 1) AS f32_u64_plus_1,
+    f32 / (u64 + UINT64(1)) AS f32_u64_plus_1,
     # float
     f32 / f32 AS f32_f32,
-    f32 / (f32 + 1) AS f32_f32_plus_1,
+    f32 / (f32 + FLOAT32(1)) AS f32_f32_plus_1,
     f32 / f64 AS f32_f64,
-    f32 / (f64 + 1) AS f32_f64_plus_1
+    f32 / (f64 + FLOAT64(1)) AS f32_f64_plus_1
 FROM stream INTO sinkF32
 ----
 -0.547619,-0.560976,-0.178295,-0.179688,-0.000702,-0.000702,-0.000000,-0.000000,0.547619,0.534884,0.089844,0.089494,0.000351,0.000351,0.000000,0.000000,1.000000,0.958333,1.000000,0.958333
@@ -308,27 +308,27 @@ FROM stream INTO sinkF32
 SELECT
     # signed
     f64 / i8 AS f64_i8,
-    f64 / (i8 + 1) AS f64_i8_plus_1,
+    f64 / (i8 + INT8(1)) AS f64_i8_plus_1,
     f64 / i16 AS f64_i16,
-    f64 / (i16 + 1) AS f64_i16_plus_1,
+    f64 / (i16 + INT16(1)) AS f64_i16_plus_1,
     f64 / i32 AS f64_i32,
-    f64 / (i32 + 1) AS f64_i32_plus_1,
+    f64 / (i32 + INT32(1)) AS f64_i32_plus_1,
     f64 / i64 AS f64_i64,
-    f64 / (i64 + 1) AS f64_i64_plus_1,
+    f64 / (i64 + INT64(1)) AS f64_i64_plus_1,
     # unsigned
     f64 / u8 AS f64_u8,
-    f64 / (u8 + 1) AS f64_u8_plus_1,
+    f64 / (u8 + UINT8(1)) AS f64_u8_plus_1,
     f64 / u16 AS f64_u16,
-    f64 / (u16 + 1) AS f64_u16_plus_1,
+    f64 / (u16 + UINT16(1)) AS f64_u16_plus_1,
     f64 / u32 AS f64_u32,
-    f64 / (u32 + 1) AS f64_u32_plus_1,
+    f64 / (u32 + UINT32(1)) AS f64_u32_plus_1,
     f64 / u64 AS f64_u64,
-    f64 / (u64 + 1) AS f64_u64_plus_1,
+    f64 / (u64 + UINT64(1)) AS f64_u64_plus_1,
     # float
     f64 / f32 AS f64_f32,
-    f64 / (f32 + 1) AS f64_f32_plus_1,
+    f64 / (f32 + FLOAT32(1)) AS f64_f32_plus_1,
     f64 / f64 AS f64_f64,
-    f64 / (f64 + 1) AS f64_f64_plus_1
+    f64 / (f64 + FLOAT64(1)) AS f64_f64_plus_1
 FROM stream INTO sinkF64
 ----
 -0.547619,-0.560976,-0.178295,-0.179688,-0.000702,-0.000702,-0.000000,-0.000000,0.547619,0.534884,0.089844,0.089494,0.000351,0.000351,0.000000,0.000000,1.000000,0.958333,1.000000,0.958333
