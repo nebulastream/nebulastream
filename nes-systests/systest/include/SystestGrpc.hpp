@@ -15,7 +15,6 @@
 #pragma once
 
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <grpc++/create_channel.h>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 /// TODO #460: We should use on GRPC client class for nebuli and systests

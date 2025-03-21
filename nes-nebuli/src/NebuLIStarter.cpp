@@ -17,7 +17,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <argparse/argparse.hpp>
 #include <google/protobuf/text_format.h>
-#include <grpc++/create_channel.h>
+#include <grpcpp/create_channel.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
