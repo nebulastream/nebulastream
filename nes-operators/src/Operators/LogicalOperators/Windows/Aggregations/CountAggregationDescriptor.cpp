@@ -85,10 +85,6 @@ std::shared_ptr<DataType> CountAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> CountAggregationDescriptor::getPartialAggregateStamp()
-{
-    return DataTypeProvider::provideDataType(LogicalType::UINT64);
-}
 std::shared_ptr<DataType> CountAggregationDescriptor::getFinalAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UINT64);

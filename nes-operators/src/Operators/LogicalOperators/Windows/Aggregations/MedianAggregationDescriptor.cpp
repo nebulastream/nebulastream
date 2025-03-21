@@ -90,10 +90,6 @@ std::shared_ptr<DataType> MedianAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> MedianAggregationDescriptor::getPartialAggregateStamp()
-{
-    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
-}
 std::shared_ptr<DataType> MedianAggregationDescriptor::getFinalAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::FLOAT64);

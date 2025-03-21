@@ -82,11 +82,6 @@ public:
     virtual std::shared_ptr<DataType> getInputStamp() = 0;
 
     /**
-     * @return the partial aggregation type
-     */
-    virtual std::shared_ptr<DataType> getPartialAggregateStamp() = 0;
-
-    /**
      * @return the final aggregation type
      */
     virtual std::shared_ptr<DataType> getFinalAggregateStamp() = 0;
