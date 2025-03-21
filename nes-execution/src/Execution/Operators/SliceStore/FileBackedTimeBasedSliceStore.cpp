@@ -263,6 +263,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
 
 void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
+    std::lock_guard lock(memCtrlMutex);
     auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
     if (not lockedSlicesAndWindows)
     {
@@ -278,11 +279,6 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
         if (windowInfo.windowEnd <= newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
-            // TODO delete state from ssd if there is any and if not done below
-            for (const auto& slice : windowsLockedIt->second.windowSlices)
-            {
-                //memCtrl.deleteSliceFiles(slice->getSliceEnd());
-            }
             windowsWriteLocked->erase(windowsLockedIt++);
         }
         else if (windowInfo.windowEnd > newGlobalWaterMark)
@@ -302,7 +298,6 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
         if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
         {
-            // TODO delete state from ssd if there is any and if not done above
             memCtrl.deleteSliceFiles(sliceEnd);
             slicesWriteLocked->erase(slicesLockedIt++);
         }
@@ -334,6 +329,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const uint64_t numberOfWorkerThreads,
     const SliceStoreMetaData& metaData)
 {
+    std::lock_guard lock(memCtrlMutex);
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
 
     // TODO write adaptively to file
@@ -356,6 +352,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const uint64_t numberOfWorkerThreads)
 {
+    std::lock_guard lock(memCtrlMutex);
     /// Read files in order by WorkerThreadId as all pagedVectorKeys have already been combined
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {

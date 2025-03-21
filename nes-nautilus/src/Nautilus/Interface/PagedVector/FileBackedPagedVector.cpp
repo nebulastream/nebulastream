@@ -79,15 +79,17 @@ void FileBackedPagedVector::readFromFile(
         case Runtime::Execution::NO_SEPARATION_KEEP_KEYS:
         case Runtime::Execution::NO_SEPARATION: {
             appendPageIfFull(bufferProvider, memoryLayout);
-            auto& lastPage = pages.back();
+            auto lastPage = pages.back();
             auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
             const auto tupleSize = memoryLayout->getTupleSize();
+            auto *lastPagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
 
-            while (const auto bytesRead = fileReader.read(lastPage.getBuffer(), tuplesToRead * tupleSize))
+            while (const auto bytesRead = fileReader.read(lastPagePtr, tuplesToRead * tupleSize))
             {
-                lastPage.setNumberOfTuples(bytesRead / tupleSize);
+                lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + bytesRead / tupleSize);
                 appendPageIfFull(bufferProvider, memoryLayout);
                 lastPage = pages.back();
+                lastPagePtr = lastPage.getBuffer();
                 tuplesToRead = memoryLayout->getCapacity();
             }
             break;
@@ -210,7 +212,7 @@ void FileBackedPagedVector::writePayloadOnlyToFile(
         {
             // TODO appendPageIfFull only when page is full not for each tuple
             appendKeyPageIfFull(bufferProvider, keyFieldsOnlyMemoryLayout.get());
-            auto& lastKeyPage = keyPages.back();
+            auto lastKeyPage = keyPages.back();
             const auto numTuplesLastKeyPage = lastKeyPage.getNumberOfTuples();
             auto* lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * keyFieldsOnlyMemoryLayout->getTupleSize();
 
@@ -246,7 +248,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
     {
         // TODO appendPageIfFull only when page is full not for each tuple
         appendPageIfFull(bufferProvider, memoryLayout);
-        auto& lastPage = pages.back();
+        auto lastPage = pages.back();
         const auto numTuplesLastPage = lastPage.getNumberOfTuples();
         auto* lastPagePtr = lastPage.getBuffer() + numTuplesLastPage * memoryLayout->getTupleSize();
 

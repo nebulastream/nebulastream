@@ -130,9 +130,9 @@ void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
             = fmt::format("memory_controller_{}_{}_{}_{}_", queryId.getRawValue(), originId.getRawValue(), sideStr, sliceEnd.getRawValue());
         const auto end = fileWriters.upper_bound(prefix + "\xFF");
         auto it = fileWriters.lower_bound(prefix);
-        //while (it != end)
+        while (it != end)
         {
-            //removeFileSystem(it++);
+            removeFileSystem(it++);
         }
     }
 }
