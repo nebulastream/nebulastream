@@ -39,8 +39,8 @@ SINK sinkStreamNonKeyed UINT64 stream$start UINT64 stream$end UINT64 stream$sumV
 
 # Two window aggregations
 SELECT SUM(value) as sumValue FROM (
-    SELECT SUM(value) as value FROM stream WHERE id < 15 GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec)
-) WHERE id < 10 GROUP BY id WINDOW TUMBLING(start, size 2 sec) INTO sinkStream;
+    SELECT SUM(value) as value FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec)
+) WHERE id < UINT32(10) GROUP BY id WINDOW TUMBLING(start, size 2 sec) INTO sinkStream;
 ----
 0 2000 1 1
 0 2000 4 1
@@ -72,8 +72,8 @@ SELECT SUM(value) as sumValue FROM (
 
 # Two window aggregations with a keyed sliding and then a keyed tumbling window
 SELECT SUM(inputValue) as sumValue FROM (
-    SELECT SUM(value) as inputValue FROM stream WHERE id < 15 GROUP BY id WINDOW TUMBLING(timestamp, size 2 sec)
-) WHERE id < 10 GROUP BY id WINDOW SLIDING(start, size 1 sec, advance by 500 ms) INTO sinkStream;
+    SELECT SUM(value) as inputValue FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW TUMBLING(timestamp, size 2 sec)
+) WHERE id < UINT32(10) GROUP BY id WINDOW SLIDING(start, size 1 sec, advance by 500 ms) INTO sinkStream;
 ----
 0 1000 1 1
 0 1000 4 1
@@ -102,9 +102,9 @@ SELECT SUM(inputValue) as sumValue FROM (
 # Three window aggregations with a sliding (keyed), then a tumbling (keyed), and then a tumbling window
 SELECT SUM(inputValue2) as sumValue FROM (
     SELECT SUM(inputValue1) as inputValue2 FROM (
-        SELECT SUM(value) as inputValue1 FROM stream WHERE id < 15 GROUP BY id WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
+        SELECT SUM(value) as inputValue1 FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW SLIDING(timestamp, size 1 sec, advance by 500 ms)
     )  GROUP BY id WINDOW TUMBLING(start, size 1 sec)
-) WHERE id < 10 WINDOW TUMBLING(start, size 2 sec) INTO sinkStreamNonKeyed;
+) WHERE id < UINT32(10) WINDOW TUMBLING(start, size 2 sec) INTO sinkStreamNonKeyed;
 ----
 0 2000 6
 2000 4000 24
