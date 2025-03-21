@@ -34,7 +34,7 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
     {
         context->AddTrailingMetadata("where", where->to_string());
     }
-    return grpc::Status(grpc::INTERNAL, exception.what());
+    return {grpc::INTERNAL, exception.what()};
 }
 
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
