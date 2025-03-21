@@ -109,37 +109,6 @@ struct TestFile
     /// Load a testfile but consider only queries with a specific query number (location in test file)
     explicit TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber);
 
-    /// Returns the correct logging path, depending on if the HOST_NEBULASTREAM_ROOT environment variable is set
-    [[nodiscard]] std::string getLogFilePath() const {
-        if (const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT"))
-        {
-            /// Set the correct logging path when using docker
-            /// To do this, we need to combine the path to the host's nebula-stream root with the path to the file.
-            /// We assume that the last part of hostNebulaStreamRoot is the common folder name.
-            auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
-
-            /// Find the position of the common folder in the file path
-            auto filePathIter = file.begin();
-            if (const auto it = std::ranges::find(file, commonFolder); it != file.end()) {
-                filePathIter = std::next(it);
-            }
-
-            /// Combining the path to the host's nebula-stream root with the path to the file
-            std::filesystem::path resultPath(hostNebulaStreamRoot);
-            for (; filePathIter != file.end(); ++filePathIter)
-            {
-                resultPath /= *filePathIter;
-            }
-
-            return resultPath.string();
-        }
-        else
-        {
-            /// Set the correct logging path without docker
-            return std::filesystem::path(file);
-        }
-    }
-
     [[nodiscard]] TestName name() const { return file.stem().string(); }
 
     std::filesystem::path file;
