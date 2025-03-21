@@ -299,31 +299,22 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
             break;
     }
 
-    auto createBuildOperator = [&](const std::shared_ptr<Schema>& inputSchema,
-                                   const std::vector<std::string>& joinFieldNames,
-                                   JoinBuildSideType buildSideType,
-                                   const TimestampField& timeStampField)
+    auto createBuildOperator
+        = [&](const std::shared_ptr<Schema>& inputSchema, JoinBuildSideType buildSideType, const TimestampField& timeStampField)
     {
         return std::make_shared<PhysicalOperators::PhysicalStreamJoinBuildOperator>(
             inputSchema,
             joinOperator->getOutputSchema(),
             joinOperatorHandler,
             queryCompilerConfig.joinStrategy,
-            joinFieldNames,
             timeStampField,
             buildSideType);
     };
     auto joinFunctionLowered = FunctionProvider::lowerFunction(joinOperator->getJoinFunction());
-    const auto leftJoinBuildOperator = createBuildOperator(
-        joinOperator->getLeftInputSchema(),
-        streamJoinConfig.joinFieldNamesLeft,
-        JoinBuildSideType::Left,
-        streamJoinConfig.timeStampFieldLeft);
-    const auto rightJoinBuildOperator = createBuildOperator(
-        joinOperator->getRightInputSchema(),
-        streamJoinConfig.joinFieldNamesRight,
-        JoinBuildSideType::Right,
-        streamJoinConfig.timeStampFieldRight);
+    const auto leftJoinBuildOperator
+        = createBuildOperator(joinOperator->getLeftInputSchema(), JoinBuildSideType::Left, streamJoinConfig.timeStampFieldLeft);
+    const auto rightJoinBuildOperator
+        = createBuildOperator(joinOperator->getRightInputSchema(), JoinBuildSideType::Right, streamJoinConfig.timeStampFieldRight);
     const auto joinProbeOperator = std::make_shared<PhysicalOperators::PhysicalStreamJoinProbeOperator>(
         joinOperator->getLeftInputSchema(),
         joinOperator->getRightInputSchema(),

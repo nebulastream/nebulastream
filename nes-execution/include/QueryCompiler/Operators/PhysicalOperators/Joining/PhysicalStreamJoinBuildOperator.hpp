@@ -37,7 +37,6 @@ public:
         const std::shared_ptr<Schema>& outputSchema,
         const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
         Configurations::StreamJoinStrategy joinStrategy,
-        const std::vector<std::string>& joinFieldNames,
         TimestampField timestampField,
         JoinBuildSideType buildSide,
         OperatorId id = getNextOperatorId());
@@ -47,14 +46,12 @@ public:
 
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
     Configurations::StreamJoinStrategy getJoinStrategy() const;
-    std::vector<std::string> getJoinFieldNames() const;
     const TimestampField& getTimeStampField() const;
     JoinBuildSideType getBuildSide() const;
 
 private:
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
     Configurations::StreamJoinStrategy joinStrategy;
-    std::vector<std::string> joinFieldNames;
     TimestampField timeStampField;
     JoinBuildSideType buildSide;
 };
