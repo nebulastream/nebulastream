@@ -548,17 +548,6 @@ STRING
     | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
     ;
 
-// Todo: remove type-specific literals
-/// Signed integer literals.
-BIGINT_LITERAL
-    : DIGIT+ '_L'
-    ;
-SMALLINT_LITERAL
-    : DIGIT+ '_S'
-    ;
-TINYINT_LITERAL
-    : DIGIT+ '_Y'
-    ;
 INTEGER_VALUE
     : DIGIT+
     ;
