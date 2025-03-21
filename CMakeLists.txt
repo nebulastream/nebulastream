@@ -35,7 +35,6 @@ option(NES_ENABLE_LLVM_LIT "Create targets for llvm lit system testing (intended
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" OFF)
 
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
-option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
 
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
 if (NES_LOG_WITH_STACKTRACE)
