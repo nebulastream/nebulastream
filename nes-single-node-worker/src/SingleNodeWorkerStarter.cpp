@@ -13,6 +13,7 @@
 */
 
 #include <Configurations/Util.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <grpcpp/server_builder.h>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
