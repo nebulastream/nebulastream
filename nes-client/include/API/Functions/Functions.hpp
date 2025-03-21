@@ -61,7 +61,7 @@ public:
     /// Rename the function item
     /// @param name : the new name
     /// @return the updated function item
-    FunctionItem as(std::string name);
+    FunctionItem as(Identifier name);
 
 private:
     std::shared_ptr<NodeFunction> function;

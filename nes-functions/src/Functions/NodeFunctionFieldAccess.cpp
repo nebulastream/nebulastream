@@ -24,21 +24,22 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
+#include <Identifiers/Identifier.hpp>
 namespace NES
 {
-NodeFunctionFieldAccess::NodeFunctionFieldAccess(DataType stamp, std::string fieldName)
+NodeFunctionFieldAccess::NodeFunctionFieldAccess(DataType stamp, IdentifierList  fieldName)
     : NodeFunction(std::move(stamp), "FieldAccess"), fieldName(std::move(fieldName)) {};
 
-NodeFunctionFieldAccess::NodeFunctionFieldAccess(NodeFunctionFieldAccess* other) : NodeFunction(other), fieldName(other->getFieldName()) {};
+NodeFunctionFieldAccess::NodeFunctionFieldAccess(const NodeFunctionFieldAccess* other) : NodeFunction(other), fieldName(other->getFieldName()) {};
 
-std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(DataType stamp, std::string fieldName)
+std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(DataType stamp, const IdentifierList& fieldName)
 {
-    return std::make_shared<NodeFunctionFieldAccess>(NodeFunctionFieldAccess(std::move(stamp), std::move(fieldName)));
+    return std::make_shared<NodeFunctionFieldAccess>(NodeFunctionFieldAccess(std::move(stamp), fieldName));
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(std::string fieldName)
+std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(const IdentifierList& fieldName)
 {
-    return create(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), std::move(fieldName));
+    return create(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), fieldName);
 }
 
 bool NodeFunctionFieldAccess::equal(const std::shared_ptr<Node>& rhs) const
@@ -53,14 +54,14 @@ bool NodeFunctionFieldAccess::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionFieldAccess::getFieldName() const
+IdentifierList NodeFunctionFieldAccess::getFieldName() const
 {
     return fieldName;
 }
 
-void NodeFunctionFieldAccess::updateFieldName(std::string fieldName)
+void NodeFunctionFieldAccess::updateFieldName(const IdentifierList& fieldName)
 {
-    this->fieldName = std::move(fieldName);
+    this->fieldName = fieldName;
 }
 
 std::string NodeFunctionFieldAccess::toString() const

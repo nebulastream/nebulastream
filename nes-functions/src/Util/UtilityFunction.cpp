@@ -22,10 +22,10 @@
 
 namespace NES
 {
-std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames(std::shared_ptr<NES::NodeFunction> joinFunction)
+std::pair<IdentifierList, IdentifierList> findEquiJoinKeyNames(std::shared_ptr<NES::NodeFunction> joinFunction)
 {
-    std::basic_string<char> leftJoinKeyNameEqui;
-    std::basic_string<char> rightJoinKeyNameEqui;
+    IdentifierList leftJoinKeyNameEqui{};
+    IdentifierList rightJoinKeyNameEqui{};
 
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<std::shared_ptr<NES::NodeFunctionBinary>> visitedFunctions;

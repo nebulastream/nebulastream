@@ -13,12 +13,18 @@
 */
 
 #pragma once
+#include "Identifiers/Identifier.hpp"
+
+
 #include <memory>
 #include <string>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
+
+
+class IdentifierList;
 namespace NES
 {
 
@@ -30,8 +36,8 @@ namespace NES
 class NodeFunctionFieldAccess : public NodeFunction
 {
 public:
-    static std::shared_ptr<NodeFunction> create(DataType stamp, std::string fieldName);
-    static std::shared_ptr<NodeFunction> create(std::string fieldName);
+    static std::shared_ptr<NodeFunction> create(DataType stamp, const IdentifierList& fieldName);
+    static std::shared_ptr<NodeFunction> create(const IdentifierList& fieldName);
 
     bool equal(const std::shared_ptr<Node>& rhs) const override;
 
@@ -39,13 +45,13 @@ public:
      * @brief Get field name
      * @return field name
      */
-    std::string getFieldName() const;
+    IdentifierList getFieldName() const;
 
     /**
      * @brief Updated field name
      * @param fieldName : the new name of the field
      */
-    void updateFieldName(std::string fieldName);
+    void updateFieldName(const IdentifierList& fieldName);
 
     /**
      * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
@@ -63,15 +69,15 @@ public:
     bool validateBeforeLowering() const override;
 
 protected:
-    explicit NodeFunctionFieldAccess(NodeFunctionFieldAccess* other);
+    explicit NodeFunctionFieldAccess(const NodeFunctionFieldAccess* other);
 
-    NodeFunctionFieldAccess(DataType stamp, std::string fieldName);
+    NodeFunctionFieldAccess(DataType stamp, IdentifierList  fieldName);
 
     std::string toString() const override;
     /**
      * @brief Name of the field want to access.
      */
-    std::string fieldName;
+    IdentifierList fieldName;
 };
 
 }

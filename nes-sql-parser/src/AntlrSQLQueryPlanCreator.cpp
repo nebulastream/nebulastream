@@ -154,7 +154,9 @@ void AntlrSQLQueryPlanCreator::enterFromClause(AntlrSQLParser::FromClauseContext
 void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext* context)
 {
     if (context->sink().empty())
+    {
         throw InvalidQuerySyntax("INTO must be followed by at least one sink-identifier.");
+    }
     /// Store all specified sinks.
     for (const auto& sink : context->sink())
     {
@@ -370,7 +372,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             {
                 /// rename of a single attribute
                 auto functionItem = static_cast<FunctionItem>(attr);
-                functionItem = functionItem.as(context->getText());
+                functionItem = functionItem.as(Identifier{context->getText()});
                 helper.functionBuilder.push_back(functionItem);
             }
             else

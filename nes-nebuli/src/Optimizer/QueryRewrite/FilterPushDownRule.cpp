@@ -371,7 +371,7 @@ FilterPushDownRule::getFilterAccessFunctions(const std::shared_ptr<NodeFunction>
 }
 
 void FilterPushDownRule::renameNodeFunctionFieldAccesss(
-    const std::shared_ptr<NodeFunction>& nodeFunction, const std::string& toReplace, const std::string& replacement)
+    const std::shared_ptr<NodeFunction>& nodeFunction, const IdentifierList& toReplace, const IdentifierList& replacement)
 {
     DepthFirstNodeIterator depthFirstNodeIterator(nodeFunction);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
@@ -399,8 +399,8 @@ void FilterPushDownRule::renameFilterAttributesByNodeFunctions(
         if (Util::instanceOf<NodeFunctionFieldRename>(nodeFunction))
         {
             const std::shared_ptr<NodeFunctionFieldRename> fieldRenameNodeFunction = Util::as<NodeFunctionFieldRename>(nodeFunction);
-            std::string newFieldName = fieldRenameNodeFunction->getNewFieldName();
-            std::string originalFieldName = fieldRenameNodeFunction->getOriginalField()->getFieldName();
+            IdentifierList newFieldName = fieldRenameNodeFunction->getNewFieldName();
+            IdentifierList originalFieldName = fieldRenameNodeFunction->getOriginalField()->getFieldName();
             renameNodeFunctionFieldAccesss(predicateCopy, newFieldName, originalFieldName);
         }
     }

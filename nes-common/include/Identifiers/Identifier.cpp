@@ -12,18 +12,4 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <string>
-#include <Functions/NodeFunctionBinary.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-
-namespace NES
-{
-/**
- * @brief return the equiJoinName contained in all joinFunctions
- * @param joinFunction : a set of potenitally nested binary functions
- * @param the keyFieldNames as pair
- */
-std::pair<IdentifierList, IdentifierList> findEquiJoinKeyNames(std::shared_ptr<NES::NodeFunction> joinFunction);
-}
+#include <Identifiers/Identifier.hpp>

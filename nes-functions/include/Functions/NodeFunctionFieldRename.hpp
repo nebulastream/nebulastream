@@ -19,6 +19,7 @@
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Node.hpp>
+#include <Identifiers/Identifier.hpp>
 namespace NES
 {
 
@@ -26,11 +27,11 @@ namespace NES
 class NodeFunctionFieldRename : public NodeFunction
 {
 public:
-    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName);
+    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, Identifier newFieldName);
 
     [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
     bool validateBeforeLowering() const override;
-    std::string getNewFieldName() const;
+    Identifier getNewFieldName() const;
 
     void inferStamp(const Schema& schema) override;
 
@@ -44,10 +45,10 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName);
+    NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, Identifier newFieldName);
 
     std::shared_ptr<NodeFunctionFieldAccess> originalField;
-    std::string newFieldName;
+    Identifier newFieldName;
 };
 
 }

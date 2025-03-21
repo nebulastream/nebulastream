@@ -28,6 +28,7 @@
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include "Identifiers/Identifier.hpp"
 
 namespace NES
 {
@@ -93,7 +94,7 @@ FunctionItem::FunctionItem(std::shared_ptr<NodeFunction> exp) : function(std::mo
 {
 }
 
-FunctionItem FunctionItem::as(std::string newName)
+FunctionItem FunctionItem::as(Identifier name)
 {
     ///rename function node
     PRECONDITION(
@@ -101,7 +102,7 @@ FunctionItem FunctionItem::as(std::string newName)
         "Renaming is only allowed on field access attributes, got: {}",
         function->getType());
     auto fieldAccessFunction = Util::as<NodeFunctionFieldAccess>(function);
-    return NodeFunctionFieldRename::create(fieldAccessFunction, std::move(newName));
+    return NodeFunctionFieldRename::create(fieldAccessFunction, std::move(name));
 }
 
 std::shared_ptr<NodeFunctionFieldAssignment> FunctionItem::operator=(const FunctionItem& assignItem) const
@@ -120,12 +121,12 @@ std::shared_ptr<NodeFunctionFieldAssignment> FunctionItem::operator=(const std::
 
 FunctionItem Attribute(std::string fieldName)
 {
-    return {NodeFunctionFieldAccess::create(std::move(fieldName))};
+    return {NodeFunctionFieldAccess::create(Identifier{fieldName})};
 }
 
 FunctionItem Attribute(std::string fieldName, const DataType::Type type)
 {
-    return {NodeFunctionFieldAccess::create(DataTypeProvider::provideDataType(type), std::move(fieldName))};
+    return {NodeFunctionFieldAccess::create(DataTypeProvider::provideDataType(type), Identifier{fieldName})};
 }
 
 std::shared_ptr<NodeFunction> WHEN(const std::shared_ptr<NodeFunction>& conditionExp, const std::shared_ptr<NodeFunction>& valueExp)

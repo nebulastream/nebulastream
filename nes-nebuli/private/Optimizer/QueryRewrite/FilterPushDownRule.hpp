@@ -219,7 +219,7 @@ private:
      * @param replacement new attribute name
      */
     static void renameNodeFunctionFieldAccesss(
-        const std::shared_ptr<NodeFunction>& nodeFunction, const std::string& toReplace, const std::string& replacement);
+        const std::shared_ptr<NodeFunction>& nodeFunction, const IdentifierList& toReplace, const IdentifierList& replacement);
 
     /**
      * @brief Substitute the filter predicate's field access expression node with the map operator's expression node if needed

@@ -25,14 +25,14 @@
 
 namespace NES
 {
-NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName)
+NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, Identifier newFieldName)
     : NodeFunction(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
 
 NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldRename>& other)
     : NodeFunctionFieldRename(other->getOriginalField(), other->getNewFieldName()) {};
 
 std::shared_ptr<NodeFunction>
-NodeFunctionFieldRename::create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName)
+NodeFunctionFieldRename::create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, Identifier newFieldName)
 {
     return std::make_shared<NodeFunctionFieldRename>(NodeFunctionFieldRename(originalField, std::move(newFieldName)));
 }
@@ -52,7 +52,7 @@ std::shared_ptr<NodeFunctionFieldAccess> NodeFunctionFieldRename::getOriginalFie
     return this->originalField;
 }
 
-std::string NodeFunctionFieldRename::getNewFieldName() const
+Identifier NodeFunctionFieldRename::getNewFieldName() const
 {
     return newFieldName;
 }
@@ -60,7 +60,7 @@ std::string NodeFunctionFieldRename::getNewFieldName() const
 std::string NodeFunctionFieldRename::toString() const
 {
     auto node = getOriginalField();
-    return fmt::format("FieldRenameFunction({} => {} : {})", fmt::format("{}", *node), newFieldName, stamp);
+    return fmt::format("FieldRenameFunction({} => {} : {})", fmt::format("{}", *node), newFieldName.getValue(), stamp);
 }
 
 void NodeFunctionFieldRename::inferStamp(const Schema& schema)

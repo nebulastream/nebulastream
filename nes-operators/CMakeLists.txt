@@ -15,7 +15,9 @@ add_subdirectory(src)
 get_source(nes-operators NES_OPERATORS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-operators ${NES_OPERATORS_SOURCE_FILES})
+add_library(nes-operators ${NES_OPERATORS_SOURCE_FILES}
+        ../nes-common/include/Identifiers/Identifier.cpp
+        ../nes-common/include/Identifiers/Identifier.hpp)
 target_link_libraries(nes-operators PUBLIC nes-sources nes-sinks nes-window-types)
 target_include_directories(nes-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
