@@ -137,8 +137,7 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
     for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
     {
         auto& [windowSlices, windowState] = (*windowsWriteLocked)[windowInfo];
-        INVARIANT(
-            windowState != WindowInfoState::EMITTED_TO_PROBE, "We should not add slices to a window that has already been triggered.");
+        INVARIANT(windowState != WindowInfoState::EMITTED_TO_PROBE, "We should not add slices to a window that has already been triggered.");
         windowState = WindowInfoState::WINDOW_FILLING;
         windowSlices.emplace_back(newSlice);
     }
