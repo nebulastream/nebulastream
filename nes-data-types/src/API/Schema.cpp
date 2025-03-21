@@ -120,52 +120,29 @@ std::optional<std::shared_ptr<AttributeField>> Schema::getFieldByName(const std:
 {
     PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
 
-    /// If the fieldName is fully qualified, we can directly search for the field
-    if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
-    {
-        if(const auto it = std::ranges::find(fields, fieldName, &AttributeField::getName); it != fields.end())
-        {
-            return *it;
-        }
-        NES_WARNING("Schema: field with name {} does not exist", fieldName);
-        return std::nullopt;
-    }
-
-    /// Fieldname is not qualified, we need to check for ambiguous field names.
-    /// Iterates over all fields and checks if the field name matches the input field name without any qualifier.
-    /// This means that if either the fieldName or the field name in the schema contains a qualifier, everything before the qualifier is ignored.
-    std::vector<std::shared_ptr<AttributeField>> potentialMatches;
+    ///Iterate over all fields and look for field which fully qualified name
+    std::vector<std::shared_ptr<AttributeField>> matchedFields;
     for (const auto& field : fields)
     {
-        /// Removing potential qualifiers from the field name and the input field name
-        const auto fieldWithoutQualifier = field->getName().substr(field->getName().find(ATTRIBUTE_NAME_SEPARATOR) + 1);
-        const auto fieldNameWithoutQualifier = fieldName.substr(fieldName.find(ATTRIBUTE_NAME_SEPARATOR) + 1);
-
-        if (fieldWithoutQualifier == fieldNameWithoutQualifier)
+        if (auto fullyQualifiedFieldName = field->getName(); fieldName.length() <= fullyQualifiedFieldName.length())
         {
-            potentialMatches.emplace_back(field);
+            ///Check if the field name ends with the input field name
+            const auto startingPos = fullyQualifiedFieldName.length() - fieldName.length();
+            const auto found = fullyQualifiedFieldName.compare(startingPos, fieldName.length(), fieldName);
+            if (found == 0)
+            {
+                matchedFields.push_back(field);
+            }
         }
     }
-
-    /// If there exists a single potential match, return it
-    /// If there exists no potential match, return an empty optional
-    if (potentialMatches.size() == 1)
+    ///Check how many matching fields were found and raise appropriate exception
+    if (not matchedFields.empty())
     {
-        return potentialMatches[0];
-    }
-    if (potentialMatches.empty())
-    {
-        return std::nullopt;
-    }
-
-    /// Check how many matching fields were found and raise appropriate exception
-    if (not potentialMatches.empty())
-    {
-        if (potentialMatches.size() > 1)
+        if (matchedFields.size() > 1)
         {
             NES_WARNING("Schema: Found ambiguous field with name {}", fieldName);
         }
-        return potentialMatches[0];
+        return matchedFields[0];
     }
     NES_WARNING("Schema: field with name {} does not exist", fieldName);
     return std::nullopt;

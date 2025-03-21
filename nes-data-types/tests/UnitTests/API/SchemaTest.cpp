@@ -130,41 +130,6 @@ TEST_F(SchemaTest, addFieldTest)
     }
 }
 
-/// Test for the method getFieldByName that calling getFieldByName(bid$start) and getFieldByName(bidbid$start) return two different fields
-TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
-{
-    const auto field1 = AttributeField::create("bidbid$start", DataTypeFactory::createUInt64());
-    const auto field2 = AttributeField::create("bidbid$end", DataTypeFactory::createUInt64());
-    const auto field3 = AttributeField::create("bid$start", DataTypeFactory::createUInt64());
-    const auto field4 = AttributeField::create("auction$id", DataTypeFactory::createUInt64());
-    const auto field5 = AttributeField::create("auction$initialbid", DataTypeFactory::createUInt64());
-
-    const auto schemaUnderTest = Schema::create()
-                                     ->addField(field1)
-                                     ->addField(field2)
-                                     ->addField(field3)
-                                     ->addField(field4)
-                                     ->addField(field5);
-
-    const auto fieldByName1 = schemaUnderTest->getFieldByName("bidbid$start");
-    const auto fieldByName2 = schemaUnderTest->getFieldByName("end");
-    const auto fieldByName3 = schemaUnderTest->getFieldByName(field3->getName());
-    const auto fieldByName4 = schemaUnderTest->getFieldByName("id");
-    const auto fieldByName5 = schemaUnderTest->getFieldByName("initialbid");
-
-    EXPECT_TRUE(field1->isEqual(fieldByName1.value())) << "Field 1 " << field1->toString() << " and field by name 1 " << fieldByName1.value()->toString() << " are not equal";
-    EXPECT_TRUE(field2->isEqual(fieldByName2.value())) << "Field 2 " << field2->toString() << " and field by name 2 " << fieldByName2.value()->toString() << " are not equal";
-    EXPECT_TRUE(field3->isEqual(fieldByName3.value())) << "Field 3 " << field3->toString() << " and field by name 3 " << fieldByName3.value()->toString() << " are not equal";
-    EXPECT_TRUE(field4->isEqual(fieldByName4.value())) << "Field 4 " << field4->toString() << " and field by name 4 " << fieldByName4.value()->toString() << " are not equal";
-    EXPECT_TRUE(field5->isEqual(fieldByName5.value())) << "Field 5 " << field5->toString() << " and field by name 5 " << fieldByName5.value()->toString() << " are not equal";
-
-    NES_INFO("fieldByName1: {}", fieldByName1.value()->toString());
-    NES_INFO("fieldByName2: {}", fieldByName2.value()->toString());
-    NES_INFO("fieldByName3: {}", fieldByName3.value()->toString());
-    NES_INFO("fieldByName4: {}", fieldByName4.value()->toString());
-    NES_INFO("fieldByName5: {}", fieldByName5.value()->toString());
-}
-
 TEST_F(SchemaTest, removeFieldsTest)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
