@@ -51,9 +51,12 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(const FileBackedTim
     , numberOfInputOriginsTerminated(other.numberOfInputOriginsTerminated.load())
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
-    *slicesWriteLocked = *otherSlicesReadLocked;
-    *windowsWriteLocked = *otherWindowsReadLocked;
+    auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
+    const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
+    *slicesWriteLocked = *otherSlicesWriteLocked;
+    *windowsWriteLocked = *otherWindowsWriteLocked;
+    *slicesInMemoryLocked = *otherSlicesInMemoryLocked;
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
@@ -64,16 +67,22 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
+    const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
     *slicesWriteLocked = std::move(*otherSlicesWriteLocked);
     *windowsWriteLocked = std::move(*otherWindowsWriteLocked);
+    *slicesInMemoryLocked = std::move(*otherSlicesInMemoryLocked);
 }
 
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(const FileBackedTimeBasedSliceStore& other)
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
+    const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
     *slicesWriteLocked = *otherSlicesReadLocked;
     *windowsWriteLocked = *otherWindowsReadLocked;
+    *slicesInMemoryLocked = *otherSlicesInMemoryLocked;
 
     memCtrl = other.memCtrl;
     sliceAssigner = other.sliceAssigner;
@@ -86,8 +95,11 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
+    const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
     *slicesWriteLocked = std::move(*otherSlicesWriteLocked);
     *windowsWriteLocked = std::move(*otherWindowsWriteLocked);
+    *slicesInMemoryLocked = std::move(*otherSlicesInMemoryLocked);
 
     memCtrl = std::move(other.memCtrl);
     sliceAssigner = std::move(other.sliceAssigner);
@@ -127,6 +139,7 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
 
     const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
     const auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
@@ -141,6 +154,8 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     INVARIANT(newSlices.size() == 1, "We assume that only one slice is created per timestamp for our default time-based slice store.");
     auto newSlice = newSlices[0];
     slicesWriteLocked->emplace(sliceEnd, newSlice);
+    slicesInMemoryLocked->insert({{sliceEnd, QueryCompilation::JoinBuildSideType::Left}, false});
+    slicesInMemoryLocked->insert({{sliceEnd, QueryCompilation::JoinBuildSideType::Right}, false});
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
     for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
@@ -263,8 +278,8 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
 
 void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
-    std::lock_guard lock(memCtrlMutex);
     auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
     if (not lockedSlicesAndWindows)
     {
         /// We could not acquire the lock, so we opt for not performing the garbage collection this time.
@@ -299,6 +314,8 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
         {
             memCtrl.deleteSliceFiles(sliceEnd);
+            slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Left}));
+            slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Right}));
             slicesWriteLocked->erase(slicesLockedIt++);
         }
         else
@@ -312,8 +329,10 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
 void FileBackedTimeBasedSliceStore::deleteState()
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
     slicesWriteLocked->clear();
     windowsWriteLocked->clear();
+    slicesInMemoryLocked->clear();
     // TODO delete memCtrl and state from ssd if there is any
 }
 
@@ -329,7 +348,6 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const uint64_t numberOfWorkerThreads,
     const SliceStoreMetaData& metaData)
 {
-    std::lock_guard lock(memCtrlMutex);
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
 
     // TODO write adaptively to file
@@ -352,15 +370,23 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const uint64_t numberOfWorkerThreads)
 {
-    std::lock_guard lock(memCtrlMutex);
-    /// Read files in order by WorkerThreadId as all pagedVectorKeys have already been combined
+    // TODO use rlock and conditions (-map)
+    const auto sliceEnd = slice->getSliceEnd();
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
+    if ((*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}])
+    {
+        return;
+    }
+
+    /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
-        if (auto fileReader = memCtrl.getFileReader(slice->getSliceEnd(), WorkerThreadId(threadId), joinBuildSide))
+        if (auto fileReader = memCtrl.getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
         {
             slice->readFromFile(bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(threadId), *fileReader, USE_FILE_LAYOUT);
         }
     }
+    (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
 }
 
 }

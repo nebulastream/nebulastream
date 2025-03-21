@@ -94,7 +94,7 @@ private:
 
     /// Manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory pool used by them.
     MemoryController memCtrl;
-    std::mutex memCtrlMutex;
+    folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.
