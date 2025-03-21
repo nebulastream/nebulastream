@@ -110,7 +110,7 @@ void CountAggregationFunction::reset(const nautilus::val<AggregationState*> aggr
 
 size_t CountAggregationFunction::getSizeOfStateInBytes() const
 {
-    return resultType->size();
+    return resultType->getSizeInBytes();
 }
 
 }
