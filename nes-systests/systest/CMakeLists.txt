@@ -41,7 +41,7 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 if (CODE_COVERAGE)
-    target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter PUBLIC AUTO ALL ARGS -n 20 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc -- --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.queryEngine.numberOfWorkerThreads=8)
+    target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter PUBLIC AUTO ALL ARGS --sequential --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc -- --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryEngine.numberOfWorkerThreads=8)
 endif (CODE_COVERAGE)
 
 
@@ -50,18 +50,18 @@ include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 # If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
 ExternalData_Add_Test(TEST_DATA
         NAME systest_interpreter
-        COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter --exclude-groups large --data DATA{../testdata/,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=INTERPRETER)
+        COMMAND systest -n 100 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter --exclude-groups large --data DATA{../testdata/,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
 if (NOT CODE_COVERAGE)
     ExternalData_Add_Test(TEST_DATA
             NAME systest_compiler
-            COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large --data DATA{../testdata/,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=COMPILER)
+            COMMAND systest -n 100 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large --data DATA{../testdata/,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=100000)
 endif (NOT CODE_COVERAGE)
 
 
 if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(TEST_DATA
             NAME systest_large
-            COMMAND systest --sequential --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data DATA{../testdata/,RECURSE:,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=10)
+            COMMAND systest --sequential --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data DATA{../testdata/,RECURSE:,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=COMPILER)
 endif ()
 ExternalData_Add_Target(TEST_DATA)
 
@@ -86,15 +86,15 @@ endforeach ()
 set(workerThreads 1 2 4 8)
 foreach (workerThreads IN LISTS workerThreads)
     if (CODE_COVERAGE)
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_join_cc -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_agg_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_aggregation_cc -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_join_cc -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_agg_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_aggregation_cc -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000)
     endif (CODE_COVERAGE)
 
     add_test(
             NAME systest_join_${workerThreads}_interpreter
             COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_join
-                    --
-                    --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
+            --
+            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
     add_test(
             NAME systest_join_${workerThreads}_compiler
             COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_join
@@ -109,8 +109,8 @@ foreach (workerThreads IN LISTS workerThreads)
     add_test(
             NAME systest_agg_${workerThreads}_compiler
             COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_aggregation
-                    --
-                    --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER)
+            --
+            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
 endforeach ()
 
 
