@@ -111,10 +111,6 @@ std::shared_ptr<DataType> AvgAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> AvgAggregationDescriptor::getPartialAggregateStamp()
-{
-    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
-}
 std::shared_ptr<DataType> AvgAggregationDescriptor::getFinalAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::FLOAT64);
