@@ -478,21 +478,9 @@ fragment LETTER
     : ('a'..'z'|'A'..'Z'|'_')
     ;
 
-SIMPLE_COMMENT
-    : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
-    ;
-
-BRACKETED_COMMENT
-    : '/*' {!isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
-    ;
-
 WS
     : [ \r\n\t]+ -> channel(HIDDEN)
     ;
-
-
-FOUR_OCTETS: OCTET '.' OCTET '.' OCTET '.' OCTET;
-OCTET: [0-2][0-9]?[0-9]?;
 
 /// Catch-all for anything we can't recognize.
 /// We use this to be able to ignore and recover all the text
@@ -503,3 +491,11 @@ UNRECOGNIZED
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
+
+SIMPLE_COMMENT
+    : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
+    ;
+
+BRACKETED_COMMENT
+    : '/*' {!isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
+    ;
