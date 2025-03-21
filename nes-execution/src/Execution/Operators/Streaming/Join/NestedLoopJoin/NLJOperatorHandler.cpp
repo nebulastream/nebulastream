@@ -27,6 +27,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -62,11 +63,11 @@ std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> NLJOper
 }
 
 void NLJOperatorHandler::emitSliceIdsToProbe(
-Slice& sliceLeft,
-Slice& sliceRight,
-const WindowInfo& windowInfo,
-const SequenceData& sequenceData,
-PipelineExecutionContext* pipelineCtx)
+    Slice& sliceLeft,
+    Slice& sliceRight,
+    const WindowInfo& windowInfo,
+    const SequenceData& sequenceData,
+    PipelineExecutionContext* pipelineCtx)
 {
     auto& nljSliceLeft = dynamic_cast<NLJSlice&>(sliceLeft);
     auto& nljSliceRight = dynamic_cast<NLJSlice&>(sliceRight);
@@ -90,9 +91,9 @@ PipelineExecutionContext* pipelineCtx)
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
     bufferMemory->windowInfo = windowInfo;
 
-    pipelineCtx->emitBuffer(tupleBuffer);
-    NES_DEBUG(
-        "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
+    pipelineCtx->emitBuffer(tupleBuffer, PipelineExecutionContext::ContinuationPolicy::NEVER);
+    NES_TRACE(
+        "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequence data {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",
         bufferMemory->leftSliceEnd,
         bufferMemory->rightSliceEnd,

@@ -36,17 +36,16 @@ public:
 TEST_F(QueryEngineConfigurationTest, testConfigurationsDefault)
 {
     const Runtime::QueryEngineConfiguration defaultConfig;
-    EXPECT_EQ(defaultConfig.taskQueueSize.getValue(), 10000);
+    EXPECT_EQ(defaultConfig.taskQueueSize.getValue(), 1000);
     EXPECT_EQ(defaultConfig.numberOfWorkerThreads.getValue(), 4);
 }
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsValidInput)
 {
     Runtime::QueryEngineConfiguration defaultConfig;
-    defaultConfig.overwriteConfigWithCommandLineInput({{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "2"}, {"admissionQueueSize", "123"}});
+    defaultConfig.overwriteConfigWithCommandLineInput({{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "2"}});
 
     EXPECT_EQ(defaultConfig.taskQueueSize.getValue(), 200);
-    EXPECT_EQ(defaultConfig.admissionQueueSize.getValue(), 123);
     EXPECT_EQ(defaultConfig.numberOfWorkerThreads.getValue(), 2);
 }
 
