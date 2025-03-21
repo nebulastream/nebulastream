@@ -71,9 +71,9 @@ endif ()
 ExternalData_Add_Target(TEST_DATA SHOW_PROGRESS ON)
 
 
-# We run all tests with some small and one large task queue size
-# We set the number of worker threads to 8, to further stress the task queue
-set(taskQueueSize 100 10000)
+# We run all tests with one small and one large task queue size
+# We set the number of worker threads to 4, to further stress the task queue
+set(taskQueueSize 100 100000)
 foreach (taskQueueSize IN LISTS taskQueueSize)
     ExternalData_Add_Test(TEST_DATA
             NAME systest_task_queue_size_${taskQueueSize}_interpreter
