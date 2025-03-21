@@ -23,7 +23,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
 
@@ -65,25 +64,6 @@ void AvgAggregationDescriptor::inferStamp(const Schema& schema)
     {
         NES_FATAL_ERROR("AvgAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
-
-    /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
-    if (const auto integerDataType = NES::Util::as_if<Integer>(onField->getStamp()); integerDataType)
-    {
-        if (integerDataType->lowerBound < 0)
-        {
-            onField->setStamp(DataTypeProvider::provideDataType(LogicalType::INT64));
-        }
-        else
-        {
-            onField->setStamp(DataTypeProvider::provideDataType(LogicalType::UINT64));
-        }
-    }
-    else
-    {
-        onField->setStamp(DataTypeProvider::provideDataType(LogicalType::FLOAT64));
-    }
-
-
     ///Set fully qualified name for the as Field
     const auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
     const auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
