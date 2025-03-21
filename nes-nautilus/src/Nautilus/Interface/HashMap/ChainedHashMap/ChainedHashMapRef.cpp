@@ -360,23 +360,6 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
     const std::vector<MemoryProvider::FieldOffsets>& fieldValues)
     : hashMapRef(hashMapRef), currentEntry({nullptr, fieldKeys, fieldValues}), chainIndex(0), tupleIndex(tupleIndex)
 {
-    const auto numberOfEntries = nautilus::invoke(
-        +[](const HashMap* hashMap) -> uint64_t
-        {
-            if (hashMap == nullptr)
-            {
-                return 0;
-            }
-            const auto chainedHashMap = dynamic_cast<const ChainedHashMap*>(hashMap);
-            return chainedHashMap->getNumberOfTuples();
-        },
-        hashMapRef);
-
-    /// We only set the members, if the number of entries is larger than 0. So if there exist some numberOfEntries
-    if (numberOfEntries == 0)
-    {
-        return;
-    }
     /// We have to initialize the chainIndex and the currentEntry by iterating over the chains until we have seen #tupleIndex tuples.
     chainIndex = invoke(findChainIndexProxy, hashMapRef, tupleIndex);
     currentEntry = ChainedHashMapRef::ChainedEntryRef(
