@@ -44,6 +44,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <utility>
+#include <numeric>
 
 namespace NES::Runtime {
 
@@ -1069,8 +1070,8 @@ std::shared_ptr<const Execution::ExecutableQueryPlan>
 NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const {
     return getExecutableQueryPlan(idWithVersion.id, idWithVersion.version);
 }
-void NodeEngine::notifyCheckpoints(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints) {
-    nesWorker->notifyCheckpointToCoordinator(sharedQueryId, checkpoints);
+void NodeEngine::notifyCheckpoints(SharedQueryId sharedQueryId, uint64_t minWatermark) {
+    nesWorker->notifyCheckpointToCoordinator(sharedQueryId, minWatermark);
 }
 
 folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::RLockedPtr NodeEngine::lockLastWritten(std::string sinkName) {
@@ -1108,14 +1109,34 @@ std::unordered_map<uint64_t, uint64_t> NodeEngine::getLastWrittenCopy(std::strin
     }
     return {};
 }
-folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>::WLockedPtr
-
-NodeEngine::writeLockSeqQueue(std::string sinkName) {
+folly::Synchronized<std::shared_ptr<Windowing::MultiOriginWatermarkProcessor>>::WLockedPtr
+NodeEngine::getWatermarkProcessorFor(std::string sinkName, uint64_t numberOfOrigins) {
     std::unique_lock lock(seqQueueMutex);
-    return seqQueueMap[sinkName].wlock();
+    auto& synchronizedProcessorPtr = seqQueueMap[sinkName];
+    auto processorPtr = synchronizedProcessorPtr.wlock();
+
+    if (!*processorPtr) {
+        *processorPtr = Windowing::MultiOriginWatermarkProcessor::create(numberOfOrigins);
+    }
+
+    return processorPtr;
 }
 folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>::WLockedPtr NodeEngine::writeLockSinkStorage(std::string sinkName) {
     std::unique_lock lock(sinkBufferMutex);
     return sinkBufferStorage[sinkName].wlock();
+}
+
+uint64_t NodeEngine::getLastSavedMinWatermark(SharedQueryId sharedQueryId) {
+    std::unique_lock lock(lastSavedWatermarkMutex);
+    if (lastSavedWatermarkMap.find(sharedQueryId) != lastSavedWatermarkMap.end()) {
+        return lastSavedWatermarkMap.at(sharedQueryId);
+    } else {
+        return 0;
+    }
+}
+
+void NodeEngine::updateLastSavedMinWatermark(SharedQueryId sharedQueryId, uint64_t newMinWatermark) {
+    std::unique_lock lock(lastSavedWatermarkMutex);
+    lastSavedWatermarkMap[sharedQueryId] = newMinWatermark;
 }
 }// namespace NES::Runtime

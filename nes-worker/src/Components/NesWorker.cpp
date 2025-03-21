@@ -644,8 +644,8 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr NesWorker::g
 
 NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr NesWorker::getMobilityHandler() { return workerMobilityHandler; }
 
-void NesWorker::notifyCheckpointToCoordinator(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints) {
-   coordinatorRpcClient->notifyCheckpoint(sharedQueryId, checkpoints);
+void NesWorker::notifyCheckpointToCoordinator(SharedQueryId sharedQueryId, uint64_t minWatermark) {
+   coordinatorRpcClient->notifyCheckpoint(sharedQueryId, minWatermark);
 }
 
 }// namespace NES

@@ -274,7 +274,7 @@ class PlacementAmendmentHandlerTest : public Testing::BaseUnitTest {
         // Fetch affected SQPs and call in parallel operator placement amendment phase
         auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        std::vector<std::future<bool>> completedAmendments;
+        std::vector<std::future<NES::Optimizer::Perf>> completedAmendments;
         //Note: deployment phase is mocked so nothing is actually getting deployed
         auto mockedDeploymentPhase = std::make_shared<MockedDeploymentPhase>(queryCatalog);
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
@@ -292,7 +292,7 @@ class PlacementAmendmentHandlerTest : public Testing::BaseUnitTest {
         uint64_t numOfFailedPlacements = 0;
         // Wait for all amendment runners to finish processing
         for (auto& completedAmendment : completedAmendments) {
-            if (!completedAmendment.get()) {
+            if (!completedAmendment.get().success) {
                 numOfFailedPlacements++;
             }
         }

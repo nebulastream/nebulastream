@@ -59,6 +59,7 @@ class CSVSource : public DataSource {
 
     virtual ~CSVSource();
 
+    std::pair<size_t, size_t> findWatermarkIndex(const std::vector<std::vector<Runtime::Record>>& records, uint64_t sentUntil);
     /**
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available
@@ -110,6 +111,7 @@ class CSVSource : public DataSource {
     bool skipHeader;
     CSVParserPtr inputParser;
     uint64_t sentUntil = 0;
+    std::pair<size_t, size_t> watermarkIndex = {0, 0};
     //std::vector<Runtime::MemoryLayouts::DynamicTupleBuffer> readLines;
 //    std::vector<std::string> readLines;
 //    uint64_t nextLinesIndex = 0;

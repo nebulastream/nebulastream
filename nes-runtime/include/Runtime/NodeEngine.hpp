@@ -24,6 +24,7 @@
 #include <StatisticCollection/StatisticManager.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -436,7 +437,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     bool getTimesStampOutputSources();
 
-    void notifyCheckpoints(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints);
+    void notifyCheckpoints(SharedQueryId sharedQueryId, uint64_t minWatermark);
 
     std::unordered_map<uint64_t, uint64_t> getLastWrittenCopy(std::string sinkName);
 
@@ -444,7 +445,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::WLockedPtr writeLockLastWritten(std::string sinkName);
 
-    folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>::WLockedPtr writeLockSeqQueue(std::string sinkName);
+    folly::Synchronized<std::shared_ptr<Windowing::MultiOriginWatermarkProcessor>>::WLockedPtr getWatermarkProcessorFor(std::string sinkName, uint64_t numberOfOrigins);
+
+    uint64_t getLastSavedMinWatermark(SharedQueryId sharedQueryId);
+
+    void updateLastSavedMinWatermark(SharedQueryId sharedQueryId, uint64_t newMinWatermark);
 
     folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>::WLockedPtr writeLockSinkStorage(std::string sinkName);
 
@@ -498,8 +503,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     // uint64_t receiverChangeCount = 0;
     uint64_t parentChangeCount = 0;
 
+    std::mutex lastSavedWatermarkMutex;
+    std::map<SharedQueryId, uint64_t> lastSavedWatermarkMap;
+
     std::mutex seqQueueMutex;
-    std::map<std::string, folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>>> seqQueueMap;
+    std::map<std::string, folly::Synchronized<std::shared_ptr<Windowing::MultiOriginWatermarkProcessor>>> seqQueueMap;
     // keep unordered tuple buffers with sequence number as key
     std::mutex sinkBufferMutex;
     std::map<std::string, folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>> sinkBufferStorage;

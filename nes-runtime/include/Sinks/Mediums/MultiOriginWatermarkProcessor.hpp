@@ -21,7 +21,7 @@
 
 namespace NES {
 using WatermarkTs = uint64_t;
-using OriginId = uint64_t;
+using WatermarkOriginId = uint64_t;
 using SequenceNumber = uint64_t;
 }// namespace NES
 
@@ -63,7 +63,7 @@ class MultiOriginWatermarkProcessor {
      * @brief Processes a watermark barrier.
      * @param watermarkBarrier
      */
-    void updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId origin);
+    void updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, WatermarkOriginId origin);
 
     /**
      * @brief Returns the visible watermark across all origins.
@@ -76,7 +76,7 @@ class MultiOriginWatermarkProcessor {
      * @param originId origin id
      * @return Success
      */
-    bool isWatermarkSynchronized(OriginId originId) const;
+    bool isWatermarkSynchronized(WatermarkOriginId originId) const;
 
   private:
     mutable std::mutex watermarkLatch;

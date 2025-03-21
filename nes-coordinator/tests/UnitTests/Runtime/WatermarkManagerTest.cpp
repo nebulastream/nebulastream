@@ -37,7 +37,7 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterTest) {
     auto updates = 10000;
     auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ 1);
     // preallocate watermarks for each transaction
-    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, WatermarkOriginId>> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
         watermarkBarriers.emplace_back(/*ts*/ i,
                                        /*sequence number*/ i,
@@ -61,7 +61,7 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterTest) {
     auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ 1);
 
     // preallocate watermarks for each transaction
-    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, WatermarkOriginId>> watermarkBarriers;
     for (int i = 1; i <= updates * threadsCount; i++) {
         watermarkBarriers.emplace_back(/*ts*/ i,
                                        /*sequence number*/ i,
@@ -100,7 +100,7 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
     auto origins = 10;
     auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ origins);
     // preallocate watermarks for each transaction
-    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, WatermarkOriginId>> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
         for (int o = 0; o < origins; o++) {
             watermarkBarriers.emplace_back(/*ts*/ i,
@@ -126,7 +126,7 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsOutofOrd
     auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ origins);
 
     // preallocate watermarks for each transaction
-    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, WatermarkOriginId>> watermarkBarriers;
     for (auto i{1u}; i <= updates; ++i) {
         for (int o = 0; o < origins; o++) {
             watermarkBarriers.emplace_back(/*ts*/ i,
@@ -157,7 +157,7 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
     auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ origins);
 
     // preallocate watermarks for each transaction
-    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, WatermarkOriginId>> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
         for (int o = 0; o < origins; o++) {
             watermarkBarriers.emplace_back(/*ts*/ i,

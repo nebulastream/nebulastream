@@ -157,54 +157,71 @@ struct Record {
 std::optional<Runtime::TupleBuffer>
 CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo,
                             Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
-    auto replayOffset = sentUntil;
-
 //    auto replay = &sourceInfo->records[replayOffset];
-    auto replayVec = sourceInfo->records.at(replayOffset);
-    NES_DEBUG("replay with id {} buffer {} (index {}), end of replay at {}", replayVec.front().id, replayOffset + 1, replayOffset, sourceInfo->records.size());
+    const auto& innerVec = sourceInfo->records.at(watermarkIndex.first);
+    std::vector<Runtime::Record> replayVec(
+        innerVec.begin() + watermarkIndex.second,
+        innerVec.end()
+    );
+    NES_DEBUG("replay with id {} buffer {}, end of replay at {}", replayVec.front().id, watermarkIndex.first + 1, sourceInfo->records.size());
 //    auto replay = sourceInfo->records.at(replayOffset).data();
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
     buffer.setNumberOfTuples(replayVec.size());
     auto returnBuffer = buffer.getBuffer();
     NES_DEBUG("setting sequence number replayed buffer to {} (id {}), fd {}", sentUntil, sourceInfo->records.front().front().id, sourceInfo->sockfd)
-    returnBuffer.setSequenceNumber(sentUntil + 1);
-    sentUntil++;
+    returnBuffer.setSequenceNumber(watermarkIndex.first);
+    watermarkIndex.first++;
+    watermarkIndex.second = 0;
 
     return returnBuffer;
 }
 
+std::pair<size_t, size_t> CSVSource::findWatermarkIndex(const std::vector<std::vector<Runtime::Record>>& records, uint64_t sentUntil) {
+    for (size_t outerIndex = 0; outerIndex < records.size(); ++outerIndex) {
+        const auto& innerVec = records[outerIndex];
+        for (size_t innerIndex = 0; innerIndex < innerVec.size(); ++innerIndex) {
+            if (innerVec[innerIndex].ingestionTimestamp == sentUntil) {
+                // Found, return indices as watermarkIndex
+                return {outerIndex, innerIndex};
+            }
+        }
+    }
+    // Not found case, can return invalid index (optional handling)
+    return {static_cast<size_t>(-1), static_cast<size_t>(-1)};
+}
+
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on  {}", operatorId);
-    //    if (generatedBuffers == 0) {
-    //        NES_DEBUG("CSVSource::receiveData called on {} and number of buffers is 0", operatorId);
-    //    }
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         if (getReplayData()) {
 //            NES_ERROR("there are {} stored buffers", sourceInfo->records.size());
             if (!sourceInfo->records.empty()) {
-                //                if (sourceInfo->seqReadFromSocketTotal != 0) {
 //                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
-                auto id = sourceInfo->records.front().front().id;
-                auto ack = queryManager->getSourceAck(id);
+                auto decomposedQueryPlans = queryManager->getExecutablePlanIdsForSource(shared_from_base<DataSource>());
+                auto sharedQueryPlab = queryManager->getSharedQueryId(*decomposedQueryPlans.begin());
+                auto ack = queryManager->getSourceAck(sharedQueryPlab.getRawValue());
                 if (ack.has_value() && ack.value() != 0) {
-                    auto adjustedAck = ack.value() - 1;
-                    NES_DEBUG("found ack, sent until {} ack {}", sentUntil, adjustedAck);
-                    sentUntil = std::max(sentUntil, adjustedAck);
+                    NES_DEBUG("found ack, sent until {} ack {}", sentUntil, ack.value());
+                    auto oldSentUntil = sentUntil;
+                    sentUntil = std::max(sentUntil, ack.value());
+                    if (oldSentUntil != sentUntil) {
+                        watermarkIndex = findWatermarkIndex(sourceInfo->records, sentUntil);
+                    }
                 }
             }
-            if (sentUntil < sourceInfo->records.size()) {
-                NES_DEBUG("sent until {}, records {}", sentUntil, sourceInfo->records.size());
+//            if (watermarkIndex < sourceInfo->records.back().back().ingestionTimestamp) {
+            if (watermarkIndex.first < sourceInfo->records.size()) {
+                NES_DEBUG("sent untill {}, records {}", sentUntil, sourceInfo->records.size());
                 return fillReplayBuffer(sourceInfo, buffer);
-                //                return buffer.getBuffer();
             }
         }
         if (!sourceInfo->records.empty()) {
             NES_DEBUG("records {}, sent until {} (id {})", sourceInfo->records.size(), sentUntil,  sourceInfo->records.front().front().id);
         }
-        NES_ASSERT(!getReplayData() || sentUntil <= sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
+        NES_ASSERT(!getReplayData() || watermarkIndex.first <= sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
         uint64_t generatedTuplesThisPass = 0;
         generatedTuplesThisPass = buffer.getCapacity();
         auto* records = buffer.getBuffer().getBuffer<Record>();
@@ -227,18 +244,11 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 for (uint16_t i = 0; i < sourceInfo->leftoverByteCount; ++i) {
                     sourceInfo->incomingBuffer[i] = sourceInfo->leftOverBytes[i];
                 }
-                //auto writePostion = &incomingBuffer[leftoverByteCount];
                 auto byteOffset = sourceInfo->leftoverByteCount;
                 //todo: this was new
                 while (byteOffset < incomingTupleSize) {
-                    //while (tupleCount < generatedTuplesThisPass) {
                     NES_DEBUG("TCPSource::fillBuffer: filling buffer now");
                     while (byteOffset < bytesPerBuffer) {
-
-                        //NES_ASSERT(generatedTuplesThisPass == bufferManager->getBufferSize(), "Buffersizes do not match");
-
-                        // Read data from the socket
-                        //int bytesRead = read(sockfd, incomingBuffer.data(), generatedTuplesThisPass * incomingTupleSize);
                         NES_DEBUG("TCPSource::fillBuffer: reading from socket");
                         int bytesRead =
                             read(sourceInfo->sockfd, &sourceInfo->incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
@@ -258,13 +268,10 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         }
                         byteOffset += bytesRead;
                         //todo: this was new
-                        //tupleCount = byteOffset / incomingTupleSize;
-                        //flush interval
                         if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
                                                                                   - flushIntervalTimerStart)
                                 .count()
                             >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(250)).count()) {
-                            //.count() >= std::chrono::duration_cast<std::chrono::milliseconds>(gatheringInterval).count()) {
                             NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
                                       "TupleBuffer.");
                             flushIntervalPassed = true;
@@ -274,12 +281,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         }
                     }
                 }
-                //                if (tupleCount <= 0) {
-                //                    return std::nullopt;
-                //                }
                 uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
-                //                uint64_t replayBufferOffset = sourceInfo->seqReadFromSocketTotal;
-                //                sourceInfo->records.
 
                 NES_DEBUG("checking if replay is activated")
                 if (getReplayData()) {
@@ -316,76 +318,18 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
                 generatedTuples += numCompleteTuplesRead;
-                //                sourceInfo->seqReadFromSocketTotal += numCompleteTuplesRead - 1;
-                //                sourceInfo->seqReadFromSocketTotal += records[numCompleteTuplesRead -1].value;
-                //                sourceInfo->seqReadFromSocketTotal = sourceInfo->records.back().value;
                 generatedBuffers++;
-                //                NES_DEBUG("TCPSource::fillBuffer: returning {} tuples, ({} in total) consisting of {} new bytes and {} previous "
-                //                          "New leftover bytes count: {} ",
-                //                          numCompleteTuplesRead,
-                //                          generatedTuples, bytesOfCompleteTuples, oldLeftoverBytes, leftoverByteCount);
                 auto returnBuffer = buffer.getBuffer();
                 if (getReplayData()) {
                     //sequence numbers start at 1 which is why we can use size
                     NES_DEBUG("setting sequence number first played buffer to {} (id {})", sourceInfo->records.size(), sourceInfo->records.front().front().id)
                     returnBuffer.setSequenceNumber(sourceInfo->records.size());
                 }
-                sentUntil++;
+                // TODO: check this logic precisely
+                sentUntil = sourceInfo->records.back().back().ingestionTimestamp;
+                watermarkIndex.first++;
+
                 return returnBuffer;
-
-                //NES_ASSERT(bytesRead % tupleSize == 0, "bytes read do not align with tuple size");
-
-                //                uint16_t bytesToJoinWithLeftover = 0;
-                //
-                //
-                //                auto additionalTupleRead = 0;
-                //                if (leftoverByteCount != 0) {
-                //                    bytesToJoinWithLeftover = incomingTupleSize - leftoverByteCount;
-                //                    //NES_INFO("Copying {} bytes to complete leftover tuple", bytesToJoinWithLeftover)
-                //                    for (uint16_t i = leftoverByteCount; i < incomingTupleSize; ++i) {
-                //                        leftOverBytes[i] = incomingBuffer[i - leftoverByteCount];
-                //                    }
-                //                    additionalTupleRead = 1;
-                //                    auto id = reinterpret_cast<uint64_t*>(&leftOverBytes[0]);
-                //                    auto seqenceNr = reinterpret_cast<uint64_t*>(&leftOverBytes[valueSize]);
-                //                    auto ingestionTime = reinterpret_cast<uint64_t*>(&leftOverBytes[2 * valueSize]);
-                //                    records[0].id = *id;
-                //                    records[0].value = *seqenceNr;
-                //                    records[0].ingestionTimestamp = *ingestionTime;
-                //                    records[0].processingTimestamp = getTimestamp();
-                //                    //totalTupleCount++;
-                //                    //std::cout << "Leftover: id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
-                //                }
-                //
-                //                //auto sizeOfCompleteTuplesRead = bytesRead - bytesToJoinWithLeftover;
-                //                // Calculate the number of tuples read
-                //                auto newTupleBytesRead = bytesRead - bytesToJoinWithLeftover;
-                //                uint64_t numCompleteTuplesRead = newTupleBytesRead / incomingTupleSize;
-                //                for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
-                //                    auto index = i * incomingTupleSize + bytesToJoinWithLeftover;
-                //                    auto id = reinterpret_cast<uint64_t*>(&incomingBuffer[index]);
-                //                    auto seqenceNr = reinterpret_cast<uint64_t*>(&incomingBuffer[index + valueSize]);
-                //                    auto ingestionTime = reinterpret_cast<uint64_t*>(&incomingBuffer[index + 2 * valueSize]);
-                //                    //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
-                //                    auto writeIndex = i + additionalTupleRead;
-                //                    records[writeIndex].id = *id;
-                //                    records[writeIndex].value = *seqenceNr;
-                //                    records[writeIndex].ingestionTimestamp = *ingestionTime;
-                //                    records[writeIndex].processingTimestamp = getTimestamp();
-                //                    //totalTupleCount++;
-                //                }
-                //
-                //                leftoverByteCount = newTupleBytesRead % incomingTupleSize;
-                //                auto processedBytes = numCompleteTuplesRead * incomingTupleSize + bytesToJoinWithLeftover;
-                ////                if (leftoverByteCount != 0) {
-                ////                    NES_INFO("Saving {} bytes of incomplete tuple", leftoverByteCount)
-                ////                }
-                //                for (uint16_t i = 0 ; i < leftoverByteCount; ++i) {
-                //                    leftOverBytes[i] = incomingBuffer[i + processedBytes];
-                //                }
-                //                buffer.setNumberOfTuples(numCompleteTuplesRead + additionalTupleRead);
-                //                //NES_INFO("TotalTupleCount {}", totalTupleCount)
-
             } else {
                 uint64_t valCount = 0;
                 for (auto u = 0u; u < generatedTuplesThisPass; ++u) {

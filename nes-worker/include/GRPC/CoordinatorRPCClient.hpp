@@ -256,7 +256,7 @@ class CoordinatorRPCClient {
     bool relocateTopologyNode(const std::vector<TopologyLinkInformation>& removedTopologyLinks,
                               const std::vector<TopologyLinkInformation>& addedTopologyLinks);
 
-    bool notifyCheckpoint(SharedQueryId sharedQueryId, std::unordered_map<uint64_t, uint64_t> checkpoints);
+    bool notifyCheckpoint(SharedQueryId sharedQueryId, uint64_t minWatermark);
 
   private:
     WorkerId workerId = INVALID_WORKER_NODE_ID;
