@@ -65,7 +65,7 @@ endif (NOT CODE_COVERAGE)
 if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(TEST_DATA
             NAME systest_large
-            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data DATA{../testdata/,RECURSE:,REGEX:.*} --groups large -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=10 --worker.queryEngine.taskQueueSize=100000 --worker.numberOfBuffersInGlobalBufferManager=200000)
+            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data DATA{../testdata/,RECURSE:,REGEX:.*} --groups large -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=10 --worker.queryEngine.taskQueueSize=100000 --worker.numberOfBuffersInGlobalBufferManager=100000)
     message(STATUS "Large scale tests enabled")
 endif ()
 ExternalData_Add_Target(TEST_DATA SHOW_PROGRESS ON)
@@ -76,16 +76,16 @@ ExternalData_Add_Target(TEST_DATA SHOW_PROGRESS ON)
 set(taskQueueSize 2 5 10 10000)
 foreach (taskQueueSize IN LISTS taskQueueSize)
     if (CODE_COVERAGE)
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_task_queue_size_${taskQueueSize}_interpreter PUBLIC AUTO ALL ARGS --sequential --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter_cc -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_task_queue_size_${taskQueueSize}_compiler PUBLIC AUTO ALL ARGS --sequential --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler_cc -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_task_queue_size_${taskQueueSize}_interpreter PUBLIC AUTO ALL ARGS --sequential --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter_cc -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000 --worker.taskQueueSize=${taskQueueSize})
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_task_queue_size_${taskQueueSize}_compiler PUBLIC AUTO ALL ARGS --sequential --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler_cc -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=100000 --worker.taskQueueSize=${taskQueueSize})
     endif (CODE_COVERAGE)
 
     ExternalData_Add_Test(TEST_DATA
             NAME systest_task_queue_size_${taskQueueSize}_interpreter
-            COMMAND systest -n 100 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter --data DATA{../testdata/,RECURSE:,REGEX:.*} -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
+            COMMAND systest -n 100 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter --data DATA{../testdata/,RECURSE:,REGEX:.*} -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=100000 --worker.taskQueueSize=${taskQueueSize})
     ExternalData_Add_Test(TEST_DATA
             NAME systest_task_queue_size_${taskQueueSize}_compiler
-            COMMAND systest -n 100 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler --data DATA{../testdata/,RECURSE:,REGEX:.*} -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
+            COMMAND systest -n 100 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler --data DATA{../testdata/,RECURSE:,REGEX:.*} -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=100000 --worker.taskQueueSize=${taskQueueSize})
 endforeach ()
 
 ## We run all join and aggregation tests with different no. worker threads
@@ -100,7 +100,7 @@ foreach (workerThreads IN LISTS workerThreads)
             NAME systest_join_${workerThreads}_interpreter
             COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_join --data DATA{../testdata/,RECURSE:,REGEX:.*}
                     --
-                    --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
+                    --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
     ExternalData_Add_Test(TEST_DATA
             NAME systest_join_${workerThreads}_compiler
             COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_join --data DATA{../testdata/,RECURSE:,REGEX:.*}
@@ -116,7 +116,7 @@ foreach (workerThreads IN LISTS workerThreads)
             NAME systest_agg_${workerThreads}_compiler
             COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_aggregation --data DATA{../testdata/,RECURSE:,REGEX:.*}
                     --
-                    --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
+                    --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER)
 endforeach ()
 
 # Adding dependency for the nes-systest-lib so that the data is downloaded before the tests are run

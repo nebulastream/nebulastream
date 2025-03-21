@@ -231,7 +231,6 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         catch (const std::exception& e)
         {
             tryLogCurrentException();
-            std::exit(1);
         }
     }
 
