@@ -40,7 +40,6 @@ public:
     std::shared_ptr<WindowAggregationDescriptor> copy() override;
 
     std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
     std::shared_ptr<DataType> getFinalAggregateStamp() override;
 
     virtual ~MedianAggregationDescriptor() = default;
