@@ -66,15 +66,17 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto sliceReference = invoke(
-        +[](OperatorHandler* ptrOpHandler, const Timestamp timestamp)
+        +[](OperatorHandler* ptrOpHandler, const Timestamp timestamp, const Memory::AbstractBufferProvider* bufferProvider)
         {
             PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+            PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
             const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
-            const auto createFunction = opHandler->getCreateNewSlicesFunction();
+            const auto createFunction = opHandler->getCreateNewSlicesFunction(bufferProvider);
             return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
         },
         operatorHandlerRef,
-        timestamp);
+        timestamp,
+        executionCtx.pipelineMemoryProvider.bufferProvider);
     const auto nljPagedVectorMemRef = invoke(
         getNLJPagedVectorProxy,
         sliceReference,
