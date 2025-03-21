@@ -40,8 +40,8 @@ jobs:
         run: cmake -GNinja -B build -DCMAKE_RELEASE_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
         run: cmake --build build -j
-      - name: Run Large System Level Tests
-        run: ctest --test-dir build -R "^systest_large*" --output-on-failure --output-junit /junit.xml
+      - name: Run Tests
+        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 800
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && !github.event.act }}
