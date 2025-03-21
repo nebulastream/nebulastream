@@ -24,13 +24,13 @@
 namespace NES
 {
 
-using BinaryLogicalFunctionRegistryReturnType = std::unique_ptr<BinaryLogicalFunction>;
+using BinaryLogicalFunctionRegistryReturnType = LogicalFunction;
 struct BinaryLogicalFunctionRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;
-    std::unique_ptr<LogicalFunction> leftChild;
-    std::unique_ptr<LogicalFunction> rightChild;
-    std::unique_ptr<DataType> stamp;
+    LogicalFunction leftChild;
+    LogicalFunction rightChild;
+    std::shared_ptr<DataType> stamp;
 };
 
 class BinaryLogicalFunctionRegistry

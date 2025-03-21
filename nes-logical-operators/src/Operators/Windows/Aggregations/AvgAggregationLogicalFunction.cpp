@@ -30,34 +30,35 @@
 namespace NES
 {
 
-AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationLogicalFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field))
+AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
+    : WindowAggregationLogicalFunction(field.getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), field)
 {
     this->aggregationType = Type::Avg;
 }
 
-AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> field, std::unique_ptr<FieldAccessLogicalFunction> asField)
-    : WindowAggregationLogicalFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field), std::move(asField))
+AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
+    : WindowAggregationLogicalFunction(field.getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), field, asField)
 {
     this->aggregationType = Type::Avg;
 }
 
 std::unique_ptr<WindowAggregationLogicalFunction>
-AvgAggregationLogicalFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
+AvgAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
     return std::make_unique<AvgAggregationLogicalFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::create(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::create(LogicalFunction onField)
 {
-    return std::make_unique<AvgAggregationLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
+    return std::make_unique<AvgAggregationLogicalFunction>(onField.get<FieldAccessLogicalFunction>());
 }
 
 std::unique_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::clone()
 {
-    return std::make_unique<AvgAggregationLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(this->onField->clone()), Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(this->asField->clone()));
+    return std::make_unique<AvgAggregationLogicalFunction>(onField.get<FieldAccessLogicalFunction>(), asField.get<FieldAccessLogicalFunction>());
 }
 
+/*
 void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
@@ -81,6 +82,7 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     }
     asField->setStamp(getFinalAggregateStamp().clone());
 }
+ */
 
 NES::SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
 {
@@ -88,10 +90,10 @@ NES::SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() 
     serializedAggregationFunction.set_type(NAME);
 
     auto *onFieldFuc = new SerializableFunction();
-    onFieldFuc->CopyFrom(onField->serialize());
+    onFieldFuc->CopyFrom(onField.serialize());
 
     auto *asFieldFuc = new SerializableFunction();
-    asFieldFuc->CopyFrom(asField->serialize());
+    asFieldFuc->CopyFrom(asField.serialize());
 
     serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
     serializedAggregationFunction.set_allocated_on_field(onFieldFuc);

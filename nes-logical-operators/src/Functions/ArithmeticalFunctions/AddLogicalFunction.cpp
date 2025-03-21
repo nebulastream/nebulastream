@@ -23,23 +23,21 @@
 namespace NES
 {
 
-AddLogicalFunction::AddLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(std::move(left), std::move(right))
-{
-    stamp = left->getStamp().join(right->getStamp());
-}
-
-AddLogicalFunction::AddLogicalFunction(const AddLogicalFunction& other) : BinaryLogicalFunction(other)
+AddLogicalFunction::AddLogicalFunction(LogicalFunction left, LogicalFunction right) : stamp(left.getStamp().join(right.getStamp())), left(left), right(right)
 {
 }
 
-bool AddLogicalFunction::operator==(const LogicalFunction& rhs) const
+AddLogicalFunction::AddLogicalFunction(const AddLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
+{
+}
+
+bool AddLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const AddLogicalFunction*>(&rhs);
     if (other)
     {
-        const bool simpleMatch = getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
-        const bool commutativeMatch = getLeftChild() == other->getRightChild() and getRightChild() == other->getLeftChild();
+        const bool simpleMatch = left == other->left and right == other->right;
+        const bool commutativeMatch = right == other->right and right == other->left;
         return simpleMatch or commutativeMatch;
     }
     return false;
@@ -48,13 +46,8 @@ bool AddLogicalFunction::operator==(const LogicalFunction& rhs) const
 std::string AddLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << getLeftChild() << "+" << getRightChild();
+    ss << left << "+" << right;
     return ss.str();
-}
-
-std::unique_ptr<LogicalFunction> AddLogicalFunction::clone() const
-{
-    return std::make_unique<AddLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
 }
 
 SerializableFunction AddLogicalFunction::serialize() const
@@ -63,9 +56,9 @@ SerializableFunction AddLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_BinaryFunction();
     auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(getLeftChild().serialize());
+    leftChild->CopyFrom(left.serialize());
     auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(getRightChild().serialize());
+    rightChild->CopyFrom(right.serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -76,7 +69,7 @@ SerializableFunction AddLogicalFunction::serialize() const
 BinaryLogicalFunctionRegistryReturnType
 BinaryLogicalFunctionGeneratedRegistrar::RegisterAddBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<AddLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
+    return AddLogicalFunction(arguments.leftChild, arguments.rightChild);
 }
 
 }

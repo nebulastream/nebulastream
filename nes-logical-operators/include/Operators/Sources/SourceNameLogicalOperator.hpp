@@ -14,8 +14,6 @@
 
 #pragma once
 
-
-#include <Operators/UnaryLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 
 namespace NES
@@ -25,7 +23,7 @@ namespace NES
 /// In the LogicalSourceExpansionRule, we use the logical source name as input to the source catalog, to retrieve all (physical) source descriptors
 /// configured for the specific logical source name. We then expand 1 SourceNameLogicalOperator to N SourceDescriptorLogicalOperators,
 /// one SourceDescriptorLogicalOperator for each descriptor found in the source catalog with the logical source name as input.
-class SourceNameLogicalOperator : public UnaryLogicalOperator
+class SourceNameLogicalOperator : public LogicalOperatorConcept
 {
 public:
     explicit SourceNameLogicalOperator(std::string logicalSourceName);
@@ -33,12 +31,11 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
-    bool inferSchema() override;
+    bool inferSchema();
 
-    [[nodiscard]] bool operator==(Operator const& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
 
-    void inferInputOrigins() override;
+    void inferInputOrigins();
 
     [[nodiscard]] Schema getSchema() const;
     void setSchema(const Schema& schema);
@@ -48,11 +45,19 @@ public:
 
     [[nodiscard]] std::string getLogicalSourceName() const;
 
-protected:
-    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
+    std::vector<Operator> getChildren() const override {return children;};
+    void setChildren(std::vector<Operator> children) override {this->children = children;};
+    Optimizer::TraitSet getTraitSet() const override { return {};};
+
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
+    std::vector<Schema> getInputSchemas() const override { return {schema}; };
+    Schema getOutputSchema() const override { return schema; };
 
 private:
     std::string logicalSourceName;
+    std::vector<Operator> children;
     Schema schema;
 };
 

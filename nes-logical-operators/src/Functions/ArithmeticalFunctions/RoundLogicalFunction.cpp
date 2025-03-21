@@ -25,21 +25,18 @@
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(std::move(child))
-{
-    stamp = child->getStamp().clone();
-};
+RoundLogicalFunction::RoundLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)  {};
 
-RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : UnaryLogicalFunction(other)
+RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) :  stamp(other.stamp->clone()), child(other.child)
 {
 }
 
-bool RoundLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool RoundLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const RoundLogicalFunction*>(&rhs);
     if (other)
     {
-        return getChild() == other->getChild();
+        return child == other->getChildren()[0];
     }
     return false;
 }
@@ -47,13 +44,8 @@ bool RoundLogicalFunction::operator==(const LogicalFunction& rhs) const
 std::string RoundLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "ROUND(" << getChild() << ")";
+    ss << "ROUND(" << child << ")";
     return ss.str();
-}
-
-std::unique_ptr<LogicalFunction> RoundLogicalFunction::clone() const
-{
-    return std::make_unique<RoundLogicalFunction>(getChild().clone());
 }
 
 SerializableFunction RoundLogicalFunction::serialize() const
@@ -61,8 +53,8 @@ SerializableFunction RoundLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild().serialize());
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(child.serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -73,7 +65,7 @@ SerializableFunction RoundLogicalFunction::serialize() const
 UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterRoundUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<RoundLogicalFunction>(std::move(arguments.child));
+    return RoundLogicalFunction(arguments.child);
 }
 
 }

@@ -15,34 +15,23 @@
 #include <memory>
 #include <unordered_set>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <ErrorHandling.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-
 #include <Functions/LogicalFunction.hpp>
-#include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
 
-JoinLogicalOperator::JoinLogicalOperator(std::unique_ptr<LogicalFunction> joinFunction,
+JoinLogicalOperator::JoinLogicalOperator(LogicalFunction joinFunction,
                                          std::unique_ptr<Windowing::WindowType> windowType,
                                          uint64_t numberOfInputEdgesLeft,
                                          uint64_t numberOfInputEdgesRight,
                                          JoinType joinType)
-    :  Operator(), BinaryLogicalOperator(), joinFunction(std::move(joinFunction)),
-    windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft), numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType)
+    :  joinFunction(joinFunction), windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft), numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType)
 {
 }
 
@@ -51,12 +40,7 @@ std::string_view JoinLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-bool JoinLogicalOperator::isIdentical(const Operator& rhs) const
-{
-    return *this == rhs && dynamic_cast<const JoinLogicalOperator*>(&rhs)->id == id;
-}
-
-bool JoinLogicalOperator::operator==(Operator const& rhs) const
+bool JoinLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const JoinLogicalOperator*>(&rhs)) {
         return (getWindowType() == rhsOperator->getWindowType())
@@ -77,6 +61,7 @@ std::string JoinLogicalOperator::toString() const
         getJoinFunction());
 }
 
+/*
 bool JoinLogicalOperator::inferSchema()
 {
     if (!BinaryLogicalOperator::inferSchema())
@@ -196,25 +181,7 @@ bool JoinLogicalOperator::inferSchema()
     updateSchemas(leftInputSchema, rightInputSchema);
     return true;
 }
-
-std::unique_ptr<Operator> JoinLogicalOperator::clone() const
-{
-    auto copy = std::make_unique<JoinLogicalOperator>(
-        std::move(joinFunction),
-        windowType,
-        numberOfInputEdgesLeft,
-        numberOfInputEdgesRight,
-        joinType);
-    copy->setLeftInputOriginIds(leftInputOriginIds);
-    copy->setRightInputOriginIds(rightInputOriginIds);
-    copy->setLeftInputSchema(leftInputSchema);
-    copy->setRightInputSchema(rightInputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->originIdTrait = originIdTrait;
-    copy->windowEndFieldName = windowEndFieldName;
-    copy->windowStartFieldName = windowStartFieldName;
-    return copy;
-}
+ */
 
 Schema JoinLogicalOperator::getLeftSchema() const
 {
@@ -254,9 +221,9 @@ std::string JoinLogicalOperator::getWindowEndFieldName() const {
     return windowEndFieldName;
 }
 
-LogicalFunction& JoinLogicalOperator::getJoinFunction() const
+LogicalFunction JoinLogicalOperator::getJoinFunction() const
 {
-    return *joinFunction;
+    return joinFunction;
 }
 
 SerializableOperator JoinLogicalOperator::serialize() const
@@ -266,7 +233,7 @@ SerializableOperator JoinLogicalOperator::serialize() const
     auto* opDesc = new SerializableOperator_LogicalOperator();
     opDesc->set_operatortype(NAME);
     serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(children[0]->id.getRawValue());
+    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
 
     /// TODO we need to serialize the window type as a trait
 
@@ -282,17 +249,18 @@ SerializableOperator JoinLogicalOperator::serialize() const
 
     auto* binaryOpDesc = new SerializableOperator_BinaryLogicalOperator();
     auto* leftInputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getLeftInputSchema(), leftInputSchema);
+    auto inputSchemas = this->getInputSchemas();
+    SchemaSerializationUtil::serializeSchema(inputSchemas[0], leftInputSchema);
     binaryOpDesc->set_allocated_leftinputschema(leftInputSchema);
 
     auto* rightInputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getRightInputSchema(), rightInputSchema);
+    SchemaSerializationUtil::serializeSchema(inputSchemas[1], rightInputSchema);
     binaryOpDesc->set_allocated_rightinputschema(rightInputSchema);
 
-    for (const auto& originId : this->getRightInputOriginIds()) {
+    for (const auto& originId : this->getInputOriginIds()[0]) {
         binaryOpDesc->add_rightoriginids(originId.getRawValue());
     }
-    for (const auto& originId : this->getLeftInputOriginIds()) {
+    for (const auto& originId : this->getInputOriginIds()[1]) {
         binaryOpDesc->add_leftoriginids(originId.getRawValue());
     }
     opDesc->set_allocated_binaryoperator(binaryOpDesc);
@@ -304,11 +272,11 @@ SerializableOperator JoinLogicalOperator::serialize() const
     return serializedOperator;
 }
 
-std::unique_ptr<LogicalOperator>
+LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
     // TODO
-    return nullptr;
+    throw UnknownLogicalOperator();
 }
 
 }

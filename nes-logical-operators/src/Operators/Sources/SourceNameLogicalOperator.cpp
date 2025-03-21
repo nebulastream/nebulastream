@@ -13,35 +13,31 @@
 */
 
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <memory>
-#include <sstream>
+#include <string_view>
+#include <string>
 #include <utility>
 #include <API/Schema.hpp>
 #include <ErrorHandling.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableOperator.pb.h>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
 SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName)
-    : Operator(), UnaryLogicalOperator(), logicalSourceName(std::move(logicalSourceName))
+    : logicalSourceName(std::move(logicalSourceName))
 {
 }
 
 SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema)
-    : Operator(), UnaryLogicalOperator(), logicalSourceName(std::move(logicalSourceName)), schema(schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
 
-bool SourceNameLogicalOperator::isIdentical(Operator const& rhs) const
+bool SourceNameLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
-    return *this == rhs && dynamic_cast<const SourceNameLogicalOperator*>(&rhs)->id == id;
-}
-
-bool SourceNameLogicalOperator::operator==(Operator const& rhs) const
-{
-    if (auto rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs)) {
+    if (auto* rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs)) {
         return this->getSchema() == rhsOperator->getSchema()
             && this->getName() == rhsOperator->getName();
     }
@@ -52,22 +48,6 @@ std::string SourceNameLogicalOperator::toString() const
 {
     return fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
 }
-
-bool SourceNameLogicalOperator::inferSchema()
-{
-    inputSchema = schema;
-    outputSchema = schema;
-    return true;
-}
-
-std::unique_ptr<Operator> SourceNameLogicalOperator::clone() const
-{
-    auto copy = std::make_unique<SourceNameLogicalOperator>(logicalSourceName);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
-}
-
 
 void SourceNameLogicalOperator::inferInputOrigins()
 {

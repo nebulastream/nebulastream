@@ -30,8 +30,7 @@
 namespace NES
 {
 
-SelectionLogicalOperator::SelectionLogicalOperator(std::unique_ptr<LogicalFunction> predicate)
-    : Operator(), UnaryLogicalOperator(), predicate(std::move(predicate))
+SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : predicate(predicate)
 {
 }
 
@@ -40,22 +39,18 @@ std::string_view SelectionLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-LogicalFunction& SelectionLogicalOperator::getPredicate() const
+LogicalFunction SelectionLogicalOperator::getPredicate() const
 {
-    return *predicate;
+    return predicate;
 }
 
-void SelectionLogicalOperator::setPredicate(std::unique_ptr<LogicalFunction> newPredicate)
+void SelectionLogicalOperator::setPredicate(LogicalFunction newPredicate)
 {
     predicate = std::move(newPredicate);
 }
 
-bool SelectionLogicalOperator::isIdentical(const Operator& rhs) const
-{
-    return *this == rhs && dynamic_cast<const SelectionLogicalOperator*>(&rhs)->id == id;
-}
 
-bool SelectionLogicalOperator::operator==(Operator const& rhs) const
+bool SelectionLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const SelectionLogicalOperator*>(&rhs)) {
         return predicate == rhsOperator->predicate;
@@ -66,10 +61,11 @@ bool SelectionLogicalOperator::operator==(Operator const& rhs) const
 std::string SelectionLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "FILTER(opId: " << id << ": predicate: " << *predicate << ")";
+    ss << "FILTER(opId: " << id << ": predicate: " << predicate << ")";
     return ss.str();
 }
 
+/*
 bool SelectionLogicalOperator::inferSchema()
 {
     if (!UnaryLogicalOperator::inferSchema())
@@ -83,17 +79,8 @@ bool SelectionLogicalOperator::inferSchema()
     }
     return true;
 }
-
-std::unique_ptr<Operator> SelectionLogicalOperator::clone() const
-{
-    auto copy = std::make_unique<SelectionLogicalOperator>(predicate->clone());
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
-}
-
-std::unique_ptr<LogicalOperator>
+*/
+LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
 {
     auto functionVariant = config.config[SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME];
@@ -111,11 +98,12 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::Logical
 
         if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
         {
-            return std::make_unique<SelectionLogicalOperator>(std::move(function.value()));
+            throw UnknownLogicalOperator();
+            //return SelectionLogicalOperator(function.value());
         }
-        return nullptr;
+        throw UnknownLogicalOperator();
     }
-    return nullptr;
+    throw UnknownLogicalOperator();
 }
 
 SerializableOperator SelectionLogicalOperator::serialize() const
@@ -125,7 +113,7 @@ SerializableOperator SelectionLogicalOperator::serialize() const
     auto* opDesc = new SerializableOperator_LogicalOperator();
     opDesc->set_operatortype(NAME);
     serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(children[0]->id.getRawValue());
+    serializedOperator.add_childrenids(children[0].getId().getRawValue());
 
     NES::FunctionList list;
     auto* serializedFunction = list.add_functions();
@@ -138,10 +126,10 @@ SerializableOperator SelectionLogicalOperator::serialize() const
 
     auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
     auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
     unaryOpDesc->set_allocated_inputschema(inputSchema);
 
-    for (const auto& originId : this->getInputOriginIds()) {
+    for (const auto& originId : this->getInputOriginIds()[0]) {
         unaryOpDesc->add_originids(originId.getRawValue());
     }
 

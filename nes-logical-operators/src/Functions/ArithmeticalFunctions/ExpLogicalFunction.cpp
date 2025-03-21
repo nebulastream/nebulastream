@@ -21,20 +21,20 @@
 namespace NES
 {
 
-ExpLogicalFunction::ExpLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(std::move(child))
+ExpLogicalFunction::ExpLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
 {
-    stamp = child->getStamp().clone();
 };
 
-ExpLogicalFunction::ExpLogicalFunction(const ExpLogicalFunction& other) : UnaryLogicalFunction(other)
+ExpLogicalFunction::ExpLogicalFunction(const ExpLogicalFunction& other) : child(other.getChildren()[0])
 {
 }
 
-bool ExpLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const ExpLogicalFunction*>(&rhs))
+    auto other = dynamic_cast<const ExpLogicalFunction*>(&rhs);
+    if (other)
     {
-        return getChild() == other->getChild();
+        return child == other->child;
     }
     return false;
 }
@@ -42,13 +42,8 @@ bool ExpLogicalFunction::operator==(const LogicalFunction& rhs) const
 std::string ExpLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "EXP(" << getChild() << ")";
+    ss << "EXP(" << child << ")";
     return ss.str();
-}
-
-std::unique_ptr<LogicalFunction> ExpLogicalFunction::clone() const
-{
-    return std::make_unique<ExpLogicalFunction>(getChild().clone());
 }
 
 SerializableFunction ExpLogicalFunction::serialize() const
@@ -56,8 +51,8 @@ SerializableFunction ExpLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild().serialize());
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(child.serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -69,6 +64,6 @@ SerializableFunction ExpLogicalFunction::serialize() const
 UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterExpUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<ExpLogicalFunction>(std::move(arguments.child));
+    return ExpLogicalFunction(arguments.child);
 }
 }

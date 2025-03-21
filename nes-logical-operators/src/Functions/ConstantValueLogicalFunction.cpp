@@ -22,25 +22,20 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <SerializableFunction.pb.h>
 #include <API/Schema.hpp>
-#include <Util/Common.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(std::unique_ptr<DataType> stamp, std::string value)
-    : LogicalFunction(), constantValue(std::move(value))
-{
-    this->stamp = std::move(stamp);
-}
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(std::shared_ptr<DataType> stamp, std::string value)
+    : constantValue(std::move(value)), stamp(stamp) {}
 
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other)
-    : LogicalFunction(), constantValue(other.constantValue)
+    :  constantValue(other.constantValue), stamp(other.stamp->clone())
 {
-    this->stamp = std::move(stamp);
 }
 
-bool ConstantValueLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool ConstantValueLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const ConstantValueLogicalFunction*>(&rhs);
     if (other)
@@ -66,16 +61,6 @@ void ConstantValueLogicalFunction::inferStamp(const Schema&)
     /// thus ut is already assigned correctly when the function node is created.
 }
 
-std::span<const std::unique_ptr<LogicalFunction>> ConstantValueLogicalFunction::getChildren() const
-{
-    return {};
-}
-
-std::unique_ptr<LogicalFunction> ConstantValueLogicalFunction::clone() const
-{
-    return std::make_unique<ConstantValueLogicalFunction>(getStamp().clone(), constantValue);
-}
-
 SerializableFunction ConstantValueLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
@@ -96,7 +81,7 @@ LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);
-    return std::make_unique<ConstantValueLogicalFunction>(arguments.stamp->clone(), constantValueAsString);
+    return ConstantValueLogicalFunction(std::move(arguments.stamp), constantValueAsString);
 }
 
 }

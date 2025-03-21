@@ -35,37 +35,35 @@ class QueryPlan
 {
 public:
     QueryPlan() = default;
-    explicit QueryPlan(std::unique_ptr<Operator> rootOperator);
-    explicit QueryPlan(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators);
-    static std::unique_ptr<QueryPlan> create(std::unique_ptr<Operator> rootOperator);
-    static std::unique_ptr<QueryPlan> create(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators);
+    explicit QueryPlan(Operator rootOperator);
+    explicit QueryPlan(QueryId queryId, std::vector<Operator> rootOperators);
+    static std::unique_ptr<QueryPlan> create(Operator rootOperator);
+    static std::unique_ptr<QueryPlan> create(QueryId queryId, std::vector<Operator> rootOperators);
 
     QueryPlan(const QueryPlan& other);
     QueryPlan(QueryPlan&& other);
     QueryPlan& operator=(QueryPlan&& other);
 
     /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
-    void promoteOperatorToRoot(std::unique_ptr<Operator> newRoot);
+    void promoteOperatorToRoot(Operator newRoot);
     /// Adds operator to roots vector
-    void addRootOperator(std::unique_ptr<Operator> newRootOperator);
+    void addRootOperator(Operator newRootOperator);
 
     [[nodiscard]] std::string toString() const;
 
-    std::vector<Operator *> getRootOperators() const;
+    std::vector<Operator> getRootOperators() const;
 
-    std::vector<std::unique_ptr<Operator>> releaseRootOperators();
-
-    bool replaceOperatorRecursively(Operator* current, Operator* target, std::unique_ptr<Operator>& replacement)
+    bool replaceOperatorRecursively(Operator current, Operator target, Operator replacement)
     {
-        auto& children = current->children;
+        auto children = current.getChildren();
         for (auto& child : children)
         {
-            if (child.get() == target)
+            if (child == target)
             {
                 child = std::move(replacement);
                 return true;
             }
-            else if (replaceOperatorRecursively(child.get(), target, replacement))
+            else if (replaceOperatorRecursively(child, target, replacement))
             {
                 return true;
             }
@@ -73,50 +71,44 @@ public:
         return false;
     }
 
-    template <typename... TraitTypes>
-    std::vector<LogicalOperator *> getOperatorsWithTraits()
+    /*template <typename... TraitTypes>
+    std::vector<Operator> getOperatorsWithTraits()
     {
-        std::vector<LogicalOperator *> operators;
+        std::vector<Operator> operators;
         std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
-            for (Operator* op : BFSRange<Operator>(rootOperator.get()))
+            for (Operator op : BFSRange<Operator>(rootOperator))
             {
-                if (!visitedOpIds.contains(op->id))
+                if (!visitedOpIds.contains(op.getId()))
                 {
-                    visitedOpIds.insert(op->id);
-                    if (auto* logicalOperator = dynamic_cast<LogicalOperator*>(op))
+                    visitedOpIds.insert(op.getId());
+                    if (hasTraits<TraitTypes...>(op.getTraitSet()))
                     {
-                        if (hasTraits<TraitTypes...>(logicalOperator->traitSet))
-                        {
-                            operators.emplace_back(logicalOperator);
-                        }
+                        operators.emplace_back(op);
                     }
-                }
+            }
             }
         }
         return operators;
-    }
+    }*/
 
-    bool replaceOperator(Operator* target, std::unique_ptr<Operator> replacement)
+    bool replaceOperator(Operator target, Operator replacement)
     {
         bool replaced = false;
         for (auto& root : rootOperators)
         {
-            if (root.get() == target)
-            {
-                replacement->parents = std::move(root->parents);
-                replacement->children = std::move(root->children);
-                root = std::move(replacement);
-                replaced = true;
-                break;
-            }
+            ///replacement.parents = std::move(root.parents);
+            replacement.getChildren() = root.getChildren();
+            root = std::move(replacement);
+            replaced = true;
+            break;
         }
         if (!replaced)
         {
             for (auto& root : rootOperators)
             {
-                if (replaceOperatorRecursively(root.get(), target, replacement))
+                if (replaceOperatorRecursively(root, target, replacement))
                 {
                     replaced = true;
                     break;
@@ -133,13 +125,13 @@ public:
         std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
-            for (Operator* op : BFSRange<Operator>(rootOperator.get()))
+            for (Operator op : BFSRange<Operator>(rootOperator))
             {
-                if (visitedOpIds.contains(op->id))
+                if (visitedOpIds.contains(op.getId()))
                 {
                     continue;
                 }
-                visitedOpIds.insert(op->id);
+                visitedOpIds.insert(op.getId());
                 if (T* casted = dynamic_cast<T*>(op))
                 {
                     operators.push_back(*casted);
@@ -149,76 +141,72 @@ public:
         return operators;
     }
 
-    std::unique_ptr<QueryPlan> flip() {
-        std::unordered_map<Operator*, Operator*> parentMap;
-        std::unordered_map<Operator*, std::unique_ptr<Operator>*> opPtrMap;
+    /*
+    QueryPlan flip() {
+        std::unordered_map<Operator, Operator> parentMap;
+        std::unordered_map<Operator, Operator> opPtrMap;
 
-        std::function<void(Operator*, Operator*, std::unique_ptr<Operator>* )> buildMaps =
-            [&](Operator* op, Operator* parent, std::unique_ptr<Operator>* opOwner) {
-            if (parent != nullptr) {
-                parentMap[op] = parent;
-            }
+        std::function<void(Operator, Operator, Operator )> buildMaps =
+            [&](Operator op, Operator parent, Operator opOwner) {
+            parentMap[op] = parent;
             opPtrMap[op] = opOwner;
-            for (auto& child : op->children) {
-                buildMaps(child.get(), op, &child);
+            for (auto& child : op.getChildren()) {
+                buildMaps(child, op, child);
             }
         };
 
         for (auto& root : rootOperators) {
-            buildMaps(root.get(), nullptr, &root);
+            buildMaps(root, root , root);
         }
 
-        std::vector<Operator*> leaves;
-        std::function<void(Operator*)> findLeaves =
-            [&](Operator* op) {
-            if (op->children.empty()) {
+        std::vector<Operator> leaves;
+        std::function<void(Operator)> findLeaves =
+            [&](Operator op) {
+            if (op.getChildren().empty()) {
                 leaves.push_back(op);
             } else {
-                for (auto& child : op->children) {
-                    findLeaves(child.get());
+                for (auto& child : op.getChildren()) {
+                    findLeaves(child);
                 }
             }
         };
         for (auto& root : rootOperators) {
-            findLeaves(root.get());
+            findLeaves(root);
         }
 
-        std::function<std::unique_ptr<Operator>(Operator*)> buildReversedChain =
-            [&](Operator* op) -> std::unique_ptr<Operator> {
-            std::unique_ptr<Operator> current = std::move(*opPtrMap[op]);
-            current->children.clear();
+        std::function<Operator(Operator)> buildReversedChain =
+            [&](Operator op) -> Operator {
+            Operator current = opPtrMap[op];
+            current.getChildren().clear();
             if (parentMap.find(op) != parentMap.end()) {
-                Operator* parent = parentMap[op];
-                current->children.push_back(buildReversedChain(parent));
+                Operator parent = parentMap[op];
+                current.getChildren().push_back(buildReversedChain(parent));
             }
             return current;
         };
 
-        std::vector<std::unique_ptr<Operator>> flippedRoots;
-        for (Operator* leaf : leaves) {
+        std::vector<Operator> flippedRoots;
+        for (Operator leaf : leaves) {
             flippedRoots.push_back(buildReversedChain(leaf));
         }
 
-        return std::make_unique<QueryPlan>(this->getQueryId(), std::move(flippedRoots));
-    }
+        return QueryPlan(this->getQueryId(), flippedRoots);
+    }*/
 
     /// Get all the leaf operators in the query plan (leaf operator is the one without any child)
     /// @note: in certain stages the source operators might not be Leaf operators
-    std::vector<Operator*> getLeafOperators() const;
+    std::vector<Operator> getLeafOperators() const;
 
-    std::unordered_set<Operator*> getAllOperators() const;
+    std::unordered_set<Operator> getAllOperators() const;
 
     void setQueryId(QueryId queryId);
     [[nodiscard]] QueryId getQueryId() const;
 
-    std::unique_ptr<QueryPlan> clone() const;
-
-    [[nodiscard]] bool operator==(const std::shared_ptr<QueryPlan>& otherPlan) const;
     [[nodiscard]] bool operator==(const QueryPlan& otherPlan) const;
 
 private:
     /// Owning pointers to the operators
-    std::vector<std::unique_ptr<Operator>> rootOperators{};
+    std::vector<Operator> rootOperators{};
     QueryId queryId = INVALID_QUERY_ID;
 };
 }

@@ -22,24 +22,28 @@ namespace NES
 
 /// @brief A FieldAccessFunction reads a specific field of the current record.
 /// It can be created typed or untyped.
-class FieldAccessLogicalFunction : public LogicalFunction
+class FieldAccessLogicalFunction : public LogicalFunctionConcept
 {
 public:
     static constexpr std::string_view NAME = "FieldAccess";
 
-    explicit FieldAccessLogicalFunction(std::string fieldName);
-    explicit FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName);
+    FieldAccessLogicalFunction(std::string fieldName);
+    FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName);
+    FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other);
 
-    void inferStamp(const Schema& schema) override;
+    void inferStamp(const Schema& schema);
 
     [[nodiscard]] std::string getFieldName() const;
     [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
-    [[nodiscard]] std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { throw UnsupportedOperation(); };
+    std::string getType() const override { return std::string(NAME); }
 
     struct ConfigParameters
     {
@@ -52,10 +56,11 @@ public:
             = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(FIELD_NAME);
     };
 
-private:
-    explicit FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other);
     std::string toString() const override;
+
+private:
     std::string fieldName;
+    std::shared_ptr<DataType> stamp;
 };
 
 }

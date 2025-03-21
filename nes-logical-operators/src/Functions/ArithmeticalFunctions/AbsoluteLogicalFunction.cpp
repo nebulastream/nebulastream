@@ -23,21 +23,20 @@
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(std::unique_ptr<LogicalFunction> child)
-    : UnaryLogicalFunction(std::move(child))
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
 {
 }
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& other) : UnaryLogicalFunction(other)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& other) : stamp(other.stamp), child(other.child)
 {
 }
 
-bool AbsoluteLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool AbsoluteLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs);
     if (other)
     {
-        return getChild() == other->getChild();
+        return child == other->child;
     }
     return false;
 }
@@ -45,13 +44,8 @@ bool AbsoluteLogicalFunction::operator==(const LogicalFunction& rhs) const
 std::string AbsoluteLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "ABS(" << getChild() << ")";
+    ss << "ABS(" << child << ")";
     return ss.str();
-}
-
-std::unique_ptr<LogicalFunction> AbsoluteLogicalFunction::clone() const
-{
-    return std::make_unique<AbsoluteLogicalFunction>(getChild().clone());
 }
 
 SerializableFunction AbsoluteLogicalFunction::serialize() const
@@ -59,8 +53,8 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild().serialize());
+    auto* funcChild = funcDesc->mutable_child();
+    funcChild->CopyFrom(child.serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -71,7 +65,7 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
 UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterAbsoluteUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<AbsoluteLogicalFunction>(std::move(arguments.child));
+    return AbsoluteLogicalFunction(arguments.child);
 }
 
 }

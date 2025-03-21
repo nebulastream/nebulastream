@@ -14,26 +14,33 @@
 
 #pragma once
 
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
-class DivLogicalFunction final : public BinaryLogicalFunction
+class DivLogicalFunction final : public LogicalFunctionConcept
 {
 public:
+    ~DivLogicalFunction() noexcept override = default;
     static constexpr std::string_view NAME = "Div";
 
-    explicit DivLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
-    ~DivLogicalFunction() noexcept override = default;
+    DivLogicalFunction(LogicalFunction left, LogicalFunction right);
+    DivLogicalFunction(const DivLogicalFunction& other);
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
+    [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit DivLogicalFunction(const DivLogicalFunction& other);
-    [[nodiscard]] std::string toString() const override;
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left;
+    LogicalFunction right;
 };
 }
 FMT_OSTREAM(NES::DivLogicalFunction);

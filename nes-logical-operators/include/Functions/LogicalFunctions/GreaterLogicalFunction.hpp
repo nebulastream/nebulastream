@@ -14,26 +14,32 @@
 
 #pragma once
 
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
-class GreaterLogicalFunction final : public BinaryLogicalFunction
+class GreaterLogicalFunction final : public LogicalFunctionConcept
 {
 public:
     static constexpr std::string_view NAME = "Greater";
 
-    GreaterLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
+    GreaterLogicalFunction(LogicalFunction left, LogicalFunction right);
+    GreaterLogicalFunction(const GreaterLogicalFunction& other);
     ~GreaterLogicalFunction() override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
+    [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit GreaterLogicalFunction(const GreaterLogicalFunction& other);
-    [[nodiscard]] std::string toString() const override;
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left, right;
 };
 }
 FMT_OSTREAM(NES::GreaterLogicalFunction);

@@ -15,10 +15,9 @@
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <memory>
 #include <Configurations/Descriptor.hpp>
-
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Operators/UnaryLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Plans/Operator.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Common.hpp>
@@ -28,8 +27,8 @@
 namespace NES
 {
 
-EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(std::unique_ptr<LogicalFunction> onField, Windowing::TimeUnit unit)
-: Operator(), UnaryLogicalOperator(), onField(std::move(onField)), unit(unit)
+EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, Windowing::TimeUnit unit)
+: onField(std::move(onField)), unit(unit)
 {
 }
 
@@ -45,42 +44,16 @@ std::string EventTimeWatermarkAssignerLogicalOperator::toString() const
     return ss.str();
 }
 
-bool EventTimeWatermarkAssignerLogicalOperator::isIdentical(const Operator& rhs) const
-{
-    return (*this == rhs) && dynamic_cast<const EventTimeWatermarkAssignerLogicalOperator*>(&rhs)->id == id;
-}
-
-bool EventTimeWatermarkAssignerLogicalOperator::operator==(Operator const& rhs) const
+bool EventTimeWatermarkAssignerLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const EventTimeWatermarkAssignerLogicalOperator*>(&rhs)) {
-        bool onFieldEqual = false;
-        if (onField && rhsOperator->onField) {
-            // Compare based on string representation (or call a custom equals() method if available)
-            onFieldEqual = (onField->toString() == rhsOperator->onField->toString());
-        }
-        else if (!onField && !rhsOperator->onField) {
-            onFieldEqual = true;
-        }
+        bool onFieldEqual = (onField.toString() == rhsOperator->onField.toString());
         return onFieldEqual && (rhsOperator->unit == this->unit);
     }
     return false;
 }
 
-std::unique_ptr<Operator> EventTimeWatermarkAssignerLogicalOperator::clone() const
-{
-    std::unique_ptr<LogicalFunction> clonedOnField;
-    if (onField)
-    {
-        clonedOnField = onField->clone();
-    }
-    auto copy = std::make_unique<EventTimeWatermarkAssignerLogicalOperator>(std::move(clonedOnField), unit);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
-}
-
-
+/*
 bool EventTimeWatermarkAssignerLogicalOperator::inferSchema()
 {
     if (!UnaryLogicalOperator::inferSchema())
@@ -89,6 +62,7 @@ bool EventTimeWatermarkAssignerLogicalOperator::inferSchema()
     }
     return true;
 }
+*/
 
 // TODO
 SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() const
@@ -98,11 +72,11 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
     auto* opDesc = new SerializableOperator_LogicalOperator();
     opDesc->set_operatortype(NAME);
     serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(children[0]->id.getRawValue());
+    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
 
     NES::FunctionList list;
     auto* serializedFunction = list.add_functions();
-    serializedFunction->CopyFrom(onField->serialize());
+    serializedFunction->CopyFrom(onField.serialize());
 
     NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
     SerializableVariantDescriptor variantDescriptor =
@@ -113,10 +87,10 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
 
 
     auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
     unaryOpDesc->set_allocated_inputschema(inputSchema);
 
-    for (const auto& originId : this->getInputOriginIds()) {
+    for (const auto& originId : this->getInputOriginIds()[0]) {
         unaryOpDesc->add_originids(originId.getRawValue());
     }
 
@@ -134,7 +108,8 @@ LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
     // TODO
-    return nullptr;
+    ///return EventTimeWatermarkAssignerLogicalOperator();
+    throw UnsupportedOperation();
 }
 
 }

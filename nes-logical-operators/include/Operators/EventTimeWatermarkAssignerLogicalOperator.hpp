@@ -15,28 +15,52 @@
 #pragma once
 
 #include <API/TimeUnit.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/UnaryLogicalOperator.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
-class EventTimeWatermarkAssignerLogicalOperator : public UnaryLogicalOperator
+class EventTimeWatermarkAssignerLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    EventTimeWatermarkAssignerLogicalOperator(std::unique_ptr<LogicalFunction> onField, Windowing::TimeUnit unit);
+    EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, Windowing::TimeUnit unit);
     std::string_view getName() const noexcept override;
 
-    [[nodiscard]] bool operator==(Operator const& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::unique_ptr<Operator> clone() const override;
-    bool inferSchema() override;
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
+    //bool inferSchema();
 
     [[nodiscard]] SerializableOperator serialize() const override;
     [[nodiscard]] std::string toString() const override;
+
+    void setChildren(std::vector<Operator> children) override
+    {
+        this->children = children;
+    }
+
+    std::vector<Operator> getChildren() const override
+    {
+        return children;
+    }
+
+    Optimizer::TraitSet getTraitSet() const override
+    {
+        return {};
+    }
+
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; };
+
 private:
     static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
-    std::unique_ptr<LogicalFunction> onField;
+    LogicalFunction onField;
     Windowing::TimeUnit unit;
+
+    std::vector<Operator> children;
+    Optimizer::TraitSet traitSet;
+    Schema inputSchema, outputSchema;
 };
 }

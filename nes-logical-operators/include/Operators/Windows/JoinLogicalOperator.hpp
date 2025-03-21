@@ -20,7 +20,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <Abstract/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/BinaryLogicalOperator.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Traits/OriginIdTrait.hpp>
@@ -29,7 +28,7 @@ namespace NES
 {
 class SerializableOperator;
 
-class JoinLogicalOperator : public BinaryLogicalOperator
+class JoinLogicalOperator : public LogicalOperatorConcept
 {
 public:
     enum class JoinType : uint8_t
@@ -38,19 +37,17 @@ public:
         CARTESIAN_PRODUCT
     };
 
-    explicit JoinLogicalOperator(std::unique_ptr<LogicalFunction> joinFunction,
+    explicit JoinLogicalOperator(LogicalFunction joinFunction,
                                  std::unique_ptr<Windowing::WindowType> windowType,
                                  uint64_t numberOfInputEdgesLeft,
                                  uint64_t numberOfInputEdgesRight,
                                  JoinType joinType);
     std::string_view getName() const noexcept override;
 
+    bool inferSchema();
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
 
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    bool inferSchema() override;
-    [[nodiscard]] bool operator==(Operator const& rhs) const override;
-
-    [[nodiscard]] LogicalFunction& getJoinFunction() const;
+    [[nodiscard]] LogicalFunction getJoinFunction() const;
     [[nodiscard]] Schema getLeftSchema() const;
     [[nodiscard]] Schema getRightSchema() const;
     [[nodiscard]] Windowing::WindowType& getWindowType() const;
@@ -59,6 +56,7 @@ public:
     void updateSchemas(Schema leftSourceSchema, Schema rightSourceSchema);
 
     [[nodiscard]] Schema getOutputSchema() const override;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
@@ -93,13 +91,10 @@ public:
 
     Optimizer::OriginIdTrait originIdTrait;
 
-protected:
-    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
-
 private:
     static constexpr std::string_view NAME = "Join";
 
-    std::unique_ptr<LogicalFunction> joinFunction;
+    LogicalFunction joinFunction;
     Schema leftSourceSchema;
     Schema rightSourceSchema;
     Schema outputSchema ;

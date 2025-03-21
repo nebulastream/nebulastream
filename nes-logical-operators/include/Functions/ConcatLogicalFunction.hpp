@@ -24,24 +24,30 @@
 namespace NES
 {
 
-class ConcatLogicalFunction final : public BinaryLogicalFunction
+class ConcatLogicalFunction final : public LogicalFunctionConcept
 {
 public:
     static constexpr std::string_view NAME = "Concat";
 
-    explicit ConcatLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right);
+    ConcatLogicalFunction(LogicalFunction left, LogicalFunction right);
+    ConcatLogicalFunction(const ConcatLogicalFunction& other);
     ~ConcatLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(const LogicalFunction& rhs) const override;
-    [[nodiscard]] std::unique_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
-private:
-    explicit ConcatLogicalFunction(const ConcatLogicalFunction& other);
+    const DataType& getStamp() const override {return *stamp;};
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME);}
     [[nodiscard]] std::string toString() const override;
 
+private:
     const std::string constantValue;
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left;
+    LogicalFunction right;
 };
 }
 FMT_OSTREAM(NES::ConcatLogicalFunction);

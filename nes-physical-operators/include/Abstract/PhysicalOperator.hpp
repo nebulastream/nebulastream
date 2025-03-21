@@ -29,7 +29,7 @@ using namespace Nautilus::Interface::MemoryProvider;
 struct ExecutionContext;
 
 /// Each operator can implement setup, open, close, execute, and terminate.
-struct PhysicalOperator : public virtual Operator
+struct PhysicalOperator : public virtual OperatorConcept
 {
     PhysicalOperator(bool isPipelineBreaker = false) : isPipelineBreaker(isPipelineBreaker) {}
 

@@ -46,7 +46,7 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
     ///Serialize the root operator ids
     for (const auto& rootOperator : rootOperators)
     {
-        auto rootOperatorId = rootOperator->id;
+        auto rootOperatorId = rootOperator.getId();
         serializableQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
     }
 
@@ -58,10 +58,10 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
     }
 }
 
-std::unique_ptr<QueryPlan> QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
+QueryPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
 {
-    std::vector<std::unique_ptr<Operator>> rootOperators;
-    std::map<uint64_t, std::unique_ptr<Operator>> operatorIdToOperatorMap;
+    std::vector<Operator> rootOperators;
+    std::map<uint64_t, Operator> operatorIdToOperatorMap;
 
     ///Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap())
@@ -76,7 +76,7 @@ std::unique_ptr<QueryPlan> QueryPlanSerializationUtil::deserializeQueryPlan(cons
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
         for (auto childId : serializedOperator.childrenids())
         {
-            operatorIdToOperatorMap[serializedOperator.operatorid()]->children.push_back(std::move(operatorIdToOperatorMap[childId]));
+            operatorIdToOperatorMap[serializedOperator.operatorid()].setChildren(operatorIdToOperatorMap[childId]);
         }
     }
 
@@ -94,6 +94,6 @@ std::unique_ptr<QueryPlan> QueryPlanSerializationUtil::deserializeQueryPlan(cons
         queryId = QueryId(serializedQueryPlan->queryid());
     }
 
-    return std::make_unique<QueryPlan>(queryId, std::move(rootOperators));
+    return QueryPlan(queryId, std::move(rootOperators));
 }
 }

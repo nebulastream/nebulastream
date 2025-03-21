@@ -24,30 +24,30 @@
 namespace NES
 {
 
-WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, std::unique_ptr<FieldAccessLogicalFunction> onField)
-    :  inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)), onField(onField->clone()), asField(std::move(onField))
+WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, LogicalFunction onField)
+    :  inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)), onField(onField), asField(onField)
 {
 }
 
 WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField)
-    : inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)),onField(std::move(onField)), asField(std::move(asField))
+    std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, LogicalFunction onField, LogicalFunction asField)
+    : inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)),onField(onField), asField(asField)
 {
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(std::unique_ptr<LogicalFunction> asField)
+std::unique_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(LogicalFunction asField)
 {
-    this->asField = Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(asField));
+    this->asField = asField;
     return std::unique_ptr<WindowAggregationLogicalFunction>(this);
 }
 
-LogicalFunction& WindowAggregationLogicalFunction::as() const
+LogicalFunction WindowAggregationLogicalFunction::as() const
 {
-    if (asField == nullptr)
-    {
-        return *onField;
-    }
-    return *asField;
+    //if (asField == nullptr)
+    //{
+    //    return onField;
+    //}
+    return asField;
 }
 
 std::string WindowAggregationLogicalFunction::toString() const
@@ -55,8 +55,8 @@ std::string WindowAggregationLogicalFunction::toString() const
     std::stringstream ss;
     ss << "WindowAggregation: ";
     ss << " Type=" << getTypeAsString();
-    ss << " onField=" << *onField;
-    ss << " asField=" << *asField;
+    ss << " onField=" << onField;
+    ss << " asField=" << asField;
     ss << std::endl;
     return ss.str();
 }
@@ -71,9 +71,9 @@ std::string WindowAggregationLogicalFunction::getTypeAsString() const
     return std::string(magic_enum::enum_name(aggregationType));
 }
 
-LogicalFunction& WindowAggregationLogicalFunction::on() const
+LogicalFunction WindowAggregationLogicalFunction::on() const
 {
-    return *onField;
+    return onField;
 }
 
 DataType& WindowAggregationLogicalFunction::getInputStamp() const
@@ -93,7 +93,8 @@ DataType& WindowAggregationLogicalFunction::getFinalAggregateStamp() const
 
 bool WindowAggregationLogicalFunction::operator==(std::shared_ptr<WindowAggregationLogicalFunction> otherWindowAggregationLogicalFunction) const
 {
-    return this->getType() == otherWindowAggregationLogicalFunction->getType() && this->onField == otherWindowAggregationLogicalFunction->onField
+    return this->getType() == otherWindowAggregationLogicalFunction->getType()
+        && this->onField == otherWindowAggregationLogicalFunction->onField
         && this->asField == otherWindowAggregationLogicalFunction->asField;
 }
 

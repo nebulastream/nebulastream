@@ -26,29 +26,29 @@
 
 namespace NES
 {
-RenameLogicalFunction::RenameLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName)
-    : UnaryLogicalFunction(std::move(originalField)), newFieldName(std::move(newFieldName))
+RenameLogicalFunction::RenameLogicalFunction(const FieldAccessLogicalFunction& originalField, std::string newFieldName)
+    : child(originalField), newFieldName(std::move(newFieldName))
 {
-    stamp = originalField->getStamp().clone();
+    stamp = originalField.getStamp().clone();
 };
 
 RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
-    : RenameLogicalFunction(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(other.getOriginalField().clone()), other.getNewFieldName()) {};
+    : RenameLogicalFunction(other.getOriginalField(), other.getNewFieldName()) {};
 
 
-bool RenameLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const RenameLogicalFunction*>(&rhs);
     if (other)
     {
-        return *(other->child[0]) == getOriginalField() && this->newFieldName == other->getNewFieldName();
+        return other->child == getOriginalField() && this->newFieldName == other->getNewFieldName();
     }
     return false;
 }
 
-FieldAccessLogicalFunction& RenameLogicalFunction::getOriginalField() const
+const FieldAccessLogicalFunction& RenameLogicalFunction::getOriginalField() const
 {
-    return static_cast<FieldAccessLogicalFunction&>(*child[0]);
+    return child.get<FieldAccessLogicalFunction>();
 }
 
 std::string RenameLogicalFunction::getNewFieldName() const
@@ -58,9 +58,10 @@ std::string RenameLogicalFunction::getNewFieldName() const
 
 std::string RenameLogicalFunction::toString() const
 {
-    return "FieldRenameFunction(" + fmt::format("{}", *child[0]) + " => " + newFieldName + " : " + stamp->toString() + ")";
+    return "FieldRenameFunction(" + fmt::format("{}", child) + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
+/*
 void RenameLogicalFunction::inferStamp(const Schema& schema)
 {
     auto& originalFieldName = getOriginalField();
@@ -92,16 +93,7 @@ void RenameLogicalFunction::inferStamp(const Schema& schema)
     /// assign the stamp of this field access with the type of this field.
     stamp = fieldAttribute.value().getDataType().clone();
 }
-
-std::span<const std::unique_ptr<LogicalFunction>> RenameLogicalFunction::getChildren() const
-{
-    return child;
-}
-
-std::unique_ptr<LogicalFunction> RenameLogicalFunction::clone() const
-{
-    return std::make_unique<RenameLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(child[0]->clone()), newFieldName);
-}
+ */
 
 SerializableFunction RenameLogicalFunction::serialize() const
 {
@@ -109,8 +101,8 @@ SerializableFunction RenameLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
 
     auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild().serialize());
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(child.serialize());
 
     NES::Configurations::DescriptorConfig::ConfigType configVariant = getNewFieldName();
     SerializableVariantDescriptor variantDescriptor =
@@ -128,7 +120,7 @@ UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterRenameUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
     auto newFieldName = get<std::string>(arguments.config["NewFieldName"]);
-    return std::make_unique<RenameLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(arguments.child)), newFieldName);
+    return RenameLogicalFunction(arguments.child.get<FieldAccessLogicalFunction>(), newFieldName);
 }
 
 }

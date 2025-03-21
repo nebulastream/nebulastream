@@ -13,48 +13,44 @@
 */
 
 #include <memory>
-#include <API/Schema.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 
 namespace NES
 {
 
-MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationLogicalFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field))
+MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
+    : WindowAggregationLogicalFunction(field.getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), field)
 {
     this->aggregationType = Type::Median;
 }
-MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
-    : WindowAggregationLogicalFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field), std::move(asField))
+MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(LogicalFunction field, LogicalFunction asField)
+    : WindowAggregationLogicalFunction(field.getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), field, asField)
 {
     this->aggregationType = Type::Median;
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(
-    std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
+std::unique_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
-    return std::make_unique<MedianAggregationLogicalFunction>(Util::unique_ptr_dynamic_cast<LogicalFunction>(std::move(onField)), Util::unique_ptr_dynamic_cast<LogicalFunction>(std::move(asField)));
+    return std::make_unique<MedianAggregationLogicalFunction>(onField, asField);
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(LogicalFunction onField)
 {
-    return std::make_unique<MedianAggregationLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
+    auto i = onField.get<FieldAccessLogicalFunction>();
+    return std::make_unique<MedianAggregationLogicalFunction>(i);
 }
 
+/*
 void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(schema);
-    INVARIANT(dynamic_cast<const Numeric*>(&onField->getStamp()) == nullptr, "aggregations on non numeric fields is not supported.");
+    onField = onField.withInferredStamp(schema).get<FieldAccessLogicalFunction>();
+    INVARIANT(dynamic_cast<const Numeric*>(&onField.getStamp()) == nullptr, "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = dynamic_cast<FieldAccessLogicalFunction*>(onField.get())->getFieldName();
@@ -71,12 +67,13 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + fieldName);
     }
-    asField->setStamp(getFinalAggregateStamp().clone());
+    asField = asField.withStamp(getFinalAggregateStamp().clone()).get<FieldAccessLogicalFunction>();
 }
+ */
 
 std::unique_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::clone()
 {
-    return std::make_unique<MedianAggregationLogicalFunction>(this->onField->clone(), this->asField->clone());
+    return std::make_unique<MedianAggregationLogicalFunction>(onField, asField);
 }
 
 NES::SerializableAggregationFunction MedianAggregationLogicalFunction::serialize() const
@@ -85,10 +82,10 @@ NES::SerializableAggregationFunction MedianAggregationLogicalFunction::serialize
     serializedAggregationFunction.set_type(NAME);
 
     auto *onFieldFuc = new SerializableFunction();
-    onFieldFuc->CopyFrom(onField->serialize());
+    onFieldFuc->CopyFrom(onField.serialize());
 
     auto *asFieldFuc = new SerializableFunction();
-    asFieldFuc->CopyFrom(asField->serialize());
+    asFieldFuc->CopyFrom(asField.serialize());
 
     serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
     serializedAggregationFunction.set_allocated_on_field(onFieldFuc);

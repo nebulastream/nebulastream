@@ -16,8 +16,8 @@
 
 #include <string>
 #include <string_view>
-#include <Operators/UnaryLogicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Traits/OriginIdTrait.hpp>
 #include <Plans/Operator.hpp>
 
@@ -29,7 +29,7 @@ namespace NES
 /// The logical source is then used as key to a multimap, with all descriptors that name the logical source as values.
 /// In the LogicalSourceExpansionRule, we take the keys from SourceNameLogicalOperator operators, get all corresponding (physical) source
 /// descriptors from the catalog, construct SourceDescriptorLogicalOperators from the descriptors and attach them to the query plan.
-class SourceDescriptorLogicalOperator final : public UnaryLogicalOperator
+class SourceDescriptorLogicalOperator final : public LogicalOperatorConcept
 {
 public:
     explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor);
@@ -38,10 +38,9 @@ public:
     [[nodiscard]] Sources::SourceDescriptor getSourceDescriptor() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
-    bool inferSchema() override;
+    //bool inferSchema();
 
-    [[nodiscard]] bool operator==(Operator const& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
 
     Optimizer::OriginIdTrait originIdTrait;
 
@@ -49,10 +48,32 @@ public:
 
     [[nodiscard]] std::string toString() const override;
 
-protected:
-    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
+    virtual std::vector<Operator> getChildren() const override
+    {
+        return children;
+    }
+
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override
+    {
+        return {};
+    }
+
+    void setChildren(std::vector<Operator> children) override
+    {
+        this->children = children;
+    }
+
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; };
 
 private:
+    std::vector<Operator> children;
+    Schema inputSchema;
+    Schema outputSchema;
+
     static constexpr std::string_view NAME = "SourceDescriptor";
     const Sources::SourceDescriptor sourceDescriptor;
 };

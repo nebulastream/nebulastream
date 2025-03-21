@@ -25,23 +25,19 @@
 
 namespace NES
 {
-
-OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : BinaryLogicalFunction(other)
+OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
 {
 }
 
-OrLogicalFunction::OrLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(std::move(left), std::move(right))
-{
-    stamp = DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
-}
+OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right) : stamp(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)), left(left), right(right)
+{}
 
-bool OrLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool OrLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const OrLogicalFunction*>(&rhs);
     if (other) {
-        const bool simpleMatch = getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
-        const bool commutativeMatch = getLeftChild() == other->getRightChild() and getRightChild() == other->getLeftChild();
+        const bool simpleMatch = left == other->left and  right == other->right;
+        const bool commutativeMatch = left == other->right and right == other->left;
         return simpleMatch or commutativeMatch;
     }
     return false;
@@ -50,29 +46,24 @@ bool OrLogicalFunction::operator==(const LogicalFunction& rhs) const
 std::string OrLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << getLeftChild() << "||" << getRightChild();
+    ss << left << "||" << right;
     return ss.str();
 }
 
+/*
 void OrLogicalFunction::inferStamp(const Schema& schema)
 {
     std::vector<LogicalFunction> children;
     /// delegate stamp inference of children
     LogicalFunction::inferStamp(schema);
     /// check if children stamp is correct
-    INVARIANT(getLeftChild().getStamp() == Boolean(), "the stamp of left child must be boolean, but was: " + getLeftChild().getStamp().toString());
-    INVARIANT(getRightChild().getStamp() == Boolean(), "the stamp of right child must be boolean, but was: " + getRightChild().getStamp().toString());
-}
-
-std::unique_ptr<LogicalFunction> OrLogicalFunction::clone() const
-{
-    return std::make_unique<OrLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
-}
+    INVARIANT(left.getStamp() == Boolean(), "the stamp of left child must be boolean, but was: " + left.getStamp().toString());
+    INVARIANT(right.getStamp() == Boolean(), "the stamp of right child must be boolean, but was: " + right.getStamp().toString());
+}*/
 
 bool OrLogicalFunction::validateBeforeLowering() const
 {
-    return dynamic_cast<const Boolean*>(&getLeftChild().getStamp())
-        && dynamic_cast<const Boolean*>(&getRightChild().getStamp());
+    return dynamic_cast<const Boolean*>(&left.getStamp()) && dynamic_cast<const Boolean*>(&right.getStamp());
 }
 
 SerializableFunction OrLogicalFunction::serialize() const
@@ -81,9 +72,9 @@ SerializableFunction OrLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_BinaryFunction();
     auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(getLeftChild().serialize());
+    leftChild->CopyFrom(left.serialize());
     auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(getRightChild().serialize());
+    rightChild->CopyFrom(right.serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -94,7 +85,7 @@ SerializableFunction OrLogicalFunction::serialize() const
 BinaryLogicalFunctionRegistryReturnType
 BinaryLogicalFunctionGeneratedRegistrar::RegisterOrBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<OrLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
+    return OrLogicalFunction(arguments.leftChild, arguments.rightChild);
 }
 
 }

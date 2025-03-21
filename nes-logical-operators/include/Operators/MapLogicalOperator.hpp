@@ -18,19 +18,19 @@
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include "UnaryLogicalOperator.hpp"
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
 /// Map operator, which contains a field assignment function that manipulates a field of the record.
-class MapLogicalOperator : public UnaryLogicalOperator
+class MapLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    MapLogicalOperator(std::unique_ptr<FieldAssignmentLogicalFunction> mapFunction);
+    MapLogicalOperator(const FieldAssignmentLogicalFunction& mapFunction);
     std::string_view getName() const noexcept override;
 
-    [[nodiscard]] FieldAssignmentLogicalFunction& getMapFunction() const;
+    [[nodiscard]] const FieldAssignmentLogicalFunction& getMapFunction() const;
 
     /// @brief Infers the schema of the map operator. We support two cases:
     /// 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
@@ -38,11 +38,9 @@ public:
     /// @throws throws exception if inference was not possible.
     /// @param typeInferencePhaseContext needed for stamp inferring
     /// @return true if inference was possible
-    [[nodiscard]] bool inferSchema() override;
+    //[[nodiscard]] bool inferSchema();
 
-    [[nodiscard]] bool operator==(Operator const& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::unique_ptr<Operator> clone() const override;
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
@@ -61,8 +59,30 @@ public:
 
     std::string toString() const override;
 
+    std::vector<Operator> getChildren() const override
+    {
+        return children;
+    }
+    void setChildren(std::vector<Operator> children) override
+    {
+        this->children = children;
+    }
+
+    Optimizer::TraitSet getTraitSet() const override
+    {
+        return {};
+    }
+
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; }
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
 private:
     static constexpr std::string_view NAME = "Map";
-    std::unique_ptr<FieldAssignmentLogicalFunction> mapFunction;
+    LogicalFunction mapFunction;
+
+    std::vector<Operator> children;
+    Schema inputSchema, outputSchema;
 };
 }

@@ -21,21 +21,20 @@
 namespace NES
 {
 
-CeilLogicalFunction::CeilLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction( std::move(child))
+CeilLogicalFunction::CeilLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
 {
-    stamp = child->getStamp().clone();
 };
 
-CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : UnaryLogicalFunction(other)
+CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : stamp(other.stamp->clone()), child(other.child)
 {
 }
 
-bool CeilLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool CeilLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const CeilLogicalFunction*>(&rhs);
     if (other)
     {
-        return getChild() == other->getChild();
+        return child == other->child;
     }
     return false;
 }
@@ -43,13 +42,8 @@ bool CeilLogicalFunction::operator==(const LogicalFunction& rhs) const
 std::string CeilLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "CEIL(" << getChild() << ")";
+    ss << "CEIL(" << child << ")";
     return ss.str();
-}
-
-std::unique_ptr<LogicalFunction> CeilLogicalFunction::clone() const
-{
-    return std::make_unique<CeilLogicalFunction>(getChild().clone());
 }
 
 SerializableFunction CeilLogicalFunction::serialize() const
@@ -57,8 +51,8 @@ SerializableFunction CeilLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild().serialize());
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(child.serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -69,7 +63,7 @@ SerializableFunction CeilLogicalFunction::serialize() const
 UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterCeilUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<CeilLogicalFunction>(std::move(arguments.child));
+    return CeilLogicalFunction(arguments.child);
 }
 
 }

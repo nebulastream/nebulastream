@@ -32,19 +32,16 @@
 namespace NES
 {
 
-ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<std::unique_ptr<LogicalFunction>> functions)
-    : Operator(), UnaryLogicalOperator(), functions(std::move(functions))
+ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<LogicalFunction> functions) : functions(functions)
 {
-    const auto functionTypeNotSupported = [](const std::unique_ptr<LogicalFunction>& function) -> bool
+    const auto functionTypeNotSupported = [](const LogicalFunction& function) -> bool
     {
-        return not(
-            dynamic_cast<FieldAccessLogicalFunction*>(function.get())
-            or dynamic_cast<FieldAssignmentLogicalFunction*>(function.get()));
+        return not(function.tryGet<FieldAccessLogicalFunction>() or function.tryGet<FieldAssignmentLogicalFunction>());
     };
     bool allFunctionsAreSupported = true;
     for (const auto& function : std::views::all(this->functions) | std::views::filter(functionTypeNotSupported))
     {
-        NES_ERROR("The projection operator does not support the function: {}", *function);
+        NES_ERROR("The projection operator does not support the function: {}", function);
         allFunctionsAreSupported = false;
     }
     INVARIANT(
@@ -57,20 +54,15 @@ std::string_view ProjectionLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-const std::vector<std::unique_ptr<LogicalFunction>>& ProjectionLogicalOperator::getFunctions() const
+const std::vector<LogicalFunction>& ProjectionLogicalOperator::getFunctions() const
 {
     return functions;
 }
 
-bool ProjectionLogicalOperator::isIdentical(const Operator& rhs) const
-{
-    return *this == rhs && dynamic_cast<const ProjectionLogicalOperator*>(&rhs)->id == id;
-}
-
-bool ProjectionLogicalOperator::operator==(Operator const& rhs) const
+bool ProjectionLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const ProjectionLogicalOperator*>(&rhs)) {
-        return (outputSchema == rhsOperator->outputSchema);
+        return (getOutputSchema() == rhsOperator->getOutputSchema());
     }
     return false;
 };
@@ -78,26 +70,27 @@ bool ProjectionLogicalOperator::operator==(Operator const& rhs) const
 std::string getFieldName(const LogicalFunction& function)
 {
     /// We assert that the projection operator only contains field access and assignment functions in the constructor.
-    if (const auto *FieldAccessLogicalFunction = dynamic_cast<class FieldAccessLogicalFunction const*>(&function))
+    if (const auto& fieldAccessLogicalFunction = function.tryGet<FieldAccessLogicalFunction>())
     {
-        return FieldAccessLogicalFunction->getFieldName();
+        return fieldAccessLogicalFunction->getFieldName();
     }
-    return dynamic_cast<FieldAssignmentLogicalFunction const*>(&function)->getField().getFieldName();
+    return function.get<FieldAssignmentLogicalFunction>().getField().getFieldName();
 }
 
 std::string ProjectionLogicalOperator::toString() const
 {
     PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
-    if (not outputSchema.getFieldNames().empty())
+    if (not getOutputSchema().getFieldNames().empty())
     {
-        return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema.toString());
+        return fmt::format("PROJECTION(opId: {}, schema={})", id, getOutputSchema().toString());
     }
     return fmt::format(
         "PROJECTION(opId: {}, fields: [{}])",
         id,
-        fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(*function); }), ", "));
+        fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(function); }), ", "));
 }
 
+/*
 bool ProjectionLogicalOperator::inferSchema()
 {
     if (!UnaryLogicalOperator::inferSchema())
@@ -130,19 +123,9 @@ bool ProjectionLogicalOperator::inferSchema()
     }
     return true;
 }
+ */
 
-std::unique_ptr<Operator> ProjectionLogicalOperator::clone() const
-{
-    auto copyOfProjectionFunctions
-        = functions | std::views::transform([](const auto& fn) { return fn->clone(); }) | std::ranges::to<std::vector>();
-    auto copy = std::make_unique<ProjectionLogicalOperator>(std::move(copyOfProjectionFunctions));
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
-}
-
-std::unique_ptr<LogicalOperator>
+LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
 {
     auto functionVariant = config.config[ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME];
@@ -151,7 +134,7 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::Logica
         const auto& functionList = std::get<FunctionList>(functionVariant);
         const auto& functions = functionList.functions();
 
-        std::vector<std::unique_ptr<LogicalFunction>> functionVec(functions.size());
+        std::vector<LogicalFunction> functionVec(functions.size());
         for (const auto &function : functions)
         {
             auto functionType = function.functiontype();
@@ -165,14 +148,10 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::Logica
             {
                 functionVec.emplace_back(std::move(function.value()));
             }
-            else
-            {
-                return nullptr;
-            }
         }
-        return std::make_unique<ProjectionLogicalOperator>(std::move(functionVec));
+        return ProjectionLogicalOperator(functionVec);
     }
-    return nullptr;
+    throw UnknownLogicalOperator();
 }
 
 
@@ -183,13 +162,13 @@ SerializableOperator ProjectionLogicalOperator::serialize() const
     auto* opDesc = new SerializableOperator_LogicalOperator();
     opDesc->set_operatortype(NAME);
     serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(children[0]->id.getRawValue());
+    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
 
     NES::FunctionList list;
     for (const auto& function : this->getFunctions())
     {
         auto* serializedFunction = list.add_functions();
-        serializedFunction->CopyFrom(function->serialize());
+        serializedFunction->CopyFrom(function.serialize());
     }
 
     NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
@@ -199,16 +178,16 @@ SerializableOperator ProjectionLogicalOperator::serialize() const
 
     auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
     auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    SchemaSerializationUtil::serializeSchema(get<0>(this->getInputSchema()), inputSchema);
     unaryOpDesc->set_allocated_inputschema(inputSchema);
 
-    for (const auto& originId : this->getInputOriginIds()) {
+    for (const auto& originId : get<0>(this->getInputOriginIds())) {
         unaryOpDesc->add_originids(originId.getRawValue());
     }
 
     opDesc->set_allocated_unaryoperator(unaryOpDesc);
     auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->outputSchema, outputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
 
     serializedOperator.set_allocated_outputschema(outputSchema);
     serializedOperator.set_allocated_operator_(opDesc);

@@ -14,16 +14,11 @@
 
 #include <Operators/Windows/WindowOperator.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/UnaryLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES
 {
 
-WindowOperator::WindowOperator()
-    : Operator(), UnaryLogicalOperator()
-{
-}
+WindowOperator::WindowOperator() = default;
 
 std::string_view WindowOperator::getName() const noexcept
 {

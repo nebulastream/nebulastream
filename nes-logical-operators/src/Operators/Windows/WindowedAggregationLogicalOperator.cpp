@@ -39,8 +39,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
     std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation,
     std::unique_ptr<Windowing::WindowType> windowType)
-    : Operator()
-    , WindowOperator()
+    : WindowOperator()
     , windowAggregation(std::move(windowAggregation))
     , windowType(std::move(windowType))
     , onKey(std::move(onKey))
@@ -66,13 +65,7 @@ std::string WindowedAggregationLogicalOperator::toString() const
     return ss.str();
 }
 
-bool WindowedAggregationLogicalOperator::isIdentical(const Operator& rhs) const
-{
-    return *this == rhs &&
-           (dynamic_cast<const WindowedAggregationLogicalOperator*>(&rhs)->id == id);
-}
-
-bool WindowedAggregationLogicalOperator::operator==(Operator const& rhs) const
+bool WindowedAggregationLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const WindowedAggregationLogicalOperator*>(&rhs))
     {
@@ -111,6 +104,7 @@ bool WindowedAggregationLogicalOperator::operator==(Operator const& rhs) const
     return false;
 }
 
+/*
 bool WindowedAggregationLogicalOperator::inferSchema()
 {
     if (!WindowOperator::inferSchema())
@@ -184,6 +178,7 @@ bool WindowedAggregationLogicalOperator::inferSchema()
     NES_DEBUG("Outputschema for window={}", outputSchema.toString());
     return true;
 }
+ */
 
 bool WindowedAggregationLogicalOperator::isKeyed() const
 {
@@ -225,29 +220,9 @@ OriginId WindowedAggregationLogicalOperator::getOriginId() const
     return originId;
 }
 
-const std::vector<OriginId>& WindowedAggregationLogicalOperator::getInputOriginIds() const
+std::vector<std::vector<OriginId>> WindowedAggregationLogicalOperator::getInputOriginIds() const
 {
-    return inputOriginIds;
-}
-
-std::unique_ptr<Operator> WindowedAggregationLogicalOperator::clone() const {
-    std::vector<std::unique_ptr<FieldAccessLogicalFunction>> clonedOnKey;
-    for (const auto& key : onKey) {
-        auto baseClone = key->clone();
-        clonedOnKey.push_back(std::unique_ptr<FieldAccessLogicalFunction>(static_cast<FieldAccessLogicalFunction*>(baseClone.release())));
-    }
-    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> clonedWindowAgg;
-    for (const auto& agg : windowAggregation) {
-        clonedWindowAgg.push_back(agg->clone());
-    }
-    std::unique_ptr<Windowing::WindowType> clonedWindowType = windowType->clone();
-    auto cloned = std::make_unique<WindowedAggregationLogicalOperator>(std::move(clonedOnKey), std::move(clonedWindowAgg), std::move(clonedWindowType));
-    cloned->windowStartFieldName = windowStartFieldName;
-    cloned->windowEndFieldName = windowEndFieldName;
-    cloned->numberOfInputEdges = numberOfInputEdges;
-    cloned->inputOriginIds = inputOriginIds;
-    cloned->originId = originId;
-    return cloned;
+    return {inputOriginIds};
 }
 
 void WindowedAggregationLogicalOperator::setInputOriginIds(const std::vector<OriginId>& inputIds)
@@ -272,31 +247,33 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
     auto* opDesc = new SerializableOperator_LogicalOperator();
     opDesc->set_operatortype(NAME);
     serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(children[0]->id.getRawValue());
+    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
 
     auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
     auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
     unaryOpDesc->set_allocated_inputschema(inputSchema);
 
-    for (const auto& originId : this->getInputOriginIds()) {
+    auto ids = this->getInputOriginIds()[0];
+    for (const auto& originId : ids) {
         unaryOpDesc->add_originids(originId.getRawValue());
     }
 
     opDesc->set_allocated_unaryoperator(unaryOpDesc);
     auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->outputSchema, outputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
     serializedOperator.set_allocated_outputschema(outputSchema);
     serializedOperator.set_allocated_operator_(opDesc);
 
     return serializedOperator;
 }
 
-std::unique_ptr<LogicalOperator>
+LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
     /// TODO
-    return nullptr;
+    //return WindowedAggregationLogicalOperator();
+    throw UnsupportedOperation();
 }
 
 }

@@ -23,7 +23,7 @@
 
 namespace NES
 {
-
+/*
 namespace
 {
 OperatorId getNextOperatorId()
@@ -71,9 +71,11 @@ std::ostream& operator<<(std::ostream& os, const Operator& op)
     return os;
 }
 
-std::vector<std::unique_ptr<Operator>> Operator::releaseChildren() const {
+std::vector<std::unique_ptr<Operator>> Operator::releaseChildren() const
+{
     auto& mutableChildren = const_cast<std::vector<std::unique_ptr<Operator>>&>(children);
     return std::move(mutableChildren);
 }
+*/
 
 }

@@ -15,36 +15,47 @@
 #pragma once
 
 #include <memory>
-#include "Operators/LogicalOperator.hpp"
-#include "Operators/UnaryLogicalOperator.hpp"
-#include "Sinks/SinkDescriptor.hpp"
+#include <string>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Plans/Operator.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
-class SinkLogicalOperator final : public UnaryLogicalOperator
+struct SinkLogicalOperator final : public LogicalOperatorConcept
 {
-public:
     /// During deserialization, we don't need to know/use the name of the sink anymore.
-    SinkLogicalOperator() : Operator(), UnaryLogicalOperator() {};
-
+    SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
-    SinkLogicalOperator(std::string sinkName)
-        : Operator(), UnaryLogicalOperator(), sinkName(std::move(sinkName)) {};
+    SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) {};
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
+    std::string_view getName() const noexcept override;
+    bool inferSchema();
 
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    [[nodiscard]] bool operator==(Operator const& rhs) const override;
-    bool inferSchema() override;
-
-    const Sinks::SinkDescriptor& getSinkDescriptorRef() const;
-
-    std::unique_ptr<Operator> clone() const override;
+    virtual void inferInputOrigins(){};
 
     std::string sinkName;
-    std::unique_ptr<Sinks::SinkDescriptor> sinkDescriptor;
+    Sinks::SinkDescriptor sinkDescriptor;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
+    [[nodiscard]] std::vector<Operator> getChildren() const override
+    {
+        return children;
+    }
+
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override { return {}; }
+    void setChildren(std::vector<Operator> children) override { this->children = children; }
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; }
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
     std::string toString() const override;
+
+private:
+    std::vector<Operator> children;
+    Schema inputSchema, outputSchema;
 };
 }

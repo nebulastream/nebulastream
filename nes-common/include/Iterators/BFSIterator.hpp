@@ -27,16 +27,14 @@ template <typename T>
 class BFSIterator {
 public:
     using iterator_category = std::forward_iterator_tag;
-    using value_type = T*;
+    using value_type = T;
     using difference_type = std::ptrdiff_t;
-    using pointer = T**;
-    using reference = T*&;
+    using pointer = T*;
+    using reference = T&;
 
     BFSIterator() = default;
-    explicit BFSIterator(T* root) {
-        if (root) {
-            nodeQueue.push(root);
-        }
+    explicit BFSIterator(T root) {
+        nodeQueue.push(root);
     }
 
     BFSIterator& operator++() {
@@ -44,9 +42,9 @@ public:
             auto current = nodeQueue.front();
             nodeQueue.pop();
 
-            for (const auto& child : current->getChildren()) {
+            for (const auto& child : current.getChildren()) {
                 // child is a const std::unique_ptr<T>&, so take its raw pointer.
-                nodeQueue.push(child.get());
+                nodeQueue.push(child);
             }
         }
         return *this;
@@ -57,7 +55,7 @@ public:
     }
     bool operator!=(const BFSIterator& other) const { return !(*this == other); }
 
-    T* operator*() const {
+    T operator*() const {
         if (!nodeQueue.empty()) {
             return nodeQueue.front();
         }
@@ -65,18 +63,18 @@ public:
     }
 
 private:
-    std::queue<T*> nodeQueue;
+    std::queue<T> nodeQueue;
 };
 
 template <typename T>
 class BFSRange {
 public:
-    explicit BFSRange(T* root) : root(root) { }
+    explicit BFSRange(T root) : root(root) { }
 
     BFSIterator<T> begin() const { return BFSIterator<T>(root); }
     BFSIterator<T> end() const { return BFSIterator<T>(); }
 
 private:
-    T* root;
+    T root;
 };
 }

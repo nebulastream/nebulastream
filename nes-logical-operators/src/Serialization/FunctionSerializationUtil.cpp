@@ -15,9 +15,7 @@
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <memory>
 #include <utility>
-#include <Functions/LogicalFunction.hpp>
-#include <Functions/UnaryLogicalFunction.hpp>
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableFunction.pb.h>
 #include <LogicalFunctionRegistry.hpp>
@@ -28,7 +26,7 @@
 namespace NES
 {
 
-std::unique_ptr<LogicalFunction> deserializeUnaryFunction(const SerializableFunction& serializedFunction)
+LogicalFunction deserializeUnaryFunction(const SerializableFunction& serializedFunction)
 {
     const auto& functionType = serializedFunction.functiontype();
 
@@ -49,7 +47,7 @@ std::unique_ptr<LogicalFunction> deserializeUnaryFunction(const SerializableFunc
     throw CannotDeserialize("Binary Logical Function: {}", serializedFunction.DebugString());
 }
 
-std::unique_ptr<LogicalFunction> deserializeBinaryFunction(const SerializableFunction& serializedFunction)
+LogicalFunction deserializeBinaryFunction(const SerializableFunction& serializedFunction)
 {
     const auto& functionType = serializedFunction.functiontype();
 
@@ -73,7 +71,7 @@ std::unique_ptr<LogicalFunction> deserializeBinaryFunction(const SerializableFun
     throw CannotDeserialize("Binary Logical Function: {}", serializedFunction.DebugString());
 }
 
-std::unique_ptr<LogicalFunction> FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
+LogicalFunction FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
 {
     if (serializedFunction.has_unaryfunction())
     {

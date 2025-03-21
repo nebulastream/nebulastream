@@ -28,43 +28,44 @@
 namespace NES
 {
 
-MinAggregationLogicalFunction::MinAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationLogicalFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field))
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field)
+    : WindowAggregationLogicalFunction(field.getStamp().clone(), field.getStamp().clone(), field.getStamp().clone(), field)
 {
-    this->aggregationType = Type::Min;
+    aggregationType = Type::Min;
 }
-MinAggregationLogicalFunction::MinAggregationLogicalFunction(std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
-    : WindowAggregationLogicalFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field), std::move(asField))
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(LogicalFunction field, LogicalFunction asField)
+    : WindowAggregationLogicalFunction(field.getStamp().clone(), field.getStamp().clone(), field.getStamp().clone(), field, asField)
 {
-    this->aggregationType = Type::Min;
+    aggregationType = Type::Min;
 }
 
 std::unique_ptr<WindowAggregationLogicalFunction>
-MinAggregationLogicalFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
+MinAggregationLogicalFunction::create(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
 {
     return std::make_unique<MinAggregationLogicalFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::create(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::create(LogicalFunction onField)
 {
-    if (auto function = dynamic_cast<const FieldAccessLogicalFunction*>(onField.get()))
+    if (auto function = onField.tryGet<FieldAccessLogicalFunction>())
     {
-        return std::make_unique<MinAggregationLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
+        return std::make_unique<MinAggregationLogicalFunction>(*function);
     }
-    NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
+    NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", onField);
     return nullptr;
 }
 
 std::unique_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::clone()
 {
-    return std::make_unique<MinAggregationLogicalFunction>(onField->clone(), asField->clone());
+    return std::make_unique<MinAggregationLogicalFunction>(onField, asField);
 }
 
+/*
 void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(schema);
-    INVARIANT(dynamic_cast<const Numeric*>(&onField->getStamp()) == nullptr, "aggregations on non numeric fields is not supported.");
+    auto newOnField = onField.withInferredStamp(schema);
+    INVARIANT(dynamic_cast<const Numeric*>(&onField.getStamp()) == nullptr, "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = dynamic_cast<FieldAccessLogicalFunction*>(onField.get())->getFieldName();
@@ -74,15 +75,15 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + asFieldName);
+        asField.get<FieldAccessLogicalFunction>->setFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + fieldName);
+        asField.get<FieldAccessLogicalFunction>->setFieldName(attributeNameResolver + fieldName);
     }
-    asField->setStamp(getFinalAggregateStamp().clone());
-}
+    asField.setStamp(getFinalAggregateStamp().clone());
+}*/
 
 NES::SerializableAggregationFunction MinAggregationLogicalFunction::serialize() const
 {
@@ -90,10 +91,10 @@ NES::SerializableAggregationFunction MinAggregationLogicalFunction::serialize() 
     serializedAggregationFunction.set_type(NAME);
 
     auto *onFieldFuc = new SerializableFunction();
-    onFieldFuc->CopyFrom(onField->serialize());
+    onFieldFuc->CopyFrom(onField.serialize());
 
     auto *asFieldFuc = new SerializableFunction();
-    asFieldFuc->CopyFrom(asField->serialize());
+    asFieldFuc->CopyFrom(asField.serialize());
 
     serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
     serializedAggregationFunction.set_allocated_on_field(onFieldFuc);

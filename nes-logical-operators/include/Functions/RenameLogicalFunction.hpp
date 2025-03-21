@@ -15,28 +15,26 @@
 #pragma once
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/UnaryLogicalFunction.hpp>
 
 namespace NES
 {
 /// @brief A RenameLogicalFunction allows us to rename an attribute value via `as` in the query
-class RenameLogicalFunction final : public UnaryLogicalFunction
+class RenameLogicalFunction final : public LogicalFunctionConcept
 {
 public:
     static constexpr std::string_view NAME = "Rename";
 
-    RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName);
+    RenameLogicalFunction(const FieldAccessLogicalFunction& originalField, std::string newFieldName);
+    RenameLogicalFunction(const RenameLogicalFunction& other);
 
-    void inferStamp(const Schema& schema) override;
+    void inferStamp(const Schema& schema);
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] std::string getNewFieldName() const;
-    [[nodiscard]] std::shared_ptr<FieldAccessLogicalFunction> getOriginalField() const;
+    [[nodiscard]] const FieldAccessLogicalFunction& getOriginalField() const;
 
-    [[nodiscard]] std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
     struct ConfigParameters
     {
@@ -49,11 +47,15 @@ public:
             = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(NEW_FIELD_NAME);
     };
 
-private:
-    explicit RenameLogicalFunction(const RenameLogicalFunction& other);
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {child}; };
+    std::string getType() const override { return std::string(NAME); }
     [[nodiscard]] std::string toString() const override;
 
-    std::array<std::shared_ptr<LogicalFunction>, 1> child;
+private:
+    LogicalFunction child;
+    std::shared_ptr<DataType> stamp;
     std::string newFieldName;
 };
 }

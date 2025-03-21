@@ -21,5 +21,5 @@
 namespace NES::FunctionSerializationUtil
 {
 /// Note: corresponding serialization is implemented as member function of each function
-static std::unique_ptr<LogicalFunction> deserializeFunction(const SerializableFunction& serializedFunction);
+static LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction);
 }

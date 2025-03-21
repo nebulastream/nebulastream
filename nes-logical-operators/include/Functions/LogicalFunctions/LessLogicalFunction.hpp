@@ -13,26 +13,33 @@
 */
 
 #pragma once
-#include <Functions/BinaryLogicalFunction.hpp>
+
+#include <Abstract/LogicalFunction.hpp>
+
 namespace NES
 {
 
-class LessLogicalFunction final : public BinaryLogicalFunction
+class LessLogicalFunction final : public LogicalFunctionConcept
 {
 public:
     static constexpr std::string_view NAME = "Less";
 
-    LessLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
+    LessLogicalFunction(LogicalFunction left, LogicalFunction right);
+    LessLogicalFunction(const LessLogicalFunction& other);
     ~LessLogicalFunction() override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
+    std::string toString() const override;
 
 private:
-    explicit LessLogicalFunction(const LessLogicalFunction& other);
-    std::string toString() const override;
+    LogicalFunction left, right;
+    std::shared_ptr<DataType> stamp;
 };
 }
 FMT_OSTREAM(NES::LessLogicalFunction);

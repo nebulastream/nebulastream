@@ -13,45 +13,137 @@
 */
 #pragma once
 
-#include <span>
 #include <cstddef>
+#include <atomic>
 #include <memory>
-#include <ostream>
 #include <string>
 #include <vector>
+#include <functional>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Formatter.hpp>
 
 namespace NES {
-/// The `Operator` struct holds all the state for an operator in the query plan.
-struct Operator {
-    explicit Operator();
-    /// Virtual destructor to make `Operator` polymorphic
-    virtual ~Operator() = default;
-    [[nodiscard]] virtual std::string toString() const = 0;
-    friend std::ostream& operator<<(std::ostream& os, const Operator& op);
-    /// Compares operator content ignoring 'id'
-    [[nodiscard]] virtual bool operator==(const Operator& rhs) const;
-    /// Expose children as a non-owning view.
-    [[nodiscard]] std::span<const std::unique_ptr<Operator>> getChildren() const;
-    /// Transfers ownership of children
-    [[nodiscard]] std::vector<std::unique_ptr<Operator>> releaseChildren() const;
-    /// Creates a new owing instance. Clone has a new operator id.
-    [[nodiscard]] std::unique_ptr<Operator> clone() const;
-    /// Unique identifier for the operator during runtime
-    const OperatorId id;
-    /// A operator owns it children and has non-owning pointers to its parents
-    std::vector<Operator*> parents;
-    std::vector<std::unique_ptr<Operator>> children;
 
-    static std::string getName()
-    {
-        return "Operator";
+/// only used in this header, thus the anonymous namespace
+namespace
+{
+inline OperatorId getNextOperatorId() {
+    static std::atomic_uint64_t id = INITIAL_OPERATOR_ID.getRawValue();
+    return OperatorId(id++);
+}
+}
+
+struct OperatorConcept {
+    virtual ~OperatorConcept() = default;
+    [[nodiscard]] virtual std::string toString() const = 0;
+    [[nodiscard]] virtual std::vector<struct Operator> getChildren() const = 0;
+    virtual void setChildren(std::vector<struct Operator>) = 0;
+
+    const OperatorId id = getNextOperatorId();
+};
+
+
+struct Operator {
+public:
+    template<typename T>
+    Operator(const T& op) : self(std::make_unique<Model<T>>(op)) {}
+
+    Operator(const Operator& other)
+        : self(other.self->clone()) {}
+
+    template<typename T>
+    const T* get() const {
+        if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
+            return &(p->data);
+        }
+        return nullptr;
     }
 
-protected:
-    /// Each derived operator implements this to clone its own state
-    virtual std::unique_ptr<Operator> cloneImpl() const = 0;
+    Operator(Operator&&) noexcept = default;
+
+    Operator& operator=(const Operator& other) {
+        if (this != &other)
+        {
+            self = other.self->clone();
+        }
+        return *this;
+    }
+
+    [[nodiscard]] std::string toString() const
+    {
+        return self->toString();
+    }
+
+    [[nodiscard]] std::vector<Operator> getChildren() const {
+        return self->getChildren();
+    }
+
+    void setChildren(std::vector<Operator> children) {
+        self->setChildren(children);
+    }
+
+    [[nodiscard]] OperatorId getId() const {
+        return self->id;
+    }
+
+    bool operator==(const Operator &other) const {
+        return self->equals(*other.self);
+    }
+
+private:
+    struct Concept : OperatorConcept {
+        [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
+        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
+    };
+
+    template<typename T>
+    struct Model : Concept {
+        T data;
+        explicit Model(T d) : data(std::move(d)) {}
+
+        [[nodiscard]] std::unique_ptr<Concept> clone() const override {
+            return std::unique_ptr<Concept>(new Model<T>(data));
+        }
+
+        [[nodiscard]] std::string toString() const override
+        {
+            return data.toString();
+        }
+
+        [[nodiscard]] std::vector<Operator> getChildren() const override
+        {
+            return data.getChildren();
+        }
+
+        void setChildren(std::vector<Operator> children) override
+        {
+            data.setChildren(children);
+        }
+
+        [[nodiscard]] bool equals(const Concept& other) const override {
+            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
+                return data == p->data;
+            }
+            return false;
+        }
+    };
+
+    std::unique_ptr<Concept> self;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const Operator& op)
+{
+    return os << op.toString();
+}
+}
+
+/// Hash is based solely on unique identifier
+namespace std {
+template<>
+struct hash<NES::Operator> {
+    std::size_t operator()(const NES::Operator& op) const noexcept {
+        return std::hash<NES::OperatorId>{}(op.getId());
+    }
 };
 }
 FMT_OSTREAM(NES::Operator);

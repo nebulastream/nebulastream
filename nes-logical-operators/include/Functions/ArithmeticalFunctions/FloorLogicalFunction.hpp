@@ -15,28 +15,33 @@
 #pragma once
 
 #include <memory>
-#include <Functions/LogicalFunction.hpp>
-#include <Functions/UnaryLogicalFunction.hpp>
-
+#include <Abstract/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
-class FloorLogicalFunction final : public UnaryLogicalFunction
+class FloorLogicalFunction final : public LogicalFunctionConcept
 {
 public:
     static constexpr std::string_view NAME = "Floor";
 
-    explicit FloorLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
+    FloorLogicalFunction(LogicalFunction child);
+    FloorLogicalFunction(const FloorLogicalFunction& other);
     ~FloorLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override {return *stamp;};
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {child}; };
+    std::string getType() const override { return std::string(NAME);}
+    [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit FloorLogicalFunction(const FloorLogicalFunction& other);
-    [[nodiscard]] std::string toString() const override;
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction child;
 };
 }
 FMT_OSTREAM(NES::FloorLogicalFunction);

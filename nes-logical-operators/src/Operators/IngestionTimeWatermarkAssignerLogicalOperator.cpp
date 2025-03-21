@@ -17,7 +17,6 @@
 #include <sstream>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Operators/UnaryLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
 #include <SerializableOperator.pb.h>
 #include <LogicalOperatorRegistry.hpp>
@@ -25,10 +24,7 @@
 namespace NES
 {
 
-IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator()
-: Operator(), UnaryLogicalOperator()
-{
-}
+IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator() = default;
 
 std::string_view IngestionTimeWatermarkAssignerLogicalOperator::getName() const noexcept
 {
@@ -42,28 +38,14 @@ std::string IngestionTimeWatermarkAssignerLogicalOperator::toString() const
     return ss.str();
 }
 
-bool IngestionTimeWatermarkAssignerLogicalOperator::isIdentical(const Operator& rhs) const
-{
-    return (*this == rhs) && dynamic_cast<const IngestionTimeWatermarkAssignerLogicalOperator*>(&rhs)->id == id;
-}
-
-bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(Operator const& rhs) const
+bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const IngestionTimeWatermarkAssignerLogicalOperator*>(&rhs)) {
     }
     return false;
 }
 
-
-std::unique_ptr<Operator> IngestionTimeWatermarkAssignerLogicalOperator::clone() const
-{
-    auto copy = std::make_unique<IngestionTimeWatermarkAssignerLogicalOperator>();
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
-}
-
+/*
 bool IngestionTimeWatermarkAssignerLogicalOperator::inferSchema()
 {
     if (!UnaryLogicalOperator::inferSchema())
@@ -72,7 +54,7 @@ bool IngestionTimeWatermarkAssignerLogicalOperator::inferSchema()
     }
     // If any additional schema inference is needed, add it here.
     return true;
-}
+}*/
 
 SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() const
 {
@@ -81,14 +63,14 @@ SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() 
     auto* opDesc = new SerializableOperator_LogicalOperator();
     opDesc->set_operatortype(NAME);
     serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(children[0]->id.getRawValue());
+    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
 
     auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
     auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
     unaryOpDesc->set_allocated_inputschema(inputSchema);
 
-    for (const auto& originId : this->getInputOriginIds()) {
+    for (const auto& originId : getInputOriginIds()[0]) {
         unaryOpDesc->add_originids(originId.getRawValue());
     }
 
@@ -106,7 +88,7 @@ LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
     // TODO
-    return std::make_unique<IngestionTimeWatermarkAssignerLogicalOperator>();
+    throw UnknownLogicalOperator();
 }
 
 

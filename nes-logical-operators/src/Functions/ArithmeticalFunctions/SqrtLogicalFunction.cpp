@@ -19,27 +19,24 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <UnaryLogicalFunctionRegistry.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(std::unique_ptr<LogicalFunction> child) : UnaryLogicalFunction(std::move(child))
+SqrtLogicalFunction::SqrtLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
 {
-    stamp = child->getStamp().clone();
 };
 
-SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : UnaryLogicalFunction(other)
+SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : stamp(other.stamp->clone()), child(other.child)
 {
 }
 
-bool SqrtLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool SqrtLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const SqrtLogicalFunction*>(&rhs);
     if(other)
     {
-        return getChild() == other->getChild();
+        return child == other->child;
     }
     return false;
 }
@@ -47,13 +44,8 @@ bool SqrtLogicalFunction::operator==(const LogicalFunction& rhs) const
 std::string SqrtLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "SQRT(" << getChild() << ")";
+    ss << "SQRT(" << child << ")";
     return ss.str();
-}
-
-std::unique_ptr<LogicalFunction> SqrtLogicalFunction::clone() const
-{
-    return std::make_unique<SqrtLogicalFunction>(getChild().clone());
 }
 
 SerializableFunction SqrtLogicalFunction::serialize() const
@@ -61,8 +53,8 @@ SerializableFunction SqrtLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild().serialize());
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(getChildren()[0].serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -73,7 +65,7 @@ SerializableFunction SqrtLogicalFunction::serialize() const
 UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterSqrtUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<SqrtLogicalFunction>(std::move(arguments.child));
+    return SqrtLogicalFunction(arguments.child);
 }
 
 }

@@ -28,25 +28,25 @@
 namespace NES::Windowing
 {
 
-ThresholdWindow::ThresholdWindow(std::unique_ptr<LogicalFunction> predicate) : ContentBasedWindowType(), predicate(std::move(predicate))
+ThresholdWindow::ThresholdWindow(LogicalFunction predicate) : ContentBasedWindowType(), predicate(std::move(predicate))
 {
 }
 
-ThresholdWindow::ThresholdWindow(std::unique_ptr<LogicalFunction> predicate, uint64_t minCount)
+ThresholdWindow::ThresholdWindow(LogicalFunction predicate, uint64_t minCount)
     : ContentBasedWindowType(), predicate(std::move(predicate)), minimumCount(minCount)
 {
 }
 
-std::unique_ptr<WindowType> ThresholdWindow::of(std::unique_ptr<LogicalFunction> predicate)
+std::unique_ptr<WindowType> ThresholdWindow::of(LogicalFunction predicate)
 {
     return std::make_unique<ThresholdWindow>(std::move(predicate));
 }
 
 std::unique_ptr<WindowType> ThresholdWindow::clone() const {
-    return std::make_unique<ThresholdWindow>(predicate->clone(), minimumCount);
+    return std::make_unique<ThresholdWindow>(predicate, minimumCount);
 }
 
-std::unique_ptr<WindowType> ThresholdWindow::of(std::unique_ptr<LogicalFunction> predicate, uint64_t minimumCount)
+std::unique_ptr<WindowType> ThresholdWindow::of(LogicalFunction predicate, uint64_t minimumCount)
 {
     return std::make_unique<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount));
 }
@@ -65,9 +65,9 @@ ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBas
     return ContentBasedSubWindowType::THRESHOLDWINDOW;
 }
 
-const LogicalFunction& ThresholdWindow::getPredicate() const
+const LogicalFunction ThresholdWindow::getPredicate() const
 {
-    return *predicate;
+    return predicate;
 }
 
 uint64_t ThresholdWindow::getMinimumCount() const
@@ -75,19 +75,21 @@ uint64_t ThresholdWindow::getMinimumCount() const
     return minimumCount;
 }
 
+/*
 bool ThresholdWindow::inferStamp(const Schema& schema)
 {
-    NES_INFO("inferStamp for ThresholdWindow")
-    predicate->inferStamp(schema);
-    INVARIANT(predicate->getStamp() == Boolean(), "the threshold function is not a valid predicate");
+    auto newPredicate = predicate.withInferredStamp(schema);
+    INVARIANT(newPredicate.getStamp() == Boolean(), "the threshold function is not a valid predicate");
+    this->predicate = newPredicate;
     return true;
 }
+ */
 
 std::string ThresholdWindow::toString() const
 {
     std::stringstream ss;
     ss << "Threshold Window: predicate ";
-    ss << *predicate;
+    ss << predicate;
     ss << "and minimumCount";
     ss << minimumCount;
     ss << '\n';
@@ -98,7 +100,7 @@ uint64_t ThresholdWindow::hash() const
 {
     uint64_t hashValue = 0;
     hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(minimumCount);
-    hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(fmt::format("{}", *predicate));
+    hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(fmt::format("{}", predicate));
     return hashValue;
 }
 }

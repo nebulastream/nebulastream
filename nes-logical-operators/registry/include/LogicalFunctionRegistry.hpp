@@ -24,11 +24,11 @@
 namespace NES
 {
 
-using LogicalFunctionRegistryReturnType = std::unique_ptr<LogicalFunction>;
+using LogicalFunctionRegistryReturnType = LogicalFunction;
 struct LogicalFunctionRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;
-    std::unique_ptr<DataType> stamp;
+    std::shared_ptr<DataType> stamp;
 };
 
 class LogicalFunctionRegistry

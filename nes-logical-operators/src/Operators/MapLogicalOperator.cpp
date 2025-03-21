@@ -31,8 +31,7 @@
 namespace NES
 {
 
-MapLogicalOperator::MapLogicalOperator(std::unique_ptr<FieldAssignmentLogicalFunction> mapFunction)
-    : Operator(), UnaryLogicalOperator(), mapFunction(std::move(mapFunction))
+MapLogicalOperator::MapLogicalOperator(const FieldAssignmentLogicalFunction& mapFunction) : mapFunction(mapFunction)
 {
 }
 
@@ -41,17 +40,12 @@ std::string_view MapLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-FieldAssignmentLogicalFunction& MapLogicalOperator::getMapFunction() const
+const FieldAssignmentLogicalFunction& MapLogicalOperator::getMapFunction() const
 {
-    return *mapFunction;
+    return mapFunction.get<FieldAssignmentLogicalFunction>();
 }
 
-bool MapLogicalOperator::isIdentical(const Operator& rhs) const
-{
-    return *this == rhs && dynamic_cast<const MapLogicalOperator*>(&rhs)->id == id;
-}
-
-bool MapLogicalOperator::operator==(Operator const& rhs) const
+bool MapLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     auto other = dynamic_cast<const MapLogicalOperator*>(&rhs);
     if (other)
@@ -61,6 +55,7 @@ bool MapLogicalOperator::operator==(Operator const& rhs) const
     return false;
 };
 
+/*
 bool MapLogicalOperator::inferSchema()
 {
     /// infer the default input and output schema
@@ -88,21 +83,13 @@ bool MapLogicalOperator::inferSchema()
     }
     return true;
 }
+ */
 
 std::string MapLogicalOperator::toString() const
 {
     std::stringstream ss;
     ss << "MAP(opId: " << id << ": predicate: " << mapFunction << ")";
     return ss.str();
-}
-
-std::unique_ptr<Operator> MapLogicalOperator::clone() const
-{
-    auto copy = std::make_unique<MapLogicalOperator>(Util::unique_ptr_dynamic_cast<FieldAssignmentLogicalFunction>(mapFunction->clone()));
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
 }
 
 SerializableOperator MapLogicalOperator::serialize() const
@@ -112,7 +99,7 @@ SerializableOperator MapLogicalOperator::serialize() const
     auto* opDesc = new SerializableOperator_LogicalOperator();
     opDesc->set_operatortype(NAME);
     serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(children[0]->id.getRawValue());
+    serializedOperator.add_childrenids(children[0].getId().getRawValue());
 
     NES::FunctionList list;
     auto* serializedFunction = list.add_functions();
@@ -125,16 +112,16 @@ SerializableOperator MapLogicalOperator::serialize() const
 
     auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
     auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
     unaryOpDesc->set_allocated_inputschema(inputSchema);
 
-    for (const auto& originId : this->getInputOriginIds()) {
+    for (const auto& originId : this->getInputOriginIds()[0]) {
         unaryOpDesc->add_originids(originId.getRawValue());
     }
 
     opDesc->set_allocated_unaryoperator(unaryOpDesc);
     auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->outputSchema, outputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
     serializedOperator.set_allocated_outputschema(outputSchema);
     serializedOperator.set_allocated_operator_(opDesc);
 
@@ -147,7 +134,7 @@ MapLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::strin
     return NES::Configurations::DescriptorConfig::validateAndFormat<MapLogicalOperator::ConfigParameters>(std::move(config), NAME);
 }
 
-std::unique_ptr<LogicalOperator>
+LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterMapLogicalOperator(NES::LogicalOperatorRegistryArguments config)
 {
     auto functionVariant = config.config[MapLogicalOperator::ConfigParameters::MAP_FUNCTION_NAME];
@@ -165,14 +152,11 @@ LogicalOperatorGeneratedRegistrar::RegisterMapLogicalOperator(NES::LogicalOperat
 
         if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
         {
-
-            auto derivedPtr = Util::unique_ptr_dynamic_cast<NES::FieldAssignmentLogicalFunction>(std::move(function.value()));
-            return std::make_unique<MapLogicalOperator>(std::move(derivedPtr));
+            return MapLogicalOperator(function.value().get<FieldAssignmentLogicalFunction>());
         }
-
-        return nullptr;
+        throw UnknownLogicalOperator();
     }
-    return nullptr;
+    throw UnknownLogicalOperator();
 }
 
 }

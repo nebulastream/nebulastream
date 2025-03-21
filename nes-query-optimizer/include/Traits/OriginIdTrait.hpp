@@ -22,11 +22,11 @@
 namespace NES::Optimizer
 {
 
-struct OriginIdTrait : public AbstractTrait
+struct OriginIdTrait final : public TraitConcept
 {
     std::vector<OriginId> originIds;
 
-    bool operator==(const AbstractTrait& other) const override;
+    bool operator==(const TraitConcept& other) const override;
     [[nodiscard]] std::string toString() const;
 };
 

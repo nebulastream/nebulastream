@@ -25,12 +25,12 @@ namespace NES
 {
 
 
-using UnaryLogicalFunctionRegistryReturnType = std::unique_ptr<UnaryLogicalFunction>;
+using UnaryLogicalFunctionRegistryReturnType = LogicalFunction;
 struct UnaryLogicalFunctionRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;
-    std::unique_ptr<LogicalFunction> child;
-    std::unique_ptr<DataType> stamp;
+    LogicalFunction child;
+    std::shared_ptr<DataType> stamp;
 };
 
 class UnaryLogicalFunctionRegistry : public BaseRegistry<

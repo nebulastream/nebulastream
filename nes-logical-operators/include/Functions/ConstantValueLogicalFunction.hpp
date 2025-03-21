@@ -27,23 +27,27 @@ namespace NES
 
 /// This function node represents a constant value and a fixed data type.
 /// Thus the samp of this function is always fixed.
-class ConstantValueLogicalFunction final : public LogicalFunction
+class ConstantValueLogicalFunction final : public LogicalFunctionConcept
 {
 public:
     static constexpr std::string_view NAME = "ConstantValue";
 
-    ConstantValueLogicalFunction(const std::shared_ptr<DataType>& stamp, std::string constantValueAsString);
+    ConstantValueLogicalFunction(std::shared_ptr<DataType> stamp, std::string constantValueAsString);
+    ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other);
     ~ConstantValueLogicalFunction() noexcept override = default;
 
     std::string getConstantValue() const;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    void inferStamp(const Schema& schema) override;
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    void inferStamp(const Schema& schema);
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
-    std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { throw UnsupportedOperation(); };
+    std::string getType() const override { return std::string(NAME); }
+    std::string toString() const override;
 
     struct ConfigParameters
     {
@@ -57,10 +61,8 @@ public:
     };
 
 private:
-    explicit ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other);
-    std::string toString() const override;
-
     const std::string constantValue;
+    std::shared_ptr<DataType> stamp;
 };
 }
 FMT_OSTREAM(NES::ConstantValueLogicalFunction);

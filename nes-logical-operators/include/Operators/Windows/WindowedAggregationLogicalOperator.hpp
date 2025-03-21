@@ -16,15 +16,15 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include "Operators/LogicalOperator.hpp"
-#include "Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp"
-#include "WindowOperator.hpp"
-#include "WindowTypes/Types/WindowType.hpp"
+#include <Operators/LogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Operators/Windows/WindowOperator.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES
 {
 
-class WindowedAggregationLogicalOperator : public WindowOperator
+class WindowedAggregationLogicalOperator final : public WindowOperator
 {
 public:
     WindowedAggregationLogicalOperator(std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
@@ -34,10 +34,8 @@ public:
 
     std::string_view getName() const noexcept override;
 
-    [[nodiscard]] bool operator==(Operator const& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::unique_ptr<Operator> clone() const override;
-    bool inferSchema() override;
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
+    //bool inferSchema() override;
 
     std::vector<std::string> getGroupByKeyNames() const;
 
@@ -53,7 +51,6 @@ public:
     void setOnKey(std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys);
 
     [[nodiscard]] OriginId getOriginId() const;
-    const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
@@ -61,6 +58,11 @@ public:
 
     [[nodiscard]] SerializableOperator serialize() const override;
     std::string toString() const override;
+
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; }
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
 
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
@@ -72,6 +74,7 @@ private:
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
     OriginId originId = INVALID_ORIGIN_ID;
+    Schema inputSchema, outputSchema;
 };
 
 }

@@ -14,28 +14,34 @@
 
 #pragma once
 
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
-class PowLogicalFunction final : public BinaryLogicalFunction
+class PowLogicalFunction final : public LogicalFunctionConcept
 {
 public:
     static constexpr std::string_view NAME = "Pow";
 
-    explicit PowLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
+    PowLogicalFunction(LogicalFunction left, LogicalFunction right);
+    PowLogicalFunction(const PowLogicalFunction& other);
     ~PowLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
     bool validateBeforeLowering() const;
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
+    [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit PowLogicalFunction(const PowLogicalFunction& other);
-    [[nodiscard]] std::string toString() const override;
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left, right;
 };
 }
 FMT_OSTREAM(NES::PowLogicalFunction);

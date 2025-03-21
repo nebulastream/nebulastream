@@ -24,7 +24,7 @@
 namespace NES
 {
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    Sources::SourceDescriptor sourceDescriptor) : Operator(), UnaryLogicalOperator(), sourceDescriptor(std::move(sourceDescriptor))
+    Sources::SourceDescriptor sourceDescriptor) : sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 
@@ -33,12 +33,7 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-bool SourceDescriptorLogicalOperator::isIdentical(const Operator& rhs) const
-{
-    return *this == rhs && dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs)->id == id;
-}
-
-bool SourceDescriptorLogicalOperator::operator==(Operator const& rhs) const
+bool SourceDescriptorLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs)) {
         return getSourceDescriptor()== rhsOperator->getSourceDescriptor();
@@ -56,22 +51,6 @@ std::string SourceDescriptorLogicalOperator::toString() const
 Sources::SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 {
     return sourceDescriptor;
-}
-
-bool SourceDescriptorLogicalOperator::inferSchema()
-{
-    setInputSchema(sourceDescriptor.schema);
-    setOutputSchema(sourceDescriptor.schema);
-    return true;
-}
-
-std::unique_ptr<Operator> SourceDescriptorLogicalOperator::clone() const
-{
-    auto sourceDescriptorPtrCopy = sourceDescriptor;
-    auto result = std::make_unique<SourceDescriptorLogicalOperator>(std::move(sourceDescriptorPtrCopy));
-    result->originIdTrait = originIdTrait;
-    result->inferSchema();
-    return result;
 }
 
 [[nodiscard]] SerializableOperator SourceDescriptorLogicalOperator::serialize() const

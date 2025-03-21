@@ -35,19 +35,15 @@ TimeCharacteristic::TimeCharacteristic(Type type, AttributeField field, TimeUnit
     : type(type), field(std::move(field)), unit(std::move(unit))
 {
 }
-TimeCharacteristic TimeCharacteristic::createEventTime(std::unique_ptr<LogicalFunction> field)
+TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction field)
 {
     return createEventTime(std::move(field), TimeUnit(1));
 }
 
-TimeCharacteristic TimeCharacteristic::createEventTime(std::unique_ptr<LogicalFunction> fieldValue, const TimeUnit& unit)
+TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction fieldValue, const TimeUnit& unit)
 {
-    auto* fieldAccess = dynamic_cast<FieldAccessLogicalFunction*>(fieldValue.get());
-    if (!fieldAccess)
-    {
-        throw QueryInvalid(fmt::format("Query: window key has to be a FieldAccessFunction but it was a {}", *fieldValue));
-    }
-    auto keyField = AttributeField(fieldAccess->getFieldName(), fieldAccess->getStamp().clone());
+    const auto& fieldAccess = fieldValue.get<FieldAccessLogicalFunction>();
+    auto keyField = AttributeField(fieldAccess.getFieldName(), fieldAccess.getStamp().clone());
     return TimeCharacteristic(Type::EventTime, keyField, unit);
 }
 

@@ -27,11 +27,11 @@ std::vector<std::unique_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getWhereClau
 {
     return whereClauses;
 }
-std::vector<std::unique_ptr<LogicalFunction>>& AntlrSQLHelper::getHavingClauses()
+std::vector<LogicalFunction>& AntlrSQLHelper::getHavingClauses()
 {
     return havingClauses;
 }
-std::vector<std::unique_ptr<LogicalFunction>>& AntlrSQLHelper::getProjectionFields()
+std::vector<LogicalFunction>& AntlrSQLHelper::getProjectionFields()
 {
     return projectionFields;
 }
@@ -41,15 +41,15 @@ void AntlrSQLHelper::setSource(std::string sourceName)
 {
     this->source = sourceName;
 }
-void AntlrSQLHelper::addWhereClause(std::unique_ptr<LogicalFunction> expressionNode)
+void AntlrSQLHelper::addWhereClause(LogicalFunction expressionNode)
 {
     this->whereClauses.emplace_back(std::move(expressionNode));
 }
-void AntlrSQLHelper::addHavingClause(std::unique_ptr<LogicalFunction> expressionNode)
+void AntlrSQLHelper::addHavingClause(LogicalFunction expressionNode)
 {
     this->havingClauses.emplace_back(std::move(expressionNode));
 }
-void AntlrSQLHelper::addProjectionField(std::unique_ptr<LogicalFunction> expressionNode)
+void AntlrSQLHelper::addProjectionField(LogicalFunction expressionNode)
 {
     this->projectionFields.push_back(std::move(expressionNode));
 }

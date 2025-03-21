@@ -16,33 +16,34 @@
 
 #include <memory>
 #include <Configurations/Descriptor.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/UnaryLogicalOperator.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
 /// The projection operator only narrows down the fields of an input schema to a smaller subset. The map operator handles renaming and adding new fields.
-class ProjectionLogicalOperator : public UnaryLogicalOperator
+class ProjectionLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    explicit ProjectionLogicalOperator(std::vector<std::unique_ptr<LogicalFunction>> functions);
+    explicit ProjectionLogicalOperator(std::vector<LogicalFunction> functions);
     ~ProjectionLogicalOperator() override = default;
     std::string_view getName() const noexcept override;
 
-    const std::vector<std::unique_ptr<LogicalFunction>>& getFunctions() const;
+    const std::vector<LogicalFunction>& getFunctions() const;
 
-    [[nodiscard]] bool operator==(Operator const& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
 
-
-    bool inferSchema() override;
-    std::unique_ptr<Operator> clone() const override;
+    bool inferSchema();
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    std::vector<Operator> getChildren() const override {return {};};
+    void setChildren(std::vector<Operator>) override {};
+    Optimizer::TraitSet getTraitSet() const override { return {};};
 
     struct ConfigParameters
     {
@@ -57,9 +58,15 @@ public:
 
     [[nodiscard]] std::string toString() const override;
 
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema;}
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
 private:
     static constexpr std::string_view NAME = "Projection";
-    std::vector<std::unique_ptr<LogicalFunction>> functions;
+    std::vector<LogicalFunction> functions;
+    Schema inputSchema, outputSchema;
 };
 
 }

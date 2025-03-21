@@ -23,21 +23,19 @@
 namespace NES
 {
 
-SubLogicalFunction::SubLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
-    : BinaryLogicalFunction(std::move(left), std::move(right))
+SubLogicalFunction::SubLogicalFunction(LogicalFunction left, LogicalFunction right) : stamp(left.getStamp().clone()), left(left), right(right)
 {
-    stamp = left->getStamp().clone();
 };
 
-SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : BinaryLogicalFunction(other)
+SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
 {
 }
 
-bool SubLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool SubLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (auto other = dynamic_cast<const SubLogicalFunction*>(&rhs))
     {
-        return getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
+        return left == other->left and right == other->right;
     }
     return false;
 }
@@ -45,13 +43,8 @@ bool SubLogicalFunction::operator==(const LogicalFunction& rhs) const
 std::string SubLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *children[0] << "-" << *children[1];
+    ss << left << "-" << right;
     return ss.str();
-}
-
-std::unique_ptr<LogicalFunction> SubLogicalFunction::clone() const
-{
-    return std::make_unique<SubLogicalFunction>(children[0]->clone(), children[1]->clone());
 }
 
 SerializableFunction SubLogicalFunction::serialize() const
@@ -60,9 +53,9 @@ SerializableFunction SubLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_BinaryFunction();
     auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(getLeftChild().serialize());
+    leftChild->CopyFrom(left.serialize());
     auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(getRightChild().serialize());
+    rightChild->CopyFrom(right.serialize());
 
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
@@ -73,7 +66,7 @@ SerializableFunction SubLogicalFunction::serialize() const
 BinaryLogicalFunctionRegistryReturnType
 BinaryLogicalFunctionGeneratedRegistrar::RegisterSubBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<SubLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
+    return SubLogicalFunction(arguments.leftChild, arguments.rightChild);
 }
 
 }
