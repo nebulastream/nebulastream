@@ -29,9 +29,9 @@ public:
     static constexpr auto POOL_SIZE = 1024 * 10; // 10 K pool size
 
     MemoryController(const std::filesystem::path& workingDir, QueryId queryId, OriginId originId);
-    MemoryController(const MemoryController& other);
+    MemoryController(MemoryController& other);
     MemoryController(MemoryController&& other) noexcept;
-    MemoryController& operator=(const MemoryController& other);
+    MemoryController& operator=(MemoryController& other);
     MemoryController& operator=(MemoryController&& other) noexcept;
     ~MemoryController();
 
@@ -64,6 +64,7 @@ private:
     size_t bufferSize;
     size_t poolSize;
 
+    // TODO build vector around map to structure by WorkerThreadId (use less locks)
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
     std::mutex fileWritersMutex;
 

@@ -44,7 +44,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
 {
 }
 
-FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other)
+FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
     : memCtrl(other.memCtrl)
     , sliceAssigner(other.sliceAssigner)
     , sequenceNumber(other.sequenceNumber.load())
@@ -74,7 +74,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     *slicesInMemoryLocked = std::move(*otherSlicesInMemoryLocked);
 }
 
-FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(const FileBackedTimeBasedSliceStore& other)
+FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore& other)
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);

@@ -31,40 +31,52 @@ MemoryController::MemoryController(const std::filesystem::path& workingDir, cons
     }
 }
 
-MemoryController::MemoryController(const MemoryController& other)
+MemoryController::MemoryController(MemoryController& other)
     : readBuffer(other.readBuffer)
     , readBufFlag(other.readBufFlag.load())
     , memoryPool(other.memoryPool)
-    , freeBuffers(other.freeBuffers)
     , bufferSize(other.bufferSize)
     , poolSize(other.poolSize)
-    , fileWriters(other.fileWriters)
     , workingDir(other.workingDir)
     , queryId(other.queryId)
     , originId(other.originId)
 {
+    const std::lock_guard writerLock(fileWritersMutex);
+    const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard otherWriterLock(other.fileWritersMutex);
+    const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    fileWriters = other.fileWriters;
+    freeBuffers = other.freeBuffers;
 }
 
 MemoryController::MemoryController(MemoryController&& other) noexcept
     : readBuffer(std::move(other.readBuffer))
     , readBufFlag(std::move(other.readBufFlag.load()))
     , memoryPool(std::move(other.memoryPool))
-    , freeBuffers(std::move(other.freeBuffers))
     , bufferSize(std::move(other.bufferSize))
     , poolSize(std::move(other.poolSize))
-    , fileWriters(std::move(other.fileWriters))
     , workingDir(std::move(other.workingDir))
     , queryId(std::move(other.queryId))
     , originId(std::move(other.originId))
 {
+    const std::lock_guard writerLock(fileWritersMutex);
+    const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard otherWriterLock(other.fileWritersMutex);
+    const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    fileWriters = std::move(other.fileWriters);
+    freeBuffers = std::move(other.freeBuffers);
 }
 
-MemoryController& MemoryController::operator=(const MemoryController& other)
+MemoryController& MemoryController::operator=(MemoryController& other)
 {
     if (this == &other)
     {
         return *this;
     }
+    const std::lock_guard writerLock(fileWritersMutex);
+    const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard otherWriterLock(other.fileWritersMutex);
+    const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
     readBuffer = other.readBuffer;
     readBufFlag = other.readBufFlag.load();
     memoryPool = other.memoryPool;
@@ -84,6 +96,10 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     {
         return *this;
     }
+    const std::lock_guard writerLock(fileWritersMutex);
+    const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard otherWriterLock(other.fileWritersMutex);
+    const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
     readBuffer = std::move(other.readBuffer);
     readBufFlag = std::move(other.readBufFlag.load());
     memoryPool = std::move(other.memoryPool);
@@ -101,7 +117,6 @@ MemoryController::~MemoryController()
 {
     // TODO investigate why destructor is never called
     const std::lock_guard lock(fileWritersMutex);
-
     for (auto it = fileWriters.begin(); it != fileWriters.end(); ++it)
     {
         removeFileSystem(it);
@@ -111,10 +126,10 @@ MemoryController::~MemoryController()
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const PipelineId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    const std::lock_guard lock(fileWritersMutex);
     const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
 
     /// Search for matching fileWriter to avoid attempting to open a file twice
+    const std::lock_guard lock(fileWritersMutex);
     if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
     {
         return it->second;
@@ -129,10 +144,10 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
 std::shared_ptr<FileReader> MemoryController::getFileReader(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    const std::lock_guard lock(fileWritersMutex);
     const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
 
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
+    const std::lock_guard lock(fileWritersMutex);
     if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
     {
         fileWriters.erase(it);

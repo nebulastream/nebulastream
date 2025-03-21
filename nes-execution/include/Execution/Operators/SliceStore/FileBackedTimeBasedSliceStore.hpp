@@ -53,9 +53,9 @@ public:
         const std::filesystem::path& workingDir,
         QueryId queryId,
         OriginId originId);
-    FileBackedTimeBasedSliceStore(const FileBackedTimeBasedSliceStore& other);
+    FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
-    FileBackedTimeBasedSliceStore& operator=(const FileBackedTimeBasedSliceStore& other);
+    FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore&& other) noexcept;
     ~FileBackedTimeBasedSliceStore() override;
 
