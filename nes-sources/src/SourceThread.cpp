@@ -119,7 +119,6 @@ SourceImplementationTermination dataSourceThreadRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
         auto emptyBuffer = bufferProvider.getBufferBlocking();
-        std::memset(emptyBuffer.getBuffer(), 0, emptyBuffer.getBufferSize());
         auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
 
         if (numReadBytes != 0)

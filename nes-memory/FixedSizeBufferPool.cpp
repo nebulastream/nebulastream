@@ -115,6 +115,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking()
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 {
     INVARIANT(memSegment, "null memory segment");
+    std::memset(memSegment->ptr, 0, memSegment->size);
     if (isDestroyed)
     {
         NES_TRACE("Recycling buffer to global buffer manager");

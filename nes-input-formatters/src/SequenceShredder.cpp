@@ -494,14 +494,16 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWitho
     std::vector<StagedBuffer> spanningTupleBuffers{};
     const auto numberOfBitmapsSnapshot = numberOfBitmapsModuloSnapshot + 1;
     const auto stagedBufferSizeModulo = (numberOfBitmapsSnapshot << BITMAP_SIZE_BIT_SHIFT) - 1;
-
-    for (auto spanningTupleIndex = spanningTuple.spanStart; spanningTupleIndex <= spanningTuple.spanEnd; ++spanningTupleIndex)
     {
-        const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-        /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-        const auto newUses = --(*this->stagedBufferUses[adjustedSpanningTupleIndex]);
-        auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex]) : this->stagedBuffers[adjustedSpanningTupleIndex];
-        spanningTupleBuffers.emplace_back(std::move(returnBuffer));
+        std::scoped_lock lock{this->readWriteMutex};
+        for (auto spanningTupleIndex = spanningTuple.spanStart; spanningTupleIndex <= spanningTuple.spanEnd; ++spanningTupleIndex)
+        {
+            const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
+            /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
+            const auto newUses = --(*this->stagedBufferUses[adjustedSpanningTupleIndex]);
+            auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex]) : this->stagedBuffers[adjustedSpanningTupleIndex];
+            spanningTupleBuffers.emplace_back(std::move(returnBuffer));
+        }
     }
 
     /// protect: read/write(tail,numberOfBitmaps,numberOfBitmapsModulo, seenAndUsedBitmaps), write(tupleDelimiterBitmaps, seenAndUsedBitmaps)
@@ -545,14 +547,17 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
     const auto returningMoreThanOnlyBufferOfSequenceNumber = startIndex < endIndex;
     const auto numberOfBitmapsSnapshot = numberOfBitmapsModuloSnapshot + 1;
     const auto stagedBufferSizeModulo = (numberOfBitmapsSnapshot * SIZE_OF_BITMAP_IN_BITS) - 1;
-    for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
     {
-        const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-        /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-        const auto newUses = (returningMoreThanOnlyBufferOfSequenceNumber) ? --(*this->stagedBufferUses[adjustedSpanningTupleIndex])
-                                                                           : this->stagedBufferUses[adjustedSpanningTupleIndex]->load();
-        auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex]) :  this->stagedBuffers[adjustedSpanningTupleIndex];
-        returnBuffers.emplace_back(std::move(returnBuffer));
+        std::scoped_lock lock{this->readWriteMutex};
+        for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
+        {
+            /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
+            const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
+            const auto newUses = (returningMoreThanOnlyBufferOfSequenceNumber) ? --(*this->stagedBufferUses[adjustedSpanningTupleIndex])
+                                                                               : this->stagedBufferUses[adjustedSpanningTupleIndex]->load();
+            auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex]) :  this->stagedBuffers[adjustedSpanningTupleIndex];
+            returnBuffers.emplace_back(std::move(returnBuffer));
+        }
     }
 
     /// protect: read/write(tail,numberOfBitmaps,numberOfBitmapsModulo, seenAndUsedBitmaps), write(tupleDelimiterBitmaps, seenAndUsedBitmaps)
