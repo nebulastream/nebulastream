@@ -307,31 +307,13 @@ primaryExpression
     | identifier                                                                               #columnReference
     ;
 
-/*
-functionName
-    : qualifiedName
-    ;
-*/
-
 qualifiedName
     : identifier ('.' identifier)*
     ;
 
 number
-    : {!legacy_exponent_literal_as_decimal_enabled}? MINUS? EXPONENT_VALUE #exponentLiteral
-    | {!legacy_exponent_literal_as_decimal_enabled}? MINUS? DECIMAL_VALUE  #decimalLiteral
-    | {legacy_exponent_literal_as_decimal_enabled}? MINUS? (EXPONENT_VALUE | DECIMAL_VALUE) #legacyDecimalLiteral
-    | MINUS? INTEGER_VALUE              #integerLiteral
-    | MINUS? BIGINT_LITERAL             #bigIntLiteral
-    | MINUS? SMALLINT_LITERAL           #smallIntLiteral
-    | MINUS? TINYINT_LITERAL            #tinyIntLiteral
-    | MINUS? UNSIGNED_INTEGER_VALUE     #unsignedIntegerLiteral
-    | MINUS? UNSIGNED_BIGINT_LITERAL    #unsignedBigIntLiteral
-    | MINUS? UNSIGNED_SMALLINT_LITERAL  #unsignedSmallIntLiteral
-    | MINUS? UNSIGNED_TINYINT_LITERAL   #unsignedTinyIntLiteral
-    | MINUS? DOUBLE_LITERAL             #doubleLiteral
+    : MINUS? INTEGER_VALUE              #integerLiteral
     | MINUS? FLOAT_LITERAL              #floatLiteral
-    | MINUS? BIGDECIMAL_LITERAL         #bigDecimalLiteral
     ;
 
 constant
@@ -566,57 +548,13 @@ STRING
     | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
     ;
 
-// Todo: remove type-specific literals
-/// Signed integer literals.
-BIGINT_LITERAL
-    : DIGIT+ '_L'
-    ;
-SMALLINT_LITERAL
-    : DIGIT+ '_S'
-    ;
-TINYINT_LITERAL
-    : DIGIT+ '_Y'
-    ;
 INTEGER_VALUE
     : DIGIT+
     ;
 
-/// Unsigned integer literals.
-UNSIGNED_SMALLINT_LITERAL
-    : DIGIT+ '_US'
-    ;
-UNSIGNED_TINYINT_LITERAL
-    : DIGIT+ '_UY'
-    ;
-UNSIGNED_INTEGER_VALUE
-    : DIGIT+ '_U'
-    ;
-UNSIGNED_BIGINT_LITERAL
-    : DIGIT+ '_UL'
-    ;
-
-EXPONENT_VALUE
-    : DIGIT+ EXPONENT
-    | DECIMAL_DIGITS EXPONENT {isValidDecimal()}?
-    ;
-
-DECIMAL_VALUE
-    : DECIMAL_DIGITS {isValidDecimal()}?
-    ;
-
 FLOAT_LITERAL
-    : DIGIT+ EXPONENT? '_F'
-    | DECIMAL_DIGITS EXPONENT? '_F' {isValidDecimal()}?
-    ;
-
-DOUBLE_LITERAL
-    : DIGIT+ EXPONENT? '_D'
-    | DECIMAL_DIGITS EXPONENT? '_D' {isValidDecimal()}?
-    ;
-
-BIGDECIMAL_LITERAL
-    : DIGIT+ EXPONENT? '_BD'
-    | DECIMAL_DIGITS EXPONENT? '_BD' {isValidDecimal()}?
+    : DIGIT+ EXPONENT?
+    | DECIMAL_DIGITS EXPONENT? {isValidDecimal()}?
     ;
 
 IDENTIFIER
