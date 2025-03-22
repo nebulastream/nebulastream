@@ -106,14 +106,14 @@ docker run \
 To integrate the container-based development environment you need to create a new docker-based toolchain. With the
 following settings:
 
-![CLion-Toolchain-Settings](resources/SetupDockerToolchainClion.png)
+![CLion-Toolchain-Settings](../resources/SetupDockerToolchainClion.png)
 
 This configuration assumes ccache is using the default directory of `$HOME/.cache/ccache`. You can create additional
 docker-based toolchains if you plan to experiment with different sanitizer.
 
 Lastly, you need to create a new CMake profile which uses the newly created docker-based toolchain:
 
-![CLion-CMake-Settings](resources/SetupDockerCmakeClion.png)
+![CLion-CMake-Settings](../resources/SetupDockerCmakeClion.png)
 
 ## Non-Container Development Environment
 
