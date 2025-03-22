@@ -22,24 +22,23 @@ namespace NES::Functions
 
 VarVal DivPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftPhysicalFunction->execute(record, arena);
-    const auto rightValue = rightPhysicalFunction->execute(record, arena);
+    const auto leftValue = leftPhysicalFunction.execute(record, arena);
+    const auto rightValue = rightPhysicalFunction.execute(record, arena);
     return leftValue / rightValue;
 }
 
 DivPhysicalFunction::DivPhysicalFunction(
-    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
-    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
+    PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
+    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
 {
 }
-
 
 PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterDivPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
     PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Div function must have exactly two sub-functions");
-    return std::make_unique<DivPhysicalFunction>(
-        std::move(PhysicalFunctionRegistryArguments.childFunctions[0]), std::move(PhysicalFunctionRegistryArguments.childFunctions[1]));
+    return DivPhysicalFunction(
+        PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

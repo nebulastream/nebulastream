@@ -25,7 +25,7 @@ namespace NES
 
 /// Is the general probe operator for window operators. It is responsible for garbage collecting slices and windows.
 /// It is part of the second phase (probe) that processes the build up state of the first phase (build).
-class WindowProbePhysicalOperator : public PhysicalOperator
+class WindowProbePhysicalOperator : public PhysicalOperatorConcept
 {
 public:
     explicit WindowProbePhysicalOperator(uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName);

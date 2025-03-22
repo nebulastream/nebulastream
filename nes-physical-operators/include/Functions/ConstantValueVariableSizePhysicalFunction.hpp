@@ -26,7 +26,7 @@ namespace NES::Functions
 {
 
 /// A function that represents a constant value of variable size, e.g., a string.
-class ConstantValueVariableSizePhysicalFunction final : public PhysicalFunction
+class ConstantValueVariableSizePhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
     explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);

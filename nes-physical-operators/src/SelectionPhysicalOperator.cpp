@@ -23,14 +23,10 @@ namespace NES
 void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// evaluate function and call child operator if function is valid
-    if (function->execute(record, ctx.pipelineMemoryProvider.arena))
+    if (function.execute(record, ctx.pipelineMemoryProvider.arena))
     {
-        PhysicalOperator::execute(ctx, record);
+       PhysicalOperatorConcept::execute(ctx, record);
     }
-}
-
-std::unique_ptr<Operator> SelectionPhysicalOperator::clone() const {
-    return std::make_unique<SelectionPhysicalOperator>(function->clone());
 }
 
 }

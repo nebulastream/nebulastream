@@ -51,7 +51,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
-    PhysicalOperator::open(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::open(executionCtx, recordBuffer);
 
     /// Getting necessary values from the record buffer
     const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer());
@@ -136,23 +136,13 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         outputRecord.reassignFields(recordKey);
         outputRecord.write(windowStartFieldName, windowStart.convertToValue());
         outputRecord.write(windowEndFieldName, windowEnd.convertToValue());
-        PhysicalOperator::execute(executionCtx, outputRecord);
+        PhysicalOperatorConcept::execute(executionCtx, outputRecord);
     }
 }
 
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(std::unique_ptr<WindowAggregation> windowAggregationOperator, const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
     : WindowAggregation(std::move(windowAggregationOperator)), WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName)
 {
-}
-
-
-std::unique_ptr<Operator> AggregationProbePhysicalOperator::clone() const {
-    return std::make_unique<AggregationProbePhysicalOperator>(
-        windowAggregationOperator->clone(),
-        operatorHandlerIndex,
-        windowStartFieldName,
-        windowEndFieldName
-    );
 }
 
 }

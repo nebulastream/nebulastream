@@ -33,7 +33,7 @@ namespace NES
 MinAggregationFunction::MinAggregationFunction(
     std::unique_ptr<PhysicalType> inputType,
     std::unique_ptr<PhysicalType> resultType,
-    std::unique_ptr<Functions::PhysicalFunction> inputFunction,
+    Functions::PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
@@ -49,7 +49,7 @@ void MinAggregationFunction::lift(
     const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, *inputType);
 
     /// Updating the min value with the new value, if the new value is smaller
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (value < min)
     {
         value.writeToMemory(memAreaMin);
@@ -106,7 +106,7 @@ std::unique_ptr<AggregationFunction> MinAggregationFunction::clone() const {
     return std::make_unique<MinAggregationFunction>(
         inputType->clone(),
         resultType->clone(),
-        inputFunction->clone(),
+        inputFunction,
         resultFieldIdentifier
     );
 }

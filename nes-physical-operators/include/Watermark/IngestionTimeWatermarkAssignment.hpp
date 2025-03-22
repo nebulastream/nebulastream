@@ -20,7 +20,7 @@ namespace NES
 class TimeFunction;
 /// @brief Watermark assignment operator.
 /// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
-class IngestionTimeWatermarkAssignment : public PhysicalOperator
+class IngestionTimeWatermarkAssignment : public PhysicalOperatorConcept
 {
 public:
     /// @brief Creates a IngestionTimeWatermarkAssignment operator without function

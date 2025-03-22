@@ -39,7 +39,7 @@ EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<TimeF
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    PhysicalOperator::open(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
 }
@@ -53,7 +53,7 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
         state->currentWatermark = tsField;
     }
     /// call next operator
-    PhysicalOperator::execute(ctx, record);
+   PhysicalOperatorConcept::execute(ctx, record);
 }
 
 void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -63,7 +63,7 @@ void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordB
         "Expects the local state to be of type WatermarkState");
     const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
     executionCtx.watermarkTs = state->currentWatermark;
-    PhysicalOperator::close(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
 
 }

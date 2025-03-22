@@ -130,12 +130,4 @@ void NLJBuildPhysicalOperator::updateLocalJoinState(
         nautilus::val<JoinBuildSideType>(joinBuildSide));
 }
 
-std::unique_ptr<Operator> NLJBuildPhysicalOperator::clone() const {
-    return std::make_unique<NLJBuildPhysicalOperator>(
-        memoryProvider->clone(),
-        operatorHandlerIndex,
-        joinBuildSide,
-        timeFunction->clone()
-    );
-}
 }

@@ -19,7 +19,7 @@
 #include <string_view>
 #include <Abstract/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include "SerializableFunction.pb.h"
+#include <SerializableFunction.pb.h>
 #include <Configurations/Descriptor.hpp>
 
 namespace NES

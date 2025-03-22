@@ -34,7 +34,7 @@ namespace NES
 AvgAggregationFunction::AvgAggregationFunction(
     std::unique_ptr<PhysicalType> inputType,
     std::unique_ptr<PhysicalType> resultType,
-    std::unique_ptr<Functions::PhysicalFunction> inputFunction,
+    Functions::PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
     std::unique_ptr<PhysicalType> countType)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
@@ -115,16 +115,6 @@ size_t AvgAggregationFunction::getSizeOfStateInBytes() const
     const auto inputSize = inputType->size();
     const auto countTypeSize = countType->size();
     return inputSize + countTypeSize;
-}
-
-std::unique_ptr<AggregationFunction> AvgAggregationFunction::clone() const {
-    return std::make_unique<AvgAggregationFunction>(
-        inputType->clone(),
-        resultType->clone(),
-        inputFunction->clone(),
-        resultFieldIdentifier,
-        countType->clone()
-    );
 }
 
 }

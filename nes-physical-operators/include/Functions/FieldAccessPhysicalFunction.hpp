@@ -22,7 +22,7 @@
 namespace NES::Functions
 {
 
-class FieldAccessPhysicalFunction : public PhysicalFunction
+class FieldAccessPhysicalFunction : public PhysicalFunctionConcept
 {
 public:
     explicit FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field);

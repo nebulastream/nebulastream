@@ -155,7 +155,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
                 auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
                 auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);
                 auto joinedRecord = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd);
-                PhysicalOperator::execute(executionCtx, joinedRecord);
+               PhysicalOperatorConcept::execute(executionCtx, joinedRecord);
             }
 
             ++rightItemPos;

@@ -22,15 +22,15 @@ namespace NES
 {
 
 /// @brief Selection operator that evaluates an boolean function on each record.
-class SelectionPhysicalOperator final : public PhysicalOperator
+class SelectionPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit SelectionPhysicalOperator(std::unique_ptr<Functions::PhysicalFunction> function) : function(std::move(function)) {};
+    explicit SelectionPhysicalOperator(Functions::PhysicalFunction function) : function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
     [[nodiscard]] std::string toString() const override {return typeid(this).name(); }
 
 private:
-    const std::unique_ptr<Functions::PhysicalFunction> function;
+    const Functions::PhysicalFunction function;
     static constexpr bool PIPELINE_BREAKER = false;
 };
 }

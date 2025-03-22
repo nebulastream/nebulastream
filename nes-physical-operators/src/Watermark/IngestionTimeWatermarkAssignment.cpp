@@ -28,7 +28,7 @@ IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::unique_p
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    PhysicalOperator::open(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::open(executionCtx, recordBuffer);
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
     const auto tsField = timeFunction->getTs(executionCtx, emptyRecord);
@@ -41,7 +41,7 @@ void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, Reco
 
 void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, Record& record) const
 {
-    PhysicalOperator::execute(executionCtx, record);
+   PhysicalOperatorConcept::execute(executionCtx, record);
 }
 
 }

@@ -134,7 +134,7 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::Logica
         const auto& functionList = std::get<FunctionList>(functionVariant);
         const auto& functions = functionList.functions();
 
-        std::vector<LogicalFunction> functionVec(functions.size());
+        std::vector<LogicalFunction> functionVec;
         for (const auto &function : functions)
         {
             auto functionType = function.functiontype();
@@ -178,10 +178,11 @@ SerializableOperator ProjectionLogicalOperator::serialize() const
 
     auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
     auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(get<0>(this->getInputSchema()), inputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
     unaryOpDesc->set_allocated_inputschema(inputSchema);
 
-    for (const auto& originId : get<0>(this->getInputOriginIds())) {
+    const auto ids = this->getInputOriginIds()[0];
+    for (const auto& originId : ids) {
         unaryOpDesc->add_originids(originId.getRawValue());
     }
 

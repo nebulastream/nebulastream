@@ -26,7 +26,7 @@
 namespace NES
 {
 
-DefaultScanPhysicalOperator::DefaultScanPhysicalOperator(std::unique_ptr<TupleBufferMemoryProvider> memoryProvider,
+DefaultScanPhysicalOperator::DefaultScanPhysicalOperator(std::shared_ptr<TupleBufferMemoryProvider> memoryProvider,
     std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {
@@ -42,13 +42,13 @@ void DefaultScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     /// call open on all child operators
-    PhysicalOperator::open(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::open(executionCtx, recordBuffer);
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = memoryProvider->readRecord(projections, recordBuffer, i);
-        PhysicalOperator::execute(executionCtx, record);
+        PhysicalOperatorConcept::execute(executionCtx, record);
     }
 }
 

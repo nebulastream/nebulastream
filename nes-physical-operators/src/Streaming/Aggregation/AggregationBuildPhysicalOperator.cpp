@@ -67,7 +67,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Calling the key functions to add/update the keys to the record
     for (const auto& [field, function] : std::views::zip(fieldKeys, keyFunctions))
     {
-        const auto value = function->execute(record, ctx.pipelineMemoryProvider.arena);
+        const auto value = function.execute(record, ctx.pipelineMemoryProvider.arena);
         record.write(field.fieldIdentifier, value);
     }
 
@@ -102,38 +102,12 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     const uint64_t operatorHandlerIndex,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions,
+    std::vector<Functions::PhysicalFunction> keyFunctions,
     std::unique_ptr<WindowAggregation> windowAggregationOperator)
     : WindowAggregation(std::move(windowAggregationOperator))
     , WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
     , keyFunctions(std::move(keyFunctions))
 {
-}
-
-std::unique_ptr<Operator> AggregationBuildPhysicalOperator::clone() const {
-    std::vector<std::unique_ptr<Functions::PhysicalFunction>> clonedKeyFunctions;
-    clonedKeyFunctions.reserve(keyFunctions.size());
-for (const auto& func : keyFunctions) {
-        clonedKeyFunctions.push_back(func->clone());
-    }
-    std::unique_ptr<TimeFunction> clonedTimeFunction = timeFunction->clone();
-    auto clonedWindowAgg = std::make_unique<WindowAggregation>(
-        copyAggregationFunctions(this->aggregationFunctions),
-        hashFunction->clone(),
-        fieldKeys,
-        fieldValues,
-        entriesPerPage,
-        entrySize
-    );
-    auto result = std::make_unique<AggregationBuildPhysicalOperator>(
-        operatorHandlerIndex,
-        std::move(clonedTimeFunction),
-        std::move(clonedKeyFunctions),
-        std::move(clonedWindowAgg)
-    );
-    AggregationBuildPhysicalOperator* raw = result.release();
-    Operator* op = static_cast<WindowBuildPhysicalOperator*>(raw);
-    return std::unique_ptr<Operator>(op);
 }
 
 }

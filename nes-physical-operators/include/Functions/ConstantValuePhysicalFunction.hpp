@@ -26,7 +26,7 @@ namespace NES::Functions
 
 template <typename T>
 requires std::is_integral_v<T> || std::is_floating_point_v<T>
-class ConstantValuePhysicalFunction final : public PhysicalFunction
+class ConstantValuePhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
     explicit ConstantValuePhysicalFunction(T value) : value(value) { }

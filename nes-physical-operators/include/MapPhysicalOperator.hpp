@@ -24,17 +24,17 @@ namespace NES
 
 /// Map operator that evaluates a map function on a input records.
 /// Map functions read record fields, apply transformations, and can set/update fields.
-class MapPhysicalOperator final : public PhysicalOperator
+class MapPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::PhysicalFunction> mapFunction);
+    MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, Functions::PhysicalFunction mapFunction);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     std::string toString() const override { return typeid(this).name(); }
-    std::unique_ptr<Operator> clone() const override;
+
 private:
     Record::RecordFieldIdentifier fieldToWriteTo;
-    std::unique_ptr<Functions::PhysicalFunction> mapFunction;
+    Functions::PhysicalFunction mapFunction;
     static constexpr bool PIPELINE_BREAKER = false;
 };
 

@@ -71,7 +71,7 @@ WindowProbePhysicalOperator::WindowProbePhysicalOperator(const uint64_t operator
 void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx) const
 {
     /// Giving child operators the change to setup
-    PhysicalOperator::setup(executionCtx);
+    PhysicalOperatorConcept::setup(executionCtx);
     nautilus::invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerIndex), executionCtx.pipelineContext);
 }
 
@@ -89,7 +89,7 @@ void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 
     /// Now close for all children
-    PhysicalOperator::close(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
 
 void WindowProbePhysicalOperator::terminate(ExecutionContext& executionCtx) const
@@ -99,6 +99,6 @@ void WindowProbePhysicalOperator::terminate(ExecutionContext& executionCtx) cons
     invoke(deleteAllSlicesAndWindowsProxy, operatorHandlerMemRef);
 
     /// Now terminate for all children
-    PhysicalOperator::terminate(executionCtx);
+    PhysicalOperatorConcept::terminate(executionCtx);
 }
 }

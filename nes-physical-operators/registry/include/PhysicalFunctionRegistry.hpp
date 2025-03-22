@@ -22,10 +22,10 @@
 namespace NES::Functions
 {
 
-using PhysicalFunctionRegistryReturnType = std::unique_ptr<Functions::PhysicalFunction>;
+using PhysicalFunctionRegistryReturnType = Functions::PhysicalFunction;
 struct PhysicalFunctionRegistryArguments
 {
-    std::vector<std::unique_ptr<Functions::PhysicalFunction>> childFunctions;
+    std::vector<Functions::PhysicalFunction> childFunctions;
 };
 
 class PhysicalFunctionRegistry : public BaseRegistry<

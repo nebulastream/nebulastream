@@ -181,7 +181,7 @@ QueryPlan QueryPlanBuilder::addJoin(
 
 QueryPlan QueryPlanBuilder::addSink(std::string sinkName, QueryPlan queryPlan, WorkerId)
 {
-    queryPlan.promoteOperatorToRoot(SinkLogicalOperator(std::move(sinkName)));
+    queryPlan.promoteOperatorToRoot(SinkLogicalOperator(sinkName));
     return queryPlan;
 }
 

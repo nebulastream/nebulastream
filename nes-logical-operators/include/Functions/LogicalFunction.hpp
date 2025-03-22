@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <memory>
 #include <stack>
 #include <string>
 #include <span>
@@ -32,7 +33,6 @@ struct LogicalFunctionConcept
 {
 public:
     virtual ~LogicalFunctionConcept() = default;
-    //[[nodiscard]] virtual bool operator==(const LogicalFunctionConcept& rhs) const = 0;
     [[nodiscard]] virtual std::string toString() const = 0;
 
     [[nodiscard]] virtual const DataType& getStamp() const = 0;

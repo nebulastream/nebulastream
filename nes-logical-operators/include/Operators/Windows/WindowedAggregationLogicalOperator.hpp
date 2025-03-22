@@ -64,6 +64,10 @@ public:
     std::vector<std::vector<OriginId>> getInputOriginIds() const override;
     std::vector<OriginId> getOutputOriginIds() const override { return {}; }
 
+    std::vector<Operator> getChildren() const override {return {};};
+    void setChildren(std::vector<struct Operator>) override {}
+    Optimizer::TraitSet getTraitSet() const override {return {};}
+
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
     std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation;

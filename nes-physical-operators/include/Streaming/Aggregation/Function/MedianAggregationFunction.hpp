@@ -33,7 +33,7 @@ public:
     MedianAggregationFunction(
         std::unique_ptr<PhysicalType> inputType,
         std::unique_ptr<PhysicalType> resultType,
-        std::unique_ptr<Functions::PhysicalFunction> inputFunction,
+        Functions::PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
         std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);
     void lift(

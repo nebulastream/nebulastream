@@ -26,14 +26,14 @@ namespace NES
 
 /// @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
 /// Furthermore, it supports projection push down to eliminate unneeded reads
-class DefaultScanPhysicalOperator final : public PhysicalOperator, public Scan
+class DefaultScanPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     /// @brief Constructor for the scan operator that receives a memory layout and a projection vector.
     /// @param memoryLayout memory layout that describes the tuple buffer.
     /// @param projections projection vector
     DefaultScanPhysicalOperator(
-        std::unique_ptr<TupleBufferMemoryProvider> memoryProvider,
+        std::shared_ptr<TupleBufferMemoryProvider> memoryProvider,
         std::vector<Nautilus::Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const override;
@@ -41,7 +41,7 @@ public:
     std::string toString() const override {return typeid(this).name(); }
 
 private:
-    std::unique_ptr<TupleBufferMemoryProvider> memoryProvider;
+    std::shared_ptr<TupleBufferMemoryProvider> memoryProvider;
     std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
 };
 

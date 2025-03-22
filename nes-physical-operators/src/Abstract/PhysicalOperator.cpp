@@ -13,20 +13,20 @@
 */
 
 #include <Abstract/PhysicalOperator.hpp>
-#include "ExecutionContext.hpp"
+#include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-void PhysicalOperator::setup(ExecutionContext& executionCtx) const
+void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx) const
 {
-    if (child())
+    if (getChildren().size() == 1)
     {
         child()->setup(executionCtx);
     }
 }
 
-void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
     if (child())
     {
@@ -34,7 +34,7 @@ void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& rb) co
     }
 }
 
-void PhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
     if (child())
     {
@@ -42,11 +42,19 @@ void PhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& rb) c
     }
 }
 
-void PhysicalOperator::terminate(ExecutionContext& executionCtx) const
+void PhysicalOperatorConcept::terminate(ExecutionContext& executionCtx) const
 {
     if (child())
     {
         child()->terminate(executionCtx);
+    }
+}
+
+void PhysicalOperatorConcept::execute(NES::ExecutionContext& executionCtx, NES::Nautilus::Record& record) const
+{
+    if (child())
+    {
+        child()->execute(executionCtx, record);
     }
 }
 
