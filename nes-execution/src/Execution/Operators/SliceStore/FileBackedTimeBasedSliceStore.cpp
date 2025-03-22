@@ -355,7 +355,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const auto slicesLocked = slices.rlock();
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
-        auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, metaData.pipelineId, joinBuildSide);
+        auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, joinBuildSide);
         const auto pagedVector = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, threadId);
         pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, USE_FILE_LAYOUT);
         pagedVector->truncate(USE_FILE_LAYOUT);

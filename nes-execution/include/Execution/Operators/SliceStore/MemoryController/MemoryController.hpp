@@ -36,7 +36,7 @@ public:
     ~MemoryController();
 
     std::shared_ptr<FileWriter>
-    getFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId, PipelineId pipelineId, QueryCompilation::JoinBuildSideType joinBuildSide);
+    getFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
     std::shared_ptr<FileReader>
     getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
 

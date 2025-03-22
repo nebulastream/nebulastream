@@ -124,7 +124,7 @@ MemoryController::~MemoryController()
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
-    const SliceEnd sliceEnd, const WorkerThreadId threadId, const PipelineId, const QueryCompilation::JoinBuildSideType joinBuildSide)
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
 

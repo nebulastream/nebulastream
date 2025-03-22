@@ -37,7 +37,6 @@ namespace NES::Runtime::Execution
 struct SliceStoreMetaData
 {
     WorkerThreadId threadId;
-    PipelineId pipelineId;
     Timestamp timestamp;
 };
 

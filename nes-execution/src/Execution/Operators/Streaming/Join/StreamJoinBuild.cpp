@@ -50,7 +50,7 @@ void updateSlicesProxy(
             memoryLayout,
             joinBuildSide,
             piplineContext->getNumberOfWorkerThreads(),
-            SliceStoreMetaData(workerThreadId, piplineContext->getPipelineId(), watermarkTs));
+            SliceStoreMetaData(workerThreadId, watermarkTs));
     }
 }
 
