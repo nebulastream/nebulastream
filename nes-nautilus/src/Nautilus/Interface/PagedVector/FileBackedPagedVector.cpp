@@ -41,8 +41,20 @@ void FileBackedPagedVector::writeToFile(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     Runtime::Execution::FileWriter& fileWriter,
-    const Runtime::Execution::FileLayout fileLayout)
+    Runtime::Execution::FileLayout fileLayout)
 {
+    // TODO remove once fileLayout is chosen adaptively
+    fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : Runtime::Execution::NO_SEPARATION;
+
+    PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
+    PRECONDITION(
+        !memoryLayout->getKeyFieldNames().empty() || fileLayout == Runtime::Execution::NO_SEPARATION,
+        "Cannot separate key field data and payload as there are no key fields");
+    // TODO fix this method and remove preconditon
+    /*PRECONDITION(
+        memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
+        "NLJSlice does not currently support any memory layout other than row layout");*/
+
     switch (fileLayout)
     {
         /// Write all tuples consecutivley to file
@@ -71,8 +83,20 @@ void FileBackedPagedVector::readFromFile(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     Runtime::Execution::FileReader& fileReader,
-    const Runtime::Execution::FileLayout fileLayout)
+    Runtime::Execution::FileLayout fileLayout)
 {
+    // TODO remove once fileLayout is chosen adaptively
+    fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : Runtime::Execution::NO_SEPARATION;
+
+    PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
+    PRECONDITION(
+        !memoryLayout->getKeyFieldNames().empty() || fileLayout == Runtime::Execution::NO_SEPARATION,
+        "Cannot separate key field data and payload as there are no key fields");
+    // TODO fix this method and remove preconditon
+    /*PRECONDITION(
+        memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
+        "NLJSlice does not currently support any memory layout other than row layout");*/
+
     switch (fileLayout)
     {
         /// Read all tuples consecutivley from file
@@ -82,7 +106,7 @@ void FileBackedPagedVector::readFromFile(
             auto lastPage = pages.back();
             auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
             const auto tupleSize = memoryLayout->getTupleSize();
-            auto *lastPagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
+            auto* lastPagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
 
             while (const auto bytesRead = fileReader.read(lastPagePtr, tuplesToRead * tupleSize))
             {
@@ -105,6 +129,7 @@ void FileBackedPagedVector::readFromFile(
 
 void FileBackedPagedVector::truncate(const Runtime::Execution::FileLayout fileLayout)
 {
+    /// Clear the pages without appending a new one afterwards as this will be done in when writing a new record
     // TODO append key field data to designated pagedVectorKeys to be able to write all tuples to file but keep keys in memory, alternatively create mew FileLayout and do this in writeToFile()->writePayloadOnlyToFile()
     switch (fileLayout)
     {

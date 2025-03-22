@@ -38,29 +38,10 @@ public:
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
     [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
 
+    Interface::FileBackedPagedVector* getPagedVectorRef(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
+
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();
-
-    /// Writes the projected fields of all tuples to fileStorage.
-    void writeToFile(
-        Memory::AbstractBufferProvider* bufferProvider,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        QueryCompilation::JoinBuildSideType joinBuildSide,
-        WorkerThreadId threadId,
-        FileWriter& fileWriter,
-        FileLayout fileLayout) override;
-
-    /// Reads the projected fields of all tuples from fileStorage.
-    void readFromFile(
-        Memory::AbstractBufferProvider* bufferProvider,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        QueryCompilation::JoinBuildSideType joinBuildSide,
-        WorkerThreadId threadId,
-        FileReader& fileReader,
-        FileLayout fileLayout) override;
-
-    /// Deletes the projected fields of all tuples.
-    void truncate(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId, FileLayout fileLayout) override;
 
     /// Returns the size of the pages in the left and right PagedVectors in bytes
     size_t getStateSizeInBytesForThreadId(
@@ -69,10 +50,8 @@ public:
         WorkerThreadId threadId) const;
 
 private:
-    Interface::FileBackedPagedVector* getPagedVector(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
-
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
+    std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> leftPagedVectors;
+    std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> rightPagedVectors;
     std::mutex combinePagedVectorsMutex;
 };
 }

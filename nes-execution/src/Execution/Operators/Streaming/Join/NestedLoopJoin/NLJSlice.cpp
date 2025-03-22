@@ -20,7 +20,6 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Nautilus/Interface/PagedVector/FileBackedPagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -58,12 +57,30 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
 
 Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
-    return getPagedVector(QueryCompilation::JoinBuildSideType::Left, workerThreadId);
+    return getPagedVectorRef(QueryCompilation::JoinBuildSideType::Left, workerThreadId);
 }
 
 Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
-    return getPagedVector(QueryCompilation::JoinBuildSideType::Right, workerThreadId);
+    return getPagedVectorRef(QueryCompilation::JoinBuildSideType::Right, workerThreadId);
+}
+
+Interface::FileBackedPagedVector*
+NLJSlice::getPagedVectorRef(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId) const
+{
+    switch (joinBuildSide)
+    {
+        case QueryCompilation::JoinBuildSideType::Left: {
+            const auto pos = threadId % leftPagedVectors.size();
+            return leftPagedVectors[pos].get();
+        }
+        case QueryCompilation::JoinBuildSideType::Right: {
+            const auto pos = threadId % rightPagedVectors.size();
+            return rightPagedVectors[pos].get();
+        }
+        default:
+            throw UnknownJoinBuildSide();
+    }
 }
 
 void NLJSlice::combinePagedVectors()
@@ -95,89 +112,16 @@ void NLJSlice::combinePagedVectors()
     }
 }
 
-void NLJSlice::writeToFile(
-    Memory::AbstractBufferProvider* bufferProvider,
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    const QueryCompilation::JoinBuildSideType joinBuildSide,
-    const WorkerThreadId threadId,
-    FileWriter& fileWriter,
-    FileLayout fileLayout)
-{
-    // TODO remove once fileLayout is chosen adaptively
-    fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : NO_SEPARATION;
-
-    PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
-    PRECONDITION(
-        !memoryLayout->getKeyFieldNames().empty() || fileLayout == NO_SEPARATION,
-        "Cannot separate key field data and payload as there are no key fields");
-    // TODO fix this method and remove preconditon
-    /*PRECONDITION(
-        memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
-        "NLJSlice does not currently support any memory layout other than row layout");*/
-
-    const auto pagedVector = getPagedVector(joinBuildSide, threadId);
-    pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, fileLayout);
-}
-
-void NLJSlice::readFromFile(
-    Memory::AbstractBufferProvider* bufferProvider,
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    const QueryCompilation::JoinBuildSideType joinBuildSide,
-    const WorkerThreadId threadId,
-    FileReader& fileReader,
-    FileLayout fileLayout)
-{
-    // TODO remove once fileLayout is chosen adaptively
-    fileLayout = !memoryLayout->getKeyFieldNames().empty() ? fileLayout : NO_SEPARATION;
-
-    PRECONDITION(!memoryLayout->getSchema()->containsVarSizedDataField(), "NLJSlice does not currently support variable sized data");
-    PRECONDITION(
-        !memoryLayout->getKeyFieldNames().empty() || fileLayout == NO_SEPARATION,
-        "Cannot separate key field data and payload as there are no key fields");
-    // TODO fix this method and remove preconditon
-    /*PRECONDITION(
-        memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
-        "NLJSlice does not currently support any memory layout other than row layout");*/
-
-    const auto pagedVector = getPagedVector(joinBuildSide, threadId);
-    pagedVector->readFromFile(bufferProvider, memoryLayout, fileReader, fileLayout);
-}
-
-void NLJSlice::truncate(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId, const FileLayout fileLayout)
-{
-    /// Clear the pages without appending a new one afterwards as this will be done in PagedVectorRef::writeRecord
-    const auto pagedVector = getPagedVector(joinBuildSide, threadId);
-    pagedVector->truncate(fileLayout);
-}
-
 size_t NLJSlice::getStateSizeInBytesForThreadId(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId) const
 {
-    const auto pagedVector = getPagedVector(joinBuildSide, threadId);
+    const auto pagedVector = getPagedVectorRef(joinBuildSide, threadId);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
 
     return pageSize * numPages;
-}
-
-Interface::FileBackedPagedVector*
-NLJSlice::getPagedVector(const QueryCompilation::JoinBuildSideType joinBuildSide, const WorkerThreadId threadId) const
-{
-    switch (joinBuildSide)
-    {
-        case QueryCompilation::JoinBuildSideType::Left: {
-            const auto pos = threadId % leftPagedVectors.size();
-            return leftPagedVectors[pos].get();
-        }
-        case QueryCompilation::JoinBuildSideType::Right: {
-            const auto pos = threadId % rightPagedVectors.size();
-            return rightPagedVectors[pos].get();
-        }
-        default:
-            throw UnknownJoinBuildSide();
-    }
 }
 
 }

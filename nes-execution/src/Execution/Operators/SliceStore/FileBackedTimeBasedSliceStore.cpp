@@ -22,6 +22,7 @@
 #include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
@@ -355,8 +356,9 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
         auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, metaData.pipelineId, joinBuildSide);
-        slice->writeToFile(bufferProvider, memoryLayout, joinBuildSide, threadId, *fileWriter, USE_FILE_LAYOUT);
-        slice->truncate(joinBuildSide, threadId, USE_FILE_LAYOUT);
+        const auto pagedVector = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, threadId);
+        pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, USE_FILE_LAYOUT);
+        pagedVector->truncate(USE_FILE_LAYOUT);
         // TODO force flush FileWriter?
     }
 
@@ -383,7 +385,8 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     {
         if (auto fileReader = memCtrl.getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
         {
-            slice->readFromFile(bufferProvider, memoryLayout, joinBuildSide, WorkerThreadId(threadId), *fileReader, USE_FILE_LAYOUT);
+            const auto pagedVector = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, WorkerThreadId(threadId));
+            pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, USE_FILE_LAYOUT);
         }
     }
     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;

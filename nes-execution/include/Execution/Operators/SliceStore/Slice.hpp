@@ -61,24 +61,6 @@ public:
     [[nodiscard]] SliceStart getSliceStart() const;
     [[nodiscard]] SliceEnd getSliceEnd() const;
 
-    virtual void writeToFile(
-        Memory::AbstractBufferProvider* bufferProvider,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        QueryCompilation::JoinBuildSideType joinBuildSide,
-        WorkerThreadId threadId,
-        FileWriter& fileWriter,
-        FileLayout fileLayout)
-        = 0;
-    virtual void readFromFile(
-        Memory::AbstractBufferProvider* bufferProvider,
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        QueryCompilation::JoinBuildSideType joinBuildSide,
-        WorkerThreadId threadId,
-        FileReader& fileReader,
-        FileLayout fileLayout)
-        = 0;
-    virtual void truncate(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId, FileLayout fileLayout) = 0;
-
     bool operator==(const Slice& rhs) const;
     bool operator!=(const Slice& rhs) const;
 
