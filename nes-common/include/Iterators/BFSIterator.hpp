@@ -18,6 +18,7 @@
 #include <iterator>
 #include <memory>
 #include <queue>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -56,10 +57,8 @@ public:
     bool operator!=(const BFSIterator& other) const { return !(*this == other); }
 
     T operator*() const {
-        if (!nodeQueue.empty()) {
-            return nodeQueue.front();
-        }
-        return nullptr;
+        INVARIANT(!nodeQueue.empty(), "Attempted to dereference end iterator");
+        return nodeQueue.front();
     }
 
 private:

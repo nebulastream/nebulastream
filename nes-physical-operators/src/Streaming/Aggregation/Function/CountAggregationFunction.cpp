@@ -34,7 +34,7 @@ namespace NES
 CountAggregationFunction::CountAggregationFunction(
     std::unique_ptr<PhysicalType> inputType,
     std::unique_ptr<PhysicalType> resultType,
-    std::unique_ptr<Functions::PhysicalFunction> inputFunction,
+    Functions::PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
@@ -103,7 +103,7 @@ std::unique_ptr<AggregationFunction> CountAggregationFunction::clone() const {
     return std::make_unique<CountAggregationFunction>(
         inputType->clone(),
         resultType->clone(),
-        inputFunction->clone(),
+        inputFunction,
         resultFieldIdentifier
     );
 }

@@ -21,7 +21,6 @@
 #include <Functions/FunctionProvider.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <RewriteRuleRegistry.hpp>
 
 namespace NES::Optimizer

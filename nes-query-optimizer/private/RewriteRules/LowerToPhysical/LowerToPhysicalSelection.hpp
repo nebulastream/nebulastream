@@ -21,7 +21,6 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <SelectionPhysicalOperator.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 

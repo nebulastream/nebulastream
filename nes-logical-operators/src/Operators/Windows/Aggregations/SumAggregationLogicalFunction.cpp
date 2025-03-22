@@ -34,7 +34,7 @@ SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLo
 {
     this->aggregationType = Type::Sum;
 }
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(const LogicalFunction& field, const LogicalFunction& asField)
     : WindowAggregationLogicalFunction(field.getStamp().clone(), field.getStamp().clone(), field.getStamp().clone(), std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Sum;

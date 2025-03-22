@@ -80,7 +80,7 @@ SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask
 
 NLJProbePhysicalOperator::NLJProbePhysicalOperator(
     const uint64_t operatorHandlerIndex,
-    std::unique_ptr<Functions::PhysicalFunction> joinFunction,
+    Functions::PhysicalFunction joinFunction,
     const std::string windowStartFieldName,
     const std::string windowEndFieldName,
     const JoinSchema& joinSchema,
@@ -99,7 +99,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
-    PhysicalOperator::open(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::open(executionCtx, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
     const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());
@@ -150,7 +150,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         for (auto rightIt = rightPagedVector.begin(rightKeyFields); rightIt != rightPagedVector.end(rightKeyFields); ++rightIt)
         {
             auto joinedKeyFields = createJoinedRecord(*leftIt, *rightIt, windowStart, windowEnd, leftKeyFields, rightKeyFields);
-            if (joinFunction->execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
+            if (joinFunction.execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
             {
                 auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
                 auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);

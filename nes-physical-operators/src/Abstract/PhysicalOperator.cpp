@@ -20,41 +20,41 @@ namespace NES
 
 void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx) const
 {
-    if (getChildren().size() == 1)
+    if (getChild())
     {
-        child()->setup(executionCtx);
+        getChild().value().setup(executionCtx);
     }
 }
 
 void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
-    if (child())
+    if (getChild())
     {
-        child()->open(executionCtx, rb);
+        getChild().value().open(executionCtx, rb);
     }
 }
 
 void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
-    if (child())
+    if (getChild())
     {
-        child()->close(executionCtx, rb);
+        getChild().value().close(executionCtx, rb);
     }
 }
 
 void PhysicalOperatorConcept::terminate(ExecutionContext& executionCtx) const
 {
-    if (child())
+    if (getChild())
     {
-        child()->terminate(executionCtx);
+        getChild().value().terminate(executionCtx);
     }
 }
 
 void PhysicalOperatorConcept::execute(NES::ExecutionContext& executionCtx, NES::Nautilus::Record& record) const
 {
-    if (child())
+    if (getChild())
     {
-        child()->execute(executionCtx, record);
+        getChild().value().execute(executionCtx, record);
     }
 }
 

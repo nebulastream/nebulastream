@@ -21,7 +21,6 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Plans/Operator.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableSchema.pb.h>
 #include <ErrorHandling.hpp>

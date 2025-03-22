@@ -33,7 +33,6 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -80,15 +79,15 @@ QueryPlanBuilder::addMap(LogicalFunction mapFunction, QueryPlan queryPlan)
     {
         throw UnsupportedQuery("Map function cannot have a FieldRenameFunction");
     }
-    queryPlan.promoteOperatorToRoot(MapLogicalOperator(mapFunction));
+    queryPlan.promoteOperatorToRoot(MapLogicalOperator(mapFunction.get<FieldAssignmentLogicalFunction>()));
     return queryPlan;
 }
 
 QueryPlan QueryPlanBuilder::addWindowAggregation(
     QueryPlan queryPlan,
-    std::unique_ptr<Windowing::WindowType> windowType,
-    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggs,
-    std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys)
+    std::shared_ptr<Windowing::WindowType> windowType,
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs,
+    std::vector<FieldAccessLogicalFunction> onKeys)
 {
     PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");
 
@@ -112,8 +111,8 @@ QueryPlan QueryPlanBuilder::addWindowAggregation(
         throw NotImplemented("Only TimeBasedWindowType is supported for now");
     }
 
-    auto inputSchema = dynamic_cast<const LogicalOperator*>(queryPlan.getRootOperators()[0])->getOutputSchema();
-    queryPlan.promoteOperatorToRoot(WindowedAggregationLogicalOperator(std::move(onKeys),  std::move(windowAggs), std::move(windowType)));
+    auto inputSchema = queryPlan.getRootOperators()[0].getOutputSchema();
+    queryPlan.promoteOperatorToRoot(WindowedAggregationLogicalOperator(onKeys,  windowAggs, windowType));
     return queryPlan;
 }
 
@@ -128,34 +127,33 @@ QueryPlan QueryPlanBuilder::addJoin(
     QueryPlan leftQueryPlan,
     QueryPlan rightQueryPlan,
     LogicalFunction joinFunction,
-    std::unique_ptr<Windowing::WindowType> windowType,
+    std::shared_ptr<Windowing::WindowType> windowType,
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::CARTESIAN_PRODUCT)
 {
     NES_TRACE("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
-    std::unordered_set<LogicalFunction*> visitedFunctions;
+    std::unordered_set<LogicalFunction> visitedFunctions;
     /// We are iterating over all binary functions and check if each side's leaf is a constant value, as we are supposedly not supporting this
     /// I am not sure why this is the case, but I will keep it for now. IMHO, the whole QueryPlanBuilder should be refactored to be more readable and
     /// also to be more maintainable. TODO #506
-    for (LogicalFunction* itr : BFSRange<LogicalFunction>(joinFunction.get()))
+    for (LogicalFunction itr : BFSRange<LogicalFunction>(joinFunction))
     {
         // Check if 'itr' is a BinaryLogicalFunction.
-        if (auto* binaryFunc = dynamic_cast<BinaryLogicalFunction*>(itr))
+        if (itr.getChildren().size() == 2)
         {
-            if (!dynamic_cast<BinaryLogicalFunction*>(&binaryFunc->getLeftChild()))
+            if (itr.getChildren()[0].getChildren().size() != 2)
             {
-                if (visitedFunctions.find(binaryFunc) == visitedFunctions.end())
+                if (visitedFunctions.find(itr.getChildren()[0]) == visitedFunctions.end())
                 {
-                    visitedFunctions.insert(binaryFunc);
-                    if (!dynamic_cast<BinaryLogicalFunction*>(&binaryFunc->getLeftChild()) &&
-                        !dynamic_cast<BinaryLogicalFunction*>(&binaryFunc->getRightChild()))
-                    {
-                        if (dynamic_cast<ConstantValueLogicalFunction*>(&binaryFunc->getLeftChild()) ||
-                            dynamic_cast<ConstantValueLogicalFunction*>(&binaryFunc->getRightChild()))
+                    visitedFunctions.insert(itr.getChildren()[0]);
+                    if ((itr.getChildren()[0].getChildren()[0].getChildren().size() != 2) && (itr.getChildren()[0].getChildren()[1].getChildren().size() != 2))
+                        {
+                        if (itr.getChildren()[0].getChildren()[0].tryGet<ConstantValueLogicalFunction>() ||
+                            itr.getChildren()[0].getChildren()[1].tryGet<ConstantValueLogicalFunction>())
                         {
                             throw InvalidQuerySyntax("One of the join keys does only consist of a constant function. Use WHERE instead.");
                         }
-                        auto leftKeyFieldAccess = asFieldAccessLogicalFunction(binaryFunc->getLeftChild().clone(), "leftSide");
-                        auto rightKeyFieldAccess = asFieldAccessLogicalFunction(binaryFunc->getRightChild().clone(), "rightSide");
+                        auto leftKeyFieldAccess = asFieldAccessLogicalFunction(itr.getChildren()[0].getChildren()[0], "leftSide");
+                        auto rightKeyFieldAccess = asFieldAccessLogicalFunction(itr.getChildren()[0].getChildren()[1], "rightSide");
                     }
                 }
             }
@@ -165,8 +163,8 @@ QueryPlan QueryPlanBuilder::addJoin(
 
     INVARIANT(!rightQueryPlan.getRootOperators().empty(), "RootOperators of rightQueryPlan are empty");
     auto& rootOperatorRhs = rightQueryPlan.getRootOperators()[0];
-    auto leftJoinType = dynamic_cast<const Operator*>(leftQueryPlan.getRootOperators()[0])->getOutputSchema();
-    auto rightQueryPlanJoinType = dynamic_cast<Operator*>(rootOperatorRhs)->getOutputSchema();
+    auto leftJoinType = leftQueryPlan.getRootOperators()[0].getOutputSchema();
+    auto rightQueryPlanJoinType = rootOperatorRhs.getOutputSchema();
 
     /// check if query contain watermark assigner, and add if missing (as default behaviour)
     leftQueryPlan = checkAndAddWatermarkAssignment(leftQueryPlan, windowType);
@@ -221,7 +219,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::checkAndAddWatermarkAssignment(
 */
 
 QueryPlan QueryPlanBuilder::addBinaryOperatorAndUpdateSource(
-    Operator operatorNode, QueryPlan leftQueryPlan, QueryPlan rightQueryPlan)
+    LogicalOperator operatorNode, QueryPlan leftQueryPlan, QueryPlan rightQueryPlan)
 {
     leftQueryPlan.addRootOperator(rightQueryPlan.getRootOperators()[0]);
     leftQueryPlan.promoteOperatorToRoot(std::move(operatorNode));

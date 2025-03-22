@@ -23,7 +23,6 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Plans/Operator.hpp>
 
 
 namespace NES
@@ -35,25 +34,25 @@ class QueryPlan
 {
 public:
     QueryPlan() = default;
-    explicit QueryPlan(Operator rootOperator);
-    explicit QueryPlan(QueryId queryId, std::vector<Operator> rootOperators);
-    static std::unique_ptr<QueryPlan> create(Operator rootOperator);
-    static std::unique_ptr<QueryPlan> create(QueryId queryId, std::vector<Operator> rootOperators);
+    explicit QueryPlan(LogicalOperator rootOperator);
+    explicit QueryPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
+    static std::unique_ptr<QueryPlan> create(LogicalOperator rootOperator);
+    static std::unique_ptr<QueryPlan> create(QueryId queryId, std::vector<LogicalOperator> rootOperators);
 
     QueryPlan(const QueryPlan& other);
     QueryPlan(QueryPlan&& other);
     QueryPlan& operator=(QueryPlan&& other);
 
     /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
-    void promoteOperatorToRoot(Operator newRoot);
+    void promoteOperatorToRoot(LogicalOperator newRoot);
     /// Adds operator to roots vector
-    void addRootOperator(Operator newRootOperator);
+    void addRootOperator(LogicalOperator newRootOperator);
 
     [[nodiscard]] std::string toString() const;
 
-    std::vector<Operator> getRootOperators() const;
+    std::vector<LogicalOperator> getRootOperators() const;
 
-    bool replaceOperatorRecursively(Operator current, Operator target, Operator replacement)
+    bool replaceOperatorRecursively(LogicalOperator current, LogicalOperator target, LogicalOperator replacement)
     {
         auto children = current.getChildren();
         for (auto& child : children)
@@ -93,7 +92,7 @@ public:
         return operators;
     }*/
 
-    bool replaceOperator(Operator target, Operator replacement)
+    bool replaceOperator(LogicalOperator target, LogicalOperator replacement)
     {
         bool replaced = false;
         for (auto& root : rootOperators)
@@ -125,7 +124,7 @@ public:
         std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
-            for (Operator op : BFSRange<Operator>(rootOperator))
+            for (LogicalOperator op : BFSRange<LogicalOperator>(rootOperator))
             {
                 if (visitedOpIds.contains(op.getId()))
                 {
@@ -195,9 +194,9 @@ public:
 
     /// Get all the leaf operators in the query plan (leaf operator is the one without any child)
     /// @note: in certain stages the source operators might not be Leaf operators
-    std::vector<Operator> getLeafOperators() const;
+    std::vector<LogicalOperator> getLeafOperators() const;
 
-    std::unordered_set<Operator> getAllOperators() const;
+    std::unordered_set<LogicalOperator> getAllOperators() const;
 
     void setQueryId(QueryId queryId);
     [[nodiscard]] QueryId getQueryId() const;
@@ -206,7 +205,7 @@ public:
 
 private:
     /// Owning pointers to the operators
-    std::vector<Operator> rootOperators{};
+    std::vector<LogicalOperator> rootOperators{};
     QueryId queryId = INVALID_QUERY_ID;
 };
 }

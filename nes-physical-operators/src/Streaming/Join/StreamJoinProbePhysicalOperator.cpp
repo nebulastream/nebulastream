@@ -30,7 +30,7 @@ namespace NES
 
 StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
     const uint64_t operatorHandlerIndex,
-    std::unique_ptr<Functions::PhysicalFunction> joinFunction,
+    Functions::PhysicalFunction joinFunction,
     std::string windowStartFieldName,
     std::string windowEndFieldName,
     JoinSchema joinSchema)

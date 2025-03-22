@@ -28,7 +28,6 @@
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Streaming/Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Streaming/Aggregation/AggregationProbePhysicalOperator.hpp>

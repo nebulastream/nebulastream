@@ -39,6 +39,7 @@ public:
     virtual void setStamp(std::shared_ptr<DataType> stamp) = 0;
 
     [[nodiscard]] virtual std::vector<struct LogicalFunction> getChildren() const = 0;
+    virtual void setChildren(std::vector<struct LogicalFunction>) = 0;
 
     [[nodiscard]] virtual std::string getType() const = 0;
     [[nodiscard]] virtual SerializableFunction serialize() const = 0;
@@ -93,6 +94,11 @@ public:
         return self->getChildren();
     }
 
+    void setChildren(std::vector<LogicalFunction> children)
+    {
+        self->setChildren(children);
+    }
+
     const DataType& getStamp() const
     {
         return self->getStamp();
@@ -138,6 +144,11 @@ private:
             return data.getChildren();
         }
 
+        void setChildren(std::vector<LogicalFunction> children) override
+        {
+            return data.setChildren(children);
+        }
+
         SerializableFunction serialize() const override
         {
             return data.serialize();
@@ -175,4 +186,14 @@ inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& lf)
 }
 
 }
+
+namespace std {
+template<>
+struct hash<NES::LogicalFunction> {
+    std::size_t operator()(const NES::LogicalFunction& lf) const noexcept {
+        return std::hash<std::string>{}(lf.toString());
+    }
+};
+}
+
 FMT_OSTREAM(NES::LogicalFunction);

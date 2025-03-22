@@ -33,7 +33,7 @@ namespace NES
 SumAggregationFunction::SumAggregationFunction(
     std::unique_ptr<PhysicalType> inputType,
     std::unique_ptr<PhysicalType> resultType,
-    std::unique_ptr<Functions::PhysicalFunction> inputFunction,
+    Functions::PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {
@@ -49,7 +49,7 @@ void SumAggregationFunction::lift(
     const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, *inputType);
 
     /// Updating the sum and count with the new value
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     const auto newSum = sum + value;
 
     /// Writing the new sum and count back to the aggregation state
@@ -105,7 +105,7 @@ std::unique_ptr<AggregationFunction> SumAggregationFunction::clone() const {
     return std::make_unique<SumAggregationFunction>(
         inputType->clone(),
         resultType->clone(),
-        inputFunction->clone(),
+        inputFunction,
         resultFieldIdentifier
     );
 }

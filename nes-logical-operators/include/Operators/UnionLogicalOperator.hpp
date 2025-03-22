@@ -44,12 +44,12 @@ public:
 
     std::string toString() const override;
 
-    std::vector<Operator> getChildren() const override
+    std::vector<LogicalOperator> getChildren() const override
     {
         return children;
     }
 
-    void setChildren(std::vector<Operator> children) override
+    void setChildren(std::vector<LogicalOperator> children) override
     {
         this->children = children;
     }
@@ -66,7 +66,7 @@ public:
 
 private:
     static constexpr std::string_view NAME = "Union";
-    std::vector<Operator> children;
+    std::vector<LogicalOperator> children;
     Schema leftInputSchema, rightInputSchema, outputSchema;
 };
 

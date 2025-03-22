@@ -14,6 +14,8 @@
 #pragma once
 
 #include <memory>
+#include <utility>
+#include <string>
 #include <Functions/PhysicalFunction.hpp>
 #include <Abstract/PhysicalOperator.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -27,10 +29,13 @@ class SelectionPhysicalOperator final : public PhysicalOperatorConcept
 public:
     explicit SelectionPhysicalOperator(Functions::PhysicalFunction function) : function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
-    [[nodiscard]] std::string toString() const override {return typeid(this).name(); }
+
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
     const Functions::PhysicalFunction function;
     static constexpr bool PIPELINE_BREAKER = false;
+    std::optional<PhysicalOperator> child;
 };
 }

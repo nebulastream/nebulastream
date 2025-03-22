@@ -28,6 +28,7 @@ struct PhysicalFunctionConcept
 public:
     virtual ~PhysicalFunctionConcept() = default;
     [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
+    virtual bool operator==(const PhysicalFunctionConcept& other) const = 0;
 };
 
 struct PhysicalFunction {
@@ -92,6 +93,13 @@ private:
         VarVal execute(const Record& record, ArenaRef& arena) const override
         {
             return data.execute(record, arena);
+        }
+
+        [[nodiscard]] bool operator==(PhysicalFunctionConcept const& rhs) const override {
+            if (auto* p = dynamic_cast<const Concept*>(&rhs)) {
+                return equals(*p);
+            }
+            return false;
         }
 
         [[nodiscard]] bool equals(const Concept& other) const override {

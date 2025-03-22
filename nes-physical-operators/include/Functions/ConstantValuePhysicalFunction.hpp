@@ -18,6 +18,7 @@
 #include <memory>
 #include <type_traits>
 #include <ExecutionContext.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
@@ -29,9 +30,14 @@ requires std::is_integral_v<T> || std::is_floating_point_v<T>
 class ConstantValuePhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
-    explicit ConstantValuePhysicalFunction(T value) : value(value) { }
+    ConstantValuePhysicalFunction(T value) : value(value) { }
     VarVal execute(const Record&, ArenaRef&) const override { return VarVal(value); }
-
+    bool operator==(const PhysicalFunctionConcept& other) const override {
+        if (auto otherPtr = dynamic_cast<const ConstantValuePhysicalFunction<T>*>(&other)) {
+            return this->value == otherPtr->value;
+        }
+        return false;
+    }
 private:
     const T value;
 };

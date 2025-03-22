@@ -45,8 +45,8 @@ public:
 
     [[nodiscard]] std::string getLogicalSourceName() const;
 
-    std::vector<Operator> getChildren() const override {return children;};
-    void setChildren(std::vector<Operator> children) override {this->children = children;};
+    std::vector<LogicalOperator> getChildren() const override {return children;};
+    void setChildren(std::vector<LogicalOperator> children) override {this->children = children;};
     Optimizer::TraitSet getTraitSet() const override { return {};};
 
     std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
@@ -57,7 +57,7 @@ public:
 
 private:
     std::string logicalSourceName;
-    std::vector<Operator> children;
+    std::vector<LogicalOperator> children;
     Schema schema;
 };
 

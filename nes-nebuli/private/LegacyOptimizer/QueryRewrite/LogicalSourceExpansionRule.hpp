@@ -18,7 +18,6 @@
 #include <set>
 #include <unordered_map>
 #include <Identifiers/Identifiers.hpp>
-#include <Plans/Operator.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 

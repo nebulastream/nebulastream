@@ -29,7 +29,6 @@
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <function.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES
 {
@@ -149,15 +148,10 @@ void DefaultEmitPhysicalOperator::emitRecordBuffer(
     }
 }
 
-DefaultEmitPhysicalOperator::DefaultEmitPhysicalOperator(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+DefaultEmitPhysicalOperator::DefaultEmitPhysicalOperator(size_t operatorHandlerIndex, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : memoryProvider(std::move(memoryProvider))
     , operatorHandlerIndex(operatorHandlerIndex)
 {
-}
-
-std::unique_ptr<Operator> DefaultEmitPhysicalOperator::clone() const
-{
-    return std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, memoryProvider->clone());
 }
 
 [[nodiscard]] uint64_t DefaultEmitPhysicalOperator::getMaxRecordsPerBuffer() const

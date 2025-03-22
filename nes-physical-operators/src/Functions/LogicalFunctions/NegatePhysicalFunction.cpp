@@ -25,7 +25,7 @@ namespace NES::Functions
 
 VarVal NegatePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto value = childFunction->execute(record, arena);
+    const auto value = childFunction.execute(record, arena);
     return !value;
 }
 

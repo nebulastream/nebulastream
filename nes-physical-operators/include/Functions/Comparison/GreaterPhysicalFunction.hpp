@@ -26,6 +26,7 @@ class GreaterPhysicalFunction final : public PhysicalFunctionConcept
 public:
     GreaterPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    bool operator==(const PhysicalFunctionConcept&) const override { return true; }
 
 private:
     const PhysicalFunction leftPhysicalFunction;

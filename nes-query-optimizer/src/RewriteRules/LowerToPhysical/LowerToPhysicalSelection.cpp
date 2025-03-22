@@ -24,7 +24,6 @@
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Plans/Operator.hpp>
 #include <SelectionPhysicalOperator.hpp>
 
 namespace NES::Optimizer

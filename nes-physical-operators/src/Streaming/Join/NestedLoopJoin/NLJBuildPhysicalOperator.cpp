@@ -33,7 +33,6 @@
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES
 {

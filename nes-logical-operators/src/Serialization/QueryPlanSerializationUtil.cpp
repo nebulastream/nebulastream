@@ -60,14 +60,14 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
 
 QueryPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
 {
-    std::vector<Operator> rootOperators;
-    std::map<uint64_t, Operator> operatorIdToOperatorMap;
+    std::vector<LogicalOperator> rootOperators;
+    std::map<uint64_t, LogicalOperator> operatorIdToOperatorMap;
 
     ///Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap())
     {
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
-        operatorIdToOperatorMap[serializedOperator.operatorid()] = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        operatorIdToOperatorMap.emplace(serializedOperator.operatorid(),OperatorSerializationUtil::deserializeOperator(serializedOperator));
     }
 
     ///Add deserialized children
@@ -76,14 +76,24 @@ QueryPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQue
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
         for (auto childId : serializedOperator.childrenids())
         {
-            operatorIdToOperatorMap[serializedOperator.operatorid()].setChildren(operatorIdToOperatorMap[childId]);
+            auto child = operatorIdToOperatorMap.find(childId);
+            if (child != operatorIdToOperatorMap.end()) {
+                auto it = operatorIdToOperatorMap.find(serializedOperator.operatorid());
+                if (it != operatorIdToOperatorMap.end()) {
+                    it->second.setChildren({ child->second });
+                }
+            }
         }
     }
 
     ///add root operators
     for (auto rootOperatorId : serializedQueryPlan->rootoperatorids())
     {
-        rootOperators.emplace_back(std::move(operatorIdToOperatorMap[rootOperatorId]));
+        auto root = operatorIdToOperatorMap.find(rootOperatorId);
+        if (root != operatorIdToOperatorMap.end())
+        {
+            rootOperators.emplace_back(root);
+        }
     }
 
     ///set properties of the query plan

@@ -15,7 +15,6 @@
 #include <memory>
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Identifiers/Identifiers.hpp>

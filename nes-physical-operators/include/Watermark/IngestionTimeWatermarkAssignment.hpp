@@ -24,12 +24,15 @@ class IngestionTimeWatermarkAssignment : public PhysicalOperatorConcept
 {
 public:
     /// @brief Creates a IngestionTimeWatermarkAssignment operator without function
-    IngestionTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction);
+    IngestionTimeWatermarkAssignment(std::shared_ptr<TimeFunction> timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
-    std::unique_ptr<TimeFunction> timeFunction;
+    std::shared_ptr<TimeFunction> timeFunction;
+    std::optional<PhysicalOperator> child;
     static constexpr bool PIPELINE_BREAKER = false;
 };
 

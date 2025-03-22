@@ -25,8 +25,9 @@ namespace NES::Functions
 class FieldAccessPhysicalFunction : public PhysicalFunctionConcept
 {
 public:
-    explicit FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field);
+    FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    bool operator==(const PhysicalFunctionConcept&) const override { return true; }
 
 private:
     const Record::RecordFieldIdentifier field;

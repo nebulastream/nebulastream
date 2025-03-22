@@ -33,7 +33,7 @@ std::shared_ptr<QueryConsoleDumpHandler> QueryConsoleDumpHandler::create(std::os
 }
 
 void QueryConsoleDumpHandler::dumpHelper(
-    const Operator& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
+    const LogicalOperator& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
     out << std::string(indent * depth, ' ') << operationNode << '\n';
     ++depth;
@@ -44,7 +44,7 @@ void QueryConsoleDumpHandler::dumpHelper(
 }
 
 void QueryConsoleDumpHandler::multilineDumpHelper(
-    const Operator& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
+    const LogicalOperator& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
     std::vector<std::string> multiLineNodeString = {fmt::format("{}", operationNode)};
     for (const std::string& line : multiLineNodeString)
@@ -80,12 +80,12 @@ void QueryConsoleDumpHandler::multilineDumpHelper(
     }
 }
 
-void QueryConsoleDumpHandler::dump(const Operator& node)
+void QueryConsoleDumpHandler::dump(const LogicalOperator& node)
 {
     multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
 }
 
-void QueryConsoleDumpHandler::multilineDump(const Operator& node)
+void QueryConsoleDumpHandler::multilineDump(const LogicalOperator& node)
 {
     multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
 }

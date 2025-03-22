@@ -27,7 +27,6 @@
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Streaming/Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>

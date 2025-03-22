@@ -32,9 +32,9 @@ namespace NES
 MaxAggregationFunction::MaxAggregationFunction(
     std::unique_ptr<PhysicalType> inputType,
     std::unique_ptr<PhysicalType> resultType,
-    std::unique_ptr<Functions::PhysicalFunction> inputFunction,
+    Functions::PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
-    : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
+    : AggregationFunction(std::move(inputType), std::move(resultType), inputFunction, std::move(resultFieldIdentifier))
 {
 }
 
@@ -48,7 +48,7 @@ void MaxAggregationFunction::lift(
     const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, *inputType);
 
     /// Updating the max value with the new value, if the new value is larger
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (value > max)
     {
         value.writeToMemory(memAreaMax);
@@ -104,7 +104,7 @@ std::unique_ptr<AggregationFunction> MaxAggregationFunction::clone() const {
     return std::make_unique<MaxAggregationFunction>(
         inputType->clone(),
         resultType->clone(),
-        inputFunction->clone(),
+        inputFunction,
         resultFieldIdentifier
     );
 }

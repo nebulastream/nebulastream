@@ -27,7 +27,7 @@ namespace NES
 class WindowBuildPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
-    explicit WindowBuildPhysicalOperator(uint64_t operatorHandlerIndex, std::unique_ptr<TimeFunction> timeFunction);
+    explicit WindowBuildPhysicalOperator(uint64_t operatorHandlerIndex, std::shared_ptr<TimeFunction> timeFunction);
 
     /// This setup function can be called in a multithreaded environment. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
@@ -42,10 +42,13 @@ public:
 
     /// Emits/Flushes all slices and windows, as the query will be terminated
     void terminate(ExecutionContext& executionCtx) const override;
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 protected:
+    std::optional<PhysicalOperator> child;
     const uint64_t operatorHandlerIndex;
-    const std::unique_ptr<TimeFunction> timeFunction;
+    const std::shared_ptr<TimeFunction> timeFunction;
 };
 
 }

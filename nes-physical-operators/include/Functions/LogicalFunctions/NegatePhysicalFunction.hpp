@@ -26,10 +26,11 @@ namespace NES::Functions
 class NegatePhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
-    explicit NegatePhysicalFunction(std::unique_ptr<PhysicalFunction> childFunction);
+    NegatePhysicalFunction(PhysicalFunction childFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    bool operator==(const PhysicalFunctionConcept&) const override { return true; }
 
 private:
-    const std::unique_ptr<PhysicalFunction> childFunction;
+    const PhysicalFunction childFunction;
 };
 }

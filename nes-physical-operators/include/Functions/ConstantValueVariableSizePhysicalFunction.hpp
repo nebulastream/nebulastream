@@ -29,9 +29,15 @@ namespace NES::Functions
 class ConstantValueVariableSizePhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
-    explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
+    ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
+    ConstantValueVariableSizePhysicalFunction(const ConstantValueVariableSizePhysicalFunction& other)
+        : sizeIncludingLength(other.sizeIncludingLength),
+        data(new int8_t[other.sizeIncludingLength])
+    {
+        std::copy(other.data.get(), other.data.get() + other.sizeIncludingLength, data.get());
+    }
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
-
+    bool operator==(const PhysicalFunctionConcept&) const override { return true; }
 private:
     size_t sizeIncludingLength;
     std::unique_ptr<int8_t[]> data;

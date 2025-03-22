@@ -52,8 +52,4 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
     return lhs.sinkType == rhs.sinkType && lhs.config == rhs.config;
 }
 
-std::unique_ptr<SinkDescriptor> SinkDescriptor::clone() {
-    return std::make_unique<SinkDescriptor>(*this);
-}
-
 }

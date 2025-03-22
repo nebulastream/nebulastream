@@ -35,7 +35,7 @@ namespace NES
 MedianAggregationFunction::MedianAggregationFunction(
     std::unique_ptr<PhysicalType> inputType,
     std::unique_ptr<PhysicalType> resultType,
-    std::unique_ptr<Functions::PhysicalFunction> inputFunction,
+    Functions::PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
@@ -104,13 +104,13 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
         nautilus::val<int64_t> countLessThan = 0;
         nautilus::val<int64_t> countEqual = 0;
         const auto candidateRecord = *candidateIt;
-        const auto candidateValue = inputFunction->execute(candidateRecord, pipelineMemoryProvider.arena);
+        const auto candidateValue = inputFunction.execute(candidateRecord, pipelineMemoryProvider.arena);
 
         /// Counting how many items are smaller or equal for the current candidate
         for (auto itemIt = pagedVectorRef.begin(allFieldNames); itemIt != endIt; ++itemIt)
         {
             const auto itemRecord = *itemIt;
-            const auto itemValue = inputFunction->execute(itemRecord, pipelineMemoryProvider.arena);
+            const auto itemValue = inputFunction.execute(itemRecord, pipelineMemoryProvider.arena);
             if (itemValue < candidateValue)
             {
                 countLessThan = countLessThan + 1;
@@ -141,8 +141,8 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
     const auto medianRecord1 = pagedVectorRef.readRecord(medianItemPos1, allFieldNames);
     const auto medianRecord2 = pagedVectorRef.readRecord(medianItemPos2, allFieldNames);
 
-    const auto medianValue1 = inputFunction->execute(medianRecord1, pipelineMemoryProvider.arena);
-    const auto medianValue2 = inputFunction->execute(medianRecord2, pipelineMemoryProvider.arena);
+    const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
+    const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
     const Nautilus::VarVal two = nautilus::val<uint64_t>(2);
     const auto medianValue = (medianValue1.castToType(*resultType.get()) + medianValue2.castToType(*resultType.get()) / two.castToType(*resultType.get()));
 
@@ -174,7 +174,7 @@ std::unique_ptr<AggregationFunction> MedianAggregationFunction::clone() const {
     return std::make_unique<MedianAggregationFunction>(
         inputType->clone(),
         resultType->clone(),
-        inputFunction->clone(),
+        inputFunction,
         resultFieldIdentifier,
         memProviderPagedVector->clone()
     );

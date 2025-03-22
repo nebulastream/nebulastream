@@ -42,12 +42,13 @@ public:
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& isLastChunk) const;
 
-    std::unique_ptr<Operator> clone() const override;
-    std::string toString() const override {return typeid(this).name(); }
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
     [[nodiscard]] uint64_t getMaxRecordsPerBuffer() const;
 
+    std::optional<PhysicalOperator> child;
     std::shared_ptr<TupleBufferMemoryProvider> memoryProvider;
     size_t operatorHandlerIndex;
 };

@@ -30,12 +30,14 @@ public:
     MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, Functions::PhysicalFunction mapFunction);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-    std::string toString() const override { return typeid(this).name(); }
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
     Record::RecordFieldIdentifier fieldToWriteTo;
     Functions::PhysicalFunction mapFunction;
     static constexpr bool PIPELINE_BREAKER = false;
+    std::optional<PhysicalOperator> child;
 };
 
 }

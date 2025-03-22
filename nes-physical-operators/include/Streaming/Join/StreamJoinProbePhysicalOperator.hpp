@@ -24,8 +24,6 @@
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
 #include <val_concepts.hpp>
-#include <Plans/Operator.hpp>
-#include <Abstract/Scan.hpp>
 
 namespace NES
 {
@@ -37,12 +35,12 @@ class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator, publ
 public:
     StreamJoinProbePhysicalOperator(
         uint64_t operatorHandlerIndex,
-        std::unique_ptr<Functions::PhysicalFunction> joinFunction,
+        Functions::PhysicalFunction joinFunction,
         std::string windowStartFieldName,
         std::string windowEndFieldName,
         JoinSchema joinSchema);
 
-    std::string toString() const override {return typeid(this).name(); }
+    std::string toString() const {return typeid(this).name(); }
 
 protected:
     /// Creates a joined record out of the left and right record, but it only uses the provided projection
@@ -61,7 +59,7 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
-    std::unique_ptr<Functions::PhysicalFunction> joinFunction;
+    Functions::PhysicalFunction joinFunction;
     JoinSchema joinSchema;
 };
 }

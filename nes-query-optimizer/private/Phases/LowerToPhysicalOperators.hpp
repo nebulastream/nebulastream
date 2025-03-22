@@ -17,5 +17,5 @@
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
-std::unique_ptr<QueryPlan> apply(std::unique_ptr<QueryPlan> queryPlan);
+std::unique_ptr<QueryPlan> apply(QueryPlan queryPlan);
 }

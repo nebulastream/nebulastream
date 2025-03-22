@@ -57,7 +57,7 @@ void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionCont
 }
 
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(uint64_t operatorHandlerIndex, std::unique_ptr<TimeFunction> timeFunction)
+WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(uint64_t operatorHandlerIndex, std::shared_ptr<TimeFunction> timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), timeFunction(std::move(timeFunction))
 {
 }

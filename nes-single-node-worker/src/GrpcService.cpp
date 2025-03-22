@@ -42,7 +42,7 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
     auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(&request->queryplan());
     try
     {
-        auto queryId = delegate.registerQuery(std::move(*fullySpecifiedQueryPlan.get()));
+        auto queryId = delegate.registerQuery(fullySpecifiedQueryPlan);
         response->set_queryid(queryId.getRawValue());
         return grpc::Status::OK;
     }

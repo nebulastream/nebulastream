@@ -35,8 +35,6 @@ public:
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction);
 
-    std::string toString() const override {return typeid(this).name(); }
-
 protected:
     const JoinBuildSideType joinBuildSide;
     std::unique_ptr<TupleBufferMemoryProvider> memoryProvider;

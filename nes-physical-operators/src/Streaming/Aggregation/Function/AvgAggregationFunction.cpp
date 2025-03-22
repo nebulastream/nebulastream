@@ -54,7 +54,7 @@ void AvgAggregationFunction::lift(
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, *countType);
 
     /// Updating the sum and count with the new value
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     const auto newSum = sum + value;
     const auto newCount = count + nautilus::val<uint64_t>(1);
 

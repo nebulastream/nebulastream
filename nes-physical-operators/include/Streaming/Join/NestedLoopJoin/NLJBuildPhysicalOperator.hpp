@@ -73,10 +73,12 @@ public:
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
-    std::string toString() const override {return typeid(this).name(); }
-    std::unique_ptr<Operator> clone() const override;
+
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
+    std::optional<PhysicalOperator> child;
     /// Returns the populated local join state for the current timestamp
     LocalNestedLoopJoinState* getLocalJoinState(ExecutionContext& executionCtx, const nautilus::val<Timestamp>& timestamp) const;
 

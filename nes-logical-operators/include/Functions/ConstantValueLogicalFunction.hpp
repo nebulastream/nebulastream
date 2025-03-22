@@ -46,6 +46,7 @@ public:
     const DataType& getStamp() const override { return *stamp; };
     void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
     std::vector<LogicalFunction> getChildren()  const override { throw UnsupportedOperation(); };
+    void setChildren(std::vector<LogicalFunction> )  override { return; };
     std::string getType() const override { return std::string(NAME); }
     std::string toString() const override;
 

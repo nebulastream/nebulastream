@@ -41,8 +41,8 @@ public:
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
 
-    std::vector<Operator> getChildren() const override {return {};};
-    void setChildren(std::vector<Operator>) override {};
+    std::vector<LogicalOperator> getChildren() const override {return {};};
+    void setChildren(std::vector<LogicalOperator>) override {};
     Optimizer::TraitSet getTraitSet() const override { return {};};
 
     struct ConfigParameters

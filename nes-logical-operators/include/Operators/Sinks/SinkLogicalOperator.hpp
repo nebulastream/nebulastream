@@ -17,7 +17,6 @@
 #include <memory>
 #include <string>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Plans/Operator.hpp>
 #include <Operators/LogicalOperator.hpp>
 
 namespace NES
@@ -36,17 +35,17 @@ struct SinkLogicalOperator final : public LogicalOperatorConcept
     virtual void inferInputOrigins(){};
 
     std::string sinkName;
-    Sinks::SinkDescriptor sinkDescriptor;
+    std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
-    [[nodiscard]] std::vector<Operator> getChildren() const override
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override
     {
         return children;
     }
 
     [[nodiscard]] Optimizer::TraitSet getTraitSet() const override { return {}; }
-    void setChildren(std::vector<Operator> children) override { this->children = children; }
+    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
     std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
     Schema getOutputSchema() const override { return outputSchema; }
     std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
@@ -55,7 +54,7 @@ struct SinkLogicalOperator final : public LogicalOperatorConcept
     std::string toString() const override;
 
 private:
-    std::vector<Operator> children;
+    std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
 };
 }

@@ -33,10 +33,10 @@ namespace NES::QueryCompilation
 {
 using namespace Functions;
 
-std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
+PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
 {
     /// 1. Recursively lower the children of the function node.
-    std::vector<std::unique_ptr<PhysicalFunction>> childFunction;
+    std::vector<PhysicalFunction> childFunction;
     for (auto& child : logicalFunction.getChildren())
     {
         childFunction.emplace_back(lowerFunction(child));
@@ -46,15 +46,15 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(LogicalFunctio
     /// due to them not simply getting a childFunction as a parameter.
     if (const auto fieldAccessNode = logicalFunction.tryGet<FieldAccessLogicalFunction>(); fieldAccessNode != nullptr)
     {
-        return std::make_unique<FieldAccessPhysicalFunction>(fieldAccessNode->getFieldName());
+        return FieldAccessPhysicalFunction(fieldAccessNode->getFieldName());
     }
     if (auto constantValueNode = logicalFunction.tryGet<ConstantValueLogicalFunction>(); constantValueNode != nullptr)
     {
-        return lowerConstantFunction(constantValueNode);
+        return lowerConstantFunction(*constantValueNode);
     }
 
     /// 3. Calling the registry to create an executable function.
-    auto executableFunctionArguments = PhysicalFunctionRegistryArguments(std::move(childFunction));
+    auto executableFunctionArguments = PhysicalFunctionRegistryArguments(childFunction);
     auto function = PhysicalFunctionRegistry::instance().create(logicalFunction.getType(), std::move(executableFunctionArguments));
     if (not function.has_value())
     {
@@ -64,7 +64,7 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(LogicalFunctio
     return std::move(function.value());
 }
 
-std::unique_ptr<PhysicalFunction> FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)
+PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)
 {
     const auto stringValue = constantFunction.getConstantValue();
     const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction.getStamp());
@@ -74,49 +74,49 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerConstantFunction(const 
         {
             case BasicPhysicalType::NativeType::UINT_8: {
                 auto intValue = static_cast<uint8_t>(std::stoul(stringValue));
-                return std::make_unique<ConstantUInt8ValueFunction>(intValue);
+                return ConstantUInt8ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::UINT_16: {
                 auto intValue = static_cast<uint16_t>(std::stoul(stringValue));
-                return std::make_unique<ConstantUInt16ValueFunction>(intValue);
+                return ConstantUInt16ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::UINT_32: {
                 auto intValue = static_cast<uint32_t>(std::stoul(stringValue));
-                return std::make_unique<ConstantUInt32ValueFunction>(intValue);
+                return ConstantUInt32ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::UINT_64: {
                 auto intValue = static_cast<uint64_t>(std::stoull(stringValue));
-                return std::make_unique<ConstantUInt64ValueFunction>(intValue);
+                return ConstantUInt64ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::INT_8: {
                 auto intValue = static_cast<int8_t>(std::stoi(stringValue));
-                return std::make_unique<ConstantInt8ValueFunction>(intValue);
+                return ConstantInt8ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::INT_16: {
                 auto intValue = static_cast<int16_t>(std::stoi(stringValue));
-                return std::make_unique<ConstantInt16ValueFunction>(intValue);
+                return ConstantInt16ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::INT_32: {
                 auto intValue = static_cast<int32_t>(std::stoi(stringValue));
-                return std::make_unique<ConstantInt32ValueFunction>(intValue);
+                return ConstantInt32ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::INT_64: {
                 auto intValue = static_cast<int64_t>(std::stol(stringValue));
-                return std::make_unique<ConstantInt64ValueFunction>(intValue);
+                return ConstantInt64ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::FLOAT: {
                 auto floatValue = std::stof(stringValue);
-                return std::make_unique<ConstantFloatValueFunction>(floatValue);
+                return ConstantFloatValueFunction(floatValue);
             };
             case BasicPhysicalType::NativeType::DOUBLE: {
                 auto doubleValue = std::stod(stringValue);
-                return std::make_unique<ConstantDoubleValueFunction>(doubleValue);
+                return ConstantDoubleValueFunction(doubleValue);
             };
             case BasicPhysicalType::NativeType::CHAR:
                 break;
             case BasicPhysicalType::NativeType::BOOLEAN: {
                 auto boolValue = static_cast<bool>(std::stoi(stringValue)) == 1;
-                return std::make_unique<ConstantBooleanValueFunction>(boolValue);
+                return ConstantBooleanValueFunction(boolValue);
             };
             default: {
                 throw UnknownPhysicalType("the basic type {} is not supported", basicType->toString());
@@ -125,7 +125,7 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerConstantFunction(const 
     }
     else if (dynamic_cast<VariableSizedDataPhysicalType*>(physicalType.get()))
     {
-        return std::make_unique<ConstantValueVariableSizePhysicalFunction>(
+        return ConstantValueVariableSizePhysicalFunction(
             reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
     }
     throw UnknownPhysicalType("couldn't create ConstantValueFunction for: {}, not a BasicPhysicalType.", physicalType->toString());

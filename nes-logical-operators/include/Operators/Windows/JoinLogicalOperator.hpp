@@ -38,7 +38,7 @@ public:
     };
 
     explicit JoinLogicalOperator(LogicalFunction joinFunction,
-                                 std::unique_ptr<Windowing::WindowType> windowType,
+                                 std::shared_ptr<Windowing::WindowType> windowType,
                                  uint64_t numberOfInputEdgesLeft,
                                  uint64_t numberOfInputEdgesRight,
                                  JoinType joinType);
@@ -91,18 +91,33 @@ public:
 
     Optimizer::OriginIdTrait originIdTrait;
 
+    std::vector<LogicalOperator> getChildren() const override
+    {
+        return children;
+    }
+    void setChildren(std::vector<LogicalOperator> children) override
+    {
+        this->children = children;
+    }
+
+    Optimizer::TraitSet getTraitSet() const override
+    {
+        return {};
+    }
+
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
 private:
     static constexpr std::string_view NAME = "Join";
 
     LogicalFunction joinFunction;
-    Schema leftSourceSchema;
-    Schema rightSourceSchema;
-    Schema outputSchema ;
-    std::unique_ptr<Windowing::WindowType> windowType;
-    uint64_t numberOfInputEdgesLeft;
-    uint64_t numberOfInputEdgesRight;
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
+    Schema leftSourceSchema, rightSourceSchema, outputSchema;
+    std::shared_ptr<Windowing::WindowType> windowType;
+    uint64_t numberOfInputEdgesLeft, numberOfInputEdgesRight;
+    std::string windowStartFieldName, windowEndFieldName;
     JoinType joinType;
+
+    std::vector<LogicalOperator> children;
 };
 }

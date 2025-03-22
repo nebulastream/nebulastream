@@ -22,28 +22,24 @@
 #include <PipelinedQueryPlan.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Pipeline.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES::QueryCompilation
 {
 
 namespace helper
 {
-[[nodiscard]] std::vector<Operator*> getAllLeafNodes(Operator& op)
+[[nodiscard]] std::vector<PhysicalOperator> getAllLeafNodes(PhysicalOperator& op)
 {
-    std::vector<Operator*> leaves;
-    auto children = op.getChildren();
-    if (children.empty())
+    std::vector<PhysicalOperator> leaves;
+    auto child = op.getChild();
+    if (!child.has_value())
     {
-        leaves.push_back(&op);
+        leaves.push_back(op);
     }
     else
     {
-        for (const auto& child : children)
-        {
-            auto childLeaves = getAllLeafNodes(*child);
-            leaves.insert(leaves.end(), childLeaves.begin(), childLeaves.end());
-        }
+        auto childLeaves = getAllLeafNodes(*child);
+        leaves.insert(leaves.end(), childLeaves.begin(), childLeaves.end());
     }
     return leaves;
 }

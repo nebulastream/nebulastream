@@ -32,7 +32,7 @@ class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 public:
     NLJProbePhysicalOperator(
         const uint64_t operatorHandlerIndex,
-        std::unique_ptr<Functions::PhysicalFunction> joinFunction,
+        Functions::PhysicalFunction joinFunction,
         const std::string windowStartFieldName,
         const std::string windowEndFieldName,
         const JoinSchema& joinSchema,
@@ -40,10 +40,12 @@ public:
         std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    std::string toString() const override {return typeid(this).name(); }
-    std::unique_ptr<Operator> clone() const override;
+
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
+    std::optional<PhysicalOperator> child;
     std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider;
     std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider;
     static constexpr bool PIPELINE_BREAKER = true;

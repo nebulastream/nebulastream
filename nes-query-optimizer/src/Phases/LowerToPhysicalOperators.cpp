@@ -24,7 +24,6 @@
 #include <ErrorHandling.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {

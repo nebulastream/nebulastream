@@ -45,8 +45,7 @@ public:
     [[nodiscard]]std::shared_ptr<Windowing::WindowType> getWindowType() const;
     void setWindowType(std::shared_ptr<Windowing::WindowType> windowType);
 
-    [[nodiscard]]std::vector<std::shared_ptr<FieldAccessLogicalFunction>> getKeys() const;
-    void setOnKey(const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& keys);
+    [[nodiscard]]std::vector<FieldAccessLogicalFunction> getKeys() const;
 
     [[nodiscard]] OriginId getOriginId() const;
     std::vector<std::vector<OriginId>> getInputOriginIds() const override;
@@ -58,7 +57,7 @@ protected:
     static constexpr std::string_view NAME = "Window";
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
     std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<std::shared_ptr<FieldAccessLogicalFunction>> onKey;
+    std::vector<FieldAccessLogicalFunction> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
 };

@@ -18,7 +18,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>

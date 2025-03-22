@@ -60,9 +60,9 @@ public:
 
     static QueryPlan addWindowAggregation(
         QueryPlan queryPlan,
-        std::unique_ptr<Windowing::WindowType> windowType,
-        std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggs,
-        std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys);
+        std::shared_ptr<Windowing::WindowType> windowType,
+        std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs,
+        std::vector<FieldAccessLogicalFunction> onKeys);
 
     /// @brief UnionOperator to combine two query plans
     /// @param leftQueryPlan the left query plan to combine by the union
@@ -80,7 +80,7 @@ public:
         QueryPlan leftQueryPlan,
         QueryPlan rightQueryPlan,
         LogicalFunction joinFunction,
-        std::unique_ptr<Windowing::WindowType> windowType,
+        std::shared_ptr<Windowing::WindowType> windowType,
         JoinLogicalOperator::JoinType joinType);
 
     static QueryPlan addSink(std::string sinkName, QueryPlan queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
@@ -100,8 +100,7 @@ private:
     /// @param function the function node to test
     /// @param side points out from which side, i.e., left or right query plan, the LogicalFunction is
     // @return LogicalFunction as FieldAccessLogicalFunction
-    static std::unique_ptr<FieldAccessLogicalFunction>
-    asFieldAccessLogicalFunction(LogicalFunction function, std::string side);
+    static FieldAccessLogicalFunction asFieldAccessLogicalFunction(LogicalFunction function, std::string side);
 
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources
     /// @param operatorNode the binary operator to add
@@ -109,6 +108,6 @@ private:
     /// @param: rightQueryPlan the right query plan of the binary operation
     /// @return the updated queryPlan
     static QueryPlan addBinaryOperatorAndUpdateSource(
-        Operator operatorNode, QueryPlan leftQueryPlan, QueryPlan rightQueryPlan);
+        LogicalOperator operatorNode, QueryPlan leftQueryPlan, QueryPlan rightQueryPlan);
 };
 }

@@ -27,10 +27,11 @@ class ModPhysicalFunction : public PhysicalFunctionConcept
 public:
     ModPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     VarVal execute(const Record& record, ArenaRef& arena) const override;
+    bool operator==(const PhysicalFunctionConcept&) const override { return true; }
 
 private:
-    std::unique_ptr<PhysicalFunction> leftPhysicalFunction;
-    std::unique_ptr<PhysicalFunction> rightPhysicalFunction;
+    PhysicalFunction leftPhysicalFunction;
+    PhysicalFunction rightPhysicalFunction;
 };
 
 }
