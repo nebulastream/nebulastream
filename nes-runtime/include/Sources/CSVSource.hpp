@@ -116,6 +116,7 @@ class CSVSource : public DataSource {
 //    std::vector<std::string> readLines;
 //    uint64_t nextLinesIndex = 0;
     bool addTimeStampsAndReadOnStartup;
+    bool shouldGetLastAck;
 //    uint64_t port;
 //    int sockfd;
 //    std::vector<uint8_t> incomingBuffer;

@@ -239,8 +239,25 @@ void AbstractQueryManager::updateSourceToQepMapping(NES::OperatorId sourceid,
 }
 
 std::optional<uint64_t> AbstractQueryManager::getSourceAck(uint64_t id) {
-    std::unique_lock lock(tcpAckMutex);
-    return tcpSourceAcks[id].seq;
+    const auto timeout = std::chrono::seconds(5);
+    const auto pollInterval = std::chrono::milliseconds(10);
+    const auto startTime = std::chrono::steady_clock::now();
+
+    while (std::chrono::steady_clock::now() - startTime < timeout) {
+        {
+            std::unique_lock lock(tcpAckMutex);
+            auto it = tcpSourceAcks.find(id);
+            if (it != tcpSourceAcks.end() && it->second.seq.has_value()) {
+                auto value = it->second.seq;
+                tcpSourceAcks.erase(it);
+                return value;
+            }
+        }
+
+        std::this_thread::sleep_for(pollInterval);
+    }
+    NES_ERROR("source ack timed out")
+    return std::nullopt;
 }
 
 //uint64_t AbstractQueryManager::waitForSourceAck(uint64_t id) {

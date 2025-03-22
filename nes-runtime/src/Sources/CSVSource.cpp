@@ -62,7 +62,7 @@ CSVSource::CSVSource(SchemaPtr schema,
       fileEnded(false), csvSourceType(csvSourceType), filePath(csvSourceType->getFilePath()->getValue()),
       numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
       delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()),
-      addTimeStampsAndReadOnStartup(addTimestampsAndReadOnStartup) {
+      addTimeStampsAndReadOnStartup(addTimestampsAndReadOnStartup), shouldGetLastAck(addTimestampsAndReadOnStartup) {
 
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
@@ -198,11 +198,12 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         if (getReplayData()) {
 //            NES_ERROR("there are {} stored buffers", sourceInfo->records.size());
-            if (!sourceInfo->records.empty()) {
+            if (!sourceInfo->records.empty() && shouldGetLastAck) {
 //                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
                 auto decomposedQueryPlans = queryManager->getExecutablePlanIdsForSource(shared_from_base<DataSource>());
                 auto sharedQueryPlab = queryManager->getSharedQueryId(*decomposedQueryPlans.begin());
                 auto ack = queryManager->getSourceAck(sharedQueryPlab.getRawValue());
+                shouldGetLastAck = false;
                 if (ack.has_value() && ack.value() != 0) {
                     NES_DEBUG("found ack, sent until {} ack {}", sentUntil, ack.value());
                     auto oldSentUntil = sentUntil;
