@@ -15,7 +15,6 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-
 #include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>

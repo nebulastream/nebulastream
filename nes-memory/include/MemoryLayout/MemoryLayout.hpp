@@ -62,6 +62,8 @@ public:
 
     virtual ~MemoryLayout() = default;
 
+    static std::shared_ptr<MemoryLayout> createMemoryLayout(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
+
     /// Gets the field index for a specific field name. If the field name not exists, we return an empty optional.
     /// @return either field index for fieldName or empty optional
     [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string& fieldName) const;

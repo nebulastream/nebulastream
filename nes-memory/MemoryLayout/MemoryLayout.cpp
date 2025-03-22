@@ -14,16 +14,16 @@
 
 #include <cstdint>
 #include <cstring>
-#include <memory>
 #include <string>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -79,6 +79,21 @@ MemoryLayout::MemoryLayout(const uint64_t bufferSize, const std::shared_ptr<Sche
     }
     /// calculate the buffer capacity only if the record size is larger then zero
     capacity = recordSize > 0 ? bufferSize / recordSize : 0;
+}
+
+std::shared_ptr<MemoryLayout> MemoryLayout::createMemoryLayout(const std::shared_ptr<Schema>& schema, const uint64_t bufferSize)
+{
+    switch (schema->getLayoutType())
+    {
+        case Schema::MemoryLayoutType::ROW_LAYOUT:
+            return RowLayout::create(schema, bufferSize);
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT:
+            return ColumnLayout::create(schema, bufferSize);
+        default: {
+            NES_FATAL_ERROR("Unknown memory layout type");
+            return nullptr;
+        }
+    }
 }
 
 std::optional<uint64_t> MemoryLayout::getFieldIndexFromName(const std::string& fieldName) const

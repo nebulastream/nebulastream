@@ -107,7 +107,7 @@ private:
 
     /// Depending on the number of origins, we have to handle the slices differently.
     /// For example, in getAllNonTriggeredSlices(), we have to wait until all origins have called this method to ensure correctness
-    std::atomic<uint64_t> numberOfInputOriginsTerminated;
+    std::atomic<uint64_t> numberOfActiveOrigins;
 };
 
 }

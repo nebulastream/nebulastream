@@ -20,6 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/FileBackedPagedVector.hpp>
+#include <Util/Execution.hpp>
 
 namespace NES::Runtime::Execution
 {

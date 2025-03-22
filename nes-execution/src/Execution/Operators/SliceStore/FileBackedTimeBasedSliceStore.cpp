@@ -41,7 +41,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     : memCtrl(workingDir, queryId, originId)
     , sliceAssigner(windowSize, windowSlide)
     , sequenceNumber(SequenceNumber::INITIAL)
-    , numberOfInputOriginsTerminated(numberOfInputOrigins)
+    , numberOfActiveOrigins(numberOfInputOrigins)
 {
 }
 
@@ -49,7 +49,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     : memCtrl(other.memCtrl)
     , sliceAssigner(other.sliceAssigner)
     , sequenceNumber(other.sequenceNumber.load())
-    , numberOfInputOriginsTerminated(other.numberOfInputOriginsTerminated.load())
+    , numberOfActiveOrigins(other.numberOfActiveOrigins.load())
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
@@ -64,7 +64,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     : memCtrl(std::move(other.memCtrl))
     , sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
-    , numberOfInputOriginsTerminated(std::move(other.numberOfInputOriginsTerminated.load()))
+    , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins.load()))
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
@@ -88,7 +88,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     memCtrl = other.memCtrl;
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
-    numberOfInputOriginsTerminated = other.numberOfInputOriginsTerminated.load();
+    numberOfActiveOrigins = other.numberOfActiveOrigins.load();
     return *this;
 }
 
@@ -105,7 +105,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     memCtrl = std::move(other.memCtrl);
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
-    numberOfInputOriginsTerminated = std::move(other.numberOfInputOriginsTerminated.load());
+    numberOfActiveOrigins = std::move(other.numberOfActiveOrigins.load());
     return *this;
 }
 
@@ -162,6 +162,8 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
     {
         auto& [windowSlices, windowState] = (*windowsWriteLocked)[windowInfo];
+        INVARIANT(
+            windowState != WindowInfoState::EMITTED_TO_PROBE, "We should not add slices to a window that has already been triggered.");
         windowState = WindowInfoState::WINDOW_FILLING;
         windowSlices.emplace_back(newSlice);
     }
@@ -178,14 +180,14 @@ FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp global
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
     for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
     {
-        if (windowInfo.windowEnd > globalWatermark)
+        if (windowInfo.windowEnd >= globalWatermark)
         {
             /// As the windows are sorted (due to std::map), we can break here as we will not find any windows with a smaller window end
             break;
         }
         if (windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
-            /// This window can not be triggered yet or has already been triggered
+            /// This window has already been triggered
             continue;
         }
 
@@ -219,8 +221,8 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices()
 {
     /// If this method gets called, we know that an origin has terminated.
-    INVARIANT(numberOfInputOriginsTerminated > 0, "Method should not be called if all origin have terminated.");
-    --numberOfInputOriginsTerminated;
+    INVARIANT(numberOfActiveOrigins > 0, "Method should not be called if all origin have terminated.");
+    --numberOfActiveOrigins;
 
     /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows
     const auto windowsWriteLocked = windows.wlock();
@@ -246,13 +248,13 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
                 continue;
             case WindowInfoState::WINDOW_FILLING: {
                 /// If we are waiting on more than one origin to terminate, we can not trigger the window yet
-                if (numberOfInputOriginsTerminated > 0)
+                if (numberOfActiveOrigins > 0)
                 {
                     windowSlicesAndState.windowState = WindowInfoState::WAITING_ON_TERMINATION;
                     NES_TRACE(
                         "Waiting on termination for window end {} and number of origins terminated {}",
                         windowInfo.windowEnd,
-                        numberOfInputOriginsTerminated.load());
+                        numberOfActiveOrigins.load());
                     break;
                 }
                 addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
@@ -263,8 +265,8 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
                 NES_TRACE(
                     "Checking if all origins have terminated for window with window end {} and number of origins terminated {}",
                     windowInfo.windowEnd,
-                    numberOfInputOriginsTerminated.load());
-                if (numberOfInputOriginsTerminated > 0)
+                    numberOfActiveOrigins.load());
+                if (numberOfActiveOrigins > 0)
                 {
                     continue;
                 }
@@ -288,14 +290,16 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     }
     auto& [slicesWriteLocked, windowsWriteLocked] = *lockedSlicesAndWindows;
 
-    /// 1. We iterate over all windows and set their state to CAN_BE_DELETED if they can be deleted
+    NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
+
+    /// 1. We iterate over all windows and erase them if they can be deleted
     /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.
     for (auto windowsLockedIt = windowsWriteLocked->cbegin(); windowsLockedIt != windowsWriteLocked->cend();)
     {
         const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
-        if (windowInfo.windowEnd <= newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
+        if (windowInfo.windowEnd < newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
-            windowsWriteLocked->erase(windowsLockedIt++);
+            windowsLockedIt = windowsWriteLocked->erase(windowsLockedIt);
         }
         else if (windowInfo.windowEnd > newGlobalWaterMark)
         {
@@ -312,8 +316,9 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     for (auto slicesLockedIt = slicesWriteLocked->cbegin(); slicesLockedIt != slicesWriteLocked->cend();)
     {
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
-        if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
+        if (sliceEnd + sliceAssigner.getWindowSize() < newGlobalWaterMark)
         {
+            NES_TRACE("Deleting slice with sliceEnd {} as it is not used anymore", sliceEnd);
             memCtrl.deleteSliceFiles(sliceEnd);
             slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Left}));
             slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Right}));

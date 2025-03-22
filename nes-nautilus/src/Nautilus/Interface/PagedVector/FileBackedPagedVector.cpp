@@ -13,7 +13,8 @@
 */
 
 #include <Nautilus/Interface/PagedVector/FileBackedPagedVector.hpp>
-#include <Util/Core.hpp>
+#include <Util/Common.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -192,7 +193,8 @@ void FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter) const
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
-    const auto keyFieldsOnlyMemoryLayout = Util::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
+    const auto keyFieldsOnlyMemoryLayout
+        = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
     const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
 
     for (const auto& keyPage : keyPages)
@@ -227,7 +229,8 @@ void FileBackedPagedVector::writePayloadOnlyToFile(
     Runtime::Execution::FileWriter& fileWriter)
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
-    const auto keyFieldsOnlyMemoryLayout = Util::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
+    const auto keyFieldsOnlyMemoryLayout
+        = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
     const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
 
     for (const auto& page : pages)
@@ -265,7 +268,8 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
     Runtime::Execution::FileReader& fileReader)
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
-    const auto keyFieldsOnlyMemoryLayout = Util::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
+    const auto keyFieldsOnlyMemoryLayout
+        = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
     const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
 
     const auto* keyPagePtr = !keyPages.empty() ? keyPages.front().getBuffer() : nullptr;

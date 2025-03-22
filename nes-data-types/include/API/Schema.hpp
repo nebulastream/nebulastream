@@ -15,7 +15,6 @@
 #pragma once
 
 #include <cstddef>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -164,9 +163,7 @@ public:
     /// @return std::vector<std::string> fieldNames
     std::vector<std::string> getFieldNames() const;
 
-    /**
-     * @return returns true if this schema conatins at least one variable sized data field
-     */
+    ///@brief returns true if this schema conatins at least one variable sized data field
     bool containsVarSizedDataField() const;
 
     auto begin() const { return std::begin(fields); }

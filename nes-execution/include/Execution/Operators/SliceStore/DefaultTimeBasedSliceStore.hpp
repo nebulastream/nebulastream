@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <functional>
 #include <map>
-#include <memory>
 #include <optional>
 #include <vector>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
