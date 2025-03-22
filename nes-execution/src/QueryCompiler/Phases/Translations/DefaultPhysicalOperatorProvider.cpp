@@ -791,7 +791,6 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(
                 windowDefinition,
                 windowOperatorHandler);
 
-        preAggregationOperator->addProperty(MIGRATION_FLAG, window_migration_flag);
     }
     else {
         const auto TimeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
@@ -815,9 +814,14 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(
                 windowDefinition,
                 windowOperatorHandler);
 
-        preAggregationOperator->addProperty(MIGRATION_FLAG, window_migration_flag);
     }
-
+    auto migrationFileVal = windowOperator->getProperty(MIGRATION_FILE);
+    if (migrationFileVal.has_value()) {
+        const auto filePath = std::any_cast<std::string>(migrationFileVal);
+        NES_DEBUG("Setting up re-creation file for WindowOperator from MIGRATION_FILE: {}", filePath);
+        windowOperatorHandler->setRecreationFileName(filePath);
+    }
+    preAggregationOperator->addProperty(MIGRATION_FLAG, window_migration_flag);
     if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>()
         && options->getWindowingStrategy() == WindowingStrategy::SLICING)
     {
