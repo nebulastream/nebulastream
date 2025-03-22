@@ -51,7 +51,7 @@ VarVal TupleBufferMemoryProvider::loadValue(
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
-        return VarVal::readVarValFromMemory(fieldReference, type);
+        return VarVal::readVarValFromMemory(fieldReference, *type);
     }
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
@@ -109,7 +109,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
 bool TupleBufferMemoryProvider::includesField(
     const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex)
 {
-    return std::ranges::find(projections, fieldIndex) != projections.end();
+    return projections.empty() or std::ranges::find(projections, fieldIndex) != projections.end();
 }
 
 TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;

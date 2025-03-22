@@ -35,8 +35,8 @@ std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> RowTupleBufferMemoryProvide
 nautilus::val<int8_t*>
 RowTupleBufferMemoryProvider::calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const
 {
-    auto fieldOffset = rowMemoryLayout->getFieldOffset(fieldIndex);
-    auto fieldAddress = recordOffset + nautilus::val<uint64_t>(fieldOffset);
+    const auto fieldOffset = rowMemoryLayout->getFieldOffset(fieldIndex);
+    const auto fieldAddress = recordOffset + nautilus::val<uint64_t>(fieldOffset);
     return fieldAddress;
 }
 
@@ -54,13 +54,12 @@ Record RowTupleBufferMemoryProvider::readRecord(
     for (nautilus::static_val<uint64_t> i = 0; i < schema->getFieldCount(); ++i)
     {
         const auto& fieldName = schema->getFieldByIndex(i)->getName();
-        if (!includesField(projections, fieldName))
+        if (includesField(projections, fieldName))
         {
-            continue;
+            auto fieldAddress = calculateFieldAddress(recordOffset, i);
+            auto value = loadValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
+            record.write(rowMemoryLayout->getSchema()->getFieldByIndex(i)->getName(), value);
         }
-        auto fieldAddress = calculateFieldAddress(recordOffset, i);
-        auto value = loadValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
-        record.write(rowMemoryLayout->getSchema()->getFieldByIndex(i)->getName(), value);
     }
     return record;
 }

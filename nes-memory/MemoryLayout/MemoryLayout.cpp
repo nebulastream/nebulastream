@@ -23,9 +23,9 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -61,6 +61,7 @@ uint64_t MemoryLayout::getTupleSize() const
 
 uint64_t MemoryLayout::getFieldSize(const uint64_t fieldIndex) const
 {
+    PRECONDITION(fieldIndex < physicalFieldSizes.size(), "Field index out of bounds");
     return physicalFieldSizes[fieldIndex];
 }
 

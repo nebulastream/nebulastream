@@ -55,7 +55,7 @@ void MinAggregationFunction::lift(
 
     /// Reading the old min value from the aggregation state.
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, inputType);
+    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, *inputType);
 
     /// Updating the min value with the new value, if the new value is smaller
     if (value < min)
@@ -71,11 +71,11 @@ void MinAggregationFunction::combine(
 {
     /// Reading the min value from the first aggregation state
     const auto memAreaMin1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto min1 = Nautilus::VarVal::readVarValFromMemory(memAreaMin1, inputType);
+    const auto min1 = Nautilus::VarVal::readVarValFromMemory(memAreaMin1, *inputType);
 
     /// Reading the min value from the second aggregation state
     const auto memAreaMin2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto min2 = Nautilus::VarVal::readVarValFromMemory(memAreaMin2, inputType);
+    const auto min2 = Nautilus::VarVal::readVarValFromMemory(memAreaMin2, *inputType);
 
     /// Updating the min value with the new min value, if the new min value is smaller
     if (min2 < min1)
@@ -88,7 +88,7 @@ Nautilus::Record MinAggregationFunction::lower(const nautilus::val<AggregationSt
 {
     /// Reading the min value from the aggregation state
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, inputType);
+    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, *inputType);
 
     /// Creating a record with the min value
     Nautilus::Record record;

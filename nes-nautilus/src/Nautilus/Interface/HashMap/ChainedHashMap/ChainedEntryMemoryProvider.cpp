@@ -75,7 +75,7 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             const auto& entryRefCopy = entryRef;
             auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
             const auto memoryAddress = castedEntryAddress + fieldOffset;
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type);
+            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, *type);
             return varVal;
         }
     }
