@@ -191,7 +191,8 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                         physicalFinalType,
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier,
-                        memoryProvider));
+                        memoryProvider,
+                        includeNullValues));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::None: {

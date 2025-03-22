@@ -37,7 +37,7 @@ public:
      * @brief Creates a new record buffer with a reference to a tuple buffer
      * @param tupleBufferRef
      */
-    explicit RecordBuffer(const nautilus::val<Memory::TupleBuffer*>& tupleBufferRef);
+    explicit RecordBuffer(const nautilus::val<const Memory::TupleBuffer*>& tupleBufferRef);
 
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
     [[nodiscard]] nautilus::val<uint64_t> getNumRecords() const;
@@ -46,7 +46,7 @@ public:
     nautilus::val<int8_t*> getBuffer() const;
 
     /// Get the reference to the underlying TupleBuffer
-    const nautilus::val<Memory::TupleBuffer*>& getReference() const;
+    const nautilus::val<const Memory::TupleBuffer*>& getReference() const;
 
     /// Get the origin ID of the underlying tuple buffer. The origin ID is a unique identifier for the origin of the tuple buffer.
     nautilus::val<OriginId> getOriginId();
@@ -75,7 +75,7 @@ public:
     ~RecordBuffer() = default;
 
 private:
-    nautilus::val<Memory::TupleBuffer*> tupleBufferRef;
+    nautilus::val<const Memory::TupleBuffer*> tupleBufferRef;
 };
 
 }
