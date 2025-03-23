@@ -92,7 +92,7 @@ QueryPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQue
         auto root = operatorIdToOperatorMap.find(rootOperatorId);
         if (root != operatorIdToOperatorMap.end())
         {
-            rootOperators.emplace_back(root);
+            rootOperators.emplace_back(root->second);
         }
     }
 

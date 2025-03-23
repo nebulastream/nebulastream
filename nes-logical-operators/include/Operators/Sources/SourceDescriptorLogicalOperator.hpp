@@ -38,7 +38,7 @@ public:
     [[nodiscard]] Sources::SourceDescriptor& getSourceDescriptorRef() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
-    //bool inferSchema();
+    bool inferSchema();
 
     [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
 

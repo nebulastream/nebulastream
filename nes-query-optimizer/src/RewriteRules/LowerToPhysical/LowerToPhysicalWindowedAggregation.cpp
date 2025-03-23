@@ -180,7 +180,7 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
     return aggregationFunctions;
 }
 
-std::vector<PhysicalOperatorWithSchema> LowerToPhysicalWindowedAggregation::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<PhysicalOperatorWrapper> LowerToPhysicalWindowedAggregation::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
     const size_t operatorHandlerIndex = 0; /// TODO this should be a singleton as for the queryid?
 
@@ -239,10 +239,10 @@ std::vector<PhysicalOperatorWithSchema> LowerToPhysicalWindowedAggregation::appl
                                                         ops->getWindowStartFieldName(),
                                                         ops->getWindowEndFieldName());
 
-    auto buildPhysicalOp = PhysicalOperatorWithSchema{std::move(build), ops->getInputSchema(), ops->getOutputSchema(), nullptr};
-    auto probePhysicalOp = PhysicalOperatorWithSchema{std::move(probe), ops->getInputSchema(), ops->getOutputSchema(), nullptr};
+    auto buildPhysicalOp = PhysicalOperatorWrapper{std::move(build), ops->getInputSchema(), ops->getOutputSchema(), nullptr};
+    auto probePhysicalOp = PhysicalOperatorWrapper{std::move(probe), ops->getInputSchema(), ops->getOutputSchema(), nullptr};
 
-    std::vector<PhysicalOperatorWithSchema> physicalOperatorVec;
+    std::vector<PhysicalOperatorWrapper> physicalOperatorVec;
     physicalOperatorVec.emplace_back(std::move(probePhysicalOp));
     physicalOperatorVec.emplace_back(std::move(buildPhysicalOp));
     return physicalOperatorVec;

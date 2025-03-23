@@ -131,66 +131,57 @@ public:
                     continue;
                 }
                 visitedOpIds.insert(op.getId());
-                if (T* casted = dynamic_cast<T*>(op))
+                if (op.tryGet<T>())
                 {
-                    operators.push_back(*casted);
+                    operators.push_back(*op.get<T>());
                 }
             }
         }
         return operators;
     }
 
-    /*
-    QueryPlan flip() {
-        std::unordered_map<Operator, Operator> parentMap;
-        std::unordered_map<Operator, Operator> opPtrMap;
+    std::unique_ptr<QueryPlan> flip() {
+        std::unordered_map<uint64_t, LogicalOperator> flippedOperators;
 
-        std::function<void(Operator, Operator, Operator )> buildMaps =
-            [&](Operator op, Operator parent, Operator opOwner) {
-            parentMap[op] = parent;
-            opPtrMap[op] = opOwner;
-            for (auto& child : op.getChildren()) {
-                buildMaps(child, op, child);
-            }
-        };
-
-        for (auto& root : rootOperators) {
-            buildMaps(root, root , root);
-        }
-
-        std::vector<Operator> leaves;
-        std::function<void(Operator)> findLeaves =
-            [&](Operator op) {
-            if (op.getChildren().empty()) {
-                leaves.push_back(op);
-            } else {
-                for (auto& child : op.getChildren()) {
-                    findLeaves(child);
+        for (const auto& root : rootOperators) {
+            for (const auto& op : BFSRange<LogicalOperator>(root)) {
+                if (flippedOperators.find(op.getId().getRawValue()) == flippedOperators.end()) {
+                    LogicalOperator newOp = op;
+                    newOp.getChildren().clear();
+                    flippedOperators.emplace(op.getId().getRawValue(), newOp);
                 }
             }
-        };
-        for (auto& root : rootOperators) {
-            findLeaves(root);
         }
 
-        std::function<Operator(Operator)> buildReversedChain =
-            [&](Operator op) -> Operator {
-            Operator current = opPtrMap[op];
-            current.getChildren().clear();
-            if (parentMap.find(op) != parentMap.end()) {
-                Operator parent = parentMap[op];
-                current.getChildren().push_back(buildReversedChain(parent));
+        for (const auto& root : rootOperators) {
+            for (const auto& op : BFSRange<LogicalOperator>(root)) {
+                for (const auto& child : op.getChildren()) {
+                    auto childIt = flippedOperators.find(child.getId().getRawValue());
+                    if (childIt != flippedOperators.end()) {
+                        childIt->second.getChildren().push_back(
+                            flippedOperators[op.getId().getRawValue()]);
+                    }
+                }
             }
-            return current;
-        };
-
-        std::vector<Operator> flippedRoots;
-        for (Operator leaf : leaves) {
-            flippedRoots.push_back(buildReversedChain(leaf));
         }
 
-        return QueryPlan(this->getQueryId(), flippedRoots);
-    }*/
+        std::unordered_set<uint64_t> nonRootIds;
+        for (const auto& pair : flippedOperators) {
+            const auto& op = pair.second;
+            for (const auto& child : op.getChildren()) {
+                nonRootIds.insert(child.getId().getRawValue());
+            }
+        }
+
+        std::vector<LogicalOperator> newRoots;
+        for (const auto& pair : flippedOperators) {
+            if (nonRootIds.find(pair.first) == nonRootIds.end()) {
+                newRoots.push_back(pair.second);
+            }
+        }
+        return std::make_unique<QueryPlan>(getQueryId(), newRoots);
+    }
+
 
     /// Get all the leaf operators in the query plan (leaf operator is the one without any child)
     /// @note: in certain stages the source operators might not be Leaf operators

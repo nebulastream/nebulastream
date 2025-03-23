@@ -11,22 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#pragma once
 
+#include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <ExecutablePipelineStage.hpp>
 #include <Pipeline.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES
 {
-
-namespace
+struct PhysicalPlan final
 {
-//PipelineId getNextPipelineId()
-//{
-//    static std::atomic_uint64_t id = INITIAL_PIPELINE_ID.getRawValue();
-//    return PipelineId(id++);
-//}
-//
+    PhysicalPlan(QueryId id);
+    [[nodiscard]] std::string toString() const;
+    friend std::ostream& operator<<(std::ostream& os, const PhysicalPlan& t);
+
+    const QueryId queryId;
+    /// Operators might form a tree structure
+    std::unique_ptr<PhysicalOperatorWrapper> rootOperator;
+};
 }
-}
+FMT_OSTREAM(NES::PhysicalPlan);

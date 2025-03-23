@@ -24,7 +24,7 @@
 namespace NES::Optimizer
 {
 
-std::vector<PhysicalOperatorWithSchema> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<PhysicalOperatorWrapper> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
     const auto op = traitSet->get<Operator>();
     const auto ops = dynamic_cast<MapLogicalOperator*>(op);
@@ -32,7 +32,7 @@ std::vector<PhysicalOperatorWithSchema> LowerToPhysicalMap::applyToPhysical(Dyna
     auto fieldName = function.getField().getFieldName();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function.clone());
     auto phyOp = std::make_unique<MapPhysicalOperator>(fieldName, std::move(func));
-    std::vector<PhysicalOperatorWithSchema> resultVec;
+    std::vector<PhysicalOperatorWrapper> resultVec;
     resultVec.emplace_back(std::move(phyOp));
     return resultVec;
 }

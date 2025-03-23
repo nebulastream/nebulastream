@@ -23,26 +23,26 @@
 namespace NES::LegacyOptimizer
 {
 
-void OriginIdInferencePhase::apply(QueryPlan& queryPlan)
+void OriginIdInferencePhase::apply(QueryPlan&)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
-    uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
-    for (auto operatorWithOriginId : queryPlan.getOperatorsWithTraits<Optimizer::OriginIdTrait>())
-    {
-        operatorWithOriginId->getTrait<Optimizer::OriginIdTrait>().value().originIds = {OriginId(originIdCounter++)};
-    }
-
-    /// propagate origin ids through the complete query plan
-    for (auto& rootOperator : queryPlan.getRootOperators())
-    {
-        if (auto logicalOperator = dynamic_cast<LogicalOperator*>(rootOperator))
-        {
-            logicalOperator->inferInputOrigins();
-        }
-        else
-        {
-            INVARIANT(false, "during OriginIdInferencePhase all root operators have to be LogicalOperators");
-        }
-    }
+//    uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
+//    for (auto operatorWithOriginId : queryPlan.getOperatorsWithTraits<Optimizer::OriginIdTrait>())
+//    {
+//        operatorWithOriginId->getTrait<Optimizer::OriginIdTrait>().value().originIds = {OriginId(originIdCounter++)};
+//    }
+//
+//    /// propagate origin ids through the complete query plan
+//    for (auto& rootOperator : queryPlan.getRootOperators())
+//    {
+//        if (auto logicalOperator = dynamic_cast<LogicalOperator*>(rootOperator))
+//        {
+//            logicalOperator->inferInputOrigins();
+//        }
+//        else
+//        {
+//            INVARIANT(false, "during OriginIdInferencePhase all root operators have to be LogicalOperators");
+//        }
+//    }
 }
 }

@@ -142,7 +142,7 @@ std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(const JoinLo
     }
 }
 
-std::vector<PhysicalOperatorWithSchema> LowerToPhysicalNLJoin::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<PhysicalOperatorWrapper> LowerToPhysicalNLJoin::apply(JoinLogicalOperator& queryPlan)
 {
     const auto operatorHandlerIndex = 0; // TODO this should change. In the best case we have setIndex() for all the operators.
 
@@ -201,11 +201,11 @@ std::vector<PhysicalOperatorWithSchema> LowerToPhysicalNLJoin::applyToPhysical(D
         std::move(leftMemoryProvider3),
         std::move(rightMemoryProvider3));
 
-    auto probeOpWrapper = PhysicalOperatorWithSchema{std::move(probeOp), ops->getOutputSchema(), ops->getOutputSchema(), nullptr};
-    auto rightBuildOpWrapper = PhysicalOperatorWithSchema{std::move(rightBuildOp), ops->getRightSchema(), ops->getOutputSchema(), nullptr};
-    auto leftBuildOpWrapper = PhysicalOperatorWithSchema{std::move(leftBuildOp), ops->getLeftSchema(), ops->getOutputSchema(), nullptr};
+    auto probeOpWrapper = PhysicalOperatorWrapper{std::move(probeOp), ops->getOutputSchema(), ops->getOutputSchema(), nullptr};
+    auto rightBuildOpWrapper = PhysicalOperatorWrapper{std::move(rightBuildOp), ops->getRightSchema(), ops->getOutputSchema(), nullptr};
+    auto leftBuildOpWrapper = PhysicalOperatorWrapper{std::move(leftBuildOp), ops->getLeftSchema(), ops->getOutputSchema(), nullptr};
 
-    std::vector<PhysicalOperatorWithSchema> physicalOperatorVec;
+    std::vector<PhysicalOperatorWrapper> physicalOperatorVec;
     physicalOperatorVec.emplace_back(std::move(probeOpWrapper));
     physicalOperatorVec.emplace_back(std::move(rightBuildOpWrapper));
     physicalOperatorVec.emplace_back(std::move(leftBuildOpWrapper));

@@ -15,68 +15,68 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Phases/AddScanAndEmitPhase.hpp>
-#include <DefaultScanPhysicalOperator.hpp>
-#include <DefaultEmitPhysicalOperator.hpp>
-#include <ErrorHandling.hpp>
-#include <PipelinedQueryPlan.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Phases/AddScanAndEmitPhase.hpp>
+#include <DefaultEmitPhysicalOperator.hpp>
+#include <DefaultScanPhysicalOperator.hpp>
+#include <ErrorHandling.hpp>
 #include <Pipeline.hpp>
+#include <PipelinedQueryPlan.hpp>
 
-namespace NES::QueryCompilation
-{
-
-namespace helper
-{
-[[nodiscard]] std::vector<PhysicalOperator> getAllLeafNodes(PhysicalOperator& op)
-{
-    std::vector<PhysicalOperator> leaves;
-    auto child = op.getChild();
-    if (!child.has_value())
-    {
-        leaves.push_back(op);
-    }
-    else
-    {
-        auto childLeaves = getAllLeafNodes(*child);
-        leaves.insert(leaves.end(), childLeaves.begin(), childLeaves.end());
-    }
-    return leaves;
-}
-}
-
-std::unique_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan)
-{
-    for (const auto& pipeline : pipelineQueryPlan->pipelines)
-    {
-        // OperatorPipelines only
-        if (pipeline->isOperatorPipeline())
-        {
-            /// Scan
-            std::vector<Nautilus::Record::RecordFieldIdentifier> emptyProjections {}; // TODO change
-            constexpr uint64_t bufferSize = 100; /// TODO change
-            constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
-            if (auto leafPhys = pipeline->getOperator<PhysicalOperatorWithSchema>(); leafPhys.has_value())
-            {
-                auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, leafPhys.value()->inputSchema);
-                auto newScan = std::make_unique<DefaultScanPhysicalOperator>(std::move(memoryProvider), emptyProjections);
-                ///pipeline->prependOperator(std::move(newScan));
-            }
-
-            /// Emit
-            /*for (auto* leaf : helper::getAllLeafNodes(pipeline->pipelineOperator))
-            {
-                if (auto* leafPhys = dynamic_cast<PhysicalOperatorWithSchema*>(leaf); leafPhys)
-                {
-                    constexpr uint64_t bufferSize = 100; /// TODO change
-                    constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
-                    auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, leafPhys->outputSchema);
-                    auto emitOperator = std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, std::move(memoryProvider));
-                    ///leafPhys->child = std::move(physicalOp);
-                }
-            }*/
-        }
-    }
-    return pipelineQueryPlan;
-}
-}
+//namespace NES::QueryCompilation
+//{
+//
+//namespace helper
+//{
+//[[nodiscard]] std::vector<PhysicalOperator> getAllLeafNodes(PhysicalOperator& op)
+//{
+//    std::vector<PhysicalOperator> leaves;
+//    auto child = op.getChild();
+//    if (!child.has_value())
+//    {
+//        leaves.push_back(op);
+//    }
+//    else
+//    {
+//        auto childLeaves = getAllLeafNodes(*child);
+//        leaves.insert(leaves.end(), childLeaves.begin(), childLeaves.end());
+//    }
+//    return leaves;
+//}
+//}
+//
+//std::unique_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan)
+//{
+//    for (const auto& pipeline : pipelineQueryPlan->pipelines)
+//    {
+//        // OperatorPipelines only
+//        if (pipeline->isOperatorPipeline())
+//        {
+//            /// Scan
+//            std::vector<Nautilus::Record::RecordFieldIdentifier> emptyProjections {}; // TODO change
+//            constexpr uint64_t bufferSize = 100; /// TODO change
+//            constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
+//            if (auto leafPhys = pipeline->getOperator<PhysicalOperatorWrapper>(); leafPhys.has_value())
+//            {
+//                auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, leafPhys.value()->inputSchema);
+//                auto newScan = DefaultScanPhysicalOperator(std::move(memoryProvider), emptyProjections);
+//                ///pipeline->prependOperator(std::move(newScan));
+//            }
+//
+//            /// Emit
+//            /*for (auto* leaf : helper::getAllLeafNodes(pipeline->pipelineOperator))
+//            {
+//                if (auto* leafPhys = dynamic_cast<PhysicalOperatorWrapper*>(leaf); leafPhys)
+//                {
+//                    constexpr uint64_t bufferSize = 100; /// TODO change
+//                    constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
+//                    auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, leafPhys->outputSchema);
+//                    auto emitOperator = std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, std::move(memoryProvider));
+//                    ///leafPhys->child = std::move(physicalOp);
+//                }
+//            }*/
+//        }
+//    }
+//    return pipelineQueryPlan;
+//}
+//}

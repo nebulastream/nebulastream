@@ -179,19 +179,19 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
         "NebulaStream currently only supports a single sink per query, but the query contains: {}",
         sinkOperators.size());
     PRECONDITION(not config.sinks.empty(), "Expects at least one sink in the query config!");
-    auto& sinkRef =sinkOperators.at(0)->sinkName;
+    auto sinkRef = sinkOperators.at(0).getSinkName();
     auto i = config.sinks.find(sinkRef);
     if (const auto& sink = config.sinks.find(sinkRef); sink != config.sinks.end())
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
-        sinkOperators.at(0)->sinkDescriptor =
+        sinkOperators.at(0).sinkDescriptor =
             std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
     }
     else
     {
         throw UnknownSinkType(
             "Sinkname {} not specified in the configuration {}",
-            sinkOperators.front()->sinkName,
+            sinkOperators.front().getSinkName(),
             fmt::join(std::views::keys(config.sinks), ","));
     }
 }
@@ -229,14 +229,13 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
     /// TODO: AntlrSQLQueryParser creates query from source to sink -> no flip required
     auto queryplan = std::move(query).flip();
-    auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
     std::cout << queryplan->toString() << "\n";
 
     validateAndSetSinkDescriptors(*queryplan, config);
     LegacyOptimizer::LogicalSourceExpansionRule::apply(*queryplan, *sourceCatalog);
-    query = typeInference->performTypeInferenceQuery(*queryplan);
+    LegacyOptimizer::TypeInferencePhase::apply(*queryplan);
     LegacyOptimizer::OriginIdInferencePhase::apply(*queryplan);
-    query = typeInference->performTypeInferenceQuery(*queryplan);
+    LegacyOptimizer::TypeInferencePhase::apply(*queryplan);
 
     NES_INFO("QEP:\n {}", queryplan->toString());
     return queryplan;

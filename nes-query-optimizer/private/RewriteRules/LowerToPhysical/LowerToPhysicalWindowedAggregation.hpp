@@ -52,7 +52,7 @@ namespace NES::Optimizer
 struct LowerToPhysicalWindowedAggregation : AbstractLowerToPhysicalRewriteRule<QueryForSubtree, Operator>
 {
     LowerToPhysicalWindowedAggregation(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    std::vector<PhysicalOperatorWithSchema> applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>*) override;
+    std::vector<PhysicalOperatorWrapper> applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>*) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 

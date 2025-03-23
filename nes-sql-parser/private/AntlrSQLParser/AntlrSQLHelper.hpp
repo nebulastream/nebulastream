@@ -55,6 +55,7 @@ public:
         , isSetOperation(other.isSetOperation)
         , isGroupBy(other.isGroupBy)
         , joinSources(other.joinSources)
+        , joinFunction(other.joinFunction)
         , joinSourceRenames(other.joinSourceRenames)
         , joinType(other.joinType)
         , opBoolean(other.opBoolean)
@@ -73,17 +74,17 @@ public:
 
         for (const auto & pf : other.projectionFields)
         {
-            projectionFields.push_back(pf ? pf->clone() : nullptr);
+            projectionFields.push_back(pf);
         }
 
         for (const auto & wc : other.whereClauses)
         {
-            whereClauses.push_back(wc ? wc->clone() : nullptr);
+            whereClauses.push_back(wc);
         }
 
         for (const auto & hc : other.havingClauses)
         {
-            havingClauses.push_back(hc ? hc->clone() : nullptr);
+            havingClauses.push_back(hc);
         }
 
         for (const auto & qp : other.queryPlans)
@@ -103,17 +104,20 @@ public:
 
         for (const auto & proj : other.projections)
         {
-            projections.push_back(proj ? proj->clone() : nullptr);
+            projections.push_back(proj);
         }
 
-        for (const auto & sd : other.sinkDescriptor)
+/*
+        for (auto & sd : other.sinkDescriptor)
         {
-            sinkDescriptor.push_back(sd ? sd->clone() : nullptr);
+            auto otherSd = Sinks::SinkDescriptor(sd->sinkType, sd->config, sd->addTimestamp);
+            sinkDescriptor.push_back(otherSd);
         }
+*/
 
         for (const auto & fb : other.functionBuilder)
         {
-            functionBuilder.push_back(fb ? fb->clone() : nullptr);
+            functionBuilder.push_back(fb);
         }
 
         /*
@@ -127,14 +131,9 @@ public:
             groupByFields.push_back(gb ? gb->clone() : nullptr);
         }*/
 
-        if (other.joinFunction)
-        {
-            joinFunction = other.joinFunction->clone();
-        }
-
         for (const auto & jk : other.joinKeyRelationHelper)
         {
-            joinKeyRelationHelper.push_back(jk ? jk->clone() : nullptr);
+            joinKeyRelationHelper.push_back(jk);
         }
     }
 
@@ -161,7 +160,7 @@ public:
     std::vector<std::unique_ptr<FieldAssignmentLogicalFunction>> mapBuilder;
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> groupByFields;
     std::vector<std::string> joinSources;
-    LogicalFunction joinFunction;
+    std::optional<LogicalFunction> joinFunction;
     std::vector<LogicalFunction> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
     Join::LogicalJoinDescriptor::JoinType joinType;

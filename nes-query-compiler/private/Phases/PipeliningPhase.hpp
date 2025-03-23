@@ -13,8 +13,8 @@
 */
 
 #include <memory>
-#include <PipelinedQueryPlan.hpp>
 #include <Plans/QueryPlan.hpp>
+#include <PipelinedQueryPlan.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {

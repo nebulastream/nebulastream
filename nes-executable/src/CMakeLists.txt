@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-executable
-        PipelinedQueryPlan.cpp
         ExecutableQueryPlan.cpp
         Pipeline.cpp
 )

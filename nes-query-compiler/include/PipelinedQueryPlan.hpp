@@ -13,7 +13,6 @@
 */
 #pragma once
 
-#include <vector>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>

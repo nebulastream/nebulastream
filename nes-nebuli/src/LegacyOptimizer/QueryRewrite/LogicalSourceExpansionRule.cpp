@@ -42,8 +42,8 @@ void LogicalSourceExpansionRule::apply(QueryPlan& queryPlan, Catalogs::Source::S
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
             auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(sourceOp.getSchema());
-            auto logicalDescOp = std::make_unique<SourceDescriptorLogicalOperator>(*sourceDescriptor);
-            queryPlan.replaceOperator(&sourceOp, std::move(logicalDescOp));
+            auto logicalDescOp = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
+            queryPlan.replaceOperator(sourceOp, std::move(logicalDescOp));
         }
     }
 }

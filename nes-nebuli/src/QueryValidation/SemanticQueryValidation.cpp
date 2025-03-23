@@ -34,7 +34,7 @@ using namespace std::string_literals;
 namespace NES::LegacyOptimizer
 {
 
-void SemanticQueryValidation::validate(QueryPlan& queryPlan, const Catalogs::Source::SourceCatalog& sourceCatalog) const
+void SemanticQueryValidation::validate(QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const
 {
     /// check if we have valid root operators, i.e., sinks
     sinkOperatorValidityCheck(queryPlan);
@@ -91,7 +91,7 @@ void createExceptionForPredicate(std::string& predicateString)
     throw QueryInvalid("Unsatisfiable Query due to filter condition:\n" + predicateString + "\n");
 }
 
-void SemanticQueryValidation::logicalSourceValidityCheck(const QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const
+void SemanticQueryValidation::logicalSourceValidityCheck(QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const
 {
     /// Getting the source operators from the query plan
     auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
@@ -107,7 +107,7 @@ void SemanticQueryValidation::logicalSourceValidityCheck(const QueryPlan& queryP
 }
 
 void SemanticQueryValidation::physicalSourceValidityCheck(
-    const QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const
+    QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const
 {
     /// Identify the source operators
     auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
@@ -135,7 +135,7 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     }
 }
 
-void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlan& queryPlan) const
+void SemanticQueryValidation::sinkOperatorValidityCheck(QueryPlan& queryPlan) const
 {
     auto rootOperators = queryPlan.getRootOperators();
     /// Check if root operator exists ina query plan
@@ -147,7 +147,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlan& queryPl
     /// Check if all root operators of type sink
     for (auto& root : rootOperators)
     {
-        if (not dynamic_cast<SinkLogicalOperator*>(root))
+        if (not root.tryGet<SinkLogicalOperator>())
         {
             throw QueryInvalid("Query "s + queryPlan.toString() + " does not contain a valid sink operator as root");
         }

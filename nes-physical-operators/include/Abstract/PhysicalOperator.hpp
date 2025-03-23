@@ -57,6 +57,7 @@ struct PhysicalOperatorConcept
 };
 
 struct PhysicalOperator {
+public:
     template<typename T>
     PhysicalOperator(const T& op) : self(std::make_unique<Model<T>>(op)) {}
 
@@ -121,12 +122,11 @@ struct PhysicalOperator {
     {
         self->execute(executionCtx, record);
     }
-
+private:
     std::string toString() const {
         return self->toString();
     }
 
-private:
     struct Concept : PhysicalOperatorConcept {
         [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
     };
@@ -179,7 +179,6 @@ private:
         {
             return "PhysicalOperator(" + std::string(typeid(T).name()) + ")";
         }
-    };
 
     std::unique_ptr<Concept> self;
 };
@@ -194,6 +193,7 @@ struct PhysicalOperatorWrapper
     std::optional<Schema> inputSchema, outputSchema;
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children {};
 
+    bool isPipelineBreaker = false;
     std::optional<std::shared_ptr<OperatorHandler>> handler;
     std::optional<OperatorHandlerId> handlerId;
 
@@ -222,4 +222,5 @@ struct PhysicalOperatorWrapper
         oss << ")";
         return oss.str();
     }
-};
+}
+}

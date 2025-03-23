@@ -32,31 +32,22 @@ std::unique_ptr<QueryPlan> apply(std::unique_ptr<QueryPlan> queryPlan)
 {
     PRECONDITION(queryPlan->getRootOperators().size() == 1, "For now, we only support query plans with a single sink.");
 
-    for (const auto& operatorNode : BFSRange<Operator>(queryPlan->getRootOperators()[0]))
+    for (const auto& operatorNode : BFSRange<LogicalOperator>(queryPlan->getRootOperators()[0]))
     {
-        if (dynamic_cast<SinkLogicalOperator*>(operatorNode)
-            or dynamic_cast<SourceDescriptorLogicalOperator*>(operatorNode)
-            or dynamic_cast<SourceNameLogicalOperator*>(operatorNode))
+        if (operatorNode.tryGet<SinkLogicalOperator>() or operatorNode.tryGet<SourceDescriptorLogicalOperator>()
+            or operatorNode.tryGet<SourceNameLogicalOperator>())
         {
             continue;
         }
-        else if (dynamic_cast<const LogicalOperator*>(operatorNode))
-        {
-            auto logicalOperator = dynamic_cast<LogicalOperator*>(operatorNode);
-            if (auto rule = RewriteRuleRegistry::instance().create(std::string(logicalOperator->getName()), RewriteRuleRegistryArguments{}); rule.has_value())
-            {
-                /// TODO here we apply the rule
-                /// The problem is that we would expect that we take the TraitSet as the input
-            }
-            else
-            {
-                throw UnknownLogicalOperator("{} not part of RewriteRuleRegistry", logicalOperator->getName());
-            }
-        }
-        else
-        {
-            throw UnknownLogicalOperator("Cannot lower {}", operatorNode->toString());
-        }
+        //if (auto rule = RewriteRuleRegistry::instance().create(std::string(logicalOperator->getName()), RewriteRuleRegistryArguments{}); rule.has_value())
+        //{
+            /// TODO here we apply the rule
+            /// The problem is that we would expect that we take the TraitSet as the input
+        //}
+        //else
+        //{
+        //    throw UnknownLogicalOperator("{} not part of RewriteRuleRegistry", logicalOperator->getName());
+        //}
     }
     return queryPlan;
 }
