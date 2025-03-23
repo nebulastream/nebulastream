@@ -292,7 +292,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
             for (const auto& executableSuccessor : executableSuccessorPipelines) {
                 if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor)) {
                     if ((*sink)->isForMigration()) {
-                        NES_TRACE("Emit Buffer to data migration sink {}", (*sink)->toString());
+                        NES_DEBUG("Emit Buffer to data migration sink {}", (*sink)->toString());
                         (*sink)->writeData(buffer, workerContext);
                     }
                 }

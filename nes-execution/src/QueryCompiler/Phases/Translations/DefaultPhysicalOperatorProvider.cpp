@@ -778,8 +778,8 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(
                 "Expected KeyedSlicePreAggregationHandler but got a different handler type.");
         }
 
-        windowOperatorHandler = windowOH;
         windowOH->migrating = true;
+        windowOperatorHandler = windowOH;
         window_migration_flag = true;
 
         preAggregationOperator =
@@ -829,8 +829,8 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(
         mergingOperator->insertBetweenThisAndChildNodes(windowSink);
     }
     else {
-        operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
-        operatorNode->replace(windowSink);
+        operatorNode->replace(preAggregationOperator);
+        // operatorNode->replace(windowSink);
     }
 }
 
