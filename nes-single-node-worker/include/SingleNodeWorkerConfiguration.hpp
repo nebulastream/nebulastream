@@ -21,11 +21,11 @@
 namespace NES::Configuration
 {
 
-class SingleNodeWorkerConfiguration final : public Configurations::BaseConfiguration
+class SingleNodeWorkerConfiguration final : public NES::Configurations::BaseConfiguration
 {
 public:
     /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
-    Configurations::StringOption grpcAddressUri
+    NES::Configurations::StringOption grpcAddressUri
         = {"grpc",
            "[::]:8080",
            R"(The address to try to bind to the server in URI form. If
@@ -41,6 +41,6 @@ protected:
 
 public:
     SingleNodeWorkerConfiguration() = default;
-    Configurations::WorkerConfiguration workerConfiguration = {"worker", "NodeEngine Configuration"};
+    NES::Configurations::WorkerConfiguration workerConfiguration = {"worker", "NodeEngine Configuration"};
 };
 }

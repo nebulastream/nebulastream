@@ -33,34 +33,45 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAcce
 {
     this->aggregationType = Type::Count;
 }
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(LogicalFunction field, LogicalFunction asField)
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), field, asField)
 {
     this->aggregationType = Type::Count;
 }
 
-/*
+std::unique_ptr<WindowAggregationLogicalFunction>
+CountAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
+{
+    return std::make_unique<CountAggregationLogicalFunction>(std::move(onField), std::move(asField));
+}
+
+std::unique_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+{
+    return std::make_unique<CountAggregationLogicalFunction>(onField);
+}
+
 void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     const auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    const auto asFieldName = dynamic_cast<FieldAccessLogicalFunction*>(asField)->getFieldName();
+    const auto asFieldName = asField.getFieldName();
 
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        dynamic_cast<FieldAccessLogicalFunction*>(asField)->setFieldName(attributeNameResolver + asFieldName);
+        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + fieldName);
+        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
 
     /// a count aggregation is always on an uint 64
-    onField->setStamp(DataTypeProvider::provideDataType(LogicalType::UINT64));
-    asField->setStamp(onField->getStamp().clone());
+    auto newOnfield = onField.withStamp(DataTypeProvider::provideDataType(LogicalType::UINT64));
+    auto newAsField = asField.withStamp(onField.getStamp().clone());
+    this->onField = newOnfield.get<FieldAccessLogicalFunction>();
+    this->asField = newAsField.get<FieldAccessLogicalFunction>();
 }
- */
 
 std::unique_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::clone()
 {

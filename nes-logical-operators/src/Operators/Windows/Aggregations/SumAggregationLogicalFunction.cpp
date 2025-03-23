@@ -34,7 +34,7 @@ SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLo
 {
     this->aggregationType = Type::Sum;
 }
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(const LogicalFunction& field, const LogicalFunction& asField)
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
     : WindowAggregationLogicalFunction(field.getStamp().clone(), field.getStamp().clone(), field.getStamp().clone(), std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Sum;
@@ -51,31 +51,33 @@ std::unique_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction:
     return std::make_unique<SumAggregationLogicalFunction>(onField.get<FieldAccessLogicalFunction>());
 }
 
-/*
 void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(schema);
-    INVARIANT(dynamic_cast<const Numeric*>(&onField->getStamp()), "aggregations on non numeric fields is not supported.");
+    auto newOnField = onField.withInferredStamp(schema);
+    this->onField = newOnField.get<FieldAccessLogicalFunction>();
+
+    INVARIANT(dynamic_cast<const Numeric*>(&onField.getStamp()), "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = dynamic_cast<FieldAccessLogicalFunction*>(onField.get())->getFieldName();
-    const auto asFieldName = dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->getFieldName();
+    const auto onFieldName = onField.getFieldName();
+    const auto asFieldName = asField.getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + asFieldName);
+        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + fieldName);
+        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
-    asField->setStamp(getFinalAggregateStamp().clone());
+    auto newAsField = asField.withStamp(getFinalAggregateStamp().clone());
+    this->asField = newAsField.get<FieldAccessLogicalFunction>();
 }
-*/
+
 std::unique_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::clone()
 {
     return std::make_unique<SumAggregationLogicalFunction>(onField, asField);

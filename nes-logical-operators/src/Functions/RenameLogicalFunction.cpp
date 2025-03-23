@@ -48,7 +48,7 @@ bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 const FieldAccessLogicalFunction& RenameLogicalFunction::getOriginalField() const
 {
-    return child.get<FieldAccessLogicalFunction>();
+    return child;
 }
 
 std::string RenameLogicalFunction::getNewFieldName() const
@@ -61,12 +61,9 @@ std::string RenameLogicalFunction::toString() const
     return "FieldRenameFunction(" + fmt::format("{}", child) + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
-/*
-void RenameLogicalFunction::inferStamp(const Schema& schema)
+LogicalFunction RenameLogicalFunction::withInferredStamp(Schema schema) const
 {
-    auto& originalFieldName = getOriginalField();
-    originalFieldName.inferStamp(schema);
-    auto fieldName = originalFieldName.getFieldName();
+    auto fieldName = child.withInferredStamp(schema).get<FieldAccessLogicalFunction>().getFieldName();
     auto fieldAttribute = schema.getFieldByName(fieldName);
     ///Detect if user has added attribute name separator
     if (!fieldAttribute)
@@ -91,9 +88,12 @@ void RenameLogicalFunction::inferStamp(const Schema& schema)
         }
     }
     /// assign the stamp of this field access with the type of this field.
-    stamp = fieldAttribute.value().getDataType().clone();
+    auto copy = *this;
+    copy.stamp = fieldAttribute.value().getDataType().clone();
+    copy.newFieldName = fieldName;
+    return copy;
 }
- */
+
 
 SerializableFunction RenameLogicalFunction::serialize() const
 {

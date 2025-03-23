@@ -28,11 +28,11 @@
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
 
-std::unique_ptr<QueryPlan> apply(std::unique_ptr<QueryPlan> queryPlan)
+std::unique_ptr<QueryPlan> apply(QueryPlan queryPlan)
 {
-    PRECONDITION(queryPlan->getRootOperators().size() == 1, "For now, we only support query plans with a single sink.");
+    PRECONDITION(queryPlan.getRootOperators().size() == 1, "For now, we only support query plans with a single sink.");
 
-    for (const auto& operatorNode : BFSRange<LogicalOperator>(queryPlan->getRootOperators()[0]))
+    for (const auto& operatorNode : BFSRange<LogicalOperator>(queryPlan.getRootOperators()[0]))
     {
         if (operatorNode.tryGet<SinkLogicalOperator>() or operatorNode.tryGet<SourceDescriptorLogicalOperator>()
             or operatorNode.tryGet<SourceNameLogicalOperator>())
@@ -49,6 +49,6 @@ std::unique_ptr<QueryPlan> apply(std::unique_ptr<QueryPlan> queryPlan)
         //    throw UnknownLogicalOperator("{} not part of RewriteRuleRegistry", logicalOperator->getName());
         //}
     }
-    return queryPlan;
+    return std::make_unique<QueryPlan>(queryPlan.getQueryId(),queryPlan.getRootOperators());
 }
 }

@@ -56,7 +56,10 @@ public:
     void updateSchemas(Schema leftSourceSchema, Schema rightSourceSchema);
 
     [[nodiscard]] Schema getOutputSchema() const override;
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override
+    {
+        return { leftSourceSchema, rightSourceSchema };
+    }
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;

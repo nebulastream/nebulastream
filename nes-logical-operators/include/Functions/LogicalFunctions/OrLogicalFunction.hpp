@@ -31,7 +31,7 @@ public:
     [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
-    void inferStamp(const Schema& schema);
+    bool inferStamp(Schema schema) override;
 
     const DataType& getStamp() const override { return *stamp; };
     void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };

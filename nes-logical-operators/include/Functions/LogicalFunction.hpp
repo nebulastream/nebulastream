@@ -38,6 +38,8 @@ public:
     [[nodiscard]] virtual const DataType& getStamp() const = 0;
     virtual void setStamp(std::shared_ptr<DataType> stamp) = 0;
 
+    virtual bool inferStamp(Schema schema) = 0;
+
     [[nodiscard]] virtual std::vector<struct LogicalFunction> getChildren() const = 0;
     virtual void setChildren(std::vector<struct LogicalFunction>) = 0;
 
@@ -63,6 +65,11 @@ public:
     }
 
     void setStamp(std::shared_ptr<DataType>) override
+    {
+        PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
+    }
+
+    bool inferStamp(Schema) override
     {
         PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
     }
@@ -143,6 +150,11 @@ public:
         return self->toString();
     }
 
+    bool inferStamp(Schema schema)
+    {
+        return self->inferStamp(schema);
+    }
+
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const
     {
         return self->getChildren();
@@ -216,6 +228,11 @@ private:
         const DataType& getStamp() const override
         {
             return data.getStamp();
+        }
+
+        bool inferStamp(Schema schema) override
+        {
+            return data.inferStamp(schema);
         }
 
         void setStamp(std::shared_ptr<DataType> stamp) override

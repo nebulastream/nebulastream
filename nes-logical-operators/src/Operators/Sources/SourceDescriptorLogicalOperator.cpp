@@ -33,6 +33,13 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
     return NAME;
 }
 
+bool SourceDescriptorLogicalOperator::inferSchema()
+{
+    inputSchema = sourceDescriptor->schema;
+    outputSchema = sourceDescriptor->schema;
+    return true;
+}
+
 bool SourceDescriptorLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs)) {

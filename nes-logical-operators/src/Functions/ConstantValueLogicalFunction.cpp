@@ -55,10 +55,11 @@ std::string ConstantValueLogicalFunction::getConstantValue() const
     return constantValue;
 }
 
-void ConstantValueLogicalFunction::inferStamp(const Schema&)
+LogicalFunction ConstantValueLogicalFunction::withInferredStamp(Schema) const
 {
     /// the stamp of constant value functions is defined by the constant value type.
     /// thus ut is already assigned correctly when the function node is created.
+    return *this;
 }
 
 SerializableFunction ConstantValueLogicalFunction::serialize() const

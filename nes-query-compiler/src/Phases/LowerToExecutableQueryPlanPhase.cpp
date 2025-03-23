@@ -155,7 +155,7 @@ Source processSource(std::unique_ptr<Pipeline> pipeline, const PipelinedQueryPla
     }
 
     Source newSource(pipeline->rootOperator.get<SourcePhysicalOperator>()->getOriginId(),
-                     std::make_shared<NES::Sources::SourceDescriptor>(pipeline->rootOperator.get<SourcePhysicalOperator>()->getDescriptor()),
+                     pipeline->rootOperator.get<SourcePhysicalOperator>()->getDescriptor(),
                      executableSuccessorPipelines);
     loweringContext.addSource(newSource);
     return newSource;

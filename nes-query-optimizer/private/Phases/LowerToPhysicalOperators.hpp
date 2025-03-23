@@ -14,8 +14,9 @@
 
 #include <memory>
 #include <Plans/QueryPlan.hpp>
+#include <PhysicalPlan.hpp>
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
-std::unique_ptr<QueryPlan> apply(QueryPlan queryPlan);
+std::unique_ptr<PhysicalPlan> apply(QueryPlan queryPlan);
 }

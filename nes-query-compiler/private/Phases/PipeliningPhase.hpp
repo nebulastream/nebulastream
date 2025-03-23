@@ -13,11 +13,11 @@
 */
 
 #include <memory>
-#include <Plans/QueryPlan.hpp>
 #include <PipelinedQueryPlan.hpp>
+#include "PhysicalPlan.hpp"
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
 /// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
-std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<QueryPlan> queryPlan);
+std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PhysicalPlan> queryPlan);
 }
