@@ -43,6 +43,35 @@ public:
     [[nodiscard]] virtual SerializableFunction serialize() const = 0;
 };
 
+class NullLogicalFunction : public LogicalFunctionConcept
+{
+public:
+    NullLogicalFunction() : stamp(nullptr) { }
+
+    [[nodiscard]] std::string toString() const override { PRECONDITION(false, "Calls in NullLogicalFunction are undefined"); }
+
+    [[nodiscard]] const DataType& getStamp() const override { PRECONDITION(false, "Calls in NullLogicalFunction are undefined"); }
+
+    void setStamp(std::shared_ptr<DataType>) override { PRECONDITION(false, "Calls in NullLogicalFunction are undefined"); }
+
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override
+    {
+        PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
+    }
+
+    void setChildren(std::vector<LogicalFunction>) override { PRECONDITION(false, "Calls in NullLogicalFunction are undefined"); }
+
+    [[nodiscard]] std::string getType() const override { PRECONDITION(false, "Calls in NullLogicalFunction are undefined"); }
+
+    [[nodiscard]] SerializableFunction serialize() const override { PRECONDITION(false, "Calls in NullLogicalFunction are undefined"); }
+
+    bool operator==(const NullLogicalFunction&) const { return false; }
+
+private:
+    std::shared_ptr<DataType> stamp;
+};
+
+
 struct LogicalFunction
 {
 public:
@@ -50,6 +79,8 @@ public:
     LogicalFunction(const T& op) : self(std::make_unique<Model<T>>(op))
     {
     }
+
+    LogicalFunction() : self(std::make_unique<Model<NullLogicalFunction>>(NullLogicalFunction{})) { }
 
     LogicalFunction(const LogicalFunction& other) : self(other.self->clone()) { }
 
