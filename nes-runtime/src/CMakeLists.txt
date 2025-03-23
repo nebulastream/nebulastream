@@ -13,6 +13,7 @@
 add_subdirectory(Runtime)
 add_subdirectory(Util)
 add_subdirectory(Listeners)
+add_subdirectory(StatisticCollection)
 
 add_source_files(nes-runtime
         ExecutableQueryPlan.cpp

@@ -12,12 +12,10 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <API/Functions/Functions.hpp>
 #include <API/Windowing.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
@@ -26,6 +24,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/Synopsis/Sample/ReservoirSampleDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::API
@@ -69,6 +68,11 @@ std::shared_ptr<API::WindowAggregation> Count(const FunctionItem& onField)
 std::shared_ptr<API::WindowAggregation> Median(const FunctionItem& onField)
 {
     return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getNodeFunction()));
+}
+
+std::shared_ptr<API::WindowAggregation> Reservoir(const FunctionItem& onField)
+{
+    return std::make_shared<API::WindowAggregation>(Windowing::ReservoirSampleDescriptor::on(onField.getNodeFunction()));
 }
 
 Windowing::TimeMeasure Milliseconds(const uint64_t milliseconds)

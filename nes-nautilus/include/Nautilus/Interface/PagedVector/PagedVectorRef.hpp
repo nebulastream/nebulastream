@@ -40,9 +40,14 @@ public:
         const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider);
 
-    /// Writes a new record to the pagedVectorRef
+    /// @brief Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
     void writeRecord(const Record& record) const;
+
+    /// @brief Replaces the record in the pagedVectorRef at given position and returns the old record
+    /// @param record the new record to be written
+    /// @param pos record position in pagedVector
+    Record replaceRecord(const Record& record, const nautilus::val<uint64_t>& pos) const;
 
     /// @brief Reads the specified fields of a record from the pagedVectorRef
     /// @param pos record position in pagedVector

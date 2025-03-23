@@ -96,6 +96,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
+        // TODO(nikla44): should this not be called once after every record has been written?
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }

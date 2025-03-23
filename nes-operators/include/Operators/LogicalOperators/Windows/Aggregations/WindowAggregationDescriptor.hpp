@@ -36,6 +36,7 @@ public:
         Min,
         Sum,
         Median,
+        Reservoir,
         None
     };
 
