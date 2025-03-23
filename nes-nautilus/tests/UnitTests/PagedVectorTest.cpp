@@ -298,6 +298,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
         projections, testSchema, entrySize, pageSize, allRecords, allRecordsAfterAppendAll, 1, *nautilusEngine, *bufferManager);
 }
 
+// TODO(nikla44): add replaceRecord test
 
 INSTANTIATE_TEST_CASE_P(
     PagedVectorTest,

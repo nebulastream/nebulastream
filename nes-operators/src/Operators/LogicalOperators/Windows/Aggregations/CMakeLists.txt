@@ -19,3 +19,5 @@ add_source_files(nes-operators
         MedianAggregationDescriptor.cpp
         WindowAggregationDescriptor.cpp
 )
+
+add_subdirectory(Synopsis)

@@ -11,13 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        AvgAggregationFunction.cpp
-        AggregationFunction.cpp
-        CountAggregationFunction.cpp
-        MaxAggregationFunction.cpp
-        MinAggregationFunction.cpp
-        MedianAggregationFunction.cpp
-        SumAggregationFunction.cpp
+        ReservoirSampleFunction.cpp
+        SampleFunction.cpp
+        SampleFunctionRef.cpp
 )
-
-add_subdirectory(Synopsis)
