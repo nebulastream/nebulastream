@@ -43,10 +43,6 @@ NLJOperatorHandler::NLJOperatorHandler(
     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), leftMemoryProvider, rightMemoryProvider)
 {
-    averageNumberOfTuplesLeft.wlock()->first = static_cast<int64_t>(leftMemoryProvider->getMemoryLayout()->getCapacity());
-    averageNumberOfTuplesLeft.wlock()->second = 0;
-    averageNumberOfTuplesRight.wlock()->first = static_cast<int64_t>(rightMemoryProvider->getMemoryLayout()->getCapacity());
-    averageNumberOfTuplesRight.wlock()->second = 0;
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> NLJOperatorHandler::getCreateNewSlicesFunction() const
@@ -108,17 +104,6 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
         nljSliceRight.getNumberOfTuplesRight(),
         windowInfo.windowStart,
         windowInfo.windowEnd);
-
-    /// Calculating a rolling average of the number of tuples in the slices
-    const auto averageNumberLeft = this->averageNumberOfTuplesLeft.wlock();
-    averageNumberLeft->second = std::min(averageNumberLeft->second + 1, windowSizeRollingAverage);
-    averageNumberLeft->first
-        += (static_cast<int64_t>(nljSliceLeft.getNumberOfTuplesLeft()) - averageNumberLeft->first) / averageNumberLeft->second;
-
-    const auto averageNumberRight = this->averageNumberOfTuplesRight.wlock();
-    averageNumberRight->second = std::min(averageNumberRight->second + 1, windowSizeRollingAverage);
-    averageNumberRight->first
-        += (static_cast<int64_t>(nljSliceRight.getNumberOfTuplesRight()) - averageNumberRight->first) / averageNumberRight->second;
 }
 
 Nautilus::Interface::PagedVector* getNLJPagedVectorProxy(
