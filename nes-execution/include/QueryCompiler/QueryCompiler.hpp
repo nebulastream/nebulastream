@@ -15,6 +15,7 @@
 #include <memory>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+#include <QueryCompiler/Phases/MemoryLayoutSelection/MemoryLayoutSelectionPhase.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
@@ -29,7 +30,7 @@ class QueryCompiler
 {
 public:
     QueryCompiler(Configurations::QueryCompilerConfiguration queryCompilerConfig, const Phases::PhaseFactory& phaseFactory);
-    std::unique_ptr<Runtime::Execution::CompiledQueryPlan> compileQuery(const std::shared_ptr<QueryCompilationRequest>& request);
+    std::unique_ptr<Runtime::Execution::CompiledQueryPlan> compileQuery(const std::shared_ptr<QueryCompilationRequest>& request) const;
 
 protected:
     Configurations::QueryCompilerConfiguration queryCompilerConfig;
@@ -37,6 +38,7 @@ protected:
     std::shared_ptr<LowerPhysicalToNautilusOperators> lowerPhysicalToNautilusOperatorsPhase;
     std::shared_ptr<NautilusCompilationPhase> compileNautilusPlanPhase;
     std::shared_ptr<PipeliningPhase> pipeliningPhase;
+    std::shared_ptr<MemoryLayoutSelectionPhase> memoryLayoutSelectionPhase;
     std::shared_ptr<AddScanAndEmitPhase> addScanAndEmitPhase;
 };
 

@@ -16,6 +16,9 @@
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/Phases/MemoryLayoutSelection/FixMemoryLayoutSelectionPhase.hpp>
+#include <QueryCompiler/Phases/MemoryLayoutSelection/MemoryLayoutSelectionPhase.hpp>
+#include <QueryCompiler/Phases/MemoryLayoutSelection/NoneMemoryLayoutSelectionPhase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
@@ -48,6 +51,19 @@ DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(Configurations::QueryCompi
     NES_DEBUG("Create default lower logical plan phase");
     const auto physicalOperatorProvider = std::make_shared<DefaultPhysicalOperatorProvider>(std::move(queryCompilerConfig));
     return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
+}
+
+std::shared_ptr<MemoryLayoutSelectionPhase>
+DefaultPhaseFactory::createMemoryLayoutSelectionPhase(Configurations::QueryCompilerConfiguration queryCompilerConfig) const
+{
+    NES_DEBUG("Create memory layout selection phase");
+    switch (queryCompilerConfig.memorySelectionPhase)
+    {
+        case Configurations::MemorySelectionPhaseType::FIXED:
+            return FixMemoryLayoutSelectionPhase::create(queryCompilerConfig.memoryLayoutType);
+        case Configurations::MemorySelectionPhaseType::NONE:
+            return NoneMemoryLayoutSelectionPhase::create();
+    }
 }
 
 std::shared_ptr<AddScanAndEmitPhase> DefaultPhaseFactory::createAddScanAndEmitPhase(Configurations::QueryCompilerConfiguration) const
