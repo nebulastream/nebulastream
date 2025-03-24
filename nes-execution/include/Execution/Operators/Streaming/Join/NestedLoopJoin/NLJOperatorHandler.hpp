@@ -60,9 +60,6 @@ private:
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
-
-    /// We store as a pair the average number of tuples left/right and the number of samples left/right
-    folly::Synchronized<std::pair<int64_t, int64_t>> averageNumberOfTuplesLeft, averageNumberOfTuplesRight;
 };
 
 /// Proxy function that returns the pointer to the correct PagedVector
