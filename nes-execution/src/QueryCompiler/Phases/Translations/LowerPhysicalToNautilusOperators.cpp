@@ -35,11 +35,13 @@
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -54,6 +56,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMemoryLayoutSwapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
@@ -131,13 +134,13 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     NES_INFO("Lower node:{} to NautilusOperator.", *operatorNode);
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
     {
-        auto scan = lowerScan(operatorNode, bufferSize);
+        auto scan = lowerScan(operatorNode->getOutputSchema(), bufferSize);
         pipeline.setRootOperator(scan);
         return scan;
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalEmitOperator>(operatorNode))
     {
-        auto emit = lowerEmit(operatorNode, bufferSize, operatorHandlers);
+        auto emit = lowerEmit(operatorNode->getOutputSchema(), bufferSize, operatorHandlers);
         parentOperator->setChild(emit);
         return emit;
     }
@@ -274,6 +277,15 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         parentOperator->setChild(joinBuildNautilus);
         return joinBuildNautilus;
     }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalMemoryLayoutSwapOperator>(operatorNode))
+    {
+        const auto swapOperator = NES::Util::as<PhysicalOperators::PhysicalMemoryLayoutSwapOperator>(operatorNode);
+        auto scan = lowerScan(swapOperator->getInputSchema(), bufferSize);
+        auto emit = lowerEmit(swapOperator->getOutputSchema(), bufferSize, operatorHandlers);
+        scan->setChild(emit);
+        pipeline.setRootOperator(scan);
+        return scan;
+    }
 
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>(operatorNode))
     {
@@ -334,36 +346,47 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
-LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode, size_t bufferSize)
+LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<Schema>& schema, size_t bufferSize)
 {
-    auto schema = operatorNode->getOutputSchema();
-    INVARIANT(
-        schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
-        "Currently only row layout is supported, current layout={}",
-        magic_enum::enum_name(schema->getLayoutType()));
-    /// pass buffer size here
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
-        = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
+    switch (schema->getLayoutType())
+    {
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
+            auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(schema, bufferSize);
+            std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+                = std::make_unique<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
+            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
+        }
+        case Schema::MemoryLayoutType::ROW_LAYOUT: {
+            auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
+            std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+                = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
+        }
+    }
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerEmit(
-    const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode,
+    const std::shared_ptr<Schema>& schema,
     size_t bufferSize,
     std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers)
 {
-    auto schema = operatorNode->getOutputSchema();
-    INVARIANT(
-        schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
-        "Currently only row layout is supported, current layout={}",
-        magic_enum::enum_name(schema->getLayoutType()));
-    /// pass buffer size here
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
-        = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-    operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::EmitOperatorHandler>());
-    return std::make_shared<Runtime::Execution::Operators::Emit>(operatorHandlers.size() - 1, std::move(memoryProvider));
+    switch (schema->getLayoutType())
+    {
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
+            auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(schema, bufferSize);
+            std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+                = std::make_unique<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
+            operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::EmitOperatorHandler>());
+            return std::make_shared<Runtime::Execution::Operators::Emit>(operatorHandlers.size() - 1, std::move(memoryProvider));
+        }
+        case Schema::MemoryLayoutType::ROW_LAYOUT: {
+            auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
+            std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+                = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+            operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::EmitOperatorHandler>());
+            return std::make_shared<Runtime::Execution::Operators::Emit>(operatorHandlers.size() - 1, std::move(memoryProvider));
+        }
+    }
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

@@ -82,7 +82,7 @@ nautilus::engine::Options setNautilusOptions(const Configurations::QueryCompiler
     return options;
 }
 
-std::shared_ptr<OperatorPipeline> NautilusCompilationPhase::apply(std::shared_ptr<OperatorPipeline> pipeline)
+std::shared_ptr<OperatorPipeline> NautilusCompilationPhase::apply(std::shared_ptr<OperatorPipeline> pipeline) const
 {
     const auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
     PRECONDITION(pipelineRoots.size() == 1, "A nautilus pipeline should have a single root operator.");

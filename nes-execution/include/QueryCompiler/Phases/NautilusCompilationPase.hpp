@@ -31,7 +31,7 @@ public:
     std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> queryPlan);
 
     /// Generates code for a particular pipeline.
-    std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline);
+    std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline) const;
 
 private:
     Configurations::QueryCompilerConfiguration compilerOptions;

@@ -11,12 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        AddScanAndEmitPhase.cpp
-        DefaultPhaseFactory.cpp
-        NautilusCompilationPhase.cpp
-        )
-
-add_subdirectory(MemoryLayoutSelection)
-add_subdirectory(Pipelining)
-add_subdirectory(Translations)
+        FixMemoryLayoutSelectionPhase.cpp
+)
 
