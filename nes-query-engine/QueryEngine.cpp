@@ -650,7 +650,7 @@ void ThreadPool::addThread()
             {
                 Task task;
                 /// This timeout controls how often a thread needs to wake up from polling on the TaskQueue to check the stopToken
-                if (!internalTaskQueue.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), task))
+                if (!internalTaskQueue.read(task))
                 {
                     if (admissionQueue.read(task))
                     {
