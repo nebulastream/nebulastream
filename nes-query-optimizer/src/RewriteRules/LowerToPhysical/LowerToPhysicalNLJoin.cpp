@@ -141,8 +141,10 @@ std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(const JoinLo
     }
 }
 
-std::vector<PhysicalOperatorWrapper> LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
+RewriteRuleResult LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
 {
+    PRECONDITION(logicalOperator.tryGet<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
+
     const auto operatorHandlerIndex = 0; // TODO this should change. In the best case we have setIndex() for all the operators.
 
     auto join = *logicalOperator.get<JoinLogicalOperator>();
@@ -186,11 +188,13 @@ std::vector<PhysicalOperatorWrapper> LowerToPhysicalNLJoin::apply(LogicalOperato
     auto handler = NLJOperatorHandler(join.getInputOriginIds()[0], logicalOperator.getOutputOriginIds()[0],
         std::move(sliceAndWindowStore), leftMemoryProvider3, rightMemoryProvider3);
 
-    auto probeOpWrapper = PhysicalOperatorWrapper(probeOperator, logicalOperator.getOutputSchema(), logicalOperator.getOutputSchema());
-    auto rightBuildOpWrapper = PhysicalOperatorWrapper(rightBuildOperator, join.getRightSchema(), logicalOperator.getOutputSchema());
-    auto leftBuildOpWrapper = PhysicalOperatorWrapper(leftBuildOperator, join.getLeftSchema(), logicalOperator.getOutputSchema());
+    auto probeOpWrapper = std::make_shared<PhysicalOperatorWrapper>(probeOperator, logicalOperator.getOutputSchema(), logicalOperator.getOutputSchema());
+    auto rightBuildOpWrapper = std::make_shared<PhysicalOperatorWrapper>(rightBuildOperator, join.getRightSchema(), logicalOperator.getOutputSchema());
+    auto leftBuildOpWrapper = std::make_shared<PhysicalOperatorWrapper>(leftBuildOperator, join.getLeftSchema(), logicalOperator.getOutputSchema());
+    probeOpWrapper->children.push_back(rightBuildOpWrapper);
+    probeOpWrapper->children.push_back(leftBuildOpWrapper);
 
-    return {rightBuildOpWrapper, leftBuildOpWrapper, probeOpWrapper};
+    return {probeOpWrapper, {rightBuildOpWrapper, leftBuildOpWrapper}};
 };
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterJoinRewriteRule(RewriteRuleRegistryArguments argument)

@@ -64,7 +64,7 @@ void SourceNameLogicalOperator::inferInputOrigins()
 
 std::string_view SourceNameLogicalOperator::getName() const noexcept
 {
-    return logicalSourceName;
+    return "Source";
 }
 
 Schema SourceNameLogicalOperator::getSchema() const

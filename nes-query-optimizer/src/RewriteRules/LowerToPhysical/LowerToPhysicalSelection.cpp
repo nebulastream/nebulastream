@@ -16,7 +16,6 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <utility>
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <SelectionPhysicalOperator.hpp>
@@ -25,14 +24,15 @@
 namespace NES::Optimizer
 {
 
-std::vector<PhysicalOperatorWrapper> LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
+RewriteRuleResult LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
 {
+    PRECONDITION(logicalOperator.tryGet<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
     auto selection = *logicalOperator.get<SelectionLogicalOperator>();
     auto function = selection.getPredicate();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto physicalOperator = SelectionPhysicalOperator(func);
-    auto wrapper = PhysicalOperatorWrapper(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
-    return {wrapper};
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    return {wrapper, {wrapper}};
 };
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSelectionRewriteRule(RewriteRuleRegistryArguments argument)

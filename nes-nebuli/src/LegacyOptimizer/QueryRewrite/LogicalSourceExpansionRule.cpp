@@ -31,7 +31,7 @@ void LogicalSourceExpansionRule::apply(QueryPlan& queryPlan, Catalogs::Source::S
 
     for (SourceNameLogicalOperator sourceOp : sourceOperators)
     {
-        std::string logicalSourceName(sourceOp.getName());
+        std::string logicalSourceName(sourceOp.getLogicalSourceName());
         auto sourceCatalogEntries = sourceCatalog.getPhysicalSources(logicalSourceName);
         if (sourceCatalogEntries.empty())
         {

@@ -14,8 +14,6 @@
 
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <Phases/LowerToExecutableQueryPlanPhase.hpp>

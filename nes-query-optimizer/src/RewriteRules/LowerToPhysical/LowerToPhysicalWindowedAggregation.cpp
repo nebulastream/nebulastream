@@ -184,8 +184,9 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
     return aggregationFunctions;
 }
 
-std::vector<PhysicalOperatorWrapper> LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
+RewriteRuleResult LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
 {
+    PRECONDITION(logicalOperator.tryGet<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
     const size_t operatorHandlerIndex = 0; /// TODO this should be a singleton as for the queryid?
 
     auto aggregation = *logicalOperator.get<WindowedAggregationLogicalOperator>();
@@ -234,10 +235,11 @@ std::vector<PhysicalOperatorWrapper> LowerToPhysicalWindowedAggregation::apply(L
 
     auto probe = AggregationProbePhysicalOperator(windowAggregationPhysicalOperator, operatorHandlerIndex, aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName());
 
-    auto buildPhysicalOp = PhysicalOperatorWrapper(build, aggregation.getInputSchemas()[0], aggregation.getOutputSchema());
-    auto probePhysicalOp = PhysicalOperatorWrapper(probe, aggregation.getInputSchemas()[0], aggregation.getOutputSchema());
+    auto buildPhysicalOp = std::make_shared<PhysicalOperatorWrapper>(build, aggregation.getInputSchemas()[0], aggregation.getOutputSchema());
+    auto probePhysicalOp = std::make_shared<PhysicalOperatorWrapper>(probe, aggregation.getInputSchemas()[0], aggregation.getOutputSchema());
+    buildPhysicalOp->children.push_back(probePhysicalOp);
 
-    return {buildPhysicalOp, probePhysicalOp};
+    return {buildPhysicalOp, {probePhysicalOp}};
 }
 
 std::unique_ptr<Optimizer::AbstractRewriteRule> Optimizer::RewriteRuleGeneratedRegistrar::RegisterWindowedAggregationRewriteRule(RewriteRuleRegistryArguments argument)

@@ -43,7 +43,10 @@ public:
     [[nodiscard]] SerializableOperator serialize() const override;
     [[nodiscard]] std::string toString() const override;
 
-    [[nodiscard]] std::string getLogicalSourceName() const;
+    [[nodiscard]] std::string getLogicalSourceName() const
+    {
+        return logicalSourceName;
+    }
 
     std::vector<LogicalOperator> getChildren() const override {return children;};
     void setChildren(std::vector<LogicalOperator> children) override {this->children = children;};
@@ -66,6 +69,7 @@ public:
     }
 
 private:
+    static constexpr std::string_view NAME = "Source";
     std::string logicalSourceName;
     std::vector<LogicalOperator> children;
     Schema schema, inputSchema, outputSchema;

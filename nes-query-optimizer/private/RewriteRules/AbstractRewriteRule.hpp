@@ -20,9 +20,17 @@
 namespace NES::Optimizer
 {
 
+struct RewriteRuleResult
+{
+    /// Top-level physical operator
+    std::shared_ptr<PhysicalOperatorWrapper> root;
+    /// Points where the following operators can attach
+    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> leafOperators;
+};
+
 struct AbstractRewriteRule
 {
-    virtual std::vector<PhysicalOperatorWrapper> apply(LogicalOperator logicalOperator) = 0;
+    virtual RewriteRuleResult apply(LogicalOperator logicalOperator) = 0;
     virtual ~AbstractRewriteRule() = default;
 };
 
