@@ -75,9 +75,25 @@ public:
     IdentifierList& operator=(const IdentifierList& other) = default;
     IdentifierList& operator=(IdentifierList&& other) noexcept = default;
     ~IdentifierList() = default;
-    [[nodiscard]] decltype(identifiers.cbegin()) begin() const { return identifiers.cbegin(); }
-    [[nodiscard]] decltype(identifiers.cend()) end() const { return identifiers.cend(); }
+    [[nodiscard]] decltype(identifiers.begin()) begin() const { return identifiers.begin(); }
+    [[nodiscard]] decltype(identifiers.end()) end() const { return identifiers.end(); }
 
+    IdentifierList copyReplaceLast(const std::initializer_list<Identifier> replacements)
+    {
+        if (replacements.size() >= identifiers.size())
+        {
+            return IdentifierList{replacements};
+        }
+        auto newIdentifiers = std::vector{identifiers};
+
+        const auto *iter = replacements.begin();
+        for (auto i = identifiers.size() - replacements.size(); i < identifiers.size(); ++i)
+        {
+            newIdentifiers[i] = *iter;
+            iter++;
+        }
+        return IdentifierList{std::move(newIdentifiers)};
+    }
     friend bool operator==(const IdentifierList& lhs, const IdentifierList& rhs) { return lhs.identifiers == rhs.identifiers; }
     friend bool operator!=(const IdentifierList& lhs, const IdentifierList& rhs) { return !(lhs == rhs); }
 };
