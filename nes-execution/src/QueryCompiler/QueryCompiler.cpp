@@ -17,6 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
+#include <QueryCompiler/Phases/MemoryLayoutSelection/MemoryLayoutSelectionPhase.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
@@ -38,17 +39,19 @@ QueryCompiler::QueryCompiler(Configurations::QueryCompilerConfiguration queryCom
     , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(this->queryCompilerConfig))
     , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(this->queryCompilerConfig))
     , pipeliningPhase(phaseFactory.createPipeliningPhase())
+    , memoryLayoutSelectionPhase(phaseFactory.createMemoryLayoutSelectionPhase(this->queryCompilerConfig))
     , addScanAndEmitPhase(phaseFactory.createAddScanAndEmitPhase(this->queryCompilerConfig))
 {
 }
 
-std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQuery(const std::shared_ptr<QueryCompilationRequest>& request)
+std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQuery(const std::shared_ptr<QueryCompilationRequest>& request) const
 {
     NES_INFO("Compile Query with Nautilus");
 
     /// create new context for handling debug output
-    const bool dumpToConsole = queryCompilerConfig.dumpMode == Configurations::DumpMode::CONSOLE
+    bool dumpToConsole = queryCompilerConfig.dumpMode == Configurations::DumpMode::CONSOLE
         || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
+    dumpToConsole = true;
     const auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, queryCompilerConfig.dumpPath.getValue());
 
     NES_DEBUG("compile query with id: {}", request->getDecomposedQueryPlan()->getQueryId());
@@ -61,8 +64,11 @@ std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQue
     auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
     dumpHelper.dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan->toString());
 
-    addScanAndEmitPhase->apply(pipelinedQueryPlan);
-    dumpHelper.dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan->toString());
+    pipelinedQueryPlan = memoryLayoutSelectionPhase->apply(pipelinedQueryPlan);
+    dumpHelper.dump("4. AfterMemoryLayoutSelectionPhase", pipelinedQueryPlan->toString());
+
+    pipelinedQueryPlan = addScanAndEmitPhase->apply(pipelinedQueryPlan);
+    dumpHelper.dump("5. AfterAddScanAndEmitPhase", pipelinedQueryPlan->toString());
 
     auto bufferSize = request->getBufferSize();
     pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
