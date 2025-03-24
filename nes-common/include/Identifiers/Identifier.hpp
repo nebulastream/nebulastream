@@ -16,11 +16,15 @@
 #pragma once
 #include <algorithm>
 #include <cctype>
+#include <functional>
 #include <initializer_list>
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
+
+#include <Util/Ranges.hpp>
 
 
 class Identifier
@@ -66,19 +70,23 @@ class IdentifierList
     std::vector<Identifier> identifiers;
 
 public:
-    explicit IdentifierList() = default;
-    explicit IdentifierList(std::ranges::input_range auto&& identifiers) : identifiers(identifiers) { }
-    IdentifierList(const std::initializer_list<Identifier> identifiers) : identifiers(identifiers) { }
-    IdentifierList(const Identifier& identifier) : identifiers(std::vector{identifier}) { }
-    IdentifierList(const IdentifierList& other) = default;
-    IdentifierList(IdentifierList&& other) noexcept = default;
-    IdentifierList& operator=(const IdentifierList& other) = default;
-    IdentifierList& operator=(IdentifierList&& other) noexcept = default;
-    ~IdentifierList() = default;
-    [[nodiscard]] decltype(identifiers.begin()) begin() const { return identifiers.begin(); }
-    [[nodiscard]] decltype(identifiers.end()) end() const { return identifiers.end(); }
+    constexpr explicit IdentifierList() = default;
+    constexpr explicit IdentifierList(std::ranges::input_range auto&& identifiers) : identifiers(identifiers) { }
+    constexpr IdentifierList(const std::initializer_list<Identifier> identifiers) : identifiers(identifiers) { }
+    constexpr IdentifierList(const Identifier& identifier) : identifiers(std::vector{identifier}) { }
+    constexpr IdentifierList(const IdentifierList& other) = default;
+    constexpr IdentifierList(IdentifierList&& other) noexcept = default;
+    constexpr IdentifierList& operator=(const IdentifierList& other) = default;
+    constexpr IdentifierList& operator=(IdentifierList&& other) noexcept = default;
+    constexpr ~IdentifierList() = default;
 
-    IdentifierList copyReplaceLast(const std::initializer_list<Identifier> replacements)
+    [[nodiscard]] constexpr decltype(identifiers.begin()) begin() { return identifiers.begin(); }
+    [[nodiscard]] constexpr decltype(identifiers.end()) end() { return identifiers.end(); }
+
+    [[nodiscard]] constexpr decltype(identifiers.cbegin()) begin() const { return identifiers.cbegin(); }
+    [[nodiscard]] constexpr decltype(identifiers.cend()) end() const { return identifiers.cend(); }
+
+    constexpr IdentifierList copyReplaceLast(const std::initializer_list<Identifier> replacements)
     {
         if (replacements.size() >= identifiers.size())
         {
@@ -94,9 +102,21 @@ public:
         }
         return IdentifierList{std::move(newIdentifiers)};
     }
+
+    [[nodiscard]] constexpr std::string toString() const
+    {
+        return identifiers | std::views::transform(&Identifier::toString) | std::views::join_with('.') | NES::ranges::to<std::string>();
+    }
+
+    // constexpr size_t size() const
+    // {
+    //     return identifiers.size();
+    // }
     friend bool operator==(const IdentifierList& lhs, const IdentifierList& rhs) { return lhs.identifiers == rhs.identifiers; }
     friend bool operator!=(const IdentifierList& lhs, const IdentifierList& rhs) { return !(lhs == rhs); }
 };
 
 
+
 static_assert(std::ranges::random_access_range<IdentifierList>);
+static_assert(std::ranges::sized_range<IdentifierList>);
