@@ -19,6 +19,7 @@
 #include <Util/OperatorsUtil.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES
 {
@@ -71,12 +72,16 @@ std::vector<OriginId> UnaryOperator::getOutputOriginIds() const
 std::ostream& UnaryOperator::toDebugString(std::ostream& os) const
 {
     return os << fmt::format(
-               "inputSchema: {}\n"
-               "outputSchema: {}\n"
-               "inputOriginIds: {}",
-               inputSchema->toString(),
-               outputSchema->toString(),
-               fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
+        "inputSchema: {} "
+        "dataLayout: {}\n"
+        "outputSchema: {} "
+        "dataLayout: {}\n"
+        "inputOriginIds: {}",
+        inputSchema->toString(),
+        magic_enum::enum_name(inputSchema->getLayoutType()),
+        outputSchema->toString(),
+        magic_enum::enum_name(outputSchema->getLayoutType()),
+        fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
 }
 std::ostream& UnaryOperator::toQueryPlanString(std::ostream& os) const
 {
