@@ -650,12 +650,18 @@ void ThreadPool::addThread()
             {
                 Task task;
                 /// This timeout controls how often a thread needs to wake up from polling on the TaskQueue to check the stopToken
-                if (!internalTaskQueue.read(task))
+                const auto shallPickTaskFromAdmissionQueue = internalTaskQueue.size() < ((static_cast<ssize_t>(numberOfThreads())) * 3);
+                if (shallPickTaskFromAdmissionQueue)
                 {
                     if (admissionQueue.read(task))
                     {
+                        NES_WARNING(
+                            "Task picked from AdmissionQueue and shallPickTaskFromAdmissionQueue={}", shallPickTaskFromAdmissionQueue);
                         addTaskOrDoItInPlace(std::move(task));
                     }
+                }
+                if (not internalTaskQueue.read(task))
+                {
                     continue;
                 }
                 try
