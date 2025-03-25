@@ -38,6 +38,9 @@ constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 2;
 constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 1;
 #endif
 
+// todo we should also fix that we download all files from the nes-dataset, even though we do not need them
+
+
 namespace NES
 {
 

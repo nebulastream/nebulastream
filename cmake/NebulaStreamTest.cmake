@@ -27,6 +27,8 @@ endfunction()
 
 function(add_nes_common_test)
     add_nes_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-common)
 endfunction()
 
 function(add_nes_unit_test)
