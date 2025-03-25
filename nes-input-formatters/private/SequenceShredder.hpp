@@ -204,6 +204,8 @@ private:
     /// Keeps track of how often a specific buffer was used in spanning tuples
     /// If it reaches 0, we move the buffer out of the stagedBuffers, taking ownership away again
     std::vector<int8_t> stagedBufferUses;
+    bool isFirstTuple = true;
+    bool isLastTuple = false;
 
     struct BitmapSnapshot
     {
