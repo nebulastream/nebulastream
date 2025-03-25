@@ -42,7 +42,7 @@ jobs:
           echo       >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-          cat clang-tidy.log | grep ": error:" >> $GITHUB_STEP_SUMMARY
+          cat clang-tidy.log | grep ": error:" | sort | uniq >> $GITHUB_STEP_SUMMARY
 
           echo '```' >> $GITHUB_STEP_SUMMARY
       - name: summarize
