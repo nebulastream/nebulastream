@@ -140,7 +140,6 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
 
     const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
     const auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
@@ -152,11 +151,9 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
 
     /// We assume that only one slice is created per timestamp
     const auto newSlices = createNewSlice(sliceStart, sliceEnd);
-    INVARIANT(newSlices.size() == 1, "We assume that only one slice is created per timestamp for our default time-based slice store.");
+    INVARIANT(newSlices.size() == 1, "We assume that only one slice is created per timestamp for our file-backed time-based slice store.");
     auto newSlice = newSlices[0];
     slicesWriteLocked->emplace(sliceEnd, newSlice);
-    slicesInMemoryLocked->insert({{sliceEnd, QueryCompilation::JoinBuildSideType::Left}, false});
-    slicesInMemoryLocked->insert({{sliceEnd, QueryCompilation::JoinBuildSideType::Right}, false});
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
     for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
@@ -167,6 +164,10 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
         windowState = WindowInfoState::WINDOW_FILLING;
         windowSlices.emplace_back(newSlice);
     }
+
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
+    slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Left}, false});
+    slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Right}, false});
 
     return {newSlice};
 }
@@ -282,13 +283,13 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
 void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
     auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
     if (not lockedSlicesAndWindows)
     {
         /// We could not acquire the lock, so we opt for not performing the garbage collection this time.
         return;
     }
     auto& [slicesWriteLocked, windowsWriteLocked] = *lockedSlicesAndWindows;
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
 
     NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
 
