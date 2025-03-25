@@ -94,7 +94,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
                 .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "64"}}});
+                .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
         });
 
     parser.registerOnSLTSourceCallback(
@@ -118,7 +118,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
                 .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInSourceLocalBufferPool", "64"}}});
+                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
 
 
             {

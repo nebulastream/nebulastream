@@ -17,7 +17,9 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
+
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -147,7 +149,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
         Sources::ParserConfig{},
         std::move(validatedSourceConfiguration));
 
-    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool));
+    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), -1);
 }
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
 {
