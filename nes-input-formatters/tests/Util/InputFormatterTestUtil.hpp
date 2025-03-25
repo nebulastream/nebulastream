@@ -222,6 +222,7 @@ std::vector<Runtime::Execution::TestablePipelineTask> createTasks(const TestHand
         testHandle.testConfig.parserConfig.fieldDelimiter);
     const auto inputFormatterTask = std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
     std::vector<Runtime::Execution::TestablePipelineTask> tasks;
+    tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
         tasks.emplace_back(

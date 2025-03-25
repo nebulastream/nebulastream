@@ -137,11 +137,11 @@ MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     const std::vector<TestablePipelineTask>& testTasks,
     std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider,
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
-    : numberOfWorkerThreads(numberOfThreads)
+    : threadTasks(testTasks.size())
+    , numberOfWorkerThreads(numberOfThreads)
+    , completionLatch(numberOfThreads)
     , bufferProvider(std::move(bufferProvider))
     , resultBuffers(std::move(resultBuffers))
-    , threadTasks(testTasks.size())
-    , completionLatch(numberOfThreads)
     , timer("ConcurrentTestTaskQueue")
 {
     PRECONDITION(not testTasks.empty(), "Test tasks must not be empty.");
