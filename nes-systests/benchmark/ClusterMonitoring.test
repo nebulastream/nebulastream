@@ -7,8 +7,8 @@
 ## For example, the data from the lightsaber paper is a subset of the original data, as it only contains 16k tuples.
 ## Furthermore, as we are having heavily out-of-order data, we need to use float64 for the cpu, ram and disk fields to ensure that the results are deterministic for the original data. The lightsaber data uses float32 for these fields.
 ##
-SourceCSV monitoringLightsaber UINT64 creationTS UINT64 jobId UINT64 taskId INT64 machineId INT16 eventType INT16 userId INT16 category INT16 priority FLOAT32 cpu FLOAT32 ram FLOAT32 disk INT16 constraints TESTDATA/large/cluster_monitoring/google-cluster-data-lightsaber.csv
-SourceCSV monitoringClusterData UINT64 creationTS UINT64 jobId UINT64 taskId INT64 machineId INT16 eventType INT16 userId INT16 category INT16 priority FLOAT64 cpu FLOAT64 ram FLOAT64 disk BOOLEAN constraints TESTDATA/large/cluster_monitoring/google-cluster-data-original.csv
+SourceCSV monitoringLightsaber UINT64 creationTS UINT64 jobId UINT64 taskId INT64 machineId INT16 eventType INT16 userId INT16 category INT16 priority FLOAT32 cpu FLOAT32 ram FLOAT32 disk INT16 constraints TESTDATA/cluster_monitoring/google-cluster-data-lightsaber.csv
+SourceCSV monitoringClusterData UINT64 creationTS UINT64 jobId UINT64 taskId INT64 machineId INT16 eventType INT16 userId INT16 category INT16 priority FLOAT64 cpu FLOAT64 ram FLOAT64 disk BOOLEAN constraints TESTDATA/cluster_monitoring/google-cluster-data-original.csv
 
 SINK q2Sink UINT64 monitoringLightsaber$start UINT64 monitoringLightsaber$end FLOAT32 monitoringLightsaber$totalCpu UINT64 monitoringLightsaber$jobId
 
