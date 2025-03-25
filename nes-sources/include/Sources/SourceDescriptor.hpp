@@ -34,7 +34,9 @@ struct ParserConfig
 
 struct SourceDescriptor : public Configurations::Descriptor
 {
-    static constexpr int NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL = 64;
+    /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
+    /// Given an invalid value, the NodeEngine takes its configured value. Otherwise the source-specific configuration takes priority.
+    static constexpr int INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL = -1;
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(

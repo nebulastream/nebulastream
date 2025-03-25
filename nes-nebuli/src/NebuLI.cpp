@@ -174,7 +174,7 @@ Sources::SourceDescriptor createSourceDescriptor(
     const auto numberOfBuffersInSourceLocalBufferPool = [](const std::unordered_map<std::string, std::string>& sourceConfig)
     {
         /// Initialize with invalid value and overwrite with configured value if given
-        auto numSourceLocalBuffers = Sources::SourceDescriptor::NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL;
+        auto numSourceLocalBuffers = Sources::SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL;
 
         if (const auto configuredNumSourceLocalBuffers = sourceConfig.find(Configurations::NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL);
             configuredNumSourceLocalBuffers != sourceConfig.end())
