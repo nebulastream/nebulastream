@@ -51,7 +51,12 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
     auto queryEngine
         = std::make_unique<QueryEngine>(workerConfiguration.queryEngineConfiguration, statisticEventListener, queryLog, bufferManager);
 
-    return std::make_unique<NodeEngine>(std::move(bufferManager), systemEventListener, std::move(queryLog), std::move(queryEngine));
+    return std::make_unique<NodeEngine>(
+        std::move(bufferManager),
+        systemEventListener,
+        std::move(queryLog),
+        std::move(queryEngine),
+        workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue());
 }
 
 }

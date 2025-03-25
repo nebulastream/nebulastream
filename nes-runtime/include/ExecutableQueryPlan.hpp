@@ -32,8 +32,10 @@ struct ExecutableQueryPlan
 {
     using SourceWithSuccessor
         = std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::weak_ptr<Execution::ExecutablePipeline>>>;
-    static std::unique_ptr<ExecutableQueryPlan>
-    instantiate(Execution::CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider);
+    static std::unique_ptr<ExecutableQueryPlan> instantiate(
+        Execution::CompiledQueryPlan& compiledQueryPlan,
+        const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider,
+        int numberOfBuffersInSourceLocalBufferPool);
 
     ExecutableQueryPlan(
         QueryId queryId,
