@@ -47,8 +47,6 @@ std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQue
     NES_INFO("Compile Query with Nautilus");
 
     /// create new context for handling debug output
-    const bool dumpToFile = queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE
-        || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
     const bool dumpToConsole = queryCompilerConfig.dumpMode == Configurations::DumpMode::CONSOLE
         || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
     const auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, queryCompilerConfig.dumpPath.getValue());

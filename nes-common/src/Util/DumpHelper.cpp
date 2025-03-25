@@ -47,7 +47,7 @@ void DumpHelper::dump(std::string_view name, std::string_view output) const
 }
 
 DumpHelper::DumpHelper(std::string contextIdentifier, const bool dumpToConsole)
-    : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole), outputPath(std::string())
+    : contextIdentifier(std::move(contextIdentifier)), dumpToConsole(dumpToConsole)
 {
 }
 
