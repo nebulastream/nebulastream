@@ -50,6 +50,49 @@ jobs:
           name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}.xml
           path: /junit.xml
 
+  # We want to test if our cmake log level flag works correctly. Therefore, we need to build and run the tests with different log levels.
+  # As we can not do this in a unit test (because the log level is set at compile time), we need to run the tests in a separate job.
+  build-and-test-log-level:
+    name: "Build and test log level: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-log-level"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        # We only want to run the tests on x64, as the log level tests are not architecture dependent, and we have more x64 runners
+        # We only want to run the tests with libcxx, as the log level tests are not standard library dependent, and we want to reduce the number of jobs
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        build_type: [ 'Debug', 'RelWithDebInfo' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Build and Run Log Level Tests
+        run: |
+          for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR; do
+            echo "Running tests with log level: $LOG_LEVEL"
+            cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=$LOG_LEVEL
+            cmake --build build --target nes-common-tests -j -- -k 0
+            ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600 -R "testLogLevel"
+            cmake --build build --target clean
+          done
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && !github.event.act }}
+        with:
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}-${{ matrix.log_level }}.xml
+          path: /junit.xml
+
   build-without-tests:
     name: "Build with disabled tests: ${{matrix.arch}}-${{matrix.stdlib}}"
     container:
