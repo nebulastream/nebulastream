@@ -24,12 +24,14 @@ SourceDescriptor::SourceDescriptor(
     std::shared_ptr<Schema> schema,
     std::string logicalSourceName,
     std::string sourceType,
+    const int numberOfBuffersInSourceLocalBufferPool,
     ParserConfig parserConfig,
     Configurations::DescriptorConfig::Config&& config)
     : Descriptor(std::move(config))
     , schema(std::move(schema))
     , logicalSourceName(std::move(logicalSourceName))
     , sourceType(std::move(sourceType))
+    , numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool)
     , parserConfig(std::move(parserConfig))
 {
 }

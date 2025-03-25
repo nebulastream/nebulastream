@@ -30,18 +30,15 @@ std::unique_ptr<SourceProvider> SourceProvider::create()
     return std::make_unique<SourceProvider>();
 }
 
-std::unique_ptr<SourceHandle> SourceProvider::lower(
-    OriginId originId,
-    const SourceDescriptor& sourceDescriptor,
-    std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
-    const int numberOfLocalBuffersInSource)
+std::unique_ptr<SourceHandle>
+SourceProvider::lower(OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
         return std::make_unique<SourceHandle>(
-            std::move(originId), std::move(bufferPool), numberOfLocalBuffersInSource, std::move(source.value()));
+            std::move(originId), std::move(bufferPool), sourceDescriptor.numberOfBuffersInSourceLocalBufferPool, std::move(source.value()));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }
