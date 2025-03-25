@@ -28,7 +28,8 @@ enum class InputFormat : uint8_t
 ///Coordinator Configuration Names
 const std::string CONFIG_PATH = "configPath";
 
-///Configuration names for source types
+///Configuration names for source types (Descriptor(.hpp) must support these in 'validateAndFormat()')
 const std::string SOURCE_TYPE_CONFIG = "type";
+const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL = "numberOfBuffersInSourceLocalBufferPool";
 
 }

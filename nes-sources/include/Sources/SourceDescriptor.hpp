@@ -34,11 +34,14 @@ struct ParserConfig
 
 struct SourceDescriptor : public Configurations::Descriptor
 {
+    static constexpr int NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL = 64;
+
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         std::shared_ptr<Schema> schema,
         std::string logicalSourceName,
         std::string sourceType,
+        int numberOfBuffersInSourceLocalBufferPool,
         ParserConfig parserConfig,
         Configurations::DescriptorConfig::Config&& config);
 
@@ -46,6 +49,7 @@ struct SourceDescriptor : public Configurations::Descriptor
     const std::shared_ptr<Schema> schema;
     const std::string logicalSourceName;
     const std::string sourceType;
+    const int numberOfBuffersInSourceLocalBufferPool;
     /// is const data member, because 'SourceDescriptor' should be immutable and 'const' communicates more clearly then private+getter
     const ParserConfig parserConfig;
 

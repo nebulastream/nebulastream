@@ -72,8 +72,9 @@ message SerializableOperator {
         SerializableSchema sourceSchema = 1;
         string logicalSourceName = 2;
         string sourceType = 3;
-        ParserConfig parserConfig = 4;
-        map<string, SerializableVariantDescriptor> config = 5;
+        int32 numberOfBuffersInSourceLocalBufferPool = 4;
+        ParserConfig parserConfig = 5;
+        map<string, SerializableVariantDescriptor> config = 6;
     }
 
     uint64 sourceOriginId = 1;

@@ -947,6 +947,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, serializedSourceDescriptor->mutable_sourceschema());
     serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.logicalSourceName);
     serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
+    serializedSourceDescriptor->set_numberofbuffersinsourcelocalbufferpool(sourceDescriptor.numberOfBuffersInSourceLocalBufferPool);
 
     /// Serialize parser config.
     auto* const serializedParserConfig = ParserConfig().New();
@@ -1002,6 +1003,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
     auto logicalSourceName = sourceDescriptor.logicalsourcename();
     auto sourceType = sourceDescriptor.sourcetype();
+    auto numberOfBuffersInSourceLocalBufferPool = sourceDescriptor.numberofbuffersinsourcelocalbufferpool();
 
     /// Deserialize the parser config.
     const auto& serializedParserConfig = sourceDescriptor.parserconfig();
@@ -1021,6 +1023,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
         std::move(schema),
         std::move(logicalSourceName),
         std::move(sourceType),
+        numberOfBuffersInSourceLocalBufferPool,
         std::move(deserializedParserConfig),
         std::move(SourceDescriptorConfig));
 }
