@@ -3,7 +3,7 @@
 # groups: [milestone, benchmark, large]
 
 # Source definitions
-SourceCSV manufacturing UINT64 creationTS UINT64 messageIndex INT16 mf01 INT16 mf02 INT16 mf03 INT16 pc13 INT16 pc14 INT16 pc15 INT16 pc25 INT16 pc26 INT16 pc27 INT16 res INT16 bm05 INT16 bm06 TESTDATA/large/manufacturing/manufacturing.csv
+SourceCSV manufacturing UINT64 creationTS UINT64 messageIndex INT16 mf01 INT16 mf02 INT16 mf03 INT16 pc13 INT16 pc14 INT16 pc15 INT16 pc25 INT16 pc26 INT16 pc27 INT16 res INT16 bm05 INT16 bm06 TESTDATA/manufacturing/manufacturing.csv
 
 SINK manufacturingSink UINT64 manufacturing$start UINT64 manufacturing$end INT16 manufacturing$avg_mf01 INT16 manufacturing$sum_mf02 INT16 manufacturing$min_mf03 UINT64 manufacturing$count INT16 manufacturing$sum_mf01
 
