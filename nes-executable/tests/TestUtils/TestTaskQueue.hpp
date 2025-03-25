@@ -121,9 +121,9 @@ class TestablePipelineStage : public ExecutablePipelineStage
 public:
     using ExecuteFunction = std::function<void(const Memory::TupleBuffer&, PipelineExecutionContext&)>;
     TestablePipelineStage() = default;
-    TestablePipelineStage(std::string stepName, ExecuteFunction testTask) { addStep(std::move(stepName), std::move(testTask)); }
+    TestablePipelineStage(const std::string& stepName, ExecuteFunction testTask) { addStep(stepName, std::move(testTask)); }
 
-    void addStep(std::string stepName, ExecuteFunction testTask) { taskSteps.push_back({stepName, std::move(testTask)}); }
+    void addStep(const std::string& stepName, ExecuteFunction testTask) { taskSteps.emplace_back(stepName, std::move(testTask)); }
 
     /// executes all task steps (ExecuteFunctions)
     void execute(const Memory::TupleBuffer& tupleBuffer, PipelineExecutionContext& pec) override;
@@ -209,13 +209,13 @@ public:
     void waitForCompletion();
 
 private:
+    folly::MPMCQueue<WorkTask> threadTasks;
     uint64_t numberOfWorkerThreads;
+    std::latch completionLatch;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     std::shared_ptr<std::vector<std::vector<Memory::TupleBuffer>>> resultBuffers;
-    folly::MPMCQueue<WorkTask> threadTasks;
-    std::latch completionLatch;
-    std::vector<std::jthread> threads;
     std::shared_ptr<ExecutablePipelineStage> eps;
+    std::vector<std::jthread> threads;
     Timer<std::chrono::microseconds> timer;
 
 

@@ -258,7 +258,7 @@ private:
     size_t tupleSizeInBytes{0};
     uint64_t numSchemaFields{0};
     std::string_view tupleBufferRawSV;
-    std::string_view partialTuple{};
+    std::string_view partialTuple;
     NES::Memory::TupleBuffer tupleBufferFormatted;
 
     size_t findIndexOfNextTuple() const { return tupleBufferRawSV.find(tupleDelimiter, currentTupleStartrawTB); }

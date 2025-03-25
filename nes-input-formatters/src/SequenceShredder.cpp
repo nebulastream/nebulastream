@@ -228,7 +228,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             break;
         }
         case WrappingMode::CHECK_WRAPPING_TO_LOWER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
+            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
             auto [spanningTupleEnd, isEndValid] = tryGetSpanningTupleEnd(
                 sequenceNumberBitIndex,
                 sequenceNumberBitmapOffset,
@@ -251,7 +251,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             break;
         }
         case WrappingMode::CHECK_WRAPPING_TO_HIGHER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
+            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
             auto [spanningTupleStart, isStartValid] = tryGetSpanningTupleStart(
                 sequenceNumberBitIndex,
                 sequenceNumberBitmapOffset,
