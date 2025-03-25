@@ -54,7 +54,7 @@ public:
 
     /// Gets the field index for a specific field name. If the field name not exists, we return an empty optional.
     /// @return either field index for fieldName or empty optional
-    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const std::string& fieldName) const;
+    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(const IdentifierList& fieldName) const;
 
     /// Calculates the offset in the tuple buffer of a particular field for a specific tuple.
     /// Depending on the concrete MemoryLayout, e.g., Columnar or Row - Layout, this may result in different calculations.
@@ -71,8 +71,8 @@ public:
     [[nodiscard]] const Schema& getSchema() const;
     [[nodiscard]] DataType getPhysicalType(uint64_t fieldIndex) const;
     [[nodiscard]] uint64_t getFieldSize(uint64_t fieldIndex) const;
-    [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
-    void setKeyFieldNames(const std::vector<std::string>& keyFields);
+    [[nodiscard]] std::vector<IdentifierList> getKeyFieldNames() const;
+    void setKeyFieldNames(const std::vector<IdentifierList>& keyFields);
     [[nodiscard]] virtual std::shared_ptr<MemoryLayout> deepCopy() const = 0;
     bool operator==(const MemoryLayout& rhs) const;
     bool operator!=(const MemoryLayout& rhs) const;
@@ -84,8 +84,8 @@ protected:
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
     std::vector<DataType> physicalTypes;
-    std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
-    std::vector<std::string> keyFieldNames;
+    std::unordered_map<IdentifierList, uint64_t> nameFieldIndexMap;
+    std::vector<IdentifierList> keyFieldNames;
 };
 
 

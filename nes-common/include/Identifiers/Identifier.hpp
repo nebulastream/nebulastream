@@ -26,7 +26,8 @@
 
 #include <Util/Ranges.hpp>
 
-
+namespace NES
+{
 class Identifier
 {
     std::string value;
@@ -58,10 +59,7 @@ public:
         return copy;
     }
 
-    friend bool operator==(const Identifier& lhs, const Identifier& rhs)
-    {
-        return lhs.toString() == rhs.toString();
-    }
+    friend bool operator==(const Identifier& lhs, const Identifier& rhs) { return lhs.toString() == rhs.toString(); }
     friend bool operator!=(const Identifier& lhs, const Identifier& rhs) { return !(lhs == rhs); }
 };
 
@@ -86,7 +84,7 @@ public:
     [[nodiscard]] constexpr decltype(identifiers.cbegin()) begin() const { return identifiers.cbegin(); }
     [[nodiscard]] constexpr decltype(identifiers.cend()) end() const { return identifiers.cend(); }
 
-    constexpr IdentifierList copyReplaceLast(const std::initializer_list<Identifier> replacements)
+    [[nodiscard]] constexpr IdentifierList copyReplaceLast(const std::initializer_list<Identifier> replacements) const
     {
         if (replacements.size() >= identifiers.size())
         {
@@ -94,11 +92,22 @@ public:
         }
         auto newIdentifiers = std::vector{identifiers};
 
-        const auto *iter = replacements.begin();
+        const auto* iter = replacements.begin();
         for (auto i = identifiers.size() - replacements.size(); i < identifiers.size(); ++i)
         {
             newIdentifiers[i] = *iter;
             iter++;
+        }
+        return IdentifierList{std::move(newIdentifiers)};
+    }
+
+    [[nodiscard]] constexpr IdentifierList copyAppendLast(const std::ranges::input_range auto&& toAppend) const
+    {
+        auto newIdentifiers = std::vector{identifiers};
+        newIdentifiers.reserve(identifiers.size() + toAppend.size());
+        for (const auto& identifier : toAppend)
+        {
+            newIdentifiers.push_back(identifier);
         }
         return IdentifierList{std::move(newIdentifiers)};
     }
@@ -114,9 +123,42 @@ public:
     // }
     friend bool operator==(const IdentifierList& lhs, const IdentifierList& rhs) { return lhs.identifiers == rhs.identifiers; }
     friend bool operator!=(const IdentifierList& lhs, const IdentifierList& rhs) { return !(lhs == rhs); }
+
+    IdentifierList operator+(const IdentifierList& other) const { return copyAppendLast(std::move(other)); }
+
+    IdentifierList operator+(const Identifier& other) const { return copyAppendLast(std::initializer_list{other}); }
 };
 
+static_assert(std::ranges::input_range<std::initializer_list<Identifier>>);
 
 
 static_assert(std::ranges::random_access_range<IdentifierList>);
 static_assert(std::ranges::sized_range<IdentifierList>);
+}
+
+template <>
+struct std::hash<NES::Identifier>
+{
+    std::size_t operator()(const NES::Identifier& arg) const noexcept { return std::hash<std::string>{}(arg.toString()); }
+};
+
+template <>
+struct std::hash<NES::IdentifierList>
+{
+    //taken from https://stackoverflow.com/a/72073933 from SO user see,
+    //based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
+    std::size_t operator()(const NES::IdentifierList& arg) const noexcept
+    {
+        std::size_t seed = std::ranges::size(arg);
+        constexpr auto hasher = std::hash<NES::Identifier>{};
+        for (const auto& identifier : arg)
+        {
+            auto hash = hasher(identifier);
+            hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+            hash = ((hash >> 16) ^ hash) * 0x45d9f3b;
+            hash = (hash >> 16) ^ hash;
+            seed ^= hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        }
+        return seed;
+    }
+};

@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
@@ -243,8 +244,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
 
     auto getJoinFieldNames = [](Schema inputSchema, const std::shared_ptr<NodeFunction>& joinFunction)
     {
-        std::vector<std::string> joinFieldNames;
-        std::vector<std::string> fieldNamesInJoinFunction;
+        std::vector<IdentifierList> joinFieldNames;
+        std::vector<IdentifierList> fieldNamesInJoinFunction;
         std::ranges::for_each(
             joinFunction->getAndFlattenAllChildren(false),
             [&fieldNamesInJoinFunction](const auto& child)
@@ -367,7 +368,7 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
     {
         /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
         auto timeStampFieldName = windowType->getTimeCharacteristic()->field.name;
-        auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+        auto timeStampFieldNameWithoutSourceName = *(std::ranges::begin(timeStampFieldName) + (std::ranges::size(timeStampFieldName) - 1));
 
         /// Lambda function for extracting the timestamp from a schema
         auto findTimeStampFieldName = [&](const Schema& schema)

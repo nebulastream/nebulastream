@@ -341,7 +341,7 @@ LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<PhysicalOperat
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
         = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema.getFieldNames());
+    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema.getUniqueFieldNames());
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerEmit(

@@ -43,8 +43,8 @@ public:
         const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
         Configurations::StreamJoinStrategy joinStrategy,
         std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
-        const std::vector<std::string>& joinFieldNamesLeft,
-        const std::vector<std::string>& joinFieldNamesRight,
+        const std::vector<IdentifierList>& joinFieldNamesLeft,
+        const std::vector<IdentifierList>& joinFieldNamesRight,
         WindowMetaData windowMetaData,
         OperatorId id = getNextOperatorId());
 

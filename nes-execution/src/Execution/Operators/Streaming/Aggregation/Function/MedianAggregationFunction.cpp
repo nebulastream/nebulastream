@@ -78,7 +78,7 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
-    const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema().getFieldNames();
+    const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema().getUniqueFieldNames();
     const auto numberOfEntries = invoke(
         +[](const Nautilus::Interface::PagedVector* pagedVector)
         {

@@ -156,7 +156,7 @@ void LogicalProjectionOperator::inferStringSignature()
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    std::vector<std::string> fields = outputSchema.getFieldNames();
+    std::vector<std::string> fields = outputSchema.getUniqueFieldNames();
     std::sort(fields.begin(), fields.end());
     signatureStream << "PROJECTION(";
     for (const auto& field : fields)

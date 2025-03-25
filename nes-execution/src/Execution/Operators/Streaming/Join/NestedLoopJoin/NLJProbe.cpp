@@ -140,8 +140,8 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
 
     const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
     const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema().getFieldNames();
-    const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema().getFieldNames();
+    const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema().getUniqueFieldNames();
+    const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema().getUniqueFieldNames();
 
     nautilus::val<uint64_t> leftItemPos = 0UL;
     for (auto leftIt = leftPagedVector.begin(leftKeyFields); leftIt != leftPagedVector.end(leftKeyFields); ++leftIt)

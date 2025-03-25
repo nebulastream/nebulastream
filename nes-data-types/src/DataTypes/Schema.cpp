@@ -31,7 +31,7 @@
 namespace NES
 {
 
-Schema::Field::Field(std::string name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType))
+Schema::Field::Field(IdentifierList name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType))
 {
 }
 
@@ -42,11 +42,11 @@ std::ostream& operator<<(std::ostream& os, const Schema::Field& field)
 
 Schema::Schema(const MemoryLayoutType memoryLayoutType) : memoryLayoutType(memoryLayoutType) {};
 
-Schema Schema::addField(std::string name, const DataType& dataType)
+Schema Schema::addField(const IdentifierList& name, const DataType& dataType)
 {
     return addField(std::move(name), dataType.type);
 }
-Schema Schema::addField(std::string name, const DataType::Type type)
+Schema Schema::addField(const IdentifierList& name, const DataType::Type type)
 {
     DataType dataType{type};
     sizeOfSchemaInBytes += dataType.getSizeInBytes();
@@ -56,7 +56,7 @@ Schema Schema::addField(std::string name, const DataType::Type type)
 }
 
 /// No need to repopulate nameToField, since the key does not change
-void Schema::replaceTypeOfField(const std::string& name, DataType type)
+void Schema::replaceTypeOfField(const IdentifierList& name, DataType type)
 {
     if (const auto fieldIdx = nameToField.find(name); fieldIdx != nameToField.end())
     {
@@ -67,7 +67,7 @@ void Schema::replaceTypeOfField(const std::string& name, DataType type)
     NES_WARNING("Could not find field with name '{}'", name);
 }
 
-std::optional<Schema::Field> Schema::getFieldByName(const std::string& fieldName) const
+std::optional<Schema::Field> Schema::getFieldByName(const IdentifierList& fieldName) const
 {
     PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
 
@@ -150,7 +150,7 @@ size_t Schema::getNumberOfFields() const
     return fields.size();
 }
 
-std::optional<std::string> Schema::getQualifierNameForSystemGeneratedFields() const
+std::optional<IdentifierList> Schema::getQualifierNameForSystemGeneratedFields() const
 {
     if (fields.empty())
     {
@@ -161,12 +161,12 @@ std::optional<std::string> Schema::getQualifierNameForSystemGeneratedFields() co
     return fields.front().name.substr(0, fields.front().name.find(ATTRIBUTE_NAME_SEPARATOR));
 }
 
-bool Schema::contains(const std::string& qualifiedFieldName) const
+bool Schema::contains(const IdentifierList& qualifiedFieldName) const
 {
     return nameToField.contains(qualifiedFieldName);
 }
 
-std::vector<std::string> Schema::getFieldNames() const
+std::vector<IdentifierList> Schema::getUniqueFieldNames() const
 {
     auto namesView = this->fields | std::views::transform([](const Field& field) { return field.name; });
     return {namesView.begin(), namesView.end()};
@@ -189,7 +189,7 @@ void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
     this->sizeOfSchemaInBytes += otherSchema.sizeOfSchemaInBytes;
 }
 
-void Schema::renameField(const std::string& oldFieldName, const std::string_view newFieldName)
+void Schema::renameField(const IdentifierList& oldFieldName, const IdentifierList newFieldName)
 {
     if (auto fieldToRename = nameToField.extract(oldFieldName); not fieldToRename.empty())
     {

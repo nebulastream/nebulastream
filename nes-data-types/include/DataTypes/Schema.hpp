@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include "Identifiers/Identifier.hpp"
+
+
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -41,12 +44,12 @@ public:
     struct Field
     {
         Field() = default;
-        Field(std::string name, DataType dataType);
+        Field(IdentifierList name, DataType dataType);
 
         friend std::ostream& operator<<(std::ostream& os, const Field& field);
         bool operator==(const Field&) const = default;
 
-        std::string name{};
+        IdentifierList name;
         DataType dataType{};
     };
 
@@ -71,38 +74,38 @@ public:
     bool operator==(const Schema& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
-    Schema addField(std::string name, const DataType& dataType);
-    Schema addField(std::string name, DataType::Type type);
+    Schema addField(const IdentifierList& name, const DataType& dataType);
+    Schema addField(const IdentifierList& name, DataType::Type type);
 
     /// Replaces the type of the field
-    void replaceTypeOfField(const std::string& name, DataType type);
+    void replaceTypeOfField(const IdentifierList& name, DataType type);
 
     /// @brief Returns the attribute field based on a qualified or unqualified field name.
     /// If an unqualified field name is given (e.g., `getFieldByName("fieldName")`), the function will match attribute fields with any source name.
     /// If a qualified field name is given (e.g., `getFieldByName("source$fieldName")`), the entire qualified field must match.
     /// Note that this function does not return a field with an ambiguous field name.
-    [[nodiscard]] std::optional<Field> getFieldByName(const std::string& fieldName) const;
+    [[nodiscard]] std::optional<Field> getFieldByName(const IdentifierList& fieldName) const;
 
     /// @Note: Raises a 'FieldNotFound' if the index is out of bounds.
     [[nodiscard]] Field getFieldAt(size_t index) const;
 
-    bool contains(const std::string& qualifiedFieldName) const;
+    bool contains(const IdentifierList& qualifiedFieldName) const;
 
-    [[nodiscard]] std::string getSourceNameQualifier() const;
+    [[nodiscard]] IdentifierList getSourceNameQualifier() const;
 
     /// get the qualifier of the source without ATTRIBUTE_NAME_SEPARATOR
-    std::optional<std::string> getQualifierNameForSystemGeneratedFields() const;
+    std::optional<IdentifierList> getQualifierNameForSystemGeneratedFields() const;
 
     /// method to get the qualifier of the source with ATTRIBUTE_NAME_SEPARATOR
-    std::string getQualifierNameForSystemGeneratedFieldsWithSeparator() const;
+    // std::string getQualifierNameForSystemGeneratedFieldsWithSeparator() const;
 
     [[nodiscard]] bool hasFields() const;
     [[nodiscard]] size_t getNumberOfFields() const;
-    std::vector<std::string> getFieldNames() const;
+    std::vector<IdentifierList> getUniqueFieldNames() const;
     [[nodiscard]] const std::vector<Field>& getFields() const;
     void assignToFields(const Schema& otherSchema);
     void appendFieldsFromOtherSchema(const Schema& otherSchema);
-    void renameField(const std::string& oldFieldName, std::string_view newFieldName);
+    void renameField(const IdentifierList& oldFieldName, IdentifierList newFieldName);
 
     size_t getSizeOfSchemaInBytes() const;
 
@@ -114,7 +117,8 @@ private:
     /// their corresponding indexes in the 'fields' vector. Thus, the below three members are private to prevent accidental manipulation.
     std::vector<Field> fields{};
     size_t sizeOfSchemaInBytes{0};
-    std::unordered_map<std::string, size_t> nameToField{};
+    std::unordered_map<IdentifierList, size_t> nameToField{};
+    IdentifierList currentPrefix{};
 };
 
 }

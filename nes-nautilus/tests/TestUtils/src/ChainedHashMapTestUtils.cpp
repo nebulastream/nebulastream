@@ -80,8 +80,8 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     /// Creating a combined schema with the keys and value types.
     auto inputSchemaKey = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(keyTypes);
     const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, inputSchemaKey.getNumberOfFields());
-    const auto fieldNamesKey = inputSchemaKey.getFieldNames();
-    const auto fieldNamesValue = inputSchemaValue.getFieldNames();
+    const auto fieldNamesKey = inputSchemaKey.getUniqueFieldNames();
+    const auto fieldNamesValue = inputSchemaValue.getUniqueFieldNames();
     inputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
     inputSchema.assignToFields(inputSchemaKey);
     inputSchema.appendFieldsFromOtherSchema(inputSchemaValue);
@@ -111,8 +111,8 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
         = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
 
     /// Storing the field names for the key and value
-    projectionKeys = inputSchemaKey.getFieldNames();
-    projectionValues = inputSchemaValue.getFieldNames();
+    projectionKeys = inputSchemaKey.getUniqueFieldNames();
+    projectionValues = inputSchemaValue.getUniqueFieldNames();
 
     /// Creating the buffers with the values for the keys and values with a specific seed
     inputBuffers = createMonotonicallyIncreasingValues(inputSchema, params.numberOfItems, *bufferManager);

@@ -70,8 +70,8 @@ struct StreamJoinOperators
 struct StreamJoinConfigs
 {
     StreamJoinConfigs(
-        const std::vector<std::string>& joinFieldNamesLeft,
-        const std::vector<std::string>& joinFieldNamesRight,
+        const std::vector<IdentifierList>& joinFieldNamesLeft,
+        const std::vector<IdentifierList>& joinFieldNamesRight,
         const uint64_t windowSize,
         const uint64_t windowSlide,
         const TimestampField& timeStampFieldLeft,
@@ -86,8 +86,8 @@ struct StreamJoinConfigs
         , joinStrategy(joinStrategy)
     {
     }
-    std::vector<std::string> joinFieldNamesLeft;
-    std::vector<std::string> joinFieldNamesRight;
+    std::vector<IdentifierList> joinFieldNamesLeft;
+    std::vector<IdentifierList> joinFieldNamesRight;
     const uint64_t windowSize;
     const uint64_t windowSlide;
     const TimestampField& timeStampFieldLeft;
