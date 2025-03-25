@@ -76,6 +76,7 @@ std::pair<SequenceShredder::SpanningTupleBuffers, SequenceShredder::SequenceNumb
     /// protect: write(resizeRequestCount), read(tail,numberOfBitmaps)
     {
         std::unique_lock lock(this->readWriteMutex);
+        isLastTuple = true;
         for (size_t offsetToTail = 1; offsetToTail <= this->numberOfBitmaps; ++offsetToTail)
         {
             const auto bitmapIndex = (this->tail + (this->numberOfBitmaps - offsetToTail)) & this->numberOfBitmapsModulo;
@@ -160,7 +161,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
         if constexpr (HasTupleDelimiter)
         {
             /// A buffer with a delimiter has two uses. To construct the leading, and to construct the trailing spanning tuple.
-            this->stagedBufferUses[sequenceNumberBufferPosition] = 2;
+            this->stagedBufferUses[sequenceNumberBufferPosition] = 3;
             this->tupleDelimiterBitmaps[sequenceNumberBitmapIndex] |= sequenceNumberBit;
         }
         else
@@ -517,6 +518,7 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWitho
         {
             incrementTail();
         }
+        isFirstTuple = false;
     }
 
     const size_t sequenceNumberIndex = sequenceNumber - spanningTuple.spanStart;
@@ -553,8 +555,10 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
         {
             const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
             /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-            const auto newUses = (returningMoreThanOnlyBufferOfSequenceNumber) ? --this->stagedBufferUses[adjustedSpanningTupleIndex]
-                                                                               : this->stagedBufferUses[adjustedSpanningTupleIndex];
+            const auto uses = static_cast<uint8_t>(spanningTupleIndex == sequenceNumber)
+                + static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
+            this->stagedBufferUses[adjustedSpanningTupleIndex] -= uses;
+            const auto newUses = this->stagedBufferUses[adjustedSpanningTupleIndex];
             auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex])
                                                : this->stagedBuffers[adjustedSpanningTupleIndex];
             returnBuffers.emplace_back(std::move(returnBuffer));
@@ -577,6 +581,7 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
         {
             incrementTail();
         }
+        isFirstTuple = false;
     }
 
     const size_t sequenceNumberIndex = sequenceNumber - startIndex;
