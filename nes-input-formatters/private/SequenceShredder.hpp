@@ -122,7 +122,7 @@ public:
     using BitmapType = uint64_t;
     using SequenceNumberType = SequenceNumber::Underlying;
     static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(BitmapType) * 8; /// 8 bits in one byte
-    static constexpr size_t INITIAL_NUM_BITMAPS = 8;
+    static constexpr size_t INITIAL_NUM_BITMAPS = 2048;
     using BitmapVectorType = std::vector<BitmapType>;
 
     struct StagedBuffer
@@ -146,7 +146,7 @@ private:
     static constexpr SequenceNumberType FIRST_BIT_MASK = 1;
     static constexpr SequenceNumberType LAST_BIT_MASK = MAX_VALUE - 1;
     static constexpr SequenceNumberType INVALID_SEQUENCE_NUMBER = SequenceNumber::INVALID;
-    static constexpr size_t MAX_NUMBER_OF_BITMAPS = 256;
+    static constexpr size_t MAX_NUMBER_OF_BITMAPS = 2048;
     static constexpr size_t SHIFT_TO_SECOND_BIT = 1;
     static constexpr size_t SHIFT_TO_THIRD_BIT = 2;
     static constexpr size_t MIN_NUMBER_OF_RESIZE_REQUESTS_BEFORE_INCREMENTING = 5;
@@ -203,7 +203,7 @@ private:
     std::vector<StagedBuffer> stagedBuffers;
     /// Keeps track of how often a specific buffer was used in spanning tuples
     /// If it reaches 0, we move the buffer out of the stagedBuffers, taking ownership away again
-    std::vector<std::shared_ptr<std::atomic<int8_t>>> stagedBufferUses;
+    std::vector<int8_t> stagedBufferUses;
 
     struct BitmapSnapshot
     {

@@ -44,7 +44,7 @@ SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter, const size
     , numberOfBitmapsModulo(initialNumBitmaps - 1)
     , resizeRequestCount(0)
     , stagedBuffers(std::vector<StagedBuffer>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
-    , stagedBufferUses(std::vector<std::shared_ptr<std::atomic<int8_t>>>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
+    , stagedBufferUses(std::vector<int8_t>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
 {
     this->tupleDelimiterBitmaps.shrink_to_fit();
     this->seenAndUsedBitmaps.shrink_to_fit();
@@ -55,7 +55,7 @@ SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter, const size
            .sizeOfBufferInBytes = sizeOfTupleDelimiter,
            .offsetOfFirstTupleDelimiter = 0,
            .offsetOfLastTupleDelimiter = 0};
-    this->stagedBufferUses[0] = std::make_shared<std::atomic<int8_t>>(1);
+    this->stagedBufferUses[0] = 1;
 };
 
 bool SequenceShredder::isInRange(const SequenceNumberType sequenceNumber)
@@ -107,7 +107,7 @@ std::pair<SequenceShredder::SpanningTupleBuffers, SequenceShredder::SequenceNumb
                 const auto bitOfLastSequenceNumber = FIRST_BIT_MASK << (offsetToNextLargerSequenceNumber - 1);
                 const auto hasTupleDelimiter = static_cast<bool>(tupleDelimiterBitmap & bitOfLastSequenceNumber);
                 const auto bufferIdxOfLargestSequenceNumber = largestSequenceNumber & (this->stagedBuffers.size() - 1);
-                const auto numUsesOfLastSequenceNumber = this->stagedBufferUses[bufferIdxOfLargestSequenceNumber]->load();
+                const auto numUsesOfLastSequenceNumber = this->stagedBufferUses[bufferIdxOfLargestSequenceNumber];
                 const auto largestSequenceNumberProducedBufferAlready = hasTupleDelimiter and numUsesOfLastSequenceNumber != 2;
                 /// We can safely use the next larger sequence number, if the there is at least one formatted buffer, with the current largest sequence number
                 const auto sequenceNumberToUseForFlushedTuple
@@ -160,13 +160,13 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
         if constexpr (HasTupleDelimiter)
         {
             /// A buffer with a delimiter has two uses. To construct the leading, and to construct the trailing spanning tuple.
-            this->stagedBufferUses[sequenceNumberBufferPosition] = std::make_shared<std::atomic<int8_t>>(2);
+            this->stagedBufferUses[sequenceNumberBufferPosition] = 2;
             this->tupleDelimiterBitmaps[sequenceNumberBitmapIndex] |= sequenceNumberBit;
         }
         else
         {
             /// A buffer without a delimiter can only construct a single spanning tuple.
-            this->stagedBufferUses[sequenceNumberBufferPosition] = std::make_shared<std::atomic<int8_t>>(1);
+            this->stagedBufferUses[sequenceNumberBufferPosition] = 1;
             this->seenAndUsedBitmaps[sequenceNumberBitmapIndex] |= sequenceNumberBit;
         }
 
@@ -495,19 +495,18 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWitho
     const auto numberOfBitmapsSnapshot = numberOfBitmapsModuloSnapshot + 1;
     const auto stagedBufferSizeModulo = (numberOfBitmapsSnapshot << BITMAP_SIZE_BIT_SHIFT) - 1;
 
-    for (auto spanningTupleIndex = spanningTuple.spanStart; spanningTupleIndex <= spanningTuple.spanEnd; ++spanningTupleIndex)
-    {
-        const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-        auto currentBuffer = this->stagedBuffers[adjustedSpanningTupleIndex];
-        /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-        const auto newUses = --(*this->stagedBufferUses[adjustedSpanningTupleIndex]);
-        auto returnBuffer = (newUses == 0) ? std::move(currentBuffer) : currentBuffer;
-        spanningTupleBuffers.emplace_back(std::move(returnBuffer));
-    }
-
     /// protect: read/write(tail,numberOfBitmaps,numberOfBitmapsModulo, seenAndUsedBitmaps), write(tupleDelimiterBitmaps, seenAndUsedBitmaps)
     {
         const std::scoped_lock lock(this->readWriteMutex);
+        for (auto spanningTupleIndex = spanningTuple.spanStart; spanningTupleIndex <= spanningTuple.spanEnd; ++spanningTupleIndex)
+        {
+            const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
+            /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
+            const auto newUses = --this->stagedBufferUses[adjustedSpanningTupleIndex];
+            auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex])
+                                               : this->stagedBuffers[adjustedSpanningTupleIndex];
+            spanningTupleBuffers.emplace_back(std::move(returnBuffer));
+        }
         /// Mark the spanning tuple as completed, by setting the start of the spanning tuple to 1 (if it is valid)
         this->seenAndUsedBitmaps[bitmapIndexOfSpanningTupleStart] |= validatedSpanningTupleStartBit;
         /// Check if the spanning tuple completed a bitmap (set the last bit in corresponding the seenAndUsed bitmap)
@@ -546,20 +545,20 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
     const auto returningMoreThanOnlyBufferOfSequenceNumber = startIndex < endIndex;
     const auto numberOfBitmapsSnapshot = numberOfBitmapsModuloSnapshot + 1;
     const auto stagedBufferSizeModulo = (numberOfBitmapsSnapshot * SIZE_OF_BITMAP_IN_BITS) - 1;
-    for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
-    {
-        const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-        auto currentBuffer = this->stagedBuffers[adjustedSpanningTupleIndex];
-        /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-        const auto newUses = (returningMoreThanOnlyBufferOfSequenceNumber) ? --(*this->stagedBufferUses[adjustedSpanningTupleIndex])
-                                                                           : this->stagedBufferUses[adjustedSpanningTupleIndex]->load();
-        auto returnBuffer = (newUses == 0) ? std::move(currentBuffer) : currentBuffer;
-        returnBuffers.emplace_back(std::move(returnBuffer));
-    }
 
     /// protect: read/write(tail,numberOfBitmaps,numberOfBitmapsModulo, seenAndUsedBitmaps), write(tupleDelimiterBitmaps, seenAndUsedBitmaps)
     {
         const std::scoped_lock lock(this->readWriteMutex);
+        for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
+        {
+            const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
+            /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
+            const auto newUses = (returningMoreThanOnlyBufferOfSequenceNumber) ? --this->stagedBufferUses[adjustedSpanningTupleIndex]
+                                                                               : this->stagedBufferUses[adjustedSpanningTupleIndex];
+            auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex])
+                                               : this->stagedBuffers[adjustedSpanningTupleIndex];
+            returnBuffers.emplace_back(std::move(returnBuffer));
+        }
         /// Mark the spanning tuple as completed, by setting the start of the spanning tuple to 1 (if it is valid)
         this->seenAndUsedBitmaps[bitmapIndexOfSpanningTupleStart] |= firstValidatedSpanningTupleStartBit;
         this->seenAndUsedBitmaps[bitmapIndexOfSpanningSequenceNumber] |= secondValidatedSpanningTupleStartBit;
