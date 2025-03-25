@@ -104,7 +104,7 @@ void FileBackedPagedVector::readFromFile(
         case Runtime::Execution::NO_SEPARATION_KEEP_KEYS:
         case Runtime::Execution::NO_SEPARATION: {
             appendPageIfFull(bufferProvider, memoryLayout);
-            auto lastPage = pages.back();
+            auto& lastPage = pages.back();
             auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
             const auto tupleSize = memoryLayout->getTupleSize();
             auto* lastPagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
@@ -207,7 +207,7 @@ void FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
         const auto* pagePtr = page.getBuffer();
         for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {
-            for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
+            for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
                 if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
                 {
@@ -240,11 +240,11 @@ void FileBackedPagedVector::writePayloadOnlyToFile(
         {
             // TODO appendPageIfFull only when page is full not for each tuple
             appendKeyPageIfFull(bufferProvider, keyFieldsOnlyMemoryLayout.get());
-            auto lastKeyPage = keyPages.back();
+            auto& lastKeyPage = keyPages.back();
             const auto numTuplesLastKeyPage = lastKeyPage.getNumberOfTuples();
             auto* lastKeyPagePtr = lastKeyPage.getBuffer() + numTuplesLastKeyPage * keyFieldsOnlyMemoryLayout->getTupleSize();
 
-            for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
+            for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
                 if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
                 {
@@ -277,7 +277,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
     {
         // TODO appendPageIfFull only when page is full not for each tuple
         appendPageIfFull(bufferProvider, memoryLayout);
-        auto lastPage = pages.back();
+        auto& lastPage = pages.back();
         const auto numTuplesLastPage = lastPage.getNumberOfTuples();
         auto* lastPagePtr = lastPage.getBuffer() + numTuplesLastPage * memoryLayout->getTupleSize();
 
@@ -293,7 +293,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
             }
         }
 
-        for (const auto [fieldType, fieldSize] : groupedFieldTypeSizes)
+        for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
         {
             if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
             {
@@ -303,10 +303,6 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
                     {
                         std::memcpy(lastPagePtr, keyPagePtr, fieldSize);
                         keyPagePtr += fieldSize;
-                    }
-                    else
-                    {
-                        return;
                     }
                 }
             }

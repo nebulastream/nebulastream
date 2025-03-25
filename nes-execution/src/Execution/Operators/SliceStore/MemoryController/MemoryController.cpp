@@ -161,7 +161,7 @@ void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
 {
     const std::lock_guard lock(fileWritersMutex);
 
-    for (const auto joinBuildSide : {QueryCompilation::JoinBuildSideType::Left, QueryCompilation::JoinBuildSideType::Right})
+    for (const auto& joinBuildSide : {QueryCompilation::JoinBuildSideType::Left, QueryCompilation::JoinBuildSideType::Right})
     {
         const auto filePathPrefix = constructFilePath(sliceEnd, joinBuildSide);
         const auto end = fileWriters.upper_bound(filePathPrefix + "\xFF");
