@@ -101,8 +101,13 @@ struct Query
 
 struct QueryExecutionInfo
 {
-    uint64_t executionTimeInNanos;
+    explicit QueryExecutionInfo(std::chrono::time_point<std::chrono::high_resolution_clock> startTime)
+        : passed(false), startTime(std::move(startTime))
+    {
+    }
     bool passed;
+    std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
+    std::chrono::time_point<std::chrono::high_resolution_clock> endTime;
 };
 
 struct RunningQuery

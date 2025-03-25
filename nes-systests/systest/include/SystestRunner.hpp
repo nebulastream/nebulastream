@@ -75,6 +75,6 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, uint64_t numConcurre
 /// function/arithmetical/FunctionMul:5..................................Failed
 /// SELECT * FROM s....
 /// Expected ............ | Actual 1, 2,3
-void printQueryResultToStdOut(const Query& query, const std::string& errorMessage, size_t queryCounter, size_t totalQueries);
+void printQueryResultToStdOut(const RunningQuery& runningQuery, const std::string& errorMessage, size_t queryCounter, size_t totalQueries);
 
 }
