@@ -61,5 +61,6 @@ private:
     std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> rightPagedVectors;
     std::mutex combinePagedVectorsMutex;
+    bool combinedPagedVectors;
 };
 }

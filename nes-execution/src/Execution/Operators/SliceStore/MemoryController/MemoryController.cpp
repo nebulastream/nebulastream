@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution
 MemoryController::MemoryController(const std::filesystem::path& workingDir, const QueryId queryId, const OriginId originId)
     : bufferSize(BUFFER_SIZE), poolSize(POOL_SIZE), workingDir(workingDir), queryId(queryId), originId(originId)
 {
-    if (bufferSize != 0)
+    if (bufferSize > 0)
     {
         readBuffer.resize(bufferSize * NUM_READ_BUFFERS);
         memoryPool.resize(bufferSize * poolSize);

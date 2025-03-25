@@ -24,7 +24,8 @@
 namespace NES::Runtime::Execution
 {
 
-NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const uint64_t numberOfWorkerThreads) : Slice(sliceStart, sliceEnd)
+NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const uint64_t numberOfWorkerThreads)
+    : Slice(sliceStart, sliceEnd), combinedPagedVectors(false)
 {
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
@@ -89,6 +90,7 @@ void NLJSlice::combinePagedVectors()
     /// For example, if different worker threads are emitting the same slice for different windows.
     /// To ensure correctness, we use a lock here
     const std::scoped_lock lock(combinePagedVectorsMutex);
+    combinedPagedVectors = true;
 
     /// Append all PagedVectors on the left join side and erase all items except for the first one
     /// We do this to ensure that we have only one PagedVector for each side during the probing phase
@@ -124,7 +126,7 @@ void NLJSlice::releaseCombinePagedVectorsMutex()
 
 bool NLJSlice::pagedVectorsCombined() const
 {
-    return leftPagedVectors.size() == 1 && rightPagedVectors.size() == 1;
+    return combinedPagedVectors;
 }
 
 size_t NLJSlice::getStateSizeInBytesForThreadId(

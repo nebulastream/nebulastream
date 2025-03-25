@@ -25,7 +25,7 @@ class MemoryController
 {
 public:
     static constexpr auto USE_PIPELINE_ID = false;
-    static constexpr auto BUFFER_SIZE = 0; // 4 KB buffer size
+    static constexpr auto BUFFER_SIZE = 1024 * 4; // 4 KB buffer size
     static constexpr auto POOL_SIZE = 1024 * 10; // 10 K pool size
 
     MemoryController(const std::filesystem::path& workingDir, QueryId queryId, OriginId originId);
