@@ -15,15 +15,14 @@
 #pragma once
 
 #include <chrono>
-#include <condition_variable>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <latch>
 #include <memory>
-#include <mutex>
 #include <ostream>
 #include <queue>
+#include <string>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -34,6 +33,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <folly/MPMCQueue.h>
+#include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
 
