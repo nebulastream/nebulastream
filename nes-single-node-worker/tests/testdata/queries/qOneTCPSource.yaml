@@ -20,6 +20,7 @@ physical:
       fieldDelimiter: ","
     sourceConfig:
       type: TCP
+      numberOfBuffersInSourceLocalBufferPool: 16
       socketDomain: AF_INET
       socketType: SOCK_STREAM
       socketPort: 0 # Generated in test to avoid port conflicts.

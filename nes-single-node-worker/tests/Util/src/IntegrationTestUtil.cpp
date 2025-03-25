@@ -471,6 +471,7 @@ void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQu
                     sourceDescriptor.schema,
                     sourceDescriptor.logicalSourceName,
                     sourceDescriptor.sourceType,
+                    sourceDescriptor.numberOfBuffersInSourceLocalBufferPool,
                     sourceDescriptor.parserConfig,
                     std::move(configUpdated));
 
@@ -510,6 +511,7 @@ void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPla
                         sourceDescriptor.schema,
                         sourceDescriptor.logicalSourceName,
                         sourceDescriptor.sourceType,
+                        sourceDescriptor.numberOfBuffersInSourceLocalBufferPool,
                         sourceDescriptor.parserConfig,
                         std::move(configUpdated));
 
