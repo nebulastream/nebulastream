@@ -44,6 +44,13 @@ public:
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();
 
+    /// Acquires and releases the lock for combinePagedVectorsMutex.
+    void acquireCombinePagedVectorsMutex();
+    void releaseCombinePagedVectorsMutex();
+
+    /// Returns true if both pagedVector vectors have a size of one. This does not acquire a lock for combinePagedVectorsMutex.
+    bool pagedVectorsCombined() const;
+
     /// Returns the size of the pages in the left and right PagedVectors in bytes
     size_t getStateSizeInBytesForThreadId(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,

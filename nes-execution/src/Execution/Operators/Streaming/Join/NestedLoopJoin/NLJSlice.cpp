@@ -112,6 +112,21 @@ void NLJSlice::combinePagedVectors()
     }
 }
 
+void NLJSlice::acquireCombinePagedVectorsMutex()
+{
+    combinePagedVectorsMutex.lock();
+}
+
+void NLJSlice::releaseCombinePagedVectorsMutex()
+{
+    combinePagedVectorsMutex.unlock();
+}
+
+bool NLJSlice::pagedVectorsCombined() const
+{
+    return leftPagedVectors.size() == 1 && rightPagedVectors.size() == 1;
+}
+
 size_t NLJSlice::getStateSizeInBytesForThreadId(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,

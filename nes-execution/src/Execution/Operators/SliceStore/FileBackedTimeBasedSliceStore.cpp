@@ -360,11 +360,21 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const auto slicesLocked = slices.rlock();
     for (const auto& [sliceEnd, slice] : *slicesLocked)
     {
-        auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, joinBuildSide);
-        const auto pagedVector = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, threadId);
-        pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, USE_FILE_LAYOUT);
-        pagedVector->truncate(USE_FILE_LAYOUT);
-        // TODO force flush FileWriter?
+        /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
+        const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
+        nljSlice->acquireCombinePagedVectorsMutex();
+
+        /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
+        if (!nljSlice->pagedVectorsCombined())
+        {
+            auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, joinBuildSide);
+            const auto pagedVector = nljSlice->getPagedVectorRef(joinBuildSide, threadId);
+            pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, USE_FILE_LAYOUT);
+            pagedVector->truncate(USE_FILE_LAYOUT);
+            // TODO force flush FileWriter?
+        }
+
+        nljSlice->releaseCombinePagedVectorsMutex();
     }
 
     // TODO predictiveRead()
@@ -382,12 +392,14 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
     if ((*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}])
     {
+        /// Slice has already been read from file for this build side
         return;
     }
 
     /// Read files in order by WorkerThreadId as all FileBackedPagedVectors have already been combined
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
+        /// Only read from file if the slice was written out earlier for this build side
         if (auto fileReader = memCtrl.getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
         {
             const auto pagedVector = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, WorkerThreadId(threadId));
