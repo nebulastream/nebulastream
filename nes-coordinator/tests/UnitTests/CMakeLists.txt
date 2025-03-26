@@ -78,6 +78,9 @@ add_nes_unit_test(statistic-ids-extractor-test "StatisticCollection/StatisticIds
 ### Async Task Executor ###
 add_nes_unit_test(async-task-executor-ut "Runtime/AsyncTaskExecutorTest.cpp")
 
+### Syntactic query validation ###
+add_nes_unit_test(syntactic-query-validation-ut "QueryValidation/SyntacticQueryValidationTest.cpp")
+
 ### Location Provider CSV Tests ###
 add_nes_unit_test(location-provider-csv-unit-tests "Spatial/LocationProviderCSVTest.cpp")
 

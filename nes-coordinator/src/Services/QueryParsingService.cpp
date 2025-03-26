@@ -95,7 +95,11 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
 
         std::string newQuery = queryCodeSnippet;
         // add return statement in front of input query
-        newQuery = NES::Util::replaceFirst(newQuery, "Query::from", "return Query::from");
+        if (newQuery.find("Query::sink2") != std::string::npos) {
+            newQuery = NES::Util::replaceFirst(newQuery, "Query::sink2", "return Query::sink2");
+        } else {
+            newQuery = NES::Util::replaceFirst(newQuery, "Query::from", "return Query::from");
+        }
 
         NES_DEBUG("QueryParsingService: parsed query = {}", newQuery);
         code << newQuery << std::endl;

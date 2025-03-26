@@ -54,10 +54,9 @@ class SyntacticQueryValidationTest : public Testing::BaseUnitTest {
 TEST_F(SyntacticQueryValidationTest, validQueryTest) {
     NES_INFO("Valid Query test");
 
-    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
-
     std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 && Attribute("id") < 100); )";
 
+    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
     syntacticQueryValidation->validate(queryString);
 }
 
@@ -106,6 +105,26 @@ TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
 
     TestForException(queryString);
 }
+
+// Test a query where a boolean operator is invalid (& instead of &&)
+TEST_F(SyntacticQueryValidationTest, validMultiJoinQuery) {
+    NES_INFO("Invalid bool operator test");
+
+    std::string queryString = R"(Query::sink2(NullOutputSinkDescriptor::create(),
+                              {Query::from("sourceName1").joinWith(Query::from("sourceName2"))
+                              .where(Attribute("m") == Attribute("m"))
+                              .window(TumblingWindow::of(EventTime(Attribute("time1")), Milliseconds(500))),
+                              Query::from("sourceName3").joinWith(Query::from("sourceName4"))
+                              .where(Attribute("m") == Attribute("m"))
+                              .window(TumblingWindow::of(EventTime(Attribute("time1")), Milliseconds(500))),
+                              Query::from("sourceName5").joinWith(Query::from("sourceName6"))
+                              .where(Attribute("m") == Attribute("m"))
+                              .window(TumblingWindow::of(EventTime(Attribute("time1")), Milliseconds(500)))});)";
+
+    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
+    EXPECT_NO_THROW(syntacticQueryValidation->validate(queryString));
+}
+
 
 // Test queryIdAndCatalogEntryMapping that calls "Attribute().as()" outside a Projection operator
 TEST_F(SyntacticQueryValidationTest, attributeRenameOutsideProjection) {
