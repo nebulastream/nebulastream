@@ -28,7 +28,7 @@ public:
      * @brief Creates a selection operator with a function.
      * @param function boolean predicate function
      */
-    Selection(std::unique_ptr<Runtime::Execution::Functions::Function> function) : function(std::move(function)) {};
+    explicit Selection(std::unique_ptr<Functions::Function> function) : function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:

@@ -149,10 +149,10 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
             medianFound2 = true;
         }
 
-        if (medianFound1 and medianFound2)
-        {
-            break;
-        }
+        // if (medianFound1 and medianFound2)
+        // {
+        //     break;
+        // }
     }
 
     /// Calculating the median value. Regardless if the number of entries is odd or even, we calculate the median as the average of the two middle values.
