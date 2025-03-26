@@ -106,7 +106,6 @@ TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
     TestForException(queryString);
 }
 
-// Test a query where a boolean operator is invalid (& instead of &&)
 TEST_F(SyntacticQueryValidationTest, validMultiJoinQuery) {
     NES_INFO("Invalid bool operator test");
 
