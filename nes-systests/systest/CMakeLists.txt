@@ -16,6 +16,7 @@ add_subdirectory(checksum)
 # Include necessary modules
 include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 include(ExternalData)
+set(ExternalData_OBJECT_STORES ${CMAKE_SOURCE_DIR}/.cache/testdata)
 set(ExternalData_URL_TEMPLATES
         "https://github.com/nebulastream/nes-datasets/releases/download/v1/%(algo)_%(hash)"
 )
