@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <exception>
+#include <string>
+#include <string_view>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -77,34 +80,32 @@ std::optional<const cpptrace::stacktrace_frame> Exception::where() const noexcep
     return std::nullopt;
 }
 
+constexpr std::string_view ansiColorReset = "\u001B[0m";
+
 std::string formatLogMessage(const Exception& e)
 {
-    if (e.where().has_value())
+    if constexpr (not logWithStacktrace)
     {
-        auto exceptionLocation = e.where().value();
-        if constexpr (logWithStacktrace)
-        {
-            constexpr auto ANSI_COLOR_RESET = "\u001B[0m";
-            return fmt::format(
-                "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n\n{}\n",
-                e.code(),
-                e.what(),
-                exceptionLocation.filename,
-                exceptionLocation.line,
-                exceptionLocation.column,
-                exceptionLocation.symbol,
-                ANSI_COLOR_RESET + e.trace().to_string(true));
-        }
-        return fmt::format(
-            "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n",
-            e.code(),
-            e.what(),
-            exceptionLocation.filename,
-            exceptionLocation.line,
-            exceptionLocation.column,
-            exceptionLocation.symbol);
+        return fmt::format("failed to process with error code ({}) : {}\n", e.code(), e.what());
     }
-    return fmt::format("failed to process with error code ({}) : {}\n\n{}\n", e.code(), e.what(), e.trace().to_string());
+
+    if (!e.where())
+    {
+        return fmt::format(
+            "failed to process with error code ({}) : {}\n\n{}{}\n", e.code(), e.what(), ansiColorReset, e.trace().to_string(true));
+    }
+
+    auto exceptionLocation = e.where().value();
+    return fmt::format(
+        "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n\n{}{}\n",
+        e.code(),
+        e.what(),
+        exceptionLocation.filename,
+        exceptionLocation.line,
+        exceptionLocation.column,
+        exceptionLocation.symbol,
+        ansiColorReset,
+        e.trace().to_string(true));
 }
 
 void tryLogCurrentException()
