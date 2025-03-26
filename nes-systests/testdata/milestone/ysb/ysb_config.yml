@@ -1,0 +1,27 @@
+input_tables:
+  - logicalSourceName: "ysb_input"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/ysb/ysb_data.csv"
+
+output_tables:
+  - name: "sink_q1"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/ysb/outputs/sink_q1"
+
+queries:
+  - >
+    SELECT 
+    campaign_id,
+    SUM(user_id) AS sum_user_id,
+    1000 * UNIX_TIMESTAMP(CAST(window_start AS STRING)) + EXTRACT(MILLISECOND FROM window_start) AS window_start,
+    1000 * UNIX_TIMESTAMP(CAST(window_end AS STRING)) + EXTRACT(MILLISECOND FROM window_end) AS window_end
+    FROM TABLE(
+        TUMBLE(
+            TABLE ysb_input,
+            DESCRIPTOR(eventTime),
+            INTERVAL '30' SECOND
+        )
+    )
+    WHERE event_type < 1
+    GROUP BY campaign_id, window_start, window_end;
+
+
+checksum_script: "/home/tim/Documents/work/nebulastream-public/cmake-build-debug-docker-code-coverage/nes-systests/systest/checksum/checksum"

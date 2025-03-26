@@ -1,0 +1,75 @@
+input_tables:
+  - logicalSourceName: "lrb"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/linear_road/lrb-data-small-ht.csv"
+
+output_tables:
+  - name: "sink_q1"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/linear_road/outputs/sink_q1"
+
+  - name: "sink_q_test"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/linear_road/outputs/sink_q2"
+
+
+queries:
+  - >
+    WITH computed_lrb AS (
+    SELECT 
+        highway,
+        direction,
+        (`position` / 5280.0) AS pos_div,
+        speed,
+        eventTime
+    FROM lrb
+    )
+    SELECT 
+        highway,
+        direction,
+        pos_div,
+        AVG(speed) AS avgSpeed,
+        1000 * UNIX_TIMESTAMP(CAST(window_start AS STRING)) + EXTRACT(MILLISECOND FROM window_start) as `window_start`,
+        1000 * UNIX_TIMESTAMP(CAST(window_end AS STRING)) + EXTRACT(MILLISECOND FROM window_end) as `window_end`
+    FROM TABLE(
+        HOP(
+            TABLE computed_lrb,
+            DESCRIPTOR(eventTime),
+            INTERVAL '1' SECOND,  -- slide interval
+            INTERVAL '5' MINUTE   -- window size (equivalent to 300 seconds)
+        )
+    )
+    GROUP BY highway, direction, pos_div, window_start, window_end
+    HAVING AVG(speed) < 40;
+  - >
+    WITH computed_lrb AS (
+    SELECT 
+        vehicle,
+        highway,
+        direction,
+        (`position` / 5280.0) AS pos_div,
+        eventTime
+    FROM lrb
+    )
+    SELECT 
+        vehicle,
+        highway,
+        direction,
+        pos_div,
+        COUNT(*) AS cntSpeed,
+        1000 * UNIX_TIMESTAMP(CAST(window_start AS STRING)) + EXTRACT(MILLISECOND FROM window_start) as `window_start`,
+        1000 * UNIX_TIMESTAMP(CAST(window_end AS STRING)) + EXTRACT(MILLISECOND FROM window_end) as `window_end`
+    FROM TABLE(
+        HOP(
+            TABLE computed_lrb,
+            DESCRIPTOR(eventTime),
+            INTERVAL '1' SECOND,
+            INTERVAL '30' SECOND
+        )
+    )
+    GROUP BY 
+        vehicle,
+        highway,
+        direction,
+        pos_div,
+        window_start,
+        window_end
+
+checksum_script: "/home/tim/Documents/work/nebulastream-public/cmake-build-debug-docker-code-coverage/nes-systests/systest/checksum/checksum"

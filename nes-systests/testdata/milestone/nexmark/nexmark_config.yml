@@ -1,0 +1,117 @@
+input_tables:
+  - logicalSourceName: "bid"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/nexmark/small/bid_small.csv"
+
+  - logicalSourceName: "auction"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/nexmark/small/auction_modified_small.csv"
+
+output_tables:
+  - name: "sink_q0"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/nexmark/small/outputs/sink_q0"
+
+  - name: "sink_q1"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/nexmark/small/outputs/sink_q1"
+
+  - name: "sink_q2"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/nexmark/small/outputs/sink_q2"
+
+  - name: "sink_q5"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/nexmark/small/outputs/sink_q5"
+
+  - name: "sink_q7"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/nexmark/small/outputs/sink_q7"
+
+  - name: "sink_8"
+    path: "/home/tim/Documents/work/nebulastream-public/nes-systests/testdata/milestone/nexmark/small/outputs/sink_q8"
+
+queries:
+  - >
+    SELECT * FROM bid;
+  - >
+    SELECT price * 89 / 100 AS price FROM bid;
+  - >
+    SELECT * FROM bid WHERE auctionId % 123 = 0;
+  - >
+    SELECT AuctionBids.auctionId, AuctionBids.num
+     FROM (
+       SELECT
+         auctionId,
+         count(*) AS num,
+         window_start AS starttime,
+         window_end AS endtime
+         FROM TABLE(
+                 HOP(TABLE bid, DESCRIPTOR(dateTime), INTERVAL '2' SECOND, INTERVAL '10' SECOND))
+         GROUP BY auctionId, window_start, window_end
+     ) AS AuctionBids
+     JOIN (
+       SELECT
+         max(CountBids.num) AS maxn,
+         CountBids.starttime,
+         CountBids.endtime
+       FROM (
+         SELECT
+           count(*) AS num,
+           window_start AS starttime,
+           window_end AS endtime
+         FROM TABLE(
+                    HOP(TABLE bid, DESCRIPTOR(dateTime), INTERVAL '2' SECOND, INTERVAL '10' SECOND))
+         GROUP BY auctionId, window_start, window_end
+         ) AS CountBids
+       GROUP BY CountBids.starttime, CountBids.endtime
+     ) AS MaxBids
+     ON AuctionBids.starttime = MaxBids.starttime AND
+        AuctionBids.endtime = MaxBids.endtime AND
+        AuctionBids.num >= MaxBids.maxn;
+  - >
+    SELECT 
+    1000 * UNIX_TIMESTAMP(CAST(B.starttime AS STRING)) + EXTRACT(MILLISECOND FROM B.starttime) AS `start`,
+    1000 * UNIX_TIMESTAMP(CAST(B.endtime AS STRING)) + EXTRACT(MILLISECOND FROM B.endtime) AS `end`,
+    1000 * UNIX_TIMESTAMP(CAST(B.dateTime AS STRING)) + EXTRACT(MILLISECOND FROM B.dateTime) AS `timestamp`,
+    B.auctionId, B.bidder, B.dateTime, B.price, 
+    1000 * UNIX_TIMESTAMP(CAST(A.dateTime AS STRING)) + EXTRACT(MILLISECOND FROM A.dateTime) AS `timestamp1`,
+    A.id AS auction1, A.seller, A.initialbid, A.reserve, A.expires, A.category
+    FROM (
+        SELECT auctionId, bidder, dateTime, price, 
+              window_start AS starttime,
+              window_end AS endtime
+        FROM TABLE(
+            TUMBLE(TABLE bid, DESCRIPTOR(dateTime), INTERVAL '12' HOUR)
+        )
+        GROUP BY auctionId, bidder, dateTime, price, window_start, window_end
+    ) B
+    JOIN (
+        SELECT id, seller, initialbid, reserve, expires, category, dateTime,
+              window_start AS starttime,
+              window_end AS endtime
+        FROM TABLE(
+            TUMBLE(TABLE auction, DESCRIPTOR(dateTime), INTERVAL '12' HOUR)
+        )
+        GROUP BY id, initialbid, reserve, expires, dateTime, seller, category, window_start, window_end
+    ) A
+    ON B.auctionId = A.id AND B.starttime = A.starttime AND B.endtime = A.endtime;
+  - >
+    SELECT
+         1000 * UNIX_TIMESTAMP(CAST(B.starttime AS STRING)) + EXTRACT(MILLISECOND FROM B.starttime) as `start`,
+         1000 * UNIX_TIMESTAMP(CAST(B.endtime AS STRING)) + EXTRACT(MILLISECOND FROM B.endtime) as `end`,
+         1000 * UNIX_TIMESTAMP(CAST(B.dateTime AS STRING)) + EXTRACT(MILLISECOND FROM B.dateTime) as `timestamp`,
+         B.auctionId, B.bidder, B.`datetime` as dateTime, B.price / 0, 1000 * UNIX_TIMESTAMP(CAST(A.dateTime AS STRING)) + EXTRACT(MILLISECOND FROM A.dateTime) as `timestamp1`,
+         A.id as auction1, A.initialbid / 1 - B.bidder, A.reserve, A.expires, A.seller, A.category    
+    FROM (
+      SELECT auctionId, bidder, dateTime, price, `datetime`,
+            window_start AS starttime,
+            window_end AS endtime
+      FROM TABLE(
+                TUMBLE(TABLE bid, DESCRIPTOR(dateTime), INTERVAL '100' SECOND(3)))
+      GROUP BY auctionId, bidder, dateTime, price, window_start, window_end, datetime
+    ) B
+    JOIN (
+      SELECT id, seller, initialbid, reserve, expires, category, dateTime,
+            window_start AS starttime,
+            window_end AS endtime
+      FROM TABLE(
+            TUMBLE(TABLE auction, DESCRIPTOR(dateTime), INTERVAL '100' SECOND(3)))
+      GROUP BY id, initialbid, reserve, expires, dateTime, seller, category, window_start, window_end
+    ) A
+    ON B.auctionId = A.id AND B.starttime = A.starttime AND B.endtime = A.endtime;
+
+checksum_script: "/home/tim/Documents/work/nebulastream-public/cmake-build-debug-docker-code-coverage/nes-systests/systest/checksum/checksum"
