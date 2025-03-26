@@ -153,14 +153,16 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
     {
         const std::scoped_lock lock(this->readWriteMutex);
         sequenceNumberBufferPosition = sequenceNumber & (this->stagedBuffers.size() - 1);
-        this->stagedBuffers.at(sequenceNumberBufferPosition) = std::move(stagedBufferOfSequenceNumber);
+        /// The SequenceShredder takes ownership of the staged buffer and returns it, once its uses reaches '0'
+        this->stagedBuffers[sequenceNumberBufferPosition] = stagedBufferOfSequenceNumber;
         sequenceNumberBitmapIndex
             = sequenceNumberBitmapCount & this->numberOfBitmapsModulo; /// Needs protection because numBitsModule is variable
 
-        /// Set the bit in the correct bitmap, depending on whether it contains a tuple delimiter or not.
+        /// Set the bit in the correct bitmap, depending on whether it contains a tuple delimiter or not
         if constexpr (HasTupleDelimiter)
         {
-            /// A buffer with a delimiter has two uses. To construct the leading, and to construct the trailing spanning tuple.
+            /// A buffer with a delimiter has three uses. To construct the leading, and to construct the trailing spanning tuple,
+            /// and to return the buffer, in case it contains full tuples
             this->stagedBufferUses[sequenceNumberBufferPosition] = 3;
             this->tupleDelimiterBitmaps[sequenceNumberBitmapIndex] |= sequenceNumberBit;
         }
@@ -295,7 +297,11 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
         : std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot))->numberOfBitmapsModulo;
     if constexpr (HasTupleDelimiter)
     {
-        return checkSpanningTupleWithTupleDelimiter(spanningTuple, sequenceNumber, numberOfBitmapsModuloSnapshot);
+        /// If two other threads already completed the leading and spanning tuple starting/ending in 'stagedBufferOfSequenceNumber', the
+        /// stagedBuffers vector might not contain stagedBufferOfSequenceNumber anymore, in that case, the SequenceShredder returns the
+        /// original 'stagedBufferOfSequenceNumber'
+        return checkSpanningTupleWithTupleDelimiter(
+            spanningTuple, sequenceNumber, numberOfBitmapsModuloSnapshot, std::move(stagedBufferOfSequenceNumber));
     }
     else
     {
@@ -304,7 +310,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
         {
             return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = 0, .stagedBuffers = {}};
         }
-        return checkSpanningTupleWithoutTupleDelimiter(spanningTuple, sequenceNumberBufferPosition, numberOfBitmapsModuloSnapshot);
+        return checkSpanningTupleWithoutTupleDelimiter(spanningTuple, sequenceNumber, numberOfBitmapsModuloSnapshot);
     }
 }
 /// Instantiate processSequenceNumber for both 'true' and 'false' so that the linker knows which templates to generate.
@@ -525,7 +531,10 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWitho
     return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = sequenceNumberIndex, .stagedBuffers = std::move(spanningTupleBuffers)};
 }
 SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithTupleDelimiter(
-    SpanningTuple spanningTuple, const SequenceNumberType sequenceNumber, const SequenceNumberType numberOfBitmapsModuloSnapshot)
+    SpanningTuple spanningTuple,
+    const SequenceNumberType sequenceNumber,
+    const SequenceNumberType numberOfBitmapsModuloSnapshot,
+    StagedBuffer stagedBufferOfSequenceNumber)
 {
     /// Determine bitmap count, bitmap index and position in bitmap of start of spanning tuple
     const auto bitmapOfSpanningTupleStart = (spanningTuple.spanStart) >> BITMAP_SIZE_BIT_SHIFT;
@@ -551,6 +560,20 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
     /// protect: read/write(tail,numberOfBitmaps,numberOfBitmapsModulo, seenAndUsedBitmaps), write(tupleDelimiterBitmaps, seenAndUsedBitmaps)
     {
         const std::scoped_lock lock(this->readWriteMutex);
+        /// If the sequenceNumber is behind the current tail, two other threads completed the leading/trailing spanning tuples starting/ending
+        /// in 'stagedBufferOfSequenceNumber'. Thus, the 'stagedBufferOfSequenceNumber' has no more uses and we can safely return it.
+        if (const auto minSequenceNumber = this->tail << BITMAP_SIZE_BIT_SHIFT; sequenceNumber < minSequenceNumber)
+        {
+            const auto adjustedSpanningTupleIndex = sequenceNumber & stagedBufferSizeModulo;
+            const auto sequenceShredderStillOwnsBuffer = stagedBuffers[adjustedSpanningTupleIndex].buffer.getBuffer() != nullptr
+                and (stagedBuffers[adjustedSpanningTupleIndex].buffer.getSequenceNumber()
+                    == stagedBufferOfSequenceNumber.buffer.getSequenceNumber());
+            /// If the sequence shredder still owns the 'stagedBufferOfSequenceNumber', return its ownerhip
+            auto returnBuffer = (sequenceShredderStillOwnsBuffer) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex])
+                                                                  : std::move(stagedBufferOfSequenceNumber);
+            returnBuffers.emplace_back(std::move(returnBuffer));
+            return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = sequenceNumber, .stagedBuffers = std::move(returnBuffers)};
+        }
         for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
         {
             const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;

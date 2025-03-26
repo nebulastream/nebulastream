@@ -122,7 +122,7 @@ public:
     using BitmapType = uint64_t;
     using SequenceNumberType = SequenceNumber::Underlying;
     static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(BitmapType) * 8; /// 8 bits in one byte
-    static constexpr size_t INITIAL_NUM_BITMAPS = 2048;
+    static constexpr size_t INITIAL_NUM_BITMAPS = 64;
     using BitmapVectorType = std::vector<BitmapType>;
 
     struct StagedBuffer
@@ -274,7 +274,10 @@ private:
 
     /// If a buffer contains a tuple delimiter, it is possible to find two spanning tuples, one ending in the sequence number and one starting with it.
     SpanningTupleBuffers checkSpanningTupleWithTupleDelimiter(
-        SpanningTuple spanningTuple, SequenceNumberType sequenceNumber, SequenceNumberType numberOfBitmapsModuloSnapshot);
+        SpanningTuple spanningTuple,
+        SequenceNumberType sequenceNumber,
+        SequenceNumberType numberOfBitmapsModuloSnapshot,
+        StagedBuffer stagedBufferOfSequenceNumber);
 };
 }
 
