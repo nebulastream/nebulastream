@@ -124,7 +124,10 @@ def main():
 
     if illegal_todos:
         fail = 1
-        print("\nError: The following TODOs lack whitespace, miss issue number or TODO is not in ALL CAPS:\n")
+        print()
+        print("Error: The following TODOs are not correctly formatted!")
+        print("       A correct TODO is e.g. '/// foo TODO #123 bar' or '/// TODO #123: foo bar'") # NO_TODO_CHECK
+        print()
         # sort by file, line_no
         illegal_todos.sort(key=lambda x: (x[0], x[1]))
         for file, line_no, line in illegal_todos:
