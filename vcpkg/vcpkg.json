@@ -38,6 +38,7 @@
     "gtest",
     "libcuckoo",
     "magic-enum",
+    "oatpp",
     "nlohmann-json",
     "nautilus",
     "spdlog",
