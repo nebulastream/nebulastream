@@ -28,22 +28,43 @@ std::shared_ptr<PhysicalOperatorWrapper> lowerOperatorRecursively(
     const LogicalOperator& logicalOperator,
     const RewriteRuleRegistryArguments& registryArgument)
 {
-    auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument);
+    auto ruleOptional = RewriteRuleRegistry::instance().create(
+        std::string(logicalOperator.getName()), registryArgument);
     if (!ruleOptional.has_value())
     {
-        throw UnknownPhysicalOperator("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+        throw UnknownPhysicalOperator("Rewrite rule for logical operator '{}' can't be resolved",
+                                      logicalOperator.getName());
     }
-    auto loweringResult = ruleOptional.value()->apply(logicalOperator);
 
+    auto loweringResult = ruleOptional.value()->apply(logicalOperator);
     auto logicalChildren = logicalOperator.getChildren();
 
-    /// Recursively lower logical children and attach to corresponding leaf operators
     for (size_t i = 0; i < logicalChildren.size(); ++i)
     {
         auto loweredChild = lowerOperatorRecursively(logicalChildren[i], registryArgument);
-        loweringResult.leafOperators[i]->children.push_back(loweredChild);
+        if (i < loweringResult.leafOperators.size() && loweringResult.leafOperators[i])
+        {
+            loweringResult.leafOperators[i]->children.push_back(loweredChild);
+        }
+        else if (loweringResult.root)
+        {
+            loweringResult.root->children.push_back(loweredChild);
+        }
     }
 
+    /// if the lowering result is empty e.g. for projection we bypass the operator
+    if (not loweringResult.root)
+    {
+        if (!logicalChildren.empty())
+        {
+            INVARIANT(logicalChildren.size() == 1, "Empty lowering results of operators with multiple keys are not supported");
+            return lowerOperatorRecursively(logicalChildren[0], registryArgument);
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
     return loweringResult.root;
 }
 
