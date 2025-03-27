@@ -14,9 +14,19 @@
 
 #pragma once
 
-namespace NES
+#include <memory>
+#include <Functions/FunctionProvider.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Plans/LogicalPlan.hpp>
+
+namespace NES::Optimizer
 {
-struct PipelineBreaker
+
+struct LowerToPhysicalProjection : AbstractRewriteRule
 {
+    LowerToPhysicalProjection(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
+    RewriteRuleResult apply(LogicalOperator logicalOperator) override;
+    const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
+
 }
