@@ -31,7 +31,6 @@ namespace NES
 
 struct LogicalFunctionConcept
 {
-public:
     virtual ~LogicalFunctionConcept() = default;
     [[nodiscard]] virtual std::string toString() const = 0;
 
@@ -45,6 +44,8 @@ public:
 
     [[nodiscard]] virtual std::string getType() const = 0;
     [[nodiscard]] virtual SerializableFunction serialize() const = 0;
+
+    [[nodiscard]] virtual bool operator==(const LogicalFunctionConcept& rhs) const = 0;
 };
 
 class NullLogicalFunction : public LogicalFunctionConcept
@@ -98,6 +99,12 @@ public:
     {
         return false;
     }
+
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept&) const override
+    {
+        return false;
+    }
+
 private:
     std::shared_ptr<DataType> stamp;
 };
@@ -238,6 +245,14 @@ private:
         void setStamp(std::shared_ptr<DataType> stamp) override
         {
             data.setStamp(stamp);
+        }
+
+        [[nodiscard]] bool operator==(const LogicalFunctionConcept& other) const override
+        {
+            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
+                return data.operator==(p->data);
+            }
+            return false;
         }
 
         [[nodiscard]] bool equals(const Concept& other) const override {

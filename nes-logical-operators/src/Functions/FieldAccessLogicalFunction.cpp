@@ -77,6 +77,33 @@ LogicalFunction FieldAccessLogicalFunction::withInferredStamp(Schema schema) con
     return copy;
 }
 
+const DataType& FieldAccessLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+void FieldAccessLogicalFunction::setStamp(std::shared_ptr<DataType> stamp)
+{
+    this->stamp = stamp;
+    auto copy = *this;
+    copy.stamp = stamp;
+};
+    return *this;
+std::vector<LogicalFunction> FieldAccessLogicalFunction::getChildren() const
+
+{
+    return {};
+};
+void FieldAccessLogicalFunction::setChildren(std::vector<LogicalFunction>)
+{
+    /// No op
+};
+    return *this;
+
+std::string FieldAccessLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 SerializableFunction FieldAccessLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;

@@ -32,17 +32,18 @@ public:
     [[nodiscard]] const FieldAccessLogicalFunction& getField() const;
     [[nodiscard]] LogicalFunction getAssignment() const;
 
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    bool inferStamp(Schema schema) override;
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+    [[nodiscard]] const DataType& getStamp() const override;
+    [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override;
+    [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const override;
 
-    const DataType& getStamp() const override {return *stamp;};
-    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
-    std::vector<LogicalFunction> getChildren()  const override { return {fieldAccess, logicalFunction}; };
-    void setChildren(std::vector<LogicalFunction> children)  override { fieldAccess = children[0].get<FieldAccessLogicalFunction>(); logicalFunction = children[1]; };
-    std::string getType() const override { return std::string(NAME);}
+    [[nodiscard]] std::vector<LogicalFunction> getChildren()  const override;
+    [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override;
 
+    [[nodiscard]] std::string getType() const override;
     [[nodiscard]] std::string toString() const override;
 
 private:

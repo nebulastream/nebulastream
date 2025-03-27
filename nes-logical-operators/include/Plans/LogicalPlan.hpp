@@ -199,9 +199,8 @@ public:
 
     [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
 
-private:
-    /// Owning pointers to the operators
     std::vector<LogicalOperator> rootOperators{};
+private:
     QueryId queryId = INVALID_QUERY_ID;
 };
 }

@@ -45,6 +45,46 @@ std::string ConcatLogicalFunction::toString() const
     return fmt::format("Concat({}, {})", left, right);
 }
 
+const DataType& ConcatLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction ConcatLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction ConcatLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> ConcatLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+LogicalFunction ConcatLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string ConcatLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 SerializableFunction ConcatLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;

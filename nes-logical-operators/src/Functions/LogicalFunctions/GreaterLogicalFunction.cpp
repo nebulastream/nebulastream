@@ -47,6 +47,46 @@ std::string GreaterLogicalFunction::toString() const
     return ss.str();
 }
 
+
+const DataType& GreaterLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction GreaterLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction GreaterLogicalFunction::withInferredStamp(Schema schema) const {
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return this->withChildren(newChildren);
+}
+
+std::vector<LogicalFunction> GreaterLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+LogicalFunction GreaterLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string GreaterLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 SerializableFunction GreaterLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;

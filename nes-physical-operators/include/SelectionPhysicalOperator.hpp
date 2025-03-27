@@ -27,15 +27,14 @@ namespace NES
 class SelectionPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit SelectionPhysicalOperator(Functions::PhysicalFunction function) : function(std::move(function)) {};
+    explicit SelectionPhysicalOperator(Functions::PhysicalFunction function) : function(function) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     std::optional<PhysicalOperator> getChild() const override { return child; }
-    void setChild(struct PhysicalOperator child) override { this->child = child; }
+    void setChild(PhysicalOperator child) override { this->child = child; }
 
 private:
     const Functions::PhysicalFunction function;
-    static constexpr bool PIPELINE_BREAKER = false;
     std::optional<PhysicalOperator> child;
 };
 }

@@ -31,14 +31,16 @@ public:
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
 
-    const DataType& getStamp() const override {return *stamp;};
-    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
-    bool inferStamp(Schema) override { return false; };
-    std::vector<LogicalFunction> getChildren()  const override { return {child}; };
-    void setChildren(std::vector<LogicalFunction> children)  override { child = children[0]; };
-    std::string getType() const override { return std::string(NAME);}
+    [[nodiscard]] const DataType& getStamp() const override;
+    [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override;
+    [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const override;
+
+    [[nodiscard]] std::vector<LogicalFunction> getChildren()  const override;
+    [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override;
+
+    [[nodiscard]] std::string getType() const override;
     [[nodiscard]] std::string toString() const override;
 
 private:

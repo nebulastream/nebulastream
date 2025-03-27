@@ -48,6 +48,45 @@ std::string SqrtLogicalFunction::toString() const
     return ss.str();
 }
 
+const DataType& SqrtLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction SqrtLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction SqrtLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const
+{
+    return {child};
+};
+
+LogicalFunction SqrtLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.child = children[0];
+    return copy;
+};
+
+std::string SqrtLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 SerializableFunction SqrtLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
