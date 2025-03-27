@@ -49,13 +49,12 @@ QueryId SingleNodeWorker::registerQuery(LogicalPlan plan)
 {
     try
     {
+        plan.setQueryId(QueryId(queryIdCounter++));
         auto queryPlan = optimizer->optimize(plan);
-
         listener->onEvent(SubmitQuerySystemEvent{queryPlan->queryId, plan.toString()});
-
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(std::move(queryPlan));
-
-        return nodeEngine->registerCompiledQueryPlan(compiler->compileQuery(std::move(request)));
+        auto result = compiler->compileQuery(std::move(request));
+        return nodeEngine->registerCompiledQueryPlan(std::move(result));
     }
     catch (Exception& e)
     {
