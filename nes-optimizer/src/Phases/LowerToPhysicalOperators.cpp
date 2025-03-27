@@ -36,8 +36,6 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     auto loweringResult = ruleOptional.value()->apply(logicalOperator);
 
     auto logicalChildren = logicalOperator.getChildren();
-    INVARIANT(
-        logicalChildren.size() != loweringResult.leafOperators.size(), "Mismatch: Logical children count and physical leaf operators");
 
     /// Recursively lower logical children and attach to corresponding leaf operators
     for (size_t i = 0; i < logicalChildren.size(); ++i)
@@ -60,6 +58,7 @@ std::unique_ptr<PhysicalPlan> apply(QueryPlan queryPlan)
         rootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
     }
 
+    INVARIANT(rootOperators.size() >= 1, "Plan must have at least one root operator");
     return std::make_unique<PhysicalPlan>(queryPlan.getQueryId(), std::move(rootOperators));
 }
 }
