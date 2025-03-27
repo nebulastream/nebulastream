@@ -24,16 +24,27 @@ namespace NES
 struct PipelinedQueryPlan final
 {
     PipelinedQueryPlan(QueryId id) : queryId(id) {};
-    [[nodiscard]] std::string toString() const
-    {
+    [[nodiscard]] std::string toString() const {
         std::stringstream ss;
-        for(const auto& pipe : pipelines)
-        {
-            ss << pipe->toString();
+        ss << "PipelinedQueryPlan for Query: " << queryId << "\n";
+        ss << "Number of root pipelines: " << pipelines.size() << "\n";
+        for (size_t i = 0; i < pipelines.size(); ++i) {
+            ss << "------------------\n";
+            ss << "Root Pipeline " << i << ":\n";
+            printPipelineRecursive(pipelines[i].get(), ss, 1);
         }
         return ss.str();
-
     }
+
+    void printPipelineRecursive(const NES::Pipeline* pipe, std::stringstream& ss, int indentLevel) const {
+        std::string indent(indentLevel * 2, ' ');
+        ss << indent << pipe->toString() << "\n";
+        for (const auto& succ : pipe->successorPipelines) {
+            ss << indent << "Successor Pipeline:\n";
+            printPipelineRecursive(succ.get(), ss, indentLevel + 1);
+        }
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t);
 
     std::vector<std::unique_ptr<Pipeline>> releaseSourcePipelines()
