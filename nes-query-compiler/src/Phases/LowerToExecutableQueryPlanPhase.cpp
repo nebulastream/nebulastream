@@ -28,176 +28,152 @@
 #include <ExecutableQueryPlan.hpp>
 #include <Pipeline.hpp>
 #include <options.hpp>
-#include <PipelinedQueryPlan.hpp>
 
 namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
 {
 
-struct LoweringContext {
-    struct PredecessorRef {
-        std::variant<OriginId, std::weak_ptr<ExecutablePipeline>> ref;
-        explicit PredecessorRef(const OriginId& id) : ref(id) {}
-        explicit PredecessorRef(const std::weak_ptr<ExecutablePipeline>& ptr) : ref(ptr) {}
-    };
-
-    void addSink(std::shared_ptr<Sinks::SinkDescriptor> sinkDesc, const PredecessorRef& predecessor) {
-        auto sinkDescShared = std::shared_ptr<Sinks::SinkDescriptor>(std::move(sinkDesc));
-        sinks[sinkDescShared].push_back(predecessor);
-    }
-
-
-    void addSource(const Source& source) {
-        sources.push_back(source);
-    }
-
-    void registerPipeline(PipelineId id, const std::shared_ptr<ExecutablePipeline>& pipeline) {
-        pipelineToExecutableMap[id] = pipeline;
-    }
-
-    [[nodiscard]] std::optional<std::shared_ptr<ExecutablePipeline>> getPipeline(PipelineId id) const {
-        auto it = pipelineToExecutableMap.find(id);
-        if (it != pipelineToExecutableMap.end()) {
-            return it->second;
-        }
-        return std::nullopt;
-    }
-
-    [[nodiscard]] const std::vector<Source>& getSources() const { return sources; }
-
-    [[nodiscard]] std::vector<std::shared_ptr<ExecutablePipeline>> getPipelines() const {
-        std::vector<std::shared_ptr<ExecutablePipeline>> result;
-        for (const auto& [id, pipeline] : pipelineToExecutableMap) {
-            result.push_back(pipeline);
-        }
-        return result;
-    }
-
-    [[nodiscard]] std::vector<Sink> getSinks() const {
-        std::vector<Sink> result;
-        for (const auto& [sinkDescriptor, preds] : sinks) {
-            std::vector<std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>> convertedPreds;
-            convertedPreds.reserve(preds.size());
-            for (const auto& predRef : preds) {
-                convertedPreds.push_back(predRef.ref);
-            }
-            result.emplace_back(sinkDescriptor, convertedPreds);
-        }
-        return result;
-    }
-
-    nautilus::engine::Options options;
-
-private:
+namespace
+{
+struct LoweringContext
+{
     std::unordered_map<
         std::shared_ptr<Sinks::SinkDescriptor>,
-        std::vector<PredecessorRef>> sinks;
+        std::vector<std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>>>
+        sinks;
     std::vector<Source> sources;
     std::unordered_map<PipelineId, std::shared_ptr<ExecutablePipeline>> pipelineToExecutableMap;
 };
 
-/// Forward decl.
-std::optional<std::shared_ptr<ExecutablePipeline>> processSuccessor(
-    const OriginId& predecessor,
-    std::unique_ptr<Pipeline> pipeline,
-    const PipelinedQueryPlan& pipelineQueryPlan,
+/// forward declaring processOperatorPipeline() and processSink() to avoid a cyclic dependency between processSuccessor() and processOperatorPipeline()
+using Predecessor = std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>;
+using Successor = std::optional<std::shared_ptr<ExecutablePipeline>>;
+std::shared_ptr<ExecutablePipeline> processOperatorPipeline(
+    const std::shared_ptr<Pipeline>& pipeline,
+    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext);
+void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline, LoweringContext& loweringContext);
+Successor processSuccessor(
+    const Predecessor& predecessor,
+    const std::shared_ptr<Pipeline>& pipeline,
+    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext);
+Source processSource(
+    const std::shared_ptr<Pipeline>& pipeline,
+    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
     LoweringContext& loweringContext);
 
-
-std::shared_ptr<ExecutablePipeline> processPipeline(
-    std::unique_ptr<Pipeline> pipeline,
-    const PipelinedQueryPlan& pipelineQueryPlan,
+Successor processSuccessor(
+    const Predecessor& predecessor,
+    const std::shared_ptr<Pipeline>& pipeline,
+    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
     LoweringContext& loweringContext)
 {
-    PRECONDITION(pipeline != nullptr, "Expected an OperatorPipeline");
-
-    loweringContext.options.setOption("toConsole", true);
-    loweringContext.options.setOption("toFile", true);
-
-    auto providerArguments = ExecutablePipelineProviderRegistryArguments{};
-    if (const auto provider = ExecutablePipelineProviderRegistry::instance().create(pipeline->getProviderType(), providerArguments))
-    {
-        auto pipelineStage = provider.value()->create(std::move(pipeline), pipeline->releaseOperatorHandlers(), loweringContext.options);
-        auto executablePipeline = ExecutablePipeline::create(
-            PipelineId(pipeline->pipelineId),
-            std::move(pipelineStage),
-            {});
-
-        const LoweringContext::PredecessorRef predecessorRef(executablePipeline);
-        for (auto& successor : pipeline->successorPipelines)
-        {
-            const OriginId& origin = std::get<OriginId>(predecessorRef.ref);
-            if (auto executableSuccessor = processSuccessor(origin, std::move(successor), pipelineQueryPlan, loweringContext))
-            {
-                executablePipeline->successors.emplace_back(*executableSuccessor);
-            }
-        }
-
-        loweringContext.registerPipeline(pipeline->pipelineId, executablePipeline);
-        return executablePipeline;
-    }
-    throw UnknownExecutablePipelineProviderType("ExecutablePipelineProvider plugin of type: {} not registered.", pipeline->getProviderType());
-}
-
-Source processSource(std::unique_ptr<Pipeline> pipeline, const PipelinedQueryPlan& pipelineQueryPlan, LoweringContext& loweringContext)
-{
-    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->toString());
-
-    std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
-    for (auto& successor : pipeline->successorPipelines)
-    {
-        if (auto executableSuccessor = processSuccessor(pipeline->rootOperator.get<SourcePhysicalOperator>()->getOriginId(),
-                                                        std::move(successor),
-                                                        pipelineQueryPlan,
-                                                        loweringContext))
-        {
-            executableSuccessorPipelines.push_back(*executableSuccessor);
-        }
-    }
-
-    Source newSource(pipeline->rootOperator.get<SourcePhysicalOperator>()->getOriginId(),
-                     pipeline->rootOperator.get<SourcePhysicalOperator>()->getDescriptor(),
-                     executableSuccessorPipelines);
-    loweringContext.addSource(newSource);
-    return newSource;
-}
-
-
-void processSink(const OriginId& predecessor, std::unique_ptr<Pipeline> pipeline, LoweringContext& loweringContext)
-{
-    PRECONDITION(pipeline->isSinkPipeline(), "expected a SinkPipeline {}", pipeline->toString());
-    auto sinkOperatorDescriptor = pipeline->rootOperator.get<SinkPhysicalOperator>()->getDescriptor();
-    loweringContext.addSink(sinkOperatorDescriptor, LoweringContext::PredecessorRef(predecessor));
-}
-
-std::optional<std::shared_ptr<ExecutablePipeline>> processSuccessor(
-    const OriginId& predecessor,
-    std::unique_ptr<Pipeline> pipeline,
-    const PipelinedQueryPlan& pipelineQueryPlan,
-    LoweringContext& loweringContext)
-{
-    PRECONDITION(pipeline->isSinkPipeline() or pipeline->isOperatorPipeline(),
-                 "expected a Sink or Pipeline {}", pipeline->toString());
+    PRECONDITION(pipeline->isSinkPipeline() || pipeline->isOperatorPipeline(), "expected a Sink or OperatorPipeline");
 
     if (pipeline->isSinkPipeline())
     {
-        processSink(predecessor, std::move(pipeline), loweringContext);
-        return std::nullopt;
+        processSink(predecessor, pipeline, loweringContext);
+        return {};
     }
-    return processPipeline(std::move(pipeline), pipelineQueryPlan, loweringContext);
+    return processOperatorPipeline(pipeline, pipelineQueryPlan, loweringContext);
 }
 
-
-std::unique_ptr<CompiledQueryPlan> apply(std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan)
+Source processSource(
+    const std::shared_ptr<Pipeline>& pipeline,
+    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext)
 {
-    LoweringContext loweringContext;
-    for (auto& pipeline : pipelineQueryPlan->releaseSourcePipelines())
+    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->toString());
+
+    /// Convert logical source descriptor to actual source descriptor
+    const auto sourceOperator =  pipeline->rootOperator.get<SourcePhysicalOperator>();
+
+    std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
+    for (const auto& successor : pipeline->successorPipelines)
     {
-        processSource(std::move(pipeline), *pipelineQueryPlan, loweringContext);
+        if (auto executableSuccessor = processSuccessor(sourceOperator->getOriginId(), successor, pipelineQueryPlan, loweringContext))
+        {
+            executableSuccessorPipelines.emplace_back(*executableSuccessor);
+        }
     }
 
-    auto pipelines = loweringContext.getPipelines();
-    auto sinks = loweringContext.getSinks();
-    return std::make_unique<CompiledQueryPlan>(pipelineQueryPlan->queryId, std::move(pipelines), std::move(sinks), loweringContext.getSources());
+    loweringContext.sources.emplace_back(
+        sourceOperator->getOriginId(), sourceOperator->getDescriptor(), executableSuccessorPipelines);
+    return loweringContext.sources.back();
+}
+
+void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline, LoweringContext& loweringContext)
+{
+    const auto sinkOperator = pipeline->rootOperator.get<SinkPhysicalOperator>()->getDescriptor();
+    loweringContext.sinks[sinkOperator].emplace_back(predecessor);
+}
+
+std::unique_ptr<ExecutablePipelineStage> getStage(const std::shared_ptr<Pipeline>& pipeline)
+{
+    nautilus::engine::Options options;
+    options.setOption("toConsole", true);
+    options.setOption("toFile", true);
+
+    auto providerArguments = ExecutablePipelineProviderRegistryArguments{};
+    const auto provider = ExecutablePipelineProviderRegistry::instance().create(pipeline->getProviderType(), providerArguments);
+    INVARIANT(provider, "Cannot find ExecutablePipelineProvider");
+    return  provider.value()->create(pipeline, pipeline->operatorHandlers, options);
+}
+
+std::shared_ptr<ExecutablePipeline> processOperatorPipeline(
+    const std::shared_ptr<Pipeline>& pipeline,
+    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
+    LoweringContext& loweringContext)
+{
+    /// check if the particular pipeline already exist in the pipeline map.
+    if (const auto executable = loweringContext.pipelineToExecutableMap.find(pipeline->pipelineId);
+        executable != loweringContext.pipelineToExecutableMap.end())
+    {
+        return executable->second;
+    }
+    auto executablePipeline
+        = ExecutablePipeline::create(PipelineId(pipeline->pipelineId), getStage(pipeline), {});
+
+    for (const auto& successor : pipeline->successorPipelines)
+    {
+        if (auto executableSuccessor = processSuccessor(executablePipeline, successor, pipelineQueryPlan, loweringContext))
+        {
+            executablePipeline->successors.emplace_back(*executableSuccessor);
+        }
+    }
+
+    loweringContext.pipelineToExecutableMap.emplace(pipeline->pipelineId, executablePipeline);
+    return executablePipeline;
+}
+}
+
+std::unique_ptr<CompiledQueryPlan>
+LowerToExecutableQueryPlanPhase::apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan)
+{
+    LoweringContext loweringContext;
+    ///Process all pipelines recursively.
+    auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
+    for (const auto& pipeline : sourcePipelines)
+    {
+        processSource(pipeline, pipelineQueryPlan, loweringContext);
+    }
+
+    auto tempPipelineMap = std::move(loweringContext.pipelineToExecutableMap);
+    std::vector<decltype(tempPipelineMap.begin()->second)> pipelines;
+    pipelines.reserve(tempPipelineMap.size());
+    for (auto& entry : tempPipelineMap) {
+        pipelines.push_back(std::move(entry.second));
+    }
+
+    auto tempSinks = std::move(loweringContext.sinks);
+    std::vector<Sink> sinks;
+    sinks.reserve(tempSinks.size());
+    for (auto& descriptorAndPredecessors : tempSinks) {
+        sinks.push_back(Sink(descriptorAndPredecessors.first, std::move(descriptorAndPredecessors.second)));
+    }
+
+    return CompiledQueryPlan::create(
+        pipelineQueryPlan->queryId, std::move(pipelines), std::move(sinks), std::move(loweringContext.sources));
 }
 
 }
