@@ -171,7 +171,7 @@ Sources::SourceDescriptor createSourceDescriptor(
         std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
 }
 
-void validateAndSetSinkDescriptors(const LogicalPlan& query, const QueryConfig& config)
+void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config)
 {
     auto sinkOperators = query.getOperatorByType<SinkLogicalOperator>();
     PRECONDITION(
@@ -184,8 +184,9 @@ void validateAndSetSinkDescriptors(const LogicalPlan& query, const QueryConfig& 
     if (const auto& sink = config.sinks.find(sinkRef); sink != config.sinks.end())
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
-        sinkOperators.at(0).sinkDescriptor =
-            std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+        auto copy = sinkOperators.at(0);
+        copy.sinkDescriptor = std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+        query.replaceOperator(sinkOperators.at(0), copy);
     }
     else
     {
@@ -232,10 +233,16 @@ std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& co
     std::cout << queryplan->toString() << "\n";
 
     validateAndSetSinkDescriptors(*queryplan, config);
+    LegacyOptimizer::TypeInferencePhase::apply(*queryplan, *sourceCatalog);
+    std::cout << queryplan->toString() << "\n";
     LegacyOptimizer::LogicalSourceExpansionRule::apply(*queryplan, *sourceCatalog);
+    std::cout << queryplan->toString() << "\n";
     LegacyOptimizer::TypeInferencePhase::apply(*queryplan);
+    std::cout << queryplan->toString() << "\n";
     LegacyOptimizer::OriginIdInferencePhase::apply(*queryplan);
+    std::cout << queryplan->toString() << "\n";
     LegacyOptimizer::TypeInferencePhase::apply(*queryplan);
+    std::cout << queryplan->toString() << "\n";
 
     NES_INFO("QEP:\n {}", queryplan->toString());
     return queryplan;

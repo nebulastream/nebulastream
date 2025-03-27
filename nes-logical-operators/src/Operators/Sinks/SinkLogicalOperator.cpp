@@ -45,19 +45,11 @@ std::string_view SinkLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-/*
-bool SinkLogicalOperator::inferSchema()
+bool SinkLogicalOperator::inferSchema(Schema inputSchema)
 {
-    const auto result = UnaryLogicalOperator::inferSchema();
-
-    if (result && sinkDescriptor)
-    {
-        sinkDescriptor->schema = this->outputSchema;
-    }
-
-    return result && sinkDescriptor;
+    sinkDescriptor->schema = inputSchema;
+    return true;
 }
- */
 
 Optimizer::TraitSet SinkLogicalOperator::getTraitSet() const
 {

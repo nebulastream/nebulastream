@@ -46,7 +46,7 @@ public:
     [[nodiscard]]std::shared_ptr<Windowing::WindowType> getWindowType() const;
     void setWindowType(std::shared_ptr<Windowing::WindowType> windowType);
 
-    [[nodiscard]]std::vector<FieldAccessLogicalFunction> getKeys() const;
+    [[nodiscard]] std::vector<FieldAccessLogicalFunction> getKeys() const;
 
     [[nodiscard]] OriginId getOriginId() const;
 

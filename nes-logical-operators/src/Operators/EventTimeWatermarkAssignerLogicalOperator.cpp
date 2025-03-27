@@ -52,16 +52,39 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(LogicalOperatorConcep
     return false;
 }
 
-/*
-bool EventTimeWatermarkAssignerLogicalOperator::inferSchema()
+
+bool EventTimeWatermarkAssignerLogicalOperator::inferSchema(Schema)
 {
-    if (!UnaryLogicalOperator::inferSchema())
+    std::vector<Schema> distinctSchemas;
+
+    /// Infer schema of all child operators
+    for (auto& child : children)
     {
-        return false;
+        if (!child.inferSchema(outputSchema))
+        {
+            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
+        }
     }
+
+    /// Identify different type of schemas from children operators
+    for (const auto& child : children)
+    {
+        auto childOutputSchema = child.getInputSchemas()[0];
+        auto found = std::find_if(
+            distinctSchemas.begin(),
+            distinctSchemas.end(),
+            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
+        if (found == distinctSchemas.end())
+        {
+            distinctSchemas.push_back(childOutputSchema);
+        }
+    }
+
+    ///validate that only two different type of schema were present
+    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
     return true;
 }
-*/
+
 
 Optimizer::TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() const
 {

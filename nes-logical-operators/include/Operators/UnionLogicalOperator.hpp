@@ -27,7 +27,6 @@ public:
     explicit UnionLogicalOperator();
 
     /// Operator specific member
-    bool inferSchema();
     void inferInputOrigins();
 
     /// LogicalOperatorConcept member
@@ -49,6 +48,9 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+
+    [[nodiscard]] bool inferSchema(Schema inputSchema) override;
+
 
 private:
     /// Operator specific member

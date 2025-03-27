@@ -30,10 +30,7 @@ struct SinkLogicalOperator final : public LogicalOperatorConcept
     SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) {};
 
     /// Operator specific member
-    /// TODO
     [[nodiscard]] std::string getSinkName() const;
-
-    bool inferSchema();
     virtual void inferInputOrigins(){};
     std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
 
@@ -59,6 +56,9 @@ struct SinkLogicalOperator final : public LogicalOperatorConcept
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+
+    [[nodiscard]] bool inferSchema(Schema inputSchema) override;
+
 
 private:
     /// Operator specific member

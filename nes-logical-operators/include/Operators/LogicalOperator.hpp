@@ -64,6 +64,8 @@ struct LogicalOperatorConcept
     virtual void setInputOriginIds(std::vector<std::vector<OriginId>>) = 0;
     virtual void setOutputOriginIds(std::vector<OriginId>) = 0;
 
+    virtual bool inferSchema(Schema inputSchema) = 0;
+
     OperatorId id = INVALID_OPERATOR_ID;
 };
 
@@ -112,6 +114,11 @@ public:
         PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
     }
     void setOutputOriginIds(std::vector<OriginId>) override
+    {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+
+    virtual bool inferSchema(Schema) override
     {
         PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
     }
@@ -220,6 +227,11 @@ public:
         return self->setOutputOriginIds(ids);
     }
 
+    bool inferSchema(Schema inputSchema)
+    {
+        return self->inferSchema(inputSchema);
+    }
+
 private:
     struct Concept : LogicalOperatorConcept {
         explicit Concept(OperatorId existingId) : LogicalOperatorConcept(existingId) {}
@@ -299,6 +311,11 @@ private:
         void setOutputOriginIds(std::vector<OriginId> ids) override
         {
             return data.setOutputOriginIds(ids);
+        }
+
+        bool inferSchema(Schema inputSchema) override
+        {
+            return data.inferSchema(inputSchema);
         }
 
         [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override {

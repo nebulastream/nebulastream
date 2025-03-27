@@ -44,7 +44,8 @@ bool SourceNameLogicalOperator::operator==(LogicalOperatorConcept const& rhs) co
     return false;
 
 }
-bool SourceNameLogicalOperator::inferSchema()
+
+bool SourceNameLogicalOperator::inferSchema(Schema)
 {
     inputSchema = schema;
     outputSchema = schema;

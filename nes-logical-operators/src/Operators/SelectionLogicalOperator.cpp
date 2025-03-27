@@ -59,21 +59,43 @@ std::string SelectionLogicalOperator::toString() const
     return ss.str();
 }
 
-/*
-bool SelectionLogicalOperator::inferSchema()
+bool SelectionLogicalOperator::inferSchema(Schema inputSchema)
 {
-    if (!UnaryLogicalOperator::inferSchema())
+    std::vector<Schema> distinctSchemas;
+
+    /// Infer schema of all child operators
+    for (auto& child : children)
     {
-        return false;
+        if (!child.inferSchema(outputSchema))
+        {
+            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
+        }
     }
-    predicate->inferStamp(inputSchema);
-    if (predicate->getStamp() != Boolean())
+
+    /// Identify different type of schemas from children operators
+    for (const auto& child : children)
+    {
+        auto childOutputSchema = child.getInputSchemas()[0];
+        auto found = std::find_if(
+            distinctSchemas.begin(),
+            distinctSchemas.end(),
+            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
+        if (found == distinctSchemas.end())
+        {
+            distinctSchemas.push_back(childOutputSchema);
+        }
+    }
+
+    ///validate that only two different type of schema were present
+    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
+
+    predicate.inferStamp(inputSchema);
+    if (predicate.getStamp() != Boolean())
     {
         throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
     }
     return true;
 }
-*/
 
 Optimizer::TraitSet SelectionLogicalOperator::getTraitSet() const
 {

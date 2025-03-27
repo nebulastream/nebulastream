@@ -30,9 +30,6 @@ public:
     explicit SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema);
 
     /// Operator specific member
-    /// Returns the result schema of a source operator, which is defined by the source descriptor.
-    bool inferSchema();
-
     void inferInputOrigins();
 
     [[nodiscard]] std::string getLogicalSourceName() const;
@@ -60,6 +57,8 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+
+    [[nodiscard]] bool inferSchema(Schema inputSchema) override;
 
 private:
     /// Operator specific member

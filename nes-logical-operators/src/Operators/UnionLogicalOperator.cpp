@@ -49,13 +49,26 @@ std::string UnionLogicalOperator::toString() const
     return ss.str();
 }
 
-/*
-bool UnionLogicalOperator::inferSchema()
+bool UnionLogicalOperator::inferSchema(Schema)
 {
-    if (!BinaryLogicalOperator::inferSchema())
+    std::vector<Schema> distinctSchemas;
+
+    /// Identify different type of schemas from children operators
+    for (const auto& child : children)
     {
-        return false;
+        auto childOutputSchema = child.getInputSchemas()[0];
+        auto found = std::find_if(
+            distinctSchemas.begin(),
+            distinctSchemas.end(),
+            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
+        if (found == distinctSchemas.end())
+        {
+            distinctSchemas.push_back(childOutputSchema);
+        }
     }
+
+    ///validate that only two different type of schema were present
+    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
 
     leftInputSchema.clear();
     rightInputSchema.clear();
@@ -87,10 +100,19 @@ bool UnionLogicalOperator::inferSchema()
     outputSchema.clear();
     outputSchema.copyFields(leftInputSchema);
     outputSchema.setLayoutType(leftInputSchema.getLayoutType());
+
+    /// Infer schema of all child operators
+    for (auto& child : children)
+    {
+        if (!child.inferSchema(outputSchema))
+        {
+            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
+        }
+    }
     return true;
 }
 
-
+/*
 void UnionLogicalOperator::inferInputOrigins()
 {
     /// in the default case we collect all input origins from the children/upstream operators

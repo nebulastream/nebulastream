@@ -193,8 +193,37 @@ struct PhysicalOperatorWrapper
 
     PhysicalOperator physicalOperator;
     std::optional<Schema> inputSchema, outputSchema;
-    std::vector<std::unique_ptr<PhysicalOperatorWrapper>> children;
+    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children {};
 
+    bool isPipelineBreaker = false;
+    std::optional<std::shared_ptr<OperatorHandler>> handler;
+    std::optional<OperatorHandlerId> handlerId;
+
+    bool isScan = false;
+    bool isEmit = false;
+
+    /// @brief Returns a string representation of the wrapper.
+    std::string toString() const {
+        std::ostringstream oss;
+        oss << "PhysicalOperatorWrapper(";
+        oss << "Operator: " << physicalOperator.toString() << ", ";
+        oss << "InputSchema: " << (inputSchema ? "present" : "none") << ", ";
+        oss << "OutputSchema: " << (outputSchema ? "present" : "none") << ", ";
+        oss << "isScan: " << std::boolalpha << isScan << ", ";
+        oss << "isEmit: " << std::boolalpha << isEmit;
+        if (!children.empty()) {
+            oss << ", Children: [";
+            for (size_t i = 0; i < children.size(); ++i)
+            {
+                oss << children[i]->toString();
+                if (i + 1 < children.size())
+                    oss << ", ";
+            }
+            oss << "]";
+        }
+        oss << ")";
+        return oss.str();
+    }
 };
 }
 

@@ -33,7 +33,6 @@ public:
 
 
     /// Operator specific member
-    //bool inferSchema() override;
     std::vector<std::string> getGroupByKeyNames() const;
     bool isKeyed() const;
 
@@ -43,7 +42,7 @@ public:
     [[nodiscard]] Windowing::WindowType& getWindowType() const;
     void setWindowType(std::unique_ptr<Windowing::WindowType> windowType);
 
-    [[nodiscard]] const std::vector<FieldAccessLogicalFunction>& getKeys() const;
+    [[nodiscard]] std::vector<FieldAccessLogicalFunction> getKeys() const;
 
     [[nodiscard]] OriginId getOriginId() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
@@ -71,6 +70,8 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+
+    [[nodiscard]] bool inferSchema(Schema inputSchema) override;
 
 private:
     /// Operator specific member

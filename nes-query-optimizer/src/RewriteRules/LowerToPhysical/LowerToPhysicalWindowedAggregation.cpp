@@ -207,7 +207,7 @@ RewriteRuleResult LowerToPhysicalWindowedAggregation::apply(LogicalOperator logi
 
     std::vector<Functions::PhysicalFunction> keyFunctions;
     uint64_t keySize = 0;
-    auto& keyFunctionLogical = aggregation.getKeys();
+    auto keyFunctionLogical = aggregation.getKeys();
     for (auto& nodeFunctionKey : keyFunctionLogical)
     {
         const DefaultPhysicalTypeFactory typeFactory;

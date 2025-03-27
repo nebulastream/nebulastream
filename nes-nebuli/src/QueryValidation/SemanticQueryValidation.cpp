@@ -45,7 +45,7 @@ void SemanticQueryValidation::validate(LogicalPlan& queryPlan, Catalogs::Source:
 
     try
     {
-        TypeInferencePhase::apply(queryPlan.getOperatorByType<SourceNameLogicalOperator>(), sourceCatalog);
+        TypeInferencePhase::apply(queryPlan, sourceCatalog);
         TypeInferencePhase::apply(queryPlan);
     }
     catch (std::exception& e)

@@ -26,8 +26,6 @@ class EventTimeWatermarkAssignerLogicalOperator : public LogicalOperatorConcept
 public:
     EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, Windowing::TimeUnit unit);
 
-    /// Operator specific member
-    //bool inferSchema();
 
     /// LogicalOperatorConcept member
     [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
@@ -48,6 +46,9 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+
+    [[nodiscard]] bool inferSchema(Schema inputSchema) override;
+
 
 private:
     /// Operator specific member

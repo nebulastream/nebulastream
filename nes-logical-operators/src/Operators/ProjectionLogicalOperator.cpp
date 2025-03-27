@@ -90,40 +90,65 @@ std::string ProjectionLogicalOperator::toString() const
         fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(function); }), ", "));
 }
 
-/*
-bool ProjectionLogicalOperator::inferSchema()
+
+bool ProjectionLogicalOperator::inferSchema(Schema inputSchema)
 {
-    if (!UnaryLogicalOperator::inferSchema())
+    std::vector<Schema> distinctSchemas;
+
+    /// Infer schema of all child operators
+    for (auto& child : children)
     {
-        return false;
+        if (!child.inferSchema(inputSchema))
+        {
+            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
+        }
     }
+
+    /// Identify different type of schemas from children operators
+    for (const auto& child : children)
+    {
+        auto childOutputSchema = child.getInputSchemas()[0];
+        auto found = std::find_if(
+            distinctSchemas.begin(),
+            distinctSchemas.end(),
+            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
+        if (found == distinctSchemas.end())
+        {
+            distinctSchemas.push_back(childOutputSchema);
+        }
+    }
+
+    ///validate that only two different type of schema were present
+    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
+
     NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema.toString(), outputSchema.toString(), toString());
     outputSchema.clear();
-    for (const auto& function : functions)
+    for (auto& function : functions)
     {
         // Infer the stamp for the function using the input schema.
-        function->inferStamp(inputSchema);
+        function = function.withInferredStamp(inputSchema);
 
         // Try casting to FieldAccessLogicalFunction.
-        if (auto* fieldAccess = dynamic_cast<FieldAccessLogicalFunction*>(function.get()))
+        if (function.tryGet<FieldAccessLogicalFunction>())
         {
-            outputSchema.addField(fieldAccess->getFieldName(), fieldAccess->getStamp().clone());
+            auto fieldAccess = function.get<FieldAccessLogicalFunction>();
+            outputSchema.addField(fieldAccess.getFieldName(), fieldAccess.getStamp().clone());
         }
         // Otherwise, try casting to FieldAssignmentLogicalFunction.
-        else if (auto* fieldAssignment = dynamic_cast<FieldAssignmentLogicalFunction*>(function.get()))
+        else if (function.tryGet<FieldAssignmentLogicalFunction>())
         {
-            outputSchema.addField(fieldAssignment->getField().getFieldName(), fieldAssignment->getField().getStamp().clone());
+            auto fieldAssignment = function.get<FieldAssignmentLogicalFunction>();
+            outputSchema.addField(fieldAssignment.getField().getFieldName(), fieldAssignment.getField().getStamp().clone());
         }
         else
         {
-            throw CannotInferSchema(fmt::format(
+            throw CannotInferSchema(
                 "ProjectionLogicalOperator: Function has to be a FieldAccessLogicalFunction, a RenameLogicalFunction, or a FieldAssignmentLogicalFunction, but it was a {}",
-                *function));
+                function);
         }
     }
     return true;
 }
- */
 
 Optimizer::TraitSet ProjectionLogicalOperator::getTraitSet() const
 {

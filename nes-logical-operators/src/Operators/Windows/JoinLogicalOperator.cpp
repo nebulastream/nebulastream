@@ -61,13 +61,36 @@ std::string JoinLogicalOperator::toString() const
         getJoinFunction());
 }
 
-/*
-bool JoinLogicalOperator::inferSchema()
+
+bool JoinLogicalOperator::inferSchema(Schema)
 {
-    if (!BinaryLogicalOperator::inferSchema())
+    std::vector<Schema> distinctSchemas;
+
+    /// Infer schema of all child operators
+    for (auto& child : children)
     {
-        return false;
+        if (!child.inferSchema(outputSchema))
+        {
+            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
+        }
     }
+
+    /// Identify different type of schemas from children operators
+    for (const auto& child : children)
+    {
+        auto childOutputSchema = child.getInputSchemas()[0];
+        auto found = std::find_if(
+            distinctSchemas.begin(),
+            distinctSchemas.end(),
+            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
+        if (found == distinctSchemas.end())
+        {
+            distinctSchemas.push_back(childOutputSchema);
+        }
+    }
+
+    ///validate that only two different type of schema were present
+    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
 
     ///validate that only two different type of schema were present
     if (distinctSchemas.size() != 2)
@@ -76,8 +99,8 @@ bool JoinLogicalOperator::inferSchema()
     }
 
     ///reset left and right schema
-    leftInputSchema.clear();
-    rightInputSchema.clear();
+    this->leftSourceSchema.clear();
+    this->rightSourceSchema.clear();
 
     /// Finds the join schema that contains the joinKey and copies the fields to the input schema, if found
     auto findSchemaInDistinctSchemas = [&](FieldAccessLogicalFunction& joinKey, Schema& inputSchema)
@@ -98,7 +121,7 @@ bool JoinLogicalOperator::inferSchema()
         }
         return false;
     };
-
+/*
     NES_DEBUG("JoinLogicalOperator: Iterate over all LogicalFunction to check if join field is in schema.");
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<LogicalFunction*> visitedFunctions;
@@ -180,8 +203,9 @@ bool JoinLogicalOperator::inferSchema()
     setOutputSchema(outputSchema);
     updateSchemas(leftInputSchema, rightInputSchema);
     return true;
+    */
+    return true;
 }
- */
 
 Optimizer::TraitSet JoinLogicalOperator::getTraitSet() const
 {

@@ -30,7 +30,7 @@ class TypeInferencePhase
 public:
     /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
     /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
-    static void apply(const std::vector<SourceNameLogicalOperator>& sourceOperators, Catalogs::Source::SourceCatalog& sourceCatalog);
+    static void apply(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog);
 
     /// Performs type inference on the given query plan.
     /// This involves the following steps.

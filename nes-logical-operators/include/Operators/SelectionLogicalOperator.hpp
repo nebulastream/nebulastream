@@ -31,7 +31,6 @@ public:
 
     /// Operator specific member
     [[nodiscard]] LogicalFunction getPredicate() const;
-    bool inferSchema();
 
     /// LogicalOperatorConcept member
     [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
@@ -52,6 +51,8 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+
+    [[nodiscard]] bool inferSchema(Schema inputSchema) override;
 
 
     /// Serialization
