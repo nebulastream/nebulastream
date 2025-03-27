@@ -13,6 +13,8 @@
 */
 
 #include <memory>
+
+#include <Execution/Operators/Streaming/Aggregation/AggregationProbe.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <fmt/format.h>
@@ -26,7 +28,7 @@ NES::Windowing::TimeUnit NES::QueryCompilation::TimestampField::getUnit() const
     return unit;
 }
 
-const std::string& NES::QueryCompilation::TimestampField::getName() const
+const NES::IdentifierList& NES::QueryCompilation::TimestampField::getName() const
 {
     return fieldName;
 }
@@ -44,14 +46,14 @@ std::unique_ptr<NES::Runtime::Execution::Operators::TimeFunction> NES::QueryComp
 }
 NES::QueryCompilation::TimestampField NES::QueryCompilation::TimestampField::IngestionTime()
 {
-    return {"IngestionTime", Windowing::TimeUnit(1), INGESTION_TIME};
+    return {Identifier{"IngestionTime", false}, Windowing::TimeUnit(1), INGESTION_TIME};
 }
-NES::QueryCompilation::TimestampField NES::QueryCompilation::TimestampField::EventTime(std::string fieldName, Windowing::TimeUnit tm)
+NES::QueryCompilation::TimestampField NES::QueryCompilation::TimestampField::EventTime(IdentifierList fieldName, Windowing::TimeUnit tm)
 {
     return {std::move(fieldName), std::move(tm), EVENT_TIME};
 }
 NES::QueryCompilation::TimestampField::TimestampField(
-    std::string fieldName, Windowing::TimeUnit unit, const TimeFunctionType timeFunctionType)
+    IdentifierList fieldName, Windowing::TimeUnit unit, const TimeFunctionType timeFunctionType)
     : fieldName(std::move(fieldName)), unit(std::move(unit)), timeFunctionType(timeFunctionType)
 {
 }

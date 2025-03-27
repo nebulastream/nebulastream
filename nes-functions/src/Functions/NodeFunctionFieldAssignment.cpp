@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <ranges>
 #include <sstream>
 #include <utility>
 #include <DataTypes/DataType.hpp>
@@ -23,12 +24,13 @@
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "ErrorHandling.hpp"
 
 namespace NES
 {
-NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(DataType stamp) : NodeFunctionBinary(std::move(stamp), "FieldAssignment") {};
+NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(DataType stamp) : NodeFunctionBinary(std::move(stamp), "FieldAssignment") { };
 
-NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other) : NodeFunctionBinary(other) {};
+NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other) : NodeFunctionBinary(other) { };
 
 std::shared_ptr<NodeFunctionFieldAssignment> NodeFunctionFieldAssignment::create(
     const std::shared_ptr<NodeFunctionFieldAccess>& fieldAccess, const std::shared_ptr<NodeFunction>& nodeFunction)
@@ -87,15 +89,19 @@ void NodeFunctionFieldAssignment::inferStamp(const Schema& schema)
     }
     else
     {
+        //Logic was overtaken from the old schema, I don't really understand it
+        //TODO check if this logic can be simplified
+
         ///Since this is a new field add the source name from schema
         ///Check if field name is already fully qualified
-        if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
+        PRECONDITION(std::ranges::size(fieldName) > 0, "Field name cannot be empty");
+        if (std::ranges::size(fieldName) > 1)
         {
             field->updateFieldName(fieldName);
         }
         else
         {
-            field->updateFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
+            field->updateFieldName(schema.getCommonPrefix() + fieldName);
         }
     }
 

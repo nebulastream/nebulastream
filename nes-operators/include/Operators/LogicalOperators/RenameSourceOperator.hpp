@@ -29,7 +29,7 @@ namespace NES
 class RenameSourceOperator : public LogicalUnaryOperator
 {
 public:
-    explicit RenameSourceOperator(const std::string& newSourceName, OperatorId id);
+    explicit RenameSourceOperator(const IdentifierList& newSourceName, OperatorId id);
     ~RenameSourceOperator() override = default;
 
     /**
@@ -47,14 +47,13 @@ public:
     */
     bool inferSchema() override;
     std::shared_ptr<Operator> copy() override;
-    void inferStringSignature() override;
-    std::string getNewSourceName() const;
+    IdentifierList getNewSourceName() const;
 
 protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    const std::string newSourceName;
+    const IdentifierList newSourceName;
 };
 
 }

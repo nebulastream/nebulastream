@@ -49,7 +49,7 @@ public:
      * Name of the field
      * @return reference to the field name
      */
-    [[nodiscard]] const std::string& getName() const;
+    [[nodiscard]] const IdentifierList& getName() const;
 
     [[nodiscard]] const TimeFunctionType& getTimeFunctionType() const;
 
@@ -59,12 +59,12 @@ public:
      */
     [[nodiscard]] std::unique_ptr<Runtime::Execution::Operators::TimeFunction> toTimeFunction() const;
     static TimestampField IngestionTime();
-    static TimestampField EventTime(std::string fieldName, Windowing::TimeUnit tm);
+    static TimestampField EventTime(IdentifierList fieldName, Windowing::TimeUnit tm);
 
 private:
-    std::string fieldName;
+    IdentifierList fieldName;
     Windowing::TimeUnit unit;
     TimeFunctionType timeFunctionType;
-    TimestampField(std::string fieldName, Windowing::TimeUnit unit, TimeFunctionType timeFunctionType);
+    TimestampField(IdentifierList fieldName, Windowing::TimeUnit unit, TimeFunctionType timeFunctionType);
 };
 }

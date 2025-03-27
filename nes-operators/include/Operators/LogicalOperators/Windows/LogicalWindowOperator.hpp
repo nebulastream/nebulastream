@@ -32,13 +32,12 @@ public:
     [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
     std::shared_ptr<Operator> copy() override;
     bool inferSchema() override;
-    void inferStringSignature() override;
 
     /**
      * @brief returns the names of every key used in the aggregation
      * @return a vector containing the key names used in the aggregation
      */
-    std::vector<std::string> getGroupByKeyNames() const;
+    std::vector<IdentifierList> getGroupByKeyNames() const;
 
 protected:
     std::string toString() const override;

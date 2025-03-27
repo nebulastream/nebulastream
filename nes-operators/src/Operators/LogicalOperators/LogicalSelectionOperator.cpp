@@ -88,7 +88,6 @@ std::shared_ptr<Operator> LogicalSelectionOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     for (const auto& [key, value] : properties)
     {
@@ -97,27 +96,6 @@ std::shared_ptr<Operator> LogicalSelectionOperator::copy()
     return copy;
 }
 
-void LogicalSelectionOperator::inferStringSignature()
-{
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalSelectionOperator: Inferring String signature for {}", *operatorNode);
-    INVARIANT(!children.empty(), "LogicalSelectionOperator: Filter should have children");
-
-    ///Infer query signatures for child operators
-    for (const auto& child : children)
-    {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
-        childOperator->inferStringSignature();
-    }
-
-    std::stringstream signatureStream;
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << "FILTER(" << *predicate << ")." << *childSignature.begin()->second.begin();
-
-    ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
-}
 float LogicalSelectionOperator::getSelectivity() const
 {
     return selectivity;
@@ -127,12 +105,12 @@ void LogicalSelectionOperator::setSelectivity(float newSelectivity)
     selectivity = newSelectivity;
 }
 
-std::vector<std::string> LogicalSelectionOperator::getFieldNamesUsedByFilterPredicate() const
+std::vector<IdentifierList> LogicalSelectionOperator::getFieldNamesUsedByFilterPredicate() const
 {
     NES_TRACE("LogicalSelectionOperator: Find all field names used in filter operator");
 
     ///vector to save the names of all the fields that are used in this predicate
-    std::vector<std::string> fieldsInPredicate;
+    std::vector<IdentifierList> fieldsInPredicate;
 
     ///iterator to go over all the fields of the predicate
     const DepthFirstNodeIterator depthFirstNodeIterator(predicate);

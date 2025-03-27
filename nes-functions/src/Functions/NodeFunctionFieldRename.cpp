@@ -25,14 +25,14 @@
 
 namespace NES
 {
-NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, Identifier newFieldName)
+NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, IdentifierList newFieldName)
     : NodeFunction(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
 
 NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldRename>& other)
     : NodeFunctionFieldRename(other->getOriginalField(), other->getNewFieldName()) {};
 
 std::shared_ptr<NodeFunction>
-NodeFunctionFieldRename::create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, Identifier newFieldName)
+NodeFunctionFieldRename::create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, IdentifierList newFieldName)
 {
     return std::make_shared<NodeFunctionFieldRename>(NodeFunctionFieldRename(originalField, std::move(newFieldName)));
 }
@@ -52,7 +52,7 @@ std::shared_ptr<NodeFunctionFieldAccess> NodeFunctionFieldRename::getOriginalFie
     return this->originalField;
 }
 
-Identifier NodeFunctionFieldRename::getNewFieldName() const
+IdentifierList NodeFunctionFieldRename::getNewFieldName() const
 {
     return newFieldName;
 }
@@ -60,7 +60,7 @@ Identifier NodeFunctionFieldRename::getNewFieldName() const
 std::string NodeFunctionFieldRename::toString() const
 {
     auto node = getOriginalField();
-    return fmt::format("FieldRenameFunction({} => {} : {})", fmt::format("{}", *node), newFieldName.getValue(), stamp);
+    return fmt::format("FieldRenameFunction({} => {} : {})", fmt::format("{}", *node), newFieldName, stamp);
 }
 
 void NodeFunctionFieldRename::inferStamp(const Schema& schema)
@@ -74,9 +74,9 @@ void NodeFunctionFieldRename::inferStamp(const Schema& schema)
     {
         throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema);
     }
-    if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+    if (std::ranges::size(newFieldName) == 1)
     {
-        newFieldName = fieldName.substr(0, fieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
+        newFieldName = fieldName.copyReplaceLast(newFieldName);
     }
 
     if (fieldName == newFieldName)

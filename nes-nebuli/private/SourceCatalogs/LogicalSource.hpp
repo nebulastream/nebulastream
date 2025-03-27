@@ -26,12 +26,12 @@ namespace NES
 class LogicalSource
 {
 public:
-    static std::shared_ptr<LogicalSource> create(const std::string& logicalSourceName, Schema schema);
+    static std::shared_ptr<LogicalSource> create(const IdentifierList& logicalSourceName, Schema schema);
 
     /**
      * @brief Gets the logical source name
      */
-    std::string getLogicalSourceName();
+    IdentifierList getLogicalSourceName();
 
     /**
      * @brief Gets the schema
@@ -39,9 +39,9 @@ public:
     Schema getSchema();
 
 private:
-    LogicalSource(std::string logicalSourceName, Schema schema);
+    LogicalSource(IdentifierList logicalSourceName, const Schema& schema);
 
-    std::string logicalSourceName;
+    IdentifierList logicalSourceName;
     Schema schema;
 };
 }

@@ -75,7 +75,7 @@ std::unique_ptr<Runtime::Execution::Operators::TimeFunction> PhysicalWindowOpera
     switch (timeWindow->getTimeCharacteristic()->getType())
     {
         case Windowing::TimeCharacteristic::Type::IngestionTime: {
-            if (timeWindow->getTimeCharacteristic()->field.name == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+            if (*(std::ranges::end(timeWindow->getTimeCharacteristic()->field.name) - 1) == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
             {
                 return std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
             }

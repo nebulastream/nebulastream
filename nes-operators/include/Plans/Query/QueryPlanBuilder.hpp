@@ -40,7 +40,7 @@ class QueryPlanBuilder
 public:
     /// Creates a query plan from a particular source. The source is identified by its name.
     /// During query processing the underlying source descriptor is retrieved from the source catalog.
-    static std::shared_ptr<QueryPlan> createQueryPlan(std::string logicalSourceName);
+    static std::shared_ptr<QueryPlan> createQueryPlan(IdentifierList logicalSourceName);
 
     /**
       * @brief this call projects out the attributes in the parameter list
@@ -57,7 +57,7 @@ public:
      * @param queryPlan the queryPlan to add the rename node
      * @return the updated queryPlan
      */
-    static std::shared_ptr<QueryPlan> addRename(const std::string& newSourceName, std::shared_ptr<QueryPlan> queryPlan);
+    static std::shared_ptr<QueryPlan> addRename(const IdentifierList& newSourceName, std::shared_ptr<QueryPlan> queryPlan);
 
     /**
      * @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate. An
@@ -117,8 +117,8 @@ public:
         Join::LogicalJoinDescriptor::JoinType joinType);
 
     /// Adds a sink operator to the query plan
-    static std::shared_ptr<QueryPlan> addSink(std::string sinkName, std::shared_ptr<QueryPlan> queryPlan);
-    static std::shared_ptr<QueryPlan> addSink(std::string sinkName, std::shared_ptr<QueryPlan> queryPlan, WorkerId workerId);
+    static std::shared_ptr<QueryPlan> addSink(IdentifierList sinkName, std::shared_ptr<QueryPlan> queryPlan);
+    static std::shared_ptr<QueryPlan> addSink(IdentifierList sinkName, std::shared_ptr<QueryPlan> queryPlan, WorkerId workerId);
 
     /// Create watermark assigner operator and adds it to the queryPlan
     static std::shared_ptr<QueryPlan> assignWatermark(

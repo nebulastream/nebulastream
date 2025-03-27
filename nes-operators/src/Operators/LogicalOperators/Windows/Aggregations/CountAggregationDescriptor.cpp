@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <DataTypes/DataType.hpp>
@@ -59,22 +60,22 @@ std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::on(cons
 
 void CountAggregationDescriptor::inferStamp(const Schema& schema)
 {
-    const auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    // const auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     const auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
 
 
-    const IdentifierList newIDList =
+    NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(schema.getCommonPrefix() + *(std::ranges::end(asFieldName) - 1));
 
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
-    {
-        NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + asFieldName);
-    }
-    else
-    {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
-    }
+    // if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+    // {
+    //     NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + asFieldName);
+    // }
+    // else
+    // {
+    //     const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    //     NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
+    // }
 
     /// a count aggregation is always on an uint 64
     onField->setStamp(DataTypeProvider::provideDataType(DataType::Type::UINT64));

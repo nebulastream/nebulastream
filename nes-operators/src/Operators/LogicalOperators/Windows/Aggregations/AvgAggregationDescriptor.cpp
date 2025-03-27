@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -23,6 +24,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "Identifiers/Identifier.hpp"
 
 
 namespace NES::Windowing
@@ -67,17 +69,16 @@ void AvgAggregationDescriptor::inferStamp(const Schema& schema)
     const auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
     const auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
 
-    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+    ///
+    //Logic adapted from previous inferStamp versions, should be revisited in the future
+    IdentifierList prefix{};
+    if (std::ranges::size(onFieldName) > 1)
     {
-        NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + asFieldName);
+        prefix = *std::ranges::begin(onFieldName);
     }
-    else
-    {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
-    }
+    NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(prefix + asFieldName);
+
     asField->setStamp(getFinalAggregateStamp());
 }
 

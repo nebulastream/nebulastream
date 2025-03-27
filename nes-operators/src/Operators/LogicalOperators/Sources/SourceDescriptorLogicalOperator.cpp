@@ -84,12 +84,6 @@ std::shared_ptr<Operator> SourceDescriptorLogicalOperator::copy()
     return result;
 }
 
-void SourceDescriptorLogicalOperator::inferStringSignature()
-{
-    ///Update the signature
-    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for SourceDescriptorLogicalOperator.");
-}
-
 void SourceDescriptorLogicalOperator::inferInputOrigins()
 {
     /// Data sources have no input origins.

@@ -127,7 +127,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
         /// Serialize rename source operator
         NES_TRACE("OperatorSerializationUtil:: serialize to RenameSourceOperator");
         auto renameDetails = SerializableOperator_RenameDetails();
-        renameDetails.set_newsourcename(NES::Util::as<RenameSourceOperator>(operatorNode)->getNewSourceName());
+        renameDetails.set_newsourcename(NES::Util::as<RenameSourceOperator>(operatorNode)->getNewSourceName().toString());
         serializedOperator.mutable_details()->PackFrom(renameDetails);
     }
     else
@@ -341,7 +341,7 @@ deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetail
         auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
+            auto field = NodeFunctionFieldAccess::create(IdentifierList::parse(serializedTimeCharacteristic.field()));
             window = Windowing::TumblingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedTumblingWindow.size()));
@@ -366,7 +366,7 @@ deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetail
         auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
+            auto field = NodeFunctionFieldAccess::create(IdentifierList::parse(serializedTimeCharacteristic.field()));
             window = Windowing::SlidingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedSlidingWindow.size()),
@@ -407,8 +407,8 @@ deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetail
     auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessFunction, aggregation, window);
     windowDef->setOriginId(OriginId(windowDetails.originid()));
     auto windowOperator = std::make_shared<LogicalWindowOperator>(windowDef, operatorId);
-    windowOperator->windowMetaData.windowStartFieldName = windowDetails.windowstartfieldname();
-    windowOperator->windowMetaData.windowEndFieldName = windowDetails.windowendfieldname();
+    windowOperator->windowMetaData.windowStartFieldName = IdentifierList::parse(windowDetails.windowstartfieldname());
+    windowOperator->windowMetaData.windowEndFieldName = IdentifierList::parse(windowDetails.windowendfieldname());
     return windowOperator;
 }
 
@@ -434,7 +434,7 @@ std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableO
         const auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            const auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
+            const auto field = NodeFunctionFieldAccess::create(IdentifierList::parse(serializedTimeCharacteristic.field()));
             window = Windowing::TumblingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedTumblingWindow.size()));
@@ -459,7 +459,7 @@ std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableO
         const auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            const auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
+            const auto field = NodeFunctionFieldAccess::create(IdentifierList::parse(serializedTimeCharacteristic.field()));
             window = Windowing::SlidingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedSlidingWindow.size()),
@@ -491,8 +491,8 @@ std::shared_ptr<LogicalJoinOperator> deserializeJoinOperator(const SerializableO
     const auto joinDefinition = Join::LogicalJoinDescriptor::create(
         joinFunction, window, joinDetails.numberofinputedgesleft(), joinDetails.numberofinputedgesright(), joinType);
     auto joinOperator = std::make_shared<LogicalJoinOperator>(joinDefinition, operatorId);
-    joinOperator->windowMetaData.windowStartFieldName = joinDetails.windowstartfieldname();
-    joinOperator->windowMetaData.windowEndFieldName = joinDetails.windowendfieldname();
+    joinOperator->windowMetaData.windowStartFieldName = IdentifierList::parse(joinDetails.windowstartfieldname());
+    joinOperator->windowMetaData.windowEndFieldName = IdentifierList::parse(joinDetails.windowendfieldname());
     joinOperator->setOriginId(OriginId(joinDetails.origin()));
     return joinOperator;
 }
@@ -597,7 +597,7 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         NES_TRACE("OperatorSerializationUtil:: deserialize to rename source operator");
         auto renameDetails = SerializableOperator_RenameDetails();
         details.UnpackTo(&renameDetails);
-        operatorNode = std::make_shared<RenameSourceOperator>(renameDetails.newsourcename(), getNextOperatorId());
+        operatorNode = std::make_shared<RenameSourceOperator>(IdentifierList::parse(renameDetails.newsourcename()), getNextOperatorId());
     }
     else
     {
@@ -745,7 +745,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
         if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime)
         {
             timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
-            timeCharacteristicDetails.set_field(timeCharacteristic->field.name);
+            timeCharacteristicDetails.set_field(timeCharacteristic->field.name.toString());
         }
         else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
         {
@@ -830,8 +830,8 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
         }
     }
 
-    windowDetails.set_windowstartfieldname(windowOperator.windowMetaData.windowStartFieldName);
-    windowDetails.set_windowendfieldname(windowOperator.windowMetaData.windowEndFieldName);
+    windowDetails.set_windowstartfieldname(windowOperator.windowMetaData.windowStartFieldName.toString());
+    windowDetails.set_windowendfieldname(windowOperator.windowMetaData.windowEndFieldName.toString());
 
 
     serializedOperator.mutable_details()->PackFrom(windowDetails);
@@ -853,7 +853,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime)
     {
         timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
-        timeCharacteristicDetails.set_field(timeCharacteristic->field.name);
+        timeCharacteristicDetails.set_field(timeCharacteristic->field.name.toString());
     }
     else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
@@ -887,8 +887,8 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
 
     joinDetails.set_numberofinputedgesleft(joinDefinition->getNumberOfInputEdgesLeft());
     joinDetails.set_numberofinputedgesright(joinDefinition->getNumberOfInputEdgesRight());
-    joinDetails.set_windowstartfieldname(joinOperator.windowMetaData.windowStartFieldName);
-    joinDetails.set_windowendfieldname(joinOperator.windowMetaData.windowEndFieldName);
+    joinDetails.set_windowstartfieldname(joinOperator.windowMetaData.windowStartFieldName.toString());
+    joinDetails.set_windowendfieldname(joinOperator.windowMetaData.windowEndFieldName.toString());
     joinDetails.set_origin(joinOperator.getOutputOriginIds()[0].getRawValue());
 
     if (joinDefinition->getJoinType() == Join::LogicalJoinDescriptor::JoinType::INNER_JOIN)

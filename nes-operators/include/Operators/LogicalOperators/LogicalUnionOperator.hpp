@@ -34,7 +34,6 @@ public:
     ///infer schema of two child operators
     bool inferSchema() override;
     void inferInputOrigins() override;
-    void inferStringSignature() override;
     std::shared_ptr<Operator> copy() override;
     [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
 

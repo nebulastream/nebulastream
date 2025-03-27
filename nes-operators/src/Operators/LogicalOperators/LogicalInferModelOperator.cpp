@@ -58,7 +58,6 @@ std::shared_ptr<Operator> LogicalInferModelOperator::copy()
     auto copy = std::make_shared<LogicalInferModelOperator>(model, inputFields, outputFields, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     for (const auto& [key, value] : properties)
     {
@@ -94,13 +93,13 @@ void LogicalInferModelOperator::updateToFullyQualifiedFieldName(const std::share
     {
         ///Since this is a new field add the stream name from schema
         ///Check if field name is already fully qualified
-        if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
+        if (std::ranges::size(fieldName) > 1)
         {
             field->updateFieldName(fieldName);
         }
         else
         {
-            field->updateFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
+            field->updateFieldName(schema.getCommonPrefix() + fieldName);
         }
     }
 }
@@ -147,25 +146,6 @@ bool LogicalInferModelOperator::inferSchema()
     return true;
 }
 
-void LogicalInferModelOperator::inferStringSignature()
-{
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("InferModelOperator: Inferring String signature for {}", *operatorNode);
-    INVARIANT(!children.empty(), "InferModel must have children, but had none");
-    ///Infer query signatures for child operators
-    for (const auto& child : children)
-    {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
-        childOperator->inferStringSignature();
-    }
-    std::stringstream signatureStream;
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << "INFER_MODEL(" + model + ")." << *childSignature.begin()->second.begin();
-
-    ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
-}
 
 const std::string& LogicalInferModelOperator::getModel() const
 {

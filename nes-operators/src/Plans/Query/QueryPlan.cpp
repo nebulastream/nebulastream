@@ -299,12 +299,12 @@ std::shared_ptr<QueryPlan> QueryPlan::copy()
     return newQueryPlan;
 }
 
-std::string QueryPlan::getSourceConsumed() const
+const IdentifierList& QueryPlan::getSourceConsumed() const
 {
     return sourceConsumed;
 }
 
-void QueryPlan::setSourceConsumed(std::string_view sourceName)
+void QueryPlan::setSourceConsumed(const IdentifierList& sourceName)
 {
     sourceConsumed = sourceName;
 }

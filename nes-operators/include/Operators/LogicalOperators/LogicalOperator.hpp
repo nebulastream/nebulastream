@@ -37,28 +37,6 @@ public:
      */
     virtual void inferInputOrigins() = 0;
 
-    /**
-     * @brief Get the String based signature for the operator
-     */
-    virtual void inferStringSignature() = 0;
-
-    /**
-     * @brief Set the hash based signature for the logical operator
-     * @param signature : the signature
-     */
-    void setHashBasedSignature(std::map<size_t, std::set<std::string>> signature);
-
-    /**
-     * @brief update the hash based signature for the logical operator
-     * @param signature : the signature
-     */
-    void updateHashBasedSignature(size_t hashCode, const std::string& stringSignature);
-
-    /**
-     * @brief Get the string signature computed based on upstream operator chain
-     * @return string representing the query signature
-     */
-    std::map<size_t, std::set<std::string>> getHashBasedSignature() const;
 
     /**
      * @brief infers the input and out schema of this operator depending on its child.

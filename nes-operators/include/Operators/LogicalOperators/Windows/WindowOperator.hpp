@@ -30,14 +30,14 @@ namespace NES
 /// Stores the window start and window end field names
 struct WindowMetaData
 {
-    WindowMetaData(std::string windowStartFieldName, std::string windowEndFieldName)
+    WindowMetaData(IdentifierList windowStartFieldName, IdentifierList windowEndFieldName)
         : windowStartFieldName(std::move(windowStartFieldName)), windowEndFieldName(std::move(windowEndFieldName))
     {
     }
     WindowMetaData() = default;
 
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
+    IdentifierList windowStartFieldName;
+    IdentifierList windowEndFieldName;
 };
 
 /**

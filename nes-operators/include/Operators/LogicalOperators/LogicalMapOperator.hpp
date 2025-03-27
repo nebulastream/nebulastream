@@ -45,7 +45,6 @@ public:
      * @return true if inference was possible
      */
     bool inferSchema() override;
-    void inferStringSignature() override;
     [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
     [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
     std::shared_ptr<Operator> copy() override;

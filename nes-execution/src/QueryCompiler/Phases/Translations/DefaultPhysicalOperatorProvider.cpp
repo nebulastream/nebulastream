@@ -67,6 +67,7 @@
 #include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include "Identifiers/Identifier.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -368,19 +369,19 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
     {
         /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
         auto timeStampFieldName = windowType->getTimeCharacteristic()->field.name;
-        auto timeStampFieldNameWithoutSourceName = *(std::ranges::begin(timeStampFieldName) + (std::ranges::size(timeStampFieldName) - 1));
+        auto timeStampFieldNameWithoutSourceName = *(std::ranges::end(timeStampFieldName) - 1);
 
         /// Lambda function for extracting the timestamp from a schema
-        auto findTimeStampFieldName = [&](const Schema& schema)
+        auto findTimeStampFieldName = [&](const Schema& schema) -> std::optional<IdentifierList>
         {
             for (const auto& field : schema.getFields())
             {
-                if (field.name.find(timeStampFieldNameWithoutSourceName) != std::string::npos)
+                if (*(std::ranges::end(field.name) - 1) == timeStampFieldName)
                 {
                     return field.name;
                 }
             }
-            return std::string();
+            return std::nullopt;
         };
 
         /// Extracting the left and right timestamp
@@ -388,14 +389,14 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
         auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator->getRightInputSchema());
 
         INVARIANT(
-            !(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
+            timeStampFieldNameLeft.has_value() && timeStampFieldNameRight.has_value(),
             "Could not find timestampfieldname {} in both streams!",
             timeStampFieldNameWithoutSourceName);
         NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
 
         return {
-            TimestampField::EventTime(timeStampFieldNameLeft, windowType->getTimeCharacteristic()->getTimeUnit()),
-            TimestampField::EventTime(timeStampFieldNameRight, windowType->getTimeCharacteristic()->getTimeUnit())};
+            TimestampField::EventTime(*timeStampFieldNameLeft, windowType->getTimeCharacteristic()->getTimeUnit()),
+            TimestampField::EventTime(*timeStampFieldNameRight, windowType->getTimeCharacteristic()->getTimeUnit())};
     }
 }
 

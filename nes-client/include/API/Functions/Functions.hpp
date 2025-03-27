@@ -71,14 +71,14 @@ private:
 /// Attribute("f1") < 10
 /// todo rename to field if conflict with legacy code is resolved.
 /// @param fieldName
-FunctionItem Attribute(std::string name);
+FunctionItem Attribute(const Identifier& name);
 
 /// Attribute(name, type) allows the user to reference a field, with a specific type in his function.
 /// Field("f1", Int) < 10.
 /// todo remove this case if we added type inference at Runtime from the operator tree.
 /// todo rename to field if conflict with legacy code is resolved.
 /// @param fieldName, type
-FunctionItem Attribute(std::string name, DataType::Type type);
+FunctionItem Attribute(const Identifier& name, DataType::Type type);
 
 /// WHEN(condition,value) can only be used as part of the left vector in a CASE() function.
 /// Allows to only return the value function if condition is met.

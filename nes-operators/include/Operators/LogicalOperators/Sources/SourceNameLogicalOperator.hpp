@@ -27,19 +27,18 @@ namespace NES
 class SourceNameLogicalOperator : public LogicalUnaryOperator
 {
 public:
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, Schema schema, OperatorId id);
+    explicit SourceNameLogicalOperator(IdentifierList logicalSourceName, OperatorId id);
+    explicit SourceNameLogicalOperator(IdentifierList logicalSourceName, Schema schema, OperatorId id);
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
 
     [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
     [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
-    void inferStringSignature() override;
     std::shared_ptr<Operator> copy() override;
     void inferInputOrigins() override;
 
-    [[nodiscard]] std::string getLogicalSourceName() const;
+    [[nodiscard]] IdentifierList getLogicalSourceName() const;
     [[nodiscard]] Schema getSchema() const;
     void setSchema(Schema schema);
 
@@ -47,7 +46,7 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    std::string logicalSourceName;
+    IdentifierList logicalSourceName;
     Schema schema;
 };
 

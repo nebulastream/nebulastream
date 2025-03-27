@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <sstream>
+#include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -74,7 +75,6 @@ std::shared_ptr<Operator> LogicalWindowOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);
@@ -111,10 +111,9 @@ bool LogicalWindowOperator::inferSchema()
         {
             return false;
         }
-        const auto& sourceName = inputSchema.getQualifierNameForSystemGeneratedFields();
-        const auto& newQualifierForSystemField = sourceName;
-        windowMetaData.windowStartFieldName = newQualifierForSystemField.value() + "$start";
-        windowMetaData.windowEndFieldName = newQualifierForSystemField.value() + "$end";
+        const auto& sourceName = inputSchema.getCommonPrefix();
+        windowMetaData.windowStartFieldName = sourceName + Identifier{"start", false};
+        windowMetaData.windowEndFieldName = sourceName + Identifier{"end", false};
         outputSchema.addField(windowMetaData.windowStartFieldName, DataType::Type::UINT64);
         outputSchema.addField(windowMetaData.windowEndFieldName, DataType::Type::UINT64);
     }
@@ -157,52 +156,10 @@ bool LogicalWindowOperator::inferSchema()
     return true;
 }
 
-void LogicalWindowOperator::inferStringSignature()
+
+std::vector<IdentifierList> LogicalWindowOperator::getGroupByKeyNames() const
 {
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("Inferring String signature for {}", *operatorNode);
-
-    ///Infer query signatures for child operators
-    for (const auto& child : children)
-    {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
-        childOperator->inferStringSignature();
-    }
-
-    std::stringstream signatureStream;
-    const auto windowType = windowDefinition->getWindowType();
-    const auto windowAggregation = windowDefinition->getWindowAggregation();
-    if (windowDefinition->isKeyed())
-    {
-        signatureStream << "WINDOW-BY-KEY(";
-        for (const auto& key : windowDefinition->getKeys())
-        {
-            signatureStream << *key << ",";
-        }
-    }
-    else
-    {
-        signatureStream << "WINDOW(";
-    }
-    signatureStream << "WINDOW-TYPE: " << windowType->toString() << ",";
-    signatureStream << "AGGREGATION: ";
-    for (const auto& agg : windowAggregation)
-    {
-        signatureStream << agg->toString() << ",";
-    }
-    signatureStream << ")";
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << "." << *childSignature.begin()->second.begin();
-
-    auto signature = signatureStream.str();
-    ///Update the signature
-    const auto hashCode = hashGenerator(signature);
-    hashBasedSignature[hashCode] = {signature};
-}
-
-std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() const
-{
-    std::vector<std::string> groupByKeyNames = {};
+    std::vector<IdentifierList> groupByKeyNames = {};
     const auto windowDefinition = this->getWindowDefinition();
     if (windowDefinition->isKeyed())
     {

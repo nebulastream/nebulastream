@@ -34,7 +34,7 @@ struct as_if<NES::NESStrongType<T, Tag, invalid, initial>, void>
     NES::NESStrongType<T, Tag, invalid, initial> operator()() const
     {
         if (!node.m_pNode)
-            throw TypedBadConversion<T>(node.Mark());
+            throw TypedBadConv1ersion<T>(node.Mark());
 
         return NES::NESStrongType<T, Tag, invalid, initial>{node.as<T>()};
     }

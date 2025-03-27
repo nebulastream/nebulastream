@@ -157,13 +157,13 @@ bool LogicalJoinOperator::inferSchema()
 
     ///Reset output schema and add fields from left and right input schema
     outputSchema = Schema{outputSchema};
-    const auto& sourceNameLeft = leftInputSchema.getQualifierNameForSystemGeneratedFields();
-    const auto& sourceNameRight = rightInputSchema.getQualifierNameForSystemGeneratedFields();
-    INVARIANT(sourceNameLeft.has_value() and sourceNameRight.has_value(), "All source names must have values.");
-    const auto& newQualifierForSystemField = sourceNameLeft.value() + sourceNameRight.value();
+    const auto& sourceNameLeft = leftInputSchema.getCommonPrefix();
+    const auto& sourceNameRight = rightInputSchema.getCommonPrefix();
+    INVARIANT(!std::ranges::empty(sourceNameLeft) && !std::ranges::empty(sourceNameRight), "All source names must have values.");
+    const auto& newQualifierForSystemField = sourceNameLeft + sourceNameRight;
 
-    windowMetaData.windowStartFieldName = newQualifierForSystemField + "$start";
-    windowMetaData.windowEndFieldName = newQualifierForSystemField + "$end";
+    windowMetaData.windowStartFieldName = newQualifierForSystemField + Identifier{"start", false};
+    windowMetaData.windowEndFieldName = newQualifierForSystemField + Identifier{"end", false};
     outputSchema.addField(windowMetaData.windowStartFieldName, DataType::Type::UINT64);
     outputSchema.addField(windowMetaData.windowEndFieldName, DataType::Type::UINT64);
 
@@ -194,7 +194,6 @@ std::shared_ptr<Operator> LogicalJoinOperator::copy()
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
     copy->setOriginId(originId);
     copy->windowMetaData = windowMetaData;
     copy->setOperatorState(operatorState);
@@ -217,31 +216,6 @@ bool LogicalJoinOperator::equal(const std::shared_ptr<Node>& rhs) const
             && (joinDefinition->getLeftSourceType() == rhsJoin->joinDefinition->getLeftSourceType());
     }
     return false;
-}
-
-void LogicalJoinOperator::inferStringSignature()
-{
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("Inferring String signature for {}", *operatorNode);
-    PRECONDITION(children.size() == 2, "Join should have 2 children, but got: {}", children.size());
-    ///Infer query signatures for child operators
-    for (const auto& child : children)
-    {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
-        childOperator->inferStringSignature();
-    }
-
-    std::stringstream signatureStream;
-    signatureStream << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
-
-    const auto rightChildSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    const auto leftChildSignature = NES::Util::as<LogicalOperator>(children[1])->getHashBasedSignature();
-    signatureStream << *rightChildSignature.begin()->second.begin() + ").";
-    signatureStream << *leftChildSignature.begin()->second.begin();
-
-    ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
 std::vector<OriginId> LogicalJoinOperator::getOutputOriginIds() const

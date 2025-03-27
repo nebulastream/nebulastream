@@ -30,10 +30,11 @@ Schema createJoinSchema(Schema leftSchema, Schema rightSchema)
         magic_enum::enum_name(leftSchema.memoryLayoutType),
         magic_enum::enum_name(rightSchema.memoryLayoutType));
     auto retSchema = Schema{leftSchema.memoryLayoutType};
-    auto newQualifierForSystemField = leftSchema.getSourceNameQualifier() + rightSchema.getSourceNameQualifier();
+    auto newQualifierForSystemField = leftSchema.getCommonPrefix() + rightSchema.getCommonPrefix();
 
-    retSchema.addField(newQualifierForSystemField + Identifier{"start"}, DataType::Type::UINT64);
-    retSchema.addField(newQualifierForSystemField + Identifier{"end"}, DataType::Type::UINT64);
+    //TODO initialize the schema with all fields in constructor
+    retSchema.addField(newQualifierForSystemField + Identifier{"start", false}, DataType::Type::UINT64);
+    retSchema.addField(newQualifierForSystemField + Identifier{"end", false}, DataType::Type::UINT64);
 
     for (const auto& fields : leftSchema.getFields())
     {

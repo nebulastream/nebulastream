@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include "Identifiers/Identifier.hpp"
+
+
 #include <unordered_map>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
@@ -25,7 +28,7 @@ namespace NES::Nautilus
 class Record
 {
 public:
-    using RecordFieldIdentifier = std::string;
+    using RecordFieldIdentifier = IdentifierList;
     explicit Record() = default;
     explicit Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& recordFields);
     ~Record() = default;

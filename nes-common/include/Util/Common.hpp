@@ -13,6 +13,9 @@
 */
 
 #pragma once
+#include <Identifiers/Identifier.hpp>
+
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -37,7 +40,7 @@ std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, USED_IN_DEBUG const std:
 }
 
 /// Update the source names by sorting and then concatenating the source names from the sub- and query plan
-std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed);
+IdentifierList updateSourceName(IdentifierList queryPlanSourceConsumed, IdentifierList subQueryPlanSourceConsumed);
 
 /// Truncates the file and then writes the header string as is to the file
 void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header);

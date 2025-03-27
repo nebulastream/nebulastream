@@ -20,8 +20,12 @@
 #include <numeric>
 #include <sstream>
 #include <string>
+
 #include <Util/Common.hpp>
+#include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <ranges>
 
 namespace NES::Util
 {
@@ -57,17 +61,23 @@ void writeRowToCsvFile(const std::string& csvFileName, const std::string& row)
     ofstream.close();
 }
 
-std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed)
+IdentifierList updateSourceName(IdentifierList queryPlanSourceConsumed, IdentifierList subQueryPlanSourceConsumed)
 {
     ///Update the Source names by sorting and then concatenating the source names from the sub query plan
-    std::vector<std::string> sourceNames;
-    sourceNames.emplace_back(subQueryPlanSourceConsumed);
-    sourceNames.emplace_back(queryPlanSourceConsumed);
-    std::sort(sourceNames.begin(), sourceNames.end());
+    // std::vector<IdentifierList> sourceNames;
+    // sourceNames.emplace_back(subQueryPlanSourceConsumed);
+    // sourceNames.emplace_back(queryPlanSourceConsumed);
+    // std::sort(sourceNames.begin(), sourceNames.end());
     /// accumulating sourceNames with delimiters between all sourceNames to enable backtracking of origin
-    auto updatedSourceName = std::accumulate(
-        sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) { return a + "_" + b; });
+
+    //If one source name is shorter than the other, the longer one get trimmed through the zip
+    auto updatedSourceName = IdentifierList{
+        std::views::zip(queryPlanSourceConsumed, subQueryPlanSourceConsumed)
+        | std::views::transform([](auto pair) { return Identifier{pair.first.getRawValue() + "_" + pair.second.getRawValue(), false}; })};
     return updatedSourceName;
+    // auto updatedSourceName = std::accumulate(
+    //     sourceNames.begin(), sourceNames.end(), std::string("-"), [](IdentifierList a, IdentifierList b) { return std::ranges::zip_view<>a + "_" + b; });
+    // return updatedSourceName;
 }
 
 uint64_t murmurHash(const uint64_t key)

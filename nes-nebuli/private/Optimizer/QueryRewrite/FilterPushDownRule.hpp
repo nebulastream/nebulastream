@@ -183,7 +183,7 @@ private:
      * @param node the map operator node
      * @return name of the field
      */
-    static std::string getAssignmentFieldFromMapOperator(const std::shared_ptr<Node>& node);
+    static IdentifierList getAssignmentFieldFromMapOperator(const std::shared_ptr<Node>& node);
 
     /**
      * @brief pushes a filter below a projection operator. If the projection renames a attribute that is used by the filter,
@@ -230,7 +230,7 @@ private:
     void substituteFilterAttributeWithMapTransformation(
         const std::shared_ptr<LogicalSelectionOperator>& filterOperator,
         const std::shared_ptr<LogicalMapOperator>& mapOperator,
-        const std::string& fieldName);
+        const IdentifierList& fieldName);
 };
 
 }

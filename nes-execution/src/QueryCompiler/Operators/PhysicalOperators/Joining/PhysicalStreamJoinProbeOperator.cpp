@@ -37,8 +37,8 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
     const Configurations::StreamJoinStrategy joinStrategy,
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
-    const std::vector<std::string>& joinFieldNamesLeft,
-    const std::vector<std::string>& joinFieldNamesRight,
+    const std::vector<IdentifierList>& joinFieldNamesLeft,
+    const std::vector<IdentifierList>& joinFieldNamesRight,
     WindowMetaData windowMetaData,
     const OperatorId id)
     : Operator(id)
@@ -83,12 +83,12 @@ std::unique_ptr<Runtime::Execution::Functions::Function> PhysicalStreamJoinProbe
     return std::move(joinFunction);
 }
 
-std::vector<std::string> PhysicalStreamJoinProbeOperator::getJoinFieldNameLeft() const
+std::vector<IdentifierList> PhysicalStreamJoinProbeOperator::getJoinFieldNameLeft() const
 {
     return joinFieldNamesLeft;
 }
 
-std::vector<std::string> PhysicalStreamJoinProbeOperator::getJoinFieldNameRight() const
+std::vector<IdentifierList> PhysicalStreamJoinProbeOperator::getJoinFieldNameRight() const
 {
     return joinFieldNamesRight;
 }

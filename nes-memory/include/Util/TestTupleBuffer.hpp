@@ -158,12 +158,12 @@ public:
 
 
     /// @throws CannotAccessBuffer if field index is invalid
-    DynamicField operator[](std::string fieldName) const;
+    DynamicField operator[](IdentifierList fieldName) const;
 
     void
-    writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, Memory::AbstractBufferProvider& bufferProvider);
+    writeVarSized(std::variant<const uint64_t, const IdentifierList> field, std::string value, Memory::AbstractBufferProvider& bufferProvider);
 
-    std::string readVarSized(std::variant<const uint64_t, const std::string> field);
+    std::string readVarSized(std::variant<const uint64_t, const IdentifierList> field);
 
     [[nodiscard]] std::string toString(Schema schema) const;
 

@@ -44,7 +44,7 @@ DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
     return DynamicField{basePointer, physicalType};
 }
 
-DynamicField DynamicTuple::operator[](std::string fieldName) const
+DynamicField DynamicTuple::operator[](IdentifierList fieldName) const
 {
     const auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value())
@@ -60,7 +60,7 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayo
 }
 
 void DynamicTuple::writeVarSized(
-    std::variant<const uint64_t, const std::string> field, std::string value, Memory::AbstractBufferProvider& bufferProvider)
+    std::variant<const uint64_t, const IdentifierList> field, std::string value, Memory::AbstractBufferProvider& bufferProvider)
 {
     const auto valueLength = value.length();
     auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
@@ -93,14 +93,14 @@ void DynamicTuple::writeVarSized(
     }
 }
 
-std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::string> field)
+std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const IdentifierList> field)
 {
     return std::visit(
         [this](const auto& key)
         {
             if constexpr (
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
-                || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
+                || std::is_convertible_v<std::decay_t<decltype(key)>, IdentifierList>)
             {
                 auto index = (*this)[key].template read<Memory::TupleBuffer::NestedTupleBufferKey>();
                 return readVarSizedData(this->buffer, index);
@@ -290,7 +290,7 @@ std::string TestTupleBuffer::toString(Schema schema, const bool showHeader)
         str << "|";
         for (const auto& field : schema.getFields())
         {
-            str << field.name << ":" << magic_enum::enum_name(field.dataType.type) << "|";
+            str << field.name.toString() << ":" << magic_enum::enum_name(field.dataType.type) << "|";
         }
         str << std::endl;
         str << "+----------------------------------------------------+" << std::endl;

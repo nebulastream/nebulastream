@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ranges>
 #include <DataTypes/DataType.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -25,6 +26,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include "Identifiers/Identifier.hpp"
 
 using namespace std::string_literals;
 
@@ -113,7 +115,8 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
         /// Making sure that all logical sources are present in the source catalog
         if (!sourceCatalog->containsLogicalSource(source->getLogicalSourceName()))
         {
-            throw QueryInvalid("The logical source '" + source->getLogicalSourceName() + "' can not be found in the SourceCatalog\n");
+            throw QueryInvalid(
+                "The logical source '" + source->getLogicalSourceName().toString() + "' can not be found in the SourceCatalog\n");
         }
     }
 }
@@ -123,7 +126,7 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
 {
     /// Identify the source operators
     auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
-    std::vector<std::string> invalidLogicalSourceNames;
+    std::vector<IdentifierList> invalidLogicalSourceNames;
     for (auto sourceOperator : sourceOperators)
     {
         if (sourceCatalog->getPhysicalSources(sourceOperator->getLogicalSourceName()).empty())
@@ -135,15 +138,13 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     /// If there are invalid logical sources then report them
     if (!invalidLogicalSourceNames.empty())
     {
-        std::stringstream invalidSources;
-        invalidSources << "[";
-        std::copy(
-            invalidLogicalSourceNames.begin(),
-            invalidLogicalSourceNames.end() - 1,
-            std::ostream_iterator<std::string>(invalidSources, ","));
-        invalidSources << invalidLogicalSourceNames.back();
-        invalidSources << "]";
-        throw QueryInvalid("Logical source(s) " + invalidSources.str() + " are found to have no physical source(s) defined.");
+        std::stringstream invalidSourcesStream;
+        invalidSourcesStream << "[";
+        invalidSourcesStream
+            << (invalidLogicalSourceNames | std::views::transform(&IdentifierList::toString) | std::views::join_with(',')
+                | NES::ranges::to<std::string>());
+        invalidSourcesStream << "]";
+        throw QueryInvalid("Logical source(s) " + invalidSourcesStream.str() + " are found to have no physical source(s) defined.");
     }
 }
 
@@ -189,8 +190,9 @@ void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<Quer
         NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp);
         if (commonStamp.isUndefined())
         {
-            throw QueryInvalid("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as "
-                               "input to infer model.");
+            throw QueryInvalid(
+                "SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as "
+                "input to infer model.");
         }
     }
 }

@@ -75,13 +75,30 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
         auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
         schema.assignToFields(originalSchema);
         schema.memoryLayoutType = originalSchema.memoryLayoutType;
-        auto qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+        //to be replaced by std::ranges::starts_with (c++ 23) as soon as it is rolled out
+        auto startsWith = [](const std::ranges::sized_range auto& fullRange, const std::ranges::sized_range auto& prefix) constexpr
+        {
+            if (std::ranges::size(fullRange) < std::ranges::size(prefix))
+            {
+                return false;
+            }
+
+            for (size_t i = 0; i < std::ranges::size(prefix); ++i)
+            {
+                if (*(std::ranges::begin(fullRange) + i) != *(std::ranges::begin(prefix) + i))
+                {
+                    return false;
+                }
+            }
+            return true;
+        };
+
         /// perform attribute name resolution
         for (auto& field : schema.getFields())
         {
-            if (!field.name.starts_with(qualifierName))
+            if (!startsWith(field.name, logicalSourceName))
             {
-                auto newFieldName = qualifierName + field.name;
+                auto newFieldName = logicalSourceName + field.name;
                 schema.renameField(field.name, std::move(newFieldName));
             }
         }

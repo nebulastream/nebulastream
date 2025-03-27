@@ -67,7 +67,6 @@ std::shared_ptr<Operator> WatermarkAssignerLogicalOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     for (const auto& pair : properties)
     {
@@ -86,26 +85,5 @@ bool WatermarkAssignerLogicalOperator::inferSchema()
     return true;
 }
 
-void WatermarkAssignerLogicalOperator::inferStringSignature()
-{
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("Inferring String signature for {}", *operatorNode);
-
-    ///Infer query signatures for child operators
-    for (const auto& child : children)
-    {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
-        childOperator->inferStringSignature();
-    }
-
-    std::stringstream signatureStream;
-    signatureStream << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ").";
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << *childSignature.begin()->second.begin();
-
-    ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
-}
 
 }

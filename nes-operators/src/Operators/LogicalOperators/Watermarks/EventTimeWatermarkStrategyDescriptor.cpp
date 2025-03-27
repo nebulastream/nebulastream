@@ -26,6 +26,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include "Identifiers/Identifier.hpp"
 
 namespace NES::Windowing
 {
@@ -87,7 +88,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(Schema schema)
         fieldAccessFunction->updateFieldName(existingField.value().name);
         return true;
     }
-    if (fieldName == TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+    if (fieldName == static_cast<Identifier>(TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME))
     {
         return true;
     }

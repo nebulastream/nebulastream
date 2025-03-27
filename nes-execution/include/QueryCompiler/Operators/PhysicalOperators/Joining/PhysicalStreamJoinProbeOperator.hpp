@@ -54,8 +54,8 @@ public:
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
     Configurations::StreamJoinStrategy getJoinStrategy() const;
     std::unique_ptr<Runtime::Execution::Functions::Function> getJoinFunction();
-    std::vector<std::string> getJoinFieldNameLeft() const;
-    std::vector<std::string> getJoinFieldNameRight() const;
+    std::vector<IdentifierList> getJoinFieldNameLeft() const;
+    std::vector<IdentifierList> getJoinFieldNameRight() const;
     Runtime::Execution::JoinSchema getJoinSchema() const;
     const WindowMetaData& getWindowMetaData() const;
 
@@ -63,8 +63,8 @@ protected:
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
     Configurations::StreamJoinStrategy joinStrategy;
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction;
-    std::vector<std::string> joinFieldNamesLeft;
-    std::vector<std::string> joinFieldNamesRight;
+    std::vector<IdentifierList> joinFieldNamesLeft;
+    std::vector<IdentifierList> joinFieldNamesRight;
     WindowMetaData windowMetaData;
 };
 }

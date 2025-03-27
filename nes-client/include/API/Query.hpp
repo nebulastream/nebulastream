@@ -93,28 +93,6 @@ private:
 namespace CEPOperatorBuilder
 {
 
-class And
-{
-public:
-    /**
-     * @brief Constructor. Initialises always subQueryRhs and original Query
-     * @param subQueryRhs
-     * @param originalQuery
-     */
-    And(const Query& subQueryRhs, Query& originalQuery);
-
-    /**
-     * @brief: calls internal the original andWith function with all the gathered parameters.
-     * @param windowType
-     * @return the query with the result of the original andWith function is returned.
-     */
-    [[nodiscard]] Query& window(const std::shared_ptr<Windowing::WindowType>& windowType) const;
-
-private:
-    Query& subQueryRhs;
-    Query& originalQuery;
-    std::shared_ptr<NodeFunction> joinFunction;
-};
 
 class Seq
 {
@@ -135,7 +113,7 @@ public:
 
 private:
     Query& subQueryRhs;
-    Query& originalQuery;
+    // Query& originalQuery;
     std::shared_ptr<NodeFunction> joinFunction;
 };
 
@@ -148,46 +126,46 @@ private:
      * @return cepBuilder
      */
 
-class Times
-{
-public:
-    /**
-     * @brief Constructor (bounded variant to a number of minOccurrences to maxOccurrences of event occurrence)
-     * @param minOccurrences: minimal number of occurrences of a specified event, i.e., tuples
-     * @param maxOccurrences: maximal number of occurrences of a specified event, i.e., tuples
-     * @param originalQuery
-     * @return cepBuilder
-     */
-    Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery);
-
-    /**
-     * @brief Constructor (bounded variant to exact amount of occurrence)
-     * @param occurrence the exact amount of occurrences expected
-     * @param originalQuery
-     * @return cepBuilder
-     */
-    Times(const uint64_t occurrences, Query& originalQuery);
-
-    /**
-     * @brief Constructor (unbounded variant)
-     * @param originalQuery
-     * @return cepBuilder
-     */
-    Times(Query& originalQuery);
-
-    /**
-     * @brief: calls internal the original seqWith function with all the gathered parameters.
-     * @param windowType
-     * @return the query with the result of the original seqWith function is returned.
-     */
-    [[nodiscard]] Query& window(const std::shared_ptr<Windowing::WindowType>& windowType) const;
-
-private:
-    Query& originalQuery;
-    uint64_t minOccurrences;
-    uint64_t maxOccurrences;
-    bool bounded;
-};
+// class Times
+// {
+// public:
+//     /**
+//      * @brief Constructor (bounded variant to a number of minOccurrences to maxOccurrences of event occurrence)
+//      * @param minOccurrences: minimal number of occurrences of a specified event, i.e., tuples
+//      * @param maxOccurrences: maximal number of occurrences of a specified event, i.e., tuples
+//      * @param originalQuery
+//      * @return cepBuilder
+//      */
+//     Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery);
+//
+//     /**
+//      * @brief Constructor (bounded variant to exact amount of occurrence)
+//      * @param occurrence the exact amount of occurrences expected
+//      * @param originalQuery
+//      * @return cepBuilder
+//      */
+//     Times(const uint64_t occurrences, Query& originalQuery);
+//
+//     /**
+//      * @brief Constructor (unbounded variant)
+//      * @param originalQuery
+//      * @return cepBuilder
+//      */
+//     Times(Query& originalQuery);
+//
+//     /**
+//      * @brief: calls internal the original seqWith function with all the gathered parameters.
+//      * @param windowType
+//      * @return the query with the result of the original seqWith function is returned.
+//      */
+//     [[nodiscard]] Query& window(const std::shared_ptr<Windowing::WindowType>& windowType) const;
+//
+// private:
+//     // Query& originalQuery;
+//     // uint64_t minOccurrences;
+//     // uint64_t maxOccurrences;
+//     // bool bounded;
+// };
 ///TODO this method is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
 /**
      * @brief: this function creates a virtual key for the left side of the binary operator
@@ -211,8 +189,7 @@ public:
 
     ///both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinWhere;
-    friend class CEPOperatorBuilder::And;
-    friend class CEPOperatorBuilder::Seq;
+    // friend class CEPOperatorBuilder::Seq;
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
@@ -225,40 +202,6 @@ public:
      */
     JoinOperatorBuilder::Join joinWith(const Query& subQueryRhs);
 
-    /**
-     * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
-     * @param subQueryRhs
-     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
-     */
-    CEPOperatorBuilder::And andWith(const Query& subQueryRhs);
-
-    /**
-     * @brief can be called on the original query with the query to be composed with and sets this query in the class Join.
-     * @param subQueryRhs
-     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
-     */
-    CEPOperatorBuilder::Seq seqWith(const Query& subQueryRhs);
-
-    /**
-     * @brief can be called on the original query to detect an number event occurrences between minOccurrence and maxOccurrence in a stream
-     * @param minOccurrences
-     * @param maxOccurrences
-     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
-     */
-    CEPOperatorBuilder::Times times(const uint64_t minOccurrences, const uint64_t maxOccurrences);
-
-    /**
-     * @brief can be called on the original query to detect an exact number event occurrences in a stream
-     * @param occurrences
-     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
-     */
-    CEPOperatorBuilder::Times times(const uint64_t occurrences);
-
-    /**
-     * @brief can be called on the original query to detect multiple occurrences of specified events in a stream
-     * @return CEPOperatorBuilder object where the window() function is defined and can be called by user
-     */
-    CEPOperatorBuilder::Times times();
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class Or.
@@ -269,7 +212,7 @@ public:
 
     /// Creates a query from a particular source. The source is identified by its name.
     /// During query processing the underlying source descriptor is retrieved from the source catalog.
-    static Query from(const std::string& logicalSourceName);
+    static Query from(const IdentifierList& logicalSourceName);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
@@ -328,7 +271,7 @@ public:
 
     /// Add a sink operator to the query plan that contains a SinkName. In a later step, we look up all sinks that registered using that SinkName
     /// and replace the operator containing only the sink name with operators containing the concrete descriptor of the sink.
-    virtual Query& sink(std::string sinkName, WorkerId workerId = INVALID_WORKER_NODE_ID);
+    virtual Query& sink(IdentifierList sinkName, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     [[nodiscard]] std::shared_ptr<QueryPlan> getQueryPlan() const;
 

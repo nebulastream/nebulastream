@@ -27,29 +27,6 @@ LogicalOperator::LogicalOperator(OperatorId id) : Operator(id)
 {
 }
 
-std::map<size_t, std::set<std::string>> LogicalOperator::getHashBasedSignature() const
-{
-    return hashBasedSignature;
-}
-
-void LogicalOperator::setHashBasedSignature(std::map<size_t, std::set<std::string>> signature)
-{
-    this->hashBasedSignature = std::move(signature);
-}
-
-void LogicalOperator::updateHashBasedSignature(size_t hashCode, const std::string& stringSignature)
-{
-    if (hashBasedSignature.contains(hashCode))
-    {
-        auto stringSignatures = hashBasedSignature[hashCode];
-        stringSignatures.emplace(stringSignature);
-        hashBasedSignature[hashCode] = stringSignatures;
-    }
-    else
-    {
-        hashBasedSignature[hashCode] = {stringSignature};
-    }
-}
 
 void LogicalOperator::setOperatorState(NES::OperatorState newOperatorState)
 {

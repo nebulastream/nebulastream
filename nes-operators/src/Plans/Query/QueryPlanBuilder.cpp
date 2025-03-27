@@ -26,8 +26,6 @@
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -53,10 +51,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <ErrorHandling.hpp>
+#include "Identifiers/Identifier.hpp"
 
 namespace NES
 {
-std::shared_ptr<QueryPlan> QueryPlanBuilder::createQueryPlan(std::string logicalSourceName)
+std::shared_ptr<QueryPlan> QueryPlanBuilder::createQueryPlan(IdentifierList logicalSourceName)
 {
     NES_TRACE("QueryPlanBuilder: create query plan for input source  {}", logicalSourceName);
     Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
@@ -75,7 +74,7 @@ QueryPlanBuilder::addProjection(const std::vector<std::shared_ptr<NodeFunction>>
     return queryPlan;
 }
 
-std::shared_ptr<QueryPlan> QueryPlanBuilder::addRename(const std::string& newSourceName, std::shared_ptr<QueryPlan> queryPlan)
+std::shared_ptr<QueryPlan> QueryPlanBuilder::addRename(const IdentifierList& newSourceName, std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add rename operator to query plan");
     auto op = std::make_shared<RenameSourceOperator>(newSourceName, getNextOperatorId());
@@ -229,12 +228,12 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addJoin(
     return leftQueryPlan;
 }
 
-std::shared_ptr<QueryPlan> QueryPlanBuilder::addSink(std::string sinkName, std::shared_ptr<QueryPlan> queryPlan)
+std::shared_ptr<QueryPlan> QueryPlanBuilder::addSink(IdentifierList sinkName, std::shared_ptr<QueryPlan> queryPlan)
 {
     return addSink(std::move(sinkName), std::move(queryPlan), INVALID_WORKER_NODE_ID);
 }
 
-std::shared_ptr<QueryPlan> QueryPlanBuilder::addSink(std::string sinkName, std::shared_ptr<QueryPlan> queryPlan, WorkerId workerId)
+std::shared_ptr<QueryPlan> QueryPlanBuilder::addSink(IdentifierList sinkName, std::shared_ptr<QueryPlan> queryPlan, WorkerId workerId)
 {
     auto sinkOperator = std::make_shared<SinkLogicalOperator>(std::move(sinkName), getNextOperatorId());
     if (workerId != INVALID_WORKER_NODE_ID)

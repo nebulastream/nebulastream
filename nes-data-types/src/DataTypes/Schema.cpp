@@ -13,13 +13,17 @@
 */
 
 #include <cstddef>
+#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <ranges>
+#include <span>
 #include <string>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -27,21 +31,115 @@
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <SerializableDataType.pb.h>
+
 
 namespace NES
 {
-
 Schema::Field::Field(IdentifierList name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType))
 {
 }
 
 std::ostream& operator<<(std::ostream& os, const Schema::Field& field)
 {
-    return os << fmt::format("Field(name: {}, DataType: {})", field.name, field.dataType);
+    return os << fmt::format("Field(name: {}, DataType: {})", field.name.toString(), field.dataType);
 }
 
-Schema::Schema(const MemoryLayoutType memoryLayoutType) : memoryLayoutType(memoryLayoutType) {};
 
+using IdSpan = std::span<const Identifier>;
+//take const reference to make sure that the spans don't dangle
+template <std::ranges::input_range Range>
+std::pair<
+    std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals>,
+    std::unordered_map<
+        IdSpan,
+        std::vector<size_t>,
+        std::hash<IdSpan>,
+        IdentifierList::SpanEquals>> static initializeFields(Range& fields) noexcept
+{
+    std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals> fieldsByName{};
+    std::unordered_map<IdSpan, std::vector<size_t>, std::hash<IdSpan>, IdentifierList::SpanEquals> collisions{};
+
+    for (std::pair<Schema::Field, size_t>& field : fields)
+    {
+        IdentifierList& fullName = field.first.name;
+        for (size_t i = 0; i < std::ranges::size(fullName); i++)
+        {
+            IdSpan idSubSpan = std::span{std::ranges::begin(fullName) + i, std::ranges::size(fullName)};
+            if (auto existingCollisions = collisions.find(idSubSpan); existingCollisions == collisions.end())
+            {
+                if (auto existingIdList = fieldsByName.find(idSubSpan); existingIdList != fieldsByName.end())
+                {
+                    collisions.insert(std::pair<IdSpan, std::vector<size_t>>{idSubSpan, std::vector{field.second}});
+                    fieldsByName.erase(existingIdList);
+                }
+                else
+                {
+                    fieldsByName.insert(std::pair{idSubSpan, field.second});
+                }
+            }
+            else
+            {
+                existingCollisions->second.push_back(field.second);
+            }
+        }
+    }
+    return {fieldsByName, collisions};
+}
+
+static std::optional<IdentifierList> findCommonPrefix(
+    size_t numFields, std::unordered_map<IdSpan, std::vector<size_t>, std::hash<IdSpan>, IdentifierList::SpanEquals> collisions)
+{
+    //maybe we can remove the limitation on the identifier list length
+    auto prefixCandidates = collisions
+        | std::views::filter([numFields](auto pair)
+                             { return std::ranges::size(pair.first) == 1 && std::ranges::size(pair.second) == numFields; })
+        | std::views::transform([](auto pair) { return pair.first; }) | ranges::to<std::vector<IdSpan>>();
+    if (std::ranges::size(prefixCandidates) == 0)
+    {
+        NES_DEBUG("Did not find a common prefix for schema");
+        return std::nullopt;
+    }
+    if (std::ranges::size(prefixCandidates) > 1)
+    {
+        NES_DEBUG("Found more then one common prefix for schema");
+        return std::nullopt;
+    }
+    return IdentifierList{prefixCandidates[0]};
+}
+Schema::Schema(const MemoryLayoutType memoryLayoutType)
+
+    : memoryLayoutType(memoryLayoutType) { };
+
+
+Schema::Schema(std::initializer_list<Field> fields) noexcept : fields(fields)
+{
+    auto enumerated = std::vector<std::pair<Field, size_t>>{};
+    enumerated.reserve(std::ranges::size(fields));
+    for (size_t i = 0; i < std::ranges::size(fields); ++i)
+    {
+        enumerated.push_back({this->fields[i], i});
+    }
+    auto [fieldsByName, collisions] = initializeFields(enumerated);
+    nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
+        | ranges::to<std::unordered_map<IdentifierList, size_t>>();
+    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
+}
+
+Schema::Schema(std::initializer_list<Schema> schemata) noexcept
+{
+    fields = schemata | std::views::transform(&Schema::getFields) | std::views::join | ranges::to<std::vector<Field>>();
+    auto enumerated = std::vector<std::pair<Field, size_t>>{};
+    enumerated.reserve(std::ranges::size(fields));
+    for (size_t i = 0; i < std::ranges::size(fields); ++i)
+    {
+        enumerated.push_back({this->fields[i], i});
+    }
+    auto [fieldsByName, collisions] = initializeFields(enumerated);
+    nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
+        | ranges::to<std::unordered_map<IdentifierList, size_t>>();
+    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
+}
 Schema Schema::addField(const IdentifierList& name, const DataType& dataType)
 {
     return addField(std::move(name), dataType.type);
@@ -64,44 +162,15 @@ void Schema::replaceTypeOfField(const IdentifierList& name, DataType type)
         sizeOfSchemaInBytes += type.getSizeInBytes();
         fields.at(fieldIdx->second).dataType = std::move(type);
     }
-    NES_WARNING("Could not find field with name '{}'", name);
+    NES_WARNING("Could not find field with name '{}'", name.toString());
 }
 
 std::optional<Schema::Field> Schema::getFieldByName(const IdentifierList& fieldName) const
 {
-    PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
-
-    /// Check if nameToField contains fully qualified name
-    if (const auto field = nameToField.find(fieldName); field != nameToField.end())
+    if (const auto found = nameToField.find(fieldName); found != nameToField.end())
     {
-        return fields.at(field->second);
+        return fields[found->second];
     }
-
-    ///Iterate over all fields and look for field which fully qualified name
-    std::vector<Field> matchedFields;
-    for (const auto& field : fields)
-    {
-        if (auto fullyQualifiedFieldName = field.name; fieldName.length() <= fullyQualifiedFieldName.length())
-        {
-            ///Check if the field name ends with the input field name
-            const auto startingPos = fullyQualifiedFieldName.length() - fieldName.length();
-            const auto fieldWithoutQualifier = fullyQualifiedFieldName.substr(startingPos, fieldName.length());
-            if (fieldWithoutQualifier == fieldName)
-            {
-                matchedFields.emplace_back(field);
-            }
-        }
-    }
-    ///Check how many matching fields were found log an ERROR
-    if (not matchedFields.empty())
-    {
-        if (matchedFields.size() > 1)
-        {
-            NES_ERROR("Schema: Found ambiguous field with name {}", fieldName);
-        }
-        return matchedFields.front();
-    }
-    NES_WARNING("Schema: field with name {} does not exist", fieldName);
     return std::nullopt;
 }
 
@@ -124,23 +193,19 @@ std::ostream& operator<<(std::ostream& os, const Schema& schema)
     return os;
 }
 
-std::string Schema::getSourceNameQualifier() const
-{
-    if (fields.empty())
-    {
-        return "Unnamed Source";
-    }
-    return fields.front().name.substr(0, fields.front().name.find(ATTRIBUTE_NAME_SEPARATOR));
-}
+// IdentifierList Schema::getSourceNameQualifier() const
+// {
+//     return currentPrefix;
+// }
 
-std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const
-{
-    if (const auto qualifierName = getQualifierNameForSystemGeneratedFields(); qualifierName.has_value())
-    {
-        return qualifierName.value() + ATTRIBUTE_NAME_SEPARATOR;
-    }
-    return ATTRIBUTE_NAME_SEPARATOR;
-}
+// std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const
+// {
+//     if (const auto qualifierName = getQualifierNameForSystemGeneratedFields(); qualifierName.has_value())
+//     {
+//         return qualifierName.value() + ATTRIBUTE_NAME_SEPARATOR;
+//     }
+//     return ATTRIBUTE_NAME_SEPARATOR;
+// }
 const std::vector<Schema::Field>& Schema::getFields() const
 {
     return fields;
@@ -150,23 +215,25 @@ size_t Schema::getNumberOfFields() const
     return fields.size();
 }
 
-std::optional<IdentifierList> Schema::getQualifierNameForSystemGeneratedFields() const
-{
-    if (fields.empty())
-    {
-        NES_ERROR("Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is "
-                  "requested");
-        return std::nullopt;
-    }
-    return fields.front().name.substr(0, fields.front().name.find(ATTRIBUTE_NAME_SEPARATOR));
-}
-
+// std::optional<IdentifierList> Schema::getQualifierNameForSystemGeneratedFields() const
+// {
+//     if (std::ranges::empty(currentPrefix))
+//     {
+//         return std::nullopt;
+//     }
+//     return currentPrefix;
+// }
+//
 bool Schema::contains(const IdentifierList& qualifiedFieldName) const
 {
     return nameToField.contains(qualifiedFieldName);
 }
+IdentifierList Schema::getCommonPrefix() const
+{
+    return currentPrefix;
+}
 
-std::vector<IdentifierList> Schema::getUniqueFieldNames() const
+std::vector<IdentifierList> Schema::getUniqueFieldNames() const&
 {
     auto namesView = this->fields | std::views::transform([](const Field& field) { return field.name; });
     return {namesView.begin(), namesView.end()};

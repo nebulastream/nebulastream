@@ -29,7 +29,7 @@ namespace Windowing
 class TimeCharacteristic final
 {
 public:
-    constexpr static auto RECORD_CREATION_TS_FIELD_NAME = "$record.creationTs";
+    constexpr static auto RECORD_CREATION_TS_FIELD_NAME = IdentifierBase<false>{"record_creationTs", false};
     enum class Type : uint8_t
     {
         IngestionTime,

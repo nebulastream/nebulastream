@@ -44,7 +44,7 @@ bool TimeBasedWindowType::inferStamp(const Schema& schema)
             timeCharacteristic->field.name = existingField.value().name;
             return true;
         }
-        if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+        if (fieldName == static_cast<Identifier>(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME))
         {
             return true;
         }

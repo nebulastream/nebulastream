@@ -66,11 +66,6 @@ public:
     bool inferSchema() override;
 
     /**
-     * @brief infers the signature of this operator node
-     */
-    void inferStringSignature() override;
-
-    /**
      * @brief getter for the model
      * @return model
      */

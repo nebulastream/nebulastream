@@ -47,7 +47,6 @@ public:
     bool inferSchema() override;
     std::shared_ptr<Operator> copy() override;
     [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-    void inferStringSignature() override;
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
     std::shared_ptr<NodeFunction> getJoinFunction() const;

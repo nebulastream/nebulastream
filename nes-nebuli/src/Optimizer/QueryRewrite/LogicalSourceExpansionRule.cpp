@@ -93,7 +93,7 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
         if (sourceCatalogEntries.empty())
         {
             auto ex = PhysicalSourceNotFoundInQueryDescription();
-            ex.what() += "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source " + logicalSourceName;
+            ex.what() += "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source " + logicalSourceName.toString();
             throw ex;
         }
 

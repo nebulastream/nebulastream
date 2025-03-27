@@ -61,13 +61,12 @@ public:
     */
     bool inferSchema() override;
     std::shared_ptr<Operator> copy() override;
-    void inferStringSignature() override;
 
     /**
      * @brief returns the names of every attribute that is accessed in the predicate of this filter
      * @return a vector containing every attribute name that is accessed by the predicate
      */
-    std::vector<std::string> getFieldNamesUsedByFilterPredicate() const;
+    std::vector<IdentifierList> getFieldNamesUsedByFilterPredicate() const;
 
 protected:
     std::string toString() const override;

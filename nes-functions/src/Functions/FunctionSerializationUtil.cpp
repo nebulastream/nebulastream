@@ -93,7 +93,7 @@ FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>
         NES_TRACE("FunctionSerializationUtil:: serialize field access function node.");
         auto fieldAccessFunction = Util::as<NodeFunctionFieldAccess>(function);
         auto serializedFieldAccessFunction = SerializableFunction_FunctionFieldAccess();
-        serializedFieldAccessFunction.set_fieldname(fieldAccessFunction->getFieldName());
+        serializedFieldAccessFunction.set_fieldname(fieldAccessFunction->getFieldName().toString());
         serializedFunction->mutable_details()->PackFrom(serializedFieldAccessFunction);
     }
     else if (Util::instanceOf<NodeFunctionFieldRename>(function))
@@ -103,7 +103,7 @@ FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>
         auto fieldRenameFunction = Util::as<NodeFunctionFieldRename>(function);
         auto serializedFieldRenameFunction = SerializableFunction_FunctionFieldRename();
         serializeFunction(fieldRenameFunction->getOriginalField(), serializedFieldRenameFunction.mutable_functionoriginalfieldaccess());
-        serializedFieldRenameFunction.set_newfieldname(fieldRenameFunction->getNewFieldName());
+        serializedFieldRenameFunction.set_newfieldname(fieldRenameFunction->getNewFieldName().toString());
         serializedFunction->mutable_details()->PackFrom(serializedFieldRenameFunction);
     }
     else if (Util::instanceOf<NodeFunctionFieldAssignment>(function))
@@ -113,7 +113,7 @@ FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>
         auto fieldAssignmentNodeFunction = Util::as<NodeFunctionFieldAssignment>(function);
         auto serializedFieldAssignmentFunction = SerializableFunction_FunctionFieldAssignment();
         auto* serializedFieldAccessFunction = serializedFieldAssignmentFunction.mutable_field();
-        serializedFieldAccessFunction->set_fieldname(fieldAssignmentNodeFunction->getField()->getFieldName());
+        serializedFieldAccessFunction->set_fieldname(fieldAssignmentNodeFunction->getField()->getFieldName().toString());
         DataTypeSerializationUtil::serializeDataType(
             fieldAssignmentNodeFunction->getField()->getStamp(), serializedFieldAccessFunction->mutable_type());
         /// serialize assignment function
@@ -195,7 +195,7 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
             SerializableFunction_FunctionFieldAccess serializedFieldAccessFunction;
             serializedFunction.details().UnpackTo(&serializedFieldAccessFunction);
             const auto& name = serializedFieldAccessFunction.fieldname();
-            nodeFunction = NodeFunctionFieldAccess::create(name);
+            nodeFunction = NodeFunctionFieldAccess::create(IdentifierList::parse(name));
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldRename>())
         {
@@ -212,7 +212,7 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
                     *originalFieldAccessFunction));
             }
             const auto& newFieldName = serializedFieldRenameFunction.newfieldname();
-            nodeFunction = NodeFunctionFieldRename::create(Util::as<NodeFunctionFieldAccess>(originalFieldAccessFunction), newFieldName);
+            nodeFunction = NodeFunctionFieldRename::create(Util::as<NodeFunctionFieldAccess>(originalFieldAccessFunction), IdentifierList::parse(newFieldName));
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAssignment>())
         {
@@ -222,7 +222,7 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
             serializedFunction.details().UnpackTo(&serializedFieldAccessFunction);
             const auto* field = serializedFieldAccessFunction.mutable_field();
             auto fieldStamp = DataTypeSerializationUtil::deserializeDataType(field->type());
-            auto fieldAccessNode = NodeFunctionFieldAccess::create(fieldStamp, field->fieldname());
+            auto fieldAccessNode = NodeFunctionFieldAccess::create(fieldStamp, IdentifierList::parse(field->fieldname()));
             auto fieldAssignmentFunction = deserializeFunction(serializedFieldAccessFunction.assignment());
             nodeFunction = NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(fieldAccessNode), fieldAssignmentFunction);
         }

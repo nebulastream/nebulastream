@@ -27,25 +27,7 @@
 namespace NES::Catalogs::Source
 {
 
-bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema)
-SourceCatalog::SourceCatalog()
-{
-    NES_DEBUG("SourceCatalog: construct source catalog");
-    addDefaultSources();
-    NES_DEBUG("SourceCatalog: construct source catalog successfully");
-}
-
-void SourceCatalog::addDefaultSources()
-{
-    std::unique_lock lock(catalogMutex);
-    NES_DEBUG("Sourcecatalog addDefaultSources");
-    const Schema schema
-        = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("id", DataType::Type::UINT32).addField("value", DataType::Type::UINT64);
-    bool success = addLogicalSource("default_logical", schema);
-    INVARIANT(success, "error while add default_logical");
-}
-
-bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, Schema schema)
+bool SourceCatalog::addLogicalSource(const IdentifierList& logicalSourceName, Schema schema)
 {
     std::unique_lock lock(catalogMutex);
     /// check if source already exist
@@ -61,13 +43,13 @@ bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, Schem
     return false;
 }
 
-bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName)
+bool SourceCatalog::removeLogicalSource(const IdentifierList& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("SourceCatalog: search for logical source in removeLogicalSource() {}", logicalSourceName);
 
     /// if log source does not exists
-    if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end())
+    if (!logicalSourceNameToSchemaMapping.contains(logicalSourceName))
     {
         NES_ERROR("SourceCatalog: logical source {} already exists", logicalSourceName);
         return false;
@@ -84,7 +66,8 @@ bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName)
     return true;
 }
 
-bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, const std::shared_ptr<SourceCatalogEntry>& sourceCatalogEntry)
+bool SourceCatalog::addPhysicalSource(
+    const IdentifierList& logicalSourceName, const std::shared_ptr<SourceCatalogEntry>& sourceCatalogEntry)
 {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("SourceCatalog: search for logical source in addPhysicalSource() {}", logicalSourceName);
@@ -110,9 +93,7 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
     else
     {
         NES_DEBUG("SourceCatalog: Logical source does not exist, create new item");
-        logicalToPhysicalSourceMapping.insert(
-            std::pair<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>>(
-                logicalSourceName, std::vector<std::shared_ptr<SourceCatalogEntry>>()));
+        logicalToPhysicalSourceMapping.insert(std::pair(logicalSourceName, std::vector<std::shared_ptr<SourceCatalogEntry>>()));
         logicalToPhysicalSourceMapping[logicalSourceName].push_back(sourceCatalogEntry);
     }
 
@@ -121,7 +102,7 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
 }
 
 bool SourceCatalog::removePhysicalSource(
-    const std::string& logicalSourceName, const std::string& physicalSourceName, WorkerId topologyNodeId)
+    const IdentifierList& logicalSourceName, const IdentifierList& physicalSourceName, WorkerId topologyNodeId)
 {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("SourceCatalog: search for logical source in removePhysicalSource() {}", logicalSourceName);
@@ -185,47 +166,47 @@ size_t SourceCatalog::removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId)
     return removedElements;
 }
 
-Schema SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName)
+Schema SourceCatalog::getSchemaForLogicalSource(const IdentifierList& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
-    if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end())
+    if (!logicalSourceNameToSchemaMapping.contains(logicalSourceName))
     {
         auto ex = LogicalSourceNotFoundInQueryDescription();
-        ex.what() += ": When attempting to look up the schema for logical source " + logicalSourceName;
+        ex.what() += ": When attempting to look up the schema for logical source " + logicalSourceName.toString();
         throw ex;
     }
     return logicalSourceNameToSchemaMapping[logicalSourceName];
 }
 
-std::shared_ptr<LogicalSource> SourceCatalog::getLogicalSource(const std::string& logicalSourceName)
+std::shared_ptr<LogicalSource> SourceCatalog::getLogicalSource(const IdentifierList& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
     return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
 }
 
-std::shared_ptr<LogicalSource> SourceCatalog::getLogicalSourceOrThrowException(const std::string& logicalSourceName)
+std::shared_ptr<LogicalSource> SourceCatalog::getLogicalSourceOrThrowException(const IdentifierList& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
-    if (logicalSourceNameToSchemaMapping.find(logicalSourceName) != logicalSourceNameToSchemaMapping.end())
+    if (logicalSourceNameToSchemaMapping.contains(logicalSourceName))
     {
         return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
     }
-    throw UnknownSourceType("Required source does not exists " + logicalSourceName);
+    throw UnknownSourceType("Required source does not exists " + logicalSourceName.toString());
 }
 
-bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName)
+bool SourceCatalog::containsLogicalSource(const IdentifierList& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
     return logicalSourceNameToSchemaMapping.contains(logicalSourceName);
 }
 
-bool SourceCatalog::testIfLogicalSourceExistsInLogicalToPhysicalMapping(const std::string& logicalSourceName)
+bool SourceCatalog::testIfLogicalSourceExistsInLogicalToPhysicalMapping(const IdentifierList& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
     return logicalToPhysicalSourceMapping.contains(logicalSourceName);
 }
 
-std::vector<WorkerId> SourceCatalog::getSourceNodesForLogicalSource(const std::string& logicalSourceName)
+std::vector<WorkerId> SourceCatalog::getSourceNodesForLogicalSource(const IdentifierList& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
     std::vector<WorkerId> listOfSourceNodes;
@@ -246,53 +227,25 @@ std::vector<WorkerId> SourceCatalog::getSourceNodesForLogicalSource(const std::s
     return listOfSourceNodes;
 }
 
-std::string SourceCatalog::getPhysicalSourceAndSchemaAsString()
-{
-    std::unique_lock lock(catalogMutex);
-    std::stringstream ss;
-    for (const auto& entry : logicalToPhysicalSourceMapping)
-    {
-        ss << "source name=" << entry.first << " with " << entry.second.size() << " elements:";
-        for (const std::shared_ptr<SourceCatalogEntry>& sce : entry.second)
-        {
-            ss << sce->toString();
-        }
-        ss << std::endl;
-    }
-    return ss.str();
-}
-
-std::vector<std::shared_ptr<SourceCatalogEntry>> SourceCatalog::getPhysicalSources(const std::string& logicalSourceName)
+std::vector<std::shared_ptr<SourceCatalogEntry>> SourceCatalog::getPhysicalSources(const IdentifierList& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
     if (!logicalToPhysicalSourceMapping.contains(logicalSourceName))
     {
         auto ex = PhysicalSourceNotFoundInQueryDescription();
-        ex.what() += ": When attempting to look up physical sources for logical source " + logicalSourceName;
+        ex.what() += ": When attempting to look up physical sources for logical source " + logicalSourceName.toString();
         throw ex;
     }
     return logicalToPhysicalSourceMapping[logicalSourceName];
 }
 
-std::map<std::string, Schema> SourceCatalog::getAllLogicalSource()
+const std::unordered_map<IdentifierList, Schema>& SourceCatalog::getAllLogicalSource()
 {
     return logicalSourceNameToSchemaMapping;
 }
 
-std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString()
-{
-    std::unique_lock lock(catalogMutex);
-    std::map<std::string, std::string> allLogicalSourceAsString;
-    const std::map<std::string, Schema> allLogicalSource = getAllLogicalSource();
 
-    for (const auto& [name, schema] : allLogicalSource)
-    {
-        allLogicalSourceAsString[name] = fmt::format("{}", schema);
-    }
-    return allLogicalSourceAsString;
-}
-
-bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Schema schema)
+bool SourceCatalog::updateLogicalSource(const IdentifierList& logicalSourceName, Schema schema)
 {
     std::unique_lock lock(catalogMutex);
     /// check if source already exist

@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <ranges>
+#include <sstream>
 #include <utility>
 #include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -70,7 +71,7 @@ bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 };
 
-std::string getFieldName(const NodeFunction& function)
+IdentifierList getFieldName(const NodeFunction& function)
 {
     /// We assert that the projection operator only contains field access and assignment functions in the constructor.
     if (const auto* nodeFunctionFieldAccess = dynamic_cast<const NodeFunctionFieldAccess*>(&function))
@@ -136,7 +137,6 @@ std::shared_ptr<Operator> LogicalProjectionOperator::copy()
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setOperatorState(operatorState);
-    copy->setHashBasedSignature(hashBasedSignature);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);
@@ -144,30 +144,4 @@ std::shared_ptr<Operator> LogicalProjectionOperator::copy()
     return copy;
 }
 
-void LogicalProjectionOperator::inferStringSignature()
-{
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalProjectionOperator: Inferring String signature for {}", *operatorNode);
-    INVARIANT(!children.empty(), "LogicalProjectionOperator: Project should have children.");
-    ///Infer query signatures for child operators
-    for (const auto& child : children)
-    {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
-        childOperator->inferStringSignature();
-    }
-    std::stringstream signatureStream;
-    std::vector<std::string> fields = outputSchema.getUniqueFieldNames();
-    std::sort(fields.begin(), fields.end());
-    signatureStream << "PROJECTION(";
-    for (const auto& field : fields)
-    {
-        signatureStream << " " << field << " ";
-    }
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << ")." << *childSignature.begin()->second.begin();
-
-    ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
-}
 }

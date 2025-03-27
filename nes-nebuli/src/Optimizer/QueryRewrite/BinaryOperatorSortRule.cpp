@@ -63,12 +63,12 @@ void BinaryOperatorSortRule::sortChildren(const std::shared_ptr<BinaryOperator>&
 
     /// Extract schema and qualifier name for left and right children
     auto leftInputSchema = binaryOperator->getLeftInputSchema();
-    auto leftQualifierName = leftInputSchema.getQualifierNameForSystemGeneratedFields();
+    auto leftQualifierName = leftInputSchema.getCommonPrefix();
     auto rightInputSchema = binaryOperator->getRightInputSchema();
-    auto rightQualifierName = rightInputSchema.getQualifierNameForSystemGeneratedFields();
+    auto rightQualifierName = rightInputSchema.getCommonPrefix();
 
     /// Compare left and right children qualifier name
-    if (leftQualifierName.has_value() and rightQualifierName.has_value() and leftQualifierName == rightQualifierName)
+    if (!std::ranges::empty(leftQualifierName) && !std::ranges::empty(rightQualifierName) and leftQualifierName == rightQualifierName)
     {
         /// Remove the left children and insert it back to the binary operator
         /// if right qualifier is smaller than left qualifier alphabetically

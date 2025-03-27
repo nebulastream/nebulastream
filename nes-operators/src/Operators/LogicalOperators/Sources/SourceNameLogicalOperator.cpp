@@ -24,12 +24,12 @@
 namespace NES
 {
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const OperatorId id)
+SourceNameLogicalOperator::SourceNameLogicalOperator(IdentifierList logicalSourceName, const OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(Schema{})
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, Schema schema, const OperatorId id)
+SourceNameLogicalOperator::SourceNameLogicalOperator(IdentifierList logicalSourceName, Schema schema, const OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
@@ -67,7 +67,6 @@ std::shared_ptr<Operator> SourceNameLogicalOperator::copy()
     auto copy = std::make_shared<SourceNameLogicalOperator>(logicalSourceName, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     for (const auto& pair : properties)
     {
@@ -76,19 +75,13 @@ std::shared_ptr<Operator> SourceNameLogicalOperator::copy()
     return copy;
 }
 
-void SourceNameLogicalOperator::inferStringSignature()
-{
-    ///Update the signature
-    throw FunctionNotImplemented("Not supporting infering signatures for SourceNameLogicalOperator.");
-}
-
 void SourceNameLogicalOperator::inferInputOrigins()
 {
     /// Data sources have no input origins.
     NES_INFO("Data sources have no input origins, so inferInputOrigins is a noop.");
 }
 
-std::string SourceNameLogicalOperator::getLogicalSourceName() const
+IdentifierList SourceNameLogicalOperator::getLogicalSourceName() const
 {
     return logicalSourceName;
 }

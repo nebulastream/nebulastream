@@ -30,7 +30,7 @@ public:
     SinkLogicalOperator(OperatorId id) : Operator(id), LogicalUnaryOperator(id) {};
 
     /// During query parsing, we require the name of the sink and need to assign it an id.
-    SinkLogicalOperator(std::string sinkName, const OperatorId id)
+    SinkLogicalOperator(IdentifierList sinkName, const OperatorId id)
         : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName)) {};
 
     [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
@@ -41,9 +41,7 @@ public:
     std::shared_ptr<Sinks::SinkDescriptor> getSinkDescriptor() const;
 
     std::shared_ptr<Operator> copy() override;
-    void inferStringSignature() override;
-
-    std::string sinkName;
+    IdentifierList sinkName;
     std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
 
 protected:

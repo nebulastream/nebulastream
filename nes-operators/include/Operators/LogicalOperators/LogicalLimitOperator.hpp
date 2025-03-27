@@ -52,7 +52,6 @@ public:
     */
     bool inferSchema() override;
     std::shared_ptr<Operator> copy() override;
-    void inferStringSignature() override;
 
 protected:
     std::string toString() const override;

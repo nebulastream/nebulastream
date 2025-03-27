@@ -70,7 +70,6 @@ std::shared_ptr<Operator> LogicalLimitOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);
@@ -78,25 +77,4 @@ std::shared_ptr<Operator> LogicalLimitOperator::copy()
     return copy;
 }
 
-void LogicalLimitOperator::inferStringSignature()
-{
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", *operatorNode);
-    INVARIANT(!children.empty(), "Limit should have children");
-
-    ///Infer query signatures for child operators
-    for (const auto& child : children)
-    {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
-        childOperator->inferStringSignature();
-    }
-
-    std::stringstream signatureStream;
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << "LIMIT(" << limit << ")." << *childSignature.begin()->second.begin();
-
-    ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
-}
 }

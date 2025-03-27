@@ -34,7 +34,7 @@ const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) c
             recordFields.begin(),
             recordFields.end(),
             std::string{},
-            [](const std::string& acc, const auto& pair) { return acc + pair.first + ", "; });
+            [](const std::string& acc, const auto& pair) { return acc + pair.first.toString() + ", "; });
         throw FieldNotFound("Field {} not found in record {}.", recordFieldIdentifier, allFields);
     }
     return recordFields.at(recordFieldIdentifier);

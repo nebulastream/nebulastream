@@ -29,7 +29,7 @@ std::shared_ptr<SerializableSchema> SchemaSerializationUtil::serializeSchema(Sch
     for (const auto& field : schema.getFields())
     {
         auto* serializedField = serializedSchema->add_fields();
-        serializedField->set_name(field.name);
+        serializedField->set_name(field.name.toString());
         /// serialize data type
         DataTypeSerializationUtil::serializeDataType(field.dataType, serializedField->mutable_type());
     }
@@ -59,7 +59,7 @@ Schema SchemaSerializationUtil::deserializeSchema(const SerializableSchema& seri
         const auto& fieldName = serializedField.name();
         /// de-serialize data type
         auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.type());
-        deserializedSchema.addField(fieldName, type);
+        deserializedSchema.addField(IdentifierList::parse(fieldName), type);
     }
 
     /// Deserialize layoutType

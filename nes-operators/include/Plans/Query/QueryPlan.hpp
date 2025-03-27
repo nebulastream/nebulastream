@@ -117,11 +117,11 @@ public:
 
     std::shared_ptr<QueryPlan> copy();
 
-    [[nodiscard]] std::string getSourceConsumed() const;
+    [[nodiscard]] const IdentifierList& getSourceConsumed() const;
 
 
     /// Set the logical sources used in the query
-    void setSourceConsumed(std::string_view sourceName);
+    void setSourceConsumed(const IdentifierList& sourceName);
 
     void setPlacementStrategy(Optimizer::PlacementStrategy placementStrategy);
 
@@ -150,7 +150,7 @@ private:
 
     std::vector<std::shared_ptr<Operator>> rootOperators;
     QueryId queryId = INVALID_QUERY_ID;
-    std::string sourceConsumed;
+    IdentifierList sourceConsumed;
     QueryState currentState;
     /// Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;

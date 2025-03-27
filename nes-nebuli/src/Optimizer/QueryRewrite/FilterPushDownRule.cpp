@@ -135,7 +135,7 @@ void FilterPushDownRule::pushFilterBelowJoin(
     bool pushed = pushFilterBelowJoinSpecialCase(filterOperator, joinOperator);
 
     /// field names that are used by the filter
-    std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
+    std::vector<IdentifierList> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
     /// better readability
     const std::shared_ptr<LogicalJoinOperator> curOperatorAsJoin = NES::Util::as<LogicalJoinOperator>(joinOperator);
     /// we might have pushed it already within the special condition before
@@ -149,7 +149,7 @@ void FilterPushDownRule::pushFilterBelowJoin(
 
         /// if any field that is used by the filter is not part of the branches schema, we can't push the filter to that branch.
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoin: Checking if filter can be pushed below left or right branch of join");
-        for (const std::string& fieldUsedByFilter : predicateFields)
+        for (const IdentifierList& fieldUsedByFilter : predicateFields)
         {
             if (not leftSchema.contains(fieldUsedByFilter))
             {
@@ -185,7 +185,7 @@ void FilterPushDownRule::pushFilterBelowJoin(
 bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(
     const std::shared_ptr<LogicalSelectionOperator>& filterOperator, const std::shared_ptr<LogicalJoinOperator>& joinOperator)
 {
-    std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
+    const std::vector<IdentifierList> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
     const std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition = joinOperator->getJoinDefinition();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Extracted field names that are used by the filter");
 
@@ -236,7 +236,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(
 void FilterPushDownRule::pushFilterBelowMap(
     const std::shared_ptr<LogicalSelectionOperator>& filterOperator, const std::shared_ptr<LogicalMapOperator>& mapOperator)
 {
-    std::string assignmentFieldName = getAssignmentFieldFromMapOperator(mapOperator);
+    const IdentifierList assignmentFieldName = getAssignmentFieldFromMapOperator(mapOperator);
     substituteFilterAttributeWithMapTransformation(filterOperator, mapOperator, assignmentFieldName);
     pushDownFilter(filterOperator, mapOperator->getChildren()[0], mapOperator);
 }
@@ -266,13 +266,13 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(
     auto groupByKeyNames = NES::Util::as<LogicalWindowOperator>(windowOperator)->getGroupByKeyNames();
     const std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByKeys
         = NES::Util::as<LogicalWindowOperator>(windowOperator)->getWindowDefinition()->getKeys();
-    std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
+    const std::vector<IdentifierList> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Retrieved the group by keys of the window operator");
 
     bool areAllFilterAttributesInGroupByKeys = true;
     for (const auto& filterAttribute : fieldNamesUsedByFilter)
     {
-        if (std::find(groupByKeyNames.begin(), groupByKeyNames.end(), filterAttribute) == groupByKeyNames.end())
+        if (std::ranges::find(groupByKeyNames, filterAttribute) == groupByKeyNames.end())
         {
             areAllFilterAttributesInGroupByKeys = false;
         }
@@ -408,7 +408,7 @@ void FilterPushDownRule::renameFilterAttributesByNodeFunctions(
     filterOperator->setPredicate(predicateCopy);
 }
 
-std::string FilterPushDownRule::getAssignmentFieldFromMapOperator(const std::shared_ptr<Node>& node)
+IdentifierList FilterPushDownRule::getAssignmentFieldFromMapOperator(const std::shared_ptr<Node>& node)
 {
     NES_TRACE("FilterPushDownRule: Find the field name used in map operator");
     const std::shared_ptr<LogicalMapOperator> mapLogicalOperator = NES::Util::as<LogicalMapOperator>(node);
@@ -420,7 +420,7 @@ std::string FilterPushDownRule::getAssignmentFieldFromMapOperator(const std::sha
 void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(
     const std::shared_ptr<LogicalSelectionOperator>& filterOperator,
     const std::shared_ptr<LogicalMapOperator>& mapOperator,
-    const std::string& fieldName)
+    const IdentifierList& fieldName)
 {
     NES_TRACE("Substitute filter predicate's field access function with map transformation.");
     NES_TRACE("Current map transformation: {}", *mapOperator->getMapFunction());

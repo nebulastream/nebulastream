@@ -51,10 +51,10 @@ std::string CSVFormat::getFormattedSchema() const
 {
     PRECONDITION(schema.hasFields(), "Encountered schema without fields in CSVFormat.");
     std::stringstream ss;
-    ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type);
+    ss << schema.getFields().front().name.toString() << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type);
     for (const auto& field : schema.getFields() | std::views::drop(1))
     {
-        ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type);
+        ss << ',' << field.name.toString() << ':' << magic_enum::enum_name(field.dataType.type);
     }
     return fmt::format("{}\n", ss.str());
 }

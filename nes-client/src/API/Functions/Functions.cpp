@@ -119,14 +119,14 @@ std::shared_ptr<NodeFunctionFieldAssignment> FunctionItem::operator=(const std::
     return NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(function), assignFunction);
 }
 
-FunctionItem Attribute(std::string fieldName)
+FunctionItem Attribute(const Identifier& fieldName)
 {
     return {NodeFunctionFieldAccess::create(Identifier{fieldName})};
 }
 
-FunctionItem Attribute(std::string fieldName, const DataType::Type type)
+FunctionItem Attribute(const Identifier& fieldName, const DataType::Type type)
 {
-    return {NodeFunctionFieldAccess::create(DataTypeProvider::provideDataType(type), Identifier{fieldName})};
+    return {NodeFunctionFieldAccess::create(DataTypeProvider::provideDataType(type), fieldName)};
 }
 
 std::shared_ptr<NodeFunction> WHEN(const std::shared_ptr<NodeFunction>& conditionExp, const std::shared_ptr<NodeFunction>& valueExp)

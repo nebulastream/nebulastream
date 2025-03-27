@@ -57,11 +57,10 @@ std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::
     for (const auto& field : inputSchema.getFields())
     {
         /// compute the new name for the field by added new source name as field qualifier
-        std::string fieldName = field.name;
         /// Compute new name without field qualifier
-        std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
+        const IdentifierList updatedFieldName = newSourceName + field.name;
         /// Compute field access and field rename function
-        auto originalField = NodeFunctionFieldAccess::create(field.dataType, fieldName);
+        auto originalField = NodeFunctionFieldAccess::create(field.dataType, field.name);
         auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);
         projectionAttributes.push_back(fieldRenameFunction);
     }

@@ -17,16 +17,17 @@
 #include <utility>
 #include <DataTypes/Schema.hpp>
 #include <SourceCatalogs/LogicalSource.hpp>
+#include "Identifiers/Identifier.hpp"
 
 namespace NES
 {
 
-std::shared_ptr<LogicalSource> LogicalSource::create(const std::string& logicalSourceName, Schema schema)
+std::shared_ptr<LogicalSource> LogicalSource::create(const IdentifierList& logicalSourceName, Schema schema)
 {
     return std::make_shared<LogicalSource>(LogicalSource(std::move(logicalSourceName), std::move(schema)));
 }
 
-LogicalSource::LogicalSource(std::string logicalSourceName, Schema schema) : logicalSourceName(std::move(logicalSourceName)), schema(schema)
+LogicalSource::LogicalSource(IdentifierList logicalSourceName, const Schema& schema) : logicalSourceName(std::move(logicalSourceName)), schema(schema)
 {
 }
 
@@ -35,7 +36,7 @@ Schema LogicalSource::getSchema()
     return schema;
 }
 
-std::string LogicalSource::getLogicalSourceName()
+IdentifierList LogicalSource::getLogicalSourceName()
 {
     return logicalSourceName;
 }

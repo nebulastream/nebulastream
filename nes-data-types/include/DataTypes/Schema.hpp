@@ -14,13 +14,16 @@
 
 #pragma once
 
-#include "Identifiers/Identifier.hpp"
+#include <Identifiers/Identifier.hpp>
 
 
 #include <cstddef>
 #include <cstdint>
+#include <initializer_list>
 #include <optional>
 #include <ostream>
+#include <ranges>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -34,6 +37,10 @@ namespace NES
 
 class Schema
 {
+    // template <std::ranges::input_range Range>
+    // std::pair<std::unordered_map<std::span<const Identifier>, size_t>, std::unordered_map<std::span<const Identifier>, std::vector<size_t>>>
+    // initializeFields(Range& fields) noexcept;
+
 public:
     /// Enum to identify the memory layout in which we want to represent the schema physically.
     enum class MemoryLayoutType : uint8_t
@@ -68,6 +75,8 @@ public:
     /// schema qualifier separator
     constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
     Schema() = default;
+    Schema(std::initializer_list<Field> fields) noexcept;
+    Schema(std::initializer_list<Schema> fields) noexcept;
     explicit Schema(MemoryLayoutType memoryLayoutType);
     ~Schema() = default;
 
@@ -91,17 +100,20 @@ public:
 
     bool contains(const IdentifierList& qualifiedFieldName) const;
 
-    [[nodiscard]] IdentifierList getSourceNameQualifier() const;
 
-    /// get the qualifier of the source without ATTRIBUTE_NAME_SEPARATOR
-    std::optional<IdentifierList> getQualifierNameForSystemGeneratedFields() const;
+    IdentifierList getCommonPrefix() const;
+
+    // [[nodiscard]] IdentifierList getSourceNameQualifier() const;
+    //
+    // /// get the qualifier of the source without ATTRIBUTE_NAME_SEPARATOR
+    // std::optional<IdentifierList> getQualifierNameForSystemGeneratedFields() const;
 
     /// method to get the qualifier of the source with ATTRIBUTE_NAME_SEPARATOR
     // std::string getQualifierNameForSystemGeneratedFieldsWithSeparator() const;
 
     [[nodiscard]] bool hasFields() const;
     [[nodiscard]] size_t getNumberOfFields() const;
-    std::vector<IdentifierList> getUniqueFieldNames() const;
+    std::vector<IdentifierList> getUniqueFieldNames() const&;
     [[nodiscard]] const std::vector<Field>& getFields() const;
     void assignToFields(const Schema& otherSchema);
     void appendFieldsFromOtherSchema(const Schema& otherSchema);

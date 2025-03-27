@@ -37,6 +37,7 @@ EXCEPTION(FieldAlreadyExists, 2005, "field already exists")
 EXCEPTION(DifferentFieldTypeExpected, 2006, "different field type expected")
 EXCEPTION(CannotInferStamp, 2007, "cannot infer stamp")
 EXCEPTION(UnsupportedQuery, 2008, "specified query is (currently) not supported")
+EXCEPTION(InvalidIdentifier, 2009, "invalid identifier")
 
 /// 21XX Errors during query compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
