@@ -49,7 +49,8 @@ Sources::SourceReturnType::EmitFunction emitFunction(
                     for (const auto& successor : successors)
                     {
                         /// The admission queue might be full, we have to reattempt
-                        while (not emitter.emitWork(queryId, successor, data.buffer, {}, {}, false))
+                        while (not emitter.emitWork(
+                            queryId, successor, data.buffer, {}, {}, Execution::PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                         }
                         ENGINE_LOG_DEBUG("Source Emitted Data to sucessor: {}-{}", queryId, successor->id);

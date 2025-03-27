@@ -38,7 +38,7 @@ public:
     virtual ~PipelineExecutionContext() = default;
 
     /// Returns success, if the buffer was emitted successfully.
-    virtual bool emitBuffer(const Memory::TupleBuffer& buffer) { return emitBuffer(buffer, ContinuationPolicy::POSSIBLE); };
+    bool emitBuffer(const Memory::TupleBuffer& buffer) { return emitBuffer(buffer, ContinuationPolicy::POSSIBLE); };
 
     /// Please be aware of how you are setting the continuation policy, as this will/can lead to deadlocks and no progress in our system.
     /// We advise to use ContinuationPolicy::POSSIBLE, as this will ensure no deadlock arising.

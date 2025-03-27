@@ -168,7 +168,7 @@ struct TestWorkEmitter : Runtime::WorkEmitter
          Memory::TupleBuffer,
          Runtime::BaseTask::onComplete,
          Runtime::BaseTask::onFailure,
-         bool),
+         Runtime::Execution::PipelineExecutionContext::ContinuationPolicy),
         (override));
     MOCK_METHOD(
         void,
