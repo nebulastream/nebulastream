@@ -181,26 +181,26 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
     /// not for the general function
     if (helper.isJoinRelation)
     {
-        auto& rightFunction = helper.joinKeyRelationHelper.back();
+        const auto rightFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
-        auto& leftFunction = helper.joinKeyRelationHelper.back();
+        const auto leftFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
 
-        auto opTokenType = context->op->getType();
-        auto function = createLogicalBinaryFunction(std::move(leftFunction), std::move(rightFunction), opTokenType);
+        const auto opTokenType = context->op->getType();
+        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
         helper.joinKeyRelationHelper.push_back(function);
-        helper.joinFunction = std::move(function);
+        helper.joinFunction = function;
     }
     else
     {
-        auto& rightFunction = helper.functionBuilder.back();
+        const auto rightFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
-        auto& leftFunction = helper.functionBuilder.back();
+        const auto leftFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
 
         const auto opTokenType = context->op->getType();
-        auto function = createLogicalBinaryFunction(std::move(leftFunction), std::move(rightFunction), opTokenType);
-        helper.functionBuilder.push_back(std::move(function));
+        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
+        helper.functionBuilder.push_back(function);
     }
 
     poppush(helper);
@@ -211,7 +211,7 @@ void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseCont
     AntlrSQLHelper helper = helpers.top();
     for (auto& selectFunction : helper.functionBuilder)
     {
-        helper.addProjectionField(std::move(selectFunction));
+        helper.addProjectionField(selectFunction);
     }
     helper.functionBuilder.clear();
     poppush(helper);
@@ -241,7 +241,7 @@ void AntlrSQLQueryPlanCreator::exitWhereClause(AntlrSQLParser::WhereClauseContex
     {
         throw InvalidQuerySyntax("There were more than 1 functions in the functionBuilder in exitWhereClause.");
     }
-    helper.addWhereClause(std::move(helper.functionBuilder.back()));
+    helper.addWhereClause(helper.functionBuilder.back());
     helper.functionBuilder.clear();
     poppush(helper);
     AntlrSQLBaseListener::exitWhereClause(context);
@@ -260,9 +260,9 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     auto helper = helpers.top();
     LogicalFunction function;
 
-    auto& rightFunction = helper.functionBuilder.back();
+    const auto rightFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
-    auto& leftFunction = helper.functionBuilder.back();
+    const auto leftFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
     auto opTokenType = context->op->getType();
     switch (opTokenType) /// TODO #619: improve this switch case
@@ -285,7 +285,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
-    helper.functionBuilder.push_back(std::move(function));
+    helper.functionBuilder.push_back(function);
     poppush(helper);
 }
 
@@ -294,13 +294,13 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     AntlrSQLHelper helper = helpers.top();
     LogicalFunction function;
 
-    auto& innerFunction = helper.functionBuilder.back();
+    const auto innerFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
     auto opTokenType = context->op->getType();
     switch (opTokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::PLUS:
-            function = std::move(innerFunction);
+            function = innerFunction;
             break;
         case AntlrSQLLexer::MINUS:
             function = MulLogicalFunction(
@@ -310,7 +310,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
     }
-    helper.functionBuilder.push_back(std::move(function));
+    helper.functionBuilder.push_back(function);
     poppush(helper);
 }
 
@@ -384,14 +384,14 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     {
         if (!helper.windowAggs.empty())
         {
-            auto& aggFunc = helper.windowAggs.back();
+            auto aggFunc = helper.windowAggs.back();
             helper.windowAggs.pop_back();
             aggFunc = aggFunc->as(FieldAccessLogicalFunction(context->getText()));
             helper.windowAggs.push_back(std::move(aggFunc));
         }
         else
         {
-            auto& projection = helper.functionBuilder.back();
+            auto projection = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
             auto renamedAttribute = FieldAssignmentLogicalFunction(
                 FieldAccessLogicalFunction(context->getText()),
@@ -683,7 +683,7 @@ void AntlrSQLQueryPlanCreator::exitHavingClause(AntlrSQLParser::HavingClauseCont
     {
         throw InvalidQuerySyntax("There was more than one function in the functionBuilder in exitWhereClause.");
     }
-    helper.addHavingClause(std::move(helper.functionBuilder.back()));
+    helper.addHavingClause(helper.functionBuilder.back());
     helper.functionBuilder.clear();
     poppush(helper);
     AntlrSQLBaseListener::exitHavingClause(context);
@@ -694,26 +694,26 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
     if (auto helper = helpers.top(); helper.isJoinRelation)
     {
         INVARIANT(helper.joinKeyRelationHelper.size() >= 2, "Requires two functions but got {}", helper.joinKeyRelationHelper.size());
-        auto& rightFunction = helper.joinKeyRelationHelper.back();
+        const auto rightFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
-        auto& leftFunction = helper.joinKeyRelationHelper.back();
+        const auto leftFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
-        auto function = createFunctionFromOpBoolean(std::move(leftFunction), std::move(rightFunction), helper.opBoolean);
+        const auto function = createFunctionFromOpBoolean(leftFunction, rightFunction, helper.opBoolean);
         helper.joinKeyRelationHelper.push_back(function);
-        helper.joinFunction = std::move(function);
+        helper.joinFunction = function;
         poppush(helper);
     }
     else
     {
         INVARIANT(helper.functionBuilder.size() >= 2, "Requires two functions");
-        auto& rightFunction = helper.functionBuilder.back();
+        const auto rightFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
-        auto& leftFunction = helper.functionBuilder.back();
+        const auto leftFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
-        auto function = createFunctionFromOpBoolean(std::move(leftFunction),
-                                                    std::move(rightFunction),
-                                                    helper.opBoolean);
-        helper.functionBuilder.push_back(std::move(function));
+
+        const auto function = createFunctionFromOpBoolean(leftFunction, rightFunction, helper.opBoolean);
+        helper.functionBuilder.push_back(function);
+        poppush(helper);
     }
     AntlrSQLBaseListener::exitComparison(context);
 }
@@ -772,8 +772,8 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
 
     /// we assume that the left query plan is the first element in the queryPlans vector and the right query plan is the second element
     INVARIANT(helper.queryPlans.size() == 2, "Join relation requires exactly two subqueries, but got {}", helper.queryPlans.size());
-    auto& leftQueryPlan = helper.queryPlans[0];
-    auto& rightQueryPlan = helper.queryPlans[1];
+    const auto leftQueryPlan = helper.queryPlans[0];
+    const auto rightQueryPlan = helper.queryPlans[1];
     helper.queryPlans.clear();
 
     auto queryPlan
@@ -801,15 +801,15 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
 
     if (helper.isJoinRelation)
     {
-        auto& innerFunction = helper.joinKeyRelationHelper.back();
+        const auto innerFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
         auto negatedFunction = NegateLogicalFunction(helper.joinFunction.value());
         helper.joinKeyRelationHelper.push_back(negatedFunction);
-        helper.joinFunction = std::move(negatedFunction);
+        helper.joinFunction = negatedFunction;
     }
     else
     {
-        auto& innerFunction = helper.functionBuilder.back();
+        const auto innerFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
         helper.functionBuilder.push_back(NegateLogicalFunction(innerFunction));
     }
@@ -823,7 +823,8 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     if (const auto valueAsNumeric = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant()))
     {
         const auto concreteValue = valueAsNumeric->number();
-        std::unique_ptr<DataType> dataType = nullptr;
+        std::shared_ptr<DataType> dataType = nullptr;
+        /// Signed Integers
         if (dynamic_cast<AntlrSQLParser::TinyIntLiteralContext*>(concreteValue))
         {
             dataType = DataTypeProvider::provideDataType(LogicalType::INT8);
@@ -921,9 +922,9 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             if (funcName == "concat")
             {
                 INVARIANT(helper.functionBuilder.size() == 2, "Concat requires two arguments, but got {}", helper.functionBuilder.size());
-                auto& rightFunction = helper.functionBuilder.back();
+                const auto rightFunction = helper.functionBuilder.back();
                 helper.functionBuilder.pop_back();
-                auto& leftFunction = helper.functionBuilder.back();
+                const auto leftFunction = helper.functionBuilder.back();
                 helper.functionBuilder.pop_back();
                 helper.functionBuilder.push_back(ConcatLogicalFunction(leftFunction, rightFunction));
             }
