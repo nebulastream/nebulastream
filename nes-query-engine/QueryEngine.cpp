@@ -226,7 +226,7 @@ public:
         Memory::TupleBuffer buffer,
         BaseTask::onComplete complete,
         BaseTask::onFailure failure,
-        bool potentiallyProcessTheWorkInPlace) override
+        const Execution::PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
     {
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
@@ -246,18 +246,22 @@ public:
         }
 
         /// WorkerThread
-        if (potentiallyProcessTheWorkInPlace)
+        switch (continuationPolicy)
         {
-            addTaskOrDoItInPlace(std::move(task));
-            return true;
+            case Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
+                addTaskOrDoItInPlace(std::move(task));
+                return true;
+            case Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT:
+            case Execution::PipelineExecutionContext::ContinuationPolicy::NEVER:
+                if (not internalTaskQueue.tryWriteUntil(
+                        std::chrono::high_resolution_clock::now() + std::chrono::seconds(1), std::move(task)))
+                {
+                    node->pendingTasks.fetch_sub(1);
+                    ENGINE_LOG_DEBUG("TaskQueue is full, could not write within 1 second.");
+                    return false;
+                }
+                return true;
         }
-        if (internalTaskQueue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::seconds(1), std::move(task)))
-        {
-            return true;
-        }
-        node->pendingTasks.fetch_sub(1);
-        ENGINE_LOG_DEBUG("TaskQueue is full, could not write within 1 second.");
-        return false;
     }
 
     void emitPipelineStart(
@@ -347,23 +351,28 @@ private:
         bool terminating{};
     };
 
+    void doTaskInPlace(Task&& task)
+    {
+        WorkerThread worker{*this, false};
+        try
+        {
+            if (std::visit(worker, task))
+            {
+                completeTask(task);
+            }
+        }
+        catch (const Exception& exception)
+        {
+            failTask(task, exception);
+        }
+    }
+
     void addTaskOrDoItInPlace(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
         if (not internalTaskQueue.write(std::move(task)))
         {
-            WorkerThread worker{*this, false};
-            try
-            {
-                if (std::visit(worker, task))
-                {
-                    completeTask(task);
-                }
-            }
-            catch (const Exception& exception)
-            {
-                failTask(task, exception);
-            }
+            doTaskInPlace(std::move(task));
         }
     }
 
@@ -376,9 +385,7 @@ private:
         /// To mitigate this, we will check if we have reached a certain stack level and if so, we will fail the task.
         if (constexpr auto MAX_STACK_LEVEL = 5000; stackLevel >= MAX_STACK_LEVEL)
         {
-            failTask(
-                task, TooMuchWork("TaskQueue is always full. We have tried for {} times to write the task into the queue", stackLevel));
-            return;
+            throw TooMuchWork("TaskQueue is always full. We have tried for {} times to write the task into the queue", stackLevel);
         }
 
 
@@ -437,29 +444,23 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                 {
                     pool.statistic->onEvent(
                         TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
-                    pool.emitWork(
+                    return pool.emitWork(
                         task.queryId,
                         pipeline,
                         tupleBuffer,
                         {},
                         {},
-                        continuationPolicy == Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-                    return true;
+                        continuationPolicy);
                 }
                 /// Otherwise, get the successor of the pipeline, and emit a work task for it.
-                for (const auto& successor : pipeline->successors)
-                {
-                    pool.statistic->onEvent(
-                        TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
-                    pool.emitWork(
-                        task.queryId,
-                        successor,
-                        tupleBuffer,
-                        {},
-                        {},
-                        continuationPolicy == Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-                }
-                return true;
+                return std::ranges::all_of(
+                    pipeline->successors,
+                    [&](const auto& successor)
+                    {
+                        pool.statistic->onEvent(
+                            TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
+                        return pool.emitWork(task.queryId, successor, tupleBuffer, {}, {}, continuationPolicy);
+                    });
             });
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
@@ -568,13 +569,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                 /// pipeline termination.
-                pool.emitWork(
-                    stopPipelineTask.queryId,
-                    successor,
-                    tupleBuffer,
-                    [ref = successor] {},
-                    {},
-                    policy == Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                pool.emitWork(stopPipelineTask.queryId, successor, tupleBuffer, [ref = successor] {}, {}, policy);
             }
             return true;
         });
@@ -655,7 +650,7 @@ void ThreadPool::addThread()
                 {
                     if (admissionQueue.read(task))
                     {
-                        NES_WARNING(
+                        ENGINE_LOG_TRACE(
                             "Task picked from AdmissionQueue and shallPickTaskFromAdmissionQueue={}", shallPickTaskFromAdmissionQueue);
                         addTaskOrDoItInPlace(std::move(task));
                     }
