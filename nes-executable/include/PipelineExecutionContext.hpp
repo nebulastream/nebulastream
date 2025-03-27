@@ -31,6 +31,7 @@ public:
     enum class ContinuationPolicy : uint8_t
     {
         POSSIBLE, /// It is possible for the emitted tuple buffer to be processed immediately. This is not a guarantee that that will happen
+        IMMEDIATE, /// The tuple buffer should be processed immediately
         NEVER, /// The tuple buffer should never be processed immediately
         REPEAT /// Put the same task back into the task queue
     };
