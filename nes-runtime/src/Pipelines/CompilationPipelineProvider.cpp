@@ -27,8 +27,8 @@ namespace NES
 {
 
 std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(
-    std::unique_ptr<Pipeline> pipeline,
-    std::vector<std::unique_ptr<OperatorHandler>> operatorHandlers,
+    std::shared_ptr<Pipeline> pipeline,
+    std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options& options)
 {
     /// As we are creating here a pipeline that is compiled, we need to set the compilation option to true
