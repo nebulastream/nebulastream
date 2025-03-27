@@ -43,13 +43,8 @@ bool SourceDescriptorLogicalOperator::inferSchema(Schema)
     {
         if (!child.inferSchema(outputSchema))
         {
-            return false;
+            throw CannotInferSchema("This operator ({}) should have at least one child operator", this->toString());
         }
-    }
-
-    if (children.empty())
-    {
-        throw CannotInferSchema("This operator ({}) should have at least one child operator", this->toString());
     }
     return true;
 }

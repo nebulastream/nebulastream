@@ -48,6 +48,8 @@ std::string_view SinkLogicalOperator::getName() const noexcept
 bool SinkLogicalOperator::inferSchema(Schema inputSchema)
 {
     sinkDescriptor->schema = inputSchema;
+    this->inputSchema = inputSchema;
+    this->outputSchema = inputSchema;
     return true;
 }
 

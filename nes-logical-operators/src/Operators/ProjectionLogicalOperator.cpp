@@ -93,35 +93,7 @@ std::string ProjectionLogicalOperator::toString() const
 
 bool ProjectionLogicalOperator::inferSchema(Schema inputSchema)
 {
-    std::vector<Schema> distinctSchemas;
-
-    /// Infer schema of all child operators
-    for (auto& child : children)
-    {
-        if (!child.inferSchema(inputSchema))
-        {
-            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
-        }
-    }
-
-    /// Identify different type of schemas from children operators
-    for (const auto& child : children)
-    {
-        auto childOutputSchema = child.getInputSchemas()[0];
-        auto found = std::find_if(
-            distinctSchemas.begin(),
-            distinctSchemas.end(),
-            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
-        if (found == distinctSchemas.end())
-        {
-            distinctSchemas.push_back(childOutputSchema);
-        }
-    }
-
-    ///validate that only two different type of schema were present
-    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
-
-    NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema.toString(), outputSchema.toString(), toString());
+    this->inputSchema = inputSchema;
     outputSchema.clear();
     for (auto& function : functions)
     {
@@ -145,6 +117,15 @@ bool ProjectionLogicalOperator::inferSchema(Schema inputSchema)
             throw CannotInferSchema(
                 "ProjectionLogicalOperator: Function has to be a FieldAccessLogicalFunction, a RenameLogicalFunction, or a FieldAssignmentLogicalFunction, but it was a {}",
                 function);
+        }
+    }
+
+    /// Infer schema of all child operators
+    for (auto& child : children)
+    {
+        if (!child.inferSchema(outputSchema))
+        {
+            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
         }
     }
     return true;

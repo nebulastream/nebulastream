@@ -30,16 +30,17 @@ void TypeInferencePhase::apply(LogicalPlan& queryPlan,  Catalogs::Source::Source
 
     PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
 
+    std::vector<LogicalOperator> newSources;
     /// first we have to check if all source operators have a correct source descriptors
     for (auto& source : sourceOperators)
     {
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
-        Schema schema = Schema();
+        auto schema = Schema();
         if (!sourceCatalog.containsLogicalSource(source.getLogicalSourceName()))
         {
             NES_ERROR("Source name: {} not registered.", source.getLogicalSourceName());
-            throw LogicalSourceNotFoundInQueryDescription(fmt::format("Logical source not registered. Source Name: {}", source.getLogicalSourceName()));
+            throw LogicalSourceNotFoundInQueryDescription("Logical source not registered. Source Name: {}", source.getLogicalSourceName());
         }
         auto originalSchema = sourceCatalog.getSchemaForLogicalSource(source.getLogicalSourceName());
         schema = schema.copyFields(originalSchema);
@@ -53,10 +54,10 @@ void TypeInferencePhase::apply(LogicalPlan& queryPlan,  Catalogs::Source::Source
                 field.setName(qualifierName + field.getName());
             }
         }
-        auto newSource = source;
-        newSource.setSchema(schema);
-        queryPlan.replaceOperator(source, newSource);
+        source.setSchema(schema);
+        newSources.push_back(source);
     }
+    queryPlan.rootOperators = newSources;
 }
 
 void TypeInferencePhase::apply(LogicalPlan& queryPlan)
@@ -66,14 +67,19 @@ void TypeInferencePhase::apply(LogicalPlan& queryPlan)
 
     /// now we have to infer the input and output schemas for the whole query.
     /// to this end we call at each sink the infer method to propagate the schemata across the whole query.
+    std::vector<LogicalOperator> newSources;
     for (auto& source : sourceOperators)
     {
         auto emptySchema = Schema();
-        if (!source.inferSchema(emptySchema))
+
+        if (not source.inferSchema(emptySchema))
         {
             throw TypeInferenceException("TypeInferencePhase failed for query with id: {}", queryPlan.getQueryId());
         }
+
+        newSources.push_back(source);
     }
+    queryPlan.rootOperators = newSources;
 }
 
 
