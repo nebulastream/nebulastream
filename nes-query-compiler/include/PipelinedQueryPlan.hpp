@@ -48,15 +48,15 @@ struct PipelinedQueryPlan final
 
     friend std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t);
 
-    std::vector<std::unique_ptr<Pipeline>> releaseSourcePipelines()
+    std::vector<std::shared_ptr<Pipeline>> getSourcePipelines()
     {
-        std::vector<std::unique_ptr<Pipeline>> sourcePipelines;
+        std::vector<std::shared_ptr<Pipeline>> sourcePipelines;
         auto it = pipelines.begin();
         while (it != pipelines.end())
         {
             if (it->get()->isSourcePipeline())
             {
-                sourcePipelines.push_back(std::move(*it));
+                sourcePipelines.push_back(*it);
                 it = pipelines.erase(it);
             }
             else
@@ -68,7 +68,7 @@ struct PipelinedQueryPlan final
     }
 
     const QueryId queryId;
-    std::vector<std::unique_ptr<Pipeline>> pipelines;
+    std::vector<std::shared_ptr<Pipeline>> pipelines;
 };
 }
 FMT_OSTREAM(NES::PipelinedQueryPlan);

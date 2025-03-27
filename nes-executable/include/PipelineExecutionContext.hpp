@@ -50,7 +50,7 @@ public:
     [[nodiscard]] virtual PipelineId getPipelineId() const = 0;
 
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
-    virtual std::vector<std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
-    virtual void setOperatorHandlers(std::vector<std::shared_ptr<OperatorHandler>>&) = 0;
+    virtual std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
+    virtual void setOperatorHandlers(std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>>&) = 0;
 };
 }
