@@ -21,8 +21,8 @@
 #include <Abstract/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
+#include <Traits/OriginIdAssignerTrait.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
-#include <Traits/OriginIdTrait.hpp>
 
 namespace NES
 {

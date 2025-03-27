@@ -51,13 +51,13 @@ bool SourceDescriptorLogicalOperator::operator==(LogicalOperatorConcept const& r
 std::string SourceDescriptorLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originIdTrait.toString() << ", " << sourceDescriptor << ")";
+    ss << "SOURCE(opId: " << id << ", " << sourceDescriptor << ")";
     return ss.str();
 }
 
 Optimizer::TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
 {
-    return {};
+    return {originIdTrait};
 }
 
 void SourceDescriptorLogicalOperator::setChildren(std::vector<LogicalOperator> children)

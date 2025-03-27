@@ -14,33 +14,27 @@
 
 #include <memory>
 #include <ostream>
-#include <Traits/OriginIdTrait.hpp>
+#include <Traits/OriginIdAssignerTrait.hpp>
 
 namespace NES::Optimizer
 {
 
-bool OriginIdTrait::operator==(const AbstractTrait& other) const
+bool OriginIdAssignerTrait::operator==(const TraitConcept& other) const
 {
-    if (auto otherTrait = dynamic_cast<const OriginIdTrait*>(&other))
+    if (dynamic_cast<const OriginIdAssignerTrait*>(&other))
     {
-        return std::ranges::equal(otherTrait->originIds, this->originIds);
+        return true;
     }
     return false;
 }
 
-std::string OriginIdTrait::toString() const
+std::string OriginIdAssignerTrait::toString() const
 {
-    std::ostringstream oss;
-    oss << "[";
-    for (size_t i = 0; i < originIds.size(); ++i)
-    {
-        if (i != 0)
-        {
-            oss << ", ";
-        }
-        oss << originIds[i];
-    }
-    oss << "]";
-    return oss.str();
+    return "OriginIdAssignerTrait";
+}
+
+const std::type_info& OriginIdAssignerTrait::getType() const
+{
+    return typeid(this);
 }
 }
