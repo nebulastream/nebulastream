@@ -15,17 +15,17 @@
 #pragma once
 
 #include <memory>
-#include <string>
-#include <vector>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
+namespace NES
+{
+class FieldAccessLogicalFunction;
+class ConstantValueLogicalFunction;
+}
 
 namespace NES::Optimizer
 {
-
 
 /**
  * @brief This rule is only used for evaluating efficiency of query merging using string based signature computation. This rule
@@ -67,21 +67,21 @@ private:
      * @param logicalOperator: the operator to be sorted
      * @return pointer to the updated function
      */
-    std::shared_ptr<NodeFunction> sortAttributesInFunction(std::shared_ptr<NodeFunction> function);
+    std::shared_ptr<LogicalFunction> sortAttributesInFunction(std::shared_ptr<LogicalFunction> function);
 
     /**
      * @brief Alphabetically sort the attributes within the arithmetic function
      * @param function: the input arithmetic function
      * @return pointer to the updated function
      */
-    std::shared_ptr<NodeFunction> sortAttributesInArithmeticalFunctions(std::shared_ptr<NodeFunction> function);
+    std::shared_ptr<LogicalFunction> sortAttributesInArithmeticalFunctions(std::shared_ptr<LogicalFunction> function);
 
     /**
      * @brief Alphabetically sort the attributes within the logical function
      * @param function: the input logical function
      * @return pointer to the updated function
      */
-    std::shared_ptr<NodeFunction> sortAttributesInLogicalFunctions(const std::shared_ptr<NodeFunction>& function);
+    std::shared_ptr<LogicalFunction> sortAttributesInLogicalFunctions(const std::shared_ptr<LogicalFunction>& function);
 
     /**
      * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic function of type
@@ -90,18 +90,18 @@ private:
      * @return: vector of function containing commutative field access or constant function type
      */
     template <class FunctionType>
-    std::vector<std::shared_ptr<NodeFunction>> fetchCommutativeFields(const std::shared_ptr<NodeFunction>& function)
+    std::vector<std::shared_ptr<LogicalFunction>> fetchCommutativeFields(const std::shared_ptr<LogicalFunction>& function)
     {
-        std::vector<std::shared_ptr<NodeFunction>> commutativeFields;
-        if (Util::instanceOf<NodeFunctionFieldAccess>(function) || Util::instanceOf<NodeFunctionConstantValue>(function))
+        std::vector<std::shared_ptr<LogicalFunction>> commutativeFields;
+        if (Util::instanceOf<FieldAccessLogicalFunction>(function) || Util::instanceOf<ConstantValueLogicalFunction>(function))
         {
             commutativeFields.push_back(function);
         }
         else if (Util::instanceOf<FunctionType>(function))
         {
-            for (const auto& child : function->getChildren())
+            for (const auto& child : function->children)
             {
-                auto childCommutativeFields = fetchCommutativeFields<FunctionType>(Util::as<NodeFunction>(child));
+                auto childCommutativeFields = fetchCommutativeFields<FunctionType>(Util::as<LogicalFunction>(child));
                 commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
             }
         }
@@ -115,9 +115,9 @@ private:
      * @param updatedFunction: the updated function
      */
     bool replaceCommutativeFunctions(
-        const std::shared_ptr<NodeFunction>& parentFunction,
-        const std::shared_ptr<NodeFunction>& originalFunction,
-        const std::shared_ptr<NodeFunction>& updatedFunction);
+        const std::shared_ptr<LogicalFunction>& parentFunction,
+        const std::shared_ptr<LogicalFunction>& originalFunction,
+        const std::shared_ptr<LogicalFunction>& updatedFunction);
 
     /**
      * @brief Fetch the value of the left most constant function or the name of the left most field access function within
@@ -125,6 +125,6 @@ private:
      * @param function: the input function
      * @return the name or value of field or constant function
      */
-    static std::string fetchLeftMostConstantValueOrFieldName(std::shared_ptr<NodeFunction> function);
+    static std::string fetchLeftMostConstantValueOrFieldName(std::shared_ptr<LogicalFunction> function);
 };
 }

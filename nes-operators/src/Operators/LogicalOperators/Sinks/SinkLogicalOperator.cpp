@@ -28,12 +28,12 @@
 namespace NES
 {
 
-bool SinkLogicalOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool SinkLogicalOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
 {
     return equal(rhs) && NES::Util::as<SinkLogicalOperator>(rhs)->getId() == id;
 }
 
-bool SinkLogicalOperator::equal(const std::shared_ptr<Node>& rhs) const
+bool SinkLogicalOperator::equal(std::shared_ptr<Operator> const& rhs) const
 {
     if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
     {

@@ -15,7 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -33,8 +32,8 @@ public:
     SinkLogicalOperator(std::string sinkName, const OperatorId id)
         : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName)) {};
 
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
     bool inferSchema() override;
 
     const Sinks::SinkDescriptor& getSinkDescriptorRef() const;

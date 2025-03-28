@@ -28,21 +28,21 @@
 namespace NES::Windowing
 {
 
-ThresholdWindow::ThresholdWindow(std::shared_ptr<NodeFunction> predicate) : predicate(std::move(predicate))
+ThresholdWindow::ThresholdWindow(std::shared_ptr<LogicalFunction> predicate) : ContentBasedWindowType(), predicate(std::move(predicate))
 {
 }
 
-ThresholdWindow::ThresholdWindow(std::shared_ptr<NodeFunction> predicate, uint64_t minCount)
-    : predicate(std::move(predicate)), minimumCount(minCount)
+ThresholdWindow::ThresholdWindow(std::shared_ptr<LogicalFunction> predicate, uint64_t minCount)
+    : ContentBasedWindowType(), predicate(predicate), minimumCount(minCount)
 {
 }
 
-std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<NodeFunction> predicate)
+std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<LogicalFunction> predicate)
 {
     return std::reinterpret_pointer_cast<WindowType>(std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate))));
 }
 
-std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<NodeFunction> predicate, uint64_t minimumCount)
+std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<LogicalFunction> predicate, uint64_t minimumCount)
 {
     return std::reinterpret_pointer_cast<WindowType>(
         std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount)));
@@ -62,7 +62,7 @@ ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBas
     return ContentBasedSubWindowType::THRESHOLDWINDOW;
 }
 
-const std::shared_ptr<NodeFunction>& ThresholdWindow::getPredicate() const
+const std::shared_ptr<LogicalFunction>& ThresholdWindow::getPredicate() const
 {
     return predicate;
 }
