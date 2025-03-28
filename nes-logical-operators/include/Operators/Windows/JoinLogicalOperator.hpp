@@ -23,6 +23,7 @@
 #include <Operators/BinaryLogicalOperator.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <Traits/OriginIdTrait.hpp>
 
 namespace NES
 {
@@ -62,7 +63,6 @@ public:
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
 
-    [[nodiscard]] OriginId getOriginId() const;
 
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -89,8 +89,9 @@ public:
     };
 
     [[nodiscard]] SerializableOperator serialize() const override;
-
     [[nodiscard]] std::string toString() const override;
+
+    Optimizer::OriginIdTrait originIdTrait;
 
 protected:
     [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;

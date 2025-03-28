@@ -40,9 +40,8 @@ JoinLogicalOperator::JoinLogicalOperator(std::unique_ptr<LogicalFunction> joinFu
                                          std::unique_ptr<Windowing::WindowType> windowType,
                                          uint64_t numberOfInputEdgesLeft,
                                          uint64_t numberOfInputEdgesRight,
-                                         JoinType joinType,
-                                         const OriginId originId)
-    :  Operator(), BinaryLogicalOperator(), OriginIdsTrait(originId), joinFunction(std::move(joinFunction)),
+                                         JoinType joinType)
+    :  Operator(), BinaryLogicalOperator(), joinFunction(std::move(joinFunction)),
     windowType(std::move(windowType)), numberOfInputEdgesLeft(numberOfInputEdgesLeft), numberOfInputEdgesRight(numberOfInputEdgesRight), joinType(joinType)
 {
 }
@@ -211,7 +210,7 @@ std::unique_ptr<Operator> JoinLogicalOperator::clone() const
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setOriginId(originId);
+    copy->originIdTrait = originIdTrait;
     copy->windowEndFieldName = windowEndFieldName;
     copy->windowStartFieldName = windowStartFieldName;
     return copy;
@@ -247,27 +246,12 @@ Schema JoinLogicalOperator::getOutputSchema() const
     return outputSchema;
 }
 
-OriginId JoinLogicalOperator::getOriginId() const
-{
-    return originId;
-}
-
 std::string JoinLogicalOperator::getWindowStartFieldName() const {
     return windowStartFieldName;
 }
 
 std::string JoinLogicalOperator::getWindowEndFieldName() const {
     return windowEndFieldName;
-}
-
-std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
-{
-    return OriginIdAssignmentOperator::getOutputOriginIds();
-}
-
-void JoinLogicalOperator::setOriginId(const OriginId originId)
-{
-    OriginIdAssignmentOperator::setOriginId(originId);
 }
 
 LogicalFunction& JoinLogicalOperator::getJoinFunction() const
