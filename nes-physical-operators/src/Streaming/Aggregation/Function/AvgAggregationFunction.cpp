@@ -117,4 +117,14 @@ size_t AvgAggregationFunction::getSizeOfStateInBytes() const
     return inputSize + countTypeSize;
 }
 
+std::unique_ptr<AggregationFunction> AvgAggregationFunction::clone() const {
+    return std::make_unique<AvgAggregationFunction>(
+        inputType->clone(),
+        resultType->clone(),
+        inputFunction,
+        resultFieldIdentifier,
+        countType->clone()
+    );
+}
+
 }
