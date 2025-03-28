@@ -27,11 +27,11 @@ class SinkLogicalOperator : public LogicalUnaryOperator
 {
 public:
     /// During deserialization, we don't need to know/use the name of the sink anymore.
-    SinkLogicalOperator(OperatorId id) : Operator(id), LogicalUnaryOperator(id) {};
+    SinkLogicalOperator(OperatorId id) : Operator(id), LogicalUnaryOperator(id) { };
 
     /// During query parsing, we require the name of the sink and need to assign it an id.
     SinkLogicalOperator(std::string sinkName, const OperatorId id)
-        : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName)) {};
+        : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName)) { };
 
     [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
     [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;

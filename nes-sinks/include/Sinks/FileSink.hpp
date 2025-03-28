@@ -71,17 +71,21 @@ private:
 struct ConfigParametersFile
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>
-        INPUT_FORMAT{"inputFormat", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-                         return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config);
-                     }};
+        INPUT_FORMAT{
+            "inputFormat",
+            std::nullopt,
+            [](const std::unordered_map<std::string, std::string>& config)
+            { return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(FILEPATH, config);
-        }};
+        "filePath",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<bool> APPEND{
-        "append", false, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(APPEND, config);
-        }};
+        "append",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return Configurations::DescriptorConfig::tryGet(APPEND, config); }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, FILEPATH, APPEND);

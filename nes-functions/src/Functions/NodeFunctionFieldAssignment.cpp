@@ -29,9 +29,9 @@
 namespace NES
 {
 NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(std::shared_ptr<DataType> stamp)
-    : NodeFunctionBinary(std::move(stamp), "FieldAssignment") {};
+    : NodeFunctionBinary(std::move(stamp), "FieldAssignment") { };
 
-NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other) : NodeFunctionBinary(other) {};
+NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other) : NodeFunctionBinary(other) { };
 
 std::shared_ptr<NodeFunctionFieldAssignment> NodeFunctionFieldAssignment::create(
     const std::shared_ptr<NodeFunctionFieldAccess>& fieldAccess, const std::shared_ptr<NodeFunction>& nodeFunction)

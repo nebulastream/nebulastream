@@ -21,7 +21,7 @@
 namespace NES::Windowing
 {
 
-TimeUnit::TimeUnit(const uint64_t offset) : multiplier(offset) {};
+TimeUnit::TimeUnit(const uint64_t offset) : multiplier(offset) { };
 
 uint64_t TimeUnit::getMillisecondsConversionMultiplier() const
 {

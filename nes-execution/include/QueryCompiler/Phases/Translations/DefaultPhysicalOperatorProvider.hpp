@@ -44,7 +44,7 @@ struct WindowOperatorProperties
         : windowOperator(std::move(windowOperator))
         , windowInputSchema(std::move(windowInputSchema))
         , windowOutputSchema(std::move(windowOutputSchema))
-        , windowDefinition(std::move(windowDefinition)) {};
+        , windowDefinition(std::move(windowDefinition)) { };
 
     std::shared_ptr<WindowOperator> windowOperator;
     std::shared_ptr<Schema> windowInputSchema;

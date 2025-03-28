@@ -33,7 +33,7 @@ class EnumOption : public TypedBaseOption<T>
 public:
     /// Constructor to define a EnumOption with a specific default value.
     EnumOption(const std::string& name, T defaultValue, const std::string& description)
-        : TypedBaseOption<T>(name, defaultValue, description) {};
+        : TypedBaseOption<T>(name, defaultValue, description) { };
 
     /// Operator to assign a new value as a value of this option.
     EnumOption<T>& operator=(const T& value)

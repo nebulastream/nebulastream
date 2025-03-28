@@ -31,7 +31,7 @@ public:
      * @brief creates an allocator for a given numa region
      * @param numaNodeIndex
      */
-    explicit NumaRegionMemoryAllocator(uint32_t numaNodeIndex) : numaNodeIndex(numaNodeIndex) {};
+    explicit NumaRegionMemoryAllocator(uint32_t numaNodeIndex) : numaNodeIndex(numaNodeIndex) { };
 
     ~NumaRegionMemoryAllocator() override { }
 

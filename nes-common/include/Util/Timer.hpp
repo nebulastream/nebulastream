@@ -39,7 +39,7 @@ public:
     {
     public:
         Snapshot(std::string name, TimeUnit runtime, std::vector<Snapshot> children)
-            : name(std::move(name)), runtime(runtime), children(children) {};
+            : name(std::move(name)), runtime(runtime), children(children) { };
         int64_t getRuntime() { return runtime.count(); }
         PrintTimePrecision getPrintTime()
         {
@@ -51,7 +51,7 @@ public:
         std::vector<Snapshot> children;
     };
 
-    Timer(std::string componentName) : componentName(componentName) {};
+    Timer(std::string componentName) : componentName(componentName) { };
 
     /**
      * @brief starts the timer or resumes it after a pause

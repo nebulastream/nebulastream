@@ -571,7 +571,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                 /// pipeline termination.
-                pool.emitWork(stopPipelineTask.queryId, successor, tupleBuffer, [ref = successor] {}, {}, policy);
+                pool.emitWork(stopPipelineTask.queryId, successor, tupleBuffer, [ref = successor] { }, {}, policy);
             }
             return true;
         });

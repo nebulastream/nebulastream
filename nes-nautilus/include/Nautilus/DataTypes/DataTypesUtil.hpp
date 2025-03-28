@@ -29,7 +29,7 @@ namespace NES::Nautilus::Util
 /// This is taken from https://stackoverflow.com/a/20141143 and modified to work with a nautilus::val<int8_t*>
 /// This does not work with multiple inheritance, for example, https://godbolt.org/z/qzExEd
 template <typename T, typename U>
-nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T::*member)
+nautilus::val<int8_t*> getMemberRef(nautilus::val<int8_t*> objectReference, U T::* member)
 {
 #pragma GCC diagnostic ignored "-Wnull-pointer-subtraction"
     return objectReference + ((char*)&((T*)nullptr->*member) - (char*)(nullptr)); /// NOLINT

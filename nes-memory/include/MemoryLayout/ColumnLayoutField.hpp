@@ -69,7 +69,7 @@ private:
      * @param basePointer
      * @param layout
      */
-    ColumnLayoutField(T* basePointer, std::shared_ptr<ColumnLayout> layout) : basePointer(basePointer), layout(std::move(layout)) {};
+    ColumnLayoutField(T* basePointer, std::shared_ptr<ColumnLayout> layout) : basePointer(basePointer), layout(std::move(layout)) { };
 
     T* basePointer;
     std::shared_ptr<ColumnLayout> layout;

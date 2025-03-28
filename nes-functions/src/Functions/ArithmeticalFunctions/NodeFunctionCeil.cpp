@@ -27,7 +27,7 @@
 namespace NES
 {
 
-NodeFunctionCeil::NodeFunctionCeil(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Ceil") {};
+NodeFunctionCeil::NodeFunctionCeil(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Ceil") { };
 
 NodeFunctionCeil::NodeFunctionCeil(NodeFunctionCeil* other) : NodeFunctionArithmeticalUnary(other)
 {

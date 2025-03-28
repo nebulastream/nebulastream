@@ -37,7 +37,7 @@ class ChainedHashMapEntry final : public AbstractHashMapEntry
 public:
     ChainedHashMapEntry* next{nullptr};
     HashFunction::HashValue::raw_type hash;
-    explicit ChainedHashMapEntry(const HashFunction::HashValue::raw_type hash) : hash(hash) {};
+    explicit ChainedHashMapEntry(const HashFunction::HashValue::raw_type hash) : hash(hash) { };
 };
 
 
