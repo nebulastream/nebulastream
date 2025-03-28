@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <memory>
+#include <vector>
 #include <Abstract/PhysicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 

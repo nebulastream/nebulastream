@@ -15,8 +15,9 @@
 #pragma once
 
 #include <memory>
-#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Functions/FunctionProvider.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <SourcePhysicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 

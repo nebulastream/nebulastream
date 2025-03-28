@@ -27,6 +27,9 @@
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
+#include <LegacyOptimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>

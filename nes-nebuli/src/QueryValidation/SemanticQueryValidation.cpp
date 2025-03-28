@@ -14,9 +14,9 @@
 
 #include <memory>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <Util/Common.hpp>
