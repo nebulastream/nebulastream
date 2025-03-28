@@ -67,6 +67,16 @@ public:
     void setChildren(std::vector<LogicalOperator>) override {}
     Optimizer::TraitSet getTraitSet() const override {return {};}
 
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override
+    {
+        inputOriginIds = ids[0];
+    }
+
+    void setOutputOriginIds(std::vector<OriginId> ids) override
+    {
+        outputOriginIds = ids;
+    }
+
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
@@ -78,6 +88,7 @@ private:
     std::vector<OriginId> inputOriginIds;
     OriginId originId = INVALID_ORIGIN_ID;
     Schema inputSchema, outputSchema;
+    std::vector<OriginId> outputOriginIds;
 };
 
 }

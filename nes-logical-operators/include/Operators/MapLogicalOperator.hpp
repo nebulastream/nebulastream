@@ -77,6 +77,15 @@ public:
     Schema getOutputSchema() const override { return outputSchema; }
     std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
     std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override
+    {
+        inputOriginIds = ids;
+    }
+
+    void setOutputOriginIds(std::vector<OriginId> ids) override
+    {
+        outputOriginIds = ids;
+    }
 
 private:
     static constexpr std::string_view NAME = "Map";
@@ -84,5 +93,7 @@ private:
 
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
 };
 }

@@ -44,17 +44,33 @@ struct SinkLogicalOperator final : public LogicalOperatorConcept
         return children;
     }
 
+    /// currently only use for testing purposes in IntegrationTestUtil
+    void setOutputSchema(Schema schema)
+    {
+        outputSchema = schema;
+    }
+
     [[nodiscard]] Optimizer::TraitSet getTraitSet() const override { return {}; }
     void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
     std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
     Schema getOutputSchema() const override { return outputSchema; }
     std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
     std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override
+    {
+        inputOriginIds = ids;
+    }
 
+    void setOutputOriginIds(std::vector<OriginId> ids) override
+    {
+        outputOriginIds = ids;
+    }
     std::string toString() const override;
 
 private:
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
 };
 }

@@ -52,13 +52,25 @@ public:
     std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
     std::vector<OriginId> getOutputOriginIds() const override { return {}; }
 
-    std::vector<Schema> getInputSchemas() const override { return {schema}; };
-    Schema getOutputSchema() const override { return schema; };
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; };
+
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override
+    {
+        inputOriginIds = ids;
+    }
+
+    void setOutputOriginIds(std::vector<OriginId> ids) override
+    {
+        outputOriginIds = ids;
+    }
 
 private:
     std::string logicalSourceName;
     std::vector<LogicalOperator> children;
-    Schema schema;
+    Schema schema, inputSchema, outputSchema;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
 };
 
 }
