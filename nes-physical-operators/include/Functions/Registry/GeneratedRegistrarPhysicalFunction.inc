@@ -16,7 +16,7 @@
 
 #ifndef INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
 #    error "This file should not be included directly! " \
-"Include instead include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>"
+"Include instead include <Functions/Registry/RegistryPhysicalFunction.hpp>"
 #endif
 
 
