@@ -150,7 +150,7 @@ Source processSource(std::unique_ptr<Pipeline> pipeline, const PipelinedQueryPla
     for (auto& successor : pipeline->successorPipelines)
     {
         if (auto executableSuccessor = processSuccessor(
-                pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->getOriginId(),
+                pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->originIdTrait.originIds[0],
                 std::move(successor),
                 pipelineQueryPlan,
                 loweringContext))
@@ -160,7 +160,7 @@ Source processSource(std::unique_ptr<Pipeline> pipeline, const PipelinedQueryPla
     }
 
     Source newSource(
-        pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->getOriginId(),
+        pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->originIdTrait.originIds[0],
         std::make_shared<NES::Sources::SourceDescriptor>(
             pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->getSourceDescriptor()),
         executableSuccessorPipelines);
