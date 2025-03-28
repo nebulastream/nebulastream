@@ -93,7 +93,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     const uint64_t maxSizeVarSizedData)
 {
     /// Creating here the memory provider for the tuple buffers that store the data
-    auto memoryProviderInputBuffer
+    const auto memoryProviderInputBuffer
         = Interface::MemoryProvider::TupleBufferMemoryProvider::create(bufferManager.getBufferSize(), schema);
 
 
@@ -108,7 +108,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
         const auto compilation = backend == Configurations::NautilusBackend::COMPILER;
         options.setOption("engine.Compilation", compilation);
         const nautilus::engine::NautilusEngine engine(options);
-        compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, *memoryProviderInputBuffer);
+        compileFillBufferFunction(FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend, options, schema, memoryProviderInputBuffer);
     }
 
     /// Lambda function that creates a vector from 0 to n-1 and then shuffles it
@@ -124,7 +124,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     /// We are using the buffer manager to get a buffer of a fixed size.
     /// Therefore, we have to iterate in a loop and fill multiple buffers until we have created the required numberofTuples.
     std::vector<Memory::TupleBuffer> buffers;
-    const auto capacity = memoryProviderInputBuffer->getMemoryLayout().getCapacity();
+    const auto capacity = memoryProviderInputBuffer->getMemoryLayout()->getCapacity();
     INVARIANT(capacity > 0, "Capacity should be larger than 0");
 
     for (uint64_t i = 0; i < numberOfTuples; i = i + capacity)
@@ -151,20 +151,20 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     return buffers;
 }
 
-Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes)
+std::shared_ptr<Schema> NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes)
 {
     constexpr auto typeIdxOffset = 0;
     return createSchemaFromBasicTypes(basicTypes, typeIdxOffset);
 }
 
-Schema
+std::shared_ptr<Schema>
 NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, const uint64_t typeIdxOffset)
 {
     /// Creating a schema for the memory provider
-    auto schema = Schema();
+    const auto schema = std::make_shared<Schema>();
     for (const auto& [typeIdx, type] : views::enumerate(basicTypes))
     {
-        schema.addField(Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset)), type);
+        schema->addField(Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset)), type);
     }
     return schema;
 }
@@ -174,11 +174,11 @@ void NautilusTestUtils::compileFillBufferFunction(
     Configurations::NautilusBackend backend,
     nautilus::engine::Options& options,
     const Schema& schema,
-    const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProviderInputBuffer)
+    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    const std::function tmp = [&](nautilus::val<Memory::TupleBuffer*> buffer,
+    const std::function tmp = [=](nautilus::val<Memory::TupleBuffer*> buffer,
                                   nautilus::val<Memory::AbstractBufferProvider*> bufferProvider,
                                   nautilus::val<uint64_t> numberOfTuplesToFill,
                                   nautilus::val<uint64_t> startForValues,
@@ -235,7 +235,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 }
             }
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
-            memoryProviderInputBuffer.writeRecord(currentIndex, recordBuffer, record);
+            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record);
             recordBuffer.setNumRecords(i + 1);
         }
     };
