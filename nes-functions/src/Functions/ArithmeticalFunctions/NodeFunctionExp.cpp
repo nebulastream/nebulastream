@@ -27,7 +27,7 @@
 namespace NES
 {
 
-NodeFunctionExp::NodeFunctionExp(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Exp") {};
+NodeFunctionExp::NodeFunctionExp(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Exp") { };
 
 NodeFunctionExp::NodeFunctionExp(NodeFunctionExp* other) : NodeFunctionArithmeticalUnary(other)
 {

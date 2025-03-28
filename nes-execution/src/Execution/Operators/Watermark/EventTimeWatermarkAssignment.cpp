@@ -34,7 +34,7 @@ struct WatermarkState final : OperatorState
 };
 
 EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)
-    : timeFunction(std::move(timeFunction)) {};
+    : timeFunction(std::move(timeFunction)) { };
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {

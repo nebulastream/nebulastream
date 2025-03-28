@@ -50,10 +50,10 @@ struct QuerySummary
 struct QueryStatusChange
 {
     QueryStatusChange(Execution::QueryStatus state, std::chrono::system_clock::time_point timestamp)
-        : state(state), timestamp(timestamp) {};
+        : state(state), timestamp(timestamp) { };
 
     QueryStatusChange(Exception exception, std::chrono::system_clock::time_point timestamp)
-        : state(Execution::QueryStatus::Failed), timestamp(timestamp), exception(exception) {};
+        : state(Execution::QueryStatus::Failed), timestamp(timestamp), exception(exception) { };
 
     friend std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange);
 

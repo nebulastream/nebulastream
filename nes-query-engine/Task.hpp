@@ -71,8 +71,8 @@ private:
 #endif
 
     std::chrono::high_resolution_clock::time_point creation = std::chrono::high_resolution_clock::now();
-    std::function<void()> onCompletion = [] {};
-    std::function<void(Exception)> onError = [](Exception) {};
+    std::function<void()> onCompletion = [] { };
+    std::function<void(Exception)> onError = [](Exception) { };
 };
 
 struct WorkTask : BaseTask

@@ -49,7 +49,8 @@ void threadRoutine(
         }
         std::visit(
             Overloaded{
-                [&](SubmitQuerySystemEvent startQuery) {
+                [&](SubmitQuerySystemEvent startQuery)
+                {
                     file << fmt::format(
                         "{:%Y-%m-%d %H:%M:%S} Submit Query {}:\n{}\n", startQuery.timestamp, startQuery.queryId, startQuery.query);
                 },
