@@ -37,8 +37,8 @@ if (NOT _NES_TOOLCHAIN_FILE)
     endif ()
 
     # If clang is available we use clang and look for libc++
-    find_program(CLANGXX_EXECUTABLE NAMES clang++ clang++-$ENV{LLVM_VERSION})
-    find_program(CLANG_EXECUTABLE NAMES clang clang-$ENV{LLVM_VERSION})
+    find_program(CLANGXX_EXECUTABLE NAMES clang++ clang++-$ENV{LLVM_TOOLCHAIN_VERSION})
+    find_program(CLANG_EXECUTABLE NAMES clang clang-$ENV{LLVM_TOOLCHAIN_VERSION})
 
     get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
     if (NOT _CMAKE_IN_TRY_COMPILE)

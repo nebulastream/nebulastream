@@ -38,8 +38,8 @@ if (NOT _NES_TOOLCHAIN_FILE)
     endif ()
 
     # If clang is available we use clang and look for libc++
-    find_program(CLANGXX_EXECUTABLE REQUIRED NAMES clang++-$ENV{LLVM_VERSION})
-    find_program(CLANG_EXECUTABLE REQUIRED NAMES clang-$ENV{LLVM_VERSION})
+    find_program(CLANGXX_EXECUTABLE REQUIRED NAMES clang++-$ENV{LLVM_TOOLCHAIN_VERSION})
+    find_program(CLANG_EXECUTABLE REQUIRED NAMES clang-$ENV{LLVM_TOOLCHAIN_VERSION})
     set(LIBCXX_COMPILER_FLAG "-stdlib=libc++")
     set(LIBCXX_LINKER_FLAG "-lc++")
     set(CMAKE_CXX_COMPILER ${CLANGXX_EXECUTABLE})

@@ -5,7 +5,7 @@ FROM nebulastream/nes-development-dependency:${TAG}
 ARG ANTLR4_VERSION=4.13.2
 
 RUN apt update -y \
-    && apt install clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} lldb-${LLVM_VERSION} gdb jq -y
+    && apt install clang-format-${LLVM_TOOLCHAIN_VERSION} clang-tidy-${LLVM_TOOLCHAIN_VERSION} lldb-${LLVM_TOOLCHAIN_VERSION} gdb jq -y
 
 RUN apt-get update && apt-get install -y \
         default-jre-headless \
