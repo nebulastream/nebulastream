@@ -622,7 +622,8 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
     {
         const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
         const auto fieldAccessFunctions = mapFunction->getChildren()
-            | std::views::transform([](auto& child) { return Util::as_if<NodeFunctionFieldAccess>(child); }) | ranges::to<std::vector>();
+            | std::views::transform([](auto& child) { return Util::as_if<NodeFunctionFieldAccess>(child); })
+            | std::ranges::to<std::vector>();
 
         if (std::ranges::count_if(fieldAccessFunctions, [](const auto& fieldAccessNode) { return fieldAccessNode.get() != nullptr; }) != 1)
         {
