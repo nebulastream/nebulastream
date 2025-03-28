@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES::Windowing
 {
