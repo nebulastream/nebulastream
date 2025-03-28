@@ -50,6 +50,8 @@ struct OriginIdTrait final : public TraitConcept
         oss << "]";
         return oss.str();
     }
+
+    const std::type_info& getType() const override { return typeid(this); }
 };
 
 }

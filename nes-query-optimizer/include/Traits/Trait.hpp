@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <memory>
 #include <set>
-#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {
@@ -30,6 +29,7 @@ namespace NES::Optimizer
 struct TraitConcept
 {
     virtual ~TraitConcept() = default;
+    virtual const std::type_info& getType() const = 0;
     virtual bool operator==(const TraitConcept& other) const = 0;
 };
 
@@ -53,6 +53,8 @@ public:
         }
         return *this;
     }
+
+    [[nodiscard]] const std::type_info& getType() const { return self->getType(); }
 
 private:
     struct Concept : TraitConcept
@@ -79,23 +81,31 @@ private:
             }
             return false;
         }
+
+        [[nodiscard]] const std::type_info& getType() const override { return data.getType(); }
     };
 
     std::unique_ptr<Concept> self;
 };
 
 using TraitSet = std::set<std::unique_ptr<Trait>>;
+}
 
 template <typename T>
-bool hasTrait(const TraitSet& traitSet)
+bool hasTrait(const NES::Optimizer::TraitSet& traitSet)
 {
-    return std::any_of(traitSet.begin(), traitSet.end(), [](const auto& trait) { return dynamic_cast<T*>(trait.get()) != nullptr; });
+    for (const auto& traitPtr : traitSet)
+    {
+        if (traitPtr && traitPtr->getType() == typeid(T))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 template <typename... TraitTypes>
-bool hasTraits(const TraitSet& traitSet)
+bool hasTraits(const NES::Optimizer::TraitSet& traitSet)
 {
     return (hasTrait<TraitTypes>(traitSet) && ...);
-}
-
 }
