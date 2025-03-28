@@ -34,13 +34,8 @@ struct QueryCompilationRequest
 class QueryCompiler
 {
 public:
-    /// TODO: get rid of the options, they should be set during query optimization
-    QueryCompiler(const std::shared_ptr<QueryCompilerConfiguration> options, const std::shared_ptr<NodeEngine> nodeEngine);
-
+    QueryCompiler();
     std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
-
-private:
-    std::shared_ptr<NodeEngine> nodeEngine;
 };
 
 }
