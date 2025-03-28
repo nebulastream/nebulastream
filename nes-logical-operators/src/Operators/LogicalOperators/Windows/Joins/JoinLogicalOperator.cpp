@@ -210,10 +210,6 @@ std::shared_ptr<Operator> JoinLogicalOperator::clone() const
     copy->setOriginId(originId);
     copy->windowMetaData = windowMetaData;
     copy->setOperatorState(operatorState);
-    for (const auto& [key, value] : properties)
-    {
-        copy->addProperty(key, value);
-    }
     return copy;
 }
 

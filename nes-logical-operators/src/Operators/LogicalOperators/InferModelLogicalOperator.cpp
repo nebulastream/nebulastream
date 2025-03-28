@@ -56,10 +56,6 @@ std::shared_ptr<Operator> InferModelLogicalOperator::clone() const
     auto copy = std::make_shared<InferModelLogicalOperator>(model, inputFields, outputFields, id);
     copy->setInputSchema(getInputSchema());
     copy->setOutputSchema(getOutputSchema());
-    for (const auto& [key, value] : properties)
-    {
-        copy->addProperty(key, value);
-    }
     return copy;
 }
 bool InferModelLogicalOperator::operator==(const Operator& rhs) const

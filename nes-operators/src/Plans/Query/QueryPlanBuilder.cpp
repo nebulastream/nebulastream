@@ -213,13 +213,9 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addJoin(
     return leftQueryPlan;
 }
 
-std::shared_ptr<QueryPlan> QueryPlanBuilder::addSink(std::string sinkName, std::shared_ptr<QueryPlan> queryPlan, WorkerId workerId)
+std::shared_ptr<QueryPlan> QueryPlanBuilder::addSink(std::string sinkName, std::shared_ptr<QueryPlan> queryPlan, WorkerId)
 {
     auto sinkOperator = std::make_shared<SinkLogicalOperator>(std::move(sinkName), getNextOperatorId());
-    if (workerId != INVALID_WORKER_NODE_ID)
-    {
-        sinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, workerId);
-    }
     const std::shared_ptr<Operator> op = sinkOperator;
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;

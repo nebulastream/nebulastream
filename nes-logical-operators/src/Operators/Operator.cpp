@@ -244,26 +244,6 @@ std::shared_ptr<Operator> Operator::getChildWithOperatorId(const OperatorId oper
     return nullptr;
 }
 
-void Operator::addProperty(const std::string& key, const std::any value)
-{
-    properties[key] = value;
-}
-
-std::any Operator::getProperty(const std::string& key)
-{
-    return properties[key];
-}
-
-bool Operator::hasProperty(const std::string& key) const
-{
-    return properties.contains(key);
-}
-
-void Operator::removeProperty(const std::string& key)
-{
-    properties.erase(key);
-}
-
 bool Operator::containAsGrandChild(const std::shared_ptr<Operator> operatorNode)
 {
     auto operatorIdToCheck = NES::Util::as<Operator>(operatorNode)->getId();
@@ -301,13 +281,6 @@ bool Operator::containAsGrandParent(const std::shared_ptr<Operator> operatorNode
         { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
 }
 */
-void Operator::addAllProperties(const OperatorProperties& properties)
-{
-    for (auto& [key, value] : properties)
-    {
-        addProperty(key, value);
-    }
-}
 
 OperatorId getNextOperatorId()
 {
@@ -320,15 +293,6 @@ std::string Operator::toString() const
     std::stringstream out;
     out << std::endl;
     out << "operatorId: " << id << "\n";
-    out << "properties: ";
-    for (const auto& itemKey : properties | std::views::keys)
-    {
-        if (itemKey != properties.begin()->first)
-        {
-            out << ", ";
-        }
-        out << itemKey;
-    }
     out << std::endl;
     return out.str();
 }
