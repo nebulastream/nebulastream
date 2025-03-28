@@ -23,7 +23,6 @@
 #include <Operators/Windows/WindowOperator.hpp>
 #include <SerializableOperator.pb.h>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
-#include <Operators/InferModelLogicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>

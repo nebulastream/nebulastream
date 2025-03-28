@@ -28,7 +28,6 @@
 #include <Common/DataTypes/Numeric.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
-#include <Operators/InferModelLogicalOperator.hpp>
 
 using namespace std::string_literals;
 
