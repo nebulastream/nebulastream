@@ -34,7 +34,7 @@ ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLo
 {
 }
 
-bool ConstantValueLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs) const
+bool ConstantValueLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (Util::instanceOf<ConstantValueLogicalFunction>(rhs))
     {

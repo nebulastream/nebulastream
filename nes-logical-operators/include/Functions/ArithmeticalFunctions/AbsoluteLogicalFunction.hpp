@@ -26,6 +26,7 @@ public:
     ~AbsoluteLogicalFunction() noexcept override = default;
     [[nodiscard]] static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
 
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 protected:
     [[nodiscard]] std::string toString() const override;

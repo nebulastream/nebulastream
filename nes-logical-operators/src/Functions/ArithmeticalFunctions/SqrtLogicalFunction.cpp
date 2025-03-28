@@ -41,7 +41,7 @@ std::shared_ptr<LogicalFunction> SqrtLogicalFunction::create(const std::shared_p
     return sqrtNode;
 }
 
-bool SqrtLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool SqrtLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<SqrtLogicalFunction>(rhs))
     {

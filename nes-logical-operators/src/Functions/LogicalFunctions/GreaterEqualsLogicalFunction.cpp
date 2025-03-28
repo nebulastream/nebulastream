@@ -33,12 +33,12 @@ GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const std::shared_ptr
     this->setRightChild(right);
 }
 
-bool GreaterEqualsLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs) const
+bool GreaterEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<GreaterEqualsLogicalFunction>(rhs))
     {
         auto other = NES::Util::as<GreaterEqualsLogicalFunction>(rhs);
-        return this->getLeftChild()->equal(other->getLeftChild()) && this->getRightChild()->equal(other->getRightChild());
+        return this->getLeftChild() == other->getLeftChild() && this->getRightChild() == other->getRightChild();
     }
     return false;
 }

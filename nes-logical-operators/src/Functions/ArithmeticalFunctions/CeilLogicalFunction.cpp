@@ -34,7 +34,7 @@ std::shared_ptr<LogicalFunction> CeilLogicalFunction::create(std::shared_ptr<Log
     return ceilNode;
 }
 
-bool CeilLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs) const
+bool CeilLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<CeilLogicalFunction>(rhs))
     {

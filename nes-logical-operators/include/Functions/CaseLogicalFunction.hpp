@@ -37,7 +37,7 @@ public:
     std::shared_ptr<LogicalFunction> getDefaultExp() const;
     void inferStamp(const Schema& schema) override;
 
-    [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const final;
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const;
 
 
 protected:

@@ -28,7 +28,7 @@ public:
     explicit FloorLogicalFunction(std::shared_ptr<DataType> stamp);
     ~FloorLogicalFunction() noexcept override = default;
     [[nodiscard]] static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
-    [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 protected:
     [[nodiscard]] std::string toString() const override;

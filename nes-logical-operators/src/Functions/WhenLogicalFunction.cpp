@@ -25,15 +25,17 @@
 
 namespace NES
 {
+WhenLogicalFunction::WhenLogicalFunction(std::shared_ptr<DataType> stamp) : BinaryLogicalFunction(std::move(stamp), "When") {};
 
-WhenLogicalFunction::WhenLogicalFunction(const WhenLogicalFunction& other) : BinaryLogicalFunction(other)
+WhenLogicalFunction::WhenLogicalFunction(WhenLogicalFunction* other) : BinaryLogicalFunction(other)
 {
 }
 
-WhenLogicalFunction::WhenLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)  : BinaryLogicalFunction(std::move(stamp), "When")
+WhenLogicalFunction::WhenLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
+    auto whenNode = std::make_shared<WhenLogicalFunction>(left->getStamp());
+    whenNode->setLeftChild(left);
+    whenNode->setRightChild(right);
 }
 
 void WhenLogicalFunction::inferStamp(const Schema& schema)
@@ -61,7 +63,7 @@ bool WhenLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs
     if (NES::Util::instanceOf<WhenLogicalFunction>(rhs))
     {
         auto otherWhenNode = NES::Util::as<WhenLogicalFunction>(rhs);
-        return getLeftChild() == otherWhenNode->getLeftChild()  && getRightChild() == otherWhenNode->getRightChild();
+        return getLeftChild()->equal(otherWhenNode->getLeftChild()) && getRightChild()->equal(otherWhenNode->getRightChild());
     }
     return false;
 }
@@ -75,7 +77,7 @@ std::string WhenLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> WhenLogicalFunction::clone() const
 {
-    return std::make_shared<WhenLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return WhenLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 bool WhenLogicalFunction::validateBeforeLowering() const
