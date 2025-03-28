@@ -27,7 +27,7 @@
 namespace NES
 {
 
-NodeFunctionNegate::NodeFunctionNegate() : NodeFunctionLogicalUnary("Negate") {};
+NodeFunctionNegate::NodeFunctionNegate() : NodeFunctionLogicalUnary("Negate") { };
 
 NodeFunctionNegate::NodeFunctionNegate(NodeFunctionNegate* other) : NodeFunctionLogicalUnary(other)
 {

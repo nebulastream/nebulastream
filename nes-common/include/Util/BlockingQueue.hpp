@@ -37,7 +37,7 @@ private:
     std::condition_variable notEmpty;
 
 public:
-    BlockingQueue() : capacity(0) {};
+    BlockingQueue() : capacity(0) { };
 
     inline BlockingQueue(uint64_t capacity) : capacity(capacity) { }
 

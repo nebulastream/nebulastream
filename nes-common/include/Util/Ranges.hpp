@@ -16,11 +16,11 @@
 
 #include <compare>
 #include <concepts>
+#include <functional>
 #include <iterator>
 #include <ranges>
 #include <tuple>
 #include <type_traits>
-#include <functional>
 
 /// This adds commonly used ranges methods, which are not currently supported by both libc++20 and libstdc++14
 /// Source is taken from upstream implementation of libc++ and adopted to not use reserved identifier names and not collide with
@@ -57,8 +57,7 @@ public:
     PerfectForwardImpl& operator=(PerfectForwardImpl&&) = default;
 
     template <class... Args, class = std::enable_if_t<std::is_invocable_v<Op, BoundArgs&..., Args...>>>
-    constexpr auto
-    operator()(Args&&... args) & noexcept(noexcept(Op()(std::get<Idx>(bound_args_)..., std::forward<Args>(args)...)))
+    constexpr auto operator()(Args&&... args) & noexcept(noexcept(Op()(std::get<Idx>(bound_args_)..., std::forward<Args>(args)...)))
         -> decltype(Op()(std::get<Idx>(bound_args_)..., std::forward<Args>(args)...))
     {
         return Op()(std::get<Idx>(bound_args_)..., std::forward<Args>(args)...);
@@ -68,8 +67,7 @@ public:
     auto operator()(Args&&...) & = delete;
 
     template <class... Args, class = std::enable_if_t<std::is_invocable_v<Op, const BoundArgs&..., Args...>>>
-    constexpr auto
-    operator()(Args&&... args) const& noexcept(noexcept(Op()(std::get<Idx>(bound_args_)..., std::forward<Args>(args)...)))
+    constexpr auto operator()(Args&&... args) const& noexcept(noexcept(Op()(std::get<Idx>(bound_args_)..., std::forward<Args>(args)...)))
         -> decltype(Op()(std::get<Idx>(bound_args_)..., std::forward<Args>(args)...))
     {
         return Op()(std::get<Idx>(bound_args_)..., std::forward<Args>(args)...);
@@ -90,8 +88,8 @@ public:
     auto operator()(Args&&...) && = delete;
 
     template <class... Args, class = std::enable_if_t<std::is_invocable_v<Op, const BoundArgs..., Args...>>>
-    constexpr auto operator()(Args&&... args) const&& noexcept(
-        noexcept(Op()(std::get<Idx>(std::move(bound_args_))..., std::forward<Args>(args)...)))
+    constexpr auto
+    operator()(Args&&... args) const&& noexcept(noexcept(Op()(std::get<Idx>(std::move(bound_args_))..., std::forward<Args>(args)...)))
         -> decltype(Op()(std::get<Idx>(std::move(bound_args_))..., std::forward<Args>(args)...))
     {
         return Op()(std::get<Idx>(std::move(bound_args_))..., std::forward<Args>(args)...);
@@ -126,8 +124,8 @@ struct Compose : PerfectForward<ComposeOp, Fn1, Fn2>
 };
 
 template <class Fn1, class Fn2>
-constexpr auto compose(Fn1&& f1, Fn2&& f2) noexcept(
-    noexcept(Compose<std::decay_t<Fn1>, std::decay_t<Fn2>>(std::forward<Fn1>(f1), std::forward<Fn2>(f2))))
+constexpr auto
+compose(Fn1&& f1, Fn2&& f2) noexcept(noexcept(Compose<std::decay_t<Fn1>, std::decay_t<Fn2>>(std::forward<Fn1>(f1), std::forward<Fn2>(f2))))
     -> decltype(Compose<std::decay_t<Fn1>, std::decay_t<Fn2>>(std::forward<Fn1>(f1), std::forward<Fn2>(f2)))
 {
     return Compose<std::decay_t<Fn1>, std::decay_t<Fn2>>(std::forward<Fn1>(f1), std::forward<Fn2>(f2));
@@ -167,8 +165,7 @@ concept RangeAdaptorClosure = !std::ranges::range<std::remove_cvref_t<T>> && req
 
 template <std::ranges::range Range, RangeAdaptorClosure _Closure>
 requires std::invocable<_Closure, Range>
-[[nodiscard]] constexpr decltype(auto)
-operator|(Range&& range, _Closure&& closure) noexcept(std::is_nothrow_invocable_v<_Closure, Range>)
+[[nodiscard]] constexpr decltype(auto) operator|(Range&& range, _Closure&& closure) noexcept(std::is_nothrow_invocable_v<_Closure, Range>)
 {
     return std::invoke(std::forward<_Closure>(closure), std::forward<Range>(range));
 }
@@ -202,8 +199,8 @@ concept range_with_movable_references = std::ranges::input_range<R> && std::move
     && std::move_constructible<std::ranges::range_rvalue_reference_t<R>>;
 
 template <class Range>
-concept simple_view = view<Range> && std::ranges::range<const Range>
-    && std::same_as<std::ranges::iterator_t<Range>, std::ranges::iterator_t<const Range>>
+concept simple_view
+    = view<Range> && std::ranges::range<const Range> && std::same_as<std::ranges::iterator_t<Range>, std::ranges::iterator_t<const Range>>
     && std::same_as<std::ranges::sentinel_t<Range>, std::ranges::sentinel_t<const Range>>;
 template <view View>
 requires range_with_movable_references<View>
@@ -318,10 +315,7 @@ private:
     std::ranges::iterator_t<Base> current_ = std::ranges::iterator_t<Base>();
     difference_type pos_ = 0;
 
-    constexpr explicit iterator(std::ranges::iterator_t<Base> current, difference_type pos)
-        : current_(std::move(current)), pos_(pos)
-    {
-    }
+    constexpr explicit iterator(std::ranges::iterator_t<Base> current, difference_type pos) : current_(std::move(current)), pos_(pos) { }
 
 public:
     iterator()
@@ -397,10 +391,7 @@ public:
         return reference_type(pos_ + n, current_[n]);
     }
 
-    [[nodiscard]] friend constexpr bool operator==(const iterator& x, const iterator& y) noexcept
-    {
-        return x.pos_ == y.pos_;
-    }
+    [[nodiscard]] friend constexpr bool operator==(const iterator& x, const iterator& y) noexcept { return x.pos_ == y.pos_; }
 
     [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const iterator& x, const iterator& y) noexcept
     {
@@ -429,17 +420,12 @@ public:
         return temp;
     }
 
-    [[nodiscard]] friend constexpr difference_type operator-(const iterator& x, const iterator& y) noexcept
-    {
-        return x.pos_ - y.pos_;
-    }
+    [[nodiscard]] friend constexpr difference_type operator-(const iterator& x, const iterator& y) noexcept { return x.pos_ - y.pos_; }
 
     [[nodiscard]] friend constexpr auto iter_move(const iterator& i) noexcept(
-        noexcept(std::ranges::iter_move(i.current_))
-        && std::is_nothrow_move_constructible_v<std::ranges::range_rvalue_reference_t<Base>>)
+        noexcept(std::ranges::iter_move(i.current_)) && std::is_nothrow_move_constructible_v<std::ranges::range_rvalue_reference_t<Base>>)
     {
-        return std::tuple<difference_type, std::ranges::range_rvalue_reference_t<Base>>(
-            i.pos_, std::ranges::iter_move(i.current_));
+        return std::tuple<difference_type, std::ranges::range_rvalue_reference_t<Base>>(i.pos_, std::ranges::iter_move(i.current_));
     }
 };
 

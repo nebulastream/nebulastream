@@ -415,7 +415,7 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
 
     /// Build chain of two pipelines. Verify that on construction of a RunningQueryPlan node a setup task has been submitted
     auto sink
-        = RunningQueryPlanNode::create(QueryId(1), PipelineId(1), emitter, {}, std::move(stage2), [](auto) {}, expirationRef, setupRef);
+        = RunningQueryPlanNode::create(QueryId(1), PipelineId(1), emitter, {}, std::move(stage2), [](auto) { }, expirationRef, setupRef);
     EXPECT_THAT(*setups, testing::SizeIs(1));
     auto pipeline = RunningQueryPlanNode::create(
         QueryId(1),
@@ -423,7 +423,7 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
         emitter,
         {std::move(sink)},
         std::move(stage1),
-        [](auto) {},
+        [](auto) { },
         std::move(expirationRef),
         std::move(setupRef));
     EXPECT_THAT(*setups, testing::SizeIs(2));

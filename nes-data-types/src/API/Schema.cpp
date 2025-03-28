@@ -33,8 +33,8 @@
 namespace NES
 {
 
-Schema::Schema() : layoutType(MemoryLayoutType::ROW_LAYOUT) {};
-Schema::Schema(const MemoryLayoutType layoutType) : layoutType(layoutType) {};
+Schema::Schema() : layoutType(MemoryLayoutType::ROW_LAYOUT) { };
+Schema::Schema(const MemoryLayoutType layoutType) : layoutType(layoutType) { };
 
 std::shared_ptr<Schema> Schema::create()
 {
