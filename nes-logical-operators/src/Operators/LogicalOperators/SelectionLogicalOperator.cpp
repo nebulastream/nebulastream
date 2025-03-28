@@ -17,13 +17,16 @@
 #include <utility>
 #include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/DFSIterator.hpp>
 #include <Nodes/Node.hpp>
+#include <Operators/LogicalOperatorRegistry.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -119,4 +122,14 @@ std::vector<std::string> SelectionLogicalOperator::getFieldNamesUsedByFilterPred
     return fieldsInPredicate;
 }
 
+std::unique_ptr<LogicalOperator>
+LogicalOperatorGeneratedRegistrar::deserializeSelectionLogicalOperator(const SerializableOperator& serializableOperator)
+{
+    auto details = serializableOperator.details();
+    std::shared_ptr<LogicalOperator> operatorNode;
+    auto selectionDetails = SerializableOperator_SelectionDetails();
+    details.UnpackTo(&selectionDetails);
+    const auto filterFunction = FunctionSerializationUtil::deserializeFunction(selectionDetails.predicate());
+    return std::make_unique<SelectionLogicalOperator>(filterFunction, getNextOperatorId());
+}
 }

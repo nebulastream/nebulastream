@@ -14,13 +14,15 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Nodes/Node.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
+#include <Operators/LogicalOperatorRegistry.hpp>
 #include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -124,6 +126,12 @@ void UnionLogicalOperator::inferInputOrigins()
         combinedInputOriginIds.insert(combinedInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
     }
     this->leftInputOriginIds = combinedInputOriginIds;
+}
+
+std::unique_ptr<LogicalOperator> LogicalOperatorGeneratedRegistrar::deserializeUnionLogicalOperator(const SerializableOperator&)
+{
+    /// nothing to da as this operator has no members
+    return std::make_unique<UnionLogicalOperator>(getNextOperatorId());
 }
 
 }

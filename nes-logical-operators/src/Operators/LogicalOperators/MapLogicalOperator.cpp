@@ -101,4 +101,15 @@ std::shared_ptr<Operator> MapLogicalOperator::clone() const
     return copy;
 }
 
+std::unique_ptr<LogicalOperator>
+LogicalOperatorGeneratedRegistrar::deserializeMapLogicalOperator(const SerializableOperator& serializableOperator)
+{
+    auto details = serializableOperator.details();
+    std::shared_ptr<LogicalOperator> operatorNode;
+    auto serializedMapOperator = SerializableOperator_MapDetails();
+    details.UnpackTo(&serializedMapOperator);
+    const auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(serializedMapOperator.function());
+    return std::make_unique<MapLogicalOperator>(
+        Util::as<FieldAssignmentBinaryLogicalFunction>(fieldAssignmentFunction), getNextOperatorId());
+}
 }
