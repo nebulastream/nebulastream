@@ -54,7 +54,7 @@ public:
 
     void accept(OptionVisitor& visitor) override
     {
-        auto* config = dynamic_cast<Configurations::BaseConfiguration*>(this);
+        auto* config = dynamic_cast<NES::Configurations::BaseConfiguration*>(this);
         visitor.visitConcrete(this->name, this->description, magic_enum::enum_name(this->getDefaultValue()));
         if (config)
         {

@@ -33,7 +33,7 @@ struct ParserConfig
     std::string fieldDelimiter;
 };
 
-struct SourceDescriptor : public Configurations::Descriptor
+struct SourceDescriptor final : public NES::Configurations::Descriptor
 {
     /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
     /// Given an invalid value, the NodeEngine takes its configured value. Otherwise the source-specific configuration takes priority.

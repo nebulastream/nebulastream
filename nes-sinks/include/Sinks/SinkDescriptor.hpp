@@ -32,7 +32,7 @@ struct SinkDescriptor final : NES::Configurations::Descriptor
     ~SinkDescriptor() = default;
 
     /// Iterates over all config pairs to create a DescriptorConfig::Config containing only strings.
-    static Configurations::DescriptorConfig::Config
+    static NES::Configurations::DescriptorConfig::Config
     validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs);
 
     const std::string sinkType;
