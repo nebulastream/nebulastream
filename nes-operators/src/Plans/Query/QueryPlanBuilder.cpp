@@ -63,7 +63,7 @@ QueryPlan
 QueryPlanBuilder::addSelection(LogicalFunction selectionFunction, QueryPlan queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add selection operator to query plan");
-    if (!selectionFunction.tryGet<RenameLogicalFunction>())
+    if (selectionFunction.tryGet<RenameLogicalFunction>())
     {
         throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
     }
@@ -75,7 +75,7 @@ QueryPlan
 QueryPlanBuilder::addMap(LogicalFunction mapFunction, QueryPlan queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add map operator to query plan");
-    if (!mapFunction.tryGet<RenameLogicalFunction>())
+    if (mapFunction.tryGet<RenameLogicalFunction>())
     {
         throw UnsupportedQuery("Map function cannot have a FieldRenameFunction");
     }
