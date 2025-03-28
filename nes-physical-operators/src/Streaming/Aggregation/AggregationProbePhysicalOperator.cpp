@@ -140,9 +140,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     }
 }
 
-AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
-                                                                   std::shared_ptr<WindowAggregation> windowAggregationOperator, const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
-    : WindowAggregation(windowAggregationOperator), WindowProbePhysicalOperator(std::move(memoryProvider), operatorHandlerIndex, windowStartFieldName, windowEndFieldName)
+AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(std::shared_ptr<WindowAggregation> windowAggregationOperator, const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
+    : WindowAggregation(windowAggregationOperator), WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName)
 {
 }
 
