@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Measures/WindowMeasure.hpp>
+#include "../../../include/WindowTypes/Measures/WindowMeasure.hpp"
 
 namespace NES::Windowing
 {

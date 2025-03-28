@@ -13,7 +13,7 @@
 */
 
 #include <string>
-#include <Measures/TimeMeasure.hpp>
+#include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
