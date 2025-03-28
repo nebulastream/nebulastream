@@ -435,7 +435,7 @@ TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultipleSources)
     test.start();
     {
         test.startQuery(std::move(query));
-        ASSERT_TRUE(test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepTermination(id, DEFAULT_LONG_AWAIT_TIMEOUT));
     }
     test.stop();
 }
@@ -814,7 +814,7 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringEngineTerminatio
         ExpectStats::TaskExecutionComplete(0),
         ExpectStats::TaskEmit(0));
 
-    test.sourceControls[source]->failDuringOpen(DEFAULT_LONG_AWAIT_TIMEOUT);
+    test.sourceControls[source]->failDuringOpen(DEFAULT_AWAIT_TIMEOUT);
     test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running});
 
     test.start();
@@ -846,7 +846,7 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermina
         ExpectStats::TaskExecutionComplete(0),
         ExpectStats::TaskEmit(0));
 
-    test.sourceControls[source]->failDuringOpen(DEFAULT_LONG_AWAIT_TIMEOUT);
+    test.sourceControls[source]->failDuringOpen(DEFAULT_AWAIT_TIMEOUT);
     test.expectQueryStatusEvents(
         query->queryId,
         {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
