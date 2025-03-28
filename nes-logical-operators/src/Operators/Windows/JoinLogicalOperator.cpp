@@ -183,6 +183,51 @@ bool JoinLogicalOperator::inferSchema()
 }
  */
 
+Optimizer::TraitSet JoinLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void JoinLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> JoinLogicalOperator::getInputSchemas() const
+{
+    return {leftSourceSchema, rightSourceSchema};
+};
+
+Schema JoinLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> JoinLogicalOperator::getInputOriginIds() const
+{
+    return inputOriginIds;
+}
+
+std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void JoinLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void JoinLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
+{
+    return children;
+}
+
 Schema JoinLogicalOperator::getLeftSchema() const
 {
     return leftSourceSchema;
@@ -196,21 +241,6 @@ Schema JoinLogicalOperator::getRightSchema() const
 Windowing::WindowType& JoinLogicalOperator::getWindowType() const
 {
     return *windowType;
-}
-
-JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const {
-    return joinType;
-}
-
-void JoinLogicalOperator::updateSchemas(Schema leftSourceSchema, Schema rightSourceSchema)
-{
-    this->leftSourceSchema = leftSourceSchema;
-    this->rightSourceSchema = rightSourceSchema;
-}
-
-Schema JoinLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
 }
 
 std::string JoinLogicalOperator::getWindowStartFieldName() const {

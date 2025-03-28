@@ -28,47 +28,44 @@ struct SinkLogicalOperator final : public LogicalOperatorConcept
     SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
     SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) {};
-    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
-    std::string_view getName() const noexcept override;
+
+    /// Operator specific member
+    /// TODO
+    [[nodiscard]] std::string getSinkName() const;
+
     bool inferSchema();
-
     virtual void inferInputOrigins(){};
-
-    std::string sinkName;
     std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
 
+    /// currently only use for testing purposes in IntegrationTestUtil
+    void setOutputSchema(Schema schema);
+
+    /// LogicalOperatorConcept member
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
 
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override
-    {
-        return children;
-    }
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override;
 
-    /// currently only use for testing purposes in IntegrationTestUtil
-    void setOutputSchema(Schema schema)
-    {
-        outputSchema = schema;
-    }
+    void setChildren(std::vector<LogicalOperator> children) override;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
 
-    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override { return {}; }
-    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
-    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
-    Schema getOutputSchema() const override { return outputSchema; }
-    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
-    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
-    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override
-    {
-        inputOriginIds = ids;
-    }
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
 
-    void setOutputOriginIds(std::vector<OriginId> ids) override
-    {
-        outputOriginIds = ids;
-    }
-    std::string toString() const override;
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override;
+    void setOutputOriginIds(std::vector<OriginId> ids) override;
+
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
+    /// Operator specific member
     static constexpr std::string_view NAME = "Sink";
+    std::string sinkName;
+
+    /// LogicalOperatorConcept member
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
     std::vector<std::vector<OriginId>> inputOriginIds;

@@ -42,6 +42,9 @@ struct LogicalOperatorConcept
 {
     virtual ~LogicalOperatorConcept() = default;
 
+    explicit LogicalOperatorConcept() : id(getNextOperatorId()) {}
+    explicit LogicalOperatorConcept(OperatorId existingId) : id(existingId) {}
+
     [[nodiscard]] virtual std::string toString() const = 0;
     [[nodiscard]] virtual std::vector<struct LogicalOperator> getChildren() const = 0;
     virtual void setChildren(std::vector<struct LogicalOperator>) = 0;
@@ -58,8 +61,10 @@ struct LogicalOperatorConcept
 
     [[nodiscard]] virtual std::vector<std::vector<OriginId>> getInputOriginIds() const = 0;
     [[nodiscard]] virtual std::vector<OriginId> getOutputOriginIds() const = 0;
+    virtual void setInputOriginIds(std::vector<std::vector<OriginId>>) = 0;
+    virtual void setOutputOriginIds(std::vector<OriginId>) = 0;
 
-    const OperatorId id = getNextOperatorId();
+    OperatorId id = INVALID_OPERATOR_ID;
 };
 
 /// Enables default construction of LogicalOperator.
@@ -69,9 +74,11 @@ public:
     std::string toString() const override {
         PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
     }
+
     std::vector<NES::LogicalOperator> getChildren() const override {
         PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
     }
+
     void setChildren(std::vector<NES::LogicalOperator>) override {
         PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
     }
@@ -99,18 +106,27 @@ public:
     std::vector<OriginId> getOutputOriginIds() const override {
         PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
     }
+
+    void setInputOriginIds(std::vector<std::vector<OriginId>>) override
+    {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    void setOutputOriginIds(std::vector<OriginId>) override
+    {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+
 };
 
-
+/// Id is preserved during copy
 struct LogicalOperator {
 public:
     template<typename T>
-    LogicalOperator(const T& op) : self(std::make_unique<Model<T>>(op)) {}
+    LogicalOperator(const T& op) : self(std::make_unique<Model<T>>(op, op.id)) {}
 
     LogicalOperator() : self(std::make_unique<Model<NullLogicalOperator>>(NullLogicalOperator{})) {}
 
-    LogicalOperator(const LogicalOperator& other)
-        : self(other.self->clone()) {}
+    LogicalOperator(const LogicalOperator& other) : self(other.self->clone()) {}
 
     template<typename T>
     const T* tryGet() const {
@@ -172,7 +188,6 @@ public:
     Optimizer::TraitSet getTraitSet() const
     {
         return self->getTraitSet();
-
     }
 
     std::vector<Schema> getInputSchemas() const
@@ -195,8 +210,19 @@ public:
         return self->getOutputOriginIds();
     }
 
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+    {
+        return self->setInputOriginIds(ids);
+    }
+
+    void setOutputOriginIds(std::vector<OriginId> ids)
+    {
+        return self->setOutputOriginIds(ids);
+    }
+
 private:
     struct Concept : LogicalOperatorConcept {
+        explicit Concept(OperatorId existingId) : LogicalOperatorConcept(existingId) {}
         [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
         [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
     };
@@ -204,10 +230,15 @@ private:
     template<typename T>
     struct Model : Concept {
         T data;
-        explicit Model(T d) : data(std::move(d)) {}
+
+        explicit Model(T d)
+            : Concept(getNextOperatorId()), data(std::move(d)) {}
+
+        Model(T d, OperatorId existingId)
+            : Concept(existingId), data(std::move(d)) {}
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override {
-            return std::unique_ptr<Concept>(new Model<T>(data));
+            return std::make_unique<Model<T>>(data, this->id);
         }
 
         [[nodiscard]] std::string toString() const override
@@ -258,6 +289,16 @@ private:
         [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override
         {
             return data.getOutputOriginIds();
+        }
+
+        void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override
+        {
+            return data.setInputOriginIds(ids);
+        }
+
+        void setOutputOriginIds(std::vector<OriginId> ids) override
+        {
+            return data.setOutputOriginIds(ids);
         }
 
         [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override {

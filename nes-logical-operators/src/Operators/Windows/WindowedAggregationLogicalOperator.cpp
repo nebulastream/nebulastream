@@ -180,6 +180,51 @@ bool WindowedAggregationLogicalOperator::inferSchema()
 }
  */
 
+Optimizer::TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void WindowedAggregationLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> WindowedAggregationLogicalOperator::getInputSchemas() const
+{
+    return {inputSchema};
+};
+
+Schema WindowedAggregationLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> WindowedAggregationLogicalOperator::getInputOriginIds() const
+{
+    return {inputOriginIds};
+}
+
+std::vector<OriginId> WindowedAggregationLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void WindowedAggregationLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void WindowedAggregationLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids[0];
+}
+
+std::vector<LogicalOperator> WindowedAggregationLogicalOperator::getChildren() const
+{
+    return children;
+}
+
 bool WindowedAggregationLogicalOperator::isKeyed() const
 {
     return !onKey.empty();
@@ -213,11 +258,6 @@ const std::vector<FieldAccessLogicalFunction>& WindowedAggregationLogicalOperato
 OriginId WindowedAggregationLogicalOperator::getOriginId() const
 {
     return originId;
-}
-
-std::vector<std::vector<OriginId>> WindowedAggregationLogicalOperator::getInputOriginIds() const
-{
-    return {inputOriginIds};
 }
 
 void WindowedAggregationLogicalOperator::setInputOriginIds(const std::vector<OriginId>& inputIds)

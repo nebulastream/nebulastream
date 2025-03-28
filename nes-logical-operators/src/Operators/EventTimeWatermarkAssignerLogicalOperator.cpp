@@ -63,6 +63,51 @@ bool EventTimeWatermarkAssignerLogicalOperator::inferSchema()
 }
 */
 
+Optimizer::TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void EventTimeWatermarkAssignerLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> EventTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
+{
+    return {inputSchema};
+};
+
+Schema EventTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> EventTimeWatermarkAssignerLogicalOperator::getInputOriginIds() const
+{
+    return inputOriginIds;
+}
+
+std::vector<OriginId> EventTimeWatermarkAssignerLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void EventTimeWatermarkAssignerLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void EventTimeWatermarkAssignerLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChildren() const
+{
+    return children;
+}
+
 // TODO
 SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() const
 {
