@@ -168,7 +168,7 @@ private:
         {
             if (auto p = dynamic_cast<const Model<T>*>(&other))
             {
-                return data == p->data;
+                return data.operator==(p->data);
             }
             return false;
         }

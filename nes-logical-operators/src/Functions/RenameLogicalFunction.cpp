@@ -38,7 +38,7 @@ bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     auto other = dynamic_cast<const RenameLogicalFunction*>(&rhs);
     if (other)
     {
-        return other->child == getOriginalField() && this->newFieldName == other->getNewFieldName();
+        return other->child.operator==(getOriginalField()) && this->newFieldName == other->getNewFieldName();
     }
     return false;
 }
