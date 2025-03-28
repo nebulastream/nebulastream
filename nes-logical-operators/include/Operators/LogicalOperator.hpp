@@ -23,6 +23,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <SerializableOperator.pb.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -60,10 +61,52 @@ struct LogicalOperatorConcept
     const OperatorId id = getNextOperatorId();
 };
 
+/// Enables default construction of LogicalOperator.
+/// Necessary to enable more ergonomic usage in e.g. unordered maps etc.
+class NullLogicalOperator : public NES::LogicalOperatorConcept {
+public:
+    std::string toString() const override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    std::vector<NES::LogicalOperator> getChildren() const override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    void setChildren(std::vector<NES::LogicalOperator>) override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    bool operator==(NES::LogicalOperatorConcept const&) const override {
+        return false;
+    }
+    std::string_view getName() const noexcept override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    NES::SerializableOperator serialize() const override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    Optimizer::TraitSet getTraitSet() const override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    std::vector<Schema> getInputSchemas() const override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    Schema getOutputSchema() const override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+    std::vector<OriginId> getOutputOriginIds() const override {
+        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
+    }
+};
+
+
 struct LogicalOperator {
 public:
     template<typename T>
     LogicalOperator(const T& op) : self(std::make_unique<Model<T>>(op)) {}
+
+    LogicalOperator() : self(std::make_unique<Model<NullLogicalOperator>>(NullLogicalOperator{})) {}
 
     LogicalOperator(const LogicalOperator& other)
         : self(other.self->clone()) {}

@@ -70,6 +70,16 @@ public:
     std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
     Schema getOutputSchema() const override { return outputSchema; };
 
+
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override
+    {
+        inputOriginIds = ids;
+    }
+
+    void setOutputOriginIds(std::vector<OriginId> ids) override
+    {
+        outputOriginIds = ids;
+    }
 private:
     std::vector<LogicalOperator> children;
     Schema inputSchema;
@@ -77,6 +87,8 @@ private:
 
     static constexpr std::string_view NAME = "SourceDescriptor";
     const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
 };
 
 }

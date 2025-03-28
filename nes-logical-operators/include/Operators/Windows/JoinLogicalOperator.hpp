@@ -105,6 +105,16 @@ public:
         return {};
     }
 
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override
+    {
+        inputOriginIds = ids;
+    }
+
+    void setOutputOriginIds(std::vector<OriginId> ids) override
+    {
+        outputOriginIds = ids;
+    }
+
     std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
     std::vector<OriginId> getOutputOriginIds() const override { return {}; }
 
@@ -119,5 +129,7 @@ private:
     JoinType joinType;
 
     std::vector<LogicalOperator> children;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
 };
 }
