@@ -21,8 +21,8 @@
 #include <grpcpp/support/status.h>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {

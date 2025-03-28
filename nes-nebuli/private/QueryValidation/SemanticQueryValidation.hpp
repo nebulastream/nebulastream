@@ -22,11 +22,11 @@ namespace NES::LegacyOptimizer
 class SemanticQueryValidation
 {
 public:
-    void validate(QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const;
+    void validate(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const;
 
 private:
-    void sinkOperatorValidityCheck(QueryPlan& queryPlan) const;
-    void logicalSourceValidityCheck(QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const;
-    void physicalSourceValidityCheck(QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const;
+    void sinkOperatorValidityCheck(LogicalPlan& queryPlan) const;
+    void logicalSourceValidityCheck(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const;
+    void physicalSourceValidityCheck(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const;
 };
 }

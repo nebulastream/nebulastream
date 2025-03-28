@@ -16,10 +16,10 @@
 #include <API/Schema.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::LegacyOptimizer
 {

@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <Plans/QueryPlan.hpp>
 #include <Abstract/PhysicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Optimizer
 {

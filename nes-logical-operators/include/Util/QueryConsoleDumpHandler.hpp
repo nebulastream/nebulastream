@@ -18,6 +18,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
@@ -37,7 +38,7 @@ public:
     /// @param context the context
     /// @param scope the scope
     /// @param plan the query plan
-    void dump(std::string context, std::string scope, QueryPlan plan);
+    void dump(std::string context, std::string scope, LogicalPlan plan);
 
 private:
     std::ostream& out;

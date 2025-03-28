@@ -16,7 +16,7 @@
 
 namespace NES
 {
-class QueryPlan;
+class LogicalPlan;
 namespace LegacyOptimizer
 {
 
@@ -35,7 +35,7 @@ namespace LegacyOptimizer
 class OriginIdInferencePhase
 {
 public:
-    static void apply(QueryPlan& queryPlan);
+    static void apply(LogicalPlan& queryPlan);
 };
 }
 }

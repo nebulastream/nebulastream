@@ -19,7 +19,7 @@
 #include <Functions/FunctionProvider.hpp>
 #include <SourcePhysicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Plans/QueryPlan.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Optimizer
 {

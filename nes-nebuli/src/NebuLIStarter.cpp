@@ -14,7 +14,6 @@
 
 #include <fstream>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <argparse/argparse.hpp>
 #include <google/protobuf/text_format.h>
 #include <grpc++/create_channel.h>
@@ -22,6 +21,7 @@
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <Plans/LogicalPlan.hpp>
 
 using namespace std::literals;
 

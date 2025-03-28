@@ -21,14 +21,14 @@
 #include <ErrorHandling.hpp>
 #include <AntlrSQLParser.h>
 #include <CommonTokenStream.h>
-#include <Plans/QueryPlan.hpp>
 #include <Exceptions.h>
 #include <BailErrorStrategy.h>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::AntlrSQLQueryParser
 {
 
-QueryPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
+LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
 {
     try
     {

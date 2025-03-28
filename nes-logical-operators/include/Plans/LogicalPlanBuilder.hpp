@@ -21,87 +21,87 @@
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Plans/QueryPlan.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES
 {
 /// This class adds the logical operators to the queryPlan and handles further conditions and updates on the updated queryPlan and its nodes, e.g.,
 /// update the consumed sources after a binary operator or adds window characteristics to the join operator.
-class QueryPlanBuilder
+class LogicalPlanBuilder
 {
 public:
     /// Creates a query plan from a particular source. The source is identified by its name.
     /// During query processing the underlying source descriptor is retrieved from the source catalog.
-    static QueryPlan createQueryPlan(std::string logicalSourceName);
+    static LogicalPlan createLogicalPlan(std::string logicalSourceName);
 
     /// @brief this call projects out the attributes in the parameter list
     /// @param functions list of attributes
     /// @param queryPlan the queryPlan to add the projection node
     /// @return the updated queryPlan
-    static QueryPlan
-    addProjection(std::vector<LogicalFunction> functions, QueryPlan queryPlan);
+    static LogicalPlan
+    addProjection(std::vector<LogicalFunction> functions, LogicalPlan queryPlan);
 
     /// @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate. An
     /// exemplary usage would be: selection(Attribute("f1" < 10))
     /// @param selectionFunction as function node containing the predicate
-    /// @param std::shared_ptr<QueryPlan> the queryPlan the selection node is added to
+    /// @param std::shared_ptr<LogicalPlan> the queryPlan the selection node is added to
     /// @return the updated queryPlan
-    static QueryPlan
-    addSelection(LogicalFunction selectionFunction, QueryPlan queryPlan);
+    static LogicalPlan
+    addSelection(LogicalFunction selectionFunction, LogicalPlan queryPlan);
 
     /// @brief: Map records according to a map function. An
     /// exemplary usage would be: map(Attribute("f2") = Attribute("f1") * 42 )
     /// @param mapFunction as function node
     /// @param queryPlan the queryPlan the map is added to
-    /// @return the updated std::shared_ptr<QueryPlan>
-    static QueryPlan
-    addMap(LogicalFunction mapFunction, QueryPlan queryPlan);
+    /// @return the updated std::shared_ptr<LogicalPlan>
+    static LogicalPlan
+    addMap(LogicalFunction mapFunction, LogicalPlan queryPlan);
 
-    static QueryPlan addWindowAggregation(
-        QueryPlan queryPlan,
+    static LogicalPlan addWindowAggregation(
+        LogicalPlan queryPlan,
         std::shared_ptr<Windowing::WindowType> windowType,
         std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs,
         std::vector<FieldAccessLogicalFunction> onKeys);
 
     /// @brief UnionOperator to combine two query plans
-    /// @param leftQueryPlan the left query plan to combine by the union
-    /// @param rightQueryPlan the right query plan to combine by the union
-    /// @return the updated queryPlan combining left and rightQueryPlan with union
-    static QueryPlan addUnion(QueryPlan leftQueryPlan, QueryPlan rightQueryPlan);
+    /// @param leftLogicalPlan the left query plan to combine by the union
+    /// @param rightLogicalPlan the right query plan to combine by the union
+    /// @return the updated queryPlan combining left and rightLogicalPlan with union
+    static LogicalPlan addUnion(LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan);
 
     /// @brief This methods add the join operator to a query
-    /// @param leftQueryPlan the left query plan to combine by the join
-    /// @param rightQueryPlan the right query plan to combine by the join
+    /// @param leftLogicalPlan the left query plan to combine by the join
+    /// @param rightLogicalPlan the right query plan to combine by the join
     /// @param joinFunction set of join Functions
     /// @param windowType Window definition.
     /// @return the updated queryPlan
-    static QueryPlan addJoin(
-        QueryPlan leftQueryPlan,
-        QueryPlan rightQueryPlan,
+    static LogicalPlan addJoin(
+        LogicalPlan leftLogicalPlan,
+        LogicalPlan rightLogicalPlan,
         LogicalFunction joinFunction,
         std::shared_ptr<Windowing::WindowType> windowType,
         JoinLogicalOperator::JoinType joinType);
 
-    static QueryPlan addSink(std::string sinkName, QueryPlan queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
+    static LogicalPlan addSink(std::string sinkName, LogicalPlan queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     // TODO
     /// Create watermark assigner operator and adds it to the queryPlan
-    //static std::shared_ptr<QueryPlan> assignWatermark(
-    //    std::shared_ptr<QueryPlan> queryPlan, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
+    //static std::shared_ptr<LogicalPlan> assignWatermark(
+    //    std::shared_ptr<LogicalPlan> queryPlan, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
-    static std::shared_ptr<QueryPlan>
-    checkAndAddWatermarkAssignment(std::shared_ptr<QueryPlan> queryPlan, std::shared_ptr<Windowing::WindowType> windowType);
+    //static std::shared_ptr<LogicalPlan>
+    //checkAndAddWatermarkAssignment(std::shared_ptr<LogicalPlan> queryPlan, std::shared_ptr<Windowing::WindowType> windowType);
 
 private:
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources
     /// @param operatorNode the binary operator to add
-    /// @param: leftQueryPlan the left query plan of the binary operation
-    /// @param: rightQueryPlan the right query plan of the binary operation
+    /// @param: leftLogicalPlan the left query plan of the binary operation
+    /// @param: rightLogicalPlan the right query plan of the binary operation
     /// @return the updated queryPlan
-    static QueryPlan addBinaryOperatorAndUpdateSource(
-        LogicalOperator operatorNode, QueryPlan leftQueryPlan, QueryPlan rightQueryPlan);
+    static LogicalPlan addBinaryOperatorAndUpdateSource(
+        LogicalOperator operatorNode, LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan);
 };
 }

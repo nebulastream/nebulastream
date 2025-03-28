@@ -28,7 +28,6 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
@@ -44,6 +43,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace YAML
 {
@@ -171,7 +171,7 @@ Sources::SourceDescriptor createSourceDescriptor(
         std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
 }
 
-void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
+void validateAndSetSinkDescriptors(const LogicalPlan& query, const QueryConfig& config)
 {
     auto sinkOperators = query.getOperatorByType<SinkLogicalOperator>();
     PRECONDITION(
@@ -196,7 +196,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     }
 }
 
-std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
+std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
@@ -241,7 +241,7 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     return queryplan;
 }
 
-std::unique_ptr<QueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
+std::unique_ptr<LogicalPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -260,7 +260,7 @@ SchemaField::SchemaField(std::string name, std::unique_ptr<NES::DataType> type) 
 {
 }
 
-std::unique_ptr<QueryPlan> loadFrom(std::istream& inputStream)
+std::unique_ptr<LogicalPlan> loadFrom(std::istream& inputStream)
 {
     try
     {

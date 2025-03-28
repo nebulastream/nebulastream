@@ -19,7 +19,6 @@
 #include <Functions/FunctionProvider.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
-#include <Plans/QueryPlan.hpp>
 
 namespace NES::Optimizer
 {

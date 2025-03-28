@@ -21,11 +21,12 @@
 #include <Plans/QueryPlan.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <ErrorHandling.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::LegacyOptimizer
 {
 
-void LogicalSourceExpansionRule::apply(QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog)
+void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog)
 {
     auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
 

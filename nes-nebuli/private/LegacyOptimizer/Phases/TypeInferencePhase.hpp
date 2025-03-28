@@ -17,8 +17,8 @@
 #include <memory>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::LegacyOptimizer
 {

@@ -18,8 +18,8 @@
 #include <set>
 #include <unordered_map>
 #include <Identifiers/Identifiers.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 
 namespace NES::LegacyOptimizer
@@ -80,6 +80,6 @@ namespace NES::LegacyOptimizer
 class LogicalSourceExpansionRule
 {
 public:
-    static void apply(QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& catalog);
+    static void apply(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& catalog);
 };
 }

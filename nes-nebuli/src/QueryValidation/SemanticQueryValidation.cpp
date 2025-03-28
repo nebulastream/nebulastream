@@ -17,7 +17,6 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <Util/Common.hpp>
@@ -28,6 +27,7 @@
 #include <Common/DataTypes/Numeric.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 using namespace std::string_literals;
 

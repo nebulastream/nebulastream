@@ -22,7 +22,6 @@
 #include <vector>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
-#include <Plans/QueryPlan.hpp>
 
 namespace NES::CLI
 {
