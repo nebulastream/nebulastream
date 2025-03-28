@@ -21,7 +21,7 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
