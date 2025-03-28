@@ -23,7 +23,7 @@
 namespace NES
 {
 
-using LogicalOperatorRegistryReturnType = LogicalOperator;
+using LogicalOperatorRegistryReturnType = std::unique_ptr<LogicalOperator>;
 struct LogicalOperatorRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;

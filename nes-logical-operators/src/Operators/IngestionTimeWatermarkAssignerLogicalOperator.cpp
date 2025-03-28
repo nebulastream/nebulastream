@@ -15,7 +15,6 @@
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <memory>
 #include <sstream>
-#include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/UnaryLogicalOperator.hpp>
@@ -103,11 +102,11 @@ SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() 
     return serializedOperator;
 }
 
-std::unique_ptr<LogicalOperator>
+LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
     // TODO
-    return nullptr;
+    return std::make_unique<IngestionTimeWatermarkAssignerLogicalOperator>();
 }
 
 

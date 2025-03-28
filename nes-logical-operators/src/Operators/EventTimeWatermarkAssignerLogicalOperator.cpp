@@ -130,7 +130,7 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
     return serializedOperator;
 }
 
-std::unique_ptr<LogicalOperator>
+LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
     // TODO
