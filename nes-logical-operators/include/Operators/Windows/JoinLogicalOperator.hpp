@@ -46,6 +46,8 @@ public:
                                  uint64_t numberOfInputEdgesRight,
                                  JoinType joinType,
                                  OriginId originId = INVALID_ORIGIN_ID);
+    std::string_view getName() const noexcept override;
+
 
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     bool inferSchema() override;
@@ -56,50 +58,21 @@ public:
     void setOriginId(OriginId originId) override;
 
     [[nodiscard]]  std::shared_ptr<LogicalFunction> getJoinFunction() const;
-    [[nodiscard]] std::shared_ptr<Schema> getLeftSchema() const
-    {
-        return leftSourceSchema;
-    }
+    [[nodiscard]] std::shared_ptr<Schema> getLeftSchema() const;
 
-    [[nodiscard]] std::shared_ptr<Schema> getRightSchema() const
-    {
-        return rightSourceSchema;
-    }
+    [[nodiscard]] std::shared_ptr<Schema> getRightSchema() const;
 
-    [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const
-    {
-        return windowType;
-    }
+    [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
+    [[nodiscard]] JoinType getJoinType() const;
 
-    [[nodiscard]] JoinType getJoinType() const {
-        return joinType;
-    }
+    void updateSchemas(std::shared_ptr<Schema> leftSourceSchema, std::shared_ptr<Schema> rightSourceSchema);
 
-    void updateSchemas(std::shared_ptr<Schema> leftSourceSchema, std::shared_ptr<Schema> rightSourceSchema)
-    {
-        if (leftSourceSchema)
-        {
-            this->leftSourceSchema = std::move(leftSourceSchema);
-        }
-        if (rightSourceSchema)
-        {
-            this->rightSourceSchema = std::move(rightSourceSchema);
-        }
-    }
-
-    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const override
-    {
-        return outputSchema;
-    }
+    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const override;
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
 
-    [[nodiscard]] OriginId getOriginId() const
-    {
-        return originId;
-    }
-
+    [[nodiscard]] OriginId getOriginId() const;
 
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -127,7 +100,6 @@ public:
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
-protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
