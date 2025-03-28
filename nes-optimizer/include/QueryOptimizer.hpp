@@ -16,23 +16,23 @@
 
 #include <memory>
 #include <Plans/QueryPlan.hpp>
+#include <Phases/LowerToPhysicalOperators.hpp>
 
 namespace NES::Optimizer
 {
 
-class Optimizer
+class QueryOptimizer
 {
 public:
-    explicit Optimizer() = default;
+    explicit QueryOptimizer() = default;
 
-
-    /// Takes the query plan as a logical plan
+    /// Takes the query plan as a logical plan and returns a fully physical plan
     std::unique_ptr<QueryPlan> optimize(std::unique_ptr<QueryPlan> plan)
     {
-        return plan;
+        /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
+        /// For now, we just 'purely' lower to physical operators here.
+        return NES::LowerToPhysicalOperators::apply(std::move(plan));
     }
-
-private:
 };
 
 }

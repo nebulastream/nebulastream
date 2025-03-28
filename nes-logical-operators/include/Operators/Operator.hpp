@@ -41,6 +41,8 @@ public:
     OperatorId getId() const;
     void setId(OperatorId id);
 
+    std::string getName() const;
+
     /// Create duplicate of this operator by copying its context information and also its parent and child operator set.
     std::shared_ptr<Operator> duplicate();
 

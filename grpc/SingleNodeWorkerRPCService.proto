@@ -13,7 +13,7 @@
 */
 
 syntax = "proto3";
-import "SerializableDecomposedQueryPlan.proto";
+import "SerializableQueryPlan.proto";
 import "google/protobuf/empty.proto";
 
 service WorkerRPCService {
@@ -28,7 +28,7 @@ service WorkerRPCService {
 }
 
 message RegisterQueryRequest {
-  NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
+  NES.SerializableQueryPlan queryPlan = 1;
 }
 
 message RegisterQueryReply {

@@ -13,7 +13,6 @@
 */
 
 syntax = "proto3";
-import "google/protobuf/any.proto";
 import "SerializableOperator.proto";
 package NES;
 
@@ -24,10 +23,4 @@ message SerializableQueryPlan{
   map<uint64, SerializableOperator> operatorMap = 1;
   repeated uint64 rootOperatorIds = 2;
   optional uint64 queryId = 3;
-}
-
-message SubmitQueryRequest {
-  SerializableQueryPlan queryPlan = 1;
-  map<string, google.protobuf.Any> context = 2;
-  optional string queryString = 3;
 }

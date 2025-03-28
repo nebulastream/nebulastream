@@ -26,6 +26,10 @@ namespace NES
 {
 struct PrintingStatisticListener;
 }
+namespace Optimizer
+{
+class QueryOptimizer;
+}
 
 /// @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
 /// coordination. The SingleNodeWorker can register LogicalQueryPlans which are lowered into an executable format, by the
@@ -36,6 +40,7 @@ class SingleNodeWorker
     std::shared_ptr<PrintingStatisticListener> listener;
     std::shared_ptr<NodeEngine> nodeEngine;
     size_t bufferSize;
+    std::unique_ptr<Optimizer::QueryOptimizer> optimizer;
     std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
 
 public:
