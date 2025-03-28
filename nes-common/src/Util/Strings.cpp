@@ -198,13 +198,13 @@ std::string escapeSpecialCharacters(const std::string_view input)
 std::string toUpperCase(std::string_view input)
 {
     PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
-    return input | std::views::transform(::toupper) | ranges::to<std::string>();
+    return input | std::views::transform(::toupper) | std::ranges::to<std::string>();
 }
 
 std::string toLowerCase(std::string_view input)
 {
     PRECONDITION(isAsciiString(input), "Support for non-ascii character not implemented");
-    return input | std::views::transform(::tolower) | ranges::to<std::string>();
+    return input | std::views::transform(::tolower) | std::ranges::to<std::string>();
 }
 
 
