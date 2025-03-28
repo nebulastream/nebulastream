@@ -54,9 +54,6 @@ void CompiledExecutablePipelineStage::execute(
 nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
-    Timer timer("compiler");
-    timer.start();
-
     /// We must capture the physicalOperatorPipeline by value to ensure it is not destroyed before the function is called
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
     /// NOLINTBEGIN(performance-unnecessary-value-param)
@@ -73,9 +70,6 @@ CompiledExecutablePipelineStage::compilePipeline() const
 
     const nautilus::engine::NautilusEngine engine(options);
     auto executable = engine.registerFunction(compiledFunction);
-    timer.snapshot("Compiled");
-    timer.pause();
-    NES_INFO("Timer: {}", fmt::streamed(timer));
     return executable;
 }
 

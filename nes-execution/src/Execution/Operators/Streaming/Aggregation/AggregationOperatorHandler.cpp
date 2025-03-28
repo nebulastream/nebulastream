@@ -62,8 +62,10 @@ std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> Aggrega
          valueSize = valueSize,
          numberOfBuckets = numberOfBuckets,
          pageSize = pageSize,
+         outputOriginId = outputOriginId,
          numberOfWorkerThreads = numberOfWorkerThreads](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
+            NES_TRACE("Creating new aggregation slice with for slice {}-{} for output origin {}", sliceStart, sliceEnd, outputOriginId);
             return {std::make_shared<AggregationSlice>(
                 keySize, valueSize, numberOfBuckets, pageSize, sliceStart, sliceEnd, numberOfWorkerThreads)};
         });
@@ -77,6 +79,7 @@ void AggregationOperatorHandler::triggerSlices(
     {
         /// Getting all hashmaps for each slice that has at least one tuple
         std::vector<Interface::HashMap*> allHashMaps;
+        uint64_t totalNumberOfTuples = 0;
         for (const auto& slice : allSlices)
         {
             const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
@@ -85,6 +88,7 @@ void AggregationOperatorHandler::triggerSlices(
                 if (auto* hashmap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx)); hashmap->getNumberOfTuples() > 0)
                 {
                     allHashMaps.emplace_back(hashmap);
+                    totalNumberOfTuples += hashmap->getNumberOfTuples();
                 }
             }
         }
@@ -119,7 +123,7 @@ void AggregationOperatorHandler::triggerSlices(
         tupleBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
         tupleBuffer.setLastChunk(true);
         tupleBuffer.setWatermark(windowInfo.windowInfo.windowStart);
-        tupleBuffer.setNumberOfTuples(1);
+        tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
 
 
         /// Writing all necessary information for the aggregation probe to the buffer.
@@ -133,7 +137,11 @@ void AggregationOperatorHandler::triggerSlices(
 
 
         /// Dispatching the buffer to the probe operator via the task queue.
-        pipelineCtx->emitBuffer(tupleBuffer);
+        constexpr auto thresholdForImmediateExecution = 200;
+        const auto continuePolicy = (totalNumberOfTuples < thresholdForImmediateExecution)
+            ? PipelineExecutionContext::ContinuationPolicy::IMMEDIATE
+            : PipelineExecutionContext::ContinuationPolicy::POSSIBLE;
+        pipelineCtx->emitBuffer(tupleBuffer, continuePolicy);
         NES_TRACE(
             "Emitted window {}-{} with watermarkTs {} sequenceNumber {} originId {}",
             windowInfo.windowInfo.windowStart,

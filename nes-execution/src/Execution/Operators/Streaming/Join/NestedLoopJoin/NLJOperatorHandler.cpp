@@ -54,9 +54,11 @@ std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> NLJOper
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
     return std::function(
-        [this](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+        [numberOfWorkerThreads = numberOfWorkerThreads,
+         outputOriginId = outputOriginId](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
-            NES_INFO("Creating new NLJ slice for sliceStart {} and sliceEnd {}", sliceStart, sliceEnd);
+            NES_TRACE(
+                "Creating new NLJ slice for sliceStart {} and sliceEnd {} for output origin {}", sliceStart, sliceEnd, outputOriginId);
             return {std::make_shared<NLJSlice>(sliceStart, sliceEnd, numberOfWorkerThreads)};
         });
 }
@@ -73,9 +75,9 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
 
     nljSliceLeft.combinePagedVectors();
     nljSliceRight.combinePagedVectors();
+    const auto totalNumberOfTuples = nljSliceLeft.getNumberOfTuplesLeft() + nljSliceRight.getNumberOfTuplesRight();
 
     auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
-    tupleBuffer.setNumberOfTuples(1);
 
     /// As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
     /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
@@ -84,13 +86,20 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
     tupleBuffer.setLastChunk(sequenceData.lastChunk);
     tupleBuffer.setWatermark(windowInfo.windowStart);
+    tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
 
     auto* bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTrigger>();
     bufferMemory->leftSliceEnd = sliceLeft.getSliceEnd();
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
     bufferMemory->windowInfo = windowInfo;
 
-    pipelineCtx->emitBuffer(tupleBuffer);
+    /// Dispatching the buffer to the probe operator via the task queue.
+    constexpr auto thresholdForImmediateExecution = 200;
+    const auto continuePolicy = (totalNumberOfTuples < thresholdForImmediateExecution)
+        ? PipelineExecutionContext::ContinuationPolicy::IMMEDIATE
+        : PipelineExecutionContext::ContinuationPolicy::POSSIBLE;
+    pipelineCtx->emitBuffer(tupleBuffer, continuePolicy);
+
     NES_TRACE(
         "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",
