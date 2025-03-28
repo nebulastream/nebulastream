@@ -1,0 +1,41 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <memory>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Functions/FunctionProvider.hpp>
+#include <SinkPhysicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <RewriteRuleRegistry.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Abstract/PhysicalOperator.hpp>
+
+namespace NES::Optimizer
+{
+
+std::vector<PhysicalOperatorWrapper> LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
+{
+    auto source = *logicalOperator.get<SourceDescriptorLogicalOperator>();
+    auto physicalOperator = SourcePhysicalOperator(source.getSourceDescriptor(), source.getOutputOriginIds()[0]);
+    auto wrapper = PhysicalOperatorWrapper(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    return {wrapper};
+}
+
+RewriteRuleRegistryReturnType RewriteRuleGeneratedRegistrar::RegisterSourceRewriteRule(RewriteRuleRegistryArguments argument)
+{
+    return std::make_unique<NES::Optimizer::LowerToPhysicalSource>(argument.conf);
+}
+}
