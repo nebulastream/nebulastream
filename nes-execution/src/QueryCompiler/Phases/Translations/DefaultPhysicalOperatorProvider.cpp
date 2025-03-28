@@ -245,7 +245,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
     const auto& joinDefinition = joinOperator->getJoinDefinition();
 
-    auto getJoinFieldNames = [](const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<NodeFunction>& joinFunction)
+    auto getJoinFieldNames = [](const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<LogicalFunction>& joinFunction)
     {
         std::vector<std::string> joinFieldNames;
         std::vector<std::string> fieldNamesInJoinFunction;
@@ -253,9 +253,9 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
             joinFunction->getAndFlattenAllChildren(false),
             [&fieldNamesInJoinFunction](const auto& child)
             {
-                if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
+                if (NES::Util::instanceOf<FieldAccessLogicalFunction>(child))
                 {
-                    fieldNamesInJoinFunction.push_back(NES::Util::as<NodeFunctionFieldAccess>(child)->getFieldName());
+                    fieldNamesInJoinFunction.push_back(NES::Util::as<FieldAccessLogicalFunction>(child)->getFieldName());
                 }
             });
 

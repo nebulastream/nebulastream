@@ -18,27 +18,26 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/ArithmeticalFunctions/AddBinaryLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/DivBinaryLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/MulBinaryLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/SubBinaryLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/AndBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/GreaterBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/GreaterEqualsBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/LessBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/LessEqualsBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/OrBinaryLogicalFunction.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -68,7 +67,7 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
     for (const auto& mapOperator : mapOperators)
     {
         auto mapFunction = mapOperator->getMapFunction();
-        auto updatedMapFunction = Util::as<NodeFunctionFieldAssignment>(sortAttributesInFunction(mapFunction));
+        auto updatedMapFunction = Util::as<FieldAssignmentBinaryLogicalFunction>(sortAttributesInFunction(mapFunction));
         auto updatedMap = std::make_shared<LogicalMapOperator>(updatedMapFunction, getNextOperatorId());
         updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
         Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
@@ -77,50 +76,50 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
     return queryPlan;
 }
 
-std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInFunction(std::shared_ptr<NodeFunction> function)
+std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInFunction(std::shared_ptr<LogicalFunction> function)
 {
     NES_DEBUG("Sorting attributed for input function {}", *function);
-    if (Util::instanceOf<NES::LogicalNodeFunction>(function))
+    if (Util::instanceOf<NES::LogicalLogicalFunction>(function))
     {
         return sortAttributesInLogicalFunctions(function);
     }
-    if (Util::instanceOf<NES::NodeFunctionArithmetical>(function))
+    if (Util::instanceOf<NES::LogicalFunctionArithmetical>(function))
     {
         return sortAttributesInArithmeticalFunctions(function);
     }
-    else if (Util::instanceOf<NES::NodeFunctionFieldAssignment>(function))
+    else if (Util::instanceOf<NES::FieldAssignmentBinaryLogicalFunction>(function))
     {
-        auto fieldAssignmentNodeFunction = Util::as<NES::NodeFunctionFieldAssignment>(function);
-        auto assignment = fieldAssignmentNodeFunction->getAssignment();
+        auto fieldAssignmentLogicalFunction = Util::as<NES::FieldAssignmentBinaryLogicalFunction>(function);
+        auto assignment = fieldAssignmentLogicalFunction->getAssignment();
         auto updatedAssignment = sortAttributesInFunction(assignment);
-        auto field = fieldAssignmentNodeFunction->getField();
-        return NES::NodeFunctionFieldAssignment::create(field, updatedAssignment);
+        auto field = fieldAssignmentLogicalFunction->getField();
+        return NES::FieldAssignmentBinaryLogicalFunction::create(field, updatedAssignment);
     }
-    else if (Util::instanceOf<NES::NodeFunctionConstantValue>(function) || Util::instanceOf<NES::NodeFunctionFieldAccess>(function))
+    else if (Util::instanceOf<NES::ConstantValueLogicalFunction>(function) || Util::instanceOf<NES::FieldAccessLogicalFunction>(function))
     {
         return function;
     }
     throw NotImplemented("No conversion to Z3 function implemented for the function: ", *function);
 }
 
-std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFunctions(std::shared_ptr<NodeFunction> function)
+std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInArithmeticalFunctions(std::shared_ptr<LogicalFunction> function)
 {
     NES_DEBUG("Create Z3 function for arithmetical function {}", *function);
-    if (Util::instanceOf<NES::NodeFunctionAdd>(function))
+    if (Util::instanceOf<NES::LogicalFunctionAdd>(function))
     {
-        auto addNodeFunction = Util::as<NES::NodeFunctionAdd>(function);
+        auto addLogicalFunction = Util::as<NES::LogicalFunctionAdd>(function);
 
-        auto sortedLeft = sortAttributesInFunction(addNodeFunction->getLeft());
-        auto sortedRight = sortAttributesInFunction(addNodeFunction->getRight());
+        auto sortedLeft = sortAttributesInFunction(addLogicalFunction->getLeft());
+        auto sortedRight = sortAttributesInFunction(addLogicalFunction->getRight());
 
-        auto leftCommutativeFields = fetchCommutativeFields<NES::NodeFunctionAdd>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<NES::NodeFunctionAdd>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<NES::LogicalFunctionAdd>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<NES::LogicalFunctionAdd>(sortedRight);
 
-        std::vector<std::shared_ptr<NodeFunction>> allCommutativeFields;
+        std::vector<std::shared_ptr<LogicalFunction>> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<std::shared_ptr<NodeFunction>> sortedCommutativeFields;
+        std::vector<std::shared_ptr<LogicalFunction>> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
@@ -134,22 +133,22 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
                 std::string leftValue;
                 std::string rightValue;
 
-                if (Util::instanceOf<NES::NodeFunctionConstantValue>(lhsField))
+                if (Util::instanceOf<NES::ConstantValueLogicalFunction>(lhsField))
                 {
-                    leftValue = Util::as<NES::NodeFunctionConstantValue>(lhsField)->getConstantValue();
+                    leftValue = Util::as<NES::ConstantValueLogicalFunction>(lhsField)->getConstantValue();
                 }
                 else
                 {
-                    leftValue = Util::as<NES::NodeFunctionFieldAccess>(lhsField)->getFieldName();
+                    leftValue = Util::as<NES::FieldAccessLogicalFunction>(lhsField)->getFieldName();
                 }
 
-                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
+                if (Util::instanceOf<ConstantValueLogicalFunction>(rhsField))
                 {
-                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
+                    rightValue = Util::as<ConstantValueLogicalFunction>(rhsField)->getConstantValue();
                 }
                 else
                 {
-                    rightValue = Util::as<NES::NodeFunctionFieldAccess>(rhsField)->getFieldName();
+                    rightValue = Util::as<NES::FieldAccessLogicalFunction>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -163,7 +162,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
             {
                 sortedLeft = updatedField;
             }
-            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
+            else if (!(Util::instanceOf<FieldAccessLogicalFunction>(sortedLeft)
+                       || Util::instanceOf<ConstantValueLogicalFunction>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -176,7 +176,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
             {
                 sortedRight = updatedField;
             }
-            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
+            else if (!(Util::instanceOf<FieldAccessLogicalFunction>(sortedRight)
+                       || Util::instanceOf<ConstantValueLogicalFunction>(sortedRight)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -186,45 +187,45 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
             }
         }
 
-        if (!Util::instanceOf<NodeFunctionAdd>(sortedLeft) || !Util::instanceOf<NodeFunctionAdd>(sortedRight))
+        if (!Util::instanceOf<LogicalFunctionAdd>(sortedLeft) || !Util::instanceOf<LogicalFunctionAdd>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
             int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0)
             {
-                return NodeFunctionAdd::create(sortedRight, sortedLeft);
+                return LogicalFunctionAdd::create(sortedRight, sortedLeft);
             }
         }
 
-        return NodeFunctionAdd::create(sortedLeft, sortedRight);
+        return LogicalFunctionAdd::create(sortedLeft, sortedRight);
     }
-    if (Util::instanceOf<NodeFunctionSub>(function))
+    if (Util::instanceOf<SubBinaryLogicalFunction>(function))
     {
-        auto subNodeFunction = Util::as<NodeFunctionSub>(function);
-        auto left = subNodeFunction->getLeft();
-        auto right = subNodeFunction->getRight();
+        auto subLogicalFunction = Util::as<SubBinaryLogicalFunction>(function);
+        auto left = subLogicalFunction->getLeft();
+        auto right = subLogicalFunction->getRight();
         sortAttributesInFunction(left);
         sortAttributesInFunction(right);
         return function;
     }
-    else if (Util::instanceOf<NodeFunctionMul>(function))
+    else if (Util::instanceOf<MulBinaryLogicalFunction>(function))
     {
-        auto mulNodeFunction = Util::as<NodeFunctionMul>(function);
-        auto left = mulNodeFunction->getLeft();
-        auto right = mulNodeFunction->getRight();
+        auto mulLogicalFunction = Util::as<MulBinaryLogicalFunction>(function);
+        auto left = mulLogicalFunction->getLeft();
+        auto right = mulLogicalFunction->getRight();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
-        auto leftCommutativeFields = fetchCommutativeFields<NodeFunctionMul>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<NodeFunctionMul>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<MulBinaryLogicalFunction>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<MulBinaryLogicalFunction>(sortedRight);
 
-        std::vector<std::shared_ptr<NodeFunction>> allCommutativeFields;
+        std::vector<std::shared_ptr<LogicalFunction>> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<std::shared_ptr<NodeFunction>> sortedCommutativeFields;
+        std::vector<std::shared_ptr<LogicalFunction>> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
@@ -234,27 +235,27 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
+            [](const std::shared_ptr<LogicalFunction>& lhsField, const std::shared_ptr<LogicalFunction>& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
 
-                if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
+                if (Util::instanceOf<ConstantValueLogicalFunction>(lhsField))
                 {
-                    leftValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
+                    leftValue = Util::as<ConstantValueLogicalFunction>(lhsField)->getConstantValue();
                 }
                 else
                 {
-                    leftValue = Util::as<NodeFunctionFieldAccess>(lhsField)->getFieldName();
+                    leftValue = Util::as<FieldAccessLogicalFunction>(lhsField)->getFieldName();
                 }
 
-                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
+                if (Util::instanceOf<ConstantValueLogicalFunction>(rhsField))
                 {
-                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
+                    rightValue = Util::as<ConstantValueLogicalFunction>(rhsField)->getConstantValue();
                 }
                 else
                 {
-                    rightValue = Util::as<NodeFunctionFieldAccess>(rhsField)->getFieldName();
+                    rightValue = Util::as<FieldAccessLogicalFunction>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -268,7 +269,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
             {
                 sortedLeft = updatedField;
             }
-            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
+            else if (!(Util::instanceOf<FieldAccessLogicalFunction>(sortedLeft)
+                       || Util::instanceOf<ConstantValueLogicalFunction>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -281,7 +283,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
             {
                 sortedRight = updatedField;
             }
-            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
+            else if (!(Util::instanceOf<FieldAccessLogicalFunction>(sortedRight)
+                       || Util::instanceOf<ConstantValueLogicalFunction>(sortedRight)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -291,24 +294,24 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
             }
         }
 
-        if (!Util::instanceOf<NodeFunctionMul>(sortedLeft) || !Util::instanceOf<NodeFunctionMul>(sortedRight))
+        if (!Util::instanceOf<MulBinaryLogicalFunction>(sortedLeft) || !Util::instanceOf<MulBinaryLogicalFunction>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
             int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0)
             {
-                return NodeFunctionMul::create(sortedRight, sortedLeft);
+                return MulBinaryLogicalFunction::create(sortedRight, sortedLeft);
             }
         }
 
-        return NodeFunctionMul::create(sortedLeft, sortedRight);
+        return MulBinaryLogicalFunction::create(sortedLeft, sortedRight);
     }
-    else if (Util::instanceOf<NodeFunctionDiv>(function))
+    else if (Util::instanceOf<DivBinaryLogicalFunction>(function))
     {
-        auto divNodeFunction = Util::as<NodeFunctionDiv>(function);
-        auto left = divNodeFunction->getLeft();
-        auto right = divNodeFunction->getRight();
+        auto divLogicalFunction = Util::as<DivBinaryLogicalFunction>(function);
+        auto left = divLogicalFunction->getLeft();
+        auto right = divLogicalFunction->getRight();
         sortAttributesInFunction(left);
         sortAttributesInFunction(right);
         return function;
@@ -316,25 +319,25 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
     throw NotImplemented("No conversion to Z3 function implemented for the arithmetical function node: ", *function);
 }
 
-std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunctions(const std::shared_ptr<NodeFunction>& function)
+std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunctions(const std::shared_ptr<LogicalFunction>& function)
 {
     NES_DEBUG("Create Z3 function node for logical function {}", *function);
-    if (Util::instanceOf<NodeFunctionAnd>(function))
+    if (Util::instanceOf<AndBinaryLogicalFunction>(function))
     {
-        auto andNodeFunction = Util::as<NodeFunctionAnd>(function);
-        auto left = andNodeFunction->getLeft();
-        auto right = andNodeFunction->getRight();
+        auto andLogicalFunction = Util::as<AndBinaryLogicalFunction>(function);
+        auto left = andLogicalFunction->getLeft();
+        auto right = andLogicalFunction->getRight();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
-        auto leftCommutativeFields = fetchCommutativeFields<NodeFunctionAnd>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<NodeFunctionAnd>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<AndBinaryLogicalFunction>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<AndBinaryLogicalFunction>(sortedRight);
 
-        std::vector<std::shared_ptr<NodeFunction>> allCommutativeFields;
+        std::vector<std::shared_ptr<LogicalFunction>> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<std::shared_ptr<NodeFunction>> sortedCommutativeFields;
+        std::vector<std::shared_ptr<LogicalFunction>> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
@@ -344,27 +347,27 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
+            [](const std::shared_ptr<LogicalFunction>& lhsField, const std::shared_ptr<LogicalFunction>& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
 
-                if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
+                if (Util::instanceOf<ConstantValueLogicalFunction>(lhsField))
                 {
-                    leftValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
+                    leftValue = Util::as<ConstantValueLogicalFunction>(lhsField)->getConstantValue();
                 }
                 else
                 {
-                    leftValue = Util::as<NodeFunctionFieldAccess>(lhsField)->getFieldName();
+                    leftValue = Util::as<FieldAccessLogicalFunction>(lhsField)->getFieldName();
                 }
 
-                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
+                if (Util::instanceOf<ConstantValueLogicalFunction>(rhsField))
                 {
-                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
+                    rightValue = Util::as<ConstantValueLogicalFunction>(rhsField)->getConstantValue();
                 }
                 else
                 {
-                    rightValue = Util::as<NodeFunctionFieldAccess>(rhsField)->getFieldName();
+                    rightValue = Util::as<FieldAccessLogicalFunction>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -378,7 +381,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
             {
                 sortedLeft = updatedField;
             }
-            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
+            else if (!(Util::instanceOf<FieldAccessLogicalFunction>(sortedLeft)
+                       || Util::instanceOf<ConstantValueLogicalFunction>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -391,7 +395,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
             {
                 sortedRight = updatedField;
             }
-            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
+            else if (!(Util::instanceOf<FieldAccessLogicalFunction>(sortedRight)
+                       || Util::instanceOf<ConstantValueLogicalFunction>(sortedRight)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -401,34 +406,34 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
             }
         }
 
-        if (!Util::instanceOf<NodeFunctionAnd>(sortedLeft) || !Util::instanceOf<NodeFunctionAnd>(sortedRight))
+        if (!Util::instanceOf<AndBinaryLogicalFunction>(sortedLeft) || !Util::instanceOf<AndBinaryLogicalFunction>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
             int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0)
             {
-                return NodeFunctionAnd::create(sortedRight, sortedLeft);
+                return AndBinaryLogicalFunction::create(sortedRight, sortedLeft);
             }
         }
-        return NodeFunctionAnd::create(sortedLeft, sortedRight);
+        return AndBinaryLogicalFunction::create(sortedLeft, sortedRight);
     }
-    if (Util::instanceOf<NodeFunctionOr>(function))
+    if (Util::instanceOf<OrBinaryLogicalFunction>(function))
     {
-        auto orNodeFunction = Util::as<NodeFunctionOr>(function);
-        auto left = orNodeFunction->getLeft();
-        auto right = orNodeFunction->getRight();
+        auto orLogicalFunction = Util::as<OrBinaryLogicalFunction>(function);
+        auto left = orLogicalFunction->getLeft();
+        auto right = orLogicalFunction->getRight();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
-        auto leftCommutativeFields = fetchCommutativeFields<NodeFunctionOr>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<NodeFunctionOr>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<OrBinaryLogicalFunction>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<OrBinaryLogicalFunction>(sortedRight);
 
-        std::vector<std::shared_ptr<NodeFunction>> allCommutativeFields;
+        std::vector<std::shared_ptr<LogicalFunction>> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<std::shared_ptr<NodeFunction>> sortedCommutativeFields;
+        std::vector<std::shared_ptr<LogicalFunction>> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
@@ -438,27 +443,27 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
+            [](const std::shared_ptr<LogicalFunction>& lhsField, const std::shared_ptr<LogicalFunction>& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
 
-                if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
+                if (Util::instanceOf<ConstantValueLogicalFunction>(lhsField))
                 {
-                    leftValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
+                    leftValue = Util::as<ConstantValueLogicalFunction>(lhsField)->getConstantValue();
                 }
                 else
                 {
-                    leftValue = Util::as<NodeFunctionFieldAccess>(lhsField)->getFieldName();
+                    leftValue = Util::as<FieldAccessLogicalFunction>(lhsField)->getFieldName();
                 }
 
-                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
+                if (Util::instanceOf<ConstantValueLogicalFunction>(rhsField))
                 {
-                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
+                    rightValue = Util::as<ConstantValueLogicalFunction>(rhsField)->getConstantValue();
                 }
                 else
                 {
-                    rightValue = Util::as<NodeFunctionFieldAccess>(rhsField)->getFieldName();
+                    rightValue = Util::as<FieldAccessLogicalFunction>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -472,7 +477,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
             {
                 sortedLeft = updatedField;
             }
-            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
+            else if (!(Util::instanceOf<FieldAccessLogicalFunction>(sortedLeft)
+                       || Util::instanceOf<ConstantValueLogicalFunction>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -485,7 +491,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
             {
                 sortedRight = updatedField;
             }
-            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
+            else if (!(Util::instanceOf<FieldAccessLogicalFunction>(sortedRight)
+                       || Util::instanceOf<ConstantValueLogicalFunction>(sortedRight)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -495,23 +502,23 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
             }
         }
 
-        if (!Util::instanceOf<NodeFunctionOr>(sortedLeft) || !Util::instanceOf<NodeFunctionOr>(sortedRight))
+        if (!Util::instanceOf<OrBinaryLogicalFunction>(sortedLeft) || !Util::instanceOf<OrBinaryLogicalFunction>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
             int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0)
             {
-                return NodeFunctionOr::create(sortedRight, sortedLeft);
+                return OrBinaryLogicalFunction::create(sortedRight, sortedLeft);
             }
         }
-        return NodeFunctionOr::create(sortedLeft, sortedRight);
+        return OrBinaryLogicalFunction::create(sortedLeft, sortedRight);
     }
-    else if (Util::instanceOf<NodeFunctionLess>(function))
+    else if (Util::instanceOf<LessBinaryLogicalFunction>(function))
     {
-        auto lessNodeFunction = Util::as<NodeFunctionLess>(function);
-        auto left = lessNodeFunction->getLeft();
-        auto right = lessNodeFunction->getRight();
+        auto lessLogicalFunction = Util::as<LessBinaryLogicalFunction>(function);
+        auto left = lessLogicalFunction->getLeft();
+        auto right = lessLogicalFunction->getRight();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
@@ -521,15 +528,15 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0)
         {
-            return NodeFunctionGreater::create(sortedRight, sortedLeft);
+            return GreaterBinaryLogicalFunction::create(sortedRight, sortedLeft);
         }
-        return NodeFunctionLess::create(sortedLeft, sortedRight);
+        return LessBinaryLogicalFunction::create(sortedLeft, sortedRight);
     }
-    else if (Util::instanceOf<NodeFunctionLessEquals>(function))
+    else if (Util::instanceOf<LessEqualsBinaryLogicalFunction>(function))
     {
-        auto lessNodeFunctionEquals = Util::as<NodeFunctionLessEquals>(function);
-        auto left = lessNodeFunctionEquals->getLeft();
-        auto right = lessNodeFunctionEquals->getRight();
+        auto lessEqualsBinaryLogicalFunction = Util::as<LessEqualsBinaryLogicalFunction>(function);
+        auto left = lessEqualsBinaryLogicalFunction->getLeft();
+        auto right = lessEqualsBinaryLogicalFunction->getRight();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
@@ -538,33 +545,15 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0)
         {
-            return NodeFunctionGreaterEquals::create(sortedRight, sortedLeft);
+            return GreaterBinaryLogicalFunctionEquals::create(sortedRight, sortedLeft);
         }
-        return NodeFunctionLessEquals::create(sortedLeft, sortedRight);
+        return LessEqualsBinaryLogicalFunction::create(sortedLeft, sortedRight);
     }
-    else if (Util::instanceOf<NodeFunctionGreater>(function))
+    else if (Util::instanceOf<GreaterBinaryLogicalFunction>(function))
     {
-        auto greaterNodeFunction = Util::as<NodeFunctionGreater>(function);
-        auto left = greaterNodeFunction->getLeft();
-        auto right = greaterNodeFunction->getRight();
-
-        auto sortedLeft = sortAttributesInFunction(left);
-        auto sortedRight = sortAttributesInFunction(right);
-
-        auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
-        auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
-        int compared = leftSortedFieldName.compare(rightSortedFieldName);
-        if (compared > 0)
-        {
-            return NodeFunctionLess::create(sortedRight, sortedLeft);
-        }
-        return NodeFunctionGreater::create(sortedLeft, sortedRight);
-    }
-    else if (Util::instanceOf<NodeFunctionGreaterEquals>(function))
-    {
-        auto greaterNodeFunctionEquals = Util::as<NodeFunctionGreaterEquals>(function);
-        auto left = greaterNodeFunctionEquals->getLeft();
-        auto right = greaterNodeFunctionEquals->getRight();
+        auto greaterLogicalFunction = Util::as<GreaterBinaryLogicalFunction>(function);
+        auto left = greaterLogicalFunction->getLeft();
+        auto right = greaterLogicalFunction->getRight();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
@@ -574,15 +563,16 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0)
         {
-            return NodeFunctionLessEquals::create(sortedRight, sortedLeft);
+            return LessBinaryLogicalFunction::create(sortedRight, sortedLeft);
         }
-        return NodeFunctionGreaterEquals::create(sortedLeft, sortedRight);
+        return GreaterBinaryLogicalFunction::create(sortedLeft, sortedRight);
     }
-    else if (Util::instanceOf<NodeFunctionEquals>(function))
+    else if (Util::instanceOf<GreaterBinaryLogicalFunctionEquals>(function))
     {
-        auto equalsNodeFunction = Util::as<NodeFunctionEquals>(function);
-        auto left = equalsNodeFunction->getLeft();
-        auto right = equalsNodeFunction->getRight();
+        auto greaterEqualsBinaryLogicalFunction = Util::as<GreaterBinaryLogicalFunctionEquals>(function);
+        auto left = greaterEqualsBinaryLogicalFunction->getLeft();
+        auto right = greaterEqualsBinaryLogicalFunction->getRight();
+
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
@@ -591,29 +581,46 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
         int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0)
         {
-            return NodeFunctionEquals::create(sortedRight, sortedLeft);
+            return LessEqualsBinaryLogicalFunction::create(sortedRight, sortedLeft);
         }
-        return NodeFunctionEquals::create(sortedLeft, sortedRight);
+        return GreaterBinaryLogicalFunctionEquals::create(sortedLeft, sortedRight);
     }
-    else if (Util::instanceOf<NodeFunctionNegate>(function))
+    else if (Util::instanceOf<EqualsBinaryLogicalFunction>(function))
     {
-        auto negateNodeFunction = Util::as<NodeFunctionNegate>(function);
-        auto childFunction = negateNodeFunction->child();
+        auto equalsLogicalFunction = Util::as<EqualsBinaryLogicalFunction>(function);
+        auto left = equalsLogicalFunction->getLeft();
+        auto right = equalsLogicalFunction->getRight();
+        auto sortedLeft = sortAttributesInFunction(left);
+        auto sortedRight = sortAttributesInFunction(right);
+
+        auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
+        auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
+        int compared = leftSortedFieldName.compare(rightSortedFieldName);
+        if (compared > 0)
+        {
+            return EqualsBinaryLogicalFunction::create(sortedRight, sortedLeft);
+        }
+        return EqualsBinaryLogicalFunction::create(sortedLeft, sortedRight);
+    }
+    else if (Util::instanceOf<NegateUnaryLogicalFunction>(function))
+    {
+        auto negateLogicalFunction = Util::as<NegateUnaryLogicalFunction>(function);
+        auto childFunction = negateLogicalFunction->child();
         auto updatedChildFunction = sortAttributesInFunction(childFunction);
-        return NodeFunctionNegate::create(updatedChildFunction);
+        return NegateUnaryLogicalFunction::create(updatedChildFunction);
     }
     throw NotImplemented("No conversion to Z3 function implemented for the logical function node: ", *function);
 }
 
 bool AttributeSortRule::replaceCommutativeFunctions(
-    const std::shared_ptr<NodeFunction>& parentFunction,
-    const std::shared_ptr<NodeFunction>& originalFunction,
-    const std::shared_ptr<NodeFunction>& updatedFunction)
+    const std::shared_ptr<LogicalFunction>& parentFunction,
+    const std::shared_ptr<LogicalFunction>& originalFunction,
+    const std::shared_ptr<LogicalFunction>& updatedFunction)
 {
-    auto binaryFunction = Util::as<NodeFunctionBinary>(parentFunction);
+    auto binaryFunction = Util::as<BinaryLogicalFunction>(parentFunction);
 
-    const std::shared_ptr<NodeFunction>& leftChild = binaryFunction->getLeft();
-    const std::shared_ptr<NodeFunction>& rightChild = binaryFunction->getRight();
+    const std::shared_ptr<LogicalFunction>& leftChild = binaryFunction->getLeft();
+    const std::shared_ptr<LogicalFunction>& rightChild = binaryFunction->getRight();
     if (leftChild.get() == originalFunction.get())
     {
         binaryFunction->removeChildren();
@@ -628,12 +635,12 @@ bool AttributeSortRule::replaceCommutativeFunctions(
     }
     else
     {
-        auto children = parentFunction->getChildren();
+        auto children = parentFunction->children;
         for (const auto& child : children)
         {
-            if (!(Util::instanceOf<NodeFunctionFieldAccess>(child) || Util::instanceOf<NodeFunctionConstantValue>(child)))
+            if (!(Util::instanceOf<FieldAccessLogicalFunction>(child) || Util::instanceOf<ConstantValueLogicalFunction>(child)))
             {
-                bool replaced = replaceCommutativeFunctions(Util::as<NodeFunction>(child), originalFunction, updatedFunction);
+                bool replaced = replaceCommutativeFunctions(Util::as<LogicalFunction>(child), originalFunction, updatedFunction);
                 if (replaced)
                 {
                     return true;
@@ -644,19 +651,19 @@ bool AttributeSortRule::replaceCommutativeFunctions(
     return false;
 }
 
-std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(std::shared_ptr<NodeFunction> function)
+std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(std::shared_ptr<LogicalFunction> function)
 {
-    std::shared_ptr<NodeFunction> startPoint = std::move(function);
-    while (!(Util::instanceOf<NodeFunctionFieldAccess>(startPoint) || Util::instanceOf<NodeFunctionConstantValue>(startPoint)))
+    std::shared_ptr<LogicalFunction> startPoint = std::move(function);
+    while (!(Util::instanceOf<FieldAccessLogicalFunction>(startPoint) || Util::instanceOf<ConstantValueLogicalFunction>(startPoint)))
     {
-        startPoint = Util::as<NodeFunction>(startPoint->getChildren()[0]);
+        startPoint = Util::as<LogicalFunction>(startPoint->children[0]);
     }
 
-    if (Util::instanceOf<NodeFunctionFieldAccess>(startPoint))
+    if (Util::instanceOf<FieldAccessLogicalFunction>(startPoint))
     {
-        return Util::as<NodeFunctionFieldAccess>(startPoint)->getFieldName();
+        return Util::as<FieldAccessLogicalFunction>(startPoint)->getFieldName();
     }
-    return Util::as<NodeFunctionConstantValue>(startPoint)->getConstantValue();
+    return Util::as<ConstantValueLogicalFunction>(startPoint)->getConstantValue();
 }
 
 }

@@ -27,14 +27,14 @@ class AvgAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
     /// Factory method to creates a avg aggregation on a particular field.
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
+    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<LogicalFunction>& onField);
 
     static std::shared_ptr<WindowAggregationDescriptor>
-    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
+    create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<WindowAggregationDescriptor> copy() override;
+    std::shared_ptr<WindowAggregationDescriptor> clone() override;
 
     std::shared_ptr<DataType> getInputStamp() override;
     std::shared_ptr<DataType> getPartialAggregateStamp() override;
@@ -43,7 +43,7 @@ public:
     virtual ~AvgAggregationDescriptor() = default;
 
 private:
-    explicit AvgAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
-    AvgAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
+    explicit AvgAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    AvgAggregationDescriptor(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
 };
 }
