@@ -52,38 +52,34 @@ namespace {
 void assertSelectionOperator(const QueryPlan &qp, const std::string &expectedLeftField, const std::string &expectedRightField) {
     auto selectionOperators = qp.getOperatorByType<SelectionLogicalOperator>();
     ASSERT_EQ(selectionOperators.size(), 1) << "Expected exactly one selection operator.";
-    auto &predicate = selectionOperators[0]->getPredicate();
-    auto *equalsFunc = dynamic_cast<EqualsLogicalFunction*>(&predicate);
-    ASSERT_NE(equalsFunc, nullptr) << "Predicate should be of type EqualsLogicalFunction.";
+    auto predicate = selectionOperators[0].getPredicate();
+    auto equalsFunc = predicate.get<EqualsLogicalFunction>();
 
-    auto *leftField = dynamic_cast<FieldAccessLogicalFunction*>(&equalsFunc->getLeftChild());
-    auto *rightField = dynamic_cast<FieldAccessLogicalFunction*>(&equalsFunc->getRightChild());
-    ASSERT_NE(leftField, nullptr) << "Left operand is not a FieldAccessLogicalFunction.";
-    ASSERT_NE(rightField, nullptr) << "Right operand is not a FieldAccessLogicalFunction.";
+    auto leftField = equalsFunc.getChildren()[0].get<FieldAccessLogicalFunction>();
+    auto rightField = equalsFunc.getChildren()[1].get<FieldAccessLogicalFunction>();
 
-    EXPECT_EQ(leftField->getFieldName(), expectedLeftField) << "Left field name mismatch.";
-    EXPECT_EQ(rightField->getFieldName(), expectedRightField) << "Right field name mismatch.";
+    EXPECT_EQ(leftField.getFieldName(), expectedLeftField) << "Left field name mismatch.";
+    EXPECT_EQ(rightField.getFieldName(), expectedRightField) << "Right field name mismatch.";
 }
 
 void assertProjectionOperator(const QueryPlan &qp, const std::vector<std::string> &expectedFields) {
     auto projectionOperators = qp.getOperatorByType<ProjectionLogicalOperator>();
     ASSERT_EQ(projectionOperators.size(), 1) << "Expected exactly one projection operator.";
-    const auto &functions = projectionOperators[0]->getFunctions();
+    const auto &functions = projectionOperators[0].getFunctions();
     ASSERT_EQ(functions.size(), expectedFields.size()) << "Projection functions count mismatch.";
 
     for (size_t i = 0; i < functions.size(); ++i) {
-        auto *fieldFunc = dynamic_cast<FieldAccessLogicalFunction*>(functions[i].get());
-        ASSERT_NE(fieldFunc, nullptr) << "Projection function is not a FieldAccessLogicalFunction.";
-        EXPECT_EQ(fieldFunc->getFieldName(), expectedFields[i]) << "Projection field name mismatch at index " << i;
+        auto fieldFunc = functions[i].get<FieldAccessLogicalFunction>();
+        EXPECT_EQ(fieldFunc.getFieldName(), expectedFields[i]) << "Projection field name mismatch at index " << i;
     }
 }
 
 void assertMapOperator(const QueryPlan &qp, const std::string &expectedField, const std::string &expectedValue) {
     auto mapOperators = qp.getOperatorByType<MapLogicalOperator>();
     ASSERT_EQ(mapOperators.size(), 1) << "Expected exactly one map operator.";
-    const auto &assignment = mapOperators[0]->getMapFunction();
-    auto *lhs = dynamic_cast<FieldAccessLogicalFunction*>(&assignment.getField());
-    auto *rhs = dynamic_cast<ConstantValueLogicalFunction*>(&assignment.getAssignment());
+    const auto &assignment = mapOperators[0].getMapFunction();
+    auto *lhs = &assignment.getField();
+    auto *rhs = &assignment.getAssignment().get<ConstantValueLogicalFunction>();
     ASSERT_NE(lhs, nullptr) << "Map left-hand side is not a FieldAccessLogicalFunction.";
     ASSERT_NE(rhs, nullptr) << "Map right-hand side is not a ConstantValueLogicalFunction.";
 
@@ -99,7 +95,7 @@ void assertUnionOperator(const QueryPlan &qp) {
 void assertSinkOperator(const QueryPlan &qp, const std::string &expectedSinkName) {
     auto sinkOperators = qp.getOperatorByType<SinkLogicalOperator>();
     ASSERT_EQ(sinkOperators.size(), 1) << "Expected exactly one sink operator.";
-    EXPECT_EQ(sinkOperators[0]->getName(), expectedSinkName) << "Sink name mismatch.";
+    EXPECT_EQ(sinkOperators[0].getName(), expectedSinkName) << "Sink name mismatch.";
 }
 }
 
@@ -107,23 +103,23 @@ TEST_F(QueryPlanBuilderTest, testHasOperator) {
     auto queryPlan = QueryPlanBuilder::createQueryPlan("test_stream");
 
     /// Add selection operator and verify
-    auto filterFunction = std::make_unique<EqualsLogicalFunction>(
-        std::make_unique<FieldAccessLogicalFunction>("a"),
-        std::make_unique<FieldAccessLogicalFunction>("b")
+    auto filterFunction = EqualsLogicalFunction(
+        FieldAccessLogicalFunction("a"),
+        FieldAccessLogicalFunction("b")
     );
-    queryPlan = QueryPlanBuilder::addSelection(std::move(filterFunction), queryPlan);
+    queryPlan = QueryPlanBuilder::addSelection(filterFunction, queryPlan);
     assertSelectionOperator(queryPlan, "a", "b");
 
     /// Add projection operator and verify
     std::vector<LogicalFunction> functions;
-    functions.push_back(std::make_unique<FieldAccessLogicalFunction>("id"));
+    functions.push_back(FieldAccessLogicalFunction("id"));
     queryPlan = QueryPlanBuilder::addProjection(std::move(functions), queryPlan);
     assertProjectionOperator(queryPlan, {"id"});
 
     /// Add map operator and verify
-    auto mapFunction = std::make_unique<FieldAssignmentLogicalFunction>(
-        std::make_unique<FieldAccessLogicalFunction>("b"),
-        std::make_unique<ConstantValueLogicalFunction>(
+    auto mapFunction = FieldAssignmentLogicalFunction(
+        FieldAccessLogicalFunction("b"),
+        ConstantValueLogicalFunction(
             DataTypeProvider::provideDataType(LogicalType::INT32), "1")
     );
     queryPlan = QueryPlanBuilder::addMap(std::move(mapFunction), queryPlan);
