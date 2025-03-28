@@ -24,10 +24,10 @@
 namespace NES::Nautilus::Interface::MemoryProvider
 {
 
-RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr)
-    : rowMemoryLayout(std::move(rowMemoryLayoutPtr)) { };
+RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout)
+    : rowMemoryLayout(std::move(rowMemoryLayout)) { };
 
-std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> RowTupleBufferMemoryProvider::getMemoryLayout()
+std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> RowTupleBufferMemoryProvider::getMemoryLayout() const
 {
     return rowMemoryLayout;
 }

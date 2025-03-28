@@ -29,8 +29,7 @@ public:
     /// Creates a row memory provider based on a valid row memory layout pointer.
     RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
-
-    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() override;
+    [[nodiscard]] std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() const override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
