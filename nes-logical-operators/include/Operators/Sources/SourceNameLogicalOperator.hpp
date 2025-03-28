@@ -29,6 +29,7 @@ class SourceNameLogicalOperator : public UnaryLogicalOperator
 public:
     explicit SourceNameLogicalOperator(std::string logicalSourceName);
     explicit SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema);
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -45,7 +46,6 @@ public:
 
     [[nodiscard]]  SerializableOperator serialize() const override;
 
-protected:
     [[nodiscard]] std::string toString() const override;
 
 private:

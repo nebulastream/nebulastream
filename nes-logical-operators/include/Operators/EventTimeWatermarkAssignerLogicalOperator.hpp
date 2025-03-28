@@ -27,6 +27,7 @@ public:
     static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
 
     EventTimeWatermarkAssignerLogicalOperator(std::shared_ptr<LogicalFunction> onField, Windowing::TimeUnit unit);
+    std::string_view getName() const noexcept override;
 
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
@@ -35,7 +36,6 @@ public:
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
-protected:
     [[nodiscard]] std::string toString() const override;
 private:
     std::shared_ptr<LogicalFunction> onField;

@@ -18,6 +18,7 @@ add_source_files(nes-logical-operators
         OriginIdAssignmentOperator.cpp
         UnaryLogicalOperator.cpp
         BinaryLogicalOperator.cpp
+        LogicalOperator.cpp
 )
 
 add_plugin(Selection LogicalOperator nes-logical-operators SelectionLogicalOperator.cpp)

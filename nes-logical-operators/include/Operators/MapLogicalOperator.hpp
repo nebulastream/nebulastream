@@ -30,6 +30,7 @@ public:
     static constexpr std::string_view NAME = "Map";
 
     MapLogicalOperator(std::shared_ptr<FieldAssignmentLogicalFunction> const& mapFunction);
+    std::string_view getName() const noexcept override;
 
     [[nodiscard]] std::shared_ptr<FieldAssignmentLogicalFunction> getMapFunction() const;
 

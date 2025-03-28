@@ -28,6 +28,7 @@ public:
     static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
 
     IngestionTimeWatermarkAssignerLogicalOperator();
+    std::string_view getName() const noexcept override;
 
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;

@@ -28,15 +28,12 @@ class LogicalOperator : public virtual Operator
 {
 public:
     explicit LogicalOperator() : outputSchema(Schema::create()) {};
-    explicit LogicalOperator(std::shared_ptr<LogicalOperator> logicalOp)
-        : outputSchema(logicalOp->outputSchema)
-      {
-      };
+    explicit LogicalOperator(std::shared_ptr<LogicalOperator> logicalOp);
+    virtual std::string_view getName() const noexcept = 0;
 
     /// If this operator does not assign new origin ids, e.g., windowing,
     /// this function collects the origin ids from all upstream operators.
     virtual void inferInputOrigins() = 0;
-
     virtual std::vector<OriginId> getOutputOriginIds() const = 0;
 
     /// @brief infers the input and out schema of this operator depending on its child.

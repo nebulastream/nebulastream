@@ -27,7 +27,7 @@ public:
     static constexpr std::string_view NAME = "Union";
 
     explicit UnionLogicalOperator();
-    ///~UnionLogicalOperator() override = default;
+    std::string_view getName() const noexcept override;
 
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     ///infer schema of two child operators

@@ -30,9 +30,9 @@ class SourceDescriptorLogicalOperator : public UnaryLogicalOperator, public Orig
 {
 public:
     explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
-
     explicit SourceDescriptorLogicalOperator(
         std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OriginId originId);
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
     const Sources::SourceDescriptor& getSourceDescriptorRef() const;
     std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
