@@ -23,13 +23,16 @@ namespace NES
 {
 struct PhysicalPlan final
 {
-    PhysicalPlan(QueryId id);
+    PhysicalPlan(QueryId id, std::vector<std::unique_ptr<PhysicalOperatorWrapper>> rootOperator)
+        : queryId(id), rootOperator(std::move(rootOperator))
+    {
+    }
     [[nodiscard]] std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const PhysicalPlan& t);
 
     const QueryId queryId;
     /// Operators might form a tree structure
-    std::unique_ptr<PhysicalOperatorWrapper> rootOperator;
+    std::vector<std::unique_ptr<PhysicalOperatorWrapper>> rootOperator;
 };
 }
 FMT_OSTREAM(NES::PhysicalPlan);
