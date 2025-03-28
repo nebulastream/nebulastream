@@ -18,18 +18,19 @@
 #include <vector>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
-#include "Common/DataTypes/BasicTypes.hpp"
-#include "API/AttributeField.hpp"
-#include "Functions/FieldAccessLogicalFunction.hpp"
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <API/AttributeField.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include "Operators/LogicalOperator.hpp"
-#include "Operators/Serialization/SchemaSerializationUtil.hpp"
-#include "SerializableOperator.pb.h"
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
-#include "WindowTypes/Types/ContentBasedWindowType.hpp"
-#include "WindowTypes/Types/ThresholdWindow.hpp"
-#include "WindowTypes/Types/TimeBasedWindowType.hpp"
+#include <Operators/LogicalOperator.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <SerializableOperator.pb.h>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <WindowTypes/Types/ContentBasedWindowType.hpp>
+#include <WindowTypes/Types/ThresholdWindow.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
@@ -304,18 +305,9 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
 }
 
 std::unique_ptr<LogicalOperator>
-LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(NES::LogicalOperatorRegistryArguments config)
+LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
-    auto functionVariant = config.config[MapLogicalOperator::ConfigParameters::MAP_FUNCTION_NAME];
-    if (std::holds_alternative<NES::FunctionList>(functionVariant)) {
-        const auto& functionList = std::get<NES::FunctionList>(functionVariant);
-        const auto& functions = functionList.functions();
-        INVARIANT(functions.size() == 1, "Expected exactly one function");
-        auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(functions[0]);
-        return std::make_unique<MapLogicalOperator>(Util::as<FieldAssignmentLogicalFunction>(fieldAssignmentFunction));
-
-    }
-    //throw CannotDeserialize("Error while deserializing MapLogicalOperator with config {}", config);
+    /// TODO
     return nullptr;
 }
 
