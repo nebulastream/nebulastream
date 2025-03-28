@@ -9,14 +9,14 @@ cd "$(git rev-parse --show-toplevel)"
 export GIT_PAGER=cat
 
 
-if [ -x "$(command -v clang-format-18)" ]
+if [ -x "$(command -v clang-format-19)" ]
 then
-    CLANG_FORMAT="clang-format-18"
-elif [ -x "$(command -v clang-format)" ] && clang-format --version | grep "version 18" > /dev/null
+    CLANG_FORMAT="clang-format-19"
+elif [ -x "$(command -v clang-format)" ] && clang-format --version | grep "version 19" > /dev/null
 then
     CLANG_FORMAT="clang-format"
 else
-    echo could not find clang-format 18 in PATH.
+    echo could not find clang-format 19 in PATH.
     echo please install.
     exit 1
 fi
