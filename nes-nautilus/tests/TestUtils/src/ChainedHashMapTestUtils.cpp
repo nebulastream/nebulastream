@@ -80,14 +80,14 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
 
     /// Creating a combined schema with the keys and value types.
     const auto inputSchemaKey = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(keyTypes);
-    const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, inputSchemaKey.getFieldCount());
-    const auto fieldNamesKey = inputSchemaKey.getFieldNames();
-    const auto fieldNamesValue = inputSchemaValue.getFieldNames();
-    inputSchema = Schema().copyFields(inputSchemaKey).copyFields(inputSchemaValue);
+    const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, inputSchemaKey->getFieldCount());
+    const auto fieldNamesKey = inputSchemaKey->getFieldNames();
+    const auto fieldNamesValue = inputSchemaValue->getFieldNames();
+    inputSchema = Schema().copyFields(*inputSchemaKey).copyFields(*inputSchemaValue);
 
     /// Setting the hash map configurations
-    keySize = inputSchemaKey.getSchemaSizeInBytes();
-    valueSize = inputSchemaValue.getSchemaSizeInBytes();
+    keySize = inputSchemaKey->getSchemaSizeInBytes();
+    valueSize = inputSchemaValue->getSchemaSizeInBytes();
     entrySize = sizeof(Interface::ChainedHashMapEntry) + keySize + valueSize;
     entriesPerPage = params.pageSize / entrySize;
 
@@ -110,8 +110,8 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
         = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
 
     /// Storing the field names for the key and value
-    projectionKeys = inputSchemaKey.getFieldNames();
-    projectionValues = inputSchemaValue.getFieldNames();
+    projectionKeys = inputSchemaKey->getFieldNames();
+    projectionValues = inputSchemaValue->getFieldNames();
 
     /// Creating the buffers with the values for the keys and values with a specific seed
     inputBuffers = createMonotonicallyIncreasingValues(inputSchema, params.numberOfItems, *bufferManager);
