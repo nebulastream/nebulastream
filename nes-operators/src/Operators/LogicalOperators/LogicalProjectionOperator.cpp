@@ -152,7 +152,7 @@ bool LogicalProjectionOperator::inferSchema()
 std::shared_ptr<Operator> LogicalProjectionOperator::copy()
 {
     auto copyOfProjectionFunctions
-        = functions | std::views::transform([](const auto& fn) { return fn->deepCopy(); }) | ranges::to<std::vector>();
+        = functions | std::views::transform([](const auto& fn) { return fn->deepCopy(); }) | std::ranges::to<std::vector>();
     auto copy = std::make_shared<LogicalProjectionOperator>(copyOfProjectionFunctions, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
