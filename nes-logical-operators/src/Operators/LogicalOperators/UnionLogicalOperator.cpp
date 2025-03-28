@@ -48,14 +48,7 @@ bool UnionLogicalOperator::operator==(const Operator& rhs) const
 std::string UnionLogicalOperator::toString() const
 {
     std::stringstream ss;
-    if (properties.contains("PINNED_WORKER_ID"))
-    {
-        ss << "unionWith(" << id << " PINNED)";
-    }
-    else
-    {
-        ss << "unionWith(" << id << ")";
-    }
+    ss << "unionWith(" << id << ")";
     return ss.str();
 }
 
@@ -107,10 +100,6 @@ std::shared_ptr<Operator> UnionLogicalOperator::clone() const
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);
-    for (const auto& [key, value] : properties)
-    {
-        copy->addProperty(key, value);
-    }
     return copy;
 }
 
