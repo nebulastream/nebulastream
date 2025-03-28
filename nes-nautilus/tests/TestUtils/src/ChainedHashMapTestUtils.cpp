@@ -83,7 +83,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     const auto inputSchemaValue = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(valueTypes, inputSchemaKey->getFieldCount());
     const auto fieldNamesKey = inputSchemaKey->getFieldNames();
     const auto fieldNamesValue = inputSchemaValue->getFieldNames();
-    inputSchema = Schema::create()->copyFields(inputSchemaKey)->copyFields(inputSchemaValue);
+    inputSchema = Schema().copyFields(*inputSchemaKey).copyFields(*inputSchemaValue);
 
     /// Setting the hash map configurations
     keySize = inputSchemaKey->getSchemaSizeInBytes();
@@ -99,7 +99,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     constexpr auto minimumBuffers = 4000UL;
     constexpr auto callsToCreateMonotonicValues = 3;
     const auto bufferNeeded
-        = callsToCreateMonotonicValues * ((inputSchema->getSchemaSizeInBytes() * params.numberOfItems) / bufferSize + 1);
+        = callsToCreateMonotonicValues * ((inputSchema.getSchemaSizeInBytes() * params.numberOfItems) / bufferSize + 1);
     bufferManager = Memory::BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
@@ -107,7 +107,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
 
     /// Creating the fields for the key and value from the schema
     std::tie(fieldKeys, fieldValues)
-        = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(*inputSchema, fieldNamesKey, fieldNamesValue);
+        = Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
 
     /// Storing the field names for the key and value
     projectionKeys = inputSchemaKey->getFieldNames();
@@ -357,10 +357,10 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     /// Calling now the compiled function to write all values of the map to the output buffer.
     const auto numberOfInputTuples = std::accumulate(
         inputBuffers.begin(), inputBuffers.end(), 0, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema->getSchemaSizeInBytes());
+    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema.getSchemaSizeInBytes());
     if (not bufferOutputOpt)
     {
-        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema->getSchemaSizeInBytes());
+        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema.getSchemaSizeInBytes());
         ASSERT_TRUE(false);
     }
     auto bufferOutput = bufferOutputOpt.value();
