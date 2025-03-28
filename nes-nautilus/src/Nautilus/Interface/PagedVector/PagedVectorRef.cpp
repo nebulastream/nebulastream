@@ -16,7 +16,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -60,20 +59,18 @@ uint64_t getBufferPosForEntryProxy(const PagedVector* pagedVector, const uint64_
 
 PagedVectorRef::PagedVectorRef(
     const nautilus::val<PagedVector*>& pagedVectorRef,
-    std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+    const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
     const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
-    : pagedVectorRef(pagedVectorRef), memoryProvider(std::move(memoryProvider)), bufferProvider(bufferProvider)
+    : pagedVectorRef(pagedVectorRef)
+    , memoryProvider(memoryProvider)
+    , memoryLayout(memoryProvider->getMemoryLayout().get())
+    , bufferProvider(bufferProvider)
 {
-}
-
-nautilus::val<Memory::MemoryLayouts::MemoryLayout*> PagedVectorRef::getMemoryLayout() const
-{
-    return &memoryProvider->getMemoryLayout();
 }
 
 void PagedVectorRef::writeRecord(const Record& record) const
 {
-    auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, getMemoryLayout()));
+    auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout));
     auto numTuplesOnPage = recordBuffer.getNumRecords();
     memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record);
     recordBuffer.setNumRecords(numTuplesOnPage + 1);

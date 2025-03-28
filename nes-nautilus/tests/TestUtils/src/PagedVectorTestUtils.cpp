@@ -17,6 +17,7 @@
 #include <functional>
 #include <memory>
 #include <numeric>
+#include <utility>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -213,5 +214,6 @@ void insertAndAppendAllPagesTest(
     const auto memoryProvider = Interface::MemoryProvider::TupleBufferMemoryProvider::create(pageSize, schema);
     runRetrieveTest(*firstPagedVec, schema, pageSize, projections, expectedRecordsAfterAppendAll, nautilusEngine, bufferManager);
 }
+
 
 }
