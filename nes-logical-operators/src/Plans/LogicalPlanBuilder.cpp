@@ -55,7 +55,7 @@ LogicalPlan
 LogicalPlanBuilder::addProjection(std::vector<LogicalFunction> functions, LogicalPlan queryPlan)
 {
     NES_TRACE("LogicalPlanBuilder: add projection operator to query plan");
-    queryPlan.promoteOperatorToRoot(ProjectionLogicalOperator(std::move(functions)));
+    queryPlan.promoteOperatorToRoot(ProjectionLogicalOperator(functions));
     return queryPlan;
 }
 
@@ -67,7 +67,7 @@ LogicalPlanBuilder::addSelection(LogicalFunction selectionFunction, LogicalPlan 
     {
         throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
     }
-    queryPlan.promoteOperatorToRoot(SelectionLogicalOperator(std::move(selectionFunction)));
+    queryPlan.promoteOperatorToRoot(SelectionLogicalOperator(selectionFunction));
     return queryPlan;
 }
 
