@@ -18,10 +18,11 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Functions/FunctionSerializationUtil.hpp>
+#include <Operators/LogicalOperatorRegistry.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -45,7 +46,6 @@
 #include <Operators/Operator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -115,14 +115,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
         /// serialize watermarkAssigner operator
         serializeWatermarkAssignerOperator(*NES::Util::as<WatermarkAssignerLogicalOperator>(operatorNode), serializedOperator);
     }
-    else if (NES::Util::instanceOf<RenameSourceLogicalOperator>(operatorNode))
-    {
-        /// Serialize rename source operator
-        NES_TRACE("OperatorSerializationUtil:: serialize to RenameSourceLogicalOperator");
-        auto renameDetails = SerializableOperator_RenameDetails();
-        renameDetails.set_newsourcename(NES::Util::as<RenameSourceLogicalOperator>(operatorNode)->getNewSourceName());
-        serializedOperator.mutable_details()->PackFrom(renameDetails);
-    }
     else
     {
         NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: {}", *operatorNode);
@@ -167,25 +159,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
 
     NES_TRACE("OperatorSerializationUtil:: serialize {} to {}", *operatorNode, serializedOperator.details().type_url());
     return serializedOperator;
-}
-
-std::shared_ptr<UnaryLogicalOperator> deserializeSelectionOperator(const SerializableOperator_SelectionDetails& selectionDetails)
-{
-    const auto filterFunction = FunctionSerializationUtil::deserializeFunction(selectionDetails.predicate());
-    return std::make_shared<SelectionLogicalOperator>(filterFunction, getNextOperatorId());
-}
-
-std::shared_ptr<UnaryLogicalOperator> deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails)
-{
-    /// serialize and append children if the node has any
-    std::vector<std::shared_ptr<LogicalFunction>> exps;
-    for (const auto& serializedFunction : projectionDetails.function())
-    {
-        auto projectFunction = FunctionSerializationUtil::deserializeFunction(serializedFunction);
-        exps.push_back(projectFunction);
-    }
-
-    return std::make_shared<ProjectionLogicalOperator>(exps, getNextOperatorId());
 }
 
 void OperatorSerializationUtil::deserializeInputSchema(
@@ -269,13 +242,6 @@ deserializeWatermarkAssignerOperator(const SerializableOperator_WatermarkStrateg
 {
     const auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(watermarkStrategyDetails);
     return std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, getNextOperatorId());
-}
-
-std::shared_ptr<UnaryLogicalOperator> deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails)
-{
-    const auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(mapDetails.function());
-    return std::make_shared<MapLogicalOperator>(
-        NES::Util::as<FieldAssignmentBinaryLogicalFunction>(fieldAssignmentFunction), getNextOperatorId());
 }
 
 std::shared_ptr<UnaryLogicalOperator>
@@ -508,38 +474,6 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         details.UnpackTo(&serializedSinkLogicalOperator);
         operatorNode = deserializeSinkOperator(serializedSinkLogicalOperator);
     }
-    else if (details.Is<SerializableOperator_SelectionDetails>())
-    {
-        /// de-serialize filter operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to SelectionLogicalOperator");
-        auto serializedSelectionOperator = SerializableOperator_SelectionDetails();
-        details.UnpackTo(&serializedSelectionOperator);
-        operatorNode = deserializeSelectionOperator(serializedSelectionOperator);
-    }
-    else if (details.Is<SerializableOperator_ProjectionDetails>())
-    {
-        /// de-serialize projection operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to ProjectionLogicalOperator");
-        auto serializedProjectionOperator = SerializableOperator_ProjectionDetails();
-        details.UnpackTo(&serializedProjectionOperator);
-        operatorNode = deserializeProjectionOperator(serializedProjectionOperator);
-    }
-    else if (details.Is<SerializableOperator_UnionDetails>())
-    {
-        /// de-serialize union operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to UnionLogicalOperator");
-        auto serializedUnionDescriptor = SerializableOperator_UnionDetails();
-        details.UnpackTo(&serializedUnionDescriptor);
-        operatorNode = std::make_shared<UnionLogicalOperator>(getNextOperatorId());
-    }
-    else if (details.Is<SerializableOperator_MapDetails>())
-    {
-        /// de-serialize map operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to MapLogicalOperator");
-        auto serializedMapOperator = SerializableOperator_MapDetails();
-        details.UnpackTo(&serializedMapOperator);
-        operatorNode = deserializeMapOperator(serializedMapOperator);
-    }
     else if (details.Is<SerializableOperator_InferModelDetails>())
     {
         /// de-serialize infer model operator
@@ -573,13 +507,10 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         details.UnpackTo(&serializedWatermarkStrategyDetails);
         operatorNode = deserializeWatermarkAssignerOperator(serializedWatermarkStrategyDetails);
     }
-    else if (details.Is<SerializableOperator_RenameDetails>())
+    else if (
+        auto logicalOperator = RegistryDeserializeLogicalOperator::instance().create(serializedOperator.operatortype(), serializedOperator))
     {
-        /// Deserialize rename source operator.
-        NES_TRACE("OperatorSerializationUtil:: deserialize to rename source operator");
-        auto renameDetails = SerializableOperator_RenameDetails();
-        details.UnpackTo(&renameDetails);
-        operatorNode = std::make_shared<RenameSourceLogicalOperator>(renameDetails.newsourcename(), getNextOperatorId());
+        operatorNode = std::move(logicalOperator.value());
     }
     else
     {
@@ -676,6 +607,7 @@ void OperatorSerializationUtil::serializeSelectionOperator(
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to SelectionLogicalOperator");
     auto selectionDetails = SerializableOperator_SelectionDetails();
+    serializedOperator.set_operatortype("Selection");
     FunctionSerializationUtil::serializeFunction(filterOperator.getPredicate(), selectionDetails.mutable_predicate());
     serializedOperator.mutable_details()->PackFrom(selectionDetails);
 }
@@ -698,6 +630,7 @@ void OperatorSerializationUtil::serializeMapOperator(const MapLogicalOperator& m
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to MapLogicalOperator");
     auto mapDetails = SerializableOperator_MapDetails();
+    serializedOperator.set_operatortype("Map");
     FunctionSerializationUtil::serializeFunction(mapOperator.getMapFunction(), mapDetails.mutable_function());
     serializedOperator.mutable_details()->PackFrom(mapDetails);
 }
