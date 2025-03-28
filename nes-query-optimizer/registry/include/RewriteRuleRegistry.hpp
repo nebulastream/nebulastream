@@ -22,7 +22,7 @@
 namespace NES::Optimizer
 {
 
-using RewriteRuleRegistryReturnType = NES::Optimizer::AbstractRewriteRule;
+using RewriteRuleRegistryReturnType = std::unique_ptr<NES::Optimizer::AbstractRewriteRule>;
 struct RewriteRuleRegistryArguments
 {
     NES::Configurations::QueryOptimizerConfiguration conf;
