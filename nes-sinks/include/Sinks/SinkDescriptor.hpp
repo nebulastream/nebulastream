@@ -20,11 +20,12 @@
 #include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES::Sinks
 {
 
-struct SinkDescriptor final : Configurations::Descriptor
+struct SinkDescriptor final : NES::Configurations::Descriptor
 {
     explicit SinkDescriptor(std::string sinkType, NES::Configurations::DescriptorConfig::Config&& config, bool addTimestamp);
     ~SinkDescriptor() = default;
@@ -42,15 +43,5 @@ struct SinkDescriptor final : Configurations::Descriptor
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 };
-
 }
-
-/// Specializing the fmt ostream_formatter to accept SinkDescriptor objects.
-/// Allows to call fmt::format("SinkDescriptor: {}", SinkDescriptorObject); and therefore also works with our logging.
-namespace fmt
-{
-template <>
-struct formatter<NES::Sinks::SinkDescriptor> : ostream_formatter
-{
-};
-}
+FMT_OSTREAM(NES::Sinks::SinkDescriptor);
