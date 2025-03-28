@@ -1,3 +1,88 @@
+From f7ce1006877916c7239c7340473ef23a6fc459dc Mon Sep 17 00:00:00 2001
+From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Fri, 28 Mar 2025 17:26:30 +0100
+Subject: [PATCH] Folly Patch
+
+---
+ CMake/FindCython.cmake                      |   47 -
+ CMake/FindDoubleConversion.cmake            |   31 -
+ CMake/FindFmt.cmake                         |   42 -
+ CMake/FindLZ4.cmake                         |   41 -
+ CMake/FindLibAIO.cmake                      |   29 -
+ CMake/FindLibDwarf.cmake                    |   32 -
+ CMake/FindLibUring.cmake                    |   29 -
+ CMake/FindLibiberty.cmake                   |   29 -
+ CMake/FindLibsodium.cmake                   |   30 -
+ CMake/FindSnappy.cmake                      |   36 -
+ CMake/FindZstd.cmake                        |   41 -
+ CMake/FollyCompilerMSVC.cmake               |  328 -----
+ CMake/FollyCompilerUnix.cmake               |   59 -
+ CMake/FollyConfigChecks.cmake               |  232 ----
+ CMake/FollyFunctions.cmake                  |  324 -----
+ CMake/GenPkgConfig.cmake                    |  110 --
+ CMake/folly-config.cmake.in                 |   47 -
+ CMake/folly-deps.cmake                      |  315 -----
+ CMake/libfolly.pc.in                        |   11 -
+ CMakeLists.txt                              | 1237 ++++---------------
+ cmake/FollyConfigChecks.cmake               |  182 +++
+ cmake/config.cmake                          |    5 +
+ {CMake => cmake}/folly-config.h.cmake       |   32 +-
+ folly/Exception.h                           |   12 +-
+ folly/Executor.cpp                          |   13 +-
+ folly/Function.h                            |    8 +-
+ folly/GLog.h                                |    3 +-
+ folly/Memory.h                              |    9 +-
+ folly/Portability.h                         |   28 -
+ folly/Range.h                               |    9 -
+ folly/Singleton.h                           |    2 +-
+ folly/String.cpp                            |    2 +-
+ folly/Synchronized.h                        |    2 +-
+ folly/concurrency/CacheLocality.cpp         |    9 +-
+ folly/concurrency/DynamicBoundedQueue.h     |    2 +-
+ folly/concurrency/UnboundedQueue.h          |    2 +-
+ folly/container/Access.h                    |    8 +-
+ folly/container/Foreach-inl.h               |  139 ++-
+ folly/detail/AtFork.cpp                     |    1 +
+ folly/detail/MemoryIdler.cpp                |    1 -
+ folly/detail/ThreadLocalDetail.h            |    2 +-
+ folly/detail/TurnSequencer.h                |    2 +-
+ folly/detail/UniqueInstance.cpp             |    6 +-
+ folly/functional/Invoke.h                   |   10 +-
+ folly/lang/SafeAssert.h                     |    1 +
+ folly/memory/MallctlHelper.cpp              |   20 +-
+ folly/stub/logging.h                        |   23 +
+ folly/synchronization/HazptrDomain.h        |    2 +
+ folly/synchronization/HazptrObj.h           |    5 +-
+ folly/synchronization/HazptrObjLinked.h     |    2 +-
+ folly/synchronization/HazptrThrLocal.h      |    2 +-
+ folly/synchronization/ParkingLot.h          |   22 +-
+ folly/synchronization/SaturatingSemaphore.h |    2 +-
+ folly/synchronization/detail/HazptrUtils.h  |    2 +-
+ 54 files changed, 617 insertions(+), 3003 deletions(-)
+ delete mode 100644 CMake/FindCython.cmake
+ delete mode 100644 CMake/FindDoubleConversion.cmake
+ delete mode 100644 CMake/FindFmt.cmake
+ delete mode 100644 CMake/FindLZ4.cmake
+ delete mode 100644 CMake/FindLibAIO.cmake
+ delete mode 100644 CMake/FindLibDwarf.cmake
+ delete mode 100644 CMake/FindLibUring.cmake
+ delete mode 100644 CMake/FindLibiberty.cmake
+ delete mode 100644 CMake/FindLibsodium.cmake
+ delete mode 100644 CMake/FindSnappy.cmake
+ delete mode 100644 CMake/FindZstd.cmake
+ delete mode 100644 CMake/FollyCompilerMSVC.cmake
+ delete mode 100644 CMake/FollyCompilerUnix.cmake
+ delete mode 100644 CMake/FollyConfigChecks.cmake
+ delete mode 100644 CMake/FollyFunctions.cmake
+ delete mode 100644 CMake/GenPkgConfig.cmake
+ delete mode 100644 CMake/folly-config.cmake.in
+ delete mode 100644 CMake/folly-deps.cmake
+ delete mode 100644 CMake/libfolly.pc.in
+ create mode 100644 cmake/FollyConfigChecks.cmake
+ create mode 100644 cmake/config.cmake
+ rename {CMake => cmake}/folly-config.h.cmake (74%)
+ create mode 100644 folly/stub/logging.h
+
 diff --git a/CMake/FindCython.cmake b/CMake/FindCython.cmake
 deleted file mode 100644
 index ee3996f33..000000000
@@ -1587,101 +1672,6 @@ index 1689f9a2d..000000000
 -if (NOT folly_FIND_QUIETLY)
 -  message(STATUS "Found folly: ${FOLLY_PREFIX_DIR}")
 -endif()
-diff --git a/CMake/folly-config.h.cmake b/CMake/folly-config.h.cmake
-deleted file mode 100644
-index ec6706a45..000000000
---- a/CMake/folly-config.h.cmake
-+++ /dev/null
-@@ -1,89 +0,0 @@
--/*
-- * Copyright (c) Facebook, Inc. and its affiliates.
-- *
-- * Licensed under the Apache License, Version 2.0 (the "License");
-- * you may not use this file except in compliance with the License.
-- * You may obtain a copy of the License at
-- *
-- *     http://www.apache.org/licenses/LICENSE-2.0
-- *
-- * Unless required by applicable law or agreed to in writing, software
-- * distributed under the License is distributed on an "AS IS" BASIS,
-- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-- * See the License for the specific language governing permissions and
-- * limitations under the License.
-- */
--
--#pragma once
--
--#if !defined(FOLLY_MOBILE)
--#if defined(__ANDROID__) || \
--    (defined(__APPLE__) &&  \
--     (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
--#define FOLLY_MOBILE 1
--#else
--#define FOLLY_MOBILE 0
--#endif
--#endif // FOLLY_MOBILE
--
--#cmakedefine FOLLY_HAVE_PTHREAD 1
--#cmakedefine FOLLY_HAVE_PTHREAD_ATFORK 1
--
--#cmakedefine FOLLY_HAVE_LIBGFLAGS 1
--#cmakedefine FOLLY_UNUSUAL_GFLAGS_NAMESPACE 1
--#cmakedefine FOLLY_GFLAGS_NAMESPACE @FOLLY_GFLAGS_NAMESPACE@
--
--#cmakedefine FOLLY_HAVE_LIBGLOG 1
--
--#cmakedefine FOLLY_USE_JEMALLOC 1
--#cmakedefine FOLLY_USE_LIBSTDCPP 1
--
--#if __has_include(<features.h>)
--#include <features.h>
--#endif
--
--#cmakedefine FOLLY_HAVE_ACCEPT4 1
--#cmakedefine01 FOLLY_HAVE_GETRANDOM
--#cmakedefine FOLLY_HAVE_PREADV 1
--#cmakedefine FOLLY_HAVE_PWRITEV 1
--#cmakedefine FOLLY_HAVE_CLOCK_GETTIME 1
--#cmakedefine FOLLY_HAVE_PIPE2 1
--#cmakedefine FOLLY_HAVE_SENDMMSG 1
--#cmakedefine FOLLY_HAVE_RECVMMSG 1
--#cmakedefine FOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF 1
--
--#cmakedefine FOLLY_HAVE_IFUNC 1
--#cmakedefine FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE 1
--#cmakedefine FOLLY_HAVE_UNALIGNED_ACCESS 1
--#cmakedefine FOLLY_HAVE_VLA 1
--#cmakedefine FOLLY_HAVE_WEAK_SYMBOLS 1
--#cmakedefine FOLLY_HAVE_LINUX_VDSO 1
--#cmakedefine FOLLY_HAVE_MALLOC_USABLE_SIZE 1
--#cmakedefine FOLLY_HAVE_INT128_T 1
--#cmakedefine FOLLY_HAVE_WCHAR_SUPPORT 1
--#cmakedefine FOLLY_HAVE_EXTRANDOM_SFMT19937 1
--#cmakedefine FOLLY_USE_LIBCPP 1
--#cmakedefine HAVE_VSNPRINTF_ERRORS 1
--
--#cmakedefine FOLLY_HAVE_LIBUNWIND 1
--#cmakedefine FOLLY_HAVE_DWARF 1
--#cmakedefine FOLLY_HAVE_ELF 1
--#cmakedefine FOLLY_HAVE_SWAPCONTEXT 1
--#cmakedefine FOLLY_HAVE_BACKTRACE 1
--#cmakedefine FOLLY_USE_SYMBOLIZER 1
--#define FOLLY_DEMANGLE_MAX_SYMBOL_SIZE 1024
--
--#cmakedefine FOLLY_HAVE_SHADOW_LOCAL_WARNINGS 1
--
--#cmakedefine FOLLY_HAVE_LIBLZ4 1
--#cmakedefine FOLLY_HAVE_LIBLZMA 1
--#cmakedefine FOLLY_HAVE_LIBSNAPPY 1
--#cmakedefine FOLLY_HAVE_LIBZ 1
--#cmakedefine FOLLY_HAVE_LIBZSTD 1
--#cmakedefine FOLLY_HAVE_LIBBZ2 1
--
--#cmakedefine01 FOLLY_LIBRARY_SANITIZE_ADDRESS
--
--#cmakedefine FOLLY_SUPPORT_SHARED_LIBRARY 1
--
--#cmakedefine01 FOLLY_HAVE_LIBRT
 diff --git a/CMake/folly-deps.cmake b/CMake/folly-deps.cmake
 deleted file mode 100644
 index e0e02c02e..000000000
@@ -2021,10 +2011,10 @@ index ffa043c1f..000000000
 -Libs: -L${libdir} -lfolly
 -Libs.private: @FOLLY_PKGCONFIG_PRIVATE_LIBS@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index fc9f56350..2f6c623df 100644
+index fc9f56350..fc93f0c6f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,1001 +1,251 @@
+@@ -1,1001 +1,254 @@
 -# Copyright (c) Facebook, Inc. and its affiliates.
 -#
 -# Licensed under the Apache License, Version 2.0 (the "License");
@@ -2038,7 +2028,9 @@ index fc9f56350..2f6c623df 100644
 -# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -# See the License for the specific language governing permissions and
 -# limitations under the License.
--
++cmake_minimum_required(VERSION 3.21)
++project(folly)
+ 
 -cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 -# We use the GoogleTest module if it is available (only in CMake 3.9+)
 -# It requires CMP0054 and CMP0057 to be enabled.
@@ -2048,7 +2040,8 @@ index fc9f56350..2f6c623df 100644
 -if (POLICY CMP0057)
 -  cmake_policy(SET CMP0057 NEW)
 -endif()
--
++set(CMAKE_CXX_STANDARD 23)
+ 
 -# CMP0075 Include file check macros honor CMAKE_REQUIRED_LIBRARIES
 -if(POLICY CMP0075)
 -  cmake_policy(SET CMP0075 NEW)
@@ -2125,45 +2118,8 @@ index fc9f56350..2f6c623df 100644
 -  FOLLY_DIR_PREFIXES
 -  "${CMAKE_CURRENT_SOURCE_DIR}:${CMAKE_CURRENT_BINARY_DIR}"
 -)
-+cmake_minimum_required(VERSION 3.21)
-+project(nesfolly)
-+
-+set(CMAKE_CXX_STANDARD 20)
-+
-+# Currently there is a dependency on BOOST-MPL
-+find_package(Boost REQUIRED)
-+
-+add_library(nesfolly
-+        folly/SharedMutex.cpp
-+        folly/ScopeGuard.cpp
-+        folly/concurrency/CacheLocality.cpp
-+        folly/detail/Futex.cpp
-+        folly/detail/ThreadLocalDetail.cpp
-+        folly/detail/StaticSingletonManager.cpp
-+        folly/detail/AtFork.cpp
-+        folly/system/ThreadId.cpp
-+        folly/synchronization/ParkingLot.cpp
-+        folly/synchronization/SanitizeThread.cpp
-+
-+        # Required for MPMC
-+        folly/synchronization/AsymmetricMemoryBarrier.cpp
-+        folly/synchronization/Hazptr.cpp
-+        folly/detail/MemoryIdler.cpp
-+        folly/detail/UniqueInstance.cpp
-+        folly/executors/QueuedImmediateExecutor.cpp
-+        folly/Executor.cpp
-+        folly/portability/SysMembarrier.cpp
-+        folly/memory/MallctlHelper.cpp
-+)
-+
-+target_compile_features(nesfolly PRIVATE cxx_std_20)
-+
-+target_include_directories(nesfolly PUBLIC
-+        ${Boost_INCLUDE_DIRS}
-+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/config>)
- 
- include(GNUInstallDirs)
+-
+-include(GNUInstallDirs)
 -
 -set(CMAKE_THREAD_PREFER_PTHREAD ON)
 -set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -2181,7 +2137,7 @@ index fc9f56350..2f6c623df 100644
 -
 -include(folly-deps) # Find the required packages
 -include(FollyConfigChecks)
--configure_file(
+ configure_file(
 -  ${CMAKE_CURRENT_SOURCE_DIR}/CMake/folly-config.h.cmake
 -  ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h
 -)
@@ -2454,9 +2410,11 @@ index fc9f56350..2f6c623df 100644
 -option(PYTHON_EXTENSIONS
 -  "Build Python Bindings for Folly, requires Cython and (BUILD_SHARED_LIBS=ON)"
 -  OFF
--)
--
--add_library(folly
++        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/folly-config.h.cmake
++        ${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h
+ )
+ 
+ add_library(folly
 -  $<TARGET_OBJECTS:folly_base>
 -)
 -set_property(TARGET folly PROPERTY VERSION ${PACKAGE_VERSION})
@@ -2479,7 +2437,35 @@ index fc9f56350..2f6c623df 100644
 -)
 -apply_folly_compile_options_to_target(folly_test_util)
 -list(APPEND FOLLY_INSTALL_TARGETS folly_test_util)
--
++        folly/SharedMutex.cpp
++        folly/ScopeGuard.cpp
++        folly/concurrency/CacheLocality.cpp
++        folly/detail/Futex.cpp
++        folly/detail/ThreadLocalDetail.cpp
++        folly/detail/StaticSingletonManager.cpp
++        folly/detail/AtFork.cpp
++        folly/system/ThreadId.cpp
++        folly/synchronization/ParkingLot.cpp
++        folly/synchronization/SanitizeThread.cpp
++
++        # Required for MPMC
++        folly/synchronization/AsymmetricMemoryBarrier.cpp
++        folly/synchronization/Hazptr.cpp
++        folly/detail/MemoryIdler.cpp
++        folly/detail/UniqueInstance.cpp
++        folly/executors/QueuedImmediateExecutor.cpp
++        folly/Executor.cpp
++        folly/portability/SysMembarrier.cpp
++        folly/memory/MallctlHelper.cpp
++        folly/memory/detail/MallocImpl.cpp
++)
++
++target_compile_features(folly PRIVATE cxx_std_20)
++
++target_include_directories(folly PUBLIC
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/config>)
+ 
 -install(TARGETS ${FOLLY_INSTALL_TARGETS}
 -  EXPORT folly
 -  RUNTIME DESTINATION bin
@@ -2497,6 +2483,7 @@ index fc9f56350..2f6c623df 100644
 -# Generate the folly-config.cmake file for installation so that
 -# downstream projects that use on folly can easily depend on it in their CMake
 -# files using "find_package(folly CONFIG)"
++include(GNUInstallDirs)
  include(CMakePackageConfigHelpers)
 -configure_package_config_file(
 -  CMake/folly-config.cmake.in
@@ -3063,7 +3050,8 @@ index fc9f56350..2f6c623df 100644
 -endif()
  
 -add_subdirectory(folly)
-+# Config
++include(cmake/FollyConfigChecks.cmake)
++
 +configure_package_config_file(cmake/config.cmake
 +        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake # cmake-build-debug/
 +        INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME} NO_SET_AND_CHECK_MACRO) # share/
@@ -3089,7 +3077,7 @@ index fc9f56350..2f6c623df 100644
 +)
 +# Install Export Set
 +install(EXPORT ${PROJECT_NAME}-targets
-+        NAMESPACE nesfolly::
++        NAMESPACE folly::
 +        DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
 +
 +
@@ -3271,120 +3259,264 @@ index fc9f56350..2f6c623df 100644
 +install(FILES ${system} DESTINATION "${include_dest}/system")
 +install(FILES ${chrono} DESTINATION "${include_dest}/chrono")
 +install(FILES ${memory_detail} DESTINATION "${include_dest}/memory/detail")
-+install(FILES "config/folly/folly-config.h" DESTINATION "${include_dest}")
++install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h" DESTINATION "${include_dest}")
 +install(FILES "folly/stub/logging.h" DESTINATION "${include_dest}/stub")
+diff --git a/cmake/FollyConfigChecks.cmake b/cmake/FollyConfigChecks.cmake
+new file mode 100644
+index 000000000..57b9e3f05
+--- /dev/null
++++ b/cmake/FollyConfigChecks.cmake
+@@ -0,0 +1,182 @@
++# Copyright (c) Meta Platforms, Inc. and affiliates.
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++include(CheckCXXSourceCompiles)
++include(CheckCXXSourceRuns)
++include(CheckFunctionExists)
++include(CheckIncludeFileCXX)
++include(CheckSymbolExists)
++include(CheckTypeSize)
++include(CheckCXXCompilerFlag)
++
++if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
++    CHECK_INCLUDE_FILE_CXX(malloc_np.h FOLLY_USE_JEMALLOC)
++else()
++    CHECK_INCLUDE_FILE_CXX(jemalloc/jemalloc.h FOLLY_USE_JEMALLOC)
++endif()
++
++if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
++    # clang only rejects unknown warning flags if -Werror=unknown-warning-option
++    # is also specified.
++    check_cxx_compiler_flag(
++            -Werror=unknown-warning-option
++            COMPILER_HAS_UNKNOWN_WARNING_OPTION)
++    if (COMPILER_HAS_UNKNOWN_WARNING_OPTION)
++        set(CMAKE_REQUIRED_FLAGS
++                "${CMAKE_REQUIRED_FLAGS} -Werror=unknown-warning-option")
++    endif()
++
++    check_cxx_compiler_flag(-Wshadow-local COMPILER_HAS_W_SHADOW_LOCAL)
++    check_cxx_compiler_flag(
++            -Wshadow-compatible-local
++            COMPILER_HAS_W_SHADOW_COMPATIBLE_LOCAL)
++    if (COMPILER_HAS_W_SHADOW_LOCAL AND COMPILER_HAS_W_SHADOW_COMPATIBLE_LOCAL)
++        set(FOLLY_HAVE_SHADOW_LOCAL_WARNINGS ON)
++        list(APPEND FOLLY_CXX_FLAGS -Wshadow-compatible-local)
++    endif()
++
++    check_cxx_compiler_flag(-Wnoexcept-type COMPILER_HAS_W_NOEXCEPT_TYPE)
++    if (COMPILER_HAS_W_NOEXCEPT_TYPE)
++        list(APPEND FOLLY_CXX_FLAGS -Wno-noexcept-type)
++    endif()
++
++    check_cxx_compiler_flag(
++            -Wnullability-completeness
++            COMPILER_HAS_W_NULLABILITY_COMPLETENESS)
++    if (COMPILER_HAS_W_NULLABILITY_COMPLETENESS)
++        list(APPEND FOLLY_CXX_FLAGS -Wno-nullability-completeness)
++    endif()
++
++    check_cxx_compiler_flag(
++            -Winconsistent-missing-override
++            COMPILER_HAS_W_INCONSISTENT_MISSING_OVERRIDE)
++    if (COMPILER_HAS_W_INCONSISTENT_MISSING_OVERRIDE)
++        list(APPEND FOLLY_CXX_FLAGS -Wno-inconsistent-missing-override)
++    endif()
++
++    check_cxx_compiler_flag(-faligned-new COMPILER_HAS_F_ALIGNED_NEW)
++    if (COMPILER_HAS_F_ALIGNED_NEW)
++        list(APPEND FOLLY_CXX_FLAGS -faligned-new)
++    endif()
++
++    check_cxx_compiler_flag(-fopenmp COMPILER_HAS_F_OPENMP)
++    if (COMPILER_HAS_F_OPENMP)
++        list(APPEND FOLLY_CXX_FLAGS -fopenmp)
++    endif()
++endif()
++
++set(FOLLY_ORIGINAL_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
++string(REGEX REPLACE
++        "-std=(c|gnu)\\+\\+.."
++        ""
++        CMAKE_REQUIRED_FLAGS
++        "${CMAKE_REQUIRED_FLAGS}")
++
++check_symbol_exists(pthread_atfork pthread.h FOLLY_HAVE_PTHREAD_ATFORK)
++
++list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
++check_symbol_exists(accept4 sys/socket.h FOLLY_HAVE_ACCEPT4)
++check_symbol_exists(getrandom sys/random.h FOLLY_HAVE_GETRANDOM)
++check_symbol_exists(preadv sys/uio.h FOLLY_HAVE_PREADV)
++check_symbol_exists(pwritev sys/uio.h FOLLY_HAVE_PWRITEV)
++check_symbol_exists(clock_gettime time.h FOLLY_HAVE_CLOCK_GETTIME)
++check_symbol_exists(pipe2 unistd.h FOLLY_HAVE_PIPE2)
++check_symbol_exists(sendmmsg sys/socket.h FOLLY_HAVE_SENDMMSG)
++check_symbol_exists(recvmmsg sys/socket.h FOLLY_HAVE_RECVMMSG)
++
++check_function_exists(malloc_usable_size FOLLY_HAVE_MALLOC_USABLE_SIZE)
++
++set(CMAKE_REQUIRED_FLAGS "${FOLLY_ORIGINAL_CMAKE_REQUIRED_FLAGS}")
++
++check_cxx_source_compiles("
++  #pragma GCC diagnostic error \"-Wattributes\"
++  extern \"C\" void (*test_ifunc(void))() { return 0; }
++  void func() __attribute__((ifunc(\"test_ifunc\")));
++  int main() { return 0; }"
++        FOLLY_HAVE_IFUNC
++)
++check_cxx_source_runs("
++  int main(int, char**) {
++    char buf[64] = {0};
++    unsigned long *ptr = (unsigned long *)(buf + 1);
++    *ptr = 0xdeadbeef;
++    return (*ptr & 0xff) == 0xef ? 0 : 1;
++  }"
++        FOLLY_HAVE_UNALIGNED_ACCESS
++)
++check_cxx_source_compiles("
++  int main(int argc, char** argv) {
++    unsigned size = argc;
++    char data[size];
++    return 0;
++  }"
++        FOLLY_HAVE_VLA
++)
++check_cxx_source_runs("
++  extern \"C\" int folly_example_undefined_weak_symbol() __attribute__((weak));
++  int main(int argc, char** argv) {
++    auto f = folly_example_undefined_weak_symbol; // null pointer
++    return f ? f() : 0; // must compile, link, and run with null pointer
++  }"
++        FOLLY_HAVE_WEAK_SYMBOLS
++)
++check_cxx_source_runs("
++  #include <dlfcn.h>
++  int main() {
++    void *h = dlopen(\"linux-vdso.so.1\", RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
++    if (h == nullptr) {
++      return -1;
++    }
++    dlclose(h);
++    return 0;
++  }"
++        FOLLY_HAVE_LINUX_VDSO
++)
++
++check_cxx_source_runs("
++  #include <cstddef>
++  #include <cwchar>
++  int main(int argc, char** argv) {
++    return wcstol(L\"01\", nullptr, 10) == 1 ? 0 : 1;
++  }"
++        FOLLY_HAVE_WCHAR_SUPPORT
++)
++
++check_cxx_source_compiles("
++  #include <ext/random>
++  int main(int argc, char** argv) {
++    __gnu_cxx::sfmt19937 rng;
++    return 0;
++  }"
++        FOLLY_HAVE_EXTRANDOM_SFMT19937
++)
++
++check_cxx_source_runs("
++  #include <stdarg.h>
++  #include <stdio.h>
++
++  int call_vsnprintf(const char* fmt, ...) {
++    char buf[256];
++    va_list ap;
++    va_start(ap, fmt);
++    int result = vsnprintf(buf, sizeof(buf), fmt, ap);
++    va_end(ap);
++    return result;
++  }
++
++  int main(int argc, char** argv) {
++    return call_vsnprintf(\"%\", 1) < 0 ? 0 : 1;
++  }"
++        HAVE_VSNPRINTF_ERRORS
++)
+\ No newline at end of file
 diff --git a/cmake/config.cmake b/cmake/config.cmake
 new file mode 100644
-index 000000000..29a8021e9
+index 000000000..0e267af7f
 --- /dev/null
 +++ b/cmake/config.cmake
 @@ -0,0 +1,5 @@
 +@PACKAGE_INIT@
 +
-+include(${CMAKE_CURRENT_LIST_DIR}/nesfolly-targets.cmake)
++include(${CMAKE_CURRENT_LIST_DIR}/folly-targets.cmake)
 +
-+check_required_components(nesfolly)
-diff --git a/config/folly/folly-config.h b/config/folly/folly-config.h
-new file mode 100644
-index 000000000..ecc99b2a8
---- /dev/null
-+++ b/config/folly/folly-config.h
-@@ -0,0 +1,92 @@
-+/*
-+ * Copyright (c) Meta Platforms, Inc. and affiliates.
-+ *
-+ * Licensed under the Apache License, Version 2.0 (the "License");
-+ * you may not use this file except in compliance with the License.
-+ * You may obtain a copy of the License at
-+ *
-+ *     http://www.apache.org/licenses/LICENSE-2.0
-+ *
-+ * Unless required by applicable law or agreed to in writing, software
-+ * distributed under the License is distributed on an "AS IS" BASIS,
-+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+ * See the License for the specific language governing permissions and
-+ * limitations under the License.
-+ */
-+
-+#pragma once
-+
-+#ifdef __APPLE__
-+#include <TargetConditionals.h> // @manual
-+#endif
-+
-+#if !defined(FOLLY_MOBILE)
-+#if defined(__ANDROID__) || \
-+    (defined(__APPLE__) &&  \
-+     (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
-+#define FOLLY_MOBILE 1
-+#else
-+#define FOLLY_MOBILE 0
-+#endif
-+#endif // FOLLY_MOBILE
-+
-+#define FOLLY_HAVE_PTHREAD 1
-+#define FOLLY_HAVE_PTHREAD_ATFORK 1
-+
-+#define FOLLY_HAVE_LIBGFLAGS 0
-+/* #undef FOLLY_UNUSUAL_GFLAGS_NAMESPACE */
-+#define FOLLY_GFLAGS_NAMESPACE gflags
-+
-+#define FOLLY_HAVE_LIBGLOG 0
-+
-+/* #undef FOLLY_USE_JEMALLOC */
-+
-+#if __has_include(<features.h>)
-+#include <features.h>
-+#endif
-+
-+#define FOLLY_HAVE_ACCEPT4 1
-+#define FOLLY_HAVE_GETRANDOM 1
-+#define FOLLY_HAVE_PREADV 1
-+#define FOLLY_HAVE_PWRITEV 1
-+#define FOLLY_HAVE_CLOCK_GETTIME 1
-+#define FOLLY_HAVE_PIPE2 1
-+#define FOLLY_HAVE_SENDMMSG 1
-+#define FOLLY_HAVE_RECVMMSG 1
-+/* #undef FOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF */
-+
-+#define FOLLY_HAVE_IFUNC 1
-+#define FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE 1
-+#define FOLLY_HAVE_UNALIGNED_ACCESS 1
-+#define FOLLY_HAVE_VLA 1
-+#define FOLLY_HAVE_WEAK_SYMBOLS 1
-+#define FOLLY_HAVE_LINUX_VDSO 1
-+#define FOLLY_HAVE_MALLOC_USABLE_SIZE 1
-+/* #undef FOLLY_HAVE_INT128_T */
-+#define FOLLY_HAVE_WCHAR_SUPPORT 1
-+#define FOLLY_HAVE_EXTRANDOM_SFMT19937 1
-+#define HAVE_VSNPRINTF_ERRORS 1
-+
-+/* #undef FOLLY_HAVE_LIBUNWIND */
-+// #define FOLLY_HAVE_DWARF 1
-+// #define FOLLY_HAVE_ELF 1
-+// #define FOLLY_HAVE_SWAPCONTEXT 1
-+// #define FOLLY_HAVE_BACKTRACE 1
-+// #define FOLLY_USE_SYMBOLIZER 1
-+// #define FOLLY_DEMANGLE_MAX_SYMBOL_SIZE 1024
-+
-+/* #undef FOLLY_HAVE_SHADOW_LOCAL_WARNINGS */
-+
-+// #define FOLLY_HAVE_LIBLZ4 1
-+/* #undef FOLLY_HAVE_LIBLZMA */
-+// #define FOLLY_HAVE_LIBSNAPPY 1
-+// #define FOLLY_HAVE_LIBZ 1
-+// #define FOLLY_HAVE_LIBZSTD 1
-+/* #undef FOLLY_HAVE_LIBBZ2 */
-+
-+#define FOLLY_LIBRARY_SANITIZE_ADDRESS 0
-+
-+/* #undef FOLLY_SUPPORT_SHARED_LIBRARY */
-+
-+#define FOLLY_HAVE_LIBRT 0
-+#define FOLLY_CFG_NO_COROUTINES 1
++check_required_components(folly)
+diff --git a/CMake/folly-config.h.cmake b/cmake/folly-config.h.cmake
+similarity index 74%
+rename from CMake/folly-config.h.cmake
+rename to cmake/folly-config.h.cmake
+index ec6706a45..3572d73eb 100644
+--- a/CMake/folly-config.h.cmake
++++ b/cmake/folly-config.h.cmake
+@@ -1,24 +1,24 @@
+ /*
+- * Copyright (c) Facebook, Inc. and its affiliates.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
++* Copyright (c) Facebook, Inc. and its affiliates.
++*
++* Licensed under the Apache License, Version 2.0 (the "License");
++* you may not use this file except in compliance with the License.
++* You may obtain a copy of the License at
++*
++*     http://www.apache.org/licenses/LICENSE-2.0
++*
++* Unless required by applicable law or agreed to in writing, software
++* distributed under the License is distributed on an "AS IS" BASIS,
++* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++* See the License for the specific language governing permissions and
++* limitations under the License.
++*/
+ 
+ #pragma once
+ 
+ #if !defined(FOLLY_MOBILE)
+ #if defined(__ANDROID__) || \
+-    (defined(__APPLE__) &&  \
++(defined(__APPLE__) &&  \
+      (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
+ #define FOLLY_MOBILE 1
+ #else
+@@ -86,4 +86,4 @@
+ 
+ #cmakedefine FOLLY_SUPPORT_SHARED_LIBRARY 1
+ 
+-#cmakedefine01 FOLLY_HAVE_LIBRT
++#cmakedefine01 FOLLY_HAVE_LIBRT
 \ No newline at end of file
 diff --git a/folly/Exception.h b/folly/Exception.h
-index d446e29bf..3b3118c61 100644
+index d446e29bf..db51d0fa3 100644
 --- a/folly/Exception.h
 +++ b/folly/Exception.h
 @@ -22,7 +22,7 @@
@@ -3396,6 +3528,23 @@ index d446e29bf..3b3118c61 100644
  #include <folly/FBString.h>
  #include <folly/Likely.h>
  #include <folly/Portability.h>
+@@ -53,11 +53,11 @@ inline std::system_error makeSystemErrorExplicit(int err, const char* msg) {
+   return std::system_error(err, errorCategoryForErrnoDomain(), msg);
+ }
+ 
+-template <class... Args>
+-std::system_error makeSystemErrorExplicit(int err, Args&&... args) {
+-  return makeSystemErrorExplicit(
+-      err, to<fbstring>(std::forward<Args>(args)...).c_str());
+-}
++// template <class... Args>
++// std::system_error makeSystemErrorExplicit(int err, Args&&... args) {
++//   return makeSystemErrorExplicit(
++//       err, to<fbstring>(std::forward<Args>(args)...).c_str());
++// }
+ 
+ inline std::system_error makeSystemError(const char* msg) {
+   return makeSystemErrorExplicit(errno, msg);
 diff --git a/folly/Executor.cpp b/folly/Executor.cpp
 index 39c6b151c..18300c4c1 100644
 --- a/folly/Executor.cpp
@@ -3428,6 +3577,46 @@ index 39c6b151c..18300c4c1 100644
  }
  
  void Executor::addWithPriority(Func, int8_t /* priority */) {
+diff --git a/folly/Function.h b/folly/Function.h
+index 1a4c496c1..9da1769ef 100644
+--- a/folly/Function.h
++++ b/folly/Function.h
+@@ -253,7 +253,7 @@ enum class Op { MOVE, NUKE, HEAP };
+ union Data {
+   Data() {}
+   void* big;
+-  std::aligned_storage<6 * sizeof(void*)>::type tiny;
++  std::byte tiny[6 * sizeof(void*)];
+ };
+ 
+ template <typename Fun, typename = Fun*>
+@@ -727,7 +727,7 @@ class Function final : private detail::function::FunctionTraits<FunctionType> {
+           std::enable_if_t<!detail::is_similar_instantiation_v<Function, Fun>>,
+       typename = typename Traits::template ResultOf<Fun>>
+   /* implicit */ Function(Fun fun) noexcept(
+-      IsSmall<Fun>::value&& noexcept(Fun(std::declval<Fun>())))
++      IsSmall<Fun>::value && noexcept(Fun(std::declval<Fun>())))
+       : Function(std::move(fun), IsSmall<Fun>{}) {}
+ 
+   /**
+@@ -756,7 +756,7 @@ class Function final : private detail::function::FunctionTraits<FunctionType> {
+       // Prevent this overload from being selected when `ptr` is not a
+       // compatible member function pointer.
+       typename = decltype(Function(std::mem_fn((Member Class::*)0)))>
+-  /* implicit */ Function(Member Class::*ptr) noexcept {
++  /* implicit */ Function(Member Class::* ptr) noexcept {
+     if (ptr) {
+       *this = std::mem_fn(ptr);
+     }
+@@ -843,7 +843,7 @@ class Function final : private detail::function::FunctionTraits<FunctionType> {
+    * operator is equivalent to `*this = std::mem_fn(ptr)`.
+    */
+   template <typename Member, typename Class>
+-  auto operator=(Member Class::*ptr) noexcept
++  auto operator=(Member Class::* ptr) noexcept
+       // Prevent this overload from being selected when `ptr` is not a
+       // compatible member function pointer.
+       -> decltype(operator=(std::mem_fn(ptr))) {
 diff --git a/folly/GLog.h b/folly/GLog.h
 index b2b3c0872..92ee5bc37 100644
 --- a/folly/GLog.h
@@ -3442,6 +3631,33 @@ index b2b3c0872..92ee5bc37 100644
  
  #ifndef FB_LOG_EVERY_MS
  /**
+diff --git a/folly/Memory.h b/folly/Memory.h
+index e8938d25a..9c607ccf5 100644
+--- a/folly/Memory.h
++++ b/folly/Memory.h
+@@ -111,7 +111,12 @@ void rawOverAlignedImpl(Alloc const& alloc, size_t n, void*& raw) {
+   // we can get it naturally, otherwise it is aligned as max_align_t.
+   // kBaseAlign is both the alignment and size of this type.
+   constexpr size_t kBaseAlign = constexpr_min(kAlign, alignof(max_align_t));
+-  using BaseType = std::aligned_storage_t<kBaseAlign, kBaseAlign>;
++  struct BaseType {
++    alignas(kBaseAlign) std::byte data[kBaseAlign];
++    std::byte& operator[](size_t index) { return data[index]; }
++    const std::byte& operator[](size_t index) const { return data[index]; }
++  };
++
+   using BaseAllocTraits =
+       typename AllocTraits::template rebind_traits<BaseType>;
+   using BaseAlloc = typename BaseAllocTraits::allocator_type;
+@@ -361,7 +366,7 @@ std::weak_ptr<T> to_weak_ptr(const std::shared_ptr<T>& ptr) {
+ namespace detail {
+ void weak_ptr_set_stored_ptr(std::weak_ptr<void>& w, void* ptr);
+ 
+-template <typename Tag, void* std::__weak_ptr<void>::*WeakPtr_Ptr_Field>
++template <typename Tag, void* std::__weak_ptr<void>::* WeakPtr_Ptr_Field>
+ struct GenerateWeakPtrInternalsAccessor {
+   friend void weak_ptr_set_stored_ptr(std::weak_ptr<void>& w, void* ptr) {
+     w.*WeakPtr_Ptr_Field = ptr;
 diff --git a/folly/Portability.h b/folly/Portability.h
 index c327cf8ba..0ed7ccd9f 100644
 --- a/folly/Portability.h
@@ -3482,6 +3698,26 @@ index c327cf8ba..0ed7ccd9f 100644
  
  // MSVC 2017.5 && C++17
  #if __cpp_noexcept_function_type >= 201510 || \
+diff --git a/folly/Range.h b/folly/Range.h
+index 5758c3e83..82ef625a0 100644
+--- a/folly/Range.h
++++ b/folly/Range.h
+@@ -1439,15 +1439,6 @@ inline size_t qfind_first_of(
+   return detail::qfind_first_byte_of(haystack, needles);
+ }
+ 
+-// specialization for ByteRange
+-template <>
+-inline size_t qfind_first_of(
+-    const Range<const unsigned char*>& haystack,
+-    const Range<const unsigned char*>& needles) {
+-  return detail::qfind_first_byte_of(
+-      StringPiece(haystack), StringPiece(needles));
+-}
+-
+ template <class Key, class Enable>
+ struct hasher;
+ 
 diff --git a/folly/Singleton.h b/folly/Singleton.h
 index d7f094748..59d96bbde 100644
 --- a/folly/Singleton.h
@@ -3581,6 +3817,221 @@ index 30f22f7d3..5c3226e24 100644
  
  #include <folly/ConstexprMath.h>
  #include <folly/Optional.h>
+diff --git a/folly/container/Access.h b/folly/container/Access.h
+index 50c948f85..35e5d8670 100644
+--- a/folly/container/Access.h
++++ b/folly/container/Access.h
+@@ -88,14 +88,14 @@ FOLLY_INLINE_VARIABLE constexpr data_fn data{};
+ //  begin
+ //
+ //  Invokes unqualified begin with std::begin in scope.
+-FOLLY_CREATE_FREE_INVOKER(begin_fn, begin, std);
+-FOLLY_INLINE_VARIABLE constexpr begin_fn begin{};
++// FOLLY_CREATE_FREE_INVOKER(begin_fn, begin, std);
++// FOLLY_INLINE_VARIABLE constexpr begin_fn begin{};
+ 
+ //  end
+ //
+ //  Invokes unqualified end with std::end in scope.
+-FOLLY_CREATE_FREE_INVOKER(end_fn, end, std);
+-FOLLY_INLINE_VARIABLE constexpr end_fn end{};
++// FOLLY_CREATE_FREE_INVOKER(end_fn, end, std);
++// FOLLY_INLINE_VARIABLE constexpr end_fn end{};
+ 
+ } // namespace access
+ 
+diff --git a/folly/container/Foreach-inl.h b/folly/container/Foreach-inl.h
+index d6b709502..ec38285fb 100644
+--- a/folly/container/Foreach-inl.h
++++ b/folly/container/Foreach-inl.h
+@@ -98,14 +98,14 @@ struct IsTuple<EnableIfTuple<T>, T> : std::true_type {};
+ /**
+  * Check if the sequence is a range
+  */
+-template <typename Type, typename T = typename std::decay<Type>::type>
+-using EnableIfRange = void_t<
+-    decltype(access::begin(std::declval<T&>())),
+-    decltype(access::end(std::declval<T&>()))>;
+-template <typename, typename T>
+-struct IsRange : std::false_type {};
+-template <typename T>
+-struct IsRange<EnableIfRange<T>, T> : std::true_type {};
++// template <typename Type, typename T = typename std::decay<Type>::type>
++// using EnableIfRange = void_t<
++//     decltype(access::begin(std::declval<T&>())),
++//     decltype(access::end(std::declval<T&>()))>;
++// template <typename, typename T>
++// struct IsRange : std::false_type {};
++// template <typename T>
++// struct IsRange<EnableIfRange<T>, T> : std::true_type {};
+ 
+ struct TupleTag {};
+ struct RangeTag {};
+@@ -114,8 +114,7 @@ struct RangeTag {};
+  * Should ideally check if it is a tuple and if not return void, but msvc fails
+  */
+ template <typename Sequence>
+-using SequenceTag =
+-    std::conditional_t<IsRange<void, Sequence>::value, RangeTag, TupleTag>;
++using SequenceTag = TupleTag;
+ 
+ struct BeginAddTag {};
+ struct IndexingTag {};
+@@ -153,41 +152,41 @@ LoopControl invoke_returning_loop_control(Func&& f, Args&&... a) {
+ /**
+  * Implementations for the runtime function
+  */
+-template <typename Sequence, typename Func>
+-void for_each_range_impl(index_constant<3>, Sequence&& range, Func& func) {
+-  auto first = access::begin(range);
+-  auto last = access::end(range);
+-  for (auto index = std::size_t{0}; first != last; ++index) {
+-    auto next = std::next(first);
+-    auto control = invoke_returning_loop_control(func, *first, index, first);
+-    if (loop_break == control) {
+-      break;
+-    }
+-    first = next;
+-  }
+-}
+-template <typename Sequence, typename Func>
+-void for_each_range_impl(index_constant<2>, Sequence&& range, Func& func) {
+-  // make a three arg adaptor for the function passed in so that the main
+-  // implementation function can be used
+-  auto three_arg_adaptor = [&func](
+-                               auto&& ele, auto index, auto) -> decltype(auto) {
+-    return func(std::forward<decltype(ele)>(ele), index);
+-  };
+-  for_each_range_impl(
+-      index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
+-}
+-
+-template <typename Sequence, typename Func>
+-void for_each_range_impl(index_constant<1>, Sequence&& range, Func& func) {
+-  // make a three argument adaptor for the function passed in that just ignores
+-  // the second and third argument
+-  auto three_arg_adaptor = [&func](auto&& ele, auto, auto) -> decltype(auto) {
+-    return func(std::forward<decltype(ele)>(ele));
+-  };
+-  for_each_range_impl(
+-      index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
+-}
++// template <typename Sequence, typename Func>
++// void for_each_range_impl(index_constant<3>, Sequence&& range, Func& func) {
++//   auto first = access::begin(range);
++//   auto last = access::end(range);
++//   for (auto index = std::size_t{0}; first != last; ++index) {
++//     auto next = std::next(first);
++//     auto control = invoke_returning_loop_control(func, *first, index, first);
++//     if (loop_break == control) {
++//       break;
++//     }
++//     first = next;
++//   }
++// }
++// template <typename Sequence, typename Func>
++// void for_each_range_impl(index_constant<2>, Sequence&& range, Func& func) {
++//   // make a three arg adaptor for the function passed in so that the main
++//   // implementation function can be used
++//   auto three_arg_adaptor = [&func](
++//                                auto&& ele, auto index, auto) -> decltype(auto) {
++//     return func(std::forward<decltype(ele)>(ele), index);
++//   };
++//   for_each_range_impl(
++//       index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
++// }
++//
++// template <typename Sequence, typename Func>
++// void for_each_range_impl(index_constant<1>, Sequence&& range, Func& func) {
++//   // make a three argument adaptor for the function passed in that just ignores
++//   // the second and third argument
++//   auto three_arg_adaptor = [&func](auto&& ele, auto, auto) -> decltype(auto) {
++//     return func(std::forward<decltype(ele)>(ele));
++//   };
++//   for_each_range_impl(
++//       index_constant<3>{}, std::forward<Sequence>(range), three_arg_adaptor);
++// }
+ 
+ /**
+  * Handlers for iteration
+@@ -260,40 +259,40 @@ void for_each_impl(TupleTag, Sequence&& range, Func& func) {
+   static_assert(!std::is_same<tag, void>::value, "unknown invocability");
+   for_each_tuple_impl(tag{}, std::forward<Sequence>(range), func);
+ }
+-template <typename Sequence, typename Func>
+-void for_each_impl(RangeTag, Sequence&& range, Func& func) {
+-  using iter = decltype(access::begin(std::declval<Sequence>()));
+-  using type = decltype(*std::declval<iter>());
+-  using tag = ForEachImplTag<Func, type, iter>;
+-  static_assert(!std::is_same<tag, void>::value, "unknown invocability");
+-  for_each_range_impl(tag{}, std::forward<Sequence>(range), func);
+-}
+-
++// template <typename Sequence, typename Func>
++// void for_each_impl(RangeTag, Sequence&& range, Func& func) {
++//   using iter = decltype(access::begin(std::declval<Sequence>()));
++//   using type = decltype(*std::declval<iter>());
++//   using tag = ForEachImplTag<Func, type, iter>;
++//   static_assert(!std::is_same<tag, void>::value, "unknown invocability");
++//   for_each_range_impl(tag{}, std::forward<Sequence>(range), func);
++// }
++//
+ template <typename Sequence, typename Index>
+ decltype(auto) fetch_impl(IndexingTag, Sequence&& sequence, Index&& index) {
+   return std::forward<Sequence>(sequence)[std::forward<Index>(index)];
+ }
+-template <typename Sequence, typename Index>
+-decltype(auto) fetch_impl(BeginAddTag, Sequence&& sequence, Index index) {
+-  return *(access::begin(std::forward<Sequence>(sequence)) + index);
+-}
++// template <typename Sequence, typename Index>
++// decltype(auto) fetch_impl(BeginAddTag, Sequence&& sequence, Index index) {
++//   return *(access::begin(std::forward<Sequence>(sequence)) + index);
++// }
+ 
+ template <typename Sequence, typename Index>
+ decltype(auto) fetch_impl(TupleTag, Sequence&& sequence, Index index) {
+   return get_impl<index>(std::forward<Sequence>(sequence));
+ }
+-template <typename Sequence, typename Index>
+-decltype(auto) fetch_impl(RangeTag, Sequence&& sequence, Index&& index) {
+-  using iter = decltype(access::begin(std::declval<Sequence>()));
+-  using iter_traits = std::iterator_traits<remove_cvref_t<iter>>;
+-  using iter_cat = typename iter_traits::iterator_category;
+-  using tag = std::conditional_t<
+-      std::is_same<iter_cat, std::random_access_iterator_tag>::value,
+-      BeginAddTag,
+-      IndexingTag>;
+-  return fetch_impl(
+-      tag{}, std::forward<Sequence>(sequence), std::forward<Index>(index));
+-}
++// template <typename Sequence, typename Index>
++// decltype(auto) fetch_impl(RangeTag, Sequence&& sequence, Index&& index) {
++//   using iter = decltype(access::begin(std::declval<Sequence>()));
++//   using iter_traits = std::iterator_traits<remove_cvref_t<iter>>;
++//   using iter_cat = typename iter_traits::iterator_category;
++//   using tag = std::conditional_t<
++//       std::is_same<iter_cat, std::random_access_iterator_tag>::value,
++//       BeginAddTag,
++//       IndexingTag>;
++//   return fetch_impl(
++//       tag{}, std::forward<Sequence>(sequence), std::forward<Index>(index));
++// }
+ 
+ } // namespace for_each_detail
+ 
+diff --git a/folly/detail/AtFork.cpp b/folly/detail/AtFork.cpp
+index b3dc157c0..8dbc2d73a 100644
+--- a/folly/detail/AtFork.cpp
++++ b/folly/detail/AtFork.cpp
+@@ -18,6 +18,7 @@
+ 
+ #include <list>
+ #include <mutex>
++#include <system_error>
+ 
+ #include <folly/ScopeGuard.h>
+ #include <folly/lang/Exception.h>
 diff --git a/folly/detail/MemoryIdler.cpp b/folly/detail/MemoryIdler.cpp
 index 0134a4c29..2b7ee2da9 100644
 --- a/folly/detail/MemoryIdler.cpp
@@ -3649,6 +4100,27 @@ index 02b9c51ca..5b42dfddc 100644
    auto const off = str.find('<');
    return str.substr(off + 1, str.size() - off - 2);
  }
+diff --git a/folly/functional/Invoke.h b/folly/functional/Invoke.h
+index f94435605..87adbf4e2 100644
+--- a/folly/functional/Invoke.h
++++ b/folly/functional/Invoke.h
+@@ -19,11 +19,11 @@
+ #include <functional>
+ #include <type_traits>
+ 
+-#include <boost/preprocessor/control/expr_iif.hpp>
+-#include <boost/preprocessor/facilities/is_empty_variadic.hpp>
+-#include <boost/preprocessor/list/for_each.hpp>
+-#include <boost/preprocessor/logical/not.hpp>
+-#include <boost/preprocessor/tuple/to_list.hpp>
++// #include <boost/preprocessor/control/expr_iif.hpp>
++// #include <boost/preprocessor/facilities/is_empty_variadic.hpp>
++// #include <boost/preprocessor/list/for_each.hpp>
++// #include <boost/preprocessor/logical/not.hpp>
++// #include <boost/preprocessor/tuple/to_list.hpp>
+ 
+ #include <folly/CppAttributes.h>
+ #include <folly/Portability.h>
 diff --git a/folly/lang/SafeAssert.h b/folly/lang/SafeAssert.h
 index ba82cc840..f2b2b7a21 100644
 --- a/folly/lang/SafeAssert.h
@@ -3868,3 +4340,6 @@ index 2a974ec3d..63d6affe6 100644
  
  #include <folly/Portability.h>
  #include <folly/synchronization/detail/Sleeper.h>
+-- 
+2.45.2
+
