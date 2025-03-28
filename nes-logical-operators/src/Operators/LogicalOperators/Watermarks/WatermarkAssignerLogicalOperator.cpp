@@ -65,10 +65,6 @@ std::shared_ptr<Operator> WatermarkAssignerLogicalOperator::clone() const
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    for (const auto& pair : properties)
-    {
-        copy->addProperty(pair.first, pair.second);
-    }
     return copy;
 }
 

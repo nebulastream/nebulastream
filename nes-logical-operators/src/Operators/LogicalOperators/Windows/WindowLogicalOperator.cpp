@@ -72,10 +72,6 @@ std::shared_ptr<Operator> WindowLogicalOperator::clone() const
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    for (const auto& [key, value] : properties)
-    {
-        copy->addProperty(key, value);
-    }
     return copy;
 }
 

@@ -30,7 +30,6 @@ namespace NES
 {
 
 class Schema;
-using OperatorProperties = std::unordered_map<std::string, std::any>;
 
 /// Returns the next free operator id
 OperatorId getNextOperatorId();
@@ -63,12 +62,6 @@ public:
 
     std::shared_ptr<Schema> getOutputSchema() const;
     void setOutputSchema(std::shared_ptr<Schema> outputSchema);
-
-    void addProperty(const std::string& key, const std::any value);
-    void addAllProperties(const OperatorProperties& properties);
-    std::any getProperty(const std::string& key);
-    void removeProperty(const std::string& key);
-    bool hasProperty(const std::string& key) const;
 
     virtual std::vector<OriginId> getOutputOriginIds() const = 0;
 
@@ -433,7 +426,6 @@ protected:
 
     std::shared_ptr<Schema> outputSchema;
     OperatorId id;
-    OperatorProperties properties;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Operator& node)

@@ -94,10 +94,6 @@ std::shared_ptr<Operator> MapLogicalOperator::clone() const
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    for (const auto& [key, value] : properties)
-    {
-        copy->addProperty(key, value);
-    }
     return copy;
 }
 
