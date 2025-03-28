@@ -75,7 +75,7 @@ public:
         , originId(originId)
         , tupleDelimiter(std::move(tupleDelimiter))
         , tupleSizeInBytes(tupleSizeInBytes)
-        , numSchemaFields(numberOfSchemaFields) {};
+        , numSchemaFields(numberOfSchemaFields) { };
 
     ~ProgressTracker() = default;
 

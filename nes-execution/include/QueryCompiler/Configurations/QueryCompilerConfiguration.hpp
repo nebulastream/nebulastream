@@ -35,7 +35,7 @@ class QueryCompilerConfiguration final : public NES::Configurations::BaseConfigu
 {
 public:
     QueryCompilerConfiguration() = default;
-    QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
+    QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
     /// Sets the dump mode for the query compiler. This setting is only for the nautilus compiler
     NES::Configurations::EnumOption<DumpMode> dumpMode

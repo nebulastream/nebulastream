@@ -60,7 +60,7 @@ ChainedHashMap::ChainedHashMap(const uint64_t keySize, const uint64_t valueSize,
     , entries(nullptr)
     , mask(numberOfChains - 1)
     /// Setting the default destructor callback to a dummy function, thus we can call it without having to check if it is set
-    , destructorCallBack(+[](ChainedHashMapEntry*) {})
+    , destructorCallBack(+[](ChainedHashMapEntry*) { })
 {
     PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     PRECONDITION(

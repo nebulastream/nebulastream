@@ -35,7 +35,7 @@ public:
      * @param originId origin id
      * @return buffer sequence number
      */
-    BufferSequenceNumber(uint64_t sequenceNumber, uint64_t originId) : sequenceNumber(sequenceNumber), originId(originId) {};
+    BufferSequenceNumber(uint64_t sequenceNumber, uint64_t originId) : sequenceNumber(sequenceNumber), originId(originId) { };
 
     /**
      * @brief Getter for a sequence number of a buffer sequence number

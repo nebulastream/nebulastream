@@ -29,7 +29,7 @@
 namespace NES
 {
 
-NodeFunctionSqrt::NodeFunctionSqrt(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Sqrt") {};
+NodeFunctionSqrt::NodeFunctionSqrt(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Sqrt") { };
 
 NodeFunctionSqrt::NodeFunctionSqrt(NodeFunctionSqrt* other) : NodeFunctionArithmeticalUnary(other)
 {

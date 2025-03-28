@@ -48,7 +48,7 @@ class TestPipelineExecutionContext final : public PipelineExecutionContext
 {
 public:
     TestPipelineExecutionContext()
-        : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)), pipelineId(PipelineId(PipelineId::INVALID)) {};
+        : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)), pipelineId(PipelineId(PipelineId::INVALID)) { };
     /// Setting invalid values for ids, since we set the values later.
     explicit TestPipelineExecutionContext(
         std::shared_ptr<Memory::AbstractBufferProvider> bufferManager,
@@ -139,7 +139,7 @@ private:
 /// Maps a pipeline task to a specific worker thread and therefore allows a test task queue to execute a specific task on a specific worker.
 struct TestablePipelineTask
 {
-    TestablePipelineTask() : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)) {};
+    TestablePipelineTask() : workerThreadId(WorkerThreadId(WorkerThreadId::INVALID)) { };
     TestablePipelineTask(const WorkerThreadId workerThreadId, Memory::TupleBuffer tupleBuffer, std::shared_ptr<ExecutablePipelineStage> eps)
         : workerThreadId(workerThreadId), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
     {

@@ -28,7 +28,7 @@
 
 namespace NES
 {
-NodeFunctionWhen::NodeFunctionWhen(std::shared_ptr<DataType> stamp) : NodeFunctionBinary(std::move(stamp), "When") {};
+NodeFunctionWhen::NodeFunctionWhen(std::shared_ptr<DataType> stamp) : NodeFunctionBinary(std::move(stamp), "When") { };
 
 NodeFunctionWhen::NodeFunctionWhen(NodeFunctionWhen* other) : NodeFunctionBinary(other)
 {

@@ -26,7 +26,7 @@
 namespace NES
 {
 
-NodeFunctionFloor::NodeFunctionFloor(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Floor") {};
+NodeFunctionFloor::NodeFunctionFloor(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Floor") { };
 
 NodeFunctionFloor::NodeFunctionFloor(NodeFunctionFloor* other) : NodeFunctionArithmeticalUnary(other)
 {

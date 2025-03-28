@@ -29,7 +29,7 @@
 namespace NES
 {
 
-NodeFunctionRound::NodeFunctionRound(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Round") {};
+NodeFunctionRound::NodeFunctionRound(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Round") { };
 
 NodeFunctionRound::NodeFunctionRound(NodeFunctionRound* other) : NodeFunctionArithmeticalUnary(other)
 {
