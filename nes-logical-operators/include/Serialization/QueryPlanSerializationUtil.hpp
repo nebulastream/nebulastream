@@ -24,7 +24,7 @@ class QueryPlanSerializationUtil
 {
 public:
     static void
-    serializeQueryPlan(const QueryPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated = false);
+    serializeQueryPlan(const LogicalPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated = false);
 
     static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
 };

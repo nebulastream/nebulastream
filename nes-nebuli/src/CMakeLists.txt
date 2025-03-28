@@ -12,4 +12,3 @@
 
 add_subdirectory(LegacyOptimizer)
 add_subdirectory(SourceCatalogs)
-add_subdirectory(QueryValidation)
