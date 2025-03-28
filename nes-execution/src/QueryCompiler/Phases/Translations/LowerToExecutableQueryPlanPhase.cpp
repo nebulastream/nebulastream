@@ -182,12 +182,12 @@ LowerToExecutableQueryPlanPhase::apply(const std::shared_ptr<PipelineQueryPlan>&
         processSource(pipeline, pipelineQueryPlan, loweringContext);
     }
 
-    auto pipelines = std::move(loweringContext.pipelineToExecutableMap) | std::views::values | ranges::to<std::vector>();
+    auto pipelines = std::move(loweringContext.pipelineToExecutableMap) | std::views::values | std::ranges::to<std::vector>();
     auto sinks = std::move(loweringContext.sinks)
         | std::views::transform(
                      [](auto descriptorAndPredecessors)
                      { return Runtime::Execution::Sink(descriptorAndPredecessors.first, std::move(descriptorAndPredecessors.second)); })
-        | ranges::to<std::vector>();
+        | std::ranges::to<std::vector>();
 
     return Runtime::Execution::CompiledQueryPlan::create(
         pipelineQueryPlan->getQueryId(), std::move(pipelines), std::move(sinks), std::move(loweringContext.sources));

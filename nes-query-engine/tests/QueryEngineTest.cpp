@@ -659,7 +659,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
                                 test.startQuery(std::move(query));
                                 return queryId;
                             })
-            | ranges::to<std::vector<QueryId>>();
+            | std::ranges::to<std::vector<QueryId>>();
 
         for (auto queryId : queryIds)
         {
