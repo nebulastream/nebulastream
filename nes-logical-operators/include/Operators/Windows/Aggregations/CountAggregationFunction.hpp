@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include "API/Schema.hpp"
-#include "Functions/LogicalFunction.hpp"
-#include "WindowAggregationFunction.hpp"
+#include <API/Schema.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 
 namespace NES::Windowing
 {

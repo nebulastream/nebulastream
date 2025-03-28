@@ -15,11 +15,12 @@
 #pragma once
 
 #include <memory>
-#include "Common/DataTypes/DataType.hpp"
-#include "API/Schema.hpp"
-#include "Functions/FieldAccessLogicalFunction.hpp"
-#include "Functions/LogicalFunction.hpp"
-#include "WindowAggregationFunction.hpp"
+#include <Common/DataTypes/DataType.hpp>
+#include <API/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+
 namespace NES::Windowing
 {
 
