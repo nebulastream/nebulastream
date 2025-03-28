@@ -45,7 +45,7 @@ class NLJOperatorHandler final : public StreamJoinOperatorHandler
 public:
     static constexpr int64_t windowSizeRollingAverage = 10;
     NLJOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
+        std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
