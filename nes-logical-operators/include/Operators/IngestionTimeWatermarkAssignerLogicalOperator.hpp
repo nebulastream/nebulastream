@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
+#include <Operators/UnaryLogicalOperator.hpp>
 
 namespace NES
 {
@@ -27,7 +27,8 @@ class IngestionTimeWatermarkAssignerLogicalOperator : public UnaryLogicalOperato
 public:
     static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
 
-    IngestionTimeWatermarkAssignerLogicalOperator(OperatorId id);
+    IngestionTimeWatermarkAssignerLogicalOperator();
+    std::string_view getName() const noexcept override;
 
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;

@@ -12,13 +12,10 @@
     limitations under the License.
 */
 #include <memory>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableOperator.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {

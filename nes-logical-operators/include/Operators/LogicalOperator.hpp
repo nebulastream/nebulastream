@@ -27,18 +27,32 @@ class SerializableOperator;
 class LogicalOperator : public virtual Operator
 {
 public:
-    explicit LogicalOperator(OperatorId id);
+    explicit LogicalOperator() : outputSchema(Schema::create()) {};
+    explicit LogicalOperator(std::shared_ptr<LogicalOperator> logicalOp);
+    virtual std::string_view getName() const noexcept = 0;
 
-    /// @brief Infers the input origin of a logical operator.
     /// If this operator does not assign new origin ids, e.g., windowing,
     /// this function collects the origin ids from all upstream operators.
     virtual void inferInputOrigins() = 0;
+    virtual std::vector<OriginId> getOutputOriginIds() const = 0;
 
     /// @brief infers the input and out schema of this operator depending on its child.
     /// @param typeInferencePhaseContext needed for stamp inferring
     /// @return true if schema was correctly inferred
     virtual bool inferSchema() = 0;
 
+    virtual std::shared_ptr<Schema> getOutputSchema() const = 0;
+    virtual void setOutputSchema(std::shared_ptr<Schema> outputSchema) = 0;
+
     virtual SerializableOperator serialize() const = 0;
+
+    virtual std::shared_ptr<Operator> clone() const = 0;
+    virtual bool operator==(Operator const& rhs) const = 0;
+    virtual bool isIdentical(Operator const& rhs) const = 0;
+
+protected:
+    /// The output schema of this operator
+    std::shared_ptr<Schema> outputSchema;
 };
 }
+FMT_OSTREAM(NES::LogicalOperator);

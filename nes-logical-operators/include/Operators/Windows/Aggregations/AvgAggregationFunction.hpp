@@ -14,14 +14,17 @@
 
 #pragma once
 
+#include <memory>
+#include <Common/DataTypes/DataType.hpp>
 #include <API/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 
 namespace NES::Windowing
 {
 
-class CountAggregationFunction : public WindowAggregationFunction
+class AvgAggregationFunction : public WindowAggregationFunction
 {
 public:
     static constexpr std::string_view NAME = "Avg";
@@ -31,20 +34,20 @@ public:
     static std::shared_ptr<WindowAggregationFunction>
     create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
 
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
-
     void inferStamp(const Schema& schema) override;
 
     std::shared_ptr<WindowAggregationFunction> clone() override;
 
-    virtual ~CountAggregationFunction() = default;
+    std::shared_ptr<DataType> getInputStamp() override;
+    std::shared_ptr<DataType> getPartialAggregateStamp() override;
+    std::shared_ptr<DataType> getFinalAggregateStamp() override;
+
+    virtual ~AvgAggregationFunction() = default;
 
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit CountAggregationFunction(const std::shared_ptr<FieldAccessLogicalFunction> onField);
-    CountAggregationFunction(const std::shared_ptr<LogicalFunction> onField, const std::shared_ptr<LogicalFunction> asField);
+    explicit AvgAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    AvgAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
 };
 }

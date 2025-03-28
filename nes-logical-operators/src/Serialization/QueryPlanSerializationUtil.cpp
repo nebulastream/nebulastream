@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Operators/Serialization/OperatorSerializationUtil.hpp>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Serialization/OperatorSerializationUtil.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableOperator.pb.h>

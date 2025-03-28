@@ -151,7 +151,7 @@ bool JoinLogicalOperator::inferSchema()
     }
 
     ///Infer stamp of window definition
-    const auto windowType = Util::as<Windowing::TimeBasedWindowType>(getWindowType());
+    getWindowType().withInferredStamp(leftInputSchema);
 
     ///Reset output schema and add fields from left and right input schema
     outputSchema->clear();
@@ -161,7 +161,8 @@ bool JoinLogicalOperator::inferSchema()
 
     windowStartFieldName = newQualifierForSystemField + "$start";
     windowEndFieldName = newQualifierForSystemField + "$end";
-    outputSchema->addField(windowStartFieldName, BasicType::UINT64);
+    outputSchema.addField(windowStartFieldName, BasicType::UINT64);
+    outputSchema.addField(windowEndFieldName, BasicType::UINT64);
 
     /// create dynamic fields to store all fields from left and right sources
     for (const auto& field : *leftInputSchema)
@@ -194,6 +195,47 @@ std::shared_ptr<Operator> JoinLogicalOperator::clone() const
     copy->windowEndFieldName = windowEndFieldName;
     copy->windowStartFieldName = windowStartFieldName;
     return copy;
+}
+
+std::shared_ptr<Schema> JoinLogicalOperator::getLeftSchema() const
+{
+    return leftSourceSchema;
+}
+
+std::shared_ptr<Schema> JoinLogicalOperator::getRightSchema() const
+{
+    return rightSourceSchema;
+}
+
+std::shared_ptr<Windowing::WindowType> JoinLogicalOperator::getWindowType() const
+{
+    return windowType;
+}
+
+JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const {
+    return joinType;
+}
+
+void JoinLogicalOperator::updateSchemas(std::shared_ptr<Schema> leftSourceSchema, std::shared_ptr<Schema> rightSourceSchema)
+{
+    if (leftSourceSchema)
+    {
+        this->leftSourceSchema = std::move(leftSourceSchema);
+    }
+    if (rightSourceSchema)
+    {
+        this->rightSourceSchema = std::move(rightSourceSchema);
+    }
+}
+
+std::shared_ptr<Schema> JoinLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+OriginId JoinLogicalOperator::getOriginId() const
+{
+    return originId;
 }
 
 std::string JoinLogicalOperator::getWindowStartFieldName() const {

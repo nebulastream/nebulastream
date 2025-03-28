@@ -15,7 +15,7 @@
 #pragma once
 
 
-#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
+#include "Operators/UnaryLogicalOperator.hpp"
 
 namespace NES
 {
@@ -27,8 +27,9 @@ namespace NES
 class SourceNameLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema);
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
