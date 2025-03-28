@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <vector>
-#include <Operators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/Operator.hpp>
 #include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
@@ -45,7 +44,7 @@ void OriginIdInferencePhase::performInference(
     /// set origin id for all operators of type OriginIdAssignmentOperator. For example, window, joins and sources.
     for (auto originIdAssignmentOperators : originIdAssignmentOperator)
     {
-        originIdAssignmentOperators->setOriginId(OriginId(originIdCounter++));
+        originIdAssignmentOperators.setOriginId(OriginId(originIdCounter++));
     }
 
     /// propagate origin ids through the complete query plan
