@@ -14,14 +14,36 @@
 
 #include <memory>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include <memory>
+#include <utility>
+#include <Traits/QueryForSubtree.hpp>
+#include <Traits/TraitSet.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Functions/FunctionProvider.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Plans/Operator.hpp>
+#include <SelectionPhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {
-std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalJoin()
-{
-    return std::make_unique<LowerToPhysicalNLJoin>();
-}
 
+std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalSelection::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+{
+    auto op = traitSet->get<Operator>();
+    const auto ops = dynamic_cast<SelectionLogicalOperator*>(op);
+    auto function = ops->getPredicate();
+    auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
+    auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(layout);
+    auto phyOp = std::make_shared<SelectionPhysicalOperator>(std::vector<std::shared_ptr<TupleBufferMemoryProvider>>{std::move(memoryProvider)}, std::move(func));
+    return {phyOp};
+};
+
+std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSelectionRewriteRule(RewriteRuleRegistryArguments argument)
+{
+    return std::make_unique<LowerToPhysicalSelection>(argument.conf);
+}
 }
