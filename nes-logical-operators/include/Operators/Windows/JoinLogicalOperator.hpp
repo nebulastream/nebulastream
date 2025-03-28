@@ -17,19 +17,19 @@
 #include <cstdint>
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
-#include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include <WindowTypes/Types/WindowType.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/BinaryLogicalOperator.hpp>
+#include <Operators/Windows/WindowOperator.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
+#include <Traits/OriginIdTrait.hpp>
 
 namespace NES
 {
 class SerializableOperator;
 
-class JoinLogicalOperator : public BinaryLogicalOperator, public OriginIdAssignmentOperator
+class JoinLogicalOperator : public BinaryLogicalOperator
 {
 public:
     enum class JoinType : uint8_t
@@ -38,41 +38,31 @@ public:
         CARTESIAN_PRODUCT
     };
 
-    static constexpr std::string_view NAME = "Join";
-
-    explicit JoinLogicalOperator(const std::shared_ptr<LogicalFunction>& joinFunction,
-                                 const std::shared_ptr<Windowing::WindowType>& windowType,
+    explicit JoinLogicalOperator(std::unique_ptr<LogicalFunction> joinFunction,
+                                 std::unique_ptr<Windowing::WindowType> windowType,
                                  uint64_t numberOfInputEdgesLeft,
                                  uint64_t numberOfInputEdgesRight,
-                                 JoinType joinType,
-                                 OriginId originId = INVALID_ORIGIN_ID);
+                                 JoinType joinType);
     std::string_view getName() const noexcept override;
 
 
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     bool inferSchema() override;
-    std::shared_ptr<Operator> clone() const override;
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
 
-    std::vector<OriginId> getOutputOriginIds() const override;
-    void setOriginId(OriginId originId) override;
-
-    [[nodiscard]]  std::shared_ptr<LogicalFunction> getJoinFunction() const;
-    [[nodiscard]] std::shared_ptr<Schema> getLeftSchema() const;
-
-    [[nodiscard]] std::shared_ptr<Schema> getRightSchema() const;
-
-    [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
+    [[nodiscard]] LogicalFunction& getJoinFunction() const;
+    [[nodiscard]] Schema getLeftSchema() const;
+    [[nodiscard]] Schema getRightSchema() const;
+    [[nodiscard]] Windowing::WindowType& getWindowType() const;
     [[nodiscard]] JoinType getJoinType() const;
 
-    void updateSchemas(std::shared_ptr<Schema> leftSourceSchema, std::shared_ptr<Schema> rightSourceSchema);
+    void updateSchemas(Schema leftSourceSchema, Schema rightSourceSchema);
 
-    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
 
-    [[nodiscard]] OriginId getOriginId() const;
 
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -99,15 +89,21 @@ public:
     };
 
     [[nodiscard]] SerializableOperator serialize() const override;
-
     [[nodiscard]] std::string toString() const override;
 
+    Optimizer::OriginIdTrait originIdTrait;
+
+protected:
+    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
+
 private:
-    std::shared_ptr<LogicalFunction> joinFunction;
-    std::shared_ptr<Schema> leftSourceSchema = Schema::create();
-    std::shared_ptr<Schema> rightSourceSchema = Schema::create();
-    std::shared_ptr<Schema> outputSchema = Schema::create();
-    std::shared_ptr<Windowing::WindowType> windowType;
+    static constexpr std::string_view NAME = "Join";
+
+    std::unique_ptr<LogicalFunction> joinFunction;
+    Schema leftSourceSchema;
+    Schema rightSourceSchema;
+    Schema outputSchema ;
+    std::unique_ptr<Windowing::WindowType> windowType;
     uint64_t numberOfInputEdgesLeft;
     uint64_t numberOfInputEdgesRight;
     std::string windowStartFieldName;
