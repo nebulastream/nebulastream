@@ -16,7 +16,7 @@
 #include <sstream>
 #include <string>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Abstract/LogicalFunction.hpp>
 #include <Util/Common.hpp>
