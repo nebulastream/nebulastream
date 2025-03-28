@@ -5,9 +5,9 @@ FROM nebulastream/nes-development-dependency:${TAG}
 ARG ANTLR4_VERSION=4.13.2
 
 RUN apt-get update -y && apt-get install -y \
-        clang-format-${LLVM_VERSION} \
-        clang-tidy-${LLVM_VERSION} \
-        lldb-${LLVM_VERSION} \
+        clang-format-${LLVM_TOOLCHAIN_VERSION} \
+        clang-tidy-${LLVM_TOOLCHAIN_VERSION} \
+        lldb-${LLVM_TOOLCHAIN_VERSION} \
         gdb \
         jq \
         python3 \

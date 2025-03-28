@@ -15,7 +15,7 @@ include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(LLVM_VERSION 18.1.6)
-set(LLVM_MAJOR_VERSION 18)
+set(LLVM_TOOLCHAIN_VERSION 19)
 
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support (might improve performance significantly)" OFF)
