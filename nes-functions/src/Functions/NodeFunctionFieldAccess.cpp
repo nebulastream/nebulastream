@@ -27,9 +27,10 @@
 namespace NES
 {
 NodeFunctionFieldAccess::NodeFunctionFieldAccess(std::shared_ptr<DataType> stamp, std::string fieldName)
-    : NodeFunction(std::move(stamp), "FieldAccess"), fieldName(std::move(fieldName)) {};
+    : NodeFunction(std::move(stamp), "FieldAccess"), fieldName(std::move(fieldName)) { };
 
-NodeFunctionFieldAccess::NodeFunctionFieldAccess(NodeFunctionFieldAccess* other) : NodeFunction(other), fieldName(other->getFieldName()) {};
+NodeFunctionFieldAccess::NodeFunctionFieldAccess(NodeFunctionFieldAccess* other)
+    : NodeFunction(other), fieldName(other->getFieldName()) { };
 
 std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(std::shared_ptr<DataType> stamp, std::string fieldName)
 {

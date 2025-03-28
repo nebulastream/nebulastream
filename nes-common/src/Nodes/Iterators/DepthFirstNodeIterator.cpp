@@ -21,7 +21,7 @@
 namespace NES
 {
 
-DepthFirstNodeIterator::DepthFirstNodeIterator(std::shared_ptr<Node> start) : start(std::move(start)) {};
+DepthFirstNodeIterator::DepthFirstNodeIterator(std::shared_ptr<Node> start) : start(std::move(start)) { };
 
 DepthFirstNodeIterator::Iterator DepthFirstNodeIterator::begin() const
 {

@@ -27,7 +27,7 @@
 namespace NES
 {
 
-NodeFunctionPow::NodeFunctionPow(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Pow") {};
+NodeFunctionPow::NodeFunctionPow(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Pow") { };
 
 NodeFunctionPow::NodeFunctionPow(NodeFunctionPow* other) : NodeFunctionArithmeticalBinary(other)
 {

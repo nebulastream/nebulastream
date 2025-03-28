@@ -25,7 +25,7 @@ class PhysicalOperatorProvider
 {
 public:
     explicit PhysicalOperatorProvider(Configurations::QueryCompilerConfiguration queryCompilerConfig)
-        : queryCompilerConfig(std::move(queryCompilerConfig)) {};
+        : queryCompilerConfig(std::move(queryCompilerConfig)) { };
     virtual ~PhysicalOperatorProvider() = default;
 
     /// This method is called to replace the logical operator with corresponding physical operators.
