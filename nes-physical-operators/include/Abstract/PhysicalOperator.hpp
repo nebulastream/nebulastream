@@ -98,10 +98,6 @@ public:
         self->setChild(child);
     }
 
-    bool operator==(const PhysicalOperator &other) const {
-        return self->equals(*other.self);
-    }
-
     void setup(ExecutionContext& executionCtx) const
     {
         self->setup(executionCtx);
@@ -134,7 +130,6 @@ public:
 
     struct Concept : PhysicalOperatorConcept {
         [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
-        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
     };
 
     template<typename T>
@@ -179,13 +174,6 @@ public:
         void execute(ExecutionContext& executionCtx, Record& record) const override
         {
             data.execute(executionCtx, record);
-        }
-
-        [[nodiscard]] bool equals(const Concept& other) const override {
-            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
-                return data == p->data;
-            }
-            return false;
         }
     };
 
