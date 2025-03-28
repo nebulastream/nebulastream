@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
 #include <memory>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <CompiledQueryPlan.hpp>
+#include <Operators/LogicalOperator.hpp>
 
-namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
+namespace NES
 {
-std::unique_ptr<Runtime::Execution::CompiledQueryPlan> apply(const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan);
+
+LogicalOperator::LogicalOperator(std::shared_ptr<LogicalOperator> logicalOp) : outputSchema(logicalOp->outputSchema) {};
+
 }

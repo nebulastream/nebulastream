@@ -20,9 +20,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Types/ContentBasedWindowType.hpp>
@@ -78,7 +76,7 @@ bool WindowedAggregationLogicalOperator::operator==(const Operator& rhs) const
 
         for (uint64_t i = 0; i < this->getKeys().size(); i++)
         {
-            if (this->getKeys()[i] != rhsOperator->getKeys()[i])
+            if (!this->getKeys()[i]->equal(rhsOperator->getKeys()[i]))
             {
                 return false;
             }

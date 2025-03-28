@@ -29,7 +29,8 @@ class MapLogicalOperator : public UnaryLogicalOperator
 public:
     static constexpr std::string_view NAME = "Map";
 
-    MapLogicalOperator(const std::shared_ptr<FieldAssignmentLogicalFunction>& mapFunction, OperatorId id);
+    MapLogicalOperator(const std::shared_ptr<FieldAssignmentLogicalFunction>& mapFunction);
+    std::string_view getName() const noexcept override;
 
     [[nodiscard]] std::shared_ptr<FieldAssignmentLogicalFunction> getMapFunction() const;
 
