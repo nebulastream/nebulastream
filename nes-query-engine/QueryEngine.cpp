@@ -464,7 +464,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                         tupleBuffer,
                         {},
                         {},
-                        policy == Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                        policy == PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
                 }
                 return true;
             });
@@ -564,7 +564,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
                     tupleBuffer,
                     [ref = successor] {},
                     {},
-                    policy == Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+                    policy == PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
             }
             return true;
         });
@@ -716,7 +716,7 @@ void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan
 {
     ENGINE_LOG_INFO("Starting Query: {}", fmt::streamed(*instantiatedQueryPlan));
     threadPool->admissionQueue.blockingWrite(
-        StartQueryTask{instantiatedQueryPlan->queryId, std::move(instantiatedQueryPlan), queryCatalog, {}, {}});
+        StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, {}, {}});
 }
 
 QueryEngine::~QueryEngine()
