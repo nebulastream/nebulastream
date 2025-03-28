@@ -44,12 +44,6 @@ LogicalFunction SelectionLogicalOperator::getPredicate() const
     return predicate;
 }
 
-void SelectionLogicalOperator::setPredicate(LogicalFunction newPredicate)
-{
-    predicate = std::move(newPredicate);
-}
-
-
 bool SelectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const SelectionLogicalOperator*>(&rhs))
@@ -81,6 +75,52 @@ bool SelectionLogicalOperator::inferSchema()
     return true;
 }
 */
+
+Optimizer::TraitSet SelectionLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void SelectionLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> SelectionLogicalOperator::getInputSchemas() const
+{
+    return {inputSchema};
+};
+
+Schema SelectionLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> SelectionLogicalOperator::getInputOriginIds() const
+{
+    return inputOriginIds;
+}
+
+std::vector<OriginId> SelectionLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void SelectionLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void SelectionLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
+{
+    return children;
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
 {

@@ -28,8 +28,8 @@ class MapLogicalOperator : public LogicalOperatorConcept
 {
 public:
     MapLogicalOperator(const FieldAssignmentLogicalFunction& mapFunction);
-    std::string_view getName() const noexcept override;
 
+    /// Operator specific member
     [[nodiscard]] const FieldAssignmentLogicalFunction& getMapFunction() const;
 
     /// @brief Infers the schema of the map operator. We support two cases:
@@ -40,42 +40,50 @@ public:
     /// @return true if inference was possible
     //[[nodiscard]] bool inferSchema();
 
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
 
+    /// LogicalOperatorConcept member
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
 
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string> config);
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override;
 
+    void setChildren(std::vector<LogicalOperator> children) override;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
+
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override;
+    void setOutputOriginIds(std::vector<OriginId> ids) override;
+
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
+
+
+    /// Serialization
+    static NES::Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
     struct ConfigParameters
     {
-        static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> MAP_FUNCTION_NAME{
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> MAP_FUNCTION_NAME{
             "mapFunctionName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-                return Configurations::DescriptorConfig::tryGet(MAP_FUNCTION_NAME, config);
+                return NES::Configurations::DescriptorConfig::tryGet(MAP_FUNCTION_NAME, config);
             }};
 
-        static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = Configurations::DescriptorConfig::createConfigParameterContainerMap(MAP_FUNCTION_NAME);
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(MAP_FUNCTION_NAME);
     };
 
-protected:
-    std::string toString() const override;
-
-    std::vector<LogicalOperator> getChildren() const override { return children; }
-    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
-
-    Optimizer::TraitSet getTraitSet() const override { return {}; }
-
-    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
-    Schema getOutputSchema() const override { return outputSchema; }
-    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
-    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
-
 private:
+    /// Operator specific member
     static constexpr std::string_view NAME = "Map";
     LogicalFunction mapFunction;
 
+    /// LogicalOperatorConcept member
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
 };
 }

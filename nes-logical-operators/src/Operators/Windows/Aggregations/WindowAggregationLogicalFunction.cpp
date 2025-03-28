@@ -28,7 +28,7 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     std::unique_ptr<DataType> inputStamp,
     std::unique_ptr<DataType> partialAggregateStamp,
     std::unique_ptr<DataType> finalAggregateStamp,
-    LogicalFunction onField)
+    FieldAccessLogicalFunction onField)
     : inputStamp(std::move(inputStamp))
     , partialAggregateStamp(std::move(partialAggregateStamp))
     , finalAggregateStamp(std::move(finalAggregateStamp))
@@ -41,8 +41,8 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     std::unique_ptr<DataType> inputStamp,
     std::unique_ptr<DataType> partialAggregateStamp,
     std::unique_ptr<DataType> finalAggregateStamp,
-    LogicalFunction onField,
-    LogicalFunction asField)
+    FieldAccessLogicalFunction onField,
+    FieldAccessLogicalFunction asField)
     : inputStamp(std::move(inputStamp))
     , partialAggregateStamp(std::move(partialAggregateStamp))
     , finalAggregateStamp(std::move(finalAggregateStamp))
@@ -51,18 +51,14 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
 {
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(LogicalFunction asField)
+std::unique_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(const FieldAccessLogicalFunction& asField)
 {
     this->asField = asField;
     return std::unique_ptr<WindowAggregationLogicalFunction>(this);
 }
 
-LogicalFunction WindowAggregationLogicalFunction::as() const
+FieldAccessLogicalFunction WindowAggregationLogicalFunction::as() const
 {
-    //if (asField == nullptr)
-    //{
-    //    return onField;
-    //}
     return asField;
 }
 
@@ -87,7 +83,7 @@ std::string WindowAggregationLogicalFunction::getTypeAsString() const
     return std::string(magic_enum::enum_name(aggregationType));
 }
 
-LogicalFunction WindowAggregationLogicalFunction::on() const
+FieldAccessLogicalFunction WindowAggregationLogicalFunction::on() const
 {
     return onField;
 }

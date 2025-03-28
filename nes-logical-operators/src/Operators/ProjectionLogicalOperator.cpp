@@ -124,6 +124,51 @@ bool ProjectionLogicalOperator::inferSchema()
 }
  */
 
+Optimizer::TraitSet ProjectionLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void ProjectionLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> ProjectionLogicalOperator::getInputSchemas() const
+{
+    return {inputSchema};
+};
+
+Schema ProjectionLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> ProjectionLogicalOperator::getInputOriginIds() const
+{
+    return inputOriginIds;
+}
+
+std::vector<OriginId> ProjectionLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void ProjectionLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void ProjectionLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
+{
+    return children;
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
 {

@@ -25,42 +25,49 @@ class UnionLogicalOperator : public LogicalOperatorConcept
 {
 public:
     explicit UnionLogicalOperator();
-    std::string_view getName() const noexcept override;
 
-    ///infer schema of two child operators
+    /// Operator specific member
     bool inferSchema();
     void inferInputOrigins();
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
 
+    /// LogicalOperatorConcept member
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
 
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string> config);
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override;
+
+    void setChildren(std::vector<LogicalOperator> children) override;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
+
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override;
+    void setOutputOriginIds(std::vector<OriginId> ids) override;
+
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
+
+private:
+    /// Operator specific member
+    static constexpr std::string_view NAME = "Union";
+
+    /// LogicalOperatorConcept member
+    std::vector<LogicalOperator> children;
+    Schema leftInputSchema, rightInputSchema, outputSchema;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
+
+    /// Serialization
+    static NES::Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     struct ConfigParameters
     {
         static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
             = Configurations::DescriptorConfig::createConfigParameterContainerMap();
     };
-
-protected:
-    std::string toString() const override;
-
-    std::vector<LogicalOperator> getChildren() const override { return children; }
-
-    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
-
-    Optimizer::TraitSet getTraitSet() const override { return {}; }
-
-    std::vector<Schema> getInputSchemas() const override { return {leftInputSchema, rightInputSchema}; };
-    Schema getOutputSchema() const override { return outputSchema; }
-    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
-    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
-
-private:
-    static constexpr std::string_view NAME = "Union";
-    std::vector<LogicalOperator> children;
-    Schema leftInputSchema, rightInputSchema, outputSchema;
 };
 
 

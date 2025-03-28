@@ -35,13 +35,13 @@ public:
     virtual ~WindowAggregationLogicalFunction() = default;
 
     /// Defines the field to which a aggregate output is assigned.
-    std::unique_ptr<WindowAggregationLogicalFunction> as(LogicalFunction asField);
+    std::unique_ptr<WindowAggregationLogicalFunction> as(const FieldAccessLogicalFunction& asField);
 
     /// Returns the result field of the aggregation
-    LogicalFunction as() const;
+    FieldAccessLogicalFunction as() const;
 
     //// Returns the result field of the aggregation
-    LogicalFunction on() const;
+    FieldAccessLogicalFunction on() const;
 
     /// Returns the type of this aggregation.
     Type getType() const;
@@ -69,17 +69,17 @@ protected:
         std::unique_ptr<DataType> inputStamp,
         std::unique_ptr<DataType> partialAggregateStamp,
         std::unique_ptr<DataType> finalAggregateStamp,
-        LogicalFunction onField,
-        LogicalFunction asField);
+        FieldAccessLogicalFunction onField,
+        FieldAccessLogicalFunction asField);
     explicit WindowAggregationLogicalFunction(
         std::unique_ptr<DataType> inputStamp,
         std::unique_ptr<DataType> partialAggregateStamp,
         std::unique_ptr<DataType> finalAggregateStamp,
-        LogicalFunction onField);
+        FieldAccessLogicalFunction onField);
     WindowAggregationLogicalFunction() = delete;
 
     std::unique_ptr<DataType> inputStamp, partialAggregateStamp, finalAggregateStamp;
-    LogicalFunction onField, asField;
+    FieldAccessLogicalFunction onField, asField;
     Type aggregationType;
 };
 }

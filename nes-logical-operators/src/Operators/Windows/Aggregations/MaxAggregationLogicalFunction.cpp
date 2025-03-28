@@ -14,11 +14,13 @@
 
 #include <memory>
 #include <utility>
+#include <API/Schema.hpp>
 #include <Abstract/LogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
+#include <Common/DataTypes/Numeric.hpp>
 
 namespace NES
 {
@@ -29,15 +31,15 @@ MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLo
     aggregationType = Type::Max;
 }
 
-MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(LogicalFunction field, LogicalFunction asField)
-    : WindowAggregationLogicalFunction(field.getStamp().clone(), field.getStamp().clone(), field.getStamp().clone(), field, asField)
+MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
+    : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field, asField)
 {
     aggregationType = Type::Max;
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::create(LogicalFunction onField)
+std::unique_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
 {
-    return std::make_unique<MaxAggregationLogicalFunction>(onField.get<FieldAccessLogicalFunction>());
+    return std::make_unique<MaxAggregationLogicalFunction>(onField);
 }
 
 std::unique_ptr<WindowAggregationLogicalFunction>
@@ -46,34 +48,30 @@ MaxAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField,
     return std::make_unique<MaxAggregationLogicalFunction>(onField, asField);
 }
 
-/*
 void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
-    onField->inferStamp(schema);
-    if (dynamic_cast<Numeric*>(&onField->getStamp()) == nullptr)
-    {
-        NES_FATAL_ERROR("MaxAggregationLogicalFunction: aggregations on non numeric fields is not supported.");
-    }
+    onField = onField.withInferredStamp(schema).get<FieldAccessLogicalFunction>();
+    INVARIANT(dynamic_cast<const Numeric*>(&onField.getStamp()) == nullptr, "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = onField.get<FieldAccessLogicalFunction>()->getFieldName();
-    const auto asFieldName = asField.get<FieldAccessLogicalFunction>()->getFieldName();
+    auto onFieldName = onField.getFieldName();
+    auto asFieldName = asField.getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField.get<FieldAccessLogicalFunction>()->setFieldName(attributeNameResolver + asFieldName);
+        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
     }
     else
     {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + fieldName);
+        auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
-    asField->setStamp(getFinalAggregateStamp().clone());
+    asField = asField.withStamp(getFinalAggregateStamp().clone()).get<FieldAccessLogicalFunction>();
 }
-*/
+
 
 std::unique_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::clone()
 {

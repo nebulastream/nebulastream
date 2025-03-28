@@ -27,25 +27,33 @@ public:
 
     FieldAssignmentLogicalFunction(const FieldAccessLogicalFunction& fieldAccess, LogicalFunction logicalFunction);
     FieldAssignmentLogicalFunction(const FieldAssignmentLogicalFunction& other);
+    FieldAssignmentLogicalFunction& operator=(const FieldAssignmentLogicalFunction& other) = default;
 
     [[nodiscard]] const FieldAccessLogicalFunction& getField() const;
     [[nodiscard]] LogicalFunction getAssignment() const;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    //void inferStamp(const Schema& schema);
+    bool inferStamp(Schema schema) override;
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
     const DataType& getStamp() const override { return *stamp; };
     void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    bool inferStamp(Schema) override { return false; };
     std::vector<LogicalFunction> getChildren() const override { return {fieldAccess, logicalFunction}; };
+    void setChildren(std::vector<LogicalFunction> children) override
+    {
+        fieldAccess = children[0].get<FieldAccessLogicalFunction>();
+        logicalFunction = children[1];
+    };
     std::string getType() const override { return std::string(NAME); }
 
     [[nodiscard]] std::string toString() const override;
 
 private:
     std::shared_ptr<DataType> stamp;
-    LogicalFunction fieldAccess, logicalFunction;
+    FieldAccessLogicalFunction fieldAccess;
+    LogicalFunction logicalFunction;
 };
 }
 FMT_OSTREAM(NES::FieldAssignmentLogicalFunction);

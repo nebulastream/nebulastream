@@ -27,7 +27,7 @@ namespace NES
 class AvgAggregationLogicalFunction final : public WindowAggregationLogicalFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(LogicalFunction onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
     static std::unique_ptr<WindowAggregationLogicalFunction>
     create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
     AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);

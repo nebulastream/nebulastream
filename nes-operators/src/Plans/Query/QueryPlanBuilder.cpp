@@ -150,8 +150,8 @@ QueryPlan QueryPlanBuilder::addJoin(
                         {
                             throw InvalidQuerySyntax("One of the join keys does only consist of a constant function. Use WHERE instead.");
                         }
-                        auto leftKeyFieldAccess = asFieldAccessLogicalFunction(itr.getChildren()[0].getChildren()[0], "leftSide");
-                        auto rightKeyFieldAccess = asFieldAccessLogicalFunction(itr.getChildren()[0].getChildren()[1], "rightSide");
+                        auto leftKeyFieldAccess = itr.getChildren()[0].getChildren()[0].get<FieldAccessLogicalFunction>();
+                        auto rightKeyFieldAccess = itr.getChildren()[0].getChildren()[1].get<FieldAccessLogicalFunction>();
                     }
                 }
             }
