@@ -12,21 +12,28 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <Types/ContentBasedWindowType.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Util/Logger/Logger.hpp>
-
+#pragma once
+#include <cstdint>
+#include <WindowTypes/Measures/WindowMeasure.hpp>
 namespace NES::Windowing
 {
 
-ContentBasedWindowType::ContentBasedWindowType() = default;
-
-std::shared_ptr<ThresholdWindow>
-ContentBasedWindowType::asThresholdWindow(const std::shared_ptr<ContentBasedWindowType>& contentBasedWindowType)
+/// A time based window measure.
+class TimeMeasure : public WindowMeasure
 {
-    auto thresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(contentBasedWindowType);
-    INVARIANT(thresholdWindow, "Cannot cast the content based window type to a threshold window");
-    return thresholdWindow;
-}
+public:
+    explicit TimeMeasure(uint64_t milliseconds);
+
+    [[nodiscard]] uint64_t getTime() const;
+
+    std::string toString() const override;
+
+    bool operator<(const TimeMeasure& other) const;
+    bool operator<=(const TimeMeasure& other) const;
+    bool operator==(const TimeMeasure& other) const;
+
+private:
+    const uint64_t milliSeconds;
+};
+
 }

@@ -24,12 +24,12 @@
 namespace NES::Windowing
 {
 
-SlidingWindow::SlidingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide)
+SlidingWindow::SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
     : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size)), slide(std::move(slide))
 {
 }
 
-std::shared_ptr<WindowType> SlidingWindow::of(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide)
+std::shared_ptr<WindowType> SlidingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
 {
     return std::make_shared<SlidingWindow>(SlidingWindow(std::move(timeCharacteristic), std::move(size), std::move(slide)));
 }
@@ -49,14 +49,14 @@ std::string SlidingWindow::toString() const
     std::stringstream ss;
     ss << "SlidingWindow: size=" << size.getTime();
     ss << " slide=" << slide.getTime();
-    ss << " timeCharacteristic=" << timeCharacteristic->toString();
+    ss << " timeCharacteristic=" << timeCharacteristic.toString();
     ss << std::endl;
     return ss.str();
 }
 
-bool SlidingWindow::equal(std::shared_ptr<WindowType> otherWindowType)
+bool SlidingWindow::operator==(const WindowType& otherWindowType)
 {
-    if (auto otherSlidingWindow = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType))
+    if (auto otherSlidingWindow = dynamic_cast<const SlidingWindow*>(&otherWindowType))
     {
         return this->size.equals(otherSlidingWindow->size) && this->slide.equals(otherSlidingWindow->slide)
             && this->timeCharacteristic->equals(*otherSlidingWindow->timeCharacteristic);
@@ -69,7 +69,7 @@ uint64_t SlidingWindow::hash() const
     uint64_t hashValue = 0;
     hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
     hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(slide.getTime());
-    hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
+    hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic.hash());
     return hashValue;
 }
 

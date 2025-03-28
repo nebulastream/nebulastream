@@ -12,13 +12,23 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Types/ContentBasedWindowType.hpp>
+#include <WindowTypes/Types/ContentBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <WindowTypes/Types/ThresholdWindow.hpp>
+#include <ErrorHandling.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::Windowing
 {
 
-WindowType::WindowType() = default;
+ContentBasedWindowType::ContentBasedWindowType() = default;
 
+std::unique_ptr<ThresholdWindow>
+ContentBasedWindowType::asThresholdWindow(const ContentBasedWindowType& contentBasedWindowType)
+{
+    if (auto* casted = dynamic_cast<const ThresholdWindow*>(&contentBasedWindowType)) {
+        return std::make_unique<ThresholdWindow>(*casted);
+    }
+    return std::unique_ptr<ThresholdWindow>();
+}
 }
