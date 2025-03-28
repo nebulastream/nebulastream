@@ -35,15 +35,13 @@ void LogicalSourceExpansionRule::apply(QueryPlan& queryPlan, Catalogs::Source::S
         auto sourceCatalogEntries = sourceCatalog.getPhysicalSources(logicalSourceName);
         if (sourceCatalogEntries.empty())
         {
-            auto ex = PhysicalSourceNotFoundInQueryDescription();
-            ex.what() += "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source " + logicalSourceName;
-            throw ex;
+            throw PhysicalSourceNotFoundInQueryDescription("LogicalSourceExpansionRule: Unable to find physical source locations for the logical source " + logicalSourceName);
         }
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
             auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(sourceOp.getSchema());
             auto logicalDescOp = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
-            queryPlan.replaceOperator(sourceOp, std::move(logicalDescOp));
+            queryPlan.replaceOperator(sourceOp, logicalDescOp);
         }
     }
 }
