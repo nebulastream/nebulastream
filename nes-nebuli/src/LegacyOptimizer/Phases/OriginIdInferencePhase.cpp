@@ -14,10 +14,10 @@
 
 #include <memory>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
-#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Traits/OriginIdTrait.hpp>
 #include <Plans/LogicalPlan.hpp>
 

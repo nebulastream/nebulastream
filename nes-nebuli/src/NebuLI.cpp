@@ -27,6 +27,9 @@
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
+#include <LegacyOptimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
@@ -34,9 +37,6 @@
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
-#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
-#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
-#include <LegacyOptimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 #include <yaml-cpp/yaml.h>

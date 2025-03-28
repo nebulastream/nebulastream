@@ -14,8 +14,8 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>

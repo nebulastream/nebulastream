@@ -14,8 +14,8 @@
 
 #include <string>
 #include <Identifiers/Identifiers.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>

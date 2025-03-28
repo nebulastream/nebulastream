@@ -15,14 +15,14 @@
 #include <string_view>
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
+#include <AntlrSQLParser.h>
+#include <BailErrorStrategy.h>
+#include <CommonTokenStream.h>
+#include <Exceptions.h>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <AntlrSQLParser.h>
-#include <CommonTokenStream.h>
-#include <Exceptions.h>
-#include <BailErrorStrategy.h>
 #include <Plans/LogicalPlan.hpp>
 
 namespace NES::AntlrSQLQueryParser

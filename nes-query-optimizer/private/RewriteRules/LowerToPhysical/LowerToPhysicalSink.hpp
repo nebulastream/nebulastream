@@ -15,8 +15,9 @@
 #pragma once
 
 #include <memory>
-#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Functions/FunctionProvider.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 

@@ -16,10 +16,10 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <QueryCompiler.hpp>
-#include <QueryOptimizer.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <QueryCompiler.hpp>
+#include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Plans/LogicalPlan.hpp>
 
