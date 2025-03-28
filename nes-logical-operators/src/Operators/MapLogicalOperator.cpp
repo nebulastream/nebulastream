@@ -141,7 +141,7 @@ SerializableOperator MapLogicalOperator::serialize() const
     return serializedOperator;
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+NES::Configurations::DescriptorConfig::Config
 MapLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return NES::Configurations::DescriptorConfig::validateAndFormat<MapLogicalOperator::ConfigParameters>(std::move(config), NAME);

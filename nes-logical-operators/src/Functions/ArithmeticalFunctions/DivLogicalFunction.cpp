@@ -69,7 +69,7 @@ SerializableFunction DivLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionRegistryReturnType
 BinaryLogicalFunctionGeneratedRegistrar::RegisterDivBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<DivLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));

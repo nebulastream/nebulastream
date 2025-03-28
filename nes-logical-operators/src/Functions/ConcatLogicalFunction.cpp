@@ -71,7 +71,7 @@ SerializableFunction ConcatLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionRegistryReturnType
 BinaryLogicalFunctionGeneratedRegistrar::RegisterConcatBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<ConcatLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));

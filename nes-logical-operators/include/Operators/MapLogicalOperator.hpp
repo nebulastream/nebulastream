@@ -46,8 +46,7 @@ public:
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static NES::Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     struct ConfigParameters
     {

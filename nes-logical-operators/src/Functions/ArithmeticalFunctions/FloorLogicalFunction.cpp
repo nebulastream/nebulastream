@@ -66,7 +66,7 @@ SerializableFunction FloorLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterFloorUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<FloorLogicalFunction>(std::move(arguments.child));

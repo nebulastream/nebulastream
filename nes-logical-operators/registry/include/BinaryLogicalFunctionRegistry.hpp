@@ -24,7 +24,7 @@
 namespace NES
 {
 
-using BinaryLogicalFunctionRegistryReturnType = BinaryLogicalFunction;
+using BinaryLogicalFunctionRegistryReturnType = std::unique_ptr<BinaryLogicalFunction>;
 struct BinaryLogicalFunctionRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;

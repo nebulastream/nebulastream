@@ -66,7 +66,7 @@ SerializableFunction ExpLogicalFunction::serialize() const
 }
 
 
-std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterExpUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<ExpLogicalFunction>(std::move(arguments.child));

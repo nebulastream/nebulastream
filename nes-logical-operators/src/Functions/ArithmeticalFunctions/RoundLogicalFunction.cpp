@@ -70,7 +70,7 @@ SerializableFunction RoundLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterRoundUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<RoundLogicalFunction>(std::move(arguments.child));

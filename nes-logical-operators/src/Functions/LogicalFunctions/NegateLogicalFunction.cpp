@@ -85,7 +85,7 @@ SerializableFunction NegateLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterNegateUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<NegateLogicalFunction>(std::move(arguments.child));

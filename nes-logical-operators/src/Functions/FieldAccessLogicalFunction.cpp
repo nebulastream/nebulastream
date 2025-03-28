@@ -104,7 +104,7 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<LogicalFunctionRegistryReturnType>
+LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     auto fieldName = get<std::string>(arguments.config["FieldName"]);

@@ -70,7 +70,7 @@ SerializableFunction LessEqualsLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionRegistryReturnType
 BinaryLogicalFunctionGeneratedRegistrar::RegisterLessEqualsBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<LessEqualsLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));

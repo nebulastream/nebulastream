@@ -92,7 +92,7 @@ SerializableFunction ConstantValueLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<LogicalFunctionRegistryReturnType>
+LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);

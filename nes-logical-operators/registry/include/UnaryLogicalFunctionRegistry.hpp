@@ -25,7 +25,7 @@ namespace NES
 {
 
 
-using UnaryLogicalFunctionRegistryReturnType = UnaryLogicalFunction;
+using UnaryLogicalFunctionRegistryReturnType = std::unique_ptr<UnaryLogicalFunction>;
 struct UnaryLogicalFunctionRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;

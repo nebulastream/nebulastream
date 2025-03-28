@@ -14,7 +14,7 @@
 
 #include <Operators/UnionLogicalOperator.hpp>
 #include <memory>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <API/Schema.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
@@ -121,7 +121,7 @@ void UnionLogicalOperator::inferInputOrigins()
     this->leftInputOriginIds = combinedInputOriginIds;
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+NES::Configurations::DescriptorConfig::Config
 UnionLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return NES::Configurations::DescriptorConfig::validateAndFormat<UnionLogicalOperator::ConfigParameters>(std::move(config), NAME);

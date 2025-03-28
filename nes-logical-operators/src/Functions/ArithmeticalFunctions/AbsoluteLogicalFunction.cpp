@@ -68,7 +68,7 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterAbsoluteUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<AbsoluteLogicalFunction>(std::move(arguments.child));

@@ -83,7 +83,7 @@ SerializableFunction EqualsLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionRegistryReturnType
 BinaryLogicalFunctionGeneratedRegistrar::RegisterEqualsBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<EqualsLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));

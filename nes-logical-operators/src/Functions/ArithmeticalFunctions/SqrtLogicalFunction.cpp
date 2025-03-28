@@ -70,7 +70,7 @@ SerializableFunction SqrtLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterSqrtUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
     return std::make_unique<SqrtLogicalFunction>(std::move(arguments.child));

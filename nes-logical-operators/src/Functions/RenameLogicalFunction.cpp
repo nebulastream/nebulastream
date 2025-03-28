@@ -124,7 +124,7 @@ SerializableFunction RenameLogicalFunction::serialize() const
 }
 
 
-std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionRegistryReturnType
 UnaryLogicalFunctionGeneratedRegistrar::RegisterRenameUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
     auto newFieldName = get<std::string>(arguments.config["NewFieldName"]);
