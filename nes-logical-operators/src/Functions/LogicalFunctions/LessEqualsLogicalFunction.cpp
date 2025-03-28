@@ -32,12 +32,12 @@ LessEqualsLogicalFunction::LessEqualsLogicalFunction(
     this->setRightChild(right);
 }
 
-bool LessEqualsLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool LessEqualsLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<LessEqualsLogicalFunction>(rhs))
     {
         auto other = NES::Util::as<LessEqualsLogicalFunction>(rhs);
-        return this->getLeftChild()->equal(other->getLeftChild()) && this->getRightChild()->equal(other->getRightChild());
+        return this->getLeftChild() == other->getLeftChild() && this->getRightChild() == other->getRightChild();
     }
     return false;
 }

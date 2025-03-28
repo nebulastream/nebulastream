@@ -35,12 +35,12 @@ std::shared_ptr<LogicalFunction> FloorLogicalFunction::create(const std::shared_
     return floorNode;
 }
 
-bool FloorLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool FloorLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<FloorLogicalFunction>(rhs))
     {
         auto otherFloorNode = NES::Util::as<FloorLogicalFunction>(rhs);
-        return getChild()->equal(otherFloorNode->getChild());
+        return getChild() == otherFloorNode->getChild();
     }
     return false;
 }

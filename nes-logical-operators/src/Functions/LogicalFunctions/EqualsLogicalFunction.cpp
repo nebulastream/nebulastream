@@ -26,15 +26,21 @@
 namespace NES
 {
 
-EqualsLogicalFunction::EqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
-    : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "Equals")
+EqualsLogicalFunction::EqualsLogicalFunction() noexcept : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "Equals")
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
 }
 
-EqualsLogicalFunction::EqualsLogicalFunction(const EqualsLogicalFunction& other) : BinaryLogicalFunction(other)
+EqualsLogicalFunction::EqualsLogicalFunction(EqualsLogicalFunction* other) : BinaryLogicalFunction(other)
 {
+}
+
+std::shared_ptr<LogicalFunction>
+EqualsLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+{
+    auto equals = std::make_shared<EqualsLogicalFunction>();
+    equals->setLeftChild(left);
+    equals->setRightChild(right);
+    return equals;
 }
 
 bool EqualsLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
@@ -42,8 +48,8 @@ bool EqualsLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& r
     if (NES::Util::instanceOf<EqualsLogicalFunction>(rhs))
     {
         auto other = NES::Util::as<EqualsLogicalFunction>(rhs);
-        const bool simpleMatch = getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
-        const bool commutativeMatch = getLeftChild() == other->getRightChild() and getRightChild() == other->getLeftChild();
+        const bool simpleMatch = getLeftChild()->equal(other->getLeftChild()) and getRightChild()->equal(other->getRightChild());
+        const bool commutativeMatch = getLeftChild()->equal(other->getRightChild()) and getRightChild()->equal(other->getLeftChild());
         return simpleMatch or commutativeMatch;
     }
     return false;
@@ -58,7 +64,7 @@ std::string EqualsLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> EqualsLogicalFunction::clone() const
 {
-    return std::make_shared<EqualsLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return EqualsLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 bool EqualsLogicalFunction::validateBeforeLowering() const

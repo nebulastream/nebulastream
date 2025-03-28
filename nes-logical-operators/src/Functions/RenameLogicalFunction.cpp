@@ -33,7 +33,7 @@ RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
     : RenameLogicalFunction(other.getOriginalField(), other.getNewFieldName()) {};
 
 
-bool RenameLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool RenameLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<RenameLogicalFunction>(rhs))
     {

@@ -27,9 +27,9 @@ public:
 
     static std::shared_ptr<LogicalFunction>
     create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
-    [[nodiscard]] bool equal(const std::shared_ptr<LogicalFunction>& rhs) const override;
 
     std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
 
 protected:
     explicit GreaterEqualsLogicalFunction(GreaterEqualsLogicalFunction* other);

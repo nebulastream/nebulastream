@@ -27,8 +27,8 @@ public:
     explicit CeilLogicalFunction(std::shared_ptr<DataType> stamp);
     ~CeilLogicalFunction() noexcept override = default;
     [[nodiscard]] static std::shared_ptr<LogicalFunction> create(const std::shared_ptr<LogicalFunction>& child);
-    [[nodiscard]] bool equal(const std::shared_ptr<LogicalFunction>& rhs) const override;
-
+    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
+    std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
     [[nodiscard]] std::string toString() const override;

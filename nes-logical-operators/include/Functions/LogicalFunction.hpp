@@ -46,7 +46,7 @@ public:
     std::shared_ptr<DataType> getStamp() const;
     void setStamp(std::shared_ptr<DataType> stamp);
 
-    virtual bool equal(const std::shared_ptr<LogicalFunction>& rhs) const = 0;
+    virtual bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const = 0;
 
     virtual std::shared_ptr<LogicalFunction> clone() const = 0;
 

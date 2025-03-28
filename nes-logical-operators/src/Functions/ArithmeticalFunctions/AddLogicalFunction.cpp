@@ -37,13 +37,13 @@ AddLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const s
     return addNode;
 }
 
-bool AddLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool AddLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<AddLogicalFunction>(rhs))
     {
         auto other = NES::Util::as<AddLogicalFunction>(rhs);
-        const bool simpleMatch = getLeftChild()->equal(other->getLeftChild()) and getRightChild()->equal(other->getRightChild());
-        const bool commutativeMatch = getLeftChild()->equal(other->getRightChild()) and getRightChild()->equal(other->getLeftChild());
+        const bool simpleMatch = getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
+        const bool commutativeMatch = getLeftChild() == other->getRightChild() and getRightChild() == other->getLeftChild();
         return simpleMatch or commutativeMatch;
     }
     return false;

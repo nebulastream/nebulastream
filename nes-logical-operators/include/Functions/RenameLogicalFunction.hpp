@@ -27,8 +27,7 @@ public:
 
     [[nodiscard]] bool equal(const std::shared_ptr<LogicalFunction>& rhs) const override;
 
-
-    std::string getNewFieldName() const;
+    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
 
     void inferStamp(const Schema& schema) override;
 

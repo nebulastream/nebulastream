@@ -27,7 +27,6 @@ public:
 
     static std::shared_ptr<LogicalFunction> create(const std::shared_ptr<LogicalFunction>& child);
 
-    [[nodiscard]] bool equal(const std::shared_ptr<LogicalFunction>& rhs) const override;
 
     void inferStamp(const Schema& schema) override;
 

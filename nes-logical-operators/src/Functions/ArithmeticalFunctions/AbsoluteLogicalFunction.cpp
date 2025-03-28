@@ -35,7 +35,7 @@ std::shared_ptr<LogicalFunction> AbsoluteLogicalFunction::create(const std::shar
     return absNode;
 }
 
-bool AbsoluteLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool AbsoluteLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<AbsoluteLogicalFunction>(rhs))
     {

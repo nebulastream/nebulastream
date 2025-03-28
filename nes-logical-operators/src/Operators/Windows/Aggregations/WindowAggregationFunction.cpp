@@ -79,8 +79,8 @@ std::shared_ptr<LogicalFunction> WindowAggregationFunction::on() const
 
 bool WindowAggregationFunction::equal(std::shared_ptr<WindowAggregationFunction> otherWindowAggregationFunction) const
 {
-    return this->getType() == otherWindowAggregationFunction->getType() && this->onField->equal(otherWindowAggregationFunction->onField)
-        && this->asField->equal(otherWindowAggregationFunction->asField);
+    return this->getType() == otherWindowAggregationFunction->getType() && this->onField == otherWindowAggregationFunction->onField
+        && this->asField == otherWindowAggregationFunction->asField;
 }
 
 }

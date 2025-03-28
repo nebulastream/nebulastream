@@ -37,7 +37,7 @@ SubLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const s
     return subNode;
 }
 
-bool SubLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool SubLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<SubLogicalFunction>(rhs))
     {

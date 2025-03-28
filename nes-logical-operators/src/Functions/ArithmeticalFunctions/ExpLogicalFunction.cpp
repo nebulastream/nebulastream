@@ -35,12 +35,12 @@ std::shared_ptr<LogicalFunction> ExpLogicalFunction::create(const std::shared_pt
     return expNode;
 }
 
-bool ExpLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool ExpLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<ExpLogicalFunction>(rhs))
     {
         auto otherExpNode = NES::Util::as<ExpLogicalFunction>(rhs);
-        return getChild()->equal(otherExpNode->getChild());
+        return getChild() == otherExpNode->getChild();
     }
     return false;
 }

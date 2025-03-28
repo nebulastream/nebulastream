@@ -34,7 +34,7 @@ public:
 
     void inferStamp(const Schema& schema) override;
 
-    bool equal(const std::shared_ptr<LogicalFunction>& rhs) const override;
+    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
 
 
 protected:
