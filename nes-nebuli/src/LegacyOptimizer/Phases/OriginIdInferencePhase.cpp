@@ -15,6 +15,7 @@
 #include <memory>
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
 #include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -23,26 +24,63 @@
 namespace NES::LegacyOptimizer
 {
 
-void OriginIdInferencePhase::apply(QueryPlan&)
+void inferInputOrigins(LogicalOperator& logicalOperator)
+{
+    if (logicalOperator.tryGet<UnionLogicalOperator>())
+    {
+        auto unionOp = logicalOperator.get<UnionLogicalOperator>();
+        std::vector<OriginId> combinedInputOriginIds;
+        for (auto child : unionOp->getChildren())
+        {
+            inferInputOrigins(child);
+            auto childInputOriginIds = child.getOutputOriginIds();
+            combinedInputOriginIds.insert(combinedInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+        }
+        logicalOperator.setInputOriginIds({combinedInputOriginIds});
+    } else if (logicalOperator.getChildren().size() == 2)
+    {
+        std::vector<OriginId> leftInputOriginIds;
+        auto rightChild = logicalOperator.getChildren()[0];
+        inferInputOrigins(rightChild);
+        auto childInputOriginIds = rightChild.getOutputOriginIds();
+        leftInputOriginIds.insert(leftInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+
+        std::vector<OriginId> rightInputOriginIds;
+        auto leftChild = logicalOperator.getChildren()[0];
+        inferInputOrigins(leftChild);
+        childInputOriginIds = leftChild.getOutputOriginIds();
+        rightInputOriginIds.insert(rightInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+
+        logicalOperator.setInputOriginIds({leftInputOriginIds, rightInputOriginIds});
+    } else if (logicalOperator.getChildren().size() == 1)
+    {
+        std::vector<OriginId> inputOriginIds;
+        auto child = logicalOperator.getChildren()[0];
+        inferInputOrigins(child);
+        auto childInputOriginIds = child.getOutputOriginIds();
+        inputOriginIds.insert(inputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+
+        logicalOperator.setInputOriginIds({inputOriginIds});
+
+    } else if (logicalOperator.getChildren().size() > 2)
+    {
+        INVARIANT(false, "No support for LogicalOperators with more than 2 children");
+    }
+}
+
+void OriginIdInferencePhase::apply(QueryPlan& queryPlan)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
-//    uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
-//    for (auto operatorWithOriginId : queryPlan.getOperatorsWithTraits<Optimizer::OriginIdTrait>())
-//    {
-//        operatorWithOriginId->getTrait<Optimizer::OriginIdTrait>().value().originIds = {OriginId(originIdCounter++)};
-//    }
-//
-//    /// propagate origin ids through the complete query plan
-//    for (auto& rootOperator : queryPlan.getRootOperators())
-//    {
-//        if (auto logicalOperator = dynamic_cast<LogicalOperator*>(rootOperator))
-//        {
-//            logicalOperator->inferInputOrigins();
-//        }
-//        else
-//        {
-//            INVARIANT(false, "during OriginIdInferencePhase all root operators have to be LogicalOperators");
-//        }
-//    }
+    uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
+    for (auto operatorWithOriginId : queryPlan.getOperatorsWithTraits<Optimizer::OriginIdTrait>())
+    {
+        operatorWithOriginId.setInputOriginIds({{OriginId(originIdCounter++)}});
+    }
+
+    /// propagate origin ids through the complete query plan
+    for (auto& rootOperator : queryPlan.getRootOperators())
+    {
+        inferInputOrigins(rootOperator);
+    }
 }
 }
