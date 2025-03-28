@@ -57,12 +57,6 @@ public:
     static std::shared_ptr<QueryPlan>
     addSelection(std::shared_ptr<LogicalFunction> const& selectionFunction, std::shared_ptr<QueryPlan> queryPlan);
 
-    /// @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
-    /// @param filterFunction as function node containing the predicate
-    /// @param std::shared_ptr<QueryPlan> the queryPlan the filter node is added to
-    /// @return the updated queryPlan
-    static std::shared_ptr<QueryPlan> addLimit(uint64_t limit, std::shared_ptr<QueryPlan> queryPlan);
-
     /// @brief: Map records according to a map function. An
     /// exemplary usage would be: map(Attribute("f2") = Attribute("f1") * 42 )
     /// @param mapFunction as function node
