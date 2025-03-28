@@ -27,7 +27,7 @@ namespace NES
 class AggregationProbePhysicalOperator final : public WindowAggregation, public WindowProbePhysicalOperator
 {
 public:
-    AggregationProbePhysicalOperator(std::unique_ptr<WindowAggregation> windowAggregationOperator,
+    AggregationProbePhysicalOperator(std::shared_ptr<WindowAggregation> windowAggregationOperator,
                                      uint64_t operatorHandlerIndex,
                                      std::string windowStartFieldName,
                                      std::string windowEndFieldName);
