@@ -17,6 +17,8 @@
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <SourcePhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {

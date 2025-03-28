@@ -18,8 +18,6 @@
 #include <LegacyOptimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <ErrorHandling.hpp>
 

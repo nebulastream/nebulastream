@@ -16,7 +16,6 @@
 #include <API/Schema.hpp>
 #include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
