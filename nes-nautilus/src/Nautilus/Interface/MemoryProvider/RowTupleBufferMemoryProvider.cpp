@@ -24,12 +24,12 @@
 namespace NES::Nautilus::Interface::MemoryProvider
 {
 
-RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::unique_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout)
+RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout)
     : rowMemoryLayout(std::move(rowMemoryLayout)) {};
 
-const Memory::MemoryLayouts::MemoryLayout& RowTupleBufferMemoryProvider::getMemoryLayout() const
+std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> RowTupleBufferMemoryProvider::getMemoryLayout() const
 {
-    return *rowMemoryLayout;
+    return rowMemoryLayout;
 }
 
 nautilus::val<int8_t*>

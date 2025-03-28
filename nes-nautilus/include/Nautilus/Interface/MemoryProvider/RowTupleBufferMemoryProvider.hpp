@@ -27,20 +27,9 @@ class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
 {
 public:
     /// Creates a row memory provider based on a valid row memory layout pointer.
-    RowTupleBufferMemoryProvider(std::unique_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
+    RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
-
-    [[nodiscard]] const Memory::MemoryLayouts::MemoryLayout& getMemoryLayout() const override;
-    RowTupleBufferMemoryProvider(const RowTupleBufferMemoryProvider& other)
-        : rowMemoryLayout(other.rowMemoryLayout
-                              ? std::make_unique<Memory::MemoryLayouts::RowLayout>(*other.rowMemoryLayout)
-                              : nullptr)
-    {
-    }
-
-    std::unique_ptr<TupleBufferMemoryProvider> clone() const override {
-        return std::make_unique<RowTupleBufferMemoryProvider>(*this);
-    }
+    [[nodiscard]] std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() const override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -54,7 +43,7 @@ private:
 
     /// It is fine that we are storing here a non nautilus value, as we are only calling methods, which return values stay
     /// the same, during tracing and during the execution of the generated code.
-    std::unique_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout;
+    std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayout;
 };
 
 }

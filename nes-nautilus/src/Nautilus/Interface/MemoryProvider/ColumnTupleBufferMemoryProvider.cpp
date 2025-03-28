@@ -29,11 +29,11 @@ namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr)
-    : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))) {};
+    : columnMemoryLayout(columnMemoryLayoutPtr) {};
 
-const Memory::MemoryLayouts::MemoryLayout& ColumnTupleBufferMemoryProvider::getMemoryLayout() const
+std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> ColumnTupleBufferMemoryProvider::getMemoryLayout() const
 {
-    return *columnMemoryLayout;
+    return columnMemoryLayout;
 }
 
 nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(
