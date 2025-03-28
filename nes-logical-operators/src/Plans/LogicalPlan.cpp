@@ -87,13 +87,9 @@ void LogicalPlan::addRootOperator(LogicalOperator newRootOperator)
 
 void LogicalPlan::promoteOperatorToRoot(LogicalOperator newRoot)
 {
-    for (auto& oldRoot : rootOperators)
-    {
-        //oldRoot->parents.emplace_back(newRoot);
-        newRoot.setChildren({oldRoot});
-    }
+    newRoot.setChildren(rootOperators);
     rootOperators.clear();
-    rootOperators.push_back(std::move(newRoot));
+    rootOperators.push_back(newRoot);
 }
 
 std::string LogicalPlan::toString() const
@@ -120,11 +116,9 @@ std::vector<LogicalOperator> LogicalPlan::getRootOperators() const
 std::vector<LogicalOperator> LogicalPlan::getLeafOperators() const
 {
     /// Find all the leaf nodes in the query plan
-    NES_DEBUG("LogicalPlan: Get all leaf nodes in the query plan.");
     std::vector<LogicalOperator> leafOperators;
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::set<OperatorId> visitedOpIds;
-    NES_DEBUG("LogicalPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
         for (auto itr :  BFSRange<LogicalOperator>(rootOperator))
@@ -134,11 +128,9 @@ std::vector<LogicalOperator> LogicalPlan::getLeafOperators() const
                 /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
-            NES_DEBUG("LogicalPlan: Inserting operator in collection of already visited node.");
             visitedOpIds.insert(itr.getId());
             if (itr.getChildren().empty())
             {
-                NES_DEBUG("LogicalPlan: Found leaf node. Adding to the collection of leaf nodes.");
                 leafOperators.push_back(itr);
             }
         }
@@ -150,7 +142,6 @@ std::unordered_set<LogicalOperator> LogicalPlan::getAllOperators() const
 {
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<LogicalOperator> visitedOperators;
-    NES_DEBUG("LogicalPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
         for (auto itr :  BFSRange<LogicalOperator>(rootOperator))
@@ -160,7 +151,6 @@ std::unordered_set<LogicalOperator> LogicalPlan::getAllOperators() const
                 /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
-            NES_DEBUG("LogicalPlan: Inserting operator in collection of already visited node.");
             visitedOperators.insert(itr);
         }
     }
