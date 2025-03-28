@@ -18,7 +18,6 @@
 #include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <Traits/OriginIdTrait.hpp>
 
 namespace NES::LegacyOptimizer

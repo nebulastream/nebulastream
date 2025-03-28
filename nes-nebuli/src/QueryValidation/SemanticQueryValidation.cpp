@@ -17,7 +17,6 @@
 #include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <Util/Common.hpp>
