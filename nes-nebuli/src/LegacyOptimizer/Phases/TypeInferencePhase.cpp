@@ -59,7 +59,7 @@ void apply(std::vector<SourceNameLogicalOperator>& sourceOperators,  Catalogs::S
 
 void TypeInferencePhase::apply(LogicalPlan& queryPlan)
 {
-    auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
+    auto sourceOperators = queryPlan.getOperatorByType<SourceDescriptorLogicalOperator>();
     INVARIANT(not sourceOperators.empty(), "Found no source operators for query plan: {}", queryPlan.getQueryId());
 
     /// now we have to infer the input and output schemas for the whole query.
