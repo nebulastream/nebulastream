@@ -48,7 +48,6 @@ public:
     [[nodiscard]]std::vector<FieldAccessLogicalFunction> getKeys() const;
 
     [[nodiscard]] OriginId getOriginId() const;
-    void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
     Optimizer::OriginIdTrait originIds;
 
