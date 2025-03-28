@@ -19,22 +19,19 @@
 #include <Operators/MapLogicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
 namespace NES::Optimizer
 {
 
-std::vector<PhysicalOperatorWrapper> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<PhysicalOperatorWrapper> LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
 {
-    const auto op = traitSet->get<Operator>();
-    const auto ops = dynamic_cast<MapLogicalOperator*>(op);
-    auto& function = ops->getMapFunction();
+    auto map = *logicalOperator.get<MapLogicalOperator>();
+    auto function = map.getMapFunction();
     auto fieldName = function.getField().getFieldName();
-    auto func = QueryCompilation::FunctionProvider::lowerFunction(function.clone());
-    auto phyOp = std::make_unique<MapPhysicalOperator>(fieldName, std::move(func));
-    std::vector<PhysicalOperatorWrapper> resultVec;
-    resultVec.emplace_back(std::move(phyOp));
-    return resultVec;
+    auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
+    auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
+    auto wrapper = PhysicalOperatorWrapper(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    return {wrapper};
 }
 
 std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)

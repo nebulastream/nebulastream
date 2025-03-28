@@ -15,7 +15,6 @@
 #pragma once
 
 #include <Plans/QueryPlan.hpp>
-#include <Traits/Trait.hpp>
 #include <Abstract/PhysicalOperator.hpp>
 
 namespace NES::Optimizer
@@ -23,7 +22,7 @@ namespace NES::Optimizer
 
 struct AbstractRewriteRule
 {
-    virtual void apply(QueryPlan& queryPlan) = 0;
+    virtual std::vector<PhysicalOperatorWrapper> apply(LogicalOperator logicalOperator) = 0;
     virtual ~AbstractRewriteRule() = default;
 };
 

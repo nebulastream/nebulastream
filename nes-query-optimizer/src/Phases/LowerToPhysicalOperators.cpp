@@ -16,39 +16,35 @@
 #include <string>
 #include <vector>
 #include <Iterators/BFSIterator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/QueryPlan.hpp>
-#include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <PhysicalPlan.hpp>
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
 
-std::unique_ptr<QueryPlan> apply(QueryPlan queryPlan)
+std::unique_ptr<PhysicalPlan> apply(QueryPlan queryPlan)
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "For now, we only support query plans with a single sink.");
+    /// default query optimizer configuration
+    NES::Configurations::QueryOptimizerConfiguration conf;
+    const auto registryArgument = RewriteRuleRegistryArguments{conf};
 
-    for (const auto& operatorNode : BFSRange<LogicalOperator>(queryPlan.getRootOperators()[0]))
+    std::vector<std::unique_ptr<PhysicalOperatorWrapper>> rootOperators;
+    for (auto logicalOperator : BFSRange<LogicalOperator>(queryPlan.getRootOperators()[0]))
     {
-        if (operatorNode.tryGet<SinkLogicalOperator>() or operatorNode.tryGet<SourceDescriptorLogicalOperator>()
-            or operatorNode.tryGet<SourceNameLogicalOperator>())
+        /// Currently, we directly map logical operators to rewrite rules.
+        /// Once our operator traits are more mature we should consider here to map logical operator + traits to rules
+        if (auto rule = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument); rule.has_value())
         {
-            continue;
+            auto physicalOperatorWrapper = rule.value()->apply(logicalOperator);
         }
-        //if (auto rule = RewriteRuleRegistry::instance().create(std::string(logicalOperator->getName()), RewriteRuleRegistryArguments{}); rule.has_value())
-        //{
-            /// TODO here we apply the rule
-            /// The problem is that we would expect that we take the TraitSet as the input
-        //}
-        //else
-        //{
-        //    throw UnknownLogicalOperator("{} not part of RewriteRuleRegistry", logicalOperator->getName());
-        //}
+        else
+        {
+            throw UnknownPhysicalOperator("{} cant be resolved into a PhysicalOperator", logicalOperator.getName());
+        }
     }
-    return std::make_unique<QueryPlan>(queryPlan.getQueryId(),queryPlan.getRootOperators());
+    return std::make_unique<PhysicalPlan>(queryPlan.getQueryId(), std::move(rootOperators));
 }
 }

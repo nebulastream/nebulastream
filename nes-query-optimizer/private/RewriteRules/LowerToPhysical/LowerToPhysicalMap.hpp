@@ -15,21 +15,19 @@
 #pragma once
 
 #include <memory>
-#include <Traits/QueryForSubtree.hpp>
-#include <Traits/TraitSet.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
-#include <RewriteRuleRegistry.hpp>
+#include <Plans/QueryPlan.hpp>
 
 namespace NES::Optimizer
 {
 
-struct LowerToPhysicalMap : AbstractLowerToPhysicalRewriteRule<QueryForSubtree, Operator>
+struct LowerToPhysicalMap : AbstractRewriteRule
 {
     LowerToPhysicalMap(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    std::vector<PhysicalOperatorWithSchema> applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>*) override;
+    std::vector<PhysicalOperatorWrapper> apply(LogicalOperator logicalOperator) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 

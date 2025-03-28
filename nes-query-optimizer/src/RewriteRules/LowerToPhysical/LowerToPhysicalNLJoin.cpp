@@ -75,8 +75,7 @@ public:
         switch (timeFunctionType)
         {
             case EVENT_TIME:
-                return std::make_unique<EventTimeFunction>(
-                    std::make_unique<::NES::Functions::FieldAccessPhysicalFunction>(fieldName), unit);
+                return std::make_unique<EventTimeFunction>(::NES::Functions::FieldAccessPhysicalFunction(fieldName), unit);
             case INGESTION_TIME:
                 return std::make_unique<IngestionTimeFunction>();
         }
@@ -128,8 +127,8 @@ std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(const JoinLo
         };
 
         /// Extracting the left and right timestamp
-        auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator.getLeftInputSchema());
-        auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator.getRightInputSchema());
+        auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator.getInputSchemas()[0]);
+        auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator.getInputSchemas()[1]);
 
         INVARIANT(
             !(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
@@ -142,75 +141,56 @@ std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(const JoinLo
     }
 }
 
-std::vector<PhysicalOperatorWrapper> LowerToPhysicalNLJoin::apply(JoinLogicalOperator& queryPlan)
+std::vector<PhysicalOperatorWrapper> LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
 {
     const auto operatorHandlerIndex = 0; // TODO this should change. In the best case we have setIndex() for all the operators.
 
-    auto* op = traitSet->get<Operator>();
-
-    auto ops = dynamic_cast<JoinLogicalOperator*>(op);
-    auto outSchema = ops->getOutputSchema();
-    auto joinFunction = ::NES::QueryCompilation::FunctionProvider::lowerFunction(ops->getJoinFunction().clone());
+    auto join = *logicalOperator.get<JoinLogicalOperator>();
+    auto outSchema = logicalOperator.getOutputSchema();
+    auto joinFunction = ::NES::QueryCompilation::FunctionProvider::lowerFunction(join.getJoinFunction());
 
     auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), ops->getLeftInputSchema());
+        conf.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
     auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), ops->getRightInputSchema());
+        conf.pageSize.getValue(), logicalOperator.getInputSchemas()[1]);
     auto probeMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), ops->getOutputSchema());
+        conf.pageSize.getValue(), logicalOperator.getOutputSchema());
 
-    auto windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(&ops->getWindowType());
-    auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(*ops, *windowType);
+    auto windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(&join.getWindowType());
+    auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(join, *windowType);
 
-    auto leftBuildOp = std::make_unique<NLJBuildPhysicalOperator>(
-        std::move(leftMemoryProvider),
-        operatorHandlerIndex,
-        JoinBuildSideType::Left,
-        timeStampFieldLeft.toTimeFunction());
+    auto leftBuildOperator = NLJBuildPhysicalOperator(leftMemoryProvider, operatorHandlerIndex, JoinBuildSideType::Left,
+                                                      timeStampFieldLeft.toTimeFunction());
 
-    auto rightBuildOp = std::make_unique<NLJBuildPhysicalOperator>(
-        std::move(rightMemoryProvider),
-        operatorHandlerIndex,
-        JoinBuildSideType::Right,
-        timeStampFieldRight.toTimeFunction());
+    auto rightBuildOperator = NLJBuildPhysicalOperator(rightMemoryProvider, operatorHandlerIndex, JoinBuildSideType::Right,
+                                                       timeStampFieldRight.toTimeFunction());
 
     auto leftMemoryProvider2 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), ops->getLeftInputSchema());
+        conf.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
     auto rightMemoryProvider2 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), ops->getRightInputSchema());
-    auto joinSchema = JoinSchema(ops->getLeftInputSchema(), ops->getRightInputSchema(), ops->getOutputSchema());
-    auto probeOp = std::make_unique<NLJProbePhysicalOperator>(
+        conf.pageSize.getValue(), logicalOperator.getInputSchemas()[1]);
+    auto joinSchema = JoinSchema(logicalOperator.getInputSchemas()[0], logicalOperator.getInputSchemas()[1], logicalOperator.getOutputSchema());
+    auto probeOperator = NLJProbePhysicalOperator(
         operatorHandlerIndex,
-        std::move(joinFunction),
-        ops->getWindowStartFieldName(),
-        ops->getWindowEndFieldName(),
+        std::move(joinFunction), join.getWindowStartFieldName(), join.getWindowEndFieldName(),
         joinSchema,
-        std::move(leftMemoryProvider2),
-        std::move(rightMemoryProvider2));
+        leftMemoryProvider2,
+        rightMemoryProvider2);
 
     constexpr uint64_t numberOfOriginIds = 2;
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime(), numberOfOriginIds);
     auto leftMemoryProvider3 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), ops->getLeftSchema());
+        conf.pageSize.getValue(), join.getLeftSchema());
     auto rightMemoryProvider3 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), ops->getRightSchema());
-    auto handler = std::make_unique<NLJOperatorHandler>(
-        ops->getAllInputOriginIds(),
-        ops->getOutputOriginIds()[0],
-        std::move(sliceAndWindowStore),
-        std::move(leftMemoryProvider3),
-        std::move(rightMemoryProvider3));
+        conf.pageSize.getValue(), join.getRightSchema());
+    auto handler = NLJOperatorHandler(join.getInputOriginIds()[0], logicalOperator.getOutputOriginIds()[0],
+        std::move(sliceAndWindowStore), leftMemoryProvider3, rightMemoryProvider3);
 
-    auto probeOpWrapper = PhysicalOperatorWrapper{std::move(probeOp), ops->getOutputSchema(), ops->getOutputSchema(), nullptr};
-    auto rightBuildOpWrapper = PhysicalOperatorWrapper{std::move(rightBuildOp), ops->getRightSchema(), ops->getOutputSchema(), nullptr};
-    auto leftBuildOpWrapper = PhysicalOperatorWrapper{std::move(leftBuildOp), ops->getLeftSchema(), ops->getOutputSchema(), nullptr};
+    auto probeOpWrapper = PhysicalOperatorWrapper(probeOperator, logicalOperator.getOutputSchema(), logicalOperator.getOutputSchema());
+    auto rightBuildOpWrapper = PhysicalOperatorWrapper(rightBuildOperator, join.getRightSchema(), logicalOperator.getOutputSchema());
+    auto leftBuildOpWrapper = PhysicalOperatorWrapper(leftBuildOperator, join.getLeftSchema(), logicalOperator.getOutputSchema());
 
-    std::vector<PhysicalOperatorWrapper> physicalOperatorVec;
-    physicalOperatorVec.emplace_back(std::move(probeOpWrapper));
-    physicalOperatorVec.emplace_back(std::move(rightBuildOpWrapper));
-    physicalOperatorVec.emplace_back(std::move(leftBuildOpWrapper));
-
-    return physicalOperatorVec;
+    return {rightBuildOpWrapper, leftBuildOpWrapper, probeOpWrapper};
 };
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterJoinRewriteRule(RewriteRuleRegistryArguments argument)

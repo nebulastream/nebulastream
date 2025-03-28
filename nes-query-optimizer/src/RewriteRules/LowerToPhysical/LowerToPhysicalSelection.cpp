@@ -16,36 +16,27 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <memory>
 #include <utility>
-#include <Traits/QueryForSubtree.hpp>
-#include <Traits/TraitSet.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <SelectionPhysicalOperator.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {
 
-std::vector<PhysicalOperatorWithSchema> LowerToPhysicalSelection::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<PhysicalOperatorWrapper> LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
 {
-    auto op = traitSet->get<Operator>();
-    const auto ops = dynamic_cast<SelectionLogicalOperator*>(op);
-    auto& function = ops->getPredicate();
-    auto func = QueryCompilation::FunctionProvider::lowerFunction(function.clone());
-    auto phyOp = std::make_unique<SelectionPhysicalOperator>(std::move(func));
-
-    auto physicalOperatorWrapper = PhysicalOperatorWrapper{std::move(phyOp), ops->getInputSchema(), ops->getOutputSchema(), nullptr};
-
-    std::vector<PhysicalOperatorWrapper> physicalOperatorVec;
-    physicalOperatorVec.emplace_back(std::move(physicalOperatorWrapper));
-    return physicalOperatorVec;
+    auto selection = *logicalOperator.get<SelectionLogicalOperator>();
+    auto function = selection.getPredicate();
+    auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+    auto physicalOperator = SelectionPhysicalOperator(func);
+    auto wrapper = PhysicalOperatorWrapper(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    return {wrapper};
 };
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSelectionRewriteRule(RewriteRuleRegistryArguments argument)
 {
-    return std::make_unique<LowerToPhysicalSelection>(std::move(argument.conf));
+    return std::make_unique<LowerToPhysicalSelection>(argument.conf);
 }
 }

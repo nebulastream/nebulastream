@@ -18,8 +18,6 @@
 #include <memory>
 #include <tuple>
 #include <utility>
-#include <Traits/QueryForSubtree.hpp>
-#include <Traits/TraitSet.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
@@ -38,10 +36,10 @@
 
 namespace NES::Optimizer
 {
-struct LowerToPhysicalNLJoin : AbstractLowerToPhysicalRewriteRule<QueryForSubtree, Operator>
+struct LowerToPhysicalNLJoin : AbstractRewriteRule
 {
     LowerToPhysicalNLJoin(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    std::vector<PhysicalOperatorWithSchema> applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>*) override;
+    std::vector<PhysicalOperatorWrapper> apply(LogicalOperator logicalOperator) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 
