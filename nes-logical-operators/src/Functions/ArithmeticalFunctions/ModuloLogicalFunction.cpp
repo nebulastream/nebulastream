@@ -42,7 +42,7 @@ ModuloLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, cons
     return addNode;
 }
 
-bool ModuloLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool ModuloLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<ModuloLogicalFunction>(rhs))
     {

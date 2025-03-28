@@ -33,7 +33,7 @@ NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other)
 {
 }
 
-bool NegateLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool NegateLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<NegateLogicalFunction>(rhs))
     {
