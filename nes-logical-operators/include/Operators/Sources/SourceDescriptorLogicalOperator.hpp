@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
-#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Operators/OriginIdAssignmentOperator.hpp>
+#include "Operators/UnaryLogicalOperator.hpp"
+#include "Sources/SourceDescriptor.hpp"
 
 namespace NES
 {
@@ -29,10 +29,9 @@ namespace NES
 class SourceDescriptorLogicalOperator : public UnaryLogicalOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
-
-    explicit SourceDescriptorLogicalOperator(
-        std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
+    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
+    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OriginId originId);
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
     const Sources::SourceDescriptor& getSourceDescriptorRef() const;
     std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;

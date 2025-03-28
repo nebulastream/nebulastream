@@ -46,8 +46,8 @@ public:
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
         JoinType joinType,
-        OperatorId id,
         OriginId originId = INVALID_ORIGIN_ID);
+    std::string_view getName() const noexcept override;
 
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     bool inferSchema() override;
@@ -58,29 +58,21 @@ public:
     void setOriginId(OriginId originId) override;
 
     [[nodiscard]] std::shared_ptr<LogicalFunction> getJoinFunction() const;
-    /// TODO Should we serialize them as well?
-    [[nodiscard]] std::shared_ptr<Schema> getLeftSourceType() const;
-    [[nodiscard]] std::shared_ptr<Schema> getRightSourceType() const;
+    [[nodiscard]] std::shared_ptr<Schema> getLeftSchema() const;
+
+    [[nodiscard]] std::shared_ptr<Schema> getRightSchema() const;
 
     [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
-
     [[nodiscard]] JoinType getJoinType() const;
 
-    /// TODO: remove them for now?
-    //[[nodiscard]] uint64_t getNumberOfInputEdgesLeft() const;
-    //void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
-    //[[nodiscard]] uint64_t getNumberOfInputEdgesRight() const;
-    //void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
+    void updateSchemas(std::shared_ptr<Schema> leftSourceSchema, std::shared_ptr<Schema> rightSourceSchema);
 
-    void updateSourceTypes(std::shared_ptr<Schema> leftSourceType, std::shared_ptr<Schema> rightSourceType);
-    void updateOutputDefinition(std::shared_ptr<Schema> outputSchema);
-    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const;
+    [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const override;
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
 
     [[nodiscard]] OriginId getOriginId() const;
-
 
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -109,13 +101,12 @@ public:
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
-protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
     std::shared_ptr<LogicalFunction> joinFunction;
-    std::shared_ptr<Schema> leftSourceType = Schema::create();
-    std::shared_ptr<Schema> rightSourceType = Schema::create();
+    std::shared_ptr<Schema> leftSourceSchema = Schema::create();
+    std::shared_ptr<Schema> rightSourceSchema = Schema::create();
     std::shared_ptr<Schema> outputSchema = Schema::create();
     std::shared_ptr<Windowing::WindowType> windowType;
     uint64_t numberOfInputEdgesLeft;

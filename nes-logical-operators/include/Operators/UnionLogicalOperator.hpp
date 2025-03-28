@@ -17,6 +17,7 @@
 #include <memory>
 #include <Configurations/Descriptor.hpp>
 #include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
+#include "BinaryLogicalOperator.hpp"
 
 namespace NES
 {
@@ -26,8 +27,8 @@ class UnionLogicalOperator : public BinaryLogicalOperator
 public:
     static constexpr std::string_view NAME = "Union";
 
-    explicit UnionLogicalOperator(OperatorId id);
-    ~UnionLogicalOperator() override = default;
+    explicit UnionLogicalOperator();
+    std::string_view getName() const noexcept override;
 
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     ///infer schema of two child operators

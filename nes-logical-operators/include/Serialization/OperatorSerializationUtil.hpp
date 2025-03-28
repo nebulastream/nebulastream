@@ -63,28 +63,5 @@ public:
 
     static std::unique_ptr<Windowing::WindowAggregationFunction> deserializeWindowAggregationFunction(
         const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableWindowAggregationFunction);
-
-    /*
-    static void serializeSelectionOperator(const SelectionLogicalOperator& selectionOperator, SerializableOperator& serializedOperator);
-    static void serializeProjectionOperator(const ProjectionLogicalOperator& projectionOperator, SerializableOperator& serializedOperator);
-    static void serializeMapOperator(const MapLogicalOperator& mapOperator, SerializableOperator& serializedOperator);
-    static void serializeWindowOperator(const WindowOperator& windowOperator, SerializableOperator& serializedOperator);
-    static void serializeJoinOperator(const JoinLogicalOperator& joinOperator, SerializableOperator& serializedOperator);
-
-    static void serializeWatermarkStrategyDescriptor(
-        const Windowing::WatermarkStrategyDescriptor& watermarkStrategyDescriptor,
-        SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails);
-    static std::shared_ptr<Windowing::WatermarkStrategyDescriptor>
-    deserializeWatermarkStrategyDescriptor(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails);
-
-    static void serializeInputSchema(const std::shared_ptr<Operator>& operatorNode, SerializableOperator& serializedOperator);
-    static void deserializeInputSchema(std::shared_ptr<LogicalOperator> operatorNode, const SerializableOperator& serializedOperator);
-
-    static void serializeWatermarkAssignerOperator(
-        const WatermarkAssignerLogicalOperator& watermarkAssignerOperator, SerializableOperator& serializedOperator);
-
-    static void
-    serializeInferModelOperator(const InferModel::InferModelLogicalOperator& inferModel, SerializableOperator& serializedOperator);
-     */
 };
 }

@@ -14,12 +14,12 @@
 
 #include <memory>
 #include <Configurations/Descriptor.hpp>
-#include <Functions/FunctionSerializationUtil.hpp>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/UnaryLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <LogicalOperatorRegistry.hpp>

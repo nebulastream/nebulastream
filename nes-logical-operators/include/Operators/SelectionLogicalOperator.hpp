@@ -31,6 +31,7 @@ public:
 
     explicit SelectionLogicalOperator(const std::shared_ptr<LogicalFunction>&);
     ~SelectionLogicalOperator() override = default;
+    std::string_view getName() const noexcept override;
 
     std::shared_ptr<LogicalFunction> getPredicate() const;
     void setPredicate(std::shared_ptr<LogicalFunction> newPredicate);
