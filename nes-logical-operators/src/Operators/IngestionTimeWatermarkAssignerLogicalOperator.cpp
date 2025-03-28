@@ -55,6 +55,52 @@ bool IngestionTimeWatermarkAssignerLogicalOperator::inferSchema()
     return true;
 }*/
 
+
+Optimizer::TraitSet IngestionTimeWatermarkAssignerLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void IngestionTimeWatermarkAssignerLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> IngestionTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
+{
+    return {inputSchema};
+};
+
+Schema IngestionTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> IngestionTimeWatermarkAssignerLogicalOperator::getInputOriginIds() const
+{
+    return inputOriginIds;
+}
+
+std::vector<OriginId> IngestionTimeWatermarkAssignerLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void IngestionTimeWatermarkAssignerLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void IngestionTimeWatermarkAssignerLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getChildren() const
+{
+    return children;
+}
+
 SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() const
 {
     SerializableOperator serializedOperator;

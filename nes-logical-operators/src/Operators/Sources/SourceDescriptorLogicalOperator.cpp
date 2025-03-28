@@ -55,6 +55,51 @@ std::string SourceDescriptorLogicalOperator::toString() const
     return ss.str();
 }
 
+Optimizer::TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void SourceDescriptorLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> SourceDescriptorLogicalOperator::getInputSchemas() const
+{
+    return {sourceDescriptor->schema};
+};
+
+Schema SourceDescriptorLogicalOperator::getOutputSchema() const
+{
+    return sourceDescriptor->schema;
+}
+
+std::vector<std::vector<OriginId>> SourceDescriptorLogicalOperator::getInputOriginIds() const
+{
+    return {inputOriginIds};
+}
+
+std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void SourceDescriptorLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void SourceDescriptorLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> SourceDescriptorLogicalOperator::getChildren() const
+{
+    return children;
+}
+
 std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getSourceDescriptor() const
 {
     return sourceDescriptor;

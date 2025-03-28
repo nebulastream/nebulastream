@@ -106,6 +106,51 @@ void UnionLogicalOperator::inferInputOrigins()
 }
 */
 
+Optimizer::TraitSet UnionLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void UnionLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> UnionLogicalOperator::getInputSchemas() const
+{
+    return {leftInputSchema, rightInputSchema};
+};
+
+Schema UnionLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> UnionLogicalOperator::getInputOriginIds() const
+{
+    return inputOriginIds;
+}
+
+std::vector<OriginId> UnionLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void UnionLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void UnionLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> UnionLogicalOperator::getChildren() const
+{
+    return children;
+}
+
 NES::Configurations::DescriptorConfig::Config
 UnionLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {

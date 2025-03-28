@@ -30,15 +30,11 @@ public:
     WindowedAggregationLogicalOperator(std::vector<FieldAccessLogicalFunction> onKey,
                           std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation,
                           std::shared_ptr<Windowing::WindowType> windowType);
-    virtual ~WindowedAggregationLogicalOperator() = default;
 
-    std::string_view getName() const noexcept override;
 
-    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
+    /// Operator specific member
     //bool inferSchema() override;
-
     std::vector<std::string> getGroupByKeyNames() const;
-
     bool isKeyed() const;
 
     [[nodiscard]] const std::vector<std::shared_ptr<WindowAggregationLogicalFunction>>& getWindowAggregation() const;
@@ -52,38 +48,41 @@ public:
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
 
+
+    /// LogicalOperatorConcept member
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
-    std::string toString() const override;
 
-    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
-    Schema getOutputSchema() const override { return outputSchema; }
-    std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override;
 
-    std::vector<LogicalOperator> getChildren() const override {return {};};
-    void setChildren(std::vector<LogicalOperator>) override {}
-    Optimizer::TraitSet getTraitSet() const override {return {};}
+    void setChildren(std::vector<LogicalOperator> children) override;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
 
-    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override
-    {
-        inputOriginIds = ids[0];
-    }
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
 
-    void setOutputOriginIds(std::vector<OriginId> ids) override
-    {
-        outputOriginIds = ids;
-    }
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override;
+    void setOutputOriginIds(std::vector<OriginId> ids) override;
+
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
+    /// Operator specific member
     static constexpr std::string_view NAME = "WindowedAggregation";
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<FieldAccessLogicalFunction> onKey;
-    std::string windowStartFieldName;
+    Optimizer::OriginIdAssignerTrait originIdTrait;
     std::string windowEndFieldName;
     uint64_t numberOfInputEdges = 0;
-    std::vector<OriginId> inputOriginIds;
     OriginId originId = INVALID_ORIGIN_ID;
+
+    /// LogicalOperatorConcept member
+    std::vector<LogicalOperator> children;
+    std::vector<OriginId> inputOriginIds;
     Schema inputSchema, outputSchema;
     std::vector<OriginId> outputOriginIds;
 };

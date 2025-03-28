@@ -84,6 +84,51 @@ bool MapLogicalOperator::inferSchema()
 }
  */
 
+Optimizer::TraitSet MapLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void MapLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> MapLogicalOperator::getInputSchemas() const
+{
+    return {inputSchema};
+};
+
+Schema MapLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> MapLogicalOperator::getInputOriginIds() const
+{
+    return inputOriginIds;
+}
+
+std::vector<OriginId> MapLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void MapLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void MapLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> MapLogicalOperator::getChildren() const
+{
+    return children;
+}
+
 std::string MapLogicalOperator::toString() const
 {
     std::stringstream ss;
