@@ -14,8 +14,8 @@
 
 #pragma once
 
+#include <Plans/QueryPlan.hpp>
 #include <Traits/Trait.hpp>
-#include <Traits/TraitSet.hpp>
 #include <Abstract/PhysicalOperator.hpp>
 
 namespace NES::Optimizer
@@ -23,41 +23,8 @@ namespace NES::Optimizer
 
 struct AbstractRewriteRule
 {
-    virtual VirtualTraitSet* apply(VirtualTraitSet*) = 0;
+    virtual void apply(QueryPlan& queryPlan) = 0;
     virtual ~AbstractRewriteRule() = default;
-};
-
-template <Trait... T>
-struct TypedAbstractRewriteRule : AbstractRewriteRule
-{
-    VirtualTraitSet* apply(VirtualTraitSet* inputTS) override
-    {
-        return applyTyped(new DynamicTraitSet<T...>(inputTS));
-    };
-
-    virtual DynamicTraitSet<T...>* applyTyped(DynamicTraitSet<T...>*) = 0;
-};
-
-template <Trait... T>
-struct AbstractLowerToPhysicalRewriteRule : public AbstractRewriteRule {
-    AbstractTraitSet* apply(AbstractTraitSet* inputTS) override {
-        auto typedTS = dynamic_cast<DynamicTraitSet<T...>*>(inputTS);
-        if (!typedTS) {
-            throw std::bad_cast();  // TODO
-        }
-        std::vector<PhysicalOperatorWithSchema> ops = applyToPhysical(typedTS);
-
-        std::vector<PhysicalOperatorWithSchema> sharedOps;
-        sharedOps.reserve(ops.size());
-        for (auto& op : ops) {
-            sharedOps.push_back(std::move(op));
-        }
-        return new PhysicalOperatorTraitSet(std::move(sharedOps));
-    }
-
-    // Derived classes will implement this to produce the physical operators.
-    virtual std::vector<PhysicalOperatorWithSchema> applyToPhysical(DynamicTraitSet<T...>* typedTS) = 0;
-    virtual ~AbstractLowerToPhysicalRewriteRule() = default;
 };
 
 }
