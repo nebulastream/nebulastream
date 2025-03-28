@@ -288,4 +288,5 @@ message SerializableOperator {
   repeated uint64 originIds = 8;
   repeated uint64 leftOriginIds = 9;
   repeated uint64 rightOriginIds = 10;
+  string operatorType = 11;
 }
