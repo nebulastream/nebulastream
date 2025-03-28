@@ -14,27 +14,16 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
-#include <Traits/TraitSet.hpp>
+#include <Traits/Trait.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES::Optimizer
 {
 
-struct OriginIdTrait
+struct OriginIdTrait : public AbstractTrait
 {
-    const std::vector<OriginId> originIds;
-
-public:
-    explicit OriginIdTrait(std::vector<OriginId> originIds) : originIds(originIds) { }
-    explicit OriginIdTrait(OriginId originId) : originIds({originId}) { }
-    explicit OriginIdTrait() : originIds() {};
-    bool operator==(const OriginIdTrait& other) const { return originIds == other.originIds; }
-    static constexpr bool atNode() { return true; }
-    static std::string getName()
-    {
-        return "OriginId";
-    }
+    std::vector<OriginId> originIds{};
 
     std::string toString() const
     {
@@ -51,13 +40,6 @@ public:
         oss << "]";
         return oss.str();
     }
-
-    std::vector<OriginId> getOriginIds()
-    {
-        return originIds;
-    }
 };
-
-static_assert(Trait<OriginIdTrait>);
 
 }
