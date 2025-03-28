@@ -41,7 +41,7 @@ endmacro()
 
 # Looks for the configured clang format version and enabled the format target if available.
 function(project_enable_format)
-    find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${LLVM_MAJOR_VERSION} clang-format)
+    find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${LLVM_TOOLCHAIN_VERSION} clang-format)
     if (NOT CLANG_FORMAT_EXECUTABLE)
         message(WARNING "Clang-Format not found, but can be installed with 'sudo apt install clang-format'. Disabling format target.")
         return()
@@ -54,8 +54,8 @@ function(project_enable_format)
 
     string(REGEX MATCH "^.* version ([0-9]+)\\.([0-9]+)\\.([0-9]+)" CLANG_FORMAT_MAJOR_MINOR_PATCH "${CLANG_FORMAT_VERSION}")
 
-    if (NOT CMAKE_MATCH_1 STREQUAL ${LLVM_MAJOR_VERSION})
-        message(WARNING "Incompatible clang-format version requires ${LLVM_MAJOR_VERSION}, got \"${CMAKE_MATCH_1}\". Disabling format target")
+    if (NOT CMAKE_MATCH_1 STREQUAL ${LLVM_TOOLCHAIN_VERSION})
+        message(WARNING "Incompatible clang-format version requires ${LLVM_TOOLCHAIN_VERSION}, got \"${CMAKE_MATCH_1}\". Disabling format target")
         return()
     endif ()
 

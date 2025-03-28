@@ -3,11 +3,10 @@
 # Additionally we install a recent CMake version and the mold linker.
 FROM ubuntu:24.04
 
-ARG LLVM_VERSION=18
-ARG MOLD_VERSION=2.33.0
-# 3.29.X is the most recent supported cmake version for clion
-ARG CMAKE_VERSION=3.29.7
-ENV LLVM_VERSION=${LLVM_VERSION}
+ARG LLVM_TOOLCHAIN_VERSION=19
+ARG MOLD_VERSION=2.37.1
+ARG CMAKE_VERSION=3.31.6
+ENV LLVM_TOOLCHAIN_VERSION=${LLVM_TOOLCHAIN_VERSION}
 ENV CMAKE_VERSION=${CMAKE_VERSION}
 
 RUN apt update -y && apt install \
@@ -21,6 +20,7 @@ RUN apt update -y && apt install \
     ca-certificates \
     linux-libc-dev \
     build-essential \
+    g++-14 \
     make \
     libssl-dev \
     openssl \
@@ -32,9 +32,9 @@ RUN apt update -y && apt install \
 # install llvm based toolchain
 RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
     && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
-    && echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"$(. /etc/os-release && echo "$VERSION_CODENAME")"/ llvm-toolchain-"$(. /etc/os-release && echo "$VERSION_CODENAME")"-${LLVM_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
-    && echo "deb-src [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"$(. /etc/os-release && echo "$VERSION_CODENAME")"/ llvm-toolchain-"$(. /etc/os-release && echo "$VERSION_CODENAME")"-${LLVM_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
-    && apt update -y && apt install clang-${LLVM_VERSION} libc++-${LLVM_VERSION}-dev libc++abi-${LLVM_VERSION}-dev libclang-rt-${LLVM_VERSION}-dev -y
+    && echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"$(. /etc/os-release && echo "$VERSION_CODENAME")"/ llvm-toolchain-"$(. /etc/os-release && echo "$VERSION_CODENAME")"-${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
+    && echo "deb-src [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"$(. /etc/os-release && echo "$VERSION_CODENAME")"/ llvm-toolchain-"$(. /etc/os-release && echo "$VERSION_CODENAME")"-${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
+    && apt update -y && apt install clang-${LLVM_TOOLCHAIN_VERSION} libc++-${LLVM_TOOLCHAIN_VERSION}-dev libc++abi-${LLVM_TOOLCHAIN_VERSION}-dev libclang-rt-${LLVM_TOOLCHAIN_VERSION}-dev -y
 
 # install recent version of the mold linker
 RUN wget https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-${MOLD_VERSION}-$(uname -m)-linux.tar.gz \
@@ -57,15 +57,15 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cm
 ENV CMAKE_GENERATOR=Ninja
 
 # set default compiler to clang and make libc++ available via ldconfig
-RUN ln -sf /usr/bin/clang-${LLVM_VERSION} /usr/bin/cc \
-    && ln -sf /usr/bin/clang++-${LLVM_VERSION} /usr/bin/c++ \
-    && update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${LLVM_VERSION} 30\
-    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${LLVM_VERSION} 30\
+RUN ln -sf /usr/bin/clang-${LLVM_TOOLCHAIN_VERSION} /usr/bin/cc \
+    && ln -sf /usr/bin/clang++-${LLVM_TOOLCHAIN_VERSION} /usr/bin/c++ \
+    && update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${LLVM_TOOLCHAIN_VERSION} 30\
+    && update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${LLVM_TOOLCHAIN_VERSION} 30\
     && update-alternatives --auto cc \
     && update-alternatives --auto c++ \
     && update-alternatives --display cc \
     && update-alternatives --display c++ \
-    && echo /usr/lib/llvm-${LLVM_VERSION}/lib > /etc/ld.so.conf.d/libcxx.conf \
+    && echo /usr/lib/llvm-${LLVM_TOOLCHAIN_VERSION}/lib > /etc/ld.so.conf.d/libcxx.conf \
     && ldconfig \
     && ls -l /usr/bin/cc /usr/bin/c++ \
     && cc --version \
