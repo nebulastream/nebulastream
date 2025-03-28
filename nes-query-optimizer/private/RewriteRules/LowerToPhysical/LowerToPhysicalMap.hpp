@@ -15,10 +15,11 @@
 #pragma once
 
 #include <memory>
-#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <MapPhysicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <MapPhysicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Optimizer
 {

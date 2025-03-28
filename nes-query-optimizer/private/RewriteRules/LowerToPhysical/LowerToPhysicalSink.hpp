@@ -19,7 +19,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Optimizer
 {

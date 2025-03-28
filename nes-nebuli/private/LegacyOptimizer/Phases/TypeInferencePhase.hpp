@@ -38,7 +38,7 @@ public:
     /// 2. Propagate the input and output schemas from source operators to the sink operators.
     /// 3. If a operator contains expression, we infer the result stamp of this operators.
     /// @throws TypeInferenceException if inferring the data types into the query failed
-    static void apply(QueryPlan& queryPlan);
+    static void apply(LogicalPlan& queryPlan);
 
 };
 }

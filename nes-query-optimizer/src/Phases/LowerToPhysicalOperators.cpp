@@ -15,7 +15,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <Plans/QueryPlan.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalPlan.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -48,7 +48,7 @@ std::shared_ptr<PhysicalOperatorWrapper> lowerOperatorRecursively(
     return loweringResult.root;
 }
 
-std::unique_ptr<PhysicalPlan> apply(QueryPlan queryPlan)
+std::unique_ptr<PhysicalPlan> apply(LogicalPlan queryPlan)
 {
     NES::Configurations::QueryOptimizerConfiguration conf;
     const auto registryArgument = RewriteRuleRegistryArguments{conf};

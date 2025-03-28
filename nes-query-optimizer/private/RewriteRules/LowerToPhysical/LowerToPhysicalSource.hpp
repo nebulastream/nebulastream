@@ -19,7 +19,7 @@
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <SourcePhysicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Optimizer
 {

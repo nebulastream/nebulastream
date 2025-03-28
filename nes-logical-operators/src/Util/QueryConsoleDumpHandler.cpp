@@ -85,7 +85,7 @@ void QueryConsoleDumpHandler::multilineDump(const LogicalOperator& node)
     multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
 }
 
-void QueryConsoleDumpHandler::dump(std::string, std::string, QueryPlan queryPlan)
+void QueryConsoleDumpHandler::dump(std::string, std::string, LogicalPlan queryPlan)
 {
     out << "Dumping queryPlan: " << queryPlan.toString() << std::endl;
 }

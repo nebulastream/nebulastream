@@ -104,6 +104,6 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         queryId = QueryId(serializedQueryPlan->queryid());
     }
 
-    return QueryPlan(queryId, std::move(rootOperators));
+    return LogicalPlan(queryId, std::move(rootOperators));
 }
 }

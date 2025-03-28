@@ -13,7 +13,7 @@
 */
 
 #include <memory>
-#include <Plans/QueryPlan.hpp>
+#include <Phases/LowerToPhysicalOperators.hpp>
 #include <QueryOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
 

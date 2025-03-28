@@ -57,7 +57,7 @@ void apply(std::vector<SourceNameLogicalOperator>& sourceOperators,  Catalogs::S
     }
 }
 
-void TypeInferencePhase::apply(QueryPlan& queryPlan)
+void TypeInferencePhase::apply(LogicalPlan& queryPlan)
 {
     auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
     INVARIANT(not sourceOperators.empty(), "Found no source operators for query plan: {}", queryPlan.getQueryId());
