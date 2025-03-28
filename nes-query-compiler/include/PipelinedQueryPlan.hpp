@@ -25,7 +25,16 @@ namespace NES
 struct PipelinedQueryPlan final
 {
     PipelinedQueryPlan(QueryId id) : queryId(id) {};
-    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] std::string toString() const
+    {
+        std::stringstream ss;
+        for(const auto& pipe : pipelines)
+        {
+            ss << pipe->toString();
+        }
+        return ss.str();
+
+    }
     friend std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t);
 
     std::vector<std::unique_ptr<Pipeline>> releaseSourcePipelines()
