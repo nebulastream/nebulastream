@@ -25,24 +25,24 @@
 namespace NES
 {
 
-SerializableOperator OperatorSerializationUtil::serializeOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+SerializableOperator OperatorSerializationUtil::serializeOperator(std::unique_ptr<LogicalOperator> operatorNode)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize operator {}", *operatorNode);
     auto serializedOperator = SerializableOperator();
-    if (NES::Util::instanceOf<SourceDescriptorLogicalOperator>(operatorNode))
+
+    if (auto* sourceOp = dynamic_cast<SourceDescriptorLogicalOperator*>(operatorNode.get()))
     {
-        /// serialize source operator
-        serializeSourceOperator(*NES::Util::as<SourceDescriptorLogicalOperator>(operatorNode), serializedOperator);
+        // Serialize source operator
+        serializeSourceOperator(*sourceOp, serializedOperator);
     }
-    else if (NES::Util::instanceOf<SinkLogicalOperator>(operatorNode))
+    else if (auto* sinkOp = dynamic_cast<SinkLogicalOperator*>(operatorNode.get()))
     {
-        /// serialize sink operator
-        serializeSinkOperator(*NES::Util::as<SinkLogicalOperator>(operatorNode), serializedOperator);
+        // Serialize sink operator
+        serializeSinkOperator(*sinkOp, serializedOperator);
     }
     return serializedOperator;
 }
 
-std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator)
+std::unique_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator)
 {
     if (serializedOperator.has_source())
     {
@@ -71,20 +71,21 @@ void OperatorSerializationUtil::serializeSourceOperator(
     SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator)
 {
     auto* sourceDetails = new SerializableOperator_SourceDescriptorLogicalOperator();
-    const auto& sourceDescriptor = sourceOperator.getSourceDescriptorRef();
+    const auto& sourceDescriptor = sourceOperator.getSourceDescriptor();
     serializeSourceDescriptor(sourceDescriptor, *sourceDetails);
-    sourceDetails->set_sourceoriginid(sourceOperator.getOriginId().getRawValue());
+    sourceDetails->set_sourceoriginid(sourceOperator.originIdTrait.originIds[0].getRawValue());
 
     serializedOperator.set_allocated_source(sourceDetails);
 }
 
-std::shared_ptr<UnaryLogicalOperator>
+std::unique_ptr<UnaryLogicalOperator>
 OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails)
 {
     const auto& serializedSourceDescriptor = sourceDetails.sourcedescriptor();
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDescriptor);
-    const auto sourceId = sourceDetails.sourceoriginid();
-    return std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), OriginId(sourceId));
+    auto logicalOperator = std::make_unique<SourceDescriptorLogicalOperator>(sourceDescriptor);
+    logicalOperator->originIdTrait.originIds = {OriginId(sourceDetails.sourceoriginid())};
+    return logicalOperator;
 }
 
 
@@ -97,14 +98,14 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
     serializedOperator.set_allocated_sink(sinkDetails);
 }
 
-std::shared_ptr<UnaryLogicalOperator>
+std::unique_ptr<UnaryLogicalOperator>
 OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
     const auto& serializedSinkDescriptor = sinkDetails.sinkdescriptor();
     auto sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
-    auto sinkOperator = std::make_shared<SinkLogicalOperator>();
-    sinkOperator->sinkDescriptor = std::move(sinkDescriptor);
-    return sinkOperator;
+    auto sinkOperator = std::make_unique<SinkLogicalOperator>();
+    sinkOperator->sinkDescriptor = sinkDescriptor.clone();
+    return std::move(sinkOperator);
 }
 
 void OperatorSerializationUtil::serializeSourceDescriptor(
@@ -153,7 +154,7 @@ OperatorSerializationUtil::deserializeLogicalOperator(const SerializableOperator
     return nullptr;
 }
 
-std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializeSourceDescriptor(
+Sources::SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(
     const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor)
 {
     /// Declaring variables outside of SourceDescriptor for readability/debuggability.
@@ -175,7 +176,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
         SourceDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
     }
 
-    return std::make_unique<Sources::SourceDescriptor>(
+    return Sources::SourceDescriptor(
         std::move(schema),
         std::move(logicalSourceName),
         std::move(sourceType),
@@ -184,11 +185,11 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
 }
 
 void OperatorSerializationUtil::serializeSinkDescriptor(
-    std::shared_ptr<Schema> schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails)
+    const Schema& schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
     const auto serializedSinkDescriptor
         = SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor().New(); /// cleaned up by protobuf
-    SchemaSerializationUtil::serializeSchema(std::move(schema), serializedSinkDescriptor->mutable_sinkschema());
+    SchemaSerializationUtil::serializeSchema(schema, serializedSinkDescriptor->mutable_sinkschema());
     serializedSinkDescriptor->set_sinktype(sinkDescriptor.sinkType);
     serializedSinkDescriptor->set_addtimestamp(sinkDescriptor.addTimestamp);
     /// Iterate over SinkDescriptor config and serialize all key-value pairs.
@@ -200,14 +201,13 @@ void OperatorSerializationUtil::serializeSinkDescriptor(
     sinkDetails.set_allocated_sinkdescriptor(serializedSinkDescriptor);
 }
 
-std::unique_ptr<Sinks::SinkDescriptor> OperatorSerializationUtil::deserializeSinkDescriptor(
+Sinks::SinkDescriptor OperatorSerializationUtil::deserializeSinkDescriptor(
     const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor)
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
     auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
     auto addTimestamp = serializableSinkDescriptor.addtimestamp();
     auto sinkType = serializableSinkDescriptor.sinktype();
-
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
     NES::Configurations::DescriptorConfig::Config sinkDescriptorConfig{};
@@ -216,9 +216,8 @@ std::unique_ptr<Sinks::SinkDescriptor> OperatorSerializationUtil::deserializeSin
         sinkDescriptorConfig[kv.first] = Configurations::protoToDescriptorConfigType(kv.second);
     }
 
-    auto sinkDescriptor
-        = std::make_unique<Sinks::SinkDescriptor>(std::move(sinkType), std::move(sinkDescriptorConfig), std::move(addTimestamp));
-    sinkDescriptor->schema = std::move(schema);
+    auto sinkDescriptor = Sinks::SinkDescriptor(std::move(sinkType), std::move(sinkDescriptorConfig), std::move(addTimestamp));
+    sinkDescriptor.schema = schema;
     return sinkDescriptor;
 }
 
