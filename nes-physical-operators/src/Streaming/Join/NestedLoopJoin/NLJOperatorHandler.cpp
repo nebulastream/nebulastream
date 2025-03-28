@@ -35,7 +35,7 @@
 namespace NES
 {
 NLJOperatorHandler::NLJOperatorHandler(
-    const std::vector<OriginId>& inputOrigins,
+    std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
