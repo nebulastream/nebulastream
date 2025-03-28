@@ -47,84 +47,84 @@ namespace NES::Optimizer
  * 1. filter("c" * "b" > "d" + "a") => filter("a" + "d" < "b" * "c")
  * 2. filter("c" * "b" > "d" + "a" and "a" < "b") => filter("a" < "b" and "b" * "c" > "a" + "d")
  */
-class AttributeSortRule : public BaseRewriteRule
-{
-public:
-    static std::shared_ptr<AttributeSortRule> create();
-    AttributeSortRule() = default;
-    virtual ~AttributeSortRule() = default;
-
-    /**
-     * @brief Apply Attribute Sort rule on input query plan
-     * @param queryPlan: the original query plan
-     * @return updated logical query plan
-     */
-    std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
-
-private:
-    /**
-     * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filter and map.
-     * @param logicalOperator: the operator to be sorted
-     * @return pointer to the updated function
-     */
-    std::shared_ptr<NodeFunction> sortAttributesInFunction(std::shared_ptr<NodeFunction> function);
-
-    /**
-     * @brief Alphabetically sort the attributes within the arithmetic function
-     * @param function: the input arithmetic function
-     * @return pointer to the updated function
-     */
-    std::shared_ptr<NodeFunction> sortAttributesInArithmeticalFunctions(std::shared_ptr<NodeFunction> function);
-
-    /**
-     * @brief Alphabetically sort the attributes within the logical function
-     * @param function: the input logical function
-     * @return pointer to the updated function
-     */
-    std::shared_ptr<NodeFunction> sortAttributesInLogicalFunctions(const std::shared_ptr<NodeFunction>& function);
-
-    /**
-     * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic function of type
-     * FunctionType. The fetched fields are then sorted alphabetically.
-     * @param function: the function to be used
-     * @return: vector of function containing commutative field access or constant function type
-     */
-    template <class FunctionType>
-    std::vector<std::shared_ptr<NodeFunction>> fetchCommutativeFields(const std::shared_ptr<NodeFunction>& function)
-    {
-        std::vector<std::shared_ptr<NodeFunction>> commutativeFields;
-        if (Util::instanceOf<NodeFunctionFieldAccess>(function) || Util::instanceOf<NodeFunctionConstantValue>(function))
-        {
-            commutativeFields.push_back(function);
-        }
-        else if (Util::instanceOf<FunctionType>(function))
-        {
-            for (const auto& child : function->getChildren())
-            {
-                auto childCommutativeFields = fetchCommutativeFields<FunctionType>(Util::as<NodeFunction>(child));
-                commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
-            }
-        }
-        return commutativeFields;
-    }
-
-    /**
-     * @brief Replace the original function within parent function with updated function
-     * @param parentFunction: the parent function containing original function
-     * @param originalFunction: the original function
-     * @param updatedFunction: the updated function
-     */
-    bool replaceCommutativeFunctions(
-        const std::shared_ptr<NodeFunction>& parentFunction,
-        const std::shared_ptr<NodeFunction>& originalFunction,
-        const std::shared_ptr<NodeFunction>& updatedFunction);
-
-    /**
-     * @brief Fetch the value of the left most constant function or the name of the left most field access function within
-     * the input function. This information is then used for performing global sorting in case of a binary function.
-     * @param function: the input function
-     * @return the name or value of field or constant function
-     */
-    static std::string fetchLeftMostConstantValueOrFieldName(std::shared_ptr<NodeFunction> function);
-};
+// class AttributeSortRule : public BaseRewriteRule
+// {
+// public:
+//     static std::shared_ptr<AttributeSortRule> create();
+//     AttributeSortRule() = default;
+//     virtual ~AttributeSortRule() = default;
+//
+//     /**
+//      * @brief Apply Attribute Sort rule on input query plan
+//      * @param queryPlan: the original query plan
+//      * @return updated logical query plan
+//      */
+//     std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
+//
+// private:
+//     /**
+//      * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filter and map.
+//      * @param logicalOperator: the operator to be sorted
+//      * @return pointer to the updated function
+//      */
+//     std::shared_ptr<NodeFunction> sortAttributesInFunction(std::shared_ptr<NodeFunction> function);
+//
+//     /**
+//      * @brief Alphabetically sort the attributes within the arithmetic function
+//      * @param function: the input arithmetic function
+//      * @return pointer to the updated function
+//      */
+//     std::shared_ptr<NodeFunction> sortAttributesInArithmeticalFunctions(std::shared_ptr<NodeFunction> function);
+//
+//     /**
+//      * @brief Alphabetically sort the attributes within the logical function
+//      * @param function: the input logical function
+//      * @return pointer to the updated function
+//      */
+//     std::shared_ptr<NodeFunction> sortAttributesInLogicalFunctions(const std::shared_ptr<NodeFunction>& function);
+//
+//     /**
+//      * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic function of type
+//      * FunctionType. The fetched fields are then sorted alphabetically.
+//      * @param function: the function to be used
+//      * @return: vector of function containing commutative field access or constant function type
+//      */
+//     template <class FunctionType>
+//     std::vector<std::shared_ptr<NodeFunction>> fetchCommutativeFields(const std::shared_ptr<NodeFunction>& function)
+//     {
+//         std::vector<std::shared_ptr<NodeFunction>> commutativeFields;
+//         if (Util::instanceOf<NodeFunctionFieldAccess>(function) || Util::instanceOf<NodeFunctionConstantValue>(function))
+//         {
+//             commutativeFields.push_back(function);
+//         }
+//         else if (Util::instanceOf<FunctionType>(function))
+//         {
+//             for (const auto& child : function->getChildren())
+//             {
+//                 auto childCommutativeFields = fetchCommutativeFields<FunctionType>(Util::as<NodeFunction>(child));
+//                 commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
+//             }
+//         }
+//         return commutativeFields;
+//     }
+//
+//     /**
+//      * @brief Replace the original function within parent function with updated function
+//      * @param parentFunction: the parent function containing original function
+//      * @param originalFunction: the original function
+//      * @param updatedFunction: the updated function
+//      */
+//     bool replaceCommutativeFunctions(
+//         const std::shared_ptr<NodeFunction>& parentFunction,
+//         const std::shared_ptr<NodeFunction>& originalFunction,
+//         const std::shared_ptr<NodeFunction>& updatedFunction);
+//
+//     /**
+//      * @brief Fetch the value of the left most constant function or the name of the left most field access function within
+//      * the input function. This information is then used for performing global sorting in case of a binary function.
+//      * @param function: the input function
+//      * @return the name or value of field or constant function
+//      */
+//     static std::string fetchLeftMostConstantValueOrFieldName(std::shared_ptr<NodeFunction> function);
+// };
 }

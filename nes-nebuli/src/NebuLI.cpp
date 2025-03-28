@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+
 #include <Configurations/ConfigurationsNames.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -48,6 +49,7 @@
 #include <fmt/ranges.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
+#include <Identifiers/Identifier.hpp>
 
 namespace YAML
 {
@@ -113,7 +115,7 @@ struct convert<NES::CLI::QueryConfig>
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
         const auto sink = node["sink"].as<NES::CLI::Sink>();
-        rhs.sinks.emplace(sink.name, sink);
+        rhs.sinks.emplace(NES::IdentifierList::parse(sink.name), sink);
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
         rhs.query = node["query"].as<std::string>();
@@ -209,21 +211,21 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
         NES_INFO("Adding logical source: {}", logicalSourceName);
         for (const auto& [name, type] : schemaFields)
         {
-            schema = schema.addField(name, type);
+            schema = schema.addField(IdentifierList::parse(name), type);
         }
-        sourceCatalog->addLogicalSource(logicalSourceName, schema);
+        sourceCatalog->addLogicalSource(IdentifierList::parse(logicalSourceName), schema);
     }
 
     /// Add physical sources to corresponding logical sources.
     for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
     {
         auto sourceDescriptor = createSourceDescriptor(
-            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
+            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(IdentifierList::parse(logicalSourceName)), parserConfig, std::move(sourceConfig));
         sourceCatalog->addPhysicalSource(
-            logicalSourceName,
+            IdentifierList::parse(logicalSourceName),
             Catalogs::Source::SourceCatalogEntry::create(
                 NES::PhysicalSource::create(std::move(sourceDescriptor)),
-                sourceCatalog->getLogicalSource(logicalSourceName),
+                sourceCatalog->getLogicalSource(IdentifierList::parse(logicalSourceName)),
                 INITIAL<WorkerId>));
     }
 

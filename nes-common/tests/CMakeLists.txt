@@ -18,7 +18,8 @@ include(GoogleTest)
 
 add_library(nes-test-util
         "Util/src/BaseIntegrationTest.cpp"
-        "Util/src/BaseUnitTest.cpp")
+        "Util/src/BaseUnitTest.cpp"
+        UnitTests/Identifiers/IdentifierTest.cpp)
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Util/include")

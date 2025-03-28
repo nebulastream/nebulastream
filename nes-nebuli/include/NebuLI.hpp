@@ -59,7 +59,7 @@ struct PhysicalSource
 struct QueryConfig
 {
     std::string query;
-    std::unordered_map<std::string, Sink> sinks;
+    std::unordered_map<IdentifierList, Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
 };

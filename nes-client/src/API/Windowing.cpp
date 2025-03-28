@@ -138,7 +138,7 @@ std::shared_ptr<Windowing::TimeCharacteristic> IngestionTime()
 
 std::shared_ptr<NodeFunction> RecordCreationTs()
 {
-    return Attribute(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME, DataType::Type::UINT64).getNodeFunction();
+    return Attribute(static_cast<Identifier>(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME), DataType::Type::UINT64).getNodeFunction();
 }
 
 }

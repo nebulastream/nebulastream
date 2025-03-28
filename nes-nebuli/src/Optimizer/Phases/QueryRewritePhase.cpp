@@ -35,7 +35,7 @@ std::shared_ptr<QueryRewritePhase> QueryRewritePhase::create()
 
 QueryRewritePhase::QueryRewritePhase()
 {
-    attributeSortRule = AttributeSortRule::create();
+    // attributeSortRule = AttributeSortRule::create();
     binaryOperatorSortRule = BinaryOperatorSortRule::create();
     filterMergeRule = FilterMergeRule::create();
     filterPushDownRule = FilterPushDownRule::create();

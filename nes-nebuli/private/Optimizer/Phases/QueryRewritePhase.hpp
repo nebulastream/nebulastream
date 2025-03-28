@@ -51,7 +51,7 @@ public:
 private:
     explicit QueryRewritePhase();
 
-    std::shared_ptr<AttributeSortRule> attributeSortRule;
+    // std::shared_ptr<AttributeSortRule> attributeSortRule;
     std::shared_ptr<BinaryOperatorSortRule> binaryOperatorSortRule;
     std::shared_ptr<FilterMergeRule> filterMergeRule;
     std::shared_ptr<FilterPushDownRule> filterPushDownRule;

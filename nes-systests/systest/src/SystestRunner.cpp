@@ -198,7 +198,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             if (sinkName == "CHECKSUM")
             {
                 auto sink = CLI::Sink{sinkName, "Checksum", {std::make_pair("filePath", resultFile)}};
-                config.sinks.emplace(sinkForQuery, std::move(sink));
+                config.sinks.emplace(IdentifierList::parse(sinkForQuery), std::move(sink));
             }
             else
             {
@@ -206,7 +206,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     sinkForQuery,
                     "File",
                     {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
-                config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
+                config.sinks.emplace(IdentifierList::parse(sinkForQuery), std::move(sinkCLI));
             }
 
             config.query = query;

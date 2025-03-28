@@ -149,7 +149,16 @@ Schema Schema::addField(const IdentifierList& name, const DataType::Type type)
     DataType dataType{type};
     sizeOfSchemaInBytes += dataType.getSizeInBytes();
     fields.emplace_back(Field{std::move(name), std::move(dataType)});
-    nameToField.emplace(fields.back().name, fields.size() - 1);
+    auto enumerated = std::vector<std::pair<Field, size_t>>{};
+    enumerated.reserve(std::ranges::size(fields));
+    for (size_t i = 0; i < std::ranges::size(fields); ++i)
+    {
+        enumerated.push_back({this->fields[i], i});
+    }
+    auto [fieldsByName, collisions] = initializeFields(enumerated);
+    nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
+        | ranges::to<std::unordered_map<IdentifierList, size_t>>();
+    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
     return *this;
 }
 
@@ -243,17 +252,27 @@ void Schema::assignToFields(const Schema& otherSchema)
     this->fields = otherSchema.fields;
     this->nameToField = otherSchema.nameToField;
     this->sizeOfSchemaInBytes = otherSchema.sizeOfSchemaInBytes;
+    this->currentPrefix = otherSchema.currentPrefix;
 }
 void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
 {
     this->fields.reserve(this->fields.size() + otherSchema.fields.size());
-    this->nameToField.reserve(this->fields.size() + otherSchema.fields.size());
     for (const auto& otherField : otherSchema.fields)
     {
         this->fields.emplace_back(otherField);
-        this->nameToField.emplace(otherField.name, this->fields.size() - 1);
     }
     this->sizeOfSchemaInBytes += otherSchema.sizeOfSchemaInBytes;
+
+    auto enumerated = std::vector<std::pair<Field, size_t>>{};
+    enumerated.reserve(std::ranges::size(fields));
+    for (size_t i = 0; i < std::ranges::size(fields); ++i)
+    {
+        enumerated.push_back({this->fields[i], i});
+    }
+    auto [fieldsByName, collisions] = initializeFields(enumerated);
+    nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
+        | ranges::to<std::unordered_map<IdentifierList, size_t>>();
+    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
 }
 
 void Schema::renameField(const IdentifierList& oldFieldName, const IdentifierList newFieldName)
@@ -262,8 +281,18 @@ void Schema::renameField(const IdentifierList& oldFieldName, const IdentifierLis
     {
         fields.at(fieldToRename.mapped()).name = newFieldName;
         fieldToRename.key() = newFieldName;
-        nameToField.insert(std::move(fieldToRename));
     }
+
+    auto enumerated = std::vector<std::pair<Field, size_t>>{};
+    enumerated.reserve(std::ranges::size(fields));
+    for (size_t i = 0; i < std::ranges::size(fields); ++i)
+    {
+        enumerated.push_back({this->fields[i], i});
+    }
+    auto [fieldsByName, collisions] = initializeFields(enumerated);
+    nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
+        | ranges::to<std::unordered_map<IdentifierList, size_t>>();
+    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
 }
 size_t Schema::getSizeOfSchemaInBytes() const
 {

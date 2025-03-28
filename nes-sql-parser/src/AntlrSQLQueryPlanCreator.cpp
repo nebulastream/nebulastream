@@ -65,7 +65,7 @@ std::string queryPlanToString(const std::shared_ptr<QueryPlan>& queryPlan)
 std::shared_ptr<QueryPlan> AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
     /// Todo #421: support multiple sinks
-    return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
+    return QueryPlanBuilder::addSink(IdentifierList::parse(sinkNames.front()), queryPlans.top());
 }
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
@@ -344,13 +344,13 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     if (helper.isGroupBy)
     {
-        const auto key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(context->getText()));
+        const auto key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(IdentifierList::parse(context->getText())));
         helper.groupByFields.push_back(key);
     }
     else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
         /// add identifiers in select, window, where and having clauses to the function builder list
-        helper.functionBuilder.push_back(Attribute(context->getText()));
+        helper.functionBuilder.push_back(Attribute(IdentifierList::parse(context->getText())));
     }
     else if (helper.isFrom and not helper.isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
@@ -372,13 +372,13 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             {
                 /// rename of a single attribute
                 auto functionItem = static_cast<FunctionItem>(attr);
-                functionItem = functionItem.as(Identifier{context->getText()});
+                functionItem = functionItem.as(IdentifierList::parse(context->getText()));
                 helper.functionBuilder.push_back(functionItem);
             }
             else
             {
                 /// renaming an function (mapBuilder) and adding a projection (functionBuilder) on the renamed function.
-                const auto renamedAttribute = Attribute(context->getText()) = attr;
+                const auto renamedAttribute = Attribute(IdentifierList::parse(context->getText())) = attr;
                 helper.functionBuilder.push_back(renamedAttribute);
                 helper.mapBuilder.push_back(renamedAttribute);
             }
@@ -390,21 +390,21 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         {
             auto aggFunc = helper.windowAggs.back();
             helper.windowAggs.pop_back();
-            aggFunc = aggFunc->as(Attribute(context->getText()));
+            aggFunc = aggFunc->as(Attribute(IdentifierList::parse(context->getText())));
             helper.windowAggs.push_back(aggFunc);
         }
         else
         {
             auto projection = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
-            auto renamedAttribute = Attribute(context->getText()) = projection;
+            auto renamedAttribute = Attribute(IdentifierList::parse(context->getText())) = projection;
             helper.functionBuilder.push_back(renamedAttribute);
             helper.mapBuilder.push_back(renamedAttribute);
         }
     }
     else if (helper.isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
-        helper.joinKeyRelationHelper.push_back(Attribute(context->getText()));
+        helper.joinKeyRelationHelper.push_back(Attribute(IdentifierList::parse(context->getText())));
     }
     else if (helper.isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
@@ -454,11 +454,11 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     }
     else
     {
-        queryPlan = QueryPlanBuilder::createQueryPlan(helper.getSource());
+        queryPlan = QueryPlanBuilder::createQueryPlan(IdentifierList::parse(helper.getSource()));
     }
     if (!helper.newSourceName.empty() && helper.newSourceName != helper.getSource())
     {
-        queryPlan = QueryPlanBuilder::addRename(helper.newSourceName, queryPlan);
+        queryPlan = QueryPlanBuilder::addRename(IdentifierList::parse(helper.newSourceName), queryPlan);
     }
 
     for (auto whereExpr = helper.getWhereClauses().rbegin(); whereExpr != helper.getWhereClauses().rend(); ++whereExpr)
@@ -579,7 +579,7 @@ void AntlrSQLQueryPlanCreator::exitTumblingWindow(AntlrSQLParser::TumblingWindow
     }
     else
     {
-        helper.windowType = Windowing::TumblingWindow::of(API::EventTime(Attribute(helper.timestamp)), timeMeasure);
+        helper.windowType = Windowing::TumblingWindow::of(API::EventTime(Attribute(IdentifierList::parse(helper.timestamp))), timeMeasure);
     }
     poppush(helper);
     AntlrSQLBaseListener::exitTumblingWindow(context);
@@ -597,7 +597,7 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
     }
     else
     {
-        helper.windowType = Windowing::SlidingWindow::of(API::EventTime(Attribute(helper.timestamp)), timeMeasure, slidingLength);
+        helper.windowType = Windowing::SlidingWindow::of(API::EventTime(Attribute(IdentifierList::parse(helper.timestamp))), timeMeasure, slidingLength);
     }
     poppush(helper);
     AntlrSQLBaseListener::exitSlidingWindow(context);
@@ -650,7 +650,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         }
         INVARIANT(not implicitFieldName.empty(), "");
         helper.functionBuilder.pop_back();
-        helper.mapBuilder.push_back(Attribute(implicitFieldName) = mapFunction);
+        helper.mapBuilder.push_back(Attribute(IdentifierList::parse(implicitFieldName)) = mapFunction);
 
         helper.implicitMapCountHelper++;
     }

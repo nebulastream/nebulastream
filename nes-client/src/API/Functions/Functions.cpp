@@ -94,7 +94,7 @@ FunctionItem::FunctionItem(std::shared_ptr<NodeFunction> exp) : function(std::mo
 {
 }
 
-FunctionItem FunctionItem::as(Identifier name)
+FunctionItem FunctionItem::as(const IdentifierList& name)
 {
     ///rename function node
     PRECONDITION(
@@ -119,12 +119,12 @@ std::shared_ptr<NodeFunctionFieldAssignment> FunctionItem::operator=(const std::
     return NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(function), assignFunction);
 }
 
-FunctionItem Attribute(const Identifier& fieldName)
+FunctionItem Attribute(const IdentifierList& fieldName)
 {
-    return {NodeFunctionFieldAccess::create(Identifier{fieldName})};
+    return {NodeFunctionFieldAccess::create(fieldName)};
 }
 
-FunctionItem Attribute(const Identifier& fieldName, const DataType::Type type)
+FunctionItem Attribute(const IdentifierList& fieldName, const DataType::Type type)
 {
     return {NodeFunctionFieldAccess::create(DataTypeProvider::provideDataType(type), fieldName)};
 }

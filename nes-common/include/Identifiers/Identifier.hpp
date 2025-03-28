@@ -34,7 +34,6 @@
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
 
-class IdentifierList;
 namespace NES
 {
 
@@ -96,6 +95,7 @@ public:
                 copy.end(),
                 copy.begin(),
                 [](const unsigned char character) -> unsigned char { return std::toupper(character); });
+            return copy;
         }
         return "\"" + copy + "\"";
     }
@@ -109,7 +109,7 @@ public:
         {
             if (*(std::ranges::end(stringView) - 1) == '"')
             {
-                return IdentifierBase{stringView, true};
+                return IdentifierBase{stringView.substr(1, std::ranges::size(stringView) - 2), true};
             }
             throw InvalidIdentifier("{}", stringView);
         }
