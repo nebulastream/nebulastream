@@ -13,37 +13,34 @@
 */
 
 #include <memory>
-#include <utility>
 #include <Functions/FunctionProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/MapLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
-#include <Traits/QueryForSubtree.hpp>
-#include <Traits/TraitSet.hpp>
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
+#include <MapPhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <SelectionPhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {
 
-std::vector<std::shared_ptr<PhysicalOperator>>
-LowerToPhysicalSelection::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
-    auto op = traitSet->get<Operator>();
-    const auto ops = dynamic_cast<SelectionLogicalOperator*>(op);
-    auto function = ops->getPredicate();
+    const auto op = traitSet->get<Operator>();
+    const auto ops = dynamic_cast<MapLogicalOperator*>(op);
+    auto function = ops->getMapFunction();
+    auto fieldName = function->getField()->getFieldName();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
     auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(layout);
-    auto phyOp = std::make_shared<SelectionPhysicalOperator>(
-        std::vector<std::shared_ptr<TupleBufferMemoryProvider>>{std::move(memoryProvider)}, std::move(func));
+    auto phyOp = std::make_shared<MapPhysicalOperator>(
+        std::vector<std::shared_ptr<TupleBufferMemoryProvider>>{std::move(memoryProvider)}, fieldName, std::move(func));
     return {phyOp};
-};
+}
 
-std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSelectionRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)
 {
-    return std::make_unique<LowerToPhysicalSelection>(argument.conf);
+    return std::make_unique<NES::Optimizer::LowerToPhysicalMap>(argument.conf);
 }
 }
