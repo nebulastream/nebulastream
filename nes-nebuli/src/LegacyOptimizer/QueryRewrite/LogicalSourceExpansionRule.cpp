@@ -13,8 +13,7 @@
 */
 
 #include <string>
-#include <unordered_set>
-#include <vector>
+#include <utility>
 #include <LegacyOptimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
@@ -28,20 +27,25 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan, Catalogs::Source:
 {
     auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
 
-    for (SourceNameLogicalOperator sourceOp : sourceOperators)
+    for (auto sourceOp : sourceOperators)
     {
         std::string logicalSourceName(sourceOp.getLogicalSourceName());
         auto sourceCatalogEntries = sourceCatalog.getPhysicalSources(logicalSourceName);
+
         if (sourceCatalogEntries.empty())
         {
             throw PhysicalSourceNotFoundInQueryDescription(
                 "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source " + logicalSourceName);
         }
-        for (const auto& sourceCatalogEntry : sourceCatalogEntries)
+
+        for (auto& sourceCatalogEntry : sourceCatalogEntries)
         {
             auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(sourceOp.getSchema());
-            auto logicalDescOp = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
-            queryPlan.replaceOperator(sourceOp, logicalDescOp);
+
+            LogicalOperator logicalDescOp(SourceDescriptorLogicalOperator(std::move(sourceDescriptor)));
+            auto replaced = queryPlan.replaceOperator(sourceOp, logicalDescOp);
+
+            std::cout << "Replacement was " << (replaced ? "successful" : "not successful") << "\n";
         }
     }
 }
