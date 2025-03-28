@@ -57,6 +57,7 @@ struct PhysicalOperatorConcept
 };
 
 struct PhysicalOperator {
+public:
     template<typename T>
     PhysicalOperator(const T& op) : self(std::make_unique<Model<T>>(op)) {}
 
@@ -97,6 +98,10 @@ struct PhysicalOperator {
         self->setChild(child);
     }
 
+    bool operator==(const PhysicalOperator &other) const {
+        return self->equals(*other.self);
+    }
+
     void setup(ExecutionContext& executionCtx) const
     {
         self->setup(executionCtx);
@@ -122,13 +127,14 @@ struct PhysicalOperator {
         self->execute(executionCtx, record);
     }
 
+
     std::string toString() const {
         return self->toString();
     }
 
-private:
     struct Concept : PhysicalOperatorConcept {
         [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
+        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
     };
 
     template<typename T>
@@ -175,11 +181,18 @@ private:
             data.execute(executionCtx, record);
         }
 
+        [[nodiscard]] bool equals(const Concept& other) const override {
+            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
+                return data == p->data;
+            }
+            return false;
+        }
+    };
+
         std::string toString() const override
         {
             return "PhysicalOperator(" + std::string(typeid(T).name()) + ")";
         }
-    };
 
     std::unique_ptr<Concept> self;
 };
@@ -192,34 +205,9 @@ struct PhysicalOperatorWrapper
 
     PhysicalOperator physicalOperator;
     std::optional<Schema> inputSchema, outputSchema;
-    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children {};
+    std::vector<std::unique_ptr<PhysicalOperatorWrapper>> children;
 
-    std::optional<std::shared_ptr<OperatorHandler>> handler;
-    std::optional<OperatorHandlerId> handlerId;
-
-    bool isScan = false;
-    bool isEmit = false;
-
-    /// @brief Returns a string representation of the wrapper.
-    std::string toString() const {
-        std::ostringstream oss;
-        oss << "PhysicalOperatorWrapper(";
-        oss << "Operator: " << physicalOperator.toString() << ", ";
-        oss << "InputSchema: " << (inputSchema ? "present" : "none") << ", ";
-        oss << "OutputSchema: " << (outputSchema ? "present" : "none") << ", ";
-        oss << "isScan: " << std::boolalpha << isScan << ", ";
-        oss << "isEmit: " << std::boolalpha << isEmit;
-        if (!children.empty()) {
-            oss << ", Children: [";
-            for (size_t i = 0; i < children.size(); ++i)
-            {
-                oss << children[i]->toString();
-                if (i + 1 < children.size())
-                    oss << ", ";
-            }
-            oss << "]";
-        }
-        oss << ")";
-        return oss.str();
-    }
 };
+}
+
+FMT_OSTREAM(NES::PhysicalOperator);
