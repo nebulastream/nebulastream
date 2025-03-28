@@ -25,8 +25,7 @@ class FieldAssignmentLogicalFunction : public BinaryLogicalFunction
 {
 public:
     explicit FieldAssignmentLogicalFunction(std::shared_ptr<DataType> stamp);
-
-    static std::shared_ptr<FieldAssignmentLogicalFunction> create(
+    explicit FieldAssignmentLogicalFunction(
         std::shared_ptr<FieldAccessLogicalFunction> fieldAccess, std::shared_ptr<LogicalFunction> LogicalFunction);
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
@@ -35,11 +34,10 @@ public:
     [[nodiscard]] std::shared_ptr<LogicalFunction> getAssignment() const;
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]]  std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
     explicit FieldAssignmentLogicalFunction(FieldAssignmentLogicalFunction* other);
-
     [[nodiscard]] std::string toString() const override;
 };
 }

@@ -22,15 +22,15 @@ namespace NES
 class NegateLogicalFunction final : public UnaryLogicalFunction
 {
 public:
-    NegateLogicalFunction();
+    NegateLogicalFunction(std::shared_ptr<LogicalFunction> const& child);
     ~NegateLogicalFunction() override = default;
 
-    static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
-
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+    bool validateBeforeLowering() const;
 
 protected:
     explicit NegateLogicalFunction(NegateLogicalFunction* other);

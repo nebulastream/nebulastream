@@ -22,18 +22,14 @@ namespace NES
 class LessEqualsLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    LessEqualsLogicalFunction();
+    LessEqualsLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~LessEqualsLogicalFunction() override = default;
-    static std::shared_ptr<LogicalFunction>
-    create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
-    std::shared_ptr<LogicalFunction> clone() const override;
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
     explicit LessEqualsLogicalFunction(LessEqualsLogicalFunction* other);
-
     [[nodiscard]] std::string toString() const override;
 };
 }

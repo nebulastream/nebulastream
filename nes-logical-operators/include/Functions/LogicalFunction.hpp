@@ -34,7 +34,6 @@ namespace NES
 class LogicalFunction : std::enable_shared_from_this<LogicalFunction>
 {
 public:
-    explicit LogicalFunction(std::shared_ptr<DataType> stamp, std::string type);
     virtual ~LogicalFunction() = default;
 
     /// @brief Indicates if this function is a predicate -> if its result stamp is a boolean
@@ -88,8 +87,8 @@ public:
     std::vector<std::shared_ptr<LogicalFunction>> children;
 
 protected:
+    explicit LogicalFunction(std::shared_ptr<DataType> stamp, std::string type);
     explicit LogicalFunction(const LogicalFunction* other);
-
 
     std::shared_ptr<DataType> stamp;
     std::string type;

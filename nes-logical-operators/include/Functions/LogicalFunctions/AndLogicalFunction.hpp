@@ -21,10 +21,8 @@ namespace NES
 class AndLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    AndLogicalFunction();
+    AndLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~AndLogicalFunction() override = default;
-    static std::shared_ptr<LogicalFunction>
-    create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     void inferStamp(const Schema& schema) override;

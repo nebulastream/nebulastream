@@ -22,18 +22,14 @@ namespace NES
 class GreaterEqualsLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    GreaterEqualsLogicalFunction() noexcept;
+    GreaterEqualsLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~GreaterEqualsLogicalFunction() override = default;
 
-    static std::shared_ptr<LogicalFunction>
-    create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
-
-    std::shared_ptr<LogicalFunction> clone() const override;
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
     explicit GreaterEqualsLogicalFunction(GreaterEqualsLogicalFunction* other);
-
     [[nodiscard]] std::string toString() const override;
 };
 }

@@ -23,10 +23,8 @@ class CaseLogicalFunction : public LogicalFunction
 {
 public:
     explicit CaseLogicalFunction(std::shared_ptr<DataType> stamp);
+    explicit CaseLogicalFunction(std::vector<std::shared_ptr<LogicalFunction>> const& whenExps, std::shared_ptr<LogicalFunction> const& defaultExp);
     ~CaseLogicalFunction() noexcept override = default;
-
-    static std::shared_ptr<LogicalFunction>
-    create(std::vector<std::shared_ptr<LogicalFunction>> const& whenExps, std::shared_ptr<LogicalFunction> const& defaultExp);
 
     void setChildren(std::vector<std::shared_ptr<LogicalFunction>> const& whenExps, std::shared_ptr<LogicalFunction> const& defaultExp);
 
@@ -44,7 +42,6 @@ public:
 
 protected:
     explicit CaseLogicalFunction(CaseLogicalFunction* other);
-
     [[nodiscard]] std::string toString() const override;
 };
 

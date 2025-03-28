@@ -21,11 +21,9 @@ namespace NES
 class OrLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    OrLogicalFunction();
+    OrLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~OrLogicalFunction() override = default;
-
-    static std::shared_ptr<LogicalFunction>
-    create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
+     
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
     void inferStamp(const Schema& schema) override;
 

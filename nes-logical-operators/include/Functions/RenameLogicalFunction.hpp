@@ -23,18 +23,17 @@ namespace NES
 class RenameLogicalFunction : public LogicalFunction
 {
 public:
-    static std::shared_ptr<LogicalFunction> create(std::shared_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName);
-
-    [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    RenameLogicalFunction(std::shared_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName);
 
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
     void inferStamp(const Schema& schema) override;
 
+    [[nodiscard]] std::string getNewFieldName() const;
+    [[nodiscard]] std::shared_ptr<FieldAccessLogicalFunction> getOriginalField() const;
 
-    std::shared_ptr<FieldAccessLogicalFunction> getOriginalField() const;
-
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
+    bool validateBeforeLowering() const;
 
 protected:
     explicit RenameLogicalFunction(const std::shared_ptr<RenameLogicalFunction> other);
@@ -42,10 +41,8 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName);
-
-    std::shared_ptr<FieldAccessLogicalFunction> originalField;
-    std::string newFieldName;
+    const std::shared_ptr<FieldAccessLogicalFunction> originalField;
+    const std::string newFieldName;
 };
 
 }

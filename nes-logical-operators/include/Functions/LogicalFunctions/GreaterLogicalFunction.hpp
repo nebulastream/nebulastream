@@ -22,18 +22,14 @@ namespace NES
 class GreaterLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    GreaterLogicalFunction() noexcept;
+    GreaterLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     ~GreaterLogicalFunction() override = default;
 
-    static std::shared_ptr<LogicalFunction>
-    create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
-
-    std::shared_ptr<LogicalFunction> clone() const override;
     [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
     explicit GreaterLogicalFunction(GreaterLogicalFunction* other);
-
     [[nodiscard]] std::string toString() const override;
 };
 }
