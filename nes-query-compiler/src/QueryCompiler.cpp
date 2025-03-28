@@ -21,7 +21,7 @@
 namespace NES::QueryCompilation
 {
 
-QueryCompiler::QueryCompiler(const std::shared_ptr<NodeEngine> nodeEngine) : nodeEngine(nodeEngine)
+QueryCompiler::QueryCompiler()
 {
 }
 
