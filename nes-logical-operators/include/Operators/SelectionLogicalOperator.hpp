@@ -16,9 +16,9 @@
 
 #include <memory>
 #include <Configurations/Descriptor.hpp>
-#include "Functions/LogicalFunction.hpp"
+#include <Abstract/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include "UnaryLogicalOperator.hpp"
+#include <Operators/UnaryLogicalOperator.hpp>
 
 namespace NES
 {

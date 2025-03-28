@@ -12,17 +12,18 @@
     limitations under the License.
 */
 
-#include "Operators/EventTimeWatermarkAssignerLogicalOperator.hpp"
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <memory>
 #include <Configurations/Descriptor.hpp>
-#include "Functions/FunctionSerializationUtil.hpp"
+#include <Functions/FunctionSerializationUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include "Operators/Serialization/SchemaSerializationUtil.hpp"
-#include "Operators/UnaryLogicalOperator.hpp"
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/UnaryLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
-#include "SerializableOperator.pb.h"
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <SerializableOperator.pb.h>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
@@ -127,6 +128,13 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
     serializedOperator.set_allocated_operator_(opDesc);
 
     return serializedOperator;
+}
+
+std::unique_ptr<LogicalOperator>
+LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments)
+{
+    // TODO
+    return nullptr;
 }
 
 }

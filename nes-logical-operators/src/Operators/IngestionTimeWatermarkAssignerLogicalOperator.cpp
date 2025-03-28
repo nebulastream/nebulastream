@@ -12,16 +12,17 @@
     limitations under the License.
 */
 
-#include "Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp"
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <memory>
 #include <sstream>
 #include <Configurations/Descriptor.hpp>
-#include "Functions/FunctionSerializationUtil.hpp"
+#include <Functions/FunctionSerializationUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include "Operators/Serialization/SchemaSerializationUtil.hpp"
-#include "Operators/UnaryLogicalOperator.hpp"
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/UnaryLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
-#include "SerializableOperator.pb.h"
+#include <SerializableOperator.pb.h>
+#include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
@@ -96,6 +97,13 @@ SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() 
     serializedOperator.set_allocated_operator_(opDesc);
 
     return serializedOperator;
+}
+
+std::unique_ptr<LogicalOperator>
+LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments)
+{
+    // TODO
+    return nullptr;
 }
 
 

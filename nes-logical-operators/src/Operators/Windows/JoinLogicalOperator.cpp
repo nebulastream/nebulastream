@@ -15,22 +15,23 @@
 #include <memory>
 #include <unordered_set>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
-#include "Common/DataTypes/BasicTypes.hpp"
-#include "API/AttributeField.hpp"
-#include "API/Schema.hpp"
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <ErrorHandling.hpp>
-#include "Functions/FieldAccessLogicalFunction.hpp"
-#include "Functions/FunctionSerializationUtil.hpp"
-#include "Functions/LogicalFunction.hpp"
-#include "Functions/LogicalFunctions/EqualsLogicalFunction.hpp"
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include "Iterators/BFSIterator.hpp"
-#include "Operators/LogicalOperator.hpp"
-#include "Operators/Serialization/SchemaSerializationUtil.hpp"
-#include "SerializableOperator.pb.h"
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
-#include "WindowTypes/Types/TimeBasedWindowType.hpp"
+#include <Iterators/BFSIterator.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <SerializableOperator.pb.h>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
@@ -274,6 +275,13 @@ SerializableOperator JoinLogicalOperator::serialize() const
     serializedOperator.set_allocated_operator_(opDesc);
 
     return serializedOperator;
+}
+
+std::unique_ptr<LogicalOperator>
+LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOperatorRegistryArguments)
+{
+    // TODO
+    return nullptr;
 }
 
 }
