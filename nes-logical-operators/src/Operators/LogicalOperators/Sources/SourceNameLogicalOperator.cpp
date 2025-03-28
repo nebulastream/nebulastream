@@ -65,20 +65,9 @@ std::shared_ptr<Operator> SourceNameLogicalOperator::clone() const
     auto copy = std::make_shared<SourceNameLogicalOperator>(logicalSourceName, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setOperatorState(operatorState);
-    for (const auto& pair : properties)
-    {
-        copy->addProperty(pair.first, pair.second);
-    }
     return copy;
 }
 
-void SourceNameLogicalOperator::inferStringSignature()
-{
-    ///Update the signature
-    throw FunctionNotImplemented("Not supporting infering signatures for SourceNameLogicalOperator.");
-}
 
 void SourceNameLogicalOperator::inferInputOrigins()
 {
