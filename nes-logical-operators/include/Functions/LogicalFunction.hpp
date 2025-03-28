@@ -214,7 +214,7 @@ private:
 
         [[nodiscard]] bool equals(const Concept& other) const override {
             if (auto p = dynamic_cast<const Model<T>*>(&other)) {
-                return data == p->data;
+                return data.operator==(p->data);
             }
             return false;
         }
