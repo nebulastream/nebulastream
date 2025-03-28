@@ -24,7 +24,6 @@ namespace NES::LogicalOperatorGeneratedRegistrar
 {
 std::unique_ptr<LogicalOperator> RegisterSelectionLogicalOperator();
 std::unique_ptr<LogicalOperator> RegisterMapLogicalOperator();
-std::unique_ptr<LogicalOperator> RegisterRenameSourceLogicalOperator();
 std::unique_ptr<LogicalOperator> RegisterProjectionLogicalOperator();
 std::unique_ptr<LogicalOperator> RegisterJoinLogicalOperator();
 std::unique_ptr<LogicalOperator> RegisterAggregationLogicalOperator();
@@ -38,7 +37,6 @@ inline void Registrar<LogicalOperatorRegistry, RewriteRuleRegistrySignature>::re
     using namespace NES::LogicalOperatorGeneratedRegistrar;
     registry.registerPlugin("Selection", RegisterSelectionLogicalOperator);
     registry.registerPlugin("Map", RegisterMapLogicalOperator);
-    registry.registerPlugin("RenameSource", RegisterRenameSourceLogicalOperator);
     registry.registerPlugin("Projection", RegisterProjectionLogicalOperator);
     registry.registerPlugin("Join", RegisterJoinLogicalOperator);
     registry.registerPlugin("Aggregation", RegisterAggregationLogicalOperator);

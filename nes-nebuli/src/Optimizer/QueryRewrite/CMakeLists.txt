@@ -19,5 +19,4 @@
 #        LogicalSourceExpansionRule.cpp
 #        PredicateReorderingRule.cpp
 #        ProjectBeforeUnionOperatorRule.cpp
-#        RenameSourceToProjectOperatorRule.cpp
 #)

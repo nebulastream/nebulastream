@@ -23,7 +23,6 @@
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -115,14 +114,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     {
         /// serialize watermarkAssigner operator
         serializeWatermarkAssignerOperator(*NES::Util::as<WatermarkAssignerLogicalOperator>(operatorNode), serializedOperator);
-    }
-    else if (NES::Util::instanceOf<RenameSourceLogicalOperator>(operatorNode))
-    {
-        /// Serialize rename source operator
-        NES_TRACE("OperatorSerializationUtil:: serialize to RenameSourceLogicalOperator");
-        auto renameDetails = SerializableOperator_RenameDetails();
-        renameDetails.set_newsourcename(NES::Util::as<RenameSourceLogicalOperator>(operatorNode)->getNewSourceName());
-        serializedOperator.mutable_details()->PackFrom(renameDetails);
     }
     else
     {
@@ -573,14 +564,6 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         auto serializedWatermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
         details.UnpackTo(&serializedWatermarkStrategyDetails);
         operatorNode = deserializeWatermarkAssignerOperator(serializedWatermarkStrategyDetails);
-    }
-    else if (details.Is<SerializableOperator_RenameDetails>())
-    {
-        /// Deserialize rename source operator.
-        NES_TRACE("OperatorSerializationUtil:: deserialize to rename source operator");
-        auto renameDetails = SerializableOperator_RenameDetails();
-        details.UnpackTo(&renameDetails);
-        operatorNode = std::make_shared<RenameSourceLogicalOperator>(renameDetails.newsourcename(), getNextOperatorId());
     }
     else
     {
