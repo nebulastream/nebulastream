@@ -16,18 +16,17 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/MapLogicalOperator.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/UnaryLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
 #include <SerializableOperator.pb.h>
-#include "Operators/EventTimeWatermarkAssignerLogicalOperator.hpp"
-#include "Operators/InferModelLogicalOperator.hpp"
-#include "Operators/MapLogicalOperator.hpp"
-#include "Operators/ProjectionLogicalOperator.hpp"
-#include "Operators/SelectionLogicalOperator.hpp"
-#include "Operators/UnaryLogicalOperator.hpp"
 
 namespace NES
 {
