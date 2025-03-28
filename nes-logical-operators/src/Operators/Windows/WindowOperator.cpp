@@ -21,12 +21,7 @@ namespace NES
 {
 
 WindowOperator::WindowOperator()
-    : WindowOperator(INVALID_ORIGIN_ID)
-{
-}
-
-WindowOperator::WindowOperator(const OriginId originId)
-    : Operator(), UnaryLogicalOperator(), originIds(originId)
+    : Operator(), UnaryLogicalOperator()
 {
 }
 

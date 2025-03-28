@@ -52,9 +52,7 @@ public:
     const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
-    Optimizer::OriginIdTrait& get() {
-        return originIds;
-    }
+    Optimizer::OriginIdTrait originIds;
 
 protected:
     static constexpr std::string_view NAME = "Window";
@@ -63,7 +61,6 @@ protected:
     std::vector<std::shared_ptr<FieldAccessLogicalFunction>> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
-    Optimizer::OriginIdTrait originIds;
 };
 
 }
