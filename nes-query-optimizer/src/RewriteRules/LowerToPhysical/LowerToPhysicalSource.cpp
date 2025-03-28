@@ -14,8 +14,6 @@
 
 #include <memory>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <Functions/FunctionProvider.hpp>
-#include <SinkPhysicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -26,12 +24,19 @@
 namespace NES::Optimizer
 {
 
-std::vector<PhysicalOperatorWrapper> LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
+RewriteRuleResult LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
 {
+    PRECONDITION(logicalOperator.tryGet<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
     auto source = *logicalOperator.get<SourceDescriptorLogicalOperator>();
-    auto physicalOperator = SourcePhysicalOperator(source.getSourceDescriptor(), source.getOutputOriginIds()[0]);
-    auto wrapper = PhysicalOperatorWrapper(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
-    return {wrapper};
+
+    auto outputOriginIds = source.getOutputOriginIds();
+    PRECONDITION(outputOriginIds.size() == 1, "SourceDescriptorLogicalOperator has exactly one origin id");
+    auto physicalOperator = SourcePhysicalOperator(source.getSourceDescriptor(), outputOriginIds[0]);
+
+    auto inputSchemas = logicalOperator.getInputSchemas();
+    PRECONDITION(inputSchemas.size() == 1, "SourceDescriptorLogicalOperator has exactly one schema");
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema());
+    return {.root=wrapper, .leafOperators={wrapper}};
 }
 
 RewriteRuleRegistryReturnType RewriteRuleGeneratedRegistrar::RegisterSourceRewriteRule(RewriteRuleRegistryArguments argument)
