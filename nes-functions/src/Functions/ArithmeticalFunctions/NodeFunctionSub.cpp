@@ -26,7 +26,7 @@
 namespace NES
 {
 
-NodeFunctionSub::NodeFunctionSub(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Sub") {};
+NodeFunctionSub::NodeFunctionSub(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Sub") { };
 
 NodeFunctionSub::NodeFunctionSub(NodeFunctionSub* other) : NodeFunctionArithmeticalBinary(other)
 {

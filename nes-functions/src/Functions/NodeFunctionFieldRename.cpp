@@ -28,10 +28,10 @@
 namespace NES
 {
 NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName)
-    : NodeFunction(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
+    : NodeFunction(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) { };
 
 NodeFunctionFieldRename::NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldRename>& other)
-    : NodeFunctionFieldRename(other->getOriginalField(), other->getNewFieldName()) {};
+    : NodeFunctionFieldRename(other->getOriginalField(), other->getNewFieldName()) { };
 
 std::shared_ptr<NodeFunction>
 NodeFunctionFieldRename::create(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName)

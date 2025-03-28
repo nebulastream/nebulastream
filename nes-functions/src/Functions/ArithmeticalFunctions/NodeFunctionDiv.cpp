@@ -25,7 +25,7 @@
 namespace NES
 {
 
-NodeFunctionDiv::NodeFunctionDiv(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Div") {};
+NodeFunctionDiv::NodeFunctionDiv(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Div") { };
 
 NodeFunctionDiv::NodeFunctionDiv(NodeFunctionDiv* other) : NodeFunctionArithmeticalBinary(other)
 {

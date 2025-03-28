@@ -27,7 +27,7 @@
 namespace NES
 {
 
-NodeFunctionMod::NodeFunctionMod(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mod") {};
+NodeFunctionMod::NodeFunctionMod(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mod") { };
 
 NodeFunctionMod::NodeFunctionMod(NodeFunctionMod* other) : NodeFunctionArithmeticalBinary(other)
 {

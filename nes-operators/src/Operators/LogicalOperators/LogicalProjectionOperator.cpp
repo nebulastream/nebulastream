@@ -38,7 +38,8 @@ namespace NES
 LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr<NodeFunction>> functions, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
 {
-    const auto functionTypeNotSupported = [](const std::shared_ptr<NodeFunction>& function) -> bool {
+    const auto functionTypeNotSupported = [](const std::shared_ptr<NodeFunction>& function) -> bool
+    {
         return not(
             NES::Util::instanceOf<NodeFunctionFieldAccess>(function) or NES::Util::instanceOf<NodeFunctionFieldAssignment>(function));
     };

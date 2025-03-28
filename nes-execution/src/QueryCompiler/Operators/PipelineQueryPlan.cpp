@@ -28,7 +28,7 @@ std::shared_ptr<PipelineQueryPlan> PipelineQueryPlan::create(QueryId queryId)
     return std::make_shared<PipelineQueryPlan>(PipelineQueryPlan(queryId));
 }
 
-PipelineQueryPlan::PipelineQueryPlan(QueryId queryId) : queryId(queryId) {};
+PipelineQueryPlan::PipelineQueryPlan(QueryId queryId) : queryId(queryId) { };
 
 void PipelineQueryPlan::addPipeline(const std::shared_ptr<OperatorPipeline>& pipeline)
 {

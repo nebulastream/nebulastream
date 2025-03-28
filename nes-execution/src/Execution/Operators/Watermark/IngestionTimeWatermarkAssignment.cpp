@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Operators
 {
 
 IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)
-    : timeFunction(std::move(timeFunction)) {};
+    : timeFunction(std::move(timeFunction)) { };
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {

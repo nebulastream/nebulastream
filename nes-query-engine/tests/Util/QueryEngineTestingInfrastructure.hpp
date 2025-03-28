@@ -121,21 +121,21 @@ struct ExpectStats
     explicit ExpectStats(std::shared_ptr<TestQueryStatisticListener> listener) : listener(std::move(listener))
     {
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::QueryStop>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::PipelineStop>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExpired>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
     }
 
     template <typename... Args>
