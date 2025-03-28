@@ -37,12 +37,12 @@ LessEqualsLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, 
     return lessThen;
 }
 
-bool LessEqualsLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs) const
+bool LessEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<LessEqualsLogicalFunction>(rhs))
     {
         auto other = NES::Util::as<LessEqualsLogicalFunction>(rhs);
-        return this->getLeftChild()->equal(other->getLeftChild()) && this->getRightChild()->equal(other->getRightChild());
+        return this->getLeftChild() == other->getLeftChild() && this->getRightChild() == other->getRightChild();
     }
     return false;
 }

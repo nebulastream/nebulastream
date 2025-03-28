@@ -38,7 +38,7 @@ RenameLogicalFunction::create(std::shared_ptr<FieldAccessLogicalFunction> origin
     return std::make_shared<RenameLogicalFunction>(RenameLogicalFunction(originalField, std::move(newFieldName)));
 }
 
-bool RenameLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool RenameLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<RenameLogicalFunction>(rhs))
     {

@@ -43,7 +43,7 @@ EqualsLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, cons
     return equals;
 }
 
-bool EqualsLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool EqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<EqualsLogicalFunction>(rhs))
     {

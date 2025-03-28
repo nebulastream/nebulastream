@@ -36,7 +36,7 @@ DivLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const s
     return divNode;
 }
 
-bool DivLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs) const
+bool DivLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<DivLogicalFunction>(rhs))
     {

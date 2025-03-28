@@ -26,7 +26,6 @@ public:
     static std::shared_ptr<LogicalFunction>
     create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
 
-    bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
     std::shared_ptr<LogicalFunction> clone() const override;
 
 

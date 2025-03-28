@@ -31,13 +31,11 @@ WhenLogicalFunction::WhenLogicalFunction(WhenLogicalFunction* other) : BinaryLog
 {
 }
 
-std::shared_ptr<LogicalFunction>
-WhenLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+WhenLogicalFunction::WhenLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
 {
     auto whenNode = std::make_shared<WhenLogicalFunction>(left->getStamp());
     whenNode->setLeftChild(left);
     whenNode->setRightChild(right);
-    return whenNode;
 }
 
 void WhenLogicalFunction::inferStamp(const Schema& schema)
@@ -60,7 +58,7 @@ void WhenLogicalFunction::inferStamp(const Schema& schema)
     NES_TRACE("WhenLogicalFunction: we assigned the following stamp: {}", stamp->toString())
 }
 
-bool WhenLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool WhenLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<WhenLogicalFunction>(rhs))
     {

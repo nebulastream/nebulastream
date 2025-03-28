@@ -41,13 +41,13 @@ OrLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const st
     return orNode;
 }
 
-bool OrLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool OrLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<OrLogicalFunction>(rhs))
     {
         auto other = NES::Util::as<OrLogicalFunction>(rhs);
-        const bool simpleMatch = getLeftChild()->equal(other->getLeftChild()) and getRightChild()->equal(other->getRightChild());
-        const bool commutativeMatch = getLeftChild()->equal(other->getRightChild()) and getRightChild()->equal(other->getLeftChild());
+        const bool simpleMatch = getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
+        const bool commutativeMatch = getLeftChild() == other->getRightChild() and getRightChild() == other->getLeftChild();
         return simpleMatch or commutativeMatch;
     }
     return false;

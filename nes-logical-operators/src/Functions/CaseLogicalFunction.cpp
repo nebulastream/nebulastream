@@ -113,7 +113,7 @@ std::shared_ptr<LogicalFunction> CaseLogicalFunction::getDefaultExp() const
     return Util::as<LogicalFunction>(*(children.end() - 1));
 }
 
-bool CaseLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs) const
+bool CaseLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<CaseLogicalFunction>(rhs))
     {

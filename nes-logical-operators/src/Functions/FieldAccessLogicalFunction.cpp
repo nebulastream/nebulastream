@@ -41,7 +41,7 @@ std::shared_ptr<LogicalFunction> FieldAccessLogicalFunction::create(std::string 
     return create(DataTypeProvider::provideDataType(LogicalType::UNDEFINED), std::move(fieldName));
 }
 
-bool FieldAccessLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool FieldAccessLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<FieldAccessLogicalFunction>(rhs))
     {

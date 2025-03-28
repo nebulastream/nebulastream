@@ -29,7 +29,7 @@ public:
     static std::shared_ptr<FieldAssignmentLogicalFunction> create(
         std::shared_ptr<FieldAccessLogicalFunction> fieldAccess, std::shared_ptr<LogicalFunction> LogicalFunction);
 
-    [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
     [[nodiscard]] std::shared_ptr<FieldAccessLogicalFunction> getField() const;
     [[nodiscard]] std::shared_ptr<LogicalFunction> getAssignment() const;

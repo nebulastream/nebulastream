@@ -39,7 +39,7 @@ std::shared_ptr<LogicalFunction> RoundLogicalFunction::create(const std::shared_
     return roundNode;
 }
 
-bool RoundLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+bool RoundLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<RoundLogicalFunction>(rhs))
     {
