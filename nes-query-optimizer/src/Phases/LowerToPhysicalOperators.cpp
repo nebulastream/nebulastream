@@ -45,12 +45,20 @@ std::unique_ptr<QueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
             currentOperator = NES::Util::as<SourceDescriptorLogicalOperator>(operatorNode);
             tmp->children.push_back(currentOperator);
         }
-        else if (auto rule = RewriteRuleRegistry::instance().create(operatorNode->getName(), RewriteRuleRegistryArguments{}); rule.has_value())
+        else if (NES::Util::instanceOf<LogicalOperator>(operatorNode))
         {
-            /// TODO here we apply the rule
-            /// The problem is that we would expect that we take the TraitSet as the input
-            rule.value();
-            operatorNode->children.push_back(currentOperator);
+            auto logicalOperator = NES::Util::as<LogicalOperator>(operatorNode);
+            if (auto rule = RewriteRuleRegistry::instance().create(logicalOperator->getName(), RewriteRuleRegistryArguments{}); rule.has_value())
+            {
+                /// TODO here we apply the rule
+                /// The problem is that we would expect that we take the TraitSet as the input
+                rule.value();
+                operatorNode->children.push_back(currentOperator);
+            }
+            else
+            {
+                throw UnknownLogicalOperator("{} not part of RewriteRuleRegistry", logicalOperator->getName());
+            }
         }
         else
         {

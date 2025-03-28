@@ -256,7 +256,7 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalWindowedAggregatio
     return {build, probe};
 }
 
-std::unique_ptr<Optimizer::AbstractRewriteRule> Optimizer::RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalWindowedAggregationRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<Optimizer::AbstractRewriteRule> Optimizer::RewriteRuleGeneratedRegistrar::RegisterWindowedAggregationRewriteRule(RewriteRuleRegistryArguments argument)
 {
     return std::make_unique<NES::Optimizer::LowerToPhysicalWindowedAggregation>(argument.conf);
 }

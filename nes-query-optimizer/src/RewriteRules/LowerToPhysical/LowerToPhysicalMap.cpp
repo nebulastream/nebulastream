@@ -38,7 +38,7 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalMap::applyToPhysic
     return {phyOp};
 }
 
-std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalMapRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)
 {
     return std::make_unique<NES::Optimizer::LowerToPhysicalMap>(argument.conf);
 }

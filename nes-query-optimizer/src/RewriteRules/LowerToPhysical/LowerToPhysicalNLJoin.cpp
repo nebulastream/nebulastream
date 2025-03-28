@@ -202,7 +202,7 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalNLJoin::applyToPhy
     return {probeOp, rightBuildOp, leftBuildOp};
 };
 
-std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalNLJoinRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterJoinRewriteRule(RewriteRuleRegistryArguments argument)
 {
     return std::make_unique<LowerToPhysicalNLJoin>(argument.conf);
 }

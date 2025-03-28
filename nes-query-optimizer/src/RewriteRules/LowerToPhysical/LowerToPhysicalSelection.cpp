@@ -42,7 +42,7 @@ std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalSelection::applyTo
     return {phyOp};
 };
 
-std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalSelectionRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSelectionRewriteRule(RewriteRuleRegistryArguments argument)
 {
     return std::make_unique<LowerToPhysicalSelection>(argument.conf);
 }
