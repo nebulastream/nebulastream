@@ -27,8 +27,8 @@ namespace NES
 class MedianAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    MedianAggregationLogicalFunction(LogicalFunction onField, LogicalFunction asField);
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(LogicalFunction onField);
+    MedianAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
     explicit MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
     /// Creates a new MedianAggregationLogicalFunction

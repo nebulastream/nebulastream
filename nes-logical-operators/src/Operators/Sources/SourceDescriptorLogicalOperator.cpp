@@ -33,6 +33,13 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
     return NAME;
 }
 
+bool SourceDescriptorLogicalOperator::inferSchema()
+{
+    inputSchema = sourceDescriptor->schema;
+    outputSchema = sourceDescriptor->schema;
+    return true;
+}
+
 bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs))
@@ -47,6 +54,51 @@ std::string SourceDescriptorLogicalOperator::toString() const
     std::stringstream ss;
     ss << "SOURCE(opId: " << id << ": originid: " << originIdTrait.toString() << ", " << sourceDescriptor << ")";
     return ss.str();
+}
+
+Optimizer::TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void SourceDescriptorLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> SourceDescriptorLogicalOperator::getInputSchemas() const
+{
+    return {sourceDescriptor->schema};
+};
+
+Schema SourceDescriptorLogicalOperator::getOutputSchema() const
+{
+    return sourceDescriptor->schema;
+}
+
+std::vector<std::vector<OriginId>> SourceDescriptorLogicalOperator::getInputOriginIds() const
+{
+    return {inputOriginIds};
+}
+
+std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void SourceDescriptorLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void SourceDescriptorLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> SourceDescriptorLogicalOperator::getChildren() const
+{
+    return children;
 }
 
 std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getSourceDescriptor() const

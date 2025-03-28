@@ -28,17 +28,33 @@ class SelectionLogicalOperator : public LogicalOperatorConcept
 {
 public:
     explicit SelectionLogicalOperator(LogicalFunction predicate);
-    std::string_view getName() const noexcept override;
 
+    /// Operator specific member
     [[nodiscard]] LogicalFunction getPredicate() const;
-    void setPredicate(LogicalFunction newPredicate);
-
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-
     bool inferSchema();
 
+    /// LogicalOperatorConcept member
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
 
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override;
+
+    void setChildren(std::vector<LogicalOperator> children) override;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
+
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
+    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
+    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
+
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
+
+
+    /// Serialization
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
 
@@ -53,24 +69,15 @@ public:
             = Configurations::DescriptorConfig::createConfigParameterContainerMap(SELECTION_FUNCTION_NAME);
     };
 
-protected:
-    std::string toString() const override;
-
-    std::vector<LogicalOperator> getChildren() const override { return children; }
-
-    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
-
-    Optimizer::TraitSet getTraitSet() const override { return {}; }
-
-    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
-    Schema getOutputSchema() const override { return outputSchema; }
-    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
-    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
-
 private:
-    std::vector<LogicalOperator> children;
+    /// Operator specific member
     static constexpr std::string_view NAME = "Selection";
     LogicalFunction predicate;
+
+    /// LogicalOperatorConcept member
+    std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
+    std::vector<OriginId> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
 };
 }

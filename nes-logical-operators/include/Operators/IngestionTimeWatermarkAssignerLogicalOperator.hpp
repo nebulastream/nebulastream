@@ -25,32 +25,41 @@ namespace NES
 class IngestionTimeWatermarkAssignerLogicalOperator final : public LogicalOperatorConcept
 {
 public:
-    static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
     IngestionTimeWatermarkAssignerLogicalOperator();
-    std::string_view getName() const noexcept override;
 
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
+    /// Operator specific member
     bool inferSchema();
 
+    /// LogicalOperatorConcept member
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
+
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override;
+
+    void setChildren(std::vector<LogicalOperator> children) override;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
+
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override;
+    void setOutputOriginIds(std::vector<OriginId> ids) override;
+
     [[nodiscard]] std::string toString() const override;
-
-    std::vector<LogicalOperator> getChildren() const override { return children; }
-
-    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
-
-    Optimizer::TraitSet getTraitSet() const override { return {}; }
-
-    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
-    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
-
-    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
-    Schema getOutputSchema() const override { return outputSchema; };
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
 protected:
+    /// Operator specific member
+    static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
+
+    /// LogicalOperatorConcept member
     std::vector<LogicalOperator> children;
     Schema inputSchema;
     Schema outputSchema;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
 };
 
 }

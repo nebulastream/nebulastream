@@ -42,6 +42,12 @@ bool SourceNameLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
     }
     return false;
 }
+bool SourceNameLogicalOperator::inferSchema()
+{
+    inputSchema = schema;
+    outputSchema = schema;
+    return true;
+}
 
 std::string SourceNameLogicalOperator::toString() const
 {
@@ -56,7 +62,7 @@ void SourceNameLogicalOperator::inferInputOrigins()
 
 std::string_view SourceNameLogicalOperator::getName() const noexcept
 {
-    return logicalSourceName;
+    return "Source";
 }
 
 Schema SourceNameLogicalOperator::getSchema() const
@@ -68,9 +74,59 @@ void SourceNameLogicalOperator::setSchema(const Schema& schema)
     this->schema = schema;
 }
 
+Optimizer::TraitSet SourceNameLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void SourceNameLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> SourceNameLogicalOperator::getInputSchemas() const
+{
+    return {inputSchema};
+};
+
+Schema SourceNameLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> SourceNameLogicalOperator::getInputOriginIds() const
+{
+    return inputOriginIds;
+}
+
+std::vector<OriginId> SourceNameLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void SourceNameLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void SourceNameLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> SourceNameLogicalOperator::getChildren() const
+{
+    return children;
+}
+
+std::string SourceNameLogicalOperator::getLogicalSourceName() const
+{
+    return logicalSourceName;
+}
+
 SerializableOperator SourceNameLogicalOperator::serialize() const
 {
-    PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined");
+    PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
 }
 
 }

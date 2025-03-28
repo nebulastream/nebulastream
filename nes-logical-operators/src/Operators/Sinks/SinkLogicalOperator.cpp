@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
@@ -42,7 +43,7 @@ std::string SinkLogicalOperator::toString() const
 
 std::string_view SinkLogicalOperator::getName() const noexcept
 {
-    return sinkName;
+    return NAME;
 }
 
 bool SinkLogicalOperator::inferSchema()
@@ -57,6 +58,60 @@ bool SinkLogicalOperator::inferSchema()
     return result && sinkDescriptor;
 }
 
+Optimizer::TraitSet SinkLogicalOperator::getTraitSet() const
+{
+    return {};
+}
+
+void SinkLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+{
+    this->children = children;
+}
+
+std::vector<Schema> SinkLogicalOperator::getInputSchemas() const
+{
+    return {inputSchema};
+};
+
+Schema SinkLogicalOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
+
+std::vector<std::vector<OriginId>> SinkLogicalOperator::getInputOriginIds() const
+{
+    return inputOriginIds;
+}
+
+std::vector<OriginId> SinkLogicalOperator::getOutputOriginIds() const
+{
+    return outputOriginIds;
+}
+
+void SinkLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+{
+    outputOriginIds = ids;
+}
+
+void SinkLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+{
+    inputOriginIds = ids;
+}
+
+std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const
+{
+    return children;
+}
+
+void SinkLogicalOperator::setOutputSchema(Schema schema)
+{
+    outputSchema = std::move(schema);
+}
+
+std::string SinkLogicalOperator::getSinkName() const
+{
+    return sinkName;
+}
 
 SerializableOperator SinkLogicalOperator::serialize() const
 {

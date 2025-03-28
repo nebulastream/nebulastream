@@ -31,43 +31,45 @@ class SourceDescriptorLogicalOperator final : public LogicalOperatorConcept
 {
 public:
     explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
-    [[nodiscard]] std::string_view getName() const noexcept override;
 
+    /// Operator specific member
     [[nodiscard]] std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
     [[nodiscard]] Sources::SourceDescriptor& getSourceDescriptorRef() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     //bool inferSchema();
 
+    /// LogicalOperatorConcept member
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
-
-    Optimizer::OriginIdTrait originIdTrait;
-
     [[nodiscard]] SerializableOperator serialize() const override;
 
-protected:
-    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
-    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override;
 
-    virtual std::vector<LogicalOperator> getChildren() const override { return children; }
+    void setChildren(std::vector<LogicalOperator> children) override;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
 
-    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override { return {}; }
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
 
-    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
-
-    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
-    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
-
-    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
-    Schema getOutputSchema() const override { return outputSchema; };
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override;
+    void setOutputOriginIds(std::vector<OriginId> ids) override;
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
-    std::vector<LogicalOperator> children;
-    Schema inputSchema;
-    Schema outputSchema;
-
-    static constexpr std::string_view NAME = "SourceDescriptor";
+    /// Operator specific member
+    static constexpr std::string_view NAME = "Source";
     const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    Optimizer::OriginIdAssignerTrait originIdTrait;
+
+    /// LogicalOperatorConcept member
+    Optimizer::OriginIdTrait originIdTrait;
+    std::vector<LogicalOperator> children;
+    Schema inputSchema, outputSchema;
+    std::vector<std::vector<OriginId>> inputOriginIds;
+    std::vector<OriginId> outputOriginIds;
 };
 
 }
