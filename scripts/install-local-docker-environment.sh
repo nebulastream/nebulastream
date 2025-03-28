@@ -47,8 +47,8 @@ done
 # Check if the standard library is set, otherwise prompt the user
 if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
   echo "Please choose a standard library implementation:"
-    echo "1. libcxx (shipped with dependencies, likely to work, limited debug symbols in CLion)"
-    echo "2. libstdcxx (not shipped with dependencies, takes local version, might lead to conflicts, full debug symbols in CLion)"
+    echo "1. llvm libc++ "
+    echo "2. gcc libstdc++ "
     read -p "Enter the number (1 or 2): " -r
     case $REPLY in
       1) STDLIB="libcxx" ;;

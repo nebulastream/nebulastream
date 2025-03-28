@@ -33,3 +33,14 @@ RUN git clone https://github.com/aras-p/ClangBuildAnalyzer.git \
     && cmake --install ClangBuildAnalyzer/build \
     && rm -rf ClangBuildAnalyzer \
     && ClangBuildAnalyzer --version
+
+# Install GDB Libc++ Pretty Printer
+RUN wget -P /usr/share/libcxx/  https://raw.githubusercontent.com/llvm/llvm-project/refs/tags/llvmorg-19.1.7/libcxx/utils/gdb/libcxx/printers.py && \
+    cat <<EOF > /etc/gdb/gdbinit
+    python
+    import sys
+    sys.path.insert(0, '/usr/share/libcxx')
+    import printers
+    printers.register_libcxx_printer_loader()
+    end
+EOF
