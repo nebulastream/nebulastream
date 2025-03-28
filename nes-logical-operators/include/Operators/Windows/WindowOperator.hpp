@@ -36,7 +36,7 @@ public:
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
 
-    bool isKeyed() const;
+    [[nodiscard]] bool isKeyed() const;
 
     [[nodiscard]] uint64_t getNumberOfInputEdges() const;
     void setNumberOfInputEdges(uint64_t numberOfInputEdges);
@@ -51,9 +51,6 @@ public:
     void setOnKey(const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& keys);
 
     [[nodiscard]] OriginId getOriginId() const;
-    // void setOriginId(OriginId originId);
-
-    ///std::shared_ptr<WindowOperator> clone() const;
     const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
