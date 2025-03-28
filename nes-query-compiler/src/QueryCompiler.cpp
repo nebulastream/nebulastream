@@ -14,16 +14,15 @@
 
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Phases/NautilusCompilationPhase.hpp>
 #include <Phases/Translations/AddScanAndEmitPhase.hpp>
-#include <Phases/Translations/LowerLogicalToNautilusOperators.hpp>
 #include <Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <Phases/Translations/PipeliningPhase.hpp>
-#include <Plans/DecomposedQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
-#include <Phases/NautilusCompilationPhase.hpp>
+#include <Phases/LowerToPhysicalOperators.hpp>
 
 namespace NES::QueryCompilation
 {

@@ -18,10 +18,10 @@
 #include <Plans/QueryPlan.hpp>
 #include <Util/QueryState.hpp>
 #include <SerializableQueryPlan.pb.h>
+#include <Plans/QueryPlan.hpp>
 
 namespace NES
 {
-
 class QueryPlanSerializationUtil
 {
 public:

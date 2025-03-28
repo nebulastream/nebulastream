@@ -27,9 +27,7 @@ namespace NES::Testing
 {
 using namespace ::testing;
 
-/**
- * @brief Integration tests for the SingleNodeWorker. Tests query status after registration, running, stopping and unregistration.
- */
+/// @brief Integration tests for the SingleNodeWorker. Tests query status after registration, running, stopping and unregistration.
 class SingleNodeIntegrationTest : public BaseIntegrationTest
 {
 public:
@@ -50,7 +48,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
     const std::string queryResultFile = fmt::format("{}.csv", resultFileName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
-    SerializableDecomposedQueryPlan queryPlan;
+    SerializableQueryPlan queryPlan;
     const auto querySpecificDataFileName = fmt::format("{}_{}", "TestQueryStatus", dataInputFile);
     if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, querySpecificDataFileName))
     {
@@ -94,7 +92,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     const std::string queryResultFile = fmt::format("{}.csv", resultFileName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
-    SerializableDecomposedQueryPlan queryPlan;
+    SerializableQueryPlan queryPlan;
     const auto querySpecificDataFileName = fmt::format("{}_{}", "TestQueryStatusSimple", dataInputFile);
     if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, querySpecificDataFileName))
     {
