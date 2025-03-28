@@ -27,11 +27,6 @@ SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
     Sources::SourceDescriptor sourceDescriptor) : Operator(), UnaryLogicalOperator(), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
-SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    Sources::SourceDescriptor sourceDescriptor, const OriginId originId)
-    : Operator(), UnaryLogicalOperator(), sourceDescriptor(std::move(sourceDescriptor)), originIds(originId)
-{
-}
 
 std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
 {
@@ -54,18 +49,13 @@ bool SourceDescriptorLogicalOperator::operator==(Operator const& rhs) const
 std::string SourceDescriptorLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originIds.toString() << ", " << sourceDescriptor << ")";
+    ss << "SOURCE(opId: " << id << ": originid: " << originIdTrait.toString() << ", " << sourceDescriptor << ")";
     return ss.str();
 }
 
 Sources::SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 {
     return sourceDescriptor;
-}
-
-Optimizer::OriginIdTrait& SourceDescriptorLogicalOperator::getOriginIds()()
-{
-    return originIds;
 }
 
 bool SourceDescriptorLogicalOperator::inferSchema()
@@ -79,14 +69,9 @@ std::unique_ptr<Operator> SourceDescriptorLogicalOperator::clone() const
 {
     auto sourceDescriptorPtrCopy = sourceDescriptor;
     auto result = std::make_unique<SourceDescriptorLogicalOperator>(std::move(sourceDescriptorPtrCopy));
-    result->get(originIds);
+    result->originIdTrait = originIdTrait;
     result->inferSchema();
     return result;
-}
-
-std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() const
-{
-    return originIds;
 }
 
 [[nodiscard]] SerializableOperator SourceDescriptorLogicalOperator::serialize() const

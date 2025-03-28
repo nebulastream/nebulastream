@@ -30,7 +30,6 @@ class SourceDescriptorLogicalOperator final : public UnaryLogicalOperator
 {
 public:
     explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor);
-    explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor, OriginId originId);
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     Sources::SourceDescriptor getSourceDescriptor() const;
@@ -41,9 +40,7 @@ public:
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
-    std::vector<OriginId> getOutputOriginIds() const override;
-
-    Optimizer::OriginIdTrait& getOriginIds();
+    Optimizer::OriginIdTrait originIdTrait;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
@@ -55,7 +52,6 @@ protected:
 private:
     static constexpr std::string_view NAME = "SourceDescriptor";
     const Sources::SourceDescriptor sourceDescriptor;
-    Optimizer::OriginIdTrait originIds;
 };
 
 }
