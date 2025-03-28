@@ -31,7 +31,7 @@ std::shared_ptr<ExecutablePipeline> ExecutablePipeline::create(
     return std::make_shared<ExecutablePipeline>(
         id,
         std::move(stage),
-        std::views::transform(successors, [](const auto& strong) { return std::weak_ptr(strong); }) | ranges::to<std::vector>());
+        std::views::transform(successors, [](const auto& strong) { return std::weak_ptr(strong); }) | std::ranges::to<std::vector>());
 }
 
 std::unique_ptr<CompiledQueryPlan> CompiledQueryPlan::create(
