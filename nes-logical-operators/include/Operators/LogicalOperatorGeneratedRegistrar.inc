@@ -14,7 +14,7 @@
 
 #pragma once
 
-#ifndef INCLUDED_FROM_REGISTRY_REWRITE_RULE
+#ifndef INCLUDED_FROM_REGISTRY_LOGICAL_OPERATOR
 #    error "This file should not be included directly! " \
 "Include instead include <Operators/LogicalOperatorRegistry.hpp>"
 #endif
@@ -22,23 +22,44 @@
 
 namespace NES::LogicalOperatorGeneratedRegistrar
 {
-std::unique_ptr<LogicalOperator> RegisterSelectionLogicalOperator();
-std::unique_ptr<LogicalOperator> RegisterMapLogicalOperator();
-std::unique_ptr<LogicalOperator> RegisterProjectionLogicalOperator();
-std::unique_ptr<LogicalOperator> RegisterJoinLogicalOperator();
-std::unique_ptr<LogicalOperator> RegisterAggregationLogicalOperator();
+std::unique_ptr<LogicalOperator> selectionLogicalOperator();
+std::unique_ptr<LogicalOperator> mapLogicalOperator();
+std::unique_ptr<LogicalOperator> projectionLogicalOperator();
+std::unique_ptr<LogicalOperator> joinLogicalOperator();
+std::unique_ptr<LogicalOperator> aggregationLogicalOperator();
+std::unique_ptr<LogicalOperator> unionLogicalOperator();
+
+std::unique_ptr<LogicalOperator> deserializeSelectionLogicalOperator(const SerializableOperator& serializableOperator);
+std::unique_ptr<LogicalOperator> deserializeMapLogicalOperator(const SerializableOperator& serializableOperator);
+std::unique_ptr<LogicalOperator> deserializeProjectionLogicalOperator(const SerializableOperator& serializableOperator);
+std::unique_ptr<LogicalOperator> deserializeJoinLogicalOperator(const SerializableOperator& serializableOperator);
+std::unique_ptr<LogicalOperator> deserializeAggregationLogicalOperator(const SerializableOperator& serializableOperator);
+std::unique_ptr<LogicalOperator> deserializeUnionLogicalOperator(const SerializableOperator& serializableOperator);
 }
 
 namespace NES
 {
 template <>
-inline void Registrar<LogicalOperatorRegistry, RewriteRuleRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+inline void Registrar<RegistryLogicalOperator, RegistrySignatureLogicalOperator>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::LogicalOperatorGeneratedRegistrar;
-    registry.registerPlugin("Selection", RegisterSelectionLogicalOperator);
-    registry.registerPlugin("Map", RegisterMapLogicalOperator);
-    registry.registerPlugin("Projection", RegisterProjectionLogicalOperator);
-    registry.registerPlugin("Join", RegisterJoinLogicalOperator);
-    registry.registerPlugin("Aggregation", RegisterAggregationLogicalOperator);
+    registry.registerPlugin("Selection", selectionLogicalOperator);
+    registry.registerPlugin("Map", mapLogicalOperator);
+    registry.registerPlugin("Projection", projectionLogicalOperator);
+    registry.registerPlugin("Join", joinLogicalOperator);
+    registry.registerPlugin("Aggregation", aggregationLogicalOperator);
+    registry.registerPlugin("Union", unionLogicalOperator);
+}
+
+template <>
+inline void Registrar<RegistryDeserializeLogicalOperator, RegistrySignatureDeserializeLogicalOperator>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+{
+    using namespace NES::LogicalOperatorGeneratedRegistrar;
+    registry.registerPlugin("Selection", deserializeSelectionLogicalOperator);
+    registry.registerPlugin("Map", deserializeMapLogicalOperator);
+    registry.registerPlugin("Projection", deserializeProjectionLogicalOperator);
+    registry.registerPlugin("Join", deserializeJoinLogicalOperator);
+    registry.registerPlugin("Aggregation", deserializeAggregationLogicalOperator);
+    registry.registerPlugin("Union", deserializeUnionLogicalOperator);
 }
 }

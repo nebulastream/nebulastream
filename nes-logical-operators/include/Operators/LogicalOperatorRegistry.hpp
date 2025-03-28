@@ -17,13 +17,18 @@
 #include <string>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/PluginRegistry.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
 
-using RegistrySignatureLogicalOperator
-    = RegistrySignature<std::string, LogicalOperator>;
+using RegistrySignatureLogicalOperator = RegistrySignature<std::string, LogicalOperator>;
 class RegistryLogicalOperator : public BaseRegistry<RegistryLogicalOperator, RegistrySignatureLogicalOperator>
+{
+};
+
+using RegistrySignatureDeserializeLogicalOperator = RegistrySignature<std::string, LogicalOperator, SerializableOperator>;
+class RegistryDeserializeLogicalOperator : public BaseRegistry<RegistryDeserializeLogicalOperator, RegistrySignatureDeserializeLogicalOperator>
 {
 };
 }

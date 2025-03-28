@@ -12,11 +12,9 @@
     limitations under the License.
 */
 
-#include <algorithm>
 #include <ranges>
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Nodes/Node.hpp>
@@ -28,6 +26,9 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
+#include <Operators/LogicalOperatorRegistry.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -143,4 +144,20 @@ std::shared_ptr<Operator> ProjectionLogicalOperator::clone() const
     }
     return copy;
 }
+
+std::unique_ptr<LogicalOperator> LogicalOperatorGeneratedRegistrar::deserializeProjectionLogicalOperator(const SerializableOperator& serializableOperator)
+{
+    auto details = serializableOperator.details();
+    std::shared_ptr<LogicalOperator> operatorNode;
+    auto projectionDetails = SerializableOperator_ProjectionDetails();
+    details.UnpackTo(&projectionDetails);
+    std::vector<std::shared_ptr<LogicalFunction>> functions;
+    for (const auto& serializedFunction : projectionDetails.function())
+    {
+        auto projectFunction = FunctionSerializationUtil::deserializeFunction(serializedFunction);
+        functions.push_back(projectFunction);
+    }
+    return std::make_unique<ProjectionLogicalOperator>(functions, getNextOperatorId());
+}
+
 }
