@@ -72,7 +72,7 @@ void OperatorSerializationUtil::serializeSourceOperator(
     auto* sourceDetails = new SerializableOperator_SourceDescriptorLogicalOperator();
     const auto& sourceDescriptor = sourceOperator.getSourceDescriptorRef();
     serializeSourceDescriptor(sourceDescriptor, *sourceDetails);
-    sourceDetails->set_sourceoriginid(sourceOperator.originIdTrait.originIds[0].getRawValue());
+    sourceDetails->set_sourceoriginid(sourceOperator.getInputOriginIds()[0][0].getRawValue());
 
     serializedOperator.set_allocated_source(sourceDetails);
 }
@@ -83,7 +83,7 @@ OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_
     const auto& serializedSourceDescriptor = sourceDetails.sourcedescriptor();
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDescriptor);
     auto logicalOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
-    logicalOperator.originIdTrait.originIds = {OriginId(sourceDetails.sourceoriginid())};
+    logicalOperator.setOutputOriginIds({OriginId(sourceDetails.sourceoriginid())});
     return logicalOperator;
 }
 
