@@ -37,7 +37,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
     , optimizer(std::make_unique<Optimizer::QueryOptimizer>())
-    , compiler(std::make_unique<QueryCompilation::QueryCompiler>(nodeEngine))
+    , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
 {
 }
 
