@@ -166,24 +166,24 @@ struct TestWorkEmitter : WorkEmitter
         (QueryId,
          const std::shared_ptr<RunningQueryPlanNode>&,
          Memory::TupleBuffer,
-         Runtime::BaseTask::onComplete,
-         Runtime::BaseTask::onFailure,
+         BaseTask::onComplete,
+         BaseTask::onFailure,
          bool),
         (override));
     MOCK_METHOD(
         void,
         emitPipelineStart,
-        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, Runtime::BaseTask::onComplete, Runtime::BaseTask::onFailure),
+        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, BaseTask::onComplete, BaseTask::onFailure),
         (override));
     MOCK_METHOD(
         void,
         emitPendingPipelineStop,
-        (QueryId, std::shared_ptr<RunningQueryPlanNode>, Runtime::BaseTask::onComplete, Runtime::BaseTask::onFailure),
+        (QueryId, std::shared_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure),
         (override));
     MOCK_METHOD(
         void,
         emitPipelineStop,
-        (QueryId, std::unique_ptr<RunningQueryPlanNode>, Runtime::BaseTask::onComplete, Runtime::BaseTask::onFailure),
+        (QueryId, std::unique_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure),
         (override));
 };
 struct TestQueryLifetimeController : QueryLifetimeController

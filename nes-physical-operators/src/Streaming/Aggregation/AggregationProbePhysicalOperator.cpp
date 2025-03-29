@@ -33,7 +33,7 @@
 #include <val.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 Interface::HashMap* getHashMapPtrProxy(const EmittedAggregationWindow* emittedAggregationWindow, const uint64_t currentHashMapVal)

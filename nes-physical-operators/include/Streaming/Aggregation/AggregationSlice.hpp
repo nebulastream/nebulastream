@@ -21,7 +21,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 
 /// This class represents a single slice for the (keyed) aggregation. It stores the aggregation state in a hashmap.

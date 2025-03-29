@@ -33,7 +33,7 @@
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 AggregationOperatorHandler::AggregationOperatorHandler(
