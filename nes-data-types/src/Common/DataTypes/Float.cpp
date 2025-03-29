@@ -61,7 +61,7 @@ std::unique_ptr<DataType> Float::clone() const
     return std::make_unique<Float>(*this);
 }
 
-std::string Float::toString()
+std::string Float::toString() const
 {
     return fmt::format("FLOAT{}", bits);
 }

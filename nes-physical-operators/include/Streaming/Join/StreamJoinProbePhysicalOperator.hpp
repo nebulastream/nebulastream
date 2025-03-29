@@ -31,7 +31,7 @@ namespace NES
 /// This class is the second phase of the stream join. The actual implementation (nested-loops, probing hash tables)
 /// is not part of this class. This class takes care of the close() functionality as this universal.
 class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator
-class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator, public Scan
+{
 public:
     StreamJoinProbePhysicalOperator(
         uint64_t operatorHandlerIndex,

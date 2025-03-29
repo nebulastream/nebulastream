@@ -81,23 +81,23 @@ const DataType& FieldAccessLogicalFunction::getStamp() const
 {
     return *stamp;
 };
-void FieldAccessLogicalFunction::setStamp(std::shared_ptr<DataType> stamp)
+
+LogicalFunction FieldAccessLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
-    this->stamp = stamp;
     auto copy = *this;
     copy.stamp = stamp;
-};
     return *this;
-std::vector<LogicalFunction> FieldAccessLogicalFunction::getChildren() const
+};
 
+std::vector<LogicalFunction> FieldAccessLogicalFunction::getChildren() const
 {
     return {};
 };
-void FieldAccessLogicalFunction::setChildren(std::vector<LogicalFunction>)
+
+LogicalFunction FieldAccessLogicalFunction::withChildren(std::vector<LogicalFunction>) const
 {
-    /// No op
-};
     return *this;
+};
 
 std::string FieldAccessLogicalFunction::getType() const
 {

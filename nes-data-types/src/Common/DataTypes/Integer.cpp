@@ -62,7 +62,7 @@ std::unique_ptr<DataType> Integer::clone() const
     return std::make_unique<Integer>(*this);
 }
 
-std::string Integer::toString()
+std::string Integer::toString() const
 {
     return fmt::format("{}{}", lowerBound == 0 ? "UINT" : "INT", std::to_string(bits));
 }

@@ -34,7 +34,7 @@ public:
     std::unique_ptr<DataType> join(const DataType& otherDataType) const override;
     std::unique_ptr<DataType> clone() const override;
 
-    std::string toString() override;
+    std::string toString() const override;
 };
 
 }
