@@ -56,7 +56,7 @@ std::string PhysicalThresholdWindowOperator::toString() const
     return out.str();
 }
 
-std::shared_ptr<Operator> PhysicalThresholdWindowOperator::copy()
+std::shared_ptr<Operator> PhysicalThresholdWindowOperator::clone()
 {
     return create(inputSchema, outputSchema, windowDefinition);
 }

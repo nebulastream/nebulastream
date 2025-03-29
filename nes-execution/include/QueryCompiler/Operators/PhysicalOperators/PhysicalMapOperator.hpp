@@ -44,7 +44,7 @@ public:
         const std::shared_ptr<Schema>& outputSchema,
         const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
 
-    std::shared_ptr<Operator> copy() override;
+    std::shared_ptr<Operator> clone() override;
 
     /**
      * @brief Returns the function of this map operator

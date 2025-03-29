@@ -70,7 +70,7 @@ std::string PhysicalWatermarkAssignmentOperator::toString() const
     return out.str();
 }
 
-std::shared_ptr<Operator> PhysicalWatermarkAssignmentOperator::copy()
+std::shared_ptr<Operator> PhysicalWatermarkAssignmentOperator::clone()
 {
     auto result = create(id, inputSchema, outputSchema, getWatermarkStrategyDescriptor());
     result->addAllProperties(properties);

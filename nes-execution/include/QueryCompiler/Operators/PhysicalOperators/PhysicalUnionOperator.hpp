@@ -47,7 +47,7 @@ public:
         const std::shared_ptr<Schema>& outputSchema);
     static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& schema);
     static std::shared_ptr<PhysicalOperator> create(const std::shared_ptr<Schema>& schema);
-    std::shared_ptr<Operator> copy() override;
+    std::shared_ptr<Operator> clone() override;
 
 protected:
     std::string toString() const override;

@@ -57,7 +57,7 @@ std::string PhysicalLimitOperator::toString() const
     return out.str();
 }
 
-std::shared_ptr<Operator> PhysicalLimitOperator::copy()
+std::shared_ptr<Operator> PhysicalLimitOperator::clone()
 {
     return create(id, inputSchema, outputSchema, limit);
 }

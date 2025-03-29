@@ -45,7 +45,7 @@ std::string PhysicalScanOperator::toString() const
     return out.str();
 }
 
-std::shared_ptr<Operator> PhysicalScanOperator::copy()
+std::shared_ptr<Operator> PhysicalScanOperator::clone()
 {
     auto result = create(id, outputSchema);
     result->addAllProperties(properties);
