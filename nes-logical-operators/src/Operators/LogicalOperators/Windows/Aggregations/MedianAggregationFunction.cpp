@@ -14,54 +14,55 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationFunction.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
-
+#include <SerializableAggregationFunction.pb.h>
+#include <Functions/FunctionSerializationUtil.hpp>
 
 namespace NES::Windowing
 {
 
-MedianAggregationDescriptor::MedianAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationDescriptor(field)
+MedianAggregationFunction::MedianAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field)
+    : WindowAggregationFunction(field)
 {
     this->aggregationType = Type::Median;
 }
-MedianAggregationDescriptor::MedianAggregationDescriptor(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
-    : WindowAggregationDescriptor(field, asField)
+MedianAggregationFunction::MedianAggregationFunction(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
+    : WindowAggregationFunction(field, asField)
 {
     this->aggregationType = Type::Median;
 }
 
-std::shared_ptr<WindowAggregationDescriptor> MedianAggregationDescriptor::create(
+std::shared_ptr<WindowAggregationFunction> MedianAggregationFunction::create(
     std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
 {
-    return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(std::move(onField), std::move(asField)));
+    return std::make_shared<MedianAggregationFunction>(MedianAggregationFunction(std::move(onField), std::move(asField)));
 }
 
-std::shared_ptr<WindowAggregationDescriptor> MedianAggregationDescriptor::on(const std::shared_ptr<LogicalFunction>& keyFunction)
+std::shared_ptr<WindowAggregationFunction> MedianAggregationFunction::on(const std::shared_ptr<LogicalFunction>& onField)
 {
     if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(onField))
     {
         NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
     }
     const auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(onField);
-    return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(fieldAccess));
+    return std::make_shared<MedianAggregationFunction>(MedianAggregationFunction(fieldAccess));
 }
 
-void MedianAggregationDescriptor::inferStamp(const Schema& schema)
+void MedianAggregationFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
     if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
     {
-        NES_FATAL_ERROR("MedianAggregationDescriptor: aggregations on non numeric fields is not supported.");
+        NES_FATAL_ERROR("MedianAggregationFunction: aggregations on non numeric fields is not supported.");
     }
     ///Set fully qualified name for the as Field
     const auto onFieldName = NES::Util::as<FieldAccessLogicalFunction>(onField)->getFieldName();
@@ -81,22 +82,38 @@ void MedianAggregationDescriptor::inferStamp(const Schema& schema)
     asField->setStamp(getFinalAggregateStamp());
 }
 
-std::shared_ptr<WindowAggregationDescriptor> MedianAggregationDescriptor::clone()
+std::shared_ptr<WindowAggregationFunction> MedianAggregationFunction::clone()
 {
-    return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(this->onField->clone(), this->asField->clone()));
+    return std::make_shared<MedianAggregationFunction>(MedianAggregationFunction(this->onField->clone(), this->asField->clone()));
 }
 
-std::shared_ptr<DataType> MedianAggregationDescriptor::getInputStamp()
+std::shared_ptr<DataType> MedianAggregationFunction::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> MedianAggregationDescriptor::getPartialAggregateStamp()
+std::shared_ptr<DataType> MedianAggregationFunction::getPartialAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
-std::shared_ptr<DataType> MedianAggregationDescriptor::getFinalAggregateStamp()
+std::shared_ptr<DataType> MedianAggregationFunction::getFinalAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::FLOAT64);
+}
+
+NES::SerializableAggregationFunction MedianAggregationFunction::serialize() const
+{
+    NES::SerializableAggregationFunction serializedAggregationFunction;
+    serializedAggregationFunction.set_type(NAME);
+
+    auto *onFieldFuc = new SerializableFunction();
+    FunctionSerializationUtil::serializeFunction(onField, onFieldFuc);
+
+    auto *asFieldFuc = new SerializableFunction();
+    FunctionSerializationUtil::serializeFunction(asField, asFieldFuc);
+
+    serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
+    serializedAggregationFunction.set_allocated_on_field(onFieldFuc);
+    return serializedAggregationFunction;
 }
 
 }

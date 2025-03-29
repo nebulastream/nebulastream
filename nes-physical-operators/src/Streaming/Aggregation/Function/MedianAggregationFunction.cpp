@@ -16,10 +16,9 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/MedianAggregationFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Streaming/Aggregation/Function/AggregationFunction.hpp>
+#include <Streaming/Aggregation/Function/MedianAggregationFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
@@ -30,13 +29,13 @@
 #include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Aggregation
+namespace NES
 {
 
 MedianAggregationFunction::MedianAggregationFunction(
     std::shared_ptr<PhysicalType> inputType,
     std::shared_ptr<PhysicalType> resultType,
-    std::unique_ptr<Functions::Function> inputFunction,
+    std::unique_ptr<Functions::PhysicalFunction> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))

@@ -16,36 +16,40 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
 {
 
-class MedianAggregationDescriptor : public WindowAggregationDescriptor
+class MedianAggregationFunction : public WindowAggregationFunction
 {
 public:
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<LogicalFunction>& onField);
+    static constexpr std::string_view NAME = "Median";
 
-    /// Creates a new MedianAggregationDescriptor
+    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
+
+    /// Creates a new MedianAggregationFunction
     /// @param onField field on which the aggregation should be performed
     /// @param asField function describing how the aggregated field should be called
-    static std::shared_ptr<WindowAggregationDescriptor> create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
+    static std::shared_ptr<WindowAggregationFunction> create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<WindowAggregationDescriptor> clone() override;
+    std::shared_ptr<WindowAggregationFunction> clone() override;
 
     std::shared_ptr<DataType> getInputStamp() override;
     std::shared_ptr<DataType> getPartialAggregateStamp() override;
     std::shared_ptr<DataType> getFinalAggregateStamp() override;
 
-    virtual ~MedianAggregationDescriptor() = default;
+    virtual ~MedianAggregationFunction() = default;
+
+    NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit MedianAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> onField);
-    MedianAggregationDescriptor(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
+    explicit MedianAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    MedianAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
 };
 }
