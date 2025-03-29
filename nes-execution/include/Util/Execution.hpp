@@ -75,9 +75,7 @@ struct BufferMetaData
     [[nodiscard]] std::string toString() const
     {
         std::ostringstream oss;
-        oss << "waterMarkTs: " << watermarkTs << ","
-            << "seqNumber: " << seqNumber << ","
-            << "originId: " << originId;
+        oss << "waterMarkTs: " << watermarkTs << "," << "seqNumber: " << seqNumber << "," << "originId: " << originId;
         return oss.str();
     }
 
