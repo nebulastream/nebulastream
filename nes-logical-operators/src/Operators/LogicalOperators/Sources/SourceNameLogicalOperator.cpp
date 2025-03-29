@@ -34,12 +34,12 @@ SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceNa
 {
 }
 
-bool SourceNameLogicalOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool SourceNameLogicalOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
 {
     return equal(rhs) && NES::Util::as<SourceNameLogicalOperator>(rhs)->getId() == id;
 }
 
-bool SourceNameLogicalOperator::equal(const std::shared_ptr<Node>& rhs) const
+bool SourceNameLogicalOperator::equal(std::shared_ptr<Operator> const& rhs) const
 {
     if (Util::instanceOf<SourceNameLogicalOperator>(rhs))
     {

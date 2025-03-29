@@ -17,15 +17,13 @@
 #include <vector>
 #include <API/Functions/Functions.hpp>
 #include <API/Query.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
@@ -59,14 +57,14 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     EXPECT_TRUE(queryPlan->getOperatorByType<RenameSourceOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceOperator>()[0]->getNewSourceName(), "testStream");
     ///test addSelection
-    auto filterFunction = std::shared_ptr<NodeFunction>(
-        NodeFunctionEquals::create(NES::Attribute("a").getNodeFunction(), NES::Attribute("b").getNodeFunction()));
+    auto filterFunction = std::shared_ptr<LogicalFunction>(
+        EqualsBinaryLogicalFunction::create(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction()));
     queryPlan = QueryPlanBuilder::addSelection(filterFunction, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalSelectionOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<LogicalSelectionOperator>()[0]->getPredicate(), filterFunction);
     ///test addProjection
-    std::vector<std::shared_ptr<NodeFunction>> functions;
-    functions.push_back(Attribute("id").getNodeFunction());
+    std::vector<std::shared_ptr<LogicalFunction>> functions;
+    functions.push_back(Attribute("id").getLogicalFunction());
     queryPlan = QueryPlanBuilder::addProjection(functions, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalProjectionOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<LogicalProjectionOperator>()[0]->getFunctions(), functions);

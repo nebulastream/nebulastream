@@ -27,17 +27,16 @@ namespace NES::Windowing
 class MedianAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
+    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<LogicalFunction>& onField);
 
     /// Creates a new MedianAggregationDescriptor
     /// @param onField field on which the aggregation should be performed
     /// @param asField function describing how the aggregated field should be called
-    static std::shared_ptr<WindowAggregationDescriptor>
-    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
+    static std::shared_ptr<WindowAggregationDescriptor> create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<WindowAggregationDescriptor> copy() override;
+    std::shared_ptr<WindowAggregationDescriptor> clone() override;
 
     std::shared_ptr<DataType> getInputStamp() override;
     std::shared_ptr<DataType> getPartialAggregateStamp() override;
@@ -46,7 +45,7 @@ public:
     virtual ~MedianAggregationDescriptor() = default;
 
 private:
-    explicit MedianAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
-    MedianAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
+    explicit MedianAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    MedianAggregationDescriptor(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
 };
 }

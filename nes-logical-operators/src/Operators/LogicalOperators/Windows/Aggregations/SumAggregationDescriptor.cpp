@@ -16,7 +16,7 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
@@ -28,30 +28,29 @@
 namespace NES::Windowing
 {
 
-SumAggregationDescriptor::SumAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& field)
-    : WindowAggregationDescriptor(field)
+SumAggregationDescriptor::SumAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationDescriptor(field)
 {
     this->aggregationType = Type::Sum;
 }
-SumAggregationDescriptor::SumAggregationDescriptor(const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
+SumAggregationDescriptor::SumAggregationDescriptor(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
     : WindowAggregationDescriptor(field, asField)
 {
     this->aggregationType = Type::Sum;
 }
 
 std::shared_ptr<WindowAggregationDescriptor>
-SumAggregationDescriptor::create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField)
+SumAggregationDescriptor::create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
 {
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-std::shared_ptr<WindowAggregationDescriptor> SumAggregationDescriptor::on(const std::shared_ptr<NodeFunction>& onField)
+std::shared_ptr<WindowAggregationDescriptor> SumAggregationDescriptor::on(const std::shared_ptr<LogicalFunction>& keyFunction)
 {
-    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(onField))
+    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(onField))
     {
         NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
     }
-    const auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(onField);
+    const auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(onField);
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(fieldAccess));
 }
 
@@ -65,25 +64,26 @@ void SumAggregationDescriptor::inferStamp(const Schema& schema)
     }
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
-    const auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
+    const auto onFieldName = NES::Util::as<FieldAccessLogicalFunction>(onField)->getFieldName();
+    const auto asFieldName = NES::Util::as<FieldAccessLogicalFunction>(asField)->getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + asFieldName);
+        NES::Util::as<FieldAccessLogicalFunction>(asField)->updateFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
+        NES::Util::as<FieldAccessLogicalFunction>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(getFinalAggregateStamp());
 }
-std::shared_ptr<WindowAggregationDescriptor> SumAggregationDescriptor::copy()
+
+std::shared_ptr<WindowAggregationDescriptor> SumAggregationDescriptor::clone()
 {
-    return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
+    return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(this->onField->clone(), this->asField->clone()));
 }
 
 std::shared_ptr<DataType> SumAggregationDescriptor::getInputStamp()

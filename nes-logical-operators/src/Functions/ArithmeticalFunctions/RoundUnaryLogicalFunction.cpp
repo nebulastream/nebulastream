@@ -16,7 +16,7 @@
 #include <memory>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
+#include <Functions/ArithmeticalFunctions/RoundUnaryLogicalFunction.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
@@ -29,38 +29,38 @@
 namespace NES
 {
 
-NodeFunctionRound::NodeFunctionRound(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Round") {};
+RoundUnaryLogicalFunction::RoundUnaryLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Round") {};
 
-NodeFunctionRound::NodeFunctionRound(NodeFunctionRound* other) : NodeFunctionArithmeticalUnary(other)
+RoundUnaryLogicalFunction::RoundUnaryLogicalFunction(RoundUnaryLogicalFunction* other) : UnaryLogicalFunction(other)
 {
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionRound::create(const std::shared_ptr<NodeFunction>& child)
+std::shared_ptr<LogicalFunction> RoundUnaryLogicalFunction::create(const std::shared_ptr<LogicalFunction>& child)
 {
-    auto roundNode = std::make_shared<NodeFunctionRound>(child->getStamp());
+    auto roundNode = std::make_shared<RoundUnaryLogicalFunction>(child->getStamp());
     roundNode->setChild(child);
     return roundNode;
 }
 
-bool NodeFunctionRound::equal(const std::shared_ptr<Node>& rhs) const
+bool RoundUnaryLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
 {
-    if (NES::Util::instanceOf<NodeFunctionRound>(rhs))
+    if (NES::Util::instanceOf<RoundUnaryLogicalFunction>(rhs))
     {
-        auto otherRoundNode = NES::Util::as<NodeFunctionRound>(rhs);
-        return child()->equal(otherRoundNode->child());
+        auto otherRoundNode = NES::Util::as<RoundUnaryLogicalFunction>(rhs);
+        return getChild()->equal(otherRoundNode->getChild());
     }
     return false;
 }
 
-std::string NodeFunctionRound::toString() const
+std::string RoundUnaryLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "ROUND(" << *children[0] << ")";
+    ss << "ROUND(" << *getChild() << ")";
     return ss.str();
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionRound::deepCopy()
+std::shared_ptr<LogicalFunction> RoundUnaryLogicalFunction::clone() const
 {
-    return NodeFunctionRound::create(Util::as<NodeFunction>(children[0])->deepCopy());
+    return RoundUnaryLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
 }
 }

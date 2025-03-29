@@ -33,10 +33,10 @@ public:
     /**
      * Factory method to create a MaxAggregationDescriptor aggregation on a particular field.
      */
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
+    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<LogicalFunction>& onField);
 
     static std::shared_ptr<WindowAggregationDescriptor>
-    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
+    create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
 
     std::shared_ptr<DataType> getInputStamp() override;
     std::shared_ptr<DataType> getPartialAggregateStamp() override;
@@ -44,12 +44,12 @@ public:
 
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<WindowAggregationDescriptor> copy() override;
-    MaxAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
+    std::shared_ptr<WindowAggregationDescriptor> clone() override;
+    MaxAggregationDescriptor(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
 
     virtual ~MaxAggregationDescriptor() = default;
 
 private:
-    explicit MaxAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
+    explicit MaxAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> onField);
 };
 }

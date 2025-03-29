@@ -180,7 +180,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<Quer
         {
             for (const auto& inputField : inferModelOperator->getInputFields())
             {
-                auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
+                auto field = NES::Util::as<FieldAccessLogicalFunction>(inputField);
                 if (!NES::Util::instanceOf<Numeric>(field->getStamp()) && !NES::Util::instanceOf<Boolean>(field->getStamp())
                     && !NES::Util::instanceOf<VariableSizedDataType>(field->getStamp()))
                 {

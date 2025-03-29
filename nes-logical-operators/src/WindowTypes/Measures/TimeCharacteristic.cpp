@@ -39,15 +39,14 @@ std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const st
     return createEventTime(field, TimeUnit(1));
 }
 
-std::shared_ptr<TimeCharacteristic>
-TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& fieldValue, const TimeUnit& unit)
+std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(std::shared_ptr<LogicalFunction> fieldValue, const TimeUnit& unit)
 {
-    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(fieldValue))
+    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(fieldValue))
     {
         throw QueryInvalid(fmt::format("Query: window key has to be an FieldAccessFunction but it was a  {}", *fieldValue));
     }
-    auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(fieldValue);
-    const std::shared_ptr<AttributeField> keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
+    auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(fieldValue);
+    std::shared_ptr<AttributeField> keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
     return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
 }
 
