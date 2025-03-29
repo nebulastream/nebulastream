@@ -51,11 +51,11 @@ std::shared_ptr<OperatorPipeline> AddScanAndEmitPhase::process(std::shared_ptr<O
     if (!NES::Util::instanceOf<ScanPhysicalOperator>(rootOperator))
     {
         PRECONDITION(
-            NES::Util::instanceOf<UnaryPhysicalOperator>(rootOperator),
+            NES::Util::instanceOf<AbstractPhysicalOperator>(rootOperator),
             "Pipeline root should be a unary operator but was: {}",
             *rootOperator);
-        const auto unaryRoot = NES::Util::as<UnaryPhysicalOperator>(rootOperator);
-        const auto newScan = ScanPhysicalOperator::create(unaryRoot->getInputSchema());
+        const auto unaryRoot = NES::Util::as<AbstractPhysicalOperator>(rootOperator);
+        const auto newScan = ScanPhysicalOperator(unaryRoot->getInputSchema());
         pipeline->prependOperator(newScan);
     }
 
