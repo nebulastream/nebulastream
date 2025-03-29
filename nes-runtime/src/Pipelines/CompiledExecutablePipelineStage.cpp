@@ -31,13 +31,13 @@ namespace NES
 {
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
-    const std::shared_ptr<Pipeline>& operatorPipeline,
+    const std::shared_ptr<OperatorPipeline>& pipeline,
     std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
     : options(std::move(options))
     , compiledPipelineFunction(nullptr)
     , operatorHandlers(std::move(operatorHandlers))
-    , operatorPipeline(operatorPipeline)
+    , pipeline(pipeline)
 {
 }
 
@@ -65,8 +65,9 @@ CompiledExecutablePipelineStage::compilePipeline() const
     {
         auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
         RecordBuffer recordBuffer(recordBufferRef);
-        operatorPipeline->getRootOperator()->open(ctx, recordBuffer);
-        operatorPipeline->getRootOperator()->close(ctx, recordBuffer);
+
+        pipeline->operators[0]->open(ctx, recordBuffer);
+        pipeline->operators[0]->close(ctx, recordBuffer);
     };
     /// NOLINTEND(performance-unnecessary-value-param)
 
@@ -83,7 +84,7 @@ void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExe
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    operatorPipeline->getRootOperator()->terminate(ctx);
+    pipeline->operators[0]->terminate(ctx);
 }
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
@@ -96,7 +97,7 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    operatorPipeline->getRootOperator()->setup(ctx);
+    pipeline->operators[0]->setup(ctx);
     compiledPipelineFunction = this->compilePipeline();
 }
 

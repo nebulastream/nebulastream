@@ -20,7 +20,7 @@
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
-#include <AbstractPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -30,14 +30,15 @@ class StreamJoinBuildPhysicalOperator : public WindowBuildPhysicalOperator
 {
 public:
     StreamJoinBuildPhysicalOperator(
+        std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProviders,
         uint64_t operatorHandlerIndex,
         JoinBuildSideType joinBuildSide,
-        std::unique_ptr<TimeFunction> timeFunction,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
+        std::unique_ptr<TimeFunction> timeFunction);
+
+    std::string toString() const override {return typeid(this).name(); }
 
 protected:
     const JoinBuildSideType joinBuildSide;
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 
 }

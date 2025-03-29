@@ -39,7 +39,7 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(const std::sha
 
     /// 2. Recursively lower the children of the function node.
     std::vector<std::unique_ptr<PhysicalFunction>> childFunction;
-    for (const auto& child : logicalFunction->getChildren())
+    for (const auto& child : logicalFunction->children)
     {
         childFunction.emplace_back(lowerFunction(NES::Util::as<LogicalFunction>(child)));
     }

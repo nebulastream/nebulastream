@@ -53,7 +53,7 @@ public:
     /// returned the query can be started with the QueryId. The registered Query will be in the StoppedState
     /// @param plan Fully Specified LogicalQueryPlan.
     /// @return QueryId which identifies the registered Query
-    QueryId registerQuery(std::unique_ptr<QueryPlan> plan);
+    QueryId registerQuery(std::shared_ptr<QueryPlan> plan);
 
     /// Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
     /// of the query.

@@ -45,7 +45,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(std::unique_ptr<QueryPlan> plan)
+QueryId SingleNodeWorker::registerQuery(std::shared_ptr<QueryPlan> plan)
 {
     try
     {

@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/PlanIterator.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
@@ -33,24 +32,23 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
 
     ///Serialize Query Plan operators
     auto& serializedOperatorMap = *serializableQueryPlan->mutable_operatormap();
-    auto bfsIterator = PlanIterator(queryPlan);
-    for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr)
+    /*for (auto itr = BFSRange<LogicalOperator>(queryPlan))
     {
         auto visitingOp = NES::Util::as<LogicalOperator>(*itr);
-        if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end())
+        if (serializedOperatorMap.find(visitingOp->id.getRawValue()) != serializedOperatorMap.end())
         {
             /// skip rest of the steps as the operator is already serialized
             continue;
         }
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
-        serializedOperatorMap[visitingOp->getId().getRawValue()] = serializeOperator;
-    }
+        serializedOperatorMap[visitingOp->id.getRawValue()] = serializeOperator;
+    }*/
 
     ///Serialize the root operator ids
     for (const auto& rootOperator : rootOperators)
     {
-        auto rootOperatorId = rootOperator->getId();
+        auto rootOperatorId = rootOperator->id;
         serializableQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
     }
 
@@ -82,7 +80,7 @@ std::shared_ptr<QueryPlan> QueryPlanSerializationUtil::deserializeQueryPlan(cons
         auto deserializedOperator = operatorIdToOperatorMap[serializedOperator.operatorid()];
         for (auto childId : serializedOperator.childrenids())
         {
-            deserializedOperator->addChild(operatorIdToOperatorMap[childId]);
+            deserializedOperator->children.push_back(operatorIdToOperatorMap[childId]);
         }
     }
 

@@ -17,9 +17,9 @@ get_source(nes-query-compiler NES_QUERY_COMPILER_SOURCE_FILES)
 # Add Library
 add_library(nes-query-compiler ${NES_QUERY_COMPILER_SOURCE_FILES})
 target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-optimizer nes-runtime)
-target_include_directories(nes-query-compiler PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+target_include_directories(nes-query-compiler
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-query-compiler REUSE_FROM nes-common)

@@ -14,19 +14,20 @@
 #pragma once
 
 #include <Functions/PhysicalFunction.hpp>
-#include <AbstractPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
 
 /// @brief Selection operator that evaluates an boolean function on each record.
-class SelectionPhysicalOperator : public AbstractPhysicalOperator
+class SelectionPhysicalOperator : public PhysicalOperator
 {
 public:
-    SelectionPhysicalOperator(std::unique_ptr<Functions::PhysicalFunction> function) : function(std::move(function)) {};
+    SelectionPhysicalOperator(std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider, std::unique_ptr<Functions::PhysicalFunction> function)
+        : PhysicalOperator(std::move(memoryProvider)), function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-    std::string toString() const {return typeid(this).name(); }
+    std::string toString() const override {return typeid(this).name(); }
 
 private:
     const std::unique_ptr<Functions::PhysicalFunction> function;

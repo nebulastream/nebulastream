@@ -14,14 +14,12 @@
 
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Phases/NautilusCompilationPhase.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
-#include "Phases/AddScanAndEmitPhase.hpp"
-#include "Phases/LowerToExecutableQueryPlanPhase.hpp"
-#include "Phases/PipeliningPhase.hpp"
+#include <Phases/LowerToExecutableQueryPlanPhase.hpp>
+#include <Phases/PipeliningPhase.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -32,17 +30,18 @@ QueryCompiler::QueryCompiler(const std::shared_ptr<QueryCompilerConfiguration> o
 }
 
 /// This phase should be as dumb as possible and not further decisions should be made here.
-std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::shared_ptr<QueryCompilationRequest> request)
+std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
-    // TODO first we should do a check if we have already cached the query
     try
     {
-        auto physicalQueryPlan = LowerLogicalToNautilusOperators::apply(request->decomposedQueryPlan);
-        auto pipelinedQueryPlan = PipeliningPhase::apply(physicalQueryPlan);
+        auto pipelinedQueryPlan = PipeliningPhase::apply(std::move(request->queryPlan));
 
-        pipelinedQueryPlan = AddScanAndEmitPhase::create()->apply(pipelinedQueryPlan);
+        //pipelinedQueryPlan = AddScanAndEmitPhase::apply(pipelinedQueryPlan);
 
-        LowerToExecutableQueryPlanPhase::apply(pipelinedQueryPlan);
+        /// auto executableQueryPlan = LowerToExecutableQueryPlanPhase::apply(std::move(pipelinedQueryPlan));
+
+        // TODO actual compilation
+        // NautilusCompilationPhase
 
         std::terminate();
         /// When lowering the scan operators cannot be used as they are not 'Operators'.

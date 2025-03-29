@@ -13,57 +13,49 @@
 */
 
 #include <memory>
-#include <Phases/AddScanAndEmitPhase.hpp>
+#include <Plans/OperatorUtil.hpp>
+#include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
+#include <PipelinedQueryPlan.hpp>
 #include <ScanPhysicalOperator.hpp>
-#include "PipelinedQueryPlan.hpp"
+#include <Phases/AddScanAndEmitPhase.hpp>
 
 namespace NES::QueryCompilation
 {
 
-std::unique_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan)
+std::shared_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::shared_ptr<PipelinedQueryPlan> pipelineQueryPlan)
 {
+    /*
     for (const auto& pipeline : pipelineQueryPlan->pipelines)
     {
-        if (pipeline->isPipeline())
+        if (NES::Util::instanceOf<OperatorPipeline>(pipeline))
         {
-            process(pipeline);
+            auto opPipeline = Util::as<OperatorPipeline>(pipeline);
+            PRECONDITION(opPipeline->hasOperators(), "A pipeline should have at least one root operator");
+
+            /// insert buffer scan operator to the pipeline root if necessary
+            const auto& rootOperator = opPipeline
+            if (true) // TODO check if we need ta add a scan
+            {
+                auto newScan = std::make_shared<ScanPhysicalOperator>(
+                    rootOperator->memoryProviders,
+                    std::vector<Nautilus::Record::RecordFieldIdentifier>{});
+                opPipeline->operators.insert(opPipeline->operators.begin(), newScan);
+            }
+
+            /// insert emit buffer operator if necessary
+            auto pipelineLeafOperators = getAllLeafNodes(rootOperator);
+            for (const auto& leaf : pipelineLeafOperators)
+            {
+                auto leafOperator = NES::Util::as<PhysicalOperator>(leaf);
+                if (true) // TODO check if we need to add an emit
+                {
+                    auto emitOperator = EmitPhysicalOperator(1 TODO, std::move(leafOperator->memoryProviders[0]));
+                    leafOperator->children.push_back(emitOperator); /// TODO its weird that this does not take a shared ptr
+                }
+            }
         }
-    }
+    }*/
     return pipelineQueryPlan;
 }
-
-std::shared_ptr<Pipeline> AddScanAndEmitPhase::process(std::shared_ptr<Pipeline> pipeline)
-{
-    const auto queryPlan = pipeline->getQueryPlan();
-    const auto pipelineRootOperators = queryPlan->getRootOperators();
-    PRECONDITION(!pipelineRootOperators.empty(), "A pipeline should have at least one root operator");
-
-    /// insert buffer scan operator to the pipeline root if necessary
-    const auto& rootOperator = pipelineRootOperators[0];
-    if (!NES::Util::instanceOf<ScanPhysicalOperator>(rootOperator))
-    {
-        PRECONDITION(
-            NES::Util::instanceOf<AbstractPhysicalOperator>(rootOperator),
-            "Pipeline root should be a unary operator but was: {}",
-            *rootOperator);
-        const auto unaryRoot = NES::Util::as<AbstractPhysicalOperator>(rootOperator);
-        const auto newScan = ScanPhysicalOperator(unaryRoot->getInputSchema());
-        pipeline->prependOperator(newScan);
-    }
-
-    /// insert emit buffer operator if necessary
-    auto pipelineLeafOperators = rootOperator->getAllLeafNodes();
-    for (const auto& leaf : pipelineLeafOperators)
-    {
-        auto leafOperator = NES::Util::as<Operator>(leaf);
-        if (!NES::Util::instanceOf<EmitPhysicalOperator>(leafOperator))
-        {
-            auto emitOperator = EmitPhysicalOperator(leafOperator->getOutputSchema());
-            leafOperator->addChild(emitOperator);
-        }
-    }
-    return pipeline;
-}
-
 }

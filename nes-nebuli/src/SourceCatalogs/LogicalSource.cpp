@@ -26,10 +26,9 @@ std::shared_ptr<LogicalSource> LogicalSource::create(const std::string& logicalS
     return std::make_shared<LogicalSource>(LogicalSource(std::move(logicalSourceName), std::move(schema)));
 }
 
-LogicalSource::LogicalSource(const std::string& logicalSourceName, const std::shared_ptr<Schema>& schema)
-    : logicalSourceName(logicalSourceName), schema(schema->copy())
+LogicalSource::LogicalSource(std::string  logicalSourceName, const std::shared_ptr<Schema>& schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(schema->clone())
 {
-    this->schema = schema->clone();
 }
 
 std::shared_ptr<Schema> LogicalSource::getSchema()

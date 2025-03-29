@@ -14,21 +14,26 @@
 
 #pragma once
 
-#include <string>
 #include <cstdint>
+#include <string>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include <Streaming/Aggregation/WindowAggregationPhysicalOperator.hpp>
+#include <Operators/Windows/WindowOperator.hpp>
+#include <Streaming/Aggregation/WindowAggregation.hpp>
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 
 namespace NES
 {
 
-class AggregationProbePhysicalOperator final : public WindowAggregationPhysicalOperator, public WindowProbePhysicalOperator
+class AggregationProbePhysicalOperator final : public WindowAggregation, public WindowProbePhysicalOperator
 {
 public:
-    AggregationProbePhysicalOperator(std::shared_ptr<WindowAggregationPhysicalOperator> windowAggregationOperator, uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName);
+    AggregationProbePhysicalOperator(std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
+                                     std::shared_ptr<WindowAggregation> windowAggregationOperator,
+                                     uint64_t operatorHandlerIndex,
+                                     std::string windowStartFieldName,
+                                     std::string windowEndFieldName);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    std::string toString() const override {return typeid(this).name(); }
 };
 
 }

@@ -24,24 +24,31 @@
 
 namespace NES
 {
+using namespace Interface::MemoryProvider;
 
 /// Performs the second phase of the join. The tuples are joined via two nested loops. The left stream is the outer loop, and the right stream is the inner loop.
 class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 {
 public:
     NLJProbePhysicalOperator(
+        std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProviders,
         const uint64_t operatorHandlerIndex,
         const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
         const std::string windowStartFieldName,
         const std::string windowEndFieldName,
-        const JoinSchema& joinSchema,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
+        const JoinSchema& joinSchema);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    std::string toString() const override {return typeid(this).name(); }
 
 protected:
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider;
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider;
+    std::shared_ptr<TupleBufferMemoryProvider> getLeftMemoryProvider() const
+    {
+        return std::shared_ptr<TupleBufferMemoryProvider>(memoryProviders[0].get());
+    };
+    std::shared_ptr<TupleBufferMemoryProvider> getRightMemoryProvider() const
+    {
+        return std::shared_ptr<TupleBufferMemoryProvider>(memoryProviders[1].get());
+    };
 };
 }

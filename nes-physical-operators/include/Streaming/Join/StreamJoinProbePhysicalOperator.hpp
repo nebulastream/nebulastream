@@ -20,11 +20,11 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Operators/Operator.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
 #include <val_concepts.hpp>
+#include <Plans/Operator.hpp>
 
 namespace NES
 {
@@ -36,11 +36,14 @@ class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator
 {
 public:
     StreamJoinProbePhysicalOperator(
+        std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProviders,
         uint64_t operatorHandlerIndex,
         const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
         std::string windowStartFieldName,
         std::string windowEndFieldName,
         JoinSchema joinSchema);
+
+    std::string toString() const override {return typeid(this).name(); }
 
 protected:
     /// Creates a joined record out of the left and right record, but it only uses the provided projection

@@ -15,6 +15,7 @@ add_source_files(nes-physical-operators
         SelectionPhysicalOperator.cpp
         PhysicalOperator.cpp
         EmitPhysicalOperator.cpp
+        EmitOperatorHandler.cpp
         ScanPhysicalOperator.cpp)
 
 add_subdirectory(Watermark)

@@ -37,7 +37,7 @@ void QueryConsoleDumpHandler::dumpHelper(
 {
     out << std::string(indent * depth, ' ') << operationNode << '\n';
     ++depth;
-    for (auto&& child : operationNode->getChildren())
+    for (auto&& child : operationNode->children)
     {
         dumpHelper(child, depth, indent, out);
     }
@@ -74,7 +74,7 @@ void QueryConsoleDumpHandler::multilineDumpHelper(
         out << line << std::endl;
     }
     ++depth;
-    for (auto&& child : operationNode->getChildren())
+    for (auto&& child : operationNode->children)
     {
         multilineDumpHelper(child, depth, indent, out);
     }

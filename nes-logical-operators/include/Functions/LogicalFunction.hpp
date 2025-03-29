@@ -85,10 +85,11 @@ public:
         return children;
     }
 
+    std::vector<std::shared_ptr<LogicalFunction>> children;
+
 protected:
     explicit LogicalFunction(const LogicalFunction* other);
 
-    std::vector<std::shared_ptr<LogicalFunction>> children;
 
     std::shared_ptr<DataType> stamp;
     std::string type;

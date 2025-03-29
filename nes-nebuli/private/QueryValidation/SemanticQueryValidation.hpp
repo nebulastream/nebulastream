@@ -16,15 +16,7 @@
 
 #include <memory>
 #include <SourceCatalogs/SourceCatalog.hpp>
-namespace NES
-{
-
-namespace Catalogs::UDF
-{
-}
-
-}
-
+/*
 namespace NES::Optimizer
 {
 
@@ -92,3 +84,4 @@ private:
     std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
 };
 }
+ */

@@ -18,14 +18,15 @@
 #include <API/Functions/Functions.hpp>
 #include <API/Query.hpp>
 #include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
+#include "Operators/MapLogicalOperator.hpp"
+#include "Operators/ProjectionLogicalOperator.hpp"
+#include "Operators/SelectionLogicalOperator.hpp"
+#include "Operators/UnionLogicalOperator.hpp"
 
 using namespace NES;
 

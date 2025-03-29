@@ -661,7 +661,7 @@ void ThreadPool::addThread()
                 }
             }
 
-            ENGINE_LOG_INFO("WorkerThread {} shutting down", id);
+            ENGINE_LOG_INFO("WorkerThread {} shutting down");
             /// Worker in termination mode will emit further work and eventually clear the task queue and terminate.
             WorkerThread terminatingWorker{*this, true};
             while (true)
@@ -845,7 +845,7 @@ void QueryCatalog::stopQuery(QueryId id)
         }
         else
         {
-            ENGINE_LOG_WARNING("Attempting to stop query {} failed. Query was not submitted to the engine.", id);
+            ENGINE_LOG_WARNING("Attempting to stop query {} failed. Query was not submitted to the engine.");
         }
     }
 }

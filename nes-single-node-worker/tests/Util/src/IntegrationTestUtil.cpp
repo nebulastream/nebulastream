@@ -21,8 +21,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/FileSink.hpp>
@@ -235,7 +235,7 @@ std::shared_ptr<Schema> loadSinkSchema(SerializableQueryPlan& queryPlan)
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);
     auto& rootOperator = queryPlan.mutable_operatormap()->at(rootOperatorId);
-    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_SinkLogicalOperator>())
+    EXPECT_TRUE(rootOperator.has_sink())
         << "Redirection expects the single root operator to be a sink operator";
     return SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
 }
@@ -426,7 +426,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
     const auto rootOperatorId = decomposedQueryPlan.mutable_rootoperatorids()->at(0);
     auto& rootOperator = decomposedQueryPlan.mutable_operatormap()->at(rootOperatorId);
 
-    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_SinkLogicalOperator>())
+    EXPECT_TRUE(rootOperator.has_sink())
         << "Redirection expects the single root operator to be a sink operator";
     const auto deserializedSinkOperator = NES::Util::as<SinkLogicalOperator>(OperatorSerializationUtil::deserializeOperator(rootOperator));
     auto descriptor = NES::Util::as<SinkLogicalOperator>(deserializedSinkOperator)->getSinkDescriptorRef();
@@ -439,7 +439,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
             = std::make_unique<Sinks::SinkDescriptor>(descriptor.sinkType, std::move(configCopy), descriptor.addTimestamp);
         sinkDescriptorUpdated->schema = deserializedOutputSchema;
         auto sinkLogicalOperatorUpdated
-            = std::make_shared<SinkLogicalOperator>(deserializedSinkOperator->sinkName, deserializedSinkOperator->getId());
+            = std::make_shared<SinkLogicalOperator>(deserializedSinkOperator->sinkName);
         sinkLogicalOperatorUpdated->sinkDescriptor = std::move(sinkDescriptorUpdated);
         sinkLogicalOperatorUpdated->setOutputSchema(deserializedOutputSchema);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(sinkLogicalOperatorUpdated);
@@ -457,7 +457,7 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
         auto& value = pair.second; /// Note: non-const reference
-        if (value.details().Is<SerializableOperator_SourceDescriptorLogicalOperator>())
+        if (value.has_source())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
@@ -476,7 +476,6 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
 
                 const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
                     std::move(sourceDescriptorUpdated),
-                    deserializedSourceOperator->getId(),
                     NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getOriginId());
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(sourceDescriptorLogicalOperatorUpdated);
 
@@ -494,7 +493,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
         auto& value = pair.second; /// Note: non-const reference
-        if (value.details().Is<SerializableOperator_SourceDescriptorLogicalOperator>())
+        if (value.has_source())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
@@ -515,7 +514,6 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
 
                     const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
                         std::move(sourceDescriptorUpdated),
-                        deserializedSourceOperator->getId(),
                         NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getOriginId());
                     auto serializedOperator = OperatorSerializationUtil::serializeOperator(sourceDescriptorLogicalOperatorUpdated);
 

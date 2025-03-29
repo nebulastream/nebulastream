@@ -13,18 +13,18 @@
 */
 #pragma once
 #include <Functions/PhysicalFunction.hpp>
-#include <AbstractPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
 class TimeFunction;
 /// @brief Watermark assignment operator.
 /// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
-class IngestionTimeWatermarkAssignment : public AbstractPhysicalOperator
+class IngestionTimeWatermarkAssignment : public PhysicalOperator
 {
 public:
     /// @brief Creates a IngestionTimeWatermarkAssignment operator without function
-    IngestionTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction);
+    IngestionTimeWatermarkAssignment(std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider, std::unique_ptr<TimeFunction> timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 

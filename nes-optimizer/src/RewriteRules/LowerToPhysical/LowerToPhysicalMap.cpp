@@ -12,14 +12,36 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <Traits/QueryForSubtree.hpp>
+#include <Traits/TraitSet.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
+#include <Functions/FunctionProvider.hpp>
+#include <MapPhysicalOperator.hpp>
+#include <Operators/MapLogicalOperator.hpp>
+#include <Plans/Operator.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
 namespace NES::Optimizer
 {
-std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalMap()
+
+std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
 {
-    return std::make_unique<NES::Optimizer::LowerToPhysicalMap>();
+    const auto op = traitSet->get<Operator>();
+    const auto ops = dynamic_cast<MapLogicalOperator*>(op);
+    auto function = ops->getMapFunction();
+    auto fieldName = function->getField()->getFieldName();
+    auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
+    auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(layout);
+    auto phyOp = std::make_shared<MapPhysicalOperator>(std::vector<std::shared_ptr<TupleBufferMemoryProvider>>{std::move(memoryProvider)}, fieldName, std::move(func));
+    return {phyOp};
+}
+
+std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalMapRewriteRule(RewriteRuleRegistryArguments argument)
+{
+    return std::make_unique<NES::Optimizer::LowerToPhysicalMap>(argument.conf);
 }
 }

@@ -30,10 +30,8 @@
 namespace NES::Configurations
 {
 
-static constexpr auto DEFAULT_HASH_PAGE_SIZE = 10240;
-static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
-static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
-static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
+static constexpr auto DEFAULT_BUFFER_SIZE_BYTES = 4096;
+static constexpr auto DEFAULT_PAGE_SIZE = 10240;
 
 class QueryOptimizerConfiguration : public BaseConfiguration
 {
@@ -62,8 +60,14 @@ public:
 
     UIntOption pageSize
         = {WINDOW_OPERATOR_PAGE_SIZE_CONFIG,
-           std::to_string(NES::Configurations::DEFAULT_HASH_PAGE_SIZE),
+           std::to_string(NES::Configurations::DEFAULT_PAGE_SIZE),
            "Page size of any paged data structure",
+           {std::make_shared<NumberValidation>()}};
+
+    UIntOption bufferSize
+        = {BUFFERS_SIZE_IN_BYTES_CONFIG,
+           std::to_string(NES::Configurations::DEFAULT_BUFFER_SIZE_BYTES),
+           "Buffer size in bytes",
            {std::make_shared<NumberValidation>()}};
 
 private:
@@ -74,7 +78,8 @@ private:
             &queryCompilerDumpPath,
             &compilationStrategy,
             &nautilusBackend,
-            &pageSize
+            &pageSize,
+            &bufferSize
         };
     }
 };

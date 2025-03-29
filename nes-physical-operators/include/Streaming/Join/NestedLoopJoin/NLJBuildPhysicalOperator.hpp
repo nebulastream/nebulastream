@@ -30,7 +30,7 @@
 #include <Watermark/TimeFunction.hpp>
 #include <OperatorState.hpp>
 #include <val_ptr.hpp>
-#include "Streaming/Join/StreamJoinUtil.hpp"
+#include <Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES
 {
@@ -66,14 +66,14 @@ public:
     };
 
     NLJBuildPhysicalOperator(
+        std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
         uint64_t operatorHandlerIndex,
         JoinBuildSideType joinBuildSide,
-        std::unique_ptr<TimeFunction> timeFunction,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
+        std::unique_ptr<TimeFunction> timeFunction);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
-
+    std::string toString() const override {return typeid(this).name(); }
 
 private:
     /// Returns the populated local join state for the current timestamp

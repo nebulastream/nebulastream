@@ -13,9 +13,9 @@
 */
 #pragma once
 
-#include "ExecutablePipelineStage.hpp"
-#include "Operators/Operator.hpp"
-#include "Runtime/Execution/OperatorHandler.hpp"
+#include <ExecutablePipelineStage.hpp>
+#include <Plans/Operator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES
 {
@@ -35,7 +35,6 @@ public:
     /// @brief Gets the operator handlers, which capture specific operator state.
     /// @return std::vector<std::shared_ptr<OperatorHandler>>>
     std::vector<std::shared_ptr<OperatorHandler>> getOperatorHandlers();
-    std::shared_ptr<Operator> clone() const override;
 
 protected:
     std::string toString() const override;

@@ -26,7 +26,7 @@
 #include <Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Streaming/Aggregation/AggregationSlice.hpp>
 #include <Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Streaming/Aggregation/WindowAggregationPhysicalOperator.hpp>
+#include <Streaming/Aggregation/WindowAggregation.hpp>
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
@@ -99,12 +99,13 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
+    std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
     const uint64_t operatorHandlerIndex,
     std::unique_ptr<TimeFunction> timeFunction,
     std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions,
-    std::shared_ptr<WindowAggregationPhysicalOperator> windowAggregationOperator)
-    : WindowAggregationPhysicalOperator(windowAggregationOperator)
-    , WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
+    std::shared_ptr<WindowAggregation> windowAggregationOperator)
+    : WindowAggregation(windowAggregationOperator)
+    , WindowBuildPhysicalOperator(std::move(memoryProvider), operatorHandlerIndex, std::move(timeFunction))
     , keyFunctions(std::move(keyFunctions))
 {
 }

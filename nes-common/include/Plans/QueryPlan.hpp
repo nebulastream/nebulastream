@@ -14,16 +14,16 @@
 
 #pragma once
 
-#include <set>
 #include <memory>
+#include <set>
 #include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Operator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Plans/Operator.hpp>
 
 
 namespace NES
@@ -40,22 +40,6 @@ public:
     static std::shared_ptr<QueryPlan> create(std::shared_ptr<Operator> rootOperator);
     static std::shared_ptr<QueryPlan> create(QueryId queryId, std::vector<std::shared_ptr<Operator>> rootOperators);
 
-    template <typename LogicalSourceType>
-    std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators() const
-    {
-        NES_DEBUG("Get all source operators by traversing all the root nodes.");
-        std::unordered_set<std::shared_ptr<LogicalSourceType>> sourceOperatorsSet;
-        for (const auto& rootOperator : rootOperators)
-        {
-            auto sourceOperators = rootOperator->getOperatorsByType<LogicalSourceType>();
-            NES_DEBUG("insert all source operators to the collection");
-            sourceOperatorsSet.insert(sourceOperators.begin(), sourceOperators.end());
-        }
-        NES_DEBUG("Found {} source operators.", sourceOperatorsSet.size());
-        std::vector<std::shared_ptr<LogicalSourceType>> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
-        return sourceOperators;
-    }
-
     std::vector<std::shared_ptr<SinkLogicalOperator>> getSinkOperators() const;
 
     void appendOperatorAsNewRoot(const std::shared_ptr<Operator>& operatorNode);
@@ -66,7 +50,24 @@ public:
     std::vector<std::shared_ptr<Operator>> getRootOperators() const;
 
     /// add subQuery's rootnode into the current node for merging purpose.
-    void addRootOperator(const std::shared_ptr<Operator>& newRootOperator);
+    void addRootOperator(const std::shared_ptr<Operator>& newRootOperator)
+    {
+        ///Check if a root with the id already present
+        auto found = std::find_if(
+            rootOperators.begin(),
+            rootOperators.end(),
+            [&](const std::shared_ptr<Operator>& root) { return newRootOperator->id == root->id; });
+
+        /// If not present then add it
+        if (found == rootOperators.end())
+        {
+            rootOperators.push_back(newRootOperator);
+        }
+        else
+        {
+            NES_WARNING("Root operator with id {} already present int he plan", newRootOperator->id);
+        }
+    }
 
     void removeAsRootOperator(std::shared_ptr<Operator> root);
 
@@ -81,12 +82,12 @@ public:
         {
             for (auto itr : BFSRange<Operator>(rootOperator))
             {
-                if (visitedOpIds.contains(itr->getId()))
+                if (visitedOpIds.contains(itr->id))
                 {
                     /// skip rest of the steps as the node found in already visited node list
                     continue;
                 }
-                visitedOpIds.insert(itr->getId());
+                visitedOpIds.insert(itr->id);
                 if (NES::Util::instanceOf<T>(itr))
                 {
                     operators.push_back(NES::Util::as<T>(itr));
@@ -102,12 +103,6 @@ public:
 
     std::unordered_set<std::shared_ptr<Operator>> getAllOperators() const;
 
-    /// @note: This method only check if there exists another operator with same Id or not.
-    /// @note: The system generated operators are ignored from this check.
-    [[nodiscard]] bool hasOperatorWithId(OperatorId operatorId) const;
-
-    std::shared_ptr<Operator> getOperatorWithOperatorId(OperatorId operatorId) const;
-
     void setQueryId(QueryId queryId);
     [[nodiscard]] QueryId getQueryId() const;
 
@@ -118,9 +113,7 @@ public:
     std::set<std::shared_ptr<Operator>> findAllOperatorsBetween(
         const std::set<std::shared_ptr<Operator>>& downstreamOperators, const std::set<std::shared_ptr<Operator>>& upstreamOperators);
 
-    /// Comparison to another plan and its children nodes by tree traversal.
-    /// @return true, if this and other plan are equal in their structure and operators, false else
-    [[nodiscard]] bool compare(const std::shared_ptr<QueryPlan>& otherPlan) const;
+    [[nodiscard]] bool operator==(const std::shared_ptr<QueryPlan>& otherPlan) const;
 
 private:
     /// Find operators between source and target operators

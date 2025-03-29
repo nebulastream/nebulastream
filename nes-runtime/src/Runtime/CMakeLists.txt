@@ -13,4 +13,5 @@
 
 add_source_files(nes-runtime
         NodeEngine.cpp
+        NodeEngineBuilder.cpp
 )

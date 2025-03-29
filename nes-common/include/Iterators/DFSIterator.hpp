@@ -15,52 +15,56 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <stack>
+#include <vector>
 
 namespace NES
 {
 
-
+// Requires that T contains a function getChildren()
 template <typename T>
-class DFSIterator {
+class DFSIterator
+{
 public:
     using iterator_category = std::forward_iterator_tag;
-    using value_type        = std::shared_ptr<T>;
-    using difference_type   = std::ptrdiff_t;
-    using pointer           = std::shared_ptr<T>*;
-    using reference         = std::shared_ptr<T>&;
+    using value_type = std::shared_ptr<T>;
+    using difference_type = std::ptrdiff_t;
+    using pointer = std::shared_ptr<T>*;
+    using reference = std::shared_ptr<T>&;
 
     DFSIterator() = default;
 
-    explicit DFSIterator(std::shared_ptr<T> root) {
-        if (root) {
+    explicit DFSIterator(std::shared_ptr<T> root)
+    {
+        if (root)
+        {
             nodeStack.push(std::move(root));
         }
     }
 
-    DFSIterator& operator++() {
-        if (!nodeStack.empty()) {
+    DFSIterator& operator++()
+    {
+        if (!nodeStack.empty())
+        {
             auto current = nodeStack.top();
             nodeStack.pop();
 
-            auto& children = current->children;
-            for (auto it = children.rbegin(); it != children.rend(); ++it) {
+            auto children = current->children;
+            for (auto it = children.rbegin(); it != children.rend(); ++it)
+            {
                 nodeStack.push(*it);
             }
         }
         return *this;
     }
 
-    bool operator==(const DFSIterator& other) const {
-        return nodeStack.empty() && other.nodeStack.empty();
-    }
-    bool operator!=(const DFSIterator& other) const {
-        return !(*this == other);
-    }
+    bool operator==(const DFSIterator& other) const { return nodeStack.empty() && other.nodeStack.empty(); }
+    bool operator!=(const DFSIterator& other) const { return !(*this == other); }
 
-    std::shared_ptr<T> operator*() const {
-        if (!nodeStack.empty()) {
+    std::shared_ptr<T> operator*() const
+    {
+        if (!nodeStack.empty())
+        {
             return nodeStack.top();
         }
         return nullptr;
@@ -71,18 +75,14 @@ private:
 };
 
 template <typename T>
-class DFSRange {
+class DFSRange
+{
 public:
-    explicit DFSRange(std::shared_ptr<T> root)
-        : root(std::move(root)) {}
+    explicit DFSRange(std::shared_ptr<T> root) : root(std::move(root)) { }
 
-    DFSIterator<T> begin() const {
-        return DFSIterator<T>(root);
-    }
+    DFSIterator<T> begin() const { return DFSIterator<T>(root); }
 
-    DFSIterator<T> end() const {
-        return DFSIterator<T>();
-    }
+    DFSIterator<T> end() const { return DFSIterator<T>(); }
 
 private:
     std::shared_ptr<T> root;

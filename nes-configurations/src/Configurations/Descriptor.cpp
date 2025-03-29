@@ -25,6 +25,47 @@ Descriptor::Descriptor(DescriptorConfig::Config&& config) : config(std::move(con
 {
 }
 
+SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::DescriptorConfig::ConfigType& var)
+{
+    SerializableVariantDescriptor protoVar;
+    std::visit(
+        [&protoVar]<typename T>(T&& arg)
+        {
+            /// Remove const, volatile, and reference to simplify type matching
+            using U = std::remove_cvref_t<T>;
+            if constexpr (std::is_same_v<U, int32_t>)
+                protoVar.set_int_value(arg);
+            else if constexpr (std::is_same_v<U, uint32_t>)
+                protoVar.set_uint_value(arg);
+            else if constexpr (std::is_same_v<U, bool>)
+                protoVar.set_bool_value(arg);
+            else if constexpr (std::is_same_v<U, char>)
+                protoVar.set_char_value(arg);
+            else if constexpr (std::is_same_v<U, float>)
+                protoVar.set_float_value(arg);
+            else if constexpr (std::is_same_v<U, double>)
+                protoVar.set_double_value(arg);
+            else if constexpr (std::is_same_v<U, std::string>)
+                protoVar.set_string_value(arg);
+            else if constexpr (std::is_same_v<U, Configurations::EnumWrapper>)
+            {
+                auto enumWrapper = SerializableEnumWrapper().New();
+                enumWrapper->set_value(arg.getValue());
+                protoVar.set_allocated_enum_value(enumWrapper);
+            }
+            else if constexpr (std::is_same_v<U, NES::FunctionList>)
+            {
+                NES::FunctionList* funcList = arg.New();
+                funcList->CopyFrom(arg);
+                protoVar.set_allocated_function_list(funcList);
+            }
+            else
+                static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
+        },
+        var);
+    return protoVar;
+}
+
 /// Define a ConfigPrinter to generate print functions for all options of the std::variant 'ConfigType'.
 struct ConfigPrinter
 {

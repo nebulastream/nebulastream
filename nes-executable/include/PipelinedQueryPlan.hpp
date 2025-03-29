@@ -21,19 +21,39 @@
 
 namespace NES
 {
-
-/// @brief Representation of a query plan, which consists of a set of Pipelines.
+/// Representation of a query plan of pipelines
 struct PipelinedQueryPlan : std::enable_shared_from_this<PipelinedQueryPlan>
 {
-    PipelinedQueryPlan(QueryId queryId = INVALID_QUERY_ID);
+    PipelinedQueryPlan(QueryId id) : queryId(id){
+    }
 
     [[nodiscard]] std::string toString() const;
+    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines() const
+    {
+        std::vector<std::shared_ptr<Pipeline>> sourcePipelines;
+        for (const auto &pipeline : pipelines)
+        {
+            if (Util::instanceOf<SourcePipeline>(pipeline))
+            {
+                sourcePipelines.emplace_back(pipeline);
+            }
+        }
+        return sourcePipelines;
+    }
+    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSinkPipelines() const
+    {
+        std::vector<std::shared_ptr<Pipeline>> sinkPipelines;
+        for (const auto &pipeline : pipelines)
+        {
+            if (Util::instanceOf<SinkPipeline>(pipeline))
+            {
+                sinkPipelines.emplace_back(pipeline);
+            }
+        }
+        return sinkPipelines;
+    }
 
     const QueryId queryId;
-
-    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines() const;
-    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSinkPipelines() const;
-
     std::vector<std::shared_ptr<Pipeline>> pipelines;
 };
 }

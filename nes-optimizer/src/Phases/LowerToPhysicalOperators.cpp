@@ -16,13 +16,13 @@
 #include <utility>
 #include <vector>
 #include <Iterators/BFSIterator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Operator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include <Plans/Operator.hpp>
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
@@ -44,15 +44,15 @@ std::unique_ptr<QueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
         {
             const auto& tmp = currentOperator;
             currentOperator = NES::Util::as<SourceDescriptorLogicalOperator>(operatorNode);
-            tmp->addChild(currentOperator);
+            tmp->children.push_back(currentOperator);
         }
-        else if (auto rule = RewriteRuleRegistry::instance().create(operatorNode->getName(), RewriteRuleRegistryArguments{}); rule.has_value())
+        /*else if (auto rule = RewriteRuleRegistry::instance().create(operatorNode->getName(), RewriteRuleRegistryArguments{}); rule.has_value())
         {
             /// TODO here we apply the rule
             /// The problem is that we would expect that we take the TraitSet as the input
             rule.value();
-            operatorNode->addChild(currentOperator);
-        }
+            operatorNode->children.push_back(currentOperator);
+        }*/
         else
         {
             throw UnknownLogicalOperator("Cannot lower {}", operatorNode->toString());

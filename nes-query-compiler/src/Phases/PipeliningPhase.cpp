@@ -12,155 +12,127 @@
     limitations under the License.
 */
 
-#include <cstdint>
-#include <iostream>
+#include <Phases/PipeliningPhase.hpp>
 #include <memory>
 #include <unordered_map>
-#include <utility>
 #include <variant>
-#include <API/Schema.hpp>
-#include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Operator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Plans/Operator.hpp>
 #include <Plans/QueryPlan.hpp>
-#include <AbstractPhysicalOperator.hpp>
-#include <EmitPhysicalOperator.hpp>
-#include <ErrorHandling.hpp>
-#include <ScanPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <PipelinedQueryPlan.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
 
-void processFusibleOperator(
-    const std::shared_ptr<PipelinedQueryPlan>& pipelinePlan,
-    std::unordered_map<std::shared_ptr<Operator>, std::shared_ptr<Pipeline>>& pipelineOperatorMap,
-    const std::shared_ptr<Pipeline>& currentPipeline,
-    const std::shared_ptr<PhysicalOperatorNode>& currentOperator)
-{
-    PRECONDITION(
-        std::holds_alternative<std::shared_ptr<AbstractPhysicalOperator>>(currentOperator->op), "should only be called with a physical operator");
+/// forward declaration
+void process(
+    std::shared_ptr<PipelinedQueryPlan> pipelinePlan,
+    std::shared_ptr<Pipeline> currentPipeline,
+    std::shared_ptr<Pipeline::PipelineOperator> currentOperator);
 
+void processFusibleOperator(
+    std::shared_ptr<PipelinedQueryPlan> pipelinePlan,
+    std::shared_ptr<Pipeline> currentPipeline,
+    std::shared_ptr<Pipeline::PipelineOperator> currentOperator)
+{
     currentPipeline->prependOperator(currentOperator);
-    currentPipeline->setType(Pipeline::Type::PipelineType); // TODO remove me
-    for (const auto& node : currentOperator->children)
+    for (const auto& op : NES::Util::as<Operator>(std::get<std::shared_ptr<PhysicalOperator>>(*currentOperator))->children)
     {
-        process(pipelinePlan, pipelineOperatorMap, currentPipeline, node);
+        process(pipelinePlan, currentPipeline, NES::Util::as<Pipeline::PipelineOperator>(op));
     }
 }
 
 void processPipelineBreakerOperator(
-    const std::shared_ptr<PipelinedQueryPlan>& pipelinePlan,
-    std::unordered_map<std::shared_ptr<Operator>, std::shared_ptr<Pipeline>>& pipelineOperatorMap,
-    const std::shared_ptr<Pipeline>& currentPipeline,
-    const std::shared_ptr<PhysicalOperatorNode>& currentOperator)
+    std::shared_ptr<PipelinedQueryPlan> pipelinePlan,
+    std::shared_ptr<Pipeline> currentPipeline,
+    std::shared_ptr<Pipeline::PipelineOperator> currentOperator)
 {
-    PRECONDITION(
-        std::holds_alternative<std::shared_ptr<AbstractPhysicalOperator>>(currentOperator->op), "should only be called with a physical operator");
-
     currentPipeline->prependOperator(currentOperator);
 
-    /// We create a new pipeline for each of the current op's childrens
-    for (const auto& node : currentOperator->children)
+    /// We create a new pipeline for each of the current op's children
+    for (const auto& op : NES::Util::as<Operator>(std::get<std::shared_ptr<PhysicalOperator>>(*currentOperator))->children)
     {
-        auto newPipeline = Pipeline::create();
-        newPipeline->setType(Pipeline::Type::PipelineType);
+        auto newPipeline = std::make_shared<OperatorPipeline>();
         pipelinePlan->pipelines.emplace_back(newPipeline);
-        newPipeline->addSuccessor(currentPipeline);
-        process(pipelinePlan, pipelineOperatorMap, newPipeline, node);
+        newPipeline->successorPipelines.emplace_back(currentPipeline);
+        process(pipelinePlan, newPipeline, NES::Util::as<Pipeline::PipelineOperator>(op));
     }
 }
 
 void processSink(
-    const std::shared_ptr<PipelinedQueryPlan>& pipelinePlan,
-    std::unordered_map<std::shared_ptr<Operator>, std::shared_ptr<Pipeline>>& pipelineOperatorMap,
-    const std::shared_ptr<Pipeline>& currentPipeline,
-    const std::shared_ptr<PhysicalOperatorNode>& currentOperator)
+    std::shared_ptr<PipelinedQueryPlan> pipelinePlan,
+    std::shared_ptr<Pipeline> currentPipeline,
+    std::shared_ptr<Pipeline::PipelineOperator> currentOperator)
 {
-    PRECONDITION(std::holds_alternative<std::shared_ptr<SinkLogicalOperator>>(currentOperator->op), "should only be called with a sink");
-
     // goes through all the children of the sink operator. creates a new operator pipeline.
     // The pipeline plan holds a plan with all currently existing pipelines. We add it there.
     // the new pipeline will be added to the current pipeline (source pipelines to sink pipelines)
     // the next operator after the sink gets processed
-    for (const auto& child : currentOperator->children)
+    for (const auto& op : NES::Util::as<Operator>(std::get<std::shared_ptr<PhysicalOperator>>(*currentOperator))->children)
     {
-        auto newPipeline = Pipeline::create();
-        newPipeline->setType(Pipeline::Type::SinkPipelineType);
+        auto newPipeline = std::make_shared<SinkPipeline>();
         pipelinePlan->pipelines.emplace_back(newPipeline);
-        newPipeline->addSuccessor(currentPipeline);
-        process(pipelinePlan, pipelineOperatorMap, newPipeline, child); // TODO should this ever happen?
+        newPipeline->successorPipelines.emplace_back(currentPipeline);
+        process(pipelinePlan, newPipeline, NES::Util::as<Pipeline::PipelineOperator>(op));
     }
 }
 
 void processSource(
     const std::shared_ptr<PipelinedQueryPlan>& pipelinePlan,
-    std::unordered_map<std::shared_ptr<Operator>, std::shared_ptr<Pipeline>>&,
     std::shared_ptr<Pipeline> currentPipeline,
-    const std::shared_ptr<PhysicalOperatorNode>& currentOperator)
+    const std::shared_ptr<Pipeline::PipelineOperator> currentOperator)
 {
-    PRECONDITION(
-        std::holds_alternative<std::shared_ptr<SourceDescriptorLogicalOperator>>(currentOperator->op),
-        "should only be called with a source");
-
+    /// Source operators will always be part of their own pipeline.
     if (currentPipeline->hasOperators())
     {
-        auto newPipeline = Pipeline::create();
+        auto newPipeline = std::make_shared<SourcePipeline>();
         pipelinePlan->pipelines.emplace_back(newPipeline);
-        newPipeline->addSuccessor(currentPipeline);
+        newPipeline->successorPipelines.emplace_back(currentPipeline);
         currentPipeline = newPipeline;
     }
-    currentPipeline->setType(Pipeline::Type::SourcePipelineType);
     currentPipeline->prependOperator(currentOperator);
 }
 
 void process(
-    const std::shared_ptr<PipelinedQueryPlan>& pipelinePlan,
-    std::unordered_map<std::shared_ptr<Operator>, std::shared_ptr<Pipeline>>& pipelineOperatorMap,
-    const std::shared_ptr<Pipeline>& currentPipeline,
-    const std::shared_ptr<PhysicalOperatorNode>& currentOperator)
+    std::shared_ptr<PipelinedQueryPlan> pipelinePlan,
+    std::shared_ptr<Pipeline> currentPipeline,
+    std::shared_ptr<Pipeline::PipelineOperator> currentOperator)
 {
-    if (std::holds_alternative<std::shared_ptr<SinkLogicalOperator>>(currentOperator->op))
+    if (std::holds_alternative<std::shared_ptr<SourceDescriptorLogicalOperator>>(*currentOperator))
     {
-        processSink(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperator);
+        processSink(pipelinePlan, currentPipeline, currentOperator);
     }
-    else if (std::holds_alternative<std::shared_ptr<SourceDescriptorLogicalOperator>>(currentOperator->op))
+    else if (std::holds_alternative<std::shared_ptr<SinkLogicalOperator>>(*currentOperator))
     {
-        processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperator);
+        processSource(pipelinePlan, currentPipeline, currentOperator);
     }
-    else if (true) // TODO we should check here at the physical operator if it is a pipeline breaker
+    else if (auto op = std::get<std::shared_ptr<PhysicalOperator>>(*currentOperator); op->isPipelineBreaker)
     {
-        processFusibleOperator(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperator);
+        processPipelineBreakerOperator(pipelinePlan, currentPipeline, currentOperator);
     }
     else
     {
-        processPipelineBreakerOperator(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperator);
+        processFusibleOperator(pipelinePlan, currentPipeline, currentOperator);
     }
 }
 
 /// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
 std::shared_ptr<PipelinedQueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
 {
-    std::unordered_map<std::shared_ptr<Operator>, std::shared_ptr<Pipeline>> pipelineOperatorMap;
-
     auto pipelinePlan = std::make_shared<PipelinedQueryPlan>(queryPlan->getQueryId());
 
     // Here we get source operators as the root, but we expected sink operators
-    for (const auto& sinkOperator : queryPlan->getRootOperators())
+    for (const auto& sourceOperator : queryPlan->getRootOperators())
     {
-        auto pipeline = Pipeline::createSinkPipeline();
-
-        /// Create a new pipeline for each sink
-        pipeline->prependOperator(dynamic_cast<SinkLogicalOperator*>(sinkOperator.get()));
+        /// Create a new pipeline for each source
+        auto pipeline = std::make_shared<SourcePipeline>();
+        pipeline->prependOperator(Util::as<Pipeline::PipelineOperator>(sourceOperator));
         pipelinePlan->pipelines.emplace_back(pipeline);
 
-        /// process next operators
-        process(pipelinePlan, pipelineOperatorMap, pipeline, sinkOperator);
+        process(pipelinePlan, pipeline, NES::Util::as<Pipeline::PipelineOperator>(sourceOperator));
     }
-
     return pipelinePlan;
 }
 

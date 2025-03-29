@@ -14,9 +14,8 @@
 
 #include <memory>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
@@ -29,9 +28,11 @@
 #include <Common/DataTypes/Numeric.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+#include <Operators/InferModelLogicalOperator.hpp>
 
 using namespace std::string_literals;
 
+/*
 namespace NES::Optimizer
 {
 SemanticQueryValidation::SemanticQueryValidation(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
@@ -206,4 +207,6 @@ void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<Quer
         }
     }
 }
+
 }
+*/

@@ -19,10 +19,10 @@
 #include <string>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
-#include <Operators/LogicalOperators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 
 namespace NES
 {

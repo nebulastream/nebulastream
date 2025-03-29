@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <vector>
-#include <Operators/Operator.hpp>
+#include <Plans/Operator.hpp>
 
 namespace NES
 {

@@ -10,11 +10,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Sinks)
+add_subdirectory(Sources)
+add_subdirectory(Serialization)
+add_subdirectory(Windows)
+
 add_source_files(nes-logical-operators
-        Operator.cpp
+        OriginIdAssignmentOperator.cpp
+        UnaryLogicalOperator.cpp
+        BinaryLogicalOperator.cpp
 )
 
-add_subdirectory(AbstractOperators)
-add_subdirectory(Serialization)
-add_subdirectory(LogicalOperators)
-
+add_plugin(Selection LogicalOperator nes-logical-operators SelectionLogicalOperator.cpp)
+add_plugin(Projection LogicalOperator nes-logical-operators ProjectionLogicalOperator.cpp)
+add_plugin(Map LogicalOperator nes-logical-operators MapLogicalOperator.cpp)
+add_plugin(Union LogicalOperator nes-logical-operators UnionLogicalOperator.cpp)
+add_plugin(IngestionTimeWatermarkAssigner LogicalOperator nes-logical-operators IngestionTimeWatermarkAssignerLogicalOperator.cpp)
+add_plugin(EventTimeWatermarkAssigner LogicalOperator nes-logical-operators EventTimeWatermarkAssignerLogicalOperator.cpp)

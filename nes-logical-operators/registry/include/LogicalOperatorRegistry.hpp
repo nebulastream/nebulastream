@@ -16,8 +16,8 @@
 
 #include <string>
 #include <unordered_map>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Registry.hpp>
+#include "Operators/LogicalOperator.hpp"
 
 namespace NES
 {

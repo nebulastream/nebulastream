@@ -23,12 +23,12 @@
 namespace NES
 {
 
-IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)
-    : timeFunction(std::move(timeFunction)) {};
+IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider, std::unique_ptr<TimeFunction> timeFunction)
+    : PhysicalOperator(std::move(memoryProvider)), timeFunction(std::move(timeFunction)) {};
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    AbstractPhysicalOperator::open(executionCtx, recordBuffer);
+    PhysicalOperator::open(executionCtx, recordBuffer);
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
     const auto tsField = timeFunction->getTs(executionCtx, emptyRecord);
@@ -41,7 +41,7 @@ void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, Reco
 
 void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, Record& record) const
 {
-    child->execute(executionCtx, record);
+    child()->execute(executionCtx, record);
 }
 
 }

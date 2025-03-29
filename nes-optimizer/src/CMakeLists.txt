@@ -14,3 +14,5 @@ add_subdirectory(RewriteRules)
 add_subdirectory(Traits)
 add_subdirectory(Phases)
 
+add_source_files(nes-optimizer
+        QueryCompiler.cpp)
