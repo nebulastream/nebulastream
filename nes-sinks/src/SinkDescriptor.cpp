@@ -42,8 +42,8 @@ SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unorde
 
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
-    return out << "SinkDescriptor:"
-               << "\nSink type: " << sinkDescriptor.sinkType << "\nadd timestamp: " << sinkDescriptor.addTimestamp << "\nConfig:\n"
+    return out << "SinkDescriptor:" << "\nSink type: " << sinkDescriptor.sinkType << "\nadd timestamp: " << sinkDescriptor.addTimestamp
+               << "\nConfig:\n"
                << sinkDescriptor.toStringConfig();
 }
 
