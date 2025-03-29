@@ -28,11 +28,9 @@
 namespace NES
 {
 
-/**
- * @brief Basic emit operator that receives records from an upstream operator and
- * writes them to a tuple buffer according to a memory layout.
- */
 class Emit : public ExecutableOperator
+/// @brief Basic emit operator that receives records from an upstream operator and
+class Emit : public PhysicalOperator
 {
 public:
     explicit Emit(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);

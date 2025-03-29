@@ -20,9 +20,8 @@
 #include <Types/WindowType.hpp>
 namespace NES::Windowing
 {
-/**
- * A SlidingWindow assigns records to multiple overlapping windows.
- */
+
+/// A SlidingWindow assigns records to multiple overlapping windows.
 class SlidingWindow : public TimeBasedWindowType
 {
 public:

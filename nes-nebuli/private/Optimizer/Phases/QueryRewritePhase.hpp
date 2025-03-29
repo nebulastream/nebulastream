@@ -38,9 +38,6 @@ class PredicateReorderingRule;
 class ProjectBeforeUnionOperatorRule;
 class RenameSourceToProjectOperatorRule;
 
-/**
- * @brief This phase is responsible for re-writing the query plan
- */
 class QueryRewritePhase
 {
 public:

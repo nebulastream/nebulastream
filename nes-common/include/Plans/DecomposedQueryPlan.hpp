@@ -28,9 +28,8 @@
 
 namespace NES
 {
-/**
- * @brief This represents the plan that need to be executed on the worker node
- */
+
+/// Represents the plan executed on the worker node
 class DecomposedQueryPlan
 {
 public:

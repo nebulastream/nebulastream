@@ -40,9 +40,7 @@ public:
     virtual ~TimeFunction() = default;
 };
 
-/**
- * @brief Time function for event time windows
- */
+/// @brief Time function for event time windows
 class EventTimeFunction final : public TimeFunction
 {
 public:
@@ -55,9 +53,7 @@ private:
     std::unique_ptr<Functions::Function> timestampFunction;
 };
 
-/**
- * @brief Time function for ingestion time windows
- */
+/// @brief Time function for ingestion time windows
 class IngestionTimeFunction final : public TimeFunction
 {
 public:

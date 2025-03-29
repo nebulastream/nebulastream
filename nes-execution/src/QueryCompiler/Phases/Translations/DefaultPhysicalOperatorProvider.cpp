@@ -58,13 +58,15 @@
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
-#include <Types/ContentBasedWindowType.hpp>
-#include <Types/SlidingWindow.hpp>
-#include <Types/TimeBasedWindowType.hpp>
-#include <Types/TumblingWindow.hpp>
+#include <QueryCompiler/QueryCompilerConfiguration.hpp>
 #include <Util/Common.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <WindowTypes/Types/ContentBasedWindowType.hpp>
+#include <WindowTypes/Types/SlidingWindow.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include <WindowTypes/Types/TumblingWindow.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation

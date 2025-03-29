@@ -26,17 +26,13 @@
 namespace NES::Nautilus
 {
 
-/**
- * @brief The RecordBuffer is a representation of a set of records that are stored together.
- * In the common case this maps to a TupleBuffer, which stores the individual records in either a row or a columnar layout.
- */
+/// @brief The RecordBuffer is a representation of a set of records that are stored together.
+/// In the common case this maps to a TupleBuffer, which stores the individual records in either a row or a columnar layout.
 class RecordBuffer
 {
 public:
-    /**
-     * @brief Creates a new record buffer with a reference to a tuple buffer
-     * @param tupleBufferRef
-     */
+    /// @brief Creates a new record buffer with a reference to a tuple buffer
+    /// @param tupleBufferRef
     explicit RecordBuffer(const nautilus::val<Memory::TupleBuffer*>& tupleBufferRef);
 
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
