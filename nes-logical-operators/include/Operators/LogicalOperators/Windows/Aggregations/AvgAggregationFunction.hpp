@@ -23,16 +23,9 @@
 namespace NES::Windowing
 {
 
-/**
- * @brief
- * The MaxAggregationDescriptor aggregation calculates the maximum over the window.
- */
 class MaxAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
-    /**
-     * Factory method to create a MaxAggregationDescriptor aggregation on a particular field.
-     */
     static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<LogicalFunction>& onField);
 
     static std::shared_ptr<WindowAggregationDescriptor>
