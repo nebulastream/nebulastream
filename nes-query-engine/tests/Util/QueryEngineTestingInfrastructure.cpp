@@ -102,8 +102,7 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(size
     }
 
     return testing::AssertionFailure() << "The expected number of tuple buffers were not received after " << DEFAULT_AWAIT_TIMEOUT.count()
-                                       << "ms. "
-                                       << "Expected: " << numberOfExpectedBuffers << " Received: " << buffers->size();
+                                       << "ms. " << "Expected: " << numberOfExpectedBuffers << " Received: " << buffers->size();
 }
 
 void TestSinkController::insertBuffer(Memory::TupleBuffer&& buffer)
