@@ -13,18 +13,20 @@
 */
 #pragma once
 
-#include <memory>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-namespace NES::QueryCompilation
 #include <Functions/Function.hpp>
 #include <PhysicalOperator.hpp>
+
+namespace NES
 {
 
-class PipeliningPhase
+/// @brief Selection operator that evaluates an boolean function on each record.
+class Selection : public PhysicalOperator
 {
 public:
-    virtual std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan) = 0;
-    virtual ~PipeliningPhase() = default;
+    Selection(std::unique_ptr<Functions::Function> function) : function(std::move(function)) {};
+    void execute(ExecutionContext& ctx, Record& record) const override;
+
+private:
+    const std::unique_ptr<Functions::Function> function;
 };
 }
