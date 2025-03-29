@@ -17,11 +17,11 @@
 namespace NES
 {
 
-class ModuloBinaryLogicalFunction final : public BinaryLogicalFunction
+class ModuloLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    explicit ModuloBinaryLogicalFunction(std::shared_ptr<DataType> stamp);
-    ~ModuloBinaryLogicalFunction() noexcept override = default;
+    explicit ModuloLogicalFunction(std::shared_ptr<DataType> stamp);
+    ~ModuloLogicalFunction() noexcept override = default;
     static std::shared_ptr<LogicalFunction>
     create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
     [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
@@ -31,7 +31,7 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit ModuloBinaryLogicalFunction(ModuloBinaryLogicalFunction* other);
+    explicit ModuloLogicalFunction(ModuloLogicalFunction* other);
 };
 
 }
