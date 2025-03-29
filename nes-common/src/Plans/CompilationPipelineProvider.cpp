@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include "Plans/CompilationPipelineProvider.hpp"
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
-#include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
-#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/options.hpp>
 #include <ExecutablePipelineProviderRegistry.hpp>
 #include <ExecutablePipelineStage.hpp>
+#include "Plans/CompiledExecutablePipelineStage.hpp"
+#include "Plans/ExecutablePipelineProvider.hpp"
+#include "Runtime/Execution/OperatorHandler.hpp"
 
 namespace NES
 {

@@ -20,7 +20,9 @@
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Operators/ExecutableOperator.hpp>
 #include <Util/Execution.hpp>
+#include <Watermark/TimeFunction.hpp>
 
 namespace NES
 {

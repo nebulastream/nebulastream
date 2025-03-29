@@ -16,8 +16,8 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Nautilus/NautilusBackend.hpp>
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
+#include <Iterators/DFSIterator.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>

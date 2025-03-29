@@ -16,12 +16,12 @@
 
 #include <cstdint>
 #include <memory>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Functions/Function.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Operators/Operator.hpp>
+#include <Operators/Streaming/Join/StreamJoinProbe.hpp>
+#include <Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Execution.hpp>
 
 namespace NES

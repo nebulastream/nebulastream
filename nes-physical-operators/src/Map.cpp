@@ -12,13 +12,9 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <utility>
-
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Map.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Map.hpp>
+
 namespace NES
 {
 Map::Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::Function> mapFunction)

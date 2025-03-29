@@ -15,8 +15,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Functions/Comparison/ExecutableFunctionLessEquals.hpp>
-#include <Execution/Functions/Function.hpp>
+#include <Functions/Comparison/ExecutableFunctionLessEquals.hpp>
+#include <Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>

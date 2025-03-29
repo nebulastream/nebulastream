@@ -12,19 +12,18 @@
     limitations under the License.
 */
 
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <algorithm>
 #include <atomic>
 #include <memory>
 #include <numeric>
 #include <sstream>
 #include <utility>
-#include <vector>
-#include <Identifiers/NESStrongTypeFormat.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
+#include <Plans/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
 namespace NES::QueryCompilation
 {

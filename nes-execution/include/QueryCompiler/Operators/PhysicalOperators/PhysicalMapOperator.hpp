@@ -15,7 +15,7 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>

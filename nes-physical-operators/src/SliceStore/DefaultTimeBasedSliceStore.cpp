@@ -20,10 +20,10 @@
 #include <optional>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
-#include <Execution/Operators/SliceStore/Slice.hpp>
-#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <Operators/SliceStore/Slice.hpp>
+#include <Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Locks.hpp>

@@ -11,22 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Plans/CompiledExecutablePipelineStage.hpp"
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <ostream>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
-#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Timer.hpp>
+#include <Plans/PhysicalOperatorPipeline.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <Engine.hpp>
 #include <options.hpp>
+#include "ExecutionContext.hpp"
+#include "Nautilus/Interface/RecordBuffer.hpp"
+#include "Runtime/Execution/OperatorHandler.hpp"
+#include "Runtime/TupleBuffer.hpp"
+#include "Util/Timer.hpp"
 
 namespace NES
 {

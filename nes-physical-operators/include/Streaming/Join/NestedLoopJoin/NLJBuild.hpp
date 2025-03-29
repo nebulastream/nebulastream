@@ -16,21 +16,21 @@
 
 #include <cstdint>
 #include <memory>
-#include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/OperatorState.hpp>
-#include <Execution/Operators/SliceStore/Slice.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
+#include <Operators/Operator.hpp>
+#include <Operators/SliceStore/Slice.hpp>
+#include <Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
+#include <Watermark/TimeFunction.hpp>
+#include <OperatorState.hpp>
 #include <val_ptr.hpp>
 
 namespace NES

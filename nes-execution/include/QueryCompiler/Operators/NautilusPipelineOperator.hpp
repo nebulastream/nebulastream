@@ -12,9 +12,8 @@
     limitations under the License.
 */
 #pragma once
-#include <vector>
-#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+#include <Plans/PhysicalOperatorPipeline.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::QueryCompilation

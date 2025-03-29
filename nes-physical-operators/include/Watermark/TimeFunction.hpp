@@ -14,7 +14,7 @@
 #pragma once
 
 #include <API/TimeUnit.hpp>
-#include <Execution/Functions/Function.hpp>
+#include <Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Time/Timestamp.hpp>

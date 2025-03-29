@@ -11,14 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Plans/PipelineQueryPlan.hpp>
 #include <algorithm>
 #include <iterator>
 #include <memory>
 #include <sstream>
 #include <vector>
+#include <string>
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {

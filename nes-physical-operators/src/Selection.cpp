@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Selection.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Selection.hpp>
 
 namespace NES
 {

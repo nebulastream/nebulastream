@@ -20,7 +20,6 @@
 #include <string>
 #include <tuple>
 #include <utility>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>

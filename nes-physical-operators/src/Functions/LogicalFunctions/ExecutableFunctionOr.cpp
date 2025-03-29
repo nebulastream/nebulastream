@@ -15,8 +15,8 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Functions/LogicalFunctions/ExecutableFunctionOr.hpp>
+#include <Functions/Function.hpp>
+#include <Functions/LogicalFunctions/ExecutableFunctionOr.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>

@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <vector>
-#include <Execution/Operators/Operator.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
