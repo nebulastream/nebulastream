@@ -42,7 +42,7 @@ public:
         OperatorId id = getNextOperatorId());
 
     /// Performs a deep copy of this physical operator
-    std::shared_ptr<Operator> copy() override;
+    std::shared_ptr<Operator> clone() override;
 
     const std::shared_ptr<Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
     Configurations::StreamJoinStrategy getJoinStrategy() const;

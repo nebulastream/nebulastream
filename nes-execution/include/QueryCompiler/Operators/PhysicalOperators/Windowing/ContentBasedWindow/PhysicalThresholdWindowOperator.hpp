@@ -51,7 +51,7 @@ public:
 
     std::shared_ptr<Windowing::LogicalWindowDescriptor> getWindowDefinition();
 
-    std::shared_ptr<Operator> copy() override;
+    std::shared_ptr<Operator> clone() override;
 
 protected:
     std::string toString() const override;

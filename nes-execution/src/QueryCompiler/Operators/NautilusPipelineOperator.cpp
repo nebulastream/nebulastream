@@ -37,7 +37,7 @@ std::string NautilusPipelineOperator::toString() const
     return "NautilusPipelineOperator";
 }
 
-std::shared_ptr<Operator> NautilusPipelineOperator::copy()
+std::shared_ptr<Operator> NautilusPipelineOperator::clone()
 {
     auto result = std::make_shared<NautilusPipelineOperator>(getNextOperatorId(), nautilusPipeline, operatorHandlers);
     result->addAllProperties(properties);

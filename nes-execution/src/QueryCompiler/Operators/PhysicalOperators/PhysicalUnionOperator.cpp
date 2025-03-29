@@ -55,7 +55,7 @@ std::string PhysicalUnionOperator::toString() const
     out << "PhysicalUnionOperator:\n";
     return out.str();
 }
-std::shared_ptr<Operator> PhysicalUnionOperator::copy()
+std::shared_ptr<Operator> PhysicalUnionOperator::clone()
 {
     return create(id, leftInputSchema, rightInputSchema, outputSchema);
 }

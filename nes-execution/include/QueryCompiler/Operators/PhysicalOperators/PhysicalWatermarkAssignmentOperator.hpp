@@ -41,7 +41,7 @@ public:
         const std::shared_ptr<Schema>& inputSchema,
         const std::shared_ptr<Schema>& outputSchema,
         const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
-    std::shared_ptr<Operator> copy() override;
+    std::shared_ptr<Operator> clone() override;
 
     /**
     * @brief Returns the watermark strategy.

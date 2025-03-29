@@ -44,7 +44,7 @@ std::string PhysicalEmitOperator::toString() const
     return out.str();
 }
 
-std::shared_ptr<Operator> PhysicalEmitOperator::copy()
+std::shared_ptr<Operator> PhysicalEmitOperator::clone()
 {
     auto result = create(id, inputSchema);
     result->addAllProperties(properties);
