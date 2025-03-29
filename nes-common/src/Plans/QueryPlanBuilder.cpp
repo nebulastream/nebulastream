@@ -213,11 +213,11 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addJoin(
 
     ///TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     ///TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalJoinDescriptor::create(joinFunction, windowType, 1, 1, joinType);
+    auto joinDefinition = Join::LogicalJoinDescriptor(joinFunction, windowType, 1, 1, joinType);
 
     NES_TRACE("QueryPlanBuilder: add join operator to query plan");
     auto op = std::make_shared<JoinLogicalOperator>(joinDefinition, getNextOperatorId());
-    NES_INFO("Created join {}", *op, Util::as<JoinLogicalOperator>(op)->getJoinDefinition()->getWindowType()->toString());
+    NES_INFO("Created join {}", *op, Util::as<JoinLogicalOperator>(op)->getJoinDefinition().getWindowType()->toString());
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }

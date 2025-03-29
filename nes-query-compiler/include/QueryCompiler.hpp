@@ -18,55 +18,24 @@
 #include <Plans/DecomposedQueryPlan.hpp>
 #include <Plans/PhysicalQueryPlan.hpp>
 #include <QueryCompilationRequest.hpp>
-#include <QueryCompilerConfiguration.hpp>
+#include "OptimizerConfiguration.hpp"
 
 namespace NES::QueryCompilation
 {
 
-struct QueryCompilationIntermediate
-{
-    /// Logical plan before logical optimizations
-    std::optional<DecomposedQueryPlan> logicalPlan;
-
-    /// Logical plan after logical optimizations
-    std::optional<DecomposedQueryPlan> OptimizedLogicalPlan;
-
-    /// Physical before physical optimization
-    ///std::optional<PhysicalQueryPlan> physicalPlan;
-
-    /// Pipelines after physical optimization
-    // std::optional<std::vector<Pipelines>> pipelinedPhysicalPlan;
-
-    /// Print all available query representations of the query compilation process
-    /// std::string getQueryCompilationExplain();
-};
-
+/// The query compiler behaves as a pure function: QueryPlan -> ExecutableQueryPlan
+/// This guarantees that identical QueryPlan instances produce identical ExecutableQueryPlan results.
 class QueryCompiler
 {
 public:
-    QueryCompiler(std::shared_ptr<QueryCompilerConfiguration> options);
-    std::unique_ptr<ExecutableQueryPlan> compileQuery(std::shared_ptr<QueryCompilationRequest> request, QueryId queryId);
+    /// TODO: get rid of the options, they should be set during query optimization
+    QueryCompiler(const std::shared_ptr<QueryCompilerConfiguration> options, const std::shared_ptr<NodeEngine> nodeEngine);
 
-    /// Prints all logical optimization steps that will be applied during compilation
-    // std::string getRegisteredLogicalOptimizations();
-
-    /// Prints all physical optimization steps that will be applied during compilation
-    // std::string getRegisteredPhysicalOptimizations();
+    std::unique_ptr<ExecutableQueryPlan> compileQuery(std::shared_ptr<QueryCompilationRequest> request);
 
 private:
-    // bool runLogicalOptimization(QueryId queryId);
 
-    // bool lowerToPhysicalPlan(QueryId queryId);
-
-    // bool runPhysicalOptimization(QueryId queryId);
-
-    // bool pipelining(QueryId queryId);
-
-    /// Stores all the queryCompilation intermediate representations. Used in case of adaptive recompilations.
-    /// We assume here that the queryId is unique throughout the worker lifetime.
-    std::unordered_map<QueryId, QueryCompilationIntermediate> queryCompilationState;
-
-    std::shared_ptr<QueryCompilerConfiguration> options;
+    std::shared_ptr<NodeEngine> nodeEngine;
 };
 
 }

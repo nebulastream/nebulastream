@@ -13,8 +13,11 @@
 */
 
 #pragma once
+
 #include <cstdint>
-#include <Measures/WindowMeasure.hpp>
+#include <string>
+#include <WindowTypes/Measures/WindowMeasure.hpp>
+
 namespace NES::Windowing
 {
 

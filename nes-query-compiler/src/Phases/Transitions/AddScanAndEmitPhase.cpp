@@ -12,17 +12,12 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+
+#include <Plans/DecomposedQueryPlan.hpp>
+#include <Plans/OperatorPipeline.hpp>
+#include <Plans/PipelineQueryPlan.hpp>
+#include <AbstractPhysicalOperator.hpp>
+#include <Phases/Translations/AddScanAndEmitPhase.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 
@@ -58,11 +53,11 @@ std::shared_ptr<OperatorPipeline> AddScanAndEmitPhase::process(std::shared_ptr<O
     if (!NES::Util::instanceOf<PhysicalOperators::AbstractScanOperator>(rootOperator))
     {
         PRECONDITION(
-            NES::Util::instanceOf<PhysicalOperators::PhysicalUnaryOperator>(rootOperator),
+            NES::Util::instanceOf<UnaryPhysicalOperator>(rootOperator),
             "Pipeline root should be a unary operator but was: {}",
             *rootOperator);
-        const auto unaryRoot = NES::Util::as<PhysicalOperators::PhysicalUnaryOperator>(rootOperator);
-        const auto newScan = PhysicalOperators::PhysicalScanOperator::create(unaryRoot->getInputSchema());
+        const auto unaryRoot = NES::Util::as<PhysicalUnaryOperator>(rootOperator);
+        const auto newScan = ScanPhysicalOperator::create(unaryRoot->getInputSchema());
         pipeline->prependOperator(newScan);
     }
 

@@ -11,8 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-query-compiler
-        QueryCompiler.cpp
-        ../../nes-physical-operators/src/Functions/FunctionProvider.cpp
-)
+        QueryCompiler.cpp)
 
 add_subdirectory(Phases)

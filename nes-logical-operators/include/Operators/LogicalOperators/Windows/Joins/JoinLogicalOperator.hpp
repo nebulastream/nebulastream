@@ -29,10 +29,10 @@ namespace NES
 class JoinLogicalOperator : public BinaryLogicalOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit JoinLogicalOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
+    explicit JoinLogicalOperator(Join::LogicalJoinDescriptor joinDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
     ~JoinLogicalOperator() override = default;
 
-    std::shared_ptr<Join::LogicalJoinDescriptor> getJoinDefinition() const;
+    [[nodiscard]] Join::LogicalJoinDescriptor getJoinDefinition() const;
 
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     ///infer schema of two child operators
@@ -50,6 +50,6 @@ protected:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    const std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition;
+    Join::LogicalJoinDescriptor joinDefinition;
 };
 }

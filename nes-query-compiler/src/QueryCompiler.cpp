@@ -29,25 +29,22 @@ namespace NES::QueryCompilation
 {
 
 // TODO: The request should include a configuration
-QueryCompiler::QueryCompiler(std::shared_ptr<QueryCompilerConfiguration> options) : options(options)
+QueryCompiler::QueryCompiler(const std::shared_ptr<QueryCompilerConfiguration> options, const std::shared_ptr<NodeEngine> nodeEngine) : nodeEngine(nodeEngine)
 {
 }
 
-std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::shared_ptr<QueryCompilationRequest> request, QueryId queryId)
+/// This phase should be as dumb as possible and not further decisions should be made here.
+std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::shared_ptr<QueryCompilationRequest> request)
 {
+    // TODO first we should do a check if we have already cached the query
     try
     {
-        // TODO: the query id does not need to part of all the operators here?
-        /// For now we have to override the id here as it should not be set by the client
-        request->decomposedQueryPlan->setQueryId(queryId);
-
-        /// 0) here we should allow logical reorderings. These rules are simpler to construct.
-
-        /// 1) get the logical query plan
-
-        /// During lowering we add the operator handlers?
-        /// 2) lower to physical query plan (old Nautilus)
         auto physicalQueryPlan = LowerLogicalToNautilusOperators::apply(request->decomposedQueryPlan);
+        auto pipelinedQueryPlan = PipeliningPhase::apply(physicalQueryPlan);
+
+        pipelinedQueryPlan = AddScanAndEmitPhase::create()->apply(pipelinedQueryPlan);
+
+        LowerToExecutableQueryPlanPhase::apply(pipelinedQueryPlan);
 
         std::terminate();
         /// When lowering the scan operators cannot be used as they are not 'Operators'.
@@ -63,7 +60,6 @@ std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::shared_ptr
         /*
         // TODO should add scan and emit where this is needed
         /// 4) Pipelining & Scan and emit
-        auto pipelinedQueryPlan = PipeliningPhase::apply(physicalQueryPlan);
         auto phase = AddScanAndEmitPhase::create();
         pipelinedQueryPlan = phase->apply(physicalQueryPlan);
 
@@ -74,7 +70,7 @@ std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::shared_ptr
         pipelinedQueryPlan = LowerLogicalToNautilusOperators::apply(pipelinedQueryPlan);
         */
         /// 6) create a executable query plan
-        return std::unique_ptr<ExecutableQueryPlan>();//LowerToExecutableQueryPlanPhase::apply(PipelinedQueryPlan(), request->nodeEngine);
+        return std::unique_ptr<ExecutableQueryPlan>();
     }
     catch (...)
     {

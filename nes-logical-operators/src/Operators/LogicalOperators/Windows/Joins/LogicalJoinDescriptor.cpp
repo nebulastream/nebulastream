@@ -12,17 +12,9 @@
     limitations under the License.
 */
 
-#include <cstdint>
-#include <memory>
-#include <unordered_set>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/BinaryLogicalFunction.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -60,7 +52,7 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(
 }
 
 std::shared_ptr<LogicalJoinDescriptor> LogicalJoinDescriptor::create(
-    const std::shared_ptr<LogicalFunction>& joinFunctions,
+    std::shared_ptr<LogicalFunction> joinFunctions,
     const std::shared_ptr<Windowing::WindowType>& windowType,
     uint64_t numberOfInputEdgesLeft,
     uint64_t numberOfInputEdgesRight,
@@ -144,7 +136,7 @@ void LogicalJoinDescriptor::setOriginId(const OriginId originId)
     this->originId = originId;
 }
 
-std::shared_ptr<LogicalFunction> LogicalJoinDescriptor::getJoinFunction()
+std::shared_ptr<LogicalFunction> LogicalJoinDescriptor::getJoinFunction() const
 {
     return this->joinFunction;
 }
@@ -157,4 +149,4 @@ bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor& other) const
         && joinType == other.joinType && originId == other.originId;
 }
 
-}; /// namespace NES::Join
+};

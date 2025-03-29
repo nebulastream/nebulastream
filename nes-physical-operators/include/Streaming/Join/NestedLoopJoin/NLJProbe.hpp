@@ -32,11 +32,11 @@ class NLJProbe final : public StreamJoinProbePhysicalOperator
 public:
     NLJProbe(
         uint64_t operatorHandlerIndex,
-        const std::shared_ptr<Functions::PhysicalFunction>& joinFunction,
+        const std::unique_ptr<Functions::PhysicalFunction> joinFunction,
         const WindowMetaData& windowMetaData,
         const JoinSchema& joinSchema,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
+        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
+        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 

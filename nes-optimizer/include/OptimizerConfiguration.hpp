@@ -20,12 +20,10 @@
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Util/Common.hpp>
 
-namespace NES::QueryCompilation
+namespace NES::Optimizer
 {
 
-
-/// TODO we have now two of them
-struct QueryCompilerConfiguration
+struct OptimizerConfiguration
 {
     enum class FilterProcessingStrategy : uint8_t
     {
@@ -44,35 +42,30 @@ struct QueryCompilerConfiguration
     uint64_t numSourceLocalBuffers = 64;
     CompilationStrategy compilationStrategy = CompilationStrategy::OPTIMIZE;
     FilterProcessingStrategy filterProcessingStrategy = FilterProcessingStrategy::BRANCHED;
-    NautilusBackend nautilusBackend = NautilusBackend::COMPILER;
-    DumpMode dumpMode = DumpMode::CONSOLE;
+    QueryCompilation::NautilusBackend nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
+    QueryCompilation::DumpMode dumpMode = QueryCompilation::DumpMode::CONSOLE;
     std::string dumpPath;
-    StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
     WindowOperatorOptions windowOperatorOptions;
 } __attribute__((aligned(64)));
-using QueryCompilerConfigurationPtr = std::shared_ptr<QueryCompilerConfiguration>;
 
-/// TODO #122: Refactor QueryCompilerConfiguration
+/// TODO #122: Refactor
 [[maybe_unused]]
-static std::shared_ptr<QueryCompilerConfiguration>
-queryCompilationOptionsFromConfig(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration)
+static std::shared_ptr<OptimizerConfiguration>
+queryCompilationOptionsFromConfig(const Configurations::QueryCompilerConfiguration& conf)
 {
-    auto options = std::make_shared<QueryCompilerConfiguration>();
+    auto options = std::make_shared<OptimizerConfiguration>();
 
-    options->compilationStrategy = queryCompilerConfiguration.compilationStrategy;
-    options->dumpMode = queryCompilerConfiguration.queryCompilerDumpMode;
-    options->nautilusBackend = queryCompilerConfiguration.nautilusBackend;
-    options->windowOperatorOptions.numberOfPartitions = queryCompilerConfiguration.numberOfPartitions.getValue();
-    options->windowOperatorOptions.pageSize = queryCompilerConfiguration.pageSize.getValue();
-    options->windowOperatorOptions.preAllocPageCnt = queryCompilerConfiguration.preAllocPageCnt.getValue();
+    options->compilationStrategy = conf.compilationStrategy;
+    options->dumpMode = conf.queryCompilerDumpMode;
+    options->nautilusBackend = conf.nautilusBackend;
+    options->windowOperatorOptions.numberOfPartitions = conf.numberOfPartitions.getValue();
+    options->windowOperatorOptions.pageSize = conf.pageSize.getValue();
+    options->windowOperatorOptions.preAllocPageCnt = conf.preAllocPageCnt.getValue();
     /// zero indicate that it has not been set in the yaml config
-    if (queryCompilerConfiguration.maxHashTableSize.getValue() != 0)
+    if (conf.maxHashTableSize.getValue() != 0)
     {
-        options->windowOperatorOptions.totalSizeForDataStructures = queryCompilerConfiguration.maxHashTableSize.getValue();
+        options->windowOperatorOptions.totalSizeForDataStructures = conf.maxHashTableSize.getValue();
     }
-
-    options->joinStrategy = queryCompilerConfiguration.joinStrategy;
-
     return options;
 }
 }

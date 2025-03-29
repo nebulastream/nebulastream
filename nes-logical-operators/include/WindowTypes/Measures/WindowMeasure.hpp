@@ -13,7 +13,9 @@
 */
 
 #pragma once
+
 #include <string>
+
 namespace NES::Windowing
 {
 

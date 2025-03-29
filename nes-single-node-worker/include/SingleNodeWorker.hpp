@@ -35,10 +35,10 @@ struct PrintingStatisticListener;
  */
 class SingleNodeWorker
 {
-    std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
     std::shared_ptr<PrintingStatisticListener> listener;
     std::shared_ptr<NodeEngine> nodeEngine;
     size_t bufferSize;
+    std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
 
 public:
     explicit SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration&);

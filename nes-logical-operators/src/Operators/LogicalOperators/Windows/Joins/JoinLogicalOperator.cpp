@@ -36,8 +36,8 @@
 namespace NES
 {
 
-JoinLogicalOperator::JoinLogicalOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, const OperatorId id, const OriginId originId)
-    : Operator(id), BinaryLogicalOperator(id), OriginIdAssignmentOperator(id, originId), joinDefinition(std::move(joinDefinition))
+JoinLogicalOperator::JoinLogicalOperator(Join::LogicalJoinDescriptor joinDefinition, const OperatorId id, const OriginId originId)
+    : Operator(id), BinaryLogicalOperator(id), OriginIdAssignmentOperator(id, originId), joinDefinition(joinDefinition)
 {
 }
 
@@ -63,11 +63,11 @@ std::string JoinLogicalOperator::toString() const
     return fmt::format(
         "Join({}, windowType = {}, joinFunction = {})",
         id,
-        joinDefinition->getWindowType()->toString(),
-        *joinDefinition->getJoinFunction());
+        joinDefinition.getWindowType()->toString(),
+        *joinDefinition.getJoinFunction());
 }
 
-std::shared_ptr<Join::LogicalJoinDescriptor> JoinLogicalOperator::getJoinDefinition() const
+Join::LogicalJoinDescriptor JoinLogicalOperator::getJoinDefinition() const
 {
     return joinDefinition;
 }
@@ -112,7 +112,7 @@ bool JoinLogicalOperator::inferSchema()
     NES_DEBUG("JoinLogicalOperator: Iterate over all LogicalFunction to check if join field is in schema.");
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<std::shared_ptr<BinaryLogicalFunction>> visitedFunctions;
-    for (auto itr : BFSRange(joinDefinition->getJoinFunction()))
+    for (auto itr : BFSRange(joinDefinition.getJoinFunction()))
     {
         if (NES::Util::instanceOf<BinaryLogicalFunction>(itr))
         {
@@ -161,7 +161,7 @@ bool JoinLogicalOperator::inferSchema()
     }
 
     ///Infer stamp of window definition
-    const auto windowType = Util::as<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
+    const auto windowType = Util::as<Windowing::TimeBasedWindowType>(joinDefinition.getWindowType());
     windowType->inferStamp(*leftInputSchema);
 
     ///Reset output schema and add fields from left and right input schema
@@ -189,8 +189,8 @@ bool JoinLogicalOperator::inferSchema()
     NES_DEBUG("LeftInput schema for join={}", leftInputSchema->toString());
     NES_DEBUG("RightInput schema for join={}", rightInputSchema->toString());
     NES_DEBUG("Output schema for join={}", outputSchema->toString());
-    joinDefinition->setOutputSchema(outputSchema);
-    joinDefinition->updateSourceTypes(leftInputSchema, rightInputSchema);
+    joinDefinition.setOutputSchema(outputSchema);
+    joinDefinition.updateSourceTypes(leftInputSchema, rightInputSchema);
     return true;
 }
 
@@ -222,12 +222,12 @@ std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
 void JoinLogicalOperator::setOriginId(const OriginId originId)
 {
     OriginIdAssignmentOperator::setOriginId(originId);
-    joinDefinition->setOriginId(originId);
+    joinDefinition.setOriginId(originId);
 }
 
-const std::shared_ptr<LogicalFunction> JoinLogicalOperator::getJoinFunction() const
+std::shared_ptr<LogicalFunction> JoinLogicalOperator::getJoinFunction() const
 {
-    return joinDefinition->getJoinFunction();
+    return joinDefinition.getJoinFunction();
 }
 
 }

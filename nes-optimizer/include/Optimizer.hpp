@@ -14,19 +14,25 @@
 
 #pragma once
 
-#include <cstdint>
+#include <memory>
+#include <Plans/QueryPlan.hpp>
 
-namespace NES
+namespace NES::Optimizer
 {
-enum class CompilationStrategy : uint8_t
+
+class Optimizer
 {
-    /// Use fast compilation strategy, i.e., does not apply any optimizations and omits debug output.
-    FAST,
-    /// Creates debug output i.e., source code files and applies formatting. No code optimizations.
-    DEBUG,
-    /// Applies all compiler optimizations.
-    OPTIMIZE,
-    /// Applies all compiler optimizations and inlines proxy functions.
-    PROXY_INLINING
+public:
+    explicit Optimizer() = default;
+
+
+    /// Takes the query plan as a logical plan
+    std::unique_ptr<QueryPlan> optimize(std::unique_ptr<QueryPlan> plan)
+    {
+        return plan;
+    }
+
+private:
 };
+
 }

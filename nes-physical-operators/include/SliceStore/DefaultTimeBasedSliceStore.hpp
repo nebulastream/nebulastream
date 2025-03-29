@@ -69,7 +69,7 @@ private:
     /// while we need to access windows during the triggering of windows.
     folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windows;
     folly::Synchronized<std::map<SliceEnd, std::shared_ptr<Slice>>> slices;
-    Operators::SliceAssigner sliceAssigner;
+    SliceAssigner sliceAssigner;
 
     /// We need to store the sequence number for the triggerable window infos. This is necessary, as we have to ensure that the sequence number is unique
     /// and increases for each window info.

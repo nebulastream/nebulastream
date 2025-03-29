@@ -29,12 +29,12 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
-          configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , listener(std::make_shared<PrintingStatisticListener>(
+    : listener(std::make_shared<PrintingStatisticListener>(
           fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", std::chrono::system_clock::now(), ::getpid())))
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
+    , compiler(std::make_unique<QueryCompilation::QueryCompiler>(
+          QueryCompilation::queryCompilationOptionsFromConfig(configuration.workerConfiguration.queryCompiler), nodeEngine))
 {
 }
 

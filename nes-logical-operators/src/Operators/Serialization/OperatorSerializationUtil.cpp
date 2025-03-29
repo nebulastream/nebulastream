@@ -489,7 +489,7 @@ std::shared_ptr<JoinLogicalOperator> deserializeJoinOperator(const SerializableO
     const auto& serializedJoinFunction = joinDetails.joinfunction();
     const auto joinFunction = Util::as<BinaryLogicalFunction>(FunctionSerializationUtil::deserializeFunction(serializedJoinFunction));
 
-    const auto joinDefinition = Join::LogicalJoinDescriptor::create(
+    const auto joinDefinition = Join::LogicalJoinDescriptor(
         joinFunction, window, joinDetails.numberofinputedgesleft(), joinDetails.numberofinputedgesright(), joinType);
     auto joinOperator = std::make_shared<JoinLogicalOperator>(joinDefinition, operatorId);
     joinOperator->windowMetaData.windowStartFieldName = joinDetails.windowstartfieldname();
@@ -614,8 +614,8 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
     if (details.Is<SerializableOperator_JoinDetails>())
     {
         auto joinOp = NES::Util::as<JoinLogicalOperator>(operatorNode);
-        joinOp->getJoinDefinition()->updateSourceTypes(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
-        joinOp->getJoinDefinition()->setOutputSchema(joinOp->getOutputSchema());
+        joinOp->getJoinDefinition().updateSourceTypes(joinOp->getLeftInputSchema(), joinOp->getRightInputSchema());
+        joinOp->getJoinDefinition().setOutputSchema(joinOp->getOutputSchema());
     }
 
     /// de-serialize and append origin id
@@ -844,9 +844,9 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperator&
     auto joinDetails = SerializableOperator_JoinDetails();
     const auto joinDefinition = joinOperator.getJoinDefinition();
 
-    FunctionSerializationUtil::serializeFunction(joinDefinition->getJoinFunction(), joinDetails.mutable_joinfunction());
+    FunctionSerializationUtil::serializeFunction(joinDefinition.getJoinFunction(), joinDetails.mutable_joinfunction());
 
-    const auto windowType = joinDefinition->getWindowType();
+    const auto windowType = joinDefinition.getWindowType();
     const auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowType);
     const auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
     auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
@@ -886,17 +886,17 @@ void OperatorSerializationUtil::serializeJoinOperator(const JoinLogicalOperator&
         NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
     }
 
-    joinDetails.set_numberofinputedgesleft(joinDefinition->getNumberOfInputEdgesLeft());
-    joinDetails.set_numberofinputedgesright(joinDefinition->getNumberOfInputEdgesRight());
+    joinDetails.set_numberofinputedgesleft(joinDefinition.getNumberOfInputEdgesLeft());
+    joinDetails.set_numberofinputedgesright(joinDefinition.getNumberOfInputEdgesRight());
     joinDetails.set_windowstartfieldname(joinOperator.windowMetaData.windowStartFieldName);
     joinDetails.set_windowendfieldname(joinOperator.windowMetaData.windowEndFieldName);
     joinDetails.set_origin(joinOperator.getOutputOriginIds()[0].getRawValue());
 
-    if (joinDefinition->getJoinType() == Join::LogicalJoinDescriptor::JoinType::INNER_JOIN)
+    if (joinDefinition.getJoinType() == Join::LogicalJoinDescriptor::JoinType::INNER_JOIN)
     {
         joinDetails.mutable_jointype()->set_jointype(SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_INNER_JOIN);
     }
-    else if (joinDefinition->getJoinType() == Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT)
+    else if (joinDefinition.getJoinType() == Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT)
     {
         joinDetails.mutable_jointype()->set_jointype(SerializableOperator_JoinDetails_JoinTypeCharacteristic_JoinType_CARTESIAN_PRODUCT);
     }

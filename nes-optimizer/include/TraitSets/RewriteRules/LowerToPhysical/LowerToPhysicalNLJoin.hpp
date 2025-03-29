@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <set>
+#include <tuple>
 #include <TraitSets/TraitSet.hpp>
 #include <TraitSets/Traits/Children.hpp>
 #include <TraitSets/Traits/QueryForSubtree.hpp>
@@ -25,35 +26,174 @@
 #include <Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
 #include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Functions/FunctionProvider.hpp>
+#include <OptimizerConfiguration.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
+#include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 
 namespace NES::Optimizer
 {
 
+/// A TimestampField is a wrapper around a FieldName and a Unit of time.
+/// This enforces fields carrying time values to be evaluated with respect to a specific timeunit.
+class TimestampField
+{
+    enum TimeFunctionType
+    {
+        EVENT_TIME,
+        INGESTION_TIME,
+    };
+
+public:
+    friend std::ostream& operator<<(std::ostream& os, const TimestampField& obj);
+
+    /// The multiplier is the value which converts from the underlying time value to milliseconds.
+    /// E.g. the multiplier for a timestampfield of seconds is 1000
+    [[nodiscard]] Windowing::TimeUnit getUnit() const
+    {
+        return unit;
+    }
+
+    [[nodiscard]] const std::string& getName() const
+    {
+        return fieldName;
+    }
+
+    [[nodiscard]] const TimeFunctionType& getTimeFunctionType() const
+    {
+        return timeFunctionType;
+    }
+
+    /// Builds the TimeFunction
+    [[nodiscard]] std::shared_ptr<TimeFunction> toTimeFunction() const
+    {
+        switch (timeFunctionType)
+        {
+            case EVENT_TIME:
+                return std::make_unique<EventTimeFunction>(
+                    std::make_unique<::NES::Functions::ReadFieldPhysicalFunction>(fieldName), unit);
+            case INGESTION_TIME:
+                return std::make_unique<IngestionTimeFunction>();
+        }
+    }
+    static TimestampField IngestionTime();
+    static TimestampField EventTime(std::string fieldName, Windowing::TimeUnit tm);
+
+private:
+    std::string fieldName;
+    Windowing::TimeUnit unit;
+    TimeFunctionType timeFunctionType;
+    TimestampField(std::string fieldName, Windowing::TimeUnit unit, TimeFunctionType timeFunctionType);
+};
+
+
+std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(
+    const std::shared_ptr<JoinLogicalOperator>& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
+{
+    if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
+    {
+        NES_DEBUG("Skip eventime identification as we use ingestion time");
+        return {TimestampField::IngestionTime(), TimestampField::IngestionTime()};
+    }
+    else
+    {
+        /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
+        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
+        auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+
+        /// Lambda function for extracting the timestamp from a schema
+        auto findTimeStampFieldName = [&](const std::shared_ptr<Schema>& schema)
+        {
+            for (const auto& field : *schema)
+            {
+                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos)
+                {
+                    return field->getName();
+                }
+            }
+            return std::string();
+        };
+
+        /// Extracting the left and right timestamp
+        auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator->getLeftInputSchema());
+        auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator->getRightInputSchema());
+
+        INVARIANT(
+            !(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
+            "Could not find timestampfieldname {} in both streams!",
+            timeStampFieldNameWithoutSourceName);
+
+        return {
+            TimestampField::EventTime(timeStampFieldNameLeft, windowType->getTimeCharacteristic()->getTimeUnit()),
+            TimestampField::EventTime(timeStampFieldNameRight, windowType->getTimeCharacteristic()->getTimeUnit())};
+    }
+}
+
+
+/// I guess this should be another type
 struct LowerToPhysicalNLJoin : TypedAbstractRewriteRule<QueryForSubtree, Operator>
 {
+    LowerToPhysicalNLJoin(std::shared_ptr<OptimizerConfiguration> conf) : conf(conf) {};
+
+    std::shared_ptr<OptimizerConfiguration> conf;
+
+    /// TODO we want to return here all three operators
     DynamicTraitSet<QueryForSubtree, Operator>* applyTyped(DynamicTraitSet<QueryForSubtree, Operator>* traitSet) override
     {
-        auto ops = traitSet->get<JoinLogicalOperator>();
-        auto outSchema = ops->getOutputSchema();
+        const auto operatorHandlerIndex = 0; // TODO this should change. In the best case we have setIndex() for all the operators.
 
-        /// TODO Where do we place the operator handler?
-        /// TODO How do we get the memory provider?
+        const auto ops = traitSet->get<JoinLogicalOperator>();
+        const auto outSchema = ops->getOutputSchema();
+        const auto joinFunction = ::NES::QueryCompilation::FunctionProvider::lowerFunction(ops->getJoinFunction());
 
-        /*
-        auto buildOp = std::make_shared<NLJBuild>(
-            uint64_t operatorHandlerIndex,
-            QueryCompilation::JoinBuildSideType joinBuildSide,
-            std::unique_ptr<TimeFunction> timeFunction,
-            const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
-        */
-        /*
-        auto probeOp = std::make_shared<NLJProbe>(uint64_t operatorHandlerIndex,
-                const std::shared_ptr<Functions::Function>& joinFunction,
-                const WindowMetaData& windowMetaData,
-                const JoinSchema& joinSchema,
-                const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-                const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
-        */
+        const auto leftSchema = ops->getLeftInputSchema();
+        const auto rightSchema = ops->getRightInputSchema();
+        const auto outputSchema = ops->getOutputSchema();
+
+        auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+            conf->joinOptions.pageSize, leftSchema);
+        auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+            conf->joinOptions.pageSize, rightSchema);
+        auto probeMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+            conf->joinOptions.pageSize, outputSchema);
+
+        const auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(ops->getJoinDefinition()->getWindowType());
+        const auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(ops, windowType);
+
+        const auto metaData = WindowMetaData(ops->getWindowStartFieldName(), ops->getWindowEndFieldName());
+
+        auto leftBuildOp = std::make_unique<NLJBuild>(
+            operatorHandlerIndex,
+            QueryCompilation::JoinBuildSideType::Left,
+            timeStampFieldLeft,
+            leftMemoryProvider);
+
+        auto rightBuildOp = std::make_unique<NLJBuild>(
+            operatorHandlerIndex,
+            QueryCompilation::JoinBuildSideType::Right,
+            timeStampFieldRight,
+            rightMemoryProvider);
+
+        auto probeOp = std::make_unique<NLJProbe>(
+                operatorHandlerIndex,
+                joinFunction,
+                metaData,
+                outputSchema,
+                leftMemoryProvider,
+                rightMemoryProvider);
+
+        constexpr uint64_t numberOfOriginIds = 2;
+        auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize(), windowType->getSlide(), numberOfOriginIds);
+
+        auto handler = std::make_unique<NLJOperatorHandler>(
+            ops->getAllInputOriginIds(),
+            ops->getOutputOriginIds()[0],
+            std::move(sliceAndWindowStore),
+            leftMemoryProvider,
+            rightMemoryProvider);
         return traitSet;
     };
 };

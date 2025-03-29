@@ -14,4 +14,4 @@
 #        NautilusCompilationPhase.cpp
 #)
 
-#add_subdirectory(Transitions)
+add_subdirectory(Transitions)
