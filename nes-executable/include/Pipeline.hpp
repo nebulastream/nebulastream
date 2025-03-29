@@ -101,7 +101,7 @@ struct Pipeline {
     }
 
     void prependOperator(PhysicalOperator newOp) {
-        PRECONDITION(isSourcePipeline() or isSinkPipeline(), "Cannot add new operator to source or sink pipeline");
+        PRECONDITION(not (isSourcePipeline() or isSinkPipeline()), "Cannot add new operator to source or sink pipeline");
         newOp.setChild(rootOperator);
         rootOperator = newOp;
     }
