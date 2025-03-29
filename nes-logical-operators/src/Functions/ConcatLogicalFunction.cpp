@@ -13,7 +13,7 @@
 */
 
 #include <memory>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/ConcatLogicalFunction.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>

@@ -15,7 +15,7 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/AndLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>

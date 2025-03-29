@@ -15,7 +15,7 @@
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <memory>
 #include <utility>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableFunction.pb.h>
 #include <LogicalFunctionRegistry.hpp>

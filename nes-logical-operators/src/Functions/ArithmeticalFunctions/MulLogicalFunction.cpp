@@ -15,7 +15,7 @@
 #include <memory>
 #include <sstream>
 #include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <BinaryLogicalFunctionRegistry.hpp>

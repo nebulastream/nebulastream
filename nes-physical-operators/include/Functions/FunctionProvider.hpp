@@ -17,7 +17,7 @@
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES::QueryCompilation
 {

@@ -17,7 +17,7 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Util/Common.hpp>

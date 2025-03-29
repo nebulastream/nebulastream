@@ -20,7 +20,7 @@
 #include <Common/DataTypes/Numeric.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>

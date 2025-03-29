@@ -15,7 +15,7 @@
 #include <memory>
 #include <sstream>
 #include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>

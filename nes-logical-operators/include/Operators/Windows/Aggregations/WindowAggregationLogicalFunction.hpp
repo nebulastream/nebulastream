@@ -15,7 +15,7 @@
 #pragma once
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {

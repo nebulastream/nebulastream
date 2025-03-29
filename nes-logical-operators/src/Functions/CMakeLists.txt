@@ -13,6 +13,10 @@
 add_subdirectory(LogicalFunctions)
 add_subdirectory(ArithmeticalFunctions)
 
+add_source_files(nes-logical-operators
+        LogicalFunction.cpp
+)
+
 add_plugin(ConstantValue LogicalFunction nes-logical-operators ConstantValueLogicalFunction.cpp)
 add_plugin(FieldAccess LogicalFunction nes-logical-operators FieldAccessLogicalFunction.cpp)
 add_plugin(FieldAssignment BinaryLogicalFunction nes-logical-operators FieldAssignmentLogicalFunction.cpp)

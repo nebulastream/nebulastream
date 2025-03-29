@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
 
 namespace NES::FunctionSerializationUtil

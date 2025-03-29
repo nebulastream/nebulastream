@@ -16,7 +16,7 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>

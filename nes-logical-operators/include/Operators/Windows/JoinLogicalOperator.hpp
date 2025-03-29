@@ -18,7 +18,7 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
