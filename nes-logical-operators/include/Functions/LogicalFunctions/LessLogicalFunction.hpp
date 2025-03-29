@@ -13,26 +13,26 @@
 */
 
 #pragma once
-
 #include <Functions/BinaryLogicalFunction.hpp>
-
 namespace NES
 {
-class AndBinaryLogicalFunction final : public BinaryLogicalFunction
+
+class LessLogicalFunction final : public BinaryLogicalFunction
 {
 public:
-    AndBinaryLogicalFunction();
-    ~AndBinaryLogicalFunction() override = default;
+    LessLogicalFunction();
+    ~LessLogicalFunction() override = default;
+
     static std::shared_ptr<LogicalFunction>
     create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
-    [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
-    void inferStamp(std::shared_ptr<Schema> schema) override;
+    bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    std::shared_ptr<LogicalFunction> clone() const override;
+
 
 protected:
-    [[nodiscard]] std::string toString() const override;
+    explicit LessLogicalFunction(LessLogicalFunction* other);
 
-private:
-    explicit AndBinaryLogicalFunction(AndBinaryLogicalFunction* other);
+    std::string toString() const override;
 };
 }

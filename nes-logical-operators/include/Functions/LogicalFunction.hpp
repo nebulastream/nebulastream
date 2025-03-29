@@ -23,6 +23,7 @@
 #include <fmt/ostream.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Util/Common.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {
@@ -40,7 +41,7 @@ public:
     [[nodiscard]] bool isPredicate() const;
 
     /// Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-    virtual void inferStamp(std::shared_ptr<Schema> schema);
+    virtual void inferStamp(const Schema& schema);
 
     std::shared_ptr<DataType> getStamp() const;
     void setStamp(std::shared_ptr<DataType> stamp);
