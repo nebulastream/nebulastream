@@ -13,8 +13,8 @@
 */
 
 #include <cstdint>
-#include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/EmitOperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -39,7 +39,7 @@ void EmitOperatorHandler::removeSequenceState(const SequenceNumberForOriginId se
 void EmitOperatorHandler::start(PipelineExecutionContext&, uint32_t)
 {
 }
-void EmitOperatorHandler::stop(Runtime::QueryTerminationType, PipelineExecutionContext&)
+void EmitOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
 }
 

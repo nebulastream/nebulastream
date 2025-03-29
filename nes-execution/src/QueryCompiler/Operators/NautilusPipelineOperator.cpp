@@ -14,10 +14,10 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/Operator.hpp>
+#include <Plans/PhysicalOperatorPipeline.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 

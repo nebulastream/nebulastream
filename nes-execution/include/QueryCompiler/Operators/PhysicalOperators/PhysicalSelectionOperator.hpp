@@ -13,11 +13,6 @@
 */
 #pragma once
 
-#include <memory>
-#include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators

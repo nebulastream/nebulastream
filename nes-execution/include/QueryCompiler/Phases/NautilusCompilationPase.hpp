@@ -17,6 +17,7 @@
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <QueryCompiler/QueryCompilerConfiguration.hpp>
 
 namespace NES::QueryCompilation
 {

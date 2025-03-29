@@ -20,8 +20,8 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 

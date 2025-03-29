@@ -12,15 +12,13 @@
     limitations under the License.
 */
 #pragma once
-#include <cstdint>
+
 #include <memory>
-#include <ostream>
 #include <vector>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <nautilus/Engine.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <options.hpp>
 

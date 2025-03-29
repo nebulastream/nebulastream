@@ -21,12 +21,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <SliceStore/Slice.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
-#include <Streaming/Join/StreamJoinUtil.hpp>
+#include <Operators/SliceStore/Slice.hpp>
+#include <Operators/SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -34,16 +35,16 @@
 namespace NES
 {
 NLJOperatorHandler::NLJOperatorHandler(
-    std::vector<OriginId>& inputOrigins,
+    const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(leftMemoryProvider), std::move(rightMemoryProvider))
+    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
+    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), leftMemoryProvider, rightMemoryProvider)
 {
-    averageNumberOfTuplesLeft.wlock()->first = static_cast<int64_t>(this->leftMemoryProvider->getMemoryLayout()->getCapacity());
+    averageNumberOfTuplesLeft.wlock()->first = static_cast<int64_t>(leftMemoryProvider->getMemoryLayout()->getCapacity());
     averageNumberOfTuplesLeft.wlock()->second = 0;
-    averageNumberOfTuplesRight.wlock()->first = static_cast<int64_t>(this->rightMemoryProvider->getMemoryLayout()->getCapacity());
+    averageNumberOfTuplesRight.wlock()->first = static_cast<int64_t>(rightMemoryProvider->getMemoryLayout()->getCapacity());
     averageNumberOfTuplesRight.wlock()->second = 0;
 }
 
@@ -85,7 +86,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
     tupleBuffer.setWatermark(Timestamp(std::min(sliceLeft.getSliceStart().getRawValue(), sliceRight.getSliceStart().getRawValue())));
 
     auto* bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTrigger>();
-    pipelineCtx->emitBuffer(tupleBuffer);
+    bufferMemory->leftSliceEnd = sliceLeft.getSliceEnd();
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
     bufferMemory->windowInfo = windowInfoAndSeqNumber.windowInfo;
 
@@ -116,14 +117,14 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
 }
 
 Nautilus::Interface::PagedVector* getNLJPagedVectorProxy(
-    const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
+    const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
     switch (joinBuildSide)
     {
-        case JoinBuildSideType::Left:
+        case QueryCompilation::JoinBuildSideType::Left:
             return nljSlice->getPagedVectorRefLeft(workerThreadId);
-        case JoinBuildSideType::Right:
+        case QueryCompilation::JoinBuildSideType::Right:
             return nljSlice->getPagedVectorRefRight(workerThreadId);
     }
 }

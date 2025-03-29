@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <Execution/Operators/Operator.hpp>
-#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Plans/PhysicalOperatorPipeline.hpp>
 
 namespace NES
 {

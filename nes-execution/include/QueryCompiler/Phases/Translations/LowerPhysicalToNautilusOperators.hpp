@@ -16,21 +16,21 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
-#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/Function.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Operators/ExecutableOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
+#include <Operators/Operator.hpp>
+#include <Plans/PhysicalOperatorPipeline.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
+#include <QueryCompiler/QueryCompilerConfiguration.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Types/TimeBasedWindowType.hpp>
+#include <Watermark/TimeFunction.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 
 namespace NES::QueryCompilation
 {

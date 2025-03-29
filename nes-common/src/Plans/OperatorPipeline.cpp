@@ -18,9 +18,8 @@
 #include <numeric>
 #include <sstream>
 #include <utility>
-#include <vector>
 #include <Identifiers/NESStrongTypeFormat.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <magic_enum/magic_enum.hpp>
