@@ -13,7 +13,7 @@
 */
 
 #include <AbstractPhysicalOperator.hpp>
-#include "ExecutionContext.hpp"
+#include <ExecutionContext.hpp>
 
 namespace NES
 {
