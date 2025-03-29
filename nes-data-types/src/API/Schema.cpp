@@ -74,18 +74,18 @@ std::shared_ptr<Schema> Schema::copyFields(const std::shared_ptr<Schema>& otherS
 {
     for (const std::shared_ptr<AttributeField>& attribute : otherSchema->fields)
     {
-        fields.push_back(attribute->deepCopy());
+        fields.push_back(attribute->clone());
     }
-    return copy();
+    return clone();
 }
 
 std::shared_ptr<Schema> Schema::addField(const std::shared_ptr<AttributeField>& attribute)
 {
     if (attribute)
     {
-        fields.push_back(attribute->deepCopy());
+        fields.push_back(attribute->clone());
     }
-    return copy();
+    return clone();
 }
 
 ///TODO #473: investigate if we can remove this method
@@ -94,14 +94,14 @@ std::shared_ptr<Schema> Schema::addField(const std::string& name, const BasicTyp
     return addField(name, DataTypeProvider::provideBasicType(type));
 }
 
-std::shared_ptr<Schema> Schema::addField(const std::string& name, const std::shared_ptr<DataType>& data)
+std::shared_ptr<Schema> Schema::addField(const std::string& name, std::shared_ptr<DataType> data)
 {
     return addField(AttributeField::create(name, data));
 }
 
 void Schema::removeField(const std::shared_ptr<AttributeField>& field)
 {
-    std::erase_if(fields, [&](const std::shared_ptr<AttributeField>& otherField) { return otherField->getName() == field->getName(); });
+    std::erase_if(fields, [&](const std::shared_ptr<AttributeField>& f) { return f->getName() == field->getName(); });
 }
 
 void Schema::replaceField(const std::string& name, const std::shared_ptr<DataType>& type)
@@ -277,7 +277,7 @@ std::shared_ptr<Schema> Schema::updateSourceName(const std::string& srcName) con
         newName << currName.back();
         field->setName(newName.str());
     }
-    return copy();
+    return clone();
 }
 
 }

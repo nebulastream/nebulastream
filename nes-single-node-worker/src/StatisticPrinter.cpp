@@ -49,16 +49,14 @@ void threadRoutine(
         }
         std::visit(
             Overloaded{
-                [&](SubmitQuerySystemEvent startQuery) {
-                    file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Submit Query {}:\n{}\n", startQuery.timestamp, startQuery.queryId, startQuery.query);
-                },
+                [&](SubmitQuerySystemEvent startQuery)
+                { file << fmt::format("{} Submit Query {}:\n{}\n", startQuery.timestamp, startQuery.queryId, startQuery.query); },
                 [&](StartQuerySystemEvent startQuery)
-                { file << fmt::format("{:%Y-%m-%d %H:%M:%S} Start Query {}\n", startQuery.timestamp, startQuery.queryId); },
+                { file << fmt::format("{} Start Query {}\n", startQuery.timestamp, startQuery.queryId); },
                 [&](TaskExecutionStart taskStartEvent)
                 {
                     file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {}\n",
+                        "{} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {}\n",
                         taskStartEvent.timestamp,
                         taskStartEvent.taskId,
                         taskStartEvent.pipelineId,
@@ -79,7 +77,7 @@ void threadRoutine(
                 [&](TaskExecutionComplete taskStopEvent)
                 {
                     file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed\n",
+                        "{} Task {} for Pipeline {} of Query {} Completed\n",
                         taskStopEvent.timestamp,
                         taskStopEvent.taskId,
                         taskStopEvent.pipelineId,

@@ -13,8 +13,7 @@
 */
 
 #include <memory>
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Nodes/Node.hpp>
+#include <Iterators/DFSIterator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -22,7 +21,7 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
@@ -58,7 +57,7 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
         /// Add downstream operators of the source operators as blocking operator
         for (const auto& sourceOperator : sourceOperators)
         {
-            for (auto& downStreamOp : sourceOperator->getParents())
+            for (auto& downStreamOp : sourceOperator->parents)
             {
                 blockingOperators[NES::Util::as<Operator>(downStreamOp)->getId()] = NES::Util::as<Operator>(downStreamOp);
             }
@@ -68,14 +67,11 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
     {
         for (const auto& rootOperator : queryPlan->getRootOperators())
         {
-            DepthFirstNodeIterator depthFirstNodeIterator(rootOperator);
-            for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
+            for (auto itr : DFSRange<Operator>(rootOperator))
             {
-                NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessFunction Node");
-                auto operatorToIterate = NES::Util::as<Operator>(*itr);
-                if (isBlockingOperator(operatorToIterate))
+                if (isBlockingOperator(itr))
                 {
-                    blockingOperators[operatorToIterate->getId()] = operatorToIterate;
+                    blockingOperators[itr->getId()] = itr;
                 }
             }
         }
@@ -104,7 +100,7 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
         else
         {
             /// disconnect all parent operators of the source operator
-            for (const auto& downStreamOperator : sourceOperator->getParents())
+            for (const auto& downStreamOperator : sourceOperator->parents)
             {
                 /// If downStreamOperator is blocking then remove source operator as its upstream operator.
                 auto success = downStreamOperator->removeChild(sourceOperator);
@@ -131,7 +127,7 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
             duplicateSourceOperator->setSchema(sourceOperator->getSchema());
 
             /// Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
-            const std::vector<std::shared_ptr<Node>>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
+            const std::vector<std::shared_ptr<Operator>>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
 
             std::unordered_set<OperatorId> visitedOperators;
             for (const auto& node : allOperators)
@@ -194,11 +190,11 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
     return queryPlan;
 }
 
-void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const std::shared_ptr<Node>& operatorNode)
+void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const std::shared_ptr<Operator>& operatorNode)
 {
     /// Check if downstream (parent) operator of this operator is blocking or not if not then recursively call this method for the
     /// downstream operator
-    auto downStreamOperators = operatorNode->getParents();
+    auto downStreamOperators = operatorNode->parents;
     NES_TRACE("LogicalSourceExpansionRule: For each parent look if their ancestor has a n-ary operator or a sink operator.");
     for (const auto& downStreamOperator : downStreamOperators)
     {
@@ -220,7 +216,8 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const std::sha
     }
 }
 
-void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const std::shared_ptr<Node>& operatorNode, OperatorId downStreamOperatorId)
+void LogicalSourceExpansionRule::addBlockingDownStreamOperator(
+    const std::shared_ptr<Operator>& operatorNode, OperatorId downStreamOperatorId)
 {
     /// extract the list of connected blocking parents and add the current parent to the list
     std::any value = NES::Util::as_if<Operator>(operatorNode)->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
@@ -238,7 +235,7 @@ void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const std::shared
     }
 }
 
-bool LogicalSourceExpansionRule::isBlockingOperator(const std::shared_ptr<Node>& operatorNode)
+bool LogicalSourceExpansionRule::isBlockingOperator(const std::shared_ptr<Operator>& operatorNode)
 {
     return (
         NES::Util::instanceOf<SinkLogicalOperator>(operatorNode) || NES::Util::instanceOf<LogicalWindowOperator>(operatorNode)

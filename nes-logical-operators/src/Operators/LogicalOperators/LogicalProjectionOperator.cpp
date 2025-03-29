@@ -17,9 +17,8 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -33,12 +32,14 @@
 namespace NES
 {
 
-LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr<NodeFunction>> functions, OperatorId id)
+LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr<LogicalFunction>> functions, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
 {
-    const auto functionTypeNotSupported = [](const std::shared_ptr<NodeFunction>& function) -> bool {
+    const auto functionTypeNotSupported = [](const std::shared_ptr<LogicalFunction>& function) -> bool
+    {
         return not(
-            NES::Util::instanceOf<NodeFunctionFieldAccess>(function) or NES::Util::instanceOf<NodeFunctionFieldAssignment>(function));
+            NES::Util::instanceOf<FieldAccessLogicalFunction>(function)
+            or NES::Util::instanceOf<FieldAssignmentBinaryLogicalFunction>(function));
     };
     bool allFunctionsAreSupported = true;
     for (const auto& function : this->functions | std::views::filter(functionTypeNotSupported))
@@ -48,20 +49,20 @@ LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr
     }
     INVARIANT(
         allFunctionsAreSupported,
-        "The Projection operator only supports NodeFunctionFieldAccess and NodeFunctionFieldAssignment functions.");
+        "The Projection operator only supports FieldAccessLogicalFunction and FieldAssignmentBinaryLogicalFunction functions.");
 }
 
-const std::vector<std::shared_ptr<NodeFunction>>& LogicalProjectionOperator::getFunctions() const
+const std::vector<std::shared_ptr<LogicalFunction>>& LogicalProjectionOperator::getFunctions() const
 {
     return functions;
 }
 
-bool LogicalProjectionOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool LogicalProjectionOperator::isIdentical(const std::shared_ptr<Operator>& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalProjectionOperator>(rhs)->getId() == id;
 }
 
-bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
+bool LogicalProjectionOperator::equal(const std::shared_ptr<Operator>& rhs) const
 {
     if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
     {
@@ -71,14 +72,14 @@ bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 };
 
-std::string getFieldName(const NodeFunction& function)
+std::string getFieldName(const LogicalFunction& function)
 {
     /// We assert that the projection operator only contains field access and assignment functions in the constructor.
-    if (const auto* nodeFunctionFieldAccess = dynamic_cast<const NodeFunctionFieldAccess*>(&function))
+    if (const auto *FieldAccessLogicalFunction = dynamic_cast<class FieldAccessLogicalFunction const*>(&function))
     {
-        return nodeFunctionFieldAccess->getFieldName();
+        return FieldAccessLogicalFunction->getFieldName();
     }
-    return dynamic_cast<const NodeFunctionFieldAssignment*>(&function)->getField()->getFieldName();
+    return dynamic_cast<FieldAssignmentBinaryLogicalFunction const*>(&function)->getField()->getFieldName();
 }
 
 std::string LogicalProjectionOperator::toString() const
@@ -107,28 +108,28 @@ bool LogicalProjectionOperator::inferSchema()
         ///Infer schema of the field function
         function->inferStamp(*inputSchema);
 
-        if (NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
+        if (NES::Util::instanceOf<FieldAccessLogicalFunction>(function))
         {
-            const auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(function);
+            const auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(function);
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
-        else if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(function))
+        else if (NES::Util::instanceOf<FieldAssignmentBinaryLogicalFunction>(function))
         {
-            const auto fieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(function);
+            const auto fieldAssignment = NES::Util::as<FieldAssignmentBinaryLogicalFunction>(function);
             outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getField()->getStamp());
         }
         else
         {
             throw CannotInferSchema(fmt::format(
-                "LogicalProjectionOperator: Function has to be an NodeFunctionFieldAccess, a "
-                "NodeFunctionFieldRename, or a NodeFunctionFieldAssignment, but it was a {}",
+                "LogicalProjectionOperator: Function has to be an FieldAccessLogicalFunction, a "
+                "RenameLogicalFunction, or a FieldAssignmentBinaryLogicalFunction, but it was a {}",
                 *function));
         }
     }
     return true;
 }
 
-std::shared_ptr<Operator> LogicalProjectionOperator::copy()
+std::shared_ptr<Operator> LogicalProjectionOperator::clone() const
 {
     auto copyOfProjectionFunctions
         = functions | std::views::transform([](const auto& fn) { return fn->deepCopy(); }) | ranges::to<std::vector>();
@@ -136,43 +137,12 @@ std::shared_ptr<Operator> LogicalProjectionOperator::copy()
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setOperatorState(operatorState);
-    copy->setHashBasedSignature(hashBasedSignature);
+
+
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);
     }
     return copy;
-}
-
-void LogicalProjectionOperator::inferStringSignature()
-{
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalProjectionOperator: Inferring String signature for {}", *operatorNode);
-    INVARIANT(!children.empty(), "LogicalProjectionOperator: Project should have children.");
-    ///Infer query signatures for child operators
-    for (const auto& child : children)
-    {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
-        childOperator->inferStringSignature();
-    }
-    std::stringstream signatureStream;
-    std::vector<std::string> fields;
-    for (const auto& field : *outputSchema)
-    {
-        fields.push_back(field->getName());
-    }
-    std::sort(fields.begin(), fields.end());
-    signatureStream << "PROJECTION(";
-    for (const auto& field : fields)
-    {
-        signatureStream << " " << field << " ";
-    }
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << ")." << *childSignature.begin()->second.begin();
-
-    ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 }

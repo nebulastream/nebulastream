@@ -27,7 +27,7 @@ public:
     explicit FieldAssignmentBinaryLogicalFunction(std::shared_ptr<DataType> stamp);
 
     static std::shared_ptr<FieldAssignmentBinaryLogicalFunction> create(
-        const std::shared_ptr<FieldAssignmentBinaryLogicalFunction>& fieldAccess, const std::shared_ptr<LogicalFunction>& LogicalFunction);
+        std::shared_ptr<FieldAccessLogicalFunction> fieldAccess, std::shared_ptr<LogicalFunction> LogicalFunction);
 
     [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
 

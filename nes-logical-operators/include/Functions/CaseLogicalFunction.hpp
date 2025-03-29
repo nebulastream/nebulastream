@@ -39,6 +39,8 @@ public:
 
     [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const final;
 
+    std::shared_ptr<LogicalFunction> clone() const override;
+    bool validateBeforeLowering() const;
 
 protected:
     explicit CaseLogicalFunction(CaseLogicalFunction* other);

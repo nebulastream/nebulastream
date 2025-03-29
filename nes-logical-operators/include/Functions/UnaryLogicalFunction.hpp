@@ -22,8 +22,11 @@ namespace NES
 class UnaryLogicalFunction : public LogicalFunction
 {
 public:
-    ~OperatorAtATimePolicy() override = default;
-    static OperatorFusionPolicyPtr create();
-    bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> getChild() const;
+    void setChild(const std::shared_ptr<LogicalFunction> child);
+
+protected:
+    explicit UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name);
+    explicit UnaryLogicalFunction(UnaryLogicalFunction* other);
 };
 }

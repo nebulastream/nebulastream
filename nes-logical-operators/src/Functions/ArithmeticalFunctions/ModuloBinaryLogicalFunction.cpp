@@ -40,7 +40,8 @@ std::shared_ptr<LogicalFunction>
 ModuloBinaryLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
 {
     auto addNode = std::make_shared<ModuloBinaryLogicalFunction>(DataTypeProvider::provideDataType(LogicalType::FLOAT32));
-    addNode->setChildren(left, right);
+    addNode->setLeftChild(left);
+    addNode->setRightChild(right);
     return addNode;
 }
 
@@ -49,7 +50,7 @@ bool ModuloBinaryLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& 
     if (NES::Util::instanceOf<ModuloBinaryLogicalFunction>(rhs))
     {
         auto otherAddNode = NES::Util::as<ModuloBinaryLogicalFunction>(rhs);
-        return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
+        return getLeftChild()->equal(otherAddNode->getLeftChild()) && getRightChild()->equal(otherAddNode->getRightChild());
     }
     return false;
 }
@@ -57,14 +58,13 @@ bool ModuloBinaryLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& 
 std::string ModuloBinaryLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *children[0] << "%" << *children[1];
+    ss << *getLeftChild() << "%" << *getRightChild();
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> ModuloBinaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> ModuloBinaryLogicalFunction::clone() const
 {
-    return ModuloBinaryLogicalFunction::create(
-        Util::as<LogicalFunction>(children[0])->deepCopy(), Util::as<LogicalFunction>(children[1])->deepCopy());
+    return ModuloBinaryLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 }

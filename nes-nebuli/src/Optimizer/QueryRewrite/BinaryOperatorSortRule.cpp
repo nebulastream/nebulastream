@@ -51,7 +51,7 @@ std::shared_ptr<QueryPlan> BinaryOperatorSortRule::apply(std::shared_ptr<QueryPl
     return queryPlan;
 }
 
-void BinaryOperatorSortRule::sortChildren(const std::shared_ptr<BinaryOperator>& binaryOperator)
+void BinaryOperatorSortRule::sortChildren(const std::shared_ptr<LogicalBinaryOperator>& binaryOperator)
 {
     /// Extract the children operators
     auto children = binaryOperator->getChildren();

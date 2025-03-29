@@ -19,6 +19,13 @@
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
+namespace NES
+{
+
+class LogicalOperator;
+class QueryPlan;
+class Schema;
+}
 
 namespace NES::Optimizer
 {

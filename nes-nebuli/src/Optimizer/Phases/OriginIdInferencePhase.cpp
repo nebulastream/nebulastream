@@ -46,8 +46,7 @@ std::shared_ptr<DecomposedQueryPlan> OriginIdInferencePhase::execute(std::shared
 }
 
 void OriginIdInferencePhase::performInference(
-    const std::vector<std::shared_ptr<OriginIdAssignmentOperator>>& originIdAssignmentOperator,
-    const std::vector<std::shared_ptr<Operator>>& rootOperators)
+    std::vector<std::shared_ptr<OriginIdAssignmentOperator>> originIdAssignmentOperator, std::vector<std::shared_ptr<Operator>> rootOperators)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();

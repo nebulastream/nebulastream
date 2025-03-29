@@ -39,7 +39,7 @@ bool CeilUnaryLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs
     if (NES::Util::instanceOf<CeilUnaryLogicalFunction>(rhs))
     {
         auto otherCeilNode = NES::Util::as<CeilUnaryLogicalFunction>(rhs);
-        return child()->equal(otherCeilNode->child());
+        return getChild()->equal(otherCeilNode->getChild());
     }
     return false;
 }
@@ -47,7 +47,7 @@ bool CeilUnaryLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs
 std::string CeilUnaryLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "CEIL(" << *child() << ")";
+    ss << "CEIL(" << *getChild() << ")";
     return ss.str();
 }
 

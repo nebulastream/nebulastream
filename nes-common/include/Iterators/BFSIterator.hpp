@@ -14,53 +14,57 @@
 
 #pragma once
 
-#include <iterator>
 #include <cstddef>
+#include <iterator>
 #include <memory>
 #include <queue>
 
 namespace NES
 {
 
+// Requires that T contains a function getChildren()
 template <typename T>
 class BFSIterator
 {
 public:
     using iterator_category = std::forward_iterator_tag;
-    using value_type        = std::shared_ptr<T>;
-    using difference_type   = std::ptrdiff_t;
-    using pointer           = std::shared_ptr<T>*;
-    using reference         = std::shared_ptr<T>&;
+    using value_type = std::shared_ptr<T>;
+    using difference_type = std::ptrdiff_t;
+    using pointer = std::shared_ptr<T>*;
+    using reference = std::shared_ptr<T>&;
 
     BFSIterator() = default;
 
-    explicit BFSIterator(std::shared_ptr<T> root) {
-        if (root) {
+    explicit BFSIterator(std::shared_ptr<T> root)
+    {
+        if (root)
+        {
             nodeQueue.push(std::move(root));
         }
     }
 
-    BFSIterator& operator++() {
-        if (!nodeQueue.empty()) {
+    BFSIterator& operator++()
+    {
+        if (!nodeQueue.empty())
+        {
             auto current = nodeQueue.front();
             nodeQueue.pop();
 
-            for (auto& child : current->children) {
+            for (auto& child : current->children)
+            {
                 nodeQueue.push(child);
             }
         }
         return *this;
     }
 
-    bool operator==(const BFSIterator& other) const {
-        return nodeQueue.empty() && other.nodeQueue.empty();
-    }
-    bool operator!=(const BFSIterator& other) const {
-        return !(*this == other);
-    }
+    bool operator==(const BFSIterator& other) const { return nodeQueue.empty() && other.nodeQueue.empty(); }
+    bool operator!=(const BFSIterator& other) const { return !(*this == other); }
 
-    std::shared_ptr<T> operator*() const {
-        if (!nodeQueue.empty()) {
+    std::shared_ptr<T> operator*() const
+    {
+        if (!nodeQueue.empty())
+        {
             return nodeQueue.front();
         }
         return nullptr;
@@ -70,22 +74,16 @@ private:
     std::queue<std::shared_ptr<T>> nodeQueue;
 };
 
-
 /// Wrapper for running ranges
 template <typename T>
-class BFSRange {
+class BFSRange
+{
 public:
-    explicit BFSRange(std::shared_ptr<T> root)
-        : root(std::move(root))
-    { }
+    explicit BFSRange(std::shared_ptr<T> root) : root(std::move(root)) { }
 
-    BFSIterator<T> begin() const {
-        return BFSIterator<T>(root);
-    }
+    BFSIterator<T> begin() const { return BFSIterator<T>(root); }
 
-    BFSIterator<T> end() const {
-        return BFSIterator<T>();
-    }
+    BFSIterator<T> end() const { return BFSIterator<T>(); }
 
 private:
     std::shared_ptr<T> root;

@@ -12,24 +12,19 @@
     limitations under the License.
 */
 #pragma once
-#include <memory>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <Functions/Function.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
-/**
- * @brief Watermark assignment operator.
- * Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
- */
-class IngestionTimeWatermarkAssignment : public ExecutableOperator
+class TimeFunction;
+/// @brief Watermark assignment operator.
+/// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
+class IngestionTimeWatermarkAssignment : public PhysicalOperator
 {
 public:
-    /**
-     * @brief Creates a IngestionTimeWatermarkAssignment operator without function
-     */
-    explicit IngestionTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction);
+    /// @brief Creates a IngestionTimeWatermarkAssignment operator without function
+    IngestionTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 

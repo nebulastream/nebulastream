@@ -17,7 +17,8 @@
 #include <memory>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-namespace NES::QueryCompilation
+
+namespace NES
 {
 /// @brief Represents a query compilation request.
 /// The request encapsulates the decomposed query plan and addition properties.
@@ -29,9 +30,9 @@ public:
     /// @brief Enable debugging for this query.
     void enableDebugging();
 
-    bool isDebugEnabled() const;
     /// @brief Checks if debugging is enabled
     /// @return bool
+    [[nodiscard]] bool isDebugEnabled() const;
 
     /// @brief Checks if optimizations for this query
     void enableOptimizations();
@@ -44,13 +45,13 @@ public:
     /// @brief Enable debugging for this query.
     void enableDump();
 
-    bool isDumpEnabled() const;
     /// @brief Checks if dumping to nesviz is enabled
     /// @return bool
+    [[nodiscard]] bool isDumpEnabled() const;
 
-    std::shared_ptr<DecomposedQueryPlan> getDecomposedQueryPlan();
     /// @brief Gets the Decomposed query plan of this request
     /// @return std::shared_ptr<DecomposedQueryPlan>
+    [[nodiscard]] std::shared_ptr<DecomposedQueryPlan> getDecomposedQueryPlan();
 
     [[nodiscard]] size_t getBufferSize() const;
     void setBufferSize(size_t bufferSize);

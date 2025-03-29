@@ -13,7 +13,9 @@
 */
 
 #pragma once
+
 #include <memory>
+#include <string>
 #include <Functions/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
@@ -25,9 +27,11 @@ class BinaryLogicalFunction : public LogicalFunction
 public:
     ~BinaryLogicalFunction() noexcept override = default;
 
-    std::shared_ptr<LogicalFunction> leftChild;
-    std::shared_ptr<LogicalFunction> rightChild;
+    void setRightChild(std::shared_ptr<LogicalFunction> left);
+    void setLeftChild(std::shared_ptr<LogicalFunction> right);
 
+    [[nodiscard]] std::shared_ptr<LogicalFunction> getRightChild() const;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> getLeftChild() const;
 protected:
     explicit BinaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name);
     explicit BinaryLogicalFunction(BinaryLogicalFunction* other);

@@ -22,6 +22,10 @@
 
 namespace NES
 {
+
+constexpr size_t LEFT_CHILD_INDEX = 0;
+constexpr size_t RIGHT_CHILD_INDEX = 1;
+
 BinaryLogicalFunction::BinaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
     : LogicalFunction(std::move(stamp), std::move(name))
 {
@@ -29,26 +33,28 @@ BinaryLogicalFunction::BinaryLogicalFunction(std::shared_ptr<DataType> stamp, st
 
 BinaryLogicalFunction::BinaryLogicalFunction(BinaryLogicalFunction* other) : LogicalFunction(other)
 {
-    addChildWithEqual(getLeft()->deepCopy());
-    addChildWithEqual(getRight()->deepCopy());
+    children[LEFT_CHILD_INDEX] = other->getLeftChild()->clone();
+    children[RIGHT_CHILD_INDEX] = other->getRightChild()->clone();
 }
 
-void BinaryLogicalFunction::setChildren(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right)
+void BinaryLogicalFunction::setLeftChild(std::shared_ptr<LogicalFunction> left)
 {
-    addChildWithEqual(left);
-    addChildWithEqual(right);
+    children[LEFT_CHILD_INDEX] = left;
 }
 
-std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getLeft() const
+void BinaryLogicalFunction::setRightChild(std::shared_ptr<LogicalFunction> right)
 {
-    INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: {}", std::to_string(children.size()));
-    return Util::as<LogicalFunction>(children[0]);
+    children[RIGHT_CHILD_INDEX] = right;
 }
 
-std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getRight() const
+std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getLeftChild() const
 {
-    INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: {}", std::to_string(children.size()));
-    return Util::as<LogicalFunction>(children[1]);
+    return children[LEFT_CHILD_INDEX];
+}
+
+std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getRightChild() const
+{
+    return children[RIGHT_CHILD_INDEX];
 }
 
 }

@@ -14,13 +14,13 @@
 
 #include <Functions/LogicalFunctions/LessEqualsBinaryLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {
 
-LessEqualsBinaryLogicalFunction::LessEqualsBinaryLogicalFunction() : BinaryLogicalFunction("LessEquals")
+LessEqualsBinaryLogicalFunction::LessEqualsBinaryLogicalFunction() : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "LessEquals")
 {
 }
 
@@ -32,7 +32,8 @@ std::shared_ptr<LogicalFunction>
 LessEqualsBinaryLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
 {
     auto lessThen = std::make_shared<LessEqualsBinaryLogicalFunction>();
-    lessThen->setChildren(left, right);
+    lessThen->setLeftChild(left);
+    lessThen->setRightChild(right);
     return lessThen;
 }
 
@@ -41,7 +42,7 @@ bool LessEqualsBinaryLogicalFunction::equal(std::shared_ptr<LogicalFunction> con
     if (NES::Util::instanceOf<LessEqualsBinaryLogicalFunction>(rhs))
     {
         auto other = NES::Util::as<LessEqualsBinaryLogicalFunction>(rhs);
-        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
+        return this->getLeftChild()->equal(other->getLeftChild()) && this->getRightChild()->equal(other->getRightChild());
     }
     return false;
 }
@@ -49,14 +50,13 @@ bool LessEqualsBinaryLogicalFunction::equal(std::shared_ptr<LogicalFunction> con
 std::string LessEqualsBinaryLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *children[0] << "<=" << *children[1];
+    ss << *getLeftChild() << "<=" << *getRightChild();
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> LessEqualsBinaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> LessEqualsBinaryLogicalFunction::clone() const
 {
-    return LessEqualsBinaryLogicalFunction::create(
-        Util::as<LogicalFunction>(children[0])->deepCopy(), Util::as<LogicalFunction>(children[1])->deepCopy());
+    return LessEqualsBinaryLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 }

@@ -13,19 +13,17 @@
 */
 
 #pragma once
+#include <atomic>
+#include <istream>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 #include <ErrorHandling.hpp>
 
-
 namespace NES::Util
 {
-/**
-* @brief escapes all non text characters in a input string, such that the string could be processed as json.
-* @param s input string.
-* @return result sing.
-*/
+/// @brief escapes all non text characters in a input string, such that the string could be processed as json.
 std::string escapeJson(const std::string& str);
 
 /// this method checks if the object is null

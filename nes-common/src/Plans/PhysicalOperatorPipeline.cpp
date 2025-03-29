@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+/*
 #include <memory>
 #include <Execution/Operators/Operator.hpp>
 #include <Plans/PhysicalOperatorPipeline.hpp>
@@ -29,3 +29,4 @@ void PhysicalOperatorPipeline::setRootOperator(std::shared_ptr<Operators::Operat
 }
 
 }
+ */

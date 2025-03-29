@@ -20,6 +20,11 @@
 #include <API/Schema.hpp>
 namespace NES
 {
+
+class Schema;
+class LogicalSource;
+using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
+
 /**
  * @brief The LogicalSource wraps the source name and the schema.
  */

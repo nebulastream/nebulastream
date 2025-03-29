@@ -34,7 +34,8 @@ std::shared_ptr<LogicalFunction>
 MulBinaryLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
 {
     auto mulNode = std::make_shared<MulBinaryLogicalFunction>(left->getStamp());
-    mulNode->setChildren(left, right);
+    mulNode->setLeftChild(left);
+    mulNode->setRightChild(right);
     return mulNode;
 }
 
@@ -43,8 +44,8 @@ bool MulBinaryLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs
     if (NES::Util::instanceOf<MulBinaryLogicalFunction>(rhs))
     {
         const auto otherMulNode = NES::Util::as<MulBinaryLogicalFunction>(rhs);
-        const bool simpleMatch = getLeft()->equal(otherMulNode->getLeft()) and getRight()->equal(otherMulNode->getRight());
-        const bool commutativeMatch = getLeft()->equal(otherMulNode->getRight()) and getRight()->equal(otherMulNode->getLeft());
+        const bool simpleMatch = getLeftChild()->equal(otherMulNode->getLeftChild()) and getRightChild()->equal(otherMulNode->getRightChild());
+        const bool commutativeMatch = getLeftChild()->equal(otherMulNode->getRightChild()) and getRightChild()->equal(otherMulNode->getLeftChild());
         return simpleMatch or commutativeMatch;
     }
     return false;
@@ -53,7 +54,7 @@ bool MulBinaryLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs
 std::string MulBinaryLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *children[0] << "*" << *children[1];
+    ss << *getLeftChild() << "*" << *getRightChild();
     return ss.str();
 }
 

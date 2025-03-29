@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
+#include <sstream>
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
@@ -36,9 +36,9 @@ CaseLogicalFunction::CaseLogicalFunction(CaseLogicalFunction* other) : LogicalFu
     auto otherWhenChildren = getWhenChildren();
     for (auto& whenItr : otherWhenChildren)
     {
-        addChildWithEqual(whenItr->deepCopy());
+        children.push_back(whenItr->clone());
     }
-    addChildWithEqual(getDefaultExp()->deepCopy());
+    children.push_back(getDefaultExp()->clone());
 }
 
 std::shared_ptr<LogicalFunction>
@@ -86,9 +86,9 @@ void CaseLogicalFunction::setChildren(
 {
     for (auto elem : whenExps)
     {
-        addChildWithEqual(elem);
+        children.push_back(elem);
     }
-    addChildWithEqual(defaultExp);
+    children.push_back(defaultExp);
 }
 
 std::vector<std::shared_ptr<LogicalFunction>> CaseLogicalFunction::getWhenChildren() const
@@ -114,7 +114,7 @@ std::shared_ptr<LogicalFunction> CaseLogicalFunction::getDefaultExp() const
     return Util::as<LogicalFunction>(*(children.end() - 1));
 }
 
-bool CaseLogicalFunction::equal(std::shared_ptr<Operator> const& rhs) const
+bool CaseLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs) const
 {
     if (NES::Util::instanceOf<CaseLogicalFunction>(rhs))
     {
@@ -149,14 +149,14 @@ std::string CaseLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> CaseLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> CaseLogicalFunction::clone() const
 {
     std::vector<std::shared_ptr<LogicalFunction>> copyOfWhenFunctions;
     for (auto whenFunction : getWhenChildren())
     {
-        copyOfWhenFunctions.push_back(NES::Util::as<LogicalFunction>(whenFunction)->deepCopy());
+        copyOfWhenFunctions.push_back(NES::Util::as<LogicalFunction>(whenFunction)->clone());
     }
-    return CaseLogicalFunction::create(copyOfWhenFunctions, getDefaultExp()->deepCopy());
+    return CaseLogicalFunction::create(copyOfWhenFunctions, getDefaultExp()->clone());
 }
 
 bool CaseLogicalFunction::validateBeforeLowering() const

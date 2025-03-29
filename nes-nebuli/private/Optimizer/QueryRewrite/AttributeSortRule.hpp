@@ -15,6 +15,8 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
 #include <Functions/LogicalFunction.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
@@ -91,15 +93,15 @@ private:
     std::vector<std::shared_ptr<LogicalFunction>> fetchCommutativeFields(const std::shared_ptr<LogicalFunction>& function)
     {
         std::vector<std::shared_ptr<LogicalFunction>> commutativeFields;
-        if (Util::instanceOf<FieldAccessLogicalFunction>(function) || Util::instanceOf<ConstantValueLogicalFunction>(function))
+        if (NES::Util::instanceOf<FieldAccessLogicalFunction>(function) || NES::Util::instanceOf<ConstantValueLogicalFunction>(function))
         {
             commutativeFields.push_back(function);
         }
-        else if (Util::instanceOf<FunctionType>(function))
+        else if (NES::Util::instanceOf<FunctionType>(function))
         {
             for (const auto& child : function->children)
             {
-                auto childCommutativeFields = fetchCommutativeFields<FunctionType>(Util::as<LogicalFunction>(child));
+                auto childCommutativeFields = fetchCommutativeFields<FunctionType>(NES::Util::as<LogicalFunction>(child));
                 commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
             }
         }

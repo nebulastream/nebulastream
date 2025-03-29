@@ -21,9 +21,7 @@
 namespace NES::Functions
 {
 
-/**
- * @brief This function reads a specific field from the input record and returns its value.
- */
+/// @brief This function reads a specific field from the input record and returns its value.
 class ExecutableFunctionReadField : public Function
 {
 public:

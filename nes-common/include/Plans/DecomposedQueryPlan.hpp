@@ -18,7 +18,7 @@
 #include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
@@ -59,7 +59,7 @@ public:
         std::unordered_set<std::shared_ptr<LogicalSourceType>> sourceOperatorsSet;
         for (const auto& rootOperator : rootOperators)
         {
-            auto sourceOperators = rootOperator->getNodesByType<LogicalSourceType>();
+            auto sourceOperators = rootOperator->getOperatorsByType<LogicalSourceType>();
             NES_DEBUG("Insert all source operators to the collection");
             sourceOperatorsSet.insert(sourceOperators.begin(), sourceOperators.end());
         }
@@ -67,6 +67,7 @@ public:
         std::vector<std::shared_ptr<LogicalSourceType>> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
         return sourceOperators;
     }
+
     [[nodiscard]] std::vector<std::shared_ptr<SinkLogicalOperator>> getSinkOperators() const;
 
     [[nodiscard]] std::unordered_set<std::shared_ptr<Operator>> getAllOperators() const;
@@ -76,7 +77,7 @@ public:
 
     [[nodiscard]] WorkerId getWorkerId() const;
 
-    [[nodiscard]] std::shared_ptr<DecomposedQueryPlan> copy() const;
+    [[nodiscard]] std::shared_ptr<DecomposedQueryPlan> clone() const;
     [[nodiscard]] std::string toString() const;
 
     template <class T>
@@ -88,10 +89,9 @@ public:
         std::unordered_set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
-            auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
-            for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr)
+            for (auto itr : BFSRange<Operator>(rootOperator))
             {
-                auto visitingOp = NES::Util::as<Operator>(*itr);
+                auto visitingOp = NES::Util::as<Operator>(itr);
                 if (visitedOpIds.contains(visitingOp->getId()))
                 {
                     /// skip rest of the steps as the node found in already visited node list

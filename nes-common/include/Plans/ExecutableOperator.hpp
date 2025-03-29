@@ -12,7 +12,8 @@
     limitations under the License.
 */
 #pragma once
-#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+
+#include <Operators/Operator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <ExecutablePipelineStage.hpp>
 
@@ -22,7 +23,7 @@ namespace NES
 /// @brief A executable operator, represents an executable version of one or more operators in a query plan.
 /// It is currently used to represent compiled executable pipeline stages in a query plan.
 /// Based on this query plan we then create the executable query plan.
-class ExecutableOperator : public UnaryOperator
+class ExecutableOperator : public Operator
 {
 public:
     /// @brief Creates a new executable operator, which captures a pipeline stage and a set of operator handlers
@@ -41,7 +42,7 @@ public:
     /// @brief Gets the operator handlers, which capture specific operator state.
     /// @return std::vector<std::shared_ptr<OperatorHandler>>>
     std::vector<std::shared_ptr<OperatorHandler>> getOperatorHandlers();
-    std::shared_ptr<Operator> clone() override;
+    std::shared_ptr<Operator> clone() const override;
 
 protected:
     std::string toString() const override;

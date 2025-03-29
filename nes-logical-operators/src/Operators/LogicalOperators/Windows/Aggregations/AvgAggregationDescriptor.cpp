@@ -55,6 +55,11 @@ std::shared_ptr<WindowAggregationDescriptor> AvgAggregationDescriptor::on(const 
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(fieldAccess));
 }
 
+std::shared_ptr<WindowAggregationDescriptor> AvgAggregationDescriptor::clone()
+{
+    return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(this->onField->clone(), this->asField->clone()));
+}
+
 void AvgAggregationDescriptor::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.

@@ -41,7 +41,7 @@ bool AbsoluteUnaryLogicalFunction::equal(std::shared_ptr<LogicalFunction> const&
     if (NES::Util::instanceOf<AbsoluteUnaryLogicalFunction>(rhs))
     {
         auto otherAbsNode = NES::Util::as<AbsoluteUnaryLogicalFunction>(rhs);
-        return child()->equal(otherAbsNode->child());
+        return getChild()->equal(otherAbsNode->getChild());
     }
     return false;
 }
@@ -49,13 +49,13 @@ bool AbsoluteUnaryLogicalFunction::equal(std::shared_ptr<LogicalFunction> const&
 std::string AbsoluteUnaryLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "ABS(" << *child() << ")";
+    ss << "ABS(" << *getChild() << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> AbsoluteUnaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> AbsoluteUnaryLogicalFunction::clone() const
 {
-    return AbsoluteUnaryLogicalFunction::create(Util::as<LogicalFunction>(child())->deepCopy());
+    return AbsoluteUnaryLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
 }
 
 }

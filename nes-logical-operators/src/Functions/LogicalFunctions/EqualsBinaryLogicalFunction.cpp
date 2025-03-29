@@ -26,7 +26,7 @@
 namespace NES
 {
 
-EqualsBinaryLogicalFunction::EqualsBinaryLogicalFunction() noexcept : BinaryLogicalFunction("Equals")
+EqualsBinaryLogicalFunction::EqualsBinaryLogicalFunction() noexcept : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "Equals")
 {
 }
 

@@ -40,7 +40,7 @@ bool FloorUnaryLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rh
     if (NES::Util::instanceOf<FloorUnaryLogicalFunction>(rhs))
     {
         auto otherFloorNode = NES::Util::as<FloorUnaryLogicalFunction>(rhs);
-        return child()->equal(otherFloorNode->child());
+        return getChild()->equal(otherFloorNode->getChild());
     }
     return false;
 }
@@ -48,7 +48,7 @@ bool FloorUnaryLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rh
 std::string FloorUnaryLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "FLOOR(" << *child() << ")";
+    ss << "FLOOR(" << *getChild() << ")";
     return ss.str();
 }
 

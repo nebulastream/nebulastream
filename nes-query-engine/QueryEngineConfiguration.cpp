@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include <charconv>
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <system_error>
 #include <thread>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <QueryEngineConfiguration.hpp>
 
-std::shared_ptr<NES::Configurations::ConfigurationValidation> NES::Runtime::QueryEngineConfiguration::numberOfThreadsValidator()
+namespace NES
+{
+std::shared_ptr<NES::Configurations::ConfigurationValidation> QueryEngineConfiguration::numberOfThreadsValidator()
 {
     struct Validator : Configurations::ConfigurationValidation
     {
@@ -62,7 +62,7 @@ std::shared_ptr<NES::Configurations::ConfigurationValidation> NES::Runtime::Quer
     return std::make_shared<Validator>();
 }
 
-std::shared_ptr<NES::Configurations::ConfigurationValidation> NES::Runtime::QueryEngineConfiguration::taskQueueSizeValidator()
+std::shared_ptr<NES::Configurations::ConfigurationValidation> QueryEngineConfiguration::taskQueueSizeValidator()
 {
     struct Validator : Configurations::ConfigurationValidation
     {
@@ -78,4 +78,5 @@ std::shared_ptr<NES::Configurations::ConfigurationValidation> NES::Runtime::Quer
     };
 
     return std::make_shared<Validator>();
+}
 }

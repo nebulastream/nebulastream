@@ -73,15 +73,16 @@ std::shared_ptr<LogicalOperator> ProjectBeforeUnionOperatorRule::constructProjec
     /// Fetch source and destination schema fields
     const auto& sourceFields = sourceSchema;
     const auto& destinationFields = destinationSchema;
-    std::vector<std::shared_ptr<NodeFunction>> projectFunctions;
+    std::vector<std::shared_ptr<LogicalFunction>> projectFunctions;
     /// Compute projection functions
     for (uint64_t i = 0; i < sourceSchema->getFieldCount(); i++)
     {
         auto field = sourceFields->getFieldByIndex(i);
         auto updatedFieldName = destinationFields->getFieldByIndex(i)->getName();
         /// Compute field access and field rename function
-        auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), field->getName());
-        auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);
+        auto originalField = FieldAccessLogicalFunction::create(field->getDataType(), field->getName());
+        auto fieldRenameFunction
+            = RenameLogicalFunction::create(NES::Util::as<FieldAccessLogicalFunction>(originalField), updatedFieldName);
         projectFunctions.push_back(fieldRenameFunction);
     }
     /// Create Projection operator

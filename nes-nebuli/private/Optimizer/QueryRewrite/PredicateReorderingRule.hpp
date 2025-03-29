@@ -17,7 +17,7 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 

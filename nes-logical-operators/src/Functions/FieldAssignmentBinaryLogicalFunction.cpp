@@ -36,10 +36,11 @@ FieldAssignmentBinaryLogicalFunction::FieldAssignmentBinaryLogicalFunction(Field
     : BinaryLogicalFunction(other) {};
 
 std::shared_ptr<FieldAssignmentBinaryLogicalFunction> FieldAssignmentBinaryLogicalFunction::create(
-    const std::shared_ptr<FieldAccessLogicalFunction>& fieldAccess, const std::shared_ptr<LogicalFunction>& LogicalFunction)
+    std::shared_ptr<FieldAccessLogicalFunction> fieldAccess, std::shared_ptr<LogicalFunction> logicalFunction)
 {
-    auto fieldAssignment = std::make_shared<FieldAssignmentBinaryLogicalFunction>(LogicalFunction->getStamp());
-    fieldAssignment->setChildren(fieldAccess, LogicalFunction);
+    auto fieldAssignment = std::make_shared<FieldAssignmentBinaryLogicalFunction>(logicalFunction->getStamp());
+    fieldAssignment->setLeftChild(fieldAccess);
+    fieldAssignment->setRightChild(logicalFunction);
     return fieldAssignment;
 }
 
@@ -59,18 +60,18 @@ bool FieldAssignmentBinaryLogicalFunction::equal(const std::shared_ptr<LogicalFu
 std::string FieldAssignmentBinaryLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "FieldAssignmentBinaryLogicalFunction(" << *children[0] << "=" << *children[1] << ")";
+    ss << "FieldAssignmentBinaryLogicalFunction(" << *getLeftChild() << "=" << *getRightChild() << ")";
     return ss.str();
 }
 
 NodeFunctionFieldAccessPtr NodeFunctionFieldAssignment::getField() const
 {
-    return Util::as<FieldAccessLogicalFunction>(getLeft());
+    return Util::as<FieldAccessLogicalFunction>(getLeftChild());
 }
 
 std::shared_ptr<LogicalFunction> FieldAssignmentBinaryLogicalFunction::getAssignment() const
 {
-    return getRight();
+    return getRightChild();
 }
 
 void FieldAssignmentBinaryLogicalFunction::inferStamp(const Schema& schema)
@@ -122,14 +123,10 @@ void FieldAssignmentBinaryLogicalFunction::inferStamp(const Schema& schema)
     }
 }
 
-std::shared_ptr<LogicalFunction> FieldAssignmentBinaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> FieldAssignmentBinaryLogicalFunction::clone() const
 {
     return FieldAssignmentBinaryLogicalFunction::create(
-        Util::as<std::shared_ptr<FieldAccessLogicalFunction>>(getField()->deepCopy()), getAssignment()->deepCopy());
+        Util::as<FieldAccessLogicalFunction>(getField()->clone()), getAssignment()->clone());
 }
 
-bool FieldAssignmentBinaryLogicalFunction::validateBeforeLowering() const
-{
-    return children.empty();
-}
 }

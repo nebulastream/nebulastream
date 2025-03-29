@@ -12,19 +12,18 @@
     limitations under the License.
 */
 
+/*
 #include <memory>
 #include <utility>
 #include <vector>
 #include <Functions/ExecutableFunctionWriteField.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Phases/Translations/FunctionProvider.hpp>
 #include <Plans/PhysicalQueryPlan.hpp>
-#include <Plans/PlanIterator.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <grpcpp/impl/codegen/config_protobuf.h>
@@ -33,6 +32,7 @@
 #include <PhysicalOperator.hpp>
 #include <Scan.hpp>
 #include <Selection.hpp>
+#include <FunctionProvider.hpp>
 
 // TODO we have muliple occurences of ExceuctableOperators. Should there be only one?
 
@@ -42,7 +42,7 @@ namespace NES::QueryCompilation::LowerLogicalToNautilusOperators
 {
 
 // TODO get rid of the shared_ptrs
-std::shared_ptr<PhysicalOperatorNode> lowerFilter(const std::shared_ptr<LogicalFilterOperator>& operatorPtr)
+std::shared_ptr<PhysicalOperatorNode> lowerFilter(const std::shared_ptr<LogicalSelectionOperator>& operatorPtr)
 {
     auto function = FunctionProvider::lowerFunction(operatorPtr->getPredicate());
     auto selection = std::make_shared<Selection>(std::move(function));
@@ -61,9 +61,9 @@ std::shared_ptr<PhysicalOperatorNode> lowerMap(const std::shared_ptr<LogicalMapO
 
 std::shared_ptr<PhysicalOperatorNode> lower(const std::shared_ptr<NES::Operator>& operatorNode)
 {
-    if (NES::Util::instanceOf<LogicalFilterOperator>(operatorNode))
+    if (NES::Util::instanceOf<LogicalSelectionOperator>(operatorNode))
     {
-        auto filter = lowerFilter(NES::Util::as<LogicalFilterOperator>(operatorNode));
+        auto filter = lowerFilter(NES::Util::as<LogicalSelectionOperator>(operatorNode));
         return filter;
     }
 
@@ -109,3 +109,4 @@ std::shared_ptr<PhysicalQueryPlan> apply(const std::shared_ptr<DecomposedQueryPl
     return plan;
 }
 }
+ */

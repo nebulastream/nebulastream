@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <algorithm>
 #include <memory>
 #include <numeric>
 #include <utility>
@@ -40,6 +39,7 @@
 #include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES::Optimizer
 {
@@ -57,9 +57,9 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
         auto predicate = selectionOperator->getPredicate();
         auto updatedPredicate = sortAttributesInFunction(predicate);
         auto updatedFilter = std::make_shared<LogicalSelectionOperator>(updatedPredicate, getNextOperatorId());
-        updatedFilter->setInputSchema(selectionOperator->getInputSchema()->copy());
+        updatedFilter->setInputSchema(selectionOperator->getInputSchema()->clone());
         Util::as_if<LogicalOperator>(updatedFilter)
-            ->setOutputSchema(Util::as_if<LogicalOperator>(selectionOperator)->getOutputSchema()->copy());
+            ->setOutputSchema(Util::as_if<LogicalOperator>(selectionOperator)->getOutputSchema()->clone());
         selectionOperator->replace(updatedFilter);
     }
 
@@ -69,8 +69,8 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
         auto mapFunction = mapOperator->getMapFunction();
         auto updatedMapFunction = Util::as<FieldAssignmentBinaryLogicalFunction>(sortAttributesInFunction(mapFunction));
         auto updatedMap = std::make_shared<LogicalMapOperator>(updatedMapFunction, getNextOperatorId());
-        updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
-        Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
+        updatedMap->setInputSchema(mapOperator->getInputSchema()->clone());
+        Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->clone());
         mapOperator->replace(updatedMap);
     }
     return queryPlan;
@@ -79,7 +79,7 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
 std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInFunction(std::shared_ptr<LogicalFunction> function)
 {
     NES_DEBUG("Sorting attributed for input function {}", *function);
-    if (Util::instanceOf<NES::LogicalLogicalFunction>(function))
+    if (Util::instanceOf<LogicalLogicalFunction>(function))
     {
         return sortAttributesInLogicalFunctions(function);
     }
@@ -105,15 +105,15 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInFunction(std
 std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInArithmeticalFunctions(std::shared_ptr<LogicalFunction> function)
 {
     NES_DEBUG("Create Z3 function for arithmetical function {}", *function);
-    if (Util::instanceOf<NES::LogicalFunctionAdd>(function))
+    if (Util::instanceOf<AddBinaryLogicalFunction>(function))
     {
-        auto addLogicalFunction = Util::as<NES::LogicalFunctionAdd>(function);
+        auto addLogicalFunction = Util::as<AddBinaryLogicalFunction>(function);
 
-        auto sortedLeft = sortAttributesInFunction(addLogicalFunction->getLeft());
-        auto sortedRight = sortAttributesInFunction(addLogicalFunction->getRight());
+        auto sortedLeft = sortAttributesInFunction(addLogicalFunction->leftChild);
+        auto sortedRight = sortAttributesInFunction(addLogicalFunction->rightChild);
 
-        auto leftCommutativeFields = fetchCommutativeFields<NES::LogicalFunctionAdd>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<NES::LogicalFunctionAdd>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<AddBinaryLogicalFunction>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<AddBinaryLogicalFunction>(sortedRight);
 
         std::vector<std::shared_ptr<LogicalFunction>> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
@@ -123,7 +123,7 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInArithmetical
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->deepCopy());
+            sortedCommutativeFields.push_back(commutativeField->clone());
         }
 
         std::ranges::sort(
@@ -203,8 +203,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInArithmetical
     if (Util::instanceOf<SubBinaryLogicalFunction>(function))
     {
         auto subLogicalFunction = Util::as<SubBinaryLogicalFunction>(function);
-        auto left = subLogicalFunction->getLeft();
-        auto right = subLogicalFunction->getRight();
+        auto left = subLogicalFunction->getLeftChild();
+        auto right = subLogicalFunction->getRightChild();
         sortAttributesInFunction(left);
         sortAttributesInFunction(right);
         return function;
@@ -212,8 +212,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInArithmetical
     else if (Util::instanceOf<MulBinaryLogicalFunction>(function))
     {
         auto mulLogicalFunction = Util::as<MulBinaryLogicalFunction>(function);
-        auto left = mulLogicalFunction->getLeft();
-        auto right = mulLogicalFunction->getRight();
+        auto left = mulLogicalFunction->getLeftChild();
+        auto right = mulLogicalFunction->getRightChild();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
@@ -229,7 +229,7 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInArithmetical
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->deepCopy());
+            sortedCommutativeFields.push_back(commutativeField->clone());
         }
 
         std::sort(
@@ -310,8 +310,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInArithmetical
     else if (Util::instanceOf<DivBinaryLogicalFunction>(function))
     {
         auto divLogicalFunction = Util::as<DivBinaryLogicalFunction>(function);
-        auto left = divLogicalFunction->getLeft();
-        auto right = divLogicalFunction->getRight();
+        auto left = divLogicalFunction->getLeftChild();
+        auto right = divLogicalFunction->getRightChild();
         sortAttributesInFunction(left);
         sortAttributesInFunction(right);
         return function;
@@ -325,8 +325,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
     if (Util::instanceOf<AndBinaryLogicalFunction>(function))
     {
         auto andLogicalFunction = Util::as<AndBinaryLogicalFunction>(function);
-        auto left = andLogicalFunction->getLeft();
-        auto right = andLogicalFunction->getRight();
+        auto left = andLogicalFunction->getLeftChild();
+        auto right = andLogicalFunction->getRightChild();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
@@ -341,7 +341,7 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->deepCopy());
+            sortedCommutativeFields.push_back(commutativeField->clone());
         }
 
         std::sort(
@@ -421,8 +421,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
     if (Util::instanceOf<OrBinaryLogicalFunction>(function))
     {
         auto orLogicalFunction = Util::as<OrBinaryLogicalFunction>(function);
-        auto left = orLogicalFunction->getLeft();
-        auto right = orLogicalFunction->getRight();
+        auto left = orLogicalFunction->getLeftChild();
+        auto right = orLogicalFunction->getRightChild();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
@@ -437,7 +437,7 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->deepCopy());
+            sortedCommutativeFields.push_back(commutativeField->clone());
         }
 
         std::sort(
@@ -517,8 +517,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
     else if (Util::instanceOf<LessBinaryLogicalFunction>(function))
     {
         auto lessLogicalFunction = Util::as<LessBinaryLogicalFunction>(function);
-        auto left = lessLogicalFunction->getLeft();
-        auto right = lessLogicalFunction->getRight();
+        auto left = lessLogicalFunction->getLeftChild();
+        auto right = lessLogicalFunction->getRightChild();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
@@ -535,8 +535,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
     else if (Util::instanceOf<LessEqualsBinaryLogicalFunction>(function))
     {
         auto lessEqualsBinaryLogicalFunction = Util::as<LessEqualsBinaryLogicalFunction>(function);
-        auto left = lessEqualsBinaryLogicalFunction->getLeft();
-        auto right = lessEqualsBinaryLogicalFunction->getRight();
+        auto left = lessEqualsBinaryLogicalFunction->getLeftChild();
+        auto right = lessEqualsBinaryLogicalFunction->getRightChild();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
@@ -552,8 +552,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
     else if (Util::instanceOf<GreaterBinaryLogicalFunction>(function))
     {
         auto greaterLogicalFunction = Util::as<GreaterBinaryLogicalFunction>(function);
-        auto left = greaterLogicalFunction->getLeft();
-        auto right = greaterLogicalFunction->getRight();
+        auto left = greaterLogicalFunction->getLeftChild();
+        auto right = greaterLogicalFunction->getRightChild();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
@@ -570,8 +570,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
     else if (Util::instanceOf<GreaterBinaryLogicalFunctionEquals>(function))
     {
         auto greaterEqualsBinaryLogicalFunction = Util::as<GreaterBinaryLogicalFunctionEquals>(function);
-        auto left = greaterEqualsBinaryLogicalFunction->getLeft();
-        auto right = greaterEqualsBinaryLogicalFunction->getRight();
+        auto left = greaterEqualsBinaryLogicalFunction->getLeftChild();
+        auto right = greaterEqualsBinaryLogicalFunction->getRightChild();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
@@ -588,8 +588,8 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
     else if (Util::instanceOf<EqualsBinaryLogicalFunction>(function))
     {
         auto equalsLogicalFunction = Util::as<EqualsBinaryLogicalFunction>(function);
-        auto left = equalsLogicalFunction->getLeft();
-        auto right = equalsLogicalFunction->getRight();
+        auto left = equalsLogicalFunction->getLeftChild();
+        auto right = equalsLogicalFunction->getRightChild();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
@@ -605,7 +605,7 @@ std::shared_ptr<LogicalFunction> AttributeSortRule::sortAttributesInLogicalFunct
     else if (Util::instanceOf<NegateUnaryLogicalFunction>(function))
     {
         auto negateLogicalFunction = Util::as<NegateUnaryLogicalFunction>(function);
-        auto childFunction = negateLogicalFunction->child();
+        auto childFunction = negateLogicalFunction->getChild();
         auto updatedChildFunction = sortAttributesInFunction(childFunction);
         return NegateUnaryLogicalFunction::create(updatedChildFunction);
     }
@@ -619,8 +619,8 @@ bool AttributeSortRule::replaceCommutativeFunctions(
 {
     auto binaryFunction = Util::as<BinaryLogicalFunction>(parentFunction);
 
-    const std::shared_ptr<LogicalFunction>& leftChild = binaryFunction->getLeft();
-    const std::shared_ptr<LogicalFunction>& rightChild = binaryFunction->getRight();
+    const std::shared_ptr<LogicalFunction>& leftChild = binaryFunction->getLeftChild();
+    const std::shared_ptr<LogicalFunction>& rightChild = binaryFunction->getRightChild();
     if (leftChild.get() == originalFunction.get())
     {
         binaryFunction->removeChildren();

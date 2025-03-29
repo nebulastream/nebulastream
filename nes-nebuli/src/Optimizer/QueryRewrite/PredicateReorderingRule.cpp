@@ -45,8 +45,8 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                 "PredicateReorderingRule: Filter {} has {} consecutive filters as children", filter->getId(), consecutiveFilters.size());
             if (consecutiveFilters.size() >= 2)
             {
-                const std::vector<std::shared_ptr<Node>> filterChainParents = consecutiveFilters.front()->getParents();
-                const std::vector<std::shared_ptr<Node>> filterChainChildren = consecutiveFilters.back()->getChildren();
+                const std::vector<std::shared_ptr<Operator>> filterChainParents = consecutiveFilters.front()->parents;
+                const std::vector<std::shared_ptr<Operator>> filterChainChildren = consecutiveFilters.back()->children;
                 NES_TRACE("PredicateReorderingRule: If the filters are already sorted, no change is needed");
                 auto already_sorted = std::is_sorted(
                     consecutiveFilters.begin(),
@@ -106,11 +106,10 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
     return queryPlan;
 }
 
-std::vector<std::shared_ptr<LogicalSelectionOperator>>
-PredicateReorderingRule::getConsecutiveFilters(const std::shared_ptr<NES::LogicalSelectionOperator>& filter)
+std::vector<std::shared_ptr<LogicalSelectionOperator>> PredicateReorderingRule::getConsecutiveFilters(const std::shared_ptr<LogicalSelectionOperator>& filter)
 {
     std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = {};
-    DepthFirstNodeIterator queryPlanNodeIterator(filter);
+    DFSRange queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);
     while (NES::Util::instanceOf<LogicalSelectionOperator>(node))

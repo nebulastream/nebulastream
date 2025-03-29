@@ -52,12 +52,12 @@ std::shared_ptr<QueryPlan> FilterMergeRule::apply(std::shared_ptr<QueryPlan> que
                 for (unsigned int i = 1; i < consecutiveFilters.size(); i++)
                 {
                     auto predicate = consecutiveFilters.at(i)->getPredicate();
-                    combinedPredicate = NodeFunctionAnd::create(combinedPredicate, predicate);
+                    combinedPredicate = AndBinaryLogicalFunction::create(combinedPredicate, predicate);
                 }
                 NES_DEBUG("FilterMergeRule: Create new combined filter with the conjunction of all filter predicates");
                 auto combinedFilter = std::make_shared<LogicalSelectionOperator>(combinedPredicate, getNextOperatorId());
-                auto filterChainParents = consecutiveFilters.at(0)->getParents();
-                auto filterChainChildren = consecutiveFilters.back()->getChildren();
+                auto filterChainParents = consecutiveFilters.at(0)->parents;
+                auto filterChainChildren = consecutiveFilters.back()->children;
                 NES_DEBUG("FilterMergeRule: Start re-writing the new query plan");
                 NES_DEBUG("FilterMergeRule: Remove parent/children references for the consecutive filters");
                 for (auto& filterToRemove : consecutiveFilters)
@@ -100,7 +100,7 @@ std::vector<std::shared_ptr<LogicalSelectionOperator>>
 FilterMergeRule::getConsecutiveFilters(const std::shared_ptr<NES::LogicalSelectionOperator>& filter)
 {
     std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = {};
-    DepthFirstNodeIterator queryPlanNodeIterator(filter);
+    DFSRange<LogicalOperator> queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);
     while (NES::Util::instanceOf<LogicalSelectionOperator>(node))

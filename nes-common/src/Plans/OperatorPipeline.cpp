@@ -150,7 +150,7 @@ void OperatorPipeline::clearSuccessors()
     successorPipelines.clear();
 }
 
-const std::vector<std::shared_ptr<OperatorPipeline>>& OperatorPipeline::getSuccessors() const
+std::vector<std::shared_ptr<OperatorPipeline>> const& OperatorPipeline::getSuccessors() const
 {
     return successorPipelines;
 }
@@ -188,6 +188,7 @@ static std::vector<PipelineId> getIds(const std::vector<T>& pipelines)
         pipelines.begin(), pipelines.end(), std::back_inserter(ids), [](const auto& pipeline) { return pipeline.get()->getPipelineId(); });
     return ids;
 }
+
 std::string OperatorPipeline::toString() const
 {
     auto successorsStr = std::accumulate(
@@ -211,11 +212,10 @@ std::string OperatorPipeline::toString() const
         });
 
     return fmt::format(
-        "- Id: {}, Type: {}, Successors: {}, Predecessors: {}\n- QueryPlan: {}",
+        "- Id: {}, Type: {}, Successors: {}, Predecessors: {}\n-",
         id,
         magic_enum::enum_name(pipelineType),
         successorsStr,
-        predecessorsStr,
-        decomposedQueryPlan->toString());
+        predecessorsStr);
 }
 }
