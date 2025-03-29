@@ -97,12 +97,12 @@ void DefaultEmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) con
     const auto resultBufferRef = ctx.allocateBuffer();
     const auto resultBuffer = RecordBuffer(resultBufferRef);
     auto emitState = std::make_unique<EmitState>(resultBuffer);
-    ctx.setLocalOperatorState(this, std::move(emitState));
+    ctx.setLocalOperatorState(id, std::move(emitState));
 }
 
 void DefaultEmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
+    const auto emitState = static_cast<EmitState*>(ctx.getLocalState(id));
     /// emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= getMaxRecordsPerBuffer())
     {
@@ -123,7 +123,7 @@ void DefaultEmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record)
 void DefaultEmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
-    auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(this));
+    auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerIndex));
 }
 

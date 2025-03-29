@@ -84,7 +84,7 @@ void NLJBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, sliceReference, sliceStart, sliceEnd, pagedVectorReference);
 
     /// Store the local state
-    executionCtx.setLocalOperatorState(this, std::move(localJoinState));
+    executionCtx.setLocalOperatorState(id, std::move(localJoinState));
 }
 
 void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
@@ -102,7 +102,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
 NLJBuildPhysicalOperator::LocalNestedLoopJoinState*
 NLJBuildPhysicalOperator::getLocalJoinState(ExecutionContext& executionCtx, const nautilus::val<Timestamp>& timestamp) const
 {
-    auto* localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(executionCtx.getLocalState(this));
+    auto* localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(executionCtx.getLocalState(id));
     const auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
 
     if (!(localJoinState->sliceStart <= timestamp && timestamp < localJoinState->sliceEnd))
