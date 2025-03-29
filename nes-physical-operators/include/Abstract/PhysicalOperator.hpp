@@ -175,12 +175,13 @@ public:
         {
             data.execute(executionCtx, record);
         }
-    };
 
         std::string toString() const override
         {
             return "PhysicalOperator(" + std::string(typeid(T).name()) + ")";
         }
+
+    };
 
     std::unique_ptr<Concept> self;
 };
