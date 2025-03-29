@@ -85,11 +85,6 @@ endforeach ()
 ## We run all join and aggregation tests with different no. worker threads
 set(workerThreads 1 2 4 8)
 foreach (workerThreads IN LISTS workerThreads)
-    if (CODE_COVERAGE)
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_join_cc -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
-        target_code_coverage(systest COVERAGE_TARGET_NAME systest_agg_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_aggregation_cc -- --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
-    endif (CODE_COVERAGE)
-
     ExternalData_Add_Test(TEST_DATA
             NAME systest_join_${workerThreads}_interpreter
             COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_join --data DATA{../testdata/small/,RECURSE:,REGEX:.*}
