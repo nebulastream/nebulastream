@@ -18,6 +18,3 @@ add_subdirectory(AbstractOperators)
 add_subdirectory(Serialization)
 add_subdirectory(LogicalOperators)
 
-# Register plugins
-add_plugin(Compiler ExecutablePipelineProvider nes-execution CompilationPipelineProvider.cpp)
-add_plugin(Interpreter ExecutablePipelineProvider nes-execution InterpretationPipelineProvider.cpp)

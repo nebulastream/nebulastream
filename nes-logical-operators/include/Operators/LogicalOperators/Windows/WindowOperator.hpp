@@ -47,9 +47,8 @@ struct WindowMetaData
 class WindowOperator : public UnaryLogicalOperator, public OriginIdAssignmentOperator
 {
 public:
-    WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id, OriginId originId);
-    WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id);
-    std::shared_ptr<Windowing::LogicalWindowDescriptor> getWindowDefinition() const;
+    WindowOperator(OperatorId id, OriginId originId);
+    WindowOperator(OperatorId id);
 
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;

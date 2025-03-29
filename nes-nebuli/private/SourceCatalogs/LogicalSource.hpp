@@ -31,8 +31,8 @@ class LogicalSource
 public:
     static std::shared_ptr<LogicalSource> create(const std::string& logicalSourceName, const std::shared_ptr<Schema>& schema);
 
-    std::string getLogicalSourceName();
-    std::shared_ptr<Schema> getSchema();
+    [[nodiscard]] std::string getLogicalSourceName();
+    [[nodiscard]] std::shared_ptr<Schema> getSchema();
 
 private:
     LogicalSource(std::string logicalSourceName, const std::shared_ptr<Schema>& schema);

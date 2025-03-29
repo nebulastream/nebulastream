@@ -39,10 +39,8 @@ public:
 
     [[nodiscard]] const std::shared_ptr<PhysicalSource>& getPhysicalSource() const;
     [[nodiscard]] const std::shared_ptr<LogicalSource>& getLogicalSource() const;
-
-    WorkerId getTopologyNodeId() const;
-
-    std::string toString();
+    [[nodiscard]] WorkerId getTopologyNodeId() const;
+    [[nodiscard]] std::string toString();
 
 private:
     explicit SourceCatalogEntry(

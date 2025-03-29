@@ -11,5 +11,4 @@
 # limitations under the License.
 
 add_subdirectory(SourceCatalogs)
-add_subdirectory(Optimizer)
 add_subdirectory(QueryValidation)

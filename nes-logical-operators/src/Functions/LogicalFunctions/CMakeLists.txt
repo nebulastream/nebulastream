@@ -11,13 +11,13 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
-        AndBinaryLogicalFunction.cpp
-        EqualsBinaryLogicalFunction.cpp
-        GreaterBinaryLogicalFunction.cpp
-        GreaterEqualsBinaryLogicalFunction.cpp
-        LessBinaryLogicalFunction.cpp
-        LessEqualsBinaryLogicalFunction.cpp
-        NegateUnaryLogicalFunction.cpp
-        OrBinaryLogicalFunction.cpp
+        AndLogicalFunction.cpp
+        EqualsLogicalFunction.cpp
+        GreaterLogicalFunction.cpp
+        GreaterEqualsLogicalFunction.cpp
+        LessLogicalFunction.cpp
+        LessEqualsLogicalFunction.cpp
+        NegateLogicalFunction.cpp
+        OrLogicalFunction.cpp
 )
 

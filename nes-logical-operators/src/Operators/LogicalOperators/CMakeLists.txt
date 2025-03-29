@@ -11,17 +11,16 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
-        LogicalOperator.cpp
-        SelectionLogicalOperator.cpp
-        ProjectionLogicalOperator.cpp
-        MapLogicalOperator.cpp
         InferModelLogicalOperator.cpp
-        UnionLogicalOperator.cpp
         BinaryLogicalOperator.cpp
         UnaryLogicalOperator.cpp
 )
 
-add_subdirectory(Sinks)
-add_subdirectory(Sources)
-add_subdirectory(Watermarks)
+add_plugin(Selection LogicalOperator nes-logical-operators SelectionLogicalOperator.cpp)
+add_plugin(Projection LogicalOperator nes-logical-operators ProjectionLogicalOperator.cpp)
+add_plugin(Map LogicalOperator nes-logical-operators MapLogicalOperator.cpp)
+add_plugin(Union LogicalOperator nes-logical-operators UnionLogicalOperator.cpp)
+add_plugin(IngestionTimeWatermarkAssigner LogicalOperator nes-logical-operators IngestionTimeWatermarkAssignerLogicalOperator.cpp)
+add_plugin(EventTimeWatermarkAssigner LogicalOperator nes-logical-operators EventTimeWatermarkAssignerLogicalOperator.cpp)
+
 add_subdirectory(Windows)

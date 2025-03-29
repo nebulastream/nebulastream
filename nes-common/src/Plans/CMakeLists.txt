@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
-        DecomposedQueryPlan.cpp
         QueryPlan.cpp
         QueryPlanBuilder.cpp
         PipelineQueryPlan.cpp

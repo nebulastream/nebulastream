@@ -10,13 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#add_source_files(nes-optimizer-legacy
-#        AttributeSortRule.cpp
-#        BinaryOperatorSortRule.cpp
-#        FilterMergeRule.cpp
-#        FilterPushDownRule.cpp
-#        FilterSplitUpRule.cpp
-#        LogicalSourceExpansionRule.cpp
-#        PredicateReorderingRule.cpp
-#        ProjectBeforeUnionOperatorRule.cpp
-#)
+add_plugin(LowerToPhysicalNLJoin RewriteRule nes-optimizer LowerToPhysicalNLJoin.cpp)
+add_plugin(LowerToPhysicalMap RewriteRule nes-optimizer LowerToPhysicalMap.cpp)
+add_plugin(LowerToPhysicalSelection RewriteRule nes-optimizer LowerToPhysicalSelection.cpp)
+add_plugin(LowerToPhysicalWindowedAggregation RewriteRule nes-optimizer LowerToPhysicalWindowedAggregation.cpp)

@@ -11,17 +11,17 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
-        AbsoluteUnaryLogicalFunction.cpp
-        AddBinaryLogicalFunction.cpp
-        CeilUnaryLogicalFunction.cpp
-        DivBinaryLogicalFunction.cpp
-        ExpUnaryLogicalFunction.cpp
-        FloorUnaryLogicalFunction.cpp
-        ModuloBinaryLogicalFunction.cpp
-        MulBinaryLogicalFunction.cpp
-        PowBinaryLogicalFunction.cpp
-        RoundUnaryLogicalFunction.cpp
-        SqrtUnaryLogicalFunction.cpp
-        SubBinaryLogicalFunction.cpp
+        AbsoluteLogicalFunction.cpp
+        AddLogicalFunction.cpp
+        CeilLogicalFunction.cpp
+        DivLogicalFunction.cpp
+        ExpLogicalFunction.cpp
+        FloorLogicalFunction.cpp
+        ModuloLogicalFunction.cpp
+        MulLogicalFunction.cpp
+        PowLogicalFunction.cpp
+        RoundLogicalFunction.cpp
+        SqrtLogicalFunction.cpp
+        SubLogicalFunction.cpp
 )
 

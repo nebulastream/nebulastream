@@ -11,8 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        ExecutableFunctionReadField.cpp
-        ExecutableFunctionConstantValueVariableSize.cpp
+        FunctionProvider.cpp
+        FieldAccessPhysicalFunction.cpp
         )
 
 add_plugin(Concat ExecutableFunction nes-execution ExecutableFunctionConcat.cpp)

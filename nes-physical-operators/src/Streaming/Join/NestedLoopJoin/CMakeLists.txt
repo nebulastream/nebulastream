@@ -11,8 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        NLJBuild.cpp
+        NLJBuildPhysicalOperator.cpp
+        NLJProbePhysicalOperator.cpp
         NLJOperatorHandler.cpp
-        NLJProbe.cpp
         NLJSlice.cpp
 )

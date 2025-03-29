@@ -11,7 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
-        CompilationPipelineProvider.cpp
         CompiledExecutablePipelineStage.cpp
-        InterpretationPipelineProvider.cpp
 )
+
+add_plugin(Compilation ExecutablePipelineProvider nes-runtime CompilationPipelineProvider.cpp)
+add_plugin(Interpreter ExecutablePipelineProvider nes-runtime InterpretationPipelineProvider.cpp)

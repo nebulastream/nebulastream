@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Greater ExecutableFunction nes-execution ExecutableFunctionGreater.cpp)
-add_plugin(GreaterEquals ExecutableFunction nes-execution ExecutableFunctionGreaterEquals.cpp)
-add_plugin(Less ExecutableFunction nes-execution ExecutableFunctionLess.cpp)
-add_plugin(LessEquals ExecutableFunction nes-execution ExecutableFunctionLessEquals.cpp)
+add_plugin(Greater PhysicalFunction nes-physical-operators GreaterPhysicalFunction.cpp)
+add_plugin(GreaterEquals PhysicalFunction nes-physical-operators GreaterEqualsPhysicalFunction.cpp)
+add_plugin(Less PhysicalFunction nes-physical-operators LessPhysicalFunction.cpp)
+add_plugin(LessEquals PhysicalFunction nes-physical-operators LessEqualsPhysicalFunction.cpp)

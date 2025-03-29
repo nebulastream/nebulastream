@@ -10,11 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# include(../cmake/LLVMIRUtil.cmake)
-
-# include registrar generation functions
-include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-
 include_directories(tests/include)
 
 # Set Sources and Headers
@@ -34,10 +29,7 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-optimizer PUBLIC "-fPIC")
 endif ()
 
-add_tests_if_enabled(tests)
-
-# Create library for the registries, and privately link it against nes-execution so that nes-execution can access its registries
-create_plugin_registry_library(nes-execution-registry nes-execution)
-target_link_libraries(nes-execution PRIVATE nes-execution-registry)
-# Generate a registrar for each registry in nes-executions
-generate_plugin_registrars(nes-execution ExecutableFunction ExecutablePipelineProvider)
+create_plugin_registry_library(nes-optimizer-registry nes-optimizer)
+target_link_libraries(nes-optimizer PRIVATE nes-optimizer-registry)
+# Generate a registrar for every registry in nes-optimizer
+generate_plugin_registrars(nes-optimizer RewriteRule Trait)
