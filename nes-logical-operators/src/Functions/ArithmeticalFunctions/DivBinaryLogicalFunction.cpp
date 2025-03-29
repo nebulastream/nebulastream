@@ -52,10 +52,9 @@ std::string DivBinaryLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> DivBinaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> DivBinaryLogicalFunction::clone() const
 {
-    return DivBinaryLogicalFunction::create(
-        Util::as<LogicalFunction>(children[0])->deepCopy(), Util::as<LogicalFunction>(children[1])->deepCopy());
+    return DivBinaryLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 

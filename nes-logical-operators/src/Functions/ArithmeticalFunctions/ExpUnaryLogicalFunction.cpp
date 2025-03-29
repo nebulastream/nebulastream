@@ -52,8 +52,8 @@ std::string ExpUnaryLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> ExpUnaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> ExpUnaryLogicalFunction::clone() const
 {
-    return ExpUnaryLogicalFunction::create(Util::as<LogicalFunction>(child())->deepCopy());
+    return ExpUnaryLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
 }
 }

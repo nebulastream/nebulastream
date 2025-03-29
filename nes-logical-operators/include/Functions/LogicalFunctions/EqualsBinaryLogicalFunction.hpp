@@ -30,6 +30,8 @@ public:
     create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
     [[nodiscard]] bool equal(const std::shared_ptr<LogicalFunction>& rhs) const override;
 
+    std::shared_ptr<LogicalFunction> clone() const override;
+
 protected:
     explicit EqualsBinaryLogicalFunction(EqualsBinaryLogicalFunction* other);
 

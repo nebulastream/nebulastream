@@ -330,7 +330,7 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
 TEST_F(SchemaTest, copyTest)
 {
     auto testSchema = Schema::create()->addField("field1", BasicType::UINT8)->addField("field2", BasicType::UINT16);
-    auto testSchemaCopy = testSchema->copy();
+    auto testSchemaCopy = testSchema->clone();
 
     ASSERT_EQ(testSchema->getSchemaSizeInBytes(), testSchemaCopy->getSchemaSizeInBytes());
     ASSERT_EQ(testSchema->getLayoutType(), testSchemaCopy->getLayoutType());

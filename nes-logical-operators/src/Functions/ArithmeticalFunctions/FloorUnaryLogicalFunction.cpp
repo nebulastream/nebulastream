@@ -52,8 +52,8 @@ std::string FloorUnaryLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> FloorUnaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> FloorUnaryLogicalFunction::clone() const
 {
-    return FloorUnaryLogicalFunction::create(Util::as<LogicalFunction>(child())->deepCopy());
+    return FloorUnaryLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
 }
 }

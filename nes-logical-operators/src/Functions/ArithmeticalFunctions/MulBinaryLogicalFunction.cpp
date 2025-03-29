@@ -57,10 +57,9 @@ std::string MulBinaryLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> MulBinaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> MulBinaryLogicalFunction::clone() const
 {
-    return MulBinaryLogicalFunction::create(
-        Util::as<LogicalFunction>(children[0])->deepCopy(), Util::as<LogicalFunction>(children[1])->deepCopy());
+    return MulBinaryLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 }

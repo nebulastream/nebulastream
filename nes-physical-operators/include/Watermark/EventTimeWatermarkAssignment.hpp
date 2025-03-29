@@ -18,18 +18,14 @@
 
 namespace NES
 {
-/**
- * @brief Watermark assignment operator.
- * Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
- */
 class EventTimeWatermarkAssignment : public ExecutableOperator
+/// @brief Watermark assignment operator.
+/// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
 {
 public:
-    /**
-     * @brief Creates a EventTimeWatermarkAssignment operator with a watermarkExtractionFunction function.
-     * @param std::unique_ptr<TimeFunction> the time function
-     */
     explicit EventTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction);
+    /// @brief Creates a EventTimeWatermarkAssignment operator with a watermarkExtractionFunction function.
+    /// @param TimeFunction the time function
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

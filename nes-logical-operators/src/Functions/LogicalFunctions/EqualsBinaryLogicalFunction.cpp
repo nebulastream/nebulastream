@@ -61,10 +61,9 @@ std::string EqualsBinaryLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> EqualsBinaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> EqualsBinaryLogicalFunction::clone() const
 {
-    return EqualsBinaryLogicalFunction::create(
-        Util::as<LogicalFunction>(children[0])->deepCopy(), Util::as<LogicalFunction>(children[1])->deepCopy());
+    return EqualsBinaryLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 bool EqualsBinaryLogicalFunction::validateBeforeLowering() const

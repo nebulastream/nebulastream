@@ -47,9 +47,8 @@ std::shared_ptr<QueryPlan> FilterSplitUpRule::apply(std::shared_ptr<QueryPlan> q
     std::sort(
         filterOperators.begin(),
         filterOperators.end(),
-        [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
-        { return lhs->getId() < rhs->getId(); });
-    auto originalQueryPlan = queryPlan->copy();
+        [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs) { return lhs->getId() < rhs->getId(); });
+    auto originalQueryPlan = queryPlan->clone();
     try
     {
         NES_DEBUG("FilterSplitUpRule: Iterate over all the filter operators to split them");

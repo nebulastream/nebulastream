@@ -31,19 +31,19 @@
 namespace NES::Windowing
 {
 
-EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(std::shared_ptr<NodeFunction> onField, TimeUnit unit)
+EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(std::shared_ptr<LogicalFunction> onField, TimeUnit unit)
     : onField(std::move(onField)), unit(std::move(unit))
 {
 }
 
 std::shared_ptr<WatermarkStrategyDescriptor>
-EventTimeWatermarkStrategyDescriptor::create(const std::shared_ptr<NodeFunction>& onField, TimeUnit unit)
+EventTimeWatermarkStrategyDescriptor::create(const std::shared_ptr<LogicalFunction>& onField, TimeUnit unit)
 {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
         Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(unit)));
 }
 
-std::shared_ptr<NodeFunction> EventTimeWatermarkStrategyDescriptor::getOnField() const
+std::shared_ptr<LogicalFunction> EventTimeWatermarkStrategyDescriptor::getOnField() const
 {
     return onField;
 }
@@ -53,7 +53,7 @@ void EventTimeWatermarkStrategyDescriptor::setOnField(const std::shared_ptr<Node
     this->onField = newField;
 }
 
-bool EventTimeWatermarkStrategyDescriptor::equal(std::shared_ptr<WatermarkStrategyDescriptor> other)
+bool EventTimeWatermarkStrategyDescriptor::equal(std::shared_ptr<WatermarkStrategyDescriptor> other) const
 {
     const auto eventTimeWatermarkStrategyDescriptor = NES::Util::as<EventTimeWatermarkStrategyDescriptor>(other);
     return eventTimeWatermarkStrategyDescriptor->onField->equal(onField);
@@ -69,7 +69,7 @@ void EventTimeWatermarkStrategyDescriptor::setTimeUnit(const TimeUnit& newUnit)
     this->unit = newUnit;
 }
 
-std::string EventTimeWatermarkStrategyDescriptor::toString()
+std::string EventTimeWatermarkStrategyDescriptor::toString() const
 {
     std::stringstream ss;
     ss << "TYPE = EVENT-TIME,";
@@ -79,7 +79,7 @@ std::string EventTimeWatermarkStrategyDescriptor::toString()
 
 bool EventTimeWatermarkStrategyDescriptor::inferStamp(const std::shared_ptr<Schema>& schema)
 {
-    const auto fieldAccessFunction = NES::Util::as<NodeFunctionFieldAccess>(onField);
+    const auto fieldAccessFunction = NES::Util::as<FieldAccessLogicalFunction>(onField);
     auto fieldName = fieldAccessFunction->getFieldName();
     ///Check if the field exists in the schema
     const auto existingField = schema->getFieldByName(fieldName);

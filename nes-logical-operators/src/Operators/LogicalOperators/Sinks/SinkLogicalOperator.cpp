@@ -77,7 +77,7 @@ std::shared_ptr<Sinks::SinkDescriptor> SinkLogicalOperator::getSinkDescriptor() 
     return sinkDescriptor;
 }
 
-std::shared_ptr<Operator> SinkLogicalOperator::copy()
+std::shared_ptr<Operator> SinkLogicalOperator::clone() const
 {
     ///We pass invalid worker id here because the properties will be copied later automatically.
     auto sinkDescriptorPtrCopy = sinkDescriptor;

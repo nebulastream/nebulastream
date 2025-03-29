@@ -52,7 +52,7 @@ Schema::Schema(const std::shared_ptr<Schema>& schema, const MemoryLayoutType lay
     copyFields(schema);
 }
 
-std::shared_ptr<Schema> Schema::copy() const
+std::shared_ptr<Schema> Schema::clone() const
 {
     return std::make_shared<Schema>(*this);
 }

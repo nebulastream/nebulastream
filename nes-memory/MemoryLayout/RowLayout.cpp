@@ -75,7 +75,7 @@ uint64_t RowLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fie
     return offSet;
 }
 
-std::shared_ptr<MemoryLayout> RowLayout::deepCopy() const
+std::shared_ptr<MemoryLayout> RowLayout::clone() const
 {
     return std::make_shared<RowLayout>(*this);
 }

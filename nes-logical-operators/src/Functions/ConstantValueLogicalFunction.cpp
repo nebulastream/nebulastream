@@ -63,7 +63,7 @@ void ConstantValueLogicalFunction::inferStamp(std::shared_ptr<Schema>)
     /// thus ut is already assigned correctly when the function node is created.
 }
 
-std::shared_ptr<LogicalFunction> ConstantValueLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> ConstantValueLogicalFunction::clone() const
 {
     return std::make_shared<ConstantValueLogicalFunction>(*this);
 }

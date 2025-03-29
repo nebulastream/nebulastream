@@ -34,6 +34,8 @@ public:
 
     void inferStamp(std::shared_ptr<Schema> schema) override;
 
+    std::shared_ptr<LogicalFunction> clone() const override;
+
 protected:
     explicit FieldAccessLogicalFunction(FieldAccessLogicalFunction* other);
 

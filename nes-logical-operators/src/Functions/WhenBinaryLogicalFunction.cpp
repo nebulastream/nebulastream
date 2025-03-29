@@ -79,10 +79,9 @@ std::string WhenBinaryLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> WhenBinaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> WhenBinaryLogicalFunction::clone() const
 {
-    return WhenBinaryLogicalFunction::create(
-        Util::as<LogicalFunction>(children[0])->deepCopy(), Util::as<LogicalFunction>(children[1])->deepCopy());
+    return WhenBinaryLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 bool WhenBinaryLogicalFunction::validateBeforeLowering() const

@@ -59,9 +59,8 @@ std::string PowBinaryLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> PowBinaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> PowBinaryLogicalFunction::clone() const
 {
-    return PowBinaryLogicalFunction::create(
-        Util::as<LogicalFunction>(children[0])->deepCopy(), Util::as<LogicalFunction>(children[1])->deepCopy());
+    return PowBinaryLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 }

@@ -58,9 +58,9 @@ std::string SqrtUnaryLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> SqrtUnaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> SqrtUnaryLogicalFunction::clone() const
 {
-    return SqrtUnaryLogicalFunction::create(Util::as<LogicalFunction>(child())->deepCopy());
+    return SqrtUnaryLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
 }
 
 }

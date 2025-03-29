@@ -82,7 +82,7 @@ void FieldAccessLogicalFunction::inferStamp(const Schema& schema)
     throw QueryInvalid("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema.toString());
 }
 
-std::shared_ptr<LogicalFunction> FieldAccessLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> FieldAccessLogicalFunction::clone() const
 {
     return std::make_shared<FieldAccessLogicalFunction>(*this);
 }

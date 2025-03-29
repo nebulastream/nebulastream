@@ -63,9 +63,9 @@ void NegateUnaryLogicalFunction::inferStamp(std::shared_ptr<Schema> schema)
             fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", child()->getStamp()->toString()));
     }
 }
-std::shared_ptr<LogicalFunction> NegateUnaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> NegateUnaryLogicalFunction::clone() const
 {
-    return NegateUnaryLogicalFunction::create(Util::as<LogicalFunction>(child())->deepCopy());
+    return NegateUnaryLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
 }
 
 bool NegateUnaryLogicalFunction::validateBeforeLowering() const

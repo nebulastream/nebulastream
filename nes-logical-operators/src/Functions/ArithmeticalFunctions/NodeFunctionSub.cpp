@@ -54,10 +54,10 @@ std::string SubBinaryLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> SubBinaryLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> SubBinaryLogicalFunction::clone() const
 {
     return SubBinaryLogicalFunction::create(
-        Util::as<LogicalFunction>(children[0])->deepCopy(), Util::as<LogicalFunction>(children[1])->deepCopy());
+        Util::as<LogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 }
