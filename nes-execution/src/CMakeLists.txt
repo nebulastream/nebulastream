@@ -11,7 +11,4 @@
 # limitations under the License.
 
 
-add_subdirectory(Execution)
-add_subdirectory(QueryCompiler)
 add_subdirectory(Runtime)
-add_subdirectory(Util)

@@ -10,10 +10,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-add_source_files(nes-execution
-        EventTimeWatermarkAssignment.cpp
-        IngestionTimeWatermarkAssignment.cpp
-        MultiOriginWatermarkProcessor.cpp
-        TimeFunction.cpp
+add_source_files(nes-logical-operators
+        AbsoluteUnaryLogicalFunction.cpp
+        AddBinaryLogicalFunction.cpp
+        CeilUnaryLogicalFunction.cpp
+        DivBinaryLogicalFunction.cpp
+        ExpUnaryLogicalFunction.cpp
+        FloorUnaryLogicalFunction.cpp
+        ModuloBinaryLogicalFunction.cpp
+        MulBinaryLogicalFunction.cpp
+        PowBinaryLogicalFunction.cpp
+        RoundUnaryLogicalFunction.cpp
+        SqrtUnaryLogicalFunction.cpp
+        SubBinaryLogicalFunction.cpp
 )
+

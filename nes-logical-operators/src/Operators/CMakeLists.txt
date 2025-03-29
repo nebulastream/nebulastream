@@ -10,10 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        PhysicalOperatorPipeline.cpp
-        CompiledExecutablePipelineStage.cpp
+add_source_files(nes-logical-operators
+        Operator.cpp
 )
+
+add_subdirectory(AbstractOperators)
+add_subdirectory(Serialization)
+add_subdirectory(LogicalOperators)
 
 # Register plugins
 add_plugin(Compiler ExecutablePipelineProvider nes-execution CompilationPipelineProvider.cpp)

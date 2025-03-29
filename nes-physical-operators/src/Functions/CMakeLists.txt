@@ -10,13 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        OperatorPipeline.cpp
-        PipelineQueryPlan.cpp
-        ExecutableOperator.cpp
-        PipelineQueryPlanIterator.cpp
-        NautilusPipelineOperator.cpp
-)
+add_source_files(nes-physical-operators
+        ExecutableFunctionReadField.cpp
+        ExecutableFunctionConstantValueVariableSize.cpp
+        )
 
-add_subdirectory(PhysicalOperators)
+add_plugin(Concat ExecutableFunction nes-execution ExecutableFunctionConcat.cpp)
 
+
+add_subdirectory(ArithmeticalFunctions)
+add_subdirectory(Comparison)
+add_subdirectory(LogicalFunctions)

@@ -10,14 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        ExecutableFunctionReadField.cpp
-        ExecutableFunctionConstantValueVariableSize.cpp
-        )
-
-add_plugin(Concat ExecutableFunction nes-execution ExecutableFunctionConcat.cpp)
-
-
-add_subdirectory(ArithmeticalFunctions)
-add_subdirectory(Comparison)
-add_subdirectory(LogicalFunctions)
+add_source_files(nes-physical-operators
+        EventTimeWatermarkAssignment.cpp
+        IngestionTimeWatermarkAssignment.cpp
+        MultiOriginWatermarkProcessor.cpp
+        TimeFunction.cpp
+)
