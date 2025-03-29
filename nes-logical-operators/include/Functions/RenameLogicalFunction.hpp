@@ -30,7 +30,7 @@ public:
 
     std::string getNewFieldName() const;
 
-    void inferStamp(std::shared_ptr<Schema> schema) override;
+    void inferStamp(const Schema& schema) override;
 
 
     std::shared_ptr<FieldAccessLogicalFunction> getOriginalField() const;

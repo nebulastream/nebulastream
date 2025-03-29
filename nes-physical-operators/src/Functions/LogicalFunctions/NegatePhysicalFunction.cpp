@@ -12,13 +12,13 @@
     limitations under the License.
 */
 #include <memory>
-#include <Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegatePhysicalFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES::Functions
 {
@@ -33,12 +33,11 @@ NegatePhysicalFunction::NegatePhysicalFunction(std::unique_ptr<PhysicalFunction>
 {
 }
 
-
-ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterNegateExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterNegatePhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one sub-function");
-    return std::make_unique<NegatePhysicalFunction>(std::move(executableFunctionRegistryArguments.childFunctions[0]));
+    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one sub-function");
+    return std::make_unique<NegatePhysicalFunction>(std::move(PhysicalFunctionRegistryArguments.childFunctions[0]));
 }
 
 }

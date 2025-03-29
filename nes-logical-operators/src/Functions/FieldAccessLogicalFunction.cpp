@@ -18,7 +18,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Nodes/Node.hpp>
+
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>

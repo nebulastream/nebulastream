@@ -18,7 +18,7 @@
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/RenameLogicalFunction.hpp>
-#include <Nodes/Node.hpp>
+
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>

@@ -15,13 +15,13 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Functions/Comparison/ExecutableFunctionLessEquals.hpp>
-#include <Functions/Function.hpp>
+#include <Functions/Comparison/LessEqualsPhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 
 namespace NES::Functions
@@ -29,23 +29,23 @@ namespace NES::Functions
 
 VarVal LessEqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record, arena);
-    const auto rightValue = rightExecutableFunction->execute(record, arena);
+    const auto leftValue = leftPhysicalFunction->execute(record, arena);
+    const auto rightValue = rightPhysicalFunction->execute(record, arena);
     return leftValue <= rightValue;
 }
 
 LessEqualsPhysicalFunction::LessEqualsPhysicalFunction(
-    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
-    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
+    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 
-ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterLessEqualsExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterLessEqualsPhysicalFunction(
+    PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "LessEquals function must have exactly two sub-functions");
+    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "LessEquals function must have exactly two sub-functions");
     return std::make_unique<LessEqualsPhysicalFunction>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+        std::move(PhysicalFunctionRegistryArguments.childFunctions[0]), std::move(PhysicalFunctionRegistryArguments.childFunctions[1]));
 }
 
 }

@@ -19,7 +19,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 #include <function.hpp>
 
 
@@ -28,24 +28,24 @@ namespace NES::Functions
 
 VarVal EqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record, arena);
-    const auto rightValue = rightExecutableFunction->execute(record, arena);
+    const auto leftValue = leftPhysicalFunction->execute(record, arena);
+    const auto rightValue = rightPhysicalFunction->execute(record, arena);
     const auto result = leftValue == rightValue;
     return result;
 }
 
 EqualsPhysicalFunction::EqualsPhysicalFunction(
-    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
-    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
+    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 
-ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterEqualsExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterEqualsPhysicalFunction(
+    PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
+    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
     return std::make_unique<EqualsPhysicalFunction>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+        std::move(PhysicalFunctionRegistryArguments.childFunctions[0]), std::move(PhysicalFunctionRegistryArguments.childFunctions[1]));
 }
 
 }

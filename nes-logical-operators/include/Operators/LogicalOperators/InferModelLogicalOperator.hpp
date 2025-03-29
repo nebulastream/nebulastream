@@ -16,6 +16,7 @@
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES::InferModel
 {
@@ -48,6 +49,10 @@ public:
     const std::vector<std::shared_ptr<LogicalFunction>>& getInputFields() const;
     const std::vector<std::shared_ptr<LogicalFunction>>& getOutputFields() const;
 
+    [[maybe_unused]] [[nodiscard]]  SerializableOperator serialize() const override {
+        /// TODO: noop for now. Will change after we added the new inference operator
+        return SerializableOperator{};
+    }
 protected:
     std::string toString() const override;
 
