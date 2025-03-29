@@ -30,7 +30,7 @@ namespace NES::QueryCompilation::PhysicalOperators
 PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     const std::shared_ptr<Schema>& inputSchema,
     const std::shared_ptr<Schema>& outputSchema,
-    const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
+    const std::shared_ptr<Operators::StreamJoinOperatorHandler>& operatorHandler,
     const Configurations::StreamJoinStrategy joinStrategy,
     TimestampField timeStampField,
     const JoinBuildSideType buildSide,
@@ -44,7 +44,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
 {
 }
 
-std::shared_ptr<Operator> PhysicalStreamJoinBuildOperator::copy()
+std::shared_ptr<Operator> PhysicalStreamJoinBuildOperator::clone()
 {
     auto result = std::make_shared<PhysicalStreamJoinBuildOperator>(
         inputSchema, outputSchema, streamJoinOperatorHandler, joinStrategy, timeStampField, buildSide, id);
@@ -52,8 +52,7 @@ std::shared_ptr<Operator> PhysicalStreamJoinBuildOperator::copy()
     return result;
 }
 
-const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>&
-PhysicalStreamJoinBuildOperator::getJoinOperatorHandler() const
+const std::shared_ptr<Operators::StreamJoinOperatorHandler>& PhysicalStreamJoinBuildOperator::getJoinOperatorHandler() const
 {
     return streamJoinOperatorHandler;
 }

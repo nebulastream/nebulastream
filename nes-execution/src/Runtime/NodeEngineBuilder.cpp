@@ -26,7 +26,7 @@
 
 #include <Listeners/SystemEventListener.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 

@@ -23,8 +23,8 @@
 namespace NES::QueryCompilation
 {
 
-std::optional<std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>> NautilusOperatorLoweringPlugin::lower(
     const std::shared_ptr<PhysicalOperators::PhysicalOperator>&, std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>&)
+std::optional<Operators::ExecutableOperatorPtr>
 {
     return {};
 }

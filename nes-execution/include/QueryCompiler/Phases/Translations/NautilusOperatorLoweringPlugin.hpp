@@ -37,9 +37,8 @@ public:
      * @param operatorHandlers operator handlers.
      * @return
      */
-    virtual std::optional<std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>> lower(
-        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& physicalOperator,
-        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers)
+    virtual std::optional<Operators::ExecutableOperatorPtr>
+    lower(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, std::vector<std::shared_ptr<OperatorHandler>>& operatorHandlers)
         = 0;
 
     virtual ~NautilusOperatorLoweringPlugin() = default;

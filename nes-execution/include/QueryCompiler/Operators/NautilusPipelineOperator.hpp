@@ -24,21 +24,21 @@ class NautilusPipelineOperator final : public UnaryOperator
 {
 public:
     std::shared_ptr<Operator> copy() override;
-    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> getNautilusPipeline();
+    std::shared_ptr<PhysicalOperatorPipeline> getNautilusPipeline();
 
-    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> getOperatorHandlers();
+    std::vector<std::shared_ptr<OperatorHandler>> getOperatorHandlers();
 
     NautilusPipelineOperator(
         OperatorId id,
-        std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers);
+        std::shared_ptr<PhysicalOperatorPipeline> nautilusPipeline,
+        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers);
 
 protected:
     std::string toString() const override;
 
 private:
-    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers;
-    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline;
+    std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
+    std::shared_ptr<PhysicalOperatorPipeline> nautilusPipeline;
 };
 
 }

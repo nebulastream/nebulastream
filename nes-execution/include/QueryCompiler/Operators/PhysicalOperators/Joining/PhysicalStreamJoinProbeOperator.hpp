@@ -40,9 +40,9 @@ public:
         const std::shared_ptr<Schema>& leftSchema,
         const std::shared_ptr<Schema>& rightSchema,
         const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
+        const std::shared_ptr<Operators::StreamJoinOperatorHandler>& operatorHandler,
         Configurations::StreamJoinStrategy joinStrategy,
-        std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
+        std::unique_ptr<Functions::Function> joinFunction,
         const std::vector<std::string>& joinFieldNamesLeft,
         const std::vector<std::string>& joinFieldNamesRight,
         WindowMetaData windowMetaData,
@@ -51,18 +51,18 @@ public:
     /// Performs a deep copy of this physical operator
     std::shared_ptr<Operator> copy() override;
 
-    const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
+    const std::shared_ptr<Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
     Configurations::StreamJoinStrategy getJoinStrategy() const;
-    std::unique_ptr<Runtime::Execution::Functions::Function> getJoinFunction();
+    std::unique_ptr<Functions::Function> getJoinFunction();
     std::vector<std::string> getJoinFieldNameLeft() const;
     std::vector<std::string> getJoinFieldNameRight() const;
-    Runtime::Execution::JoinSchema getJoinSchema() const;
+    JoinSchema getJoinSchema() const;
     const WindowMetaData& getWindowMetaData() const;
 
 protected:
-    std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
+    std::shared_ptr<Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
     Configurations::StreamJoinStrategy joinStrategy;
-    std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction;
+    std::unique_ptr<Functions::Function> joinFunction;
     std::vector<std::string> joinFieldNamesLeft;
     std::vector<std::string> joinFieldNamesRight;
     WindowMetaData windowMetaData;

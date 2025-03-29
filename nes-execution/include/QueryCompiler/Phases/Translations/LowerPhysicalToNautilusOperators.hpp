@@ -49,28 +49,25 @@ public:
     std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline, size_t bufferSize) const;
 
 private:
-    std::shared_ptr<Runtime::Execution::Operators::Operator> lower(
-        Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-        const std::shared_ptr<Runtime::Execution::Operators::Operator>& parentOperator,
+    std::shared_ptr<Operators::Operator> lower(
+        PhysicalOperatorPipeline& pipeline,
+        const std::shared_ptr<Operators::Operator> parentOperator,
         const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode,
         size_t bufferSize,
-        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers) const;
+        std::vector<std::shared_ptr<OperatorHandler>>& operatorHandlers) const;
 
-    static std::shared_ptr<Runtime::Execution::Operators::Operator>
-    lowerScan(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode, size_t bufferSize);
+    static std::shared_ptr<Operators::Operator> lowerScan(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode, size_t bufferSize);
 
-    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lowerEmit(
+    static std::shared_ptr<Operators::ExecutableOperator> lowerEmit(
         const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode,
         size_t bufferSize,
-        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers);
+        std::vector<std::shared_ptr<OperatorHandler>>& operatorHandlers);
 
-    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerFilter(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode);
+    static std::shared_ptr<Operators::ExecutableOperator> lowerFilter(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode);
 
-    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerMap(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode);
+    static std::shared_ptr<Operators::ExecutableOperator> lowerMap(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode);
 
-    Configurations::QueryCompilerConfiguration queryCompilerConfig;
+    std::shared_ptr<QueryCompilerConfiguration> options;
     std::unique_ptr<FunctionProvider> functionProvider;
 };
 }

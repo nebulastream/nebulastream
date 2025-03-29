@@ -19,7 +19,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 /// Create instances of NodeEngine using the builder pattern.
 class NodeEngineBuilder
