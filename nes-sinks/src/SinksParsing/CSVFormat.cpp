@@ -65,7 +65,7 @@ CSVFormat::CSVFormat(Schema pSchema) : schema(std::move(pSchema))
 
 std::string CSVFormat::getFormattedSchema() const
 {
-    return schema->toString("", ", ", "\n");
+    return schema.toString("", ", ", "\n");
 }
 
 
@@ -107,7 +107,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
 
 std::ostream& operator<<(std::ostream& out, const CSVFormat& format)
 {
-    return out << fmt::format("CSVFormat(Schema: {})", format.schema->toString());
+    return out << fmt::format("CSVFormat(Schema: {})", format.schema.toString());
 }
 
 }
