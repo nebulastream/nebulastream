@@ -23,7 +23,7 @@
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 class AggregationBuild final : public WindowAggregationOperator, public WindowOperatorBuild

@@ -21,7 +21,7 @@
 #include <Streaming/Aggregation/WindowAggregationPhysicalOperator.hpp>
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 class AggregationProbe final : public WindowAggregationOperator, public WindowOperatorProbe

@@ -19,7 +19,7 @@
 #include <Execution/Functions/Function.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Runtime::Execution::Functions
+namespace NES::Functions
 {
 
 using ExecutableFunctionRegistryReturnType = std::unique_ptr<Function>;

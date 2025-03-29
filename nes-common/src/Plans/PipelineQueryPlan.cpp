@@ -21,7 +21,7 @@
 #include <string>
 #include <Identifiers/Identifiers.hpp>
 
-namespace NES::QueryCompilation
+namespace NES
 {
 
 std::shared_ptr<PipelineQueryPlan> PipelineQueryPlan::create(QueryId queryId)

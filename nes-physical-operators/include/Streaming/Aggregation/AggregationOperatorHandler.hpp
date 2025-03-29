@@ -25,7 +25,7 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 /// This struct models the information for an aggregation window trigger
