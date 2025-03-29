@@ -58,8 +58,8 @@ bool SlidingWindow::equal(std::shared_ptr<WindowType> otherWindowType)
 {
     if (auto otherSlidingWindow = std::dynamic_pointer_cast<SlidingWindow>(otherWindowType))
     {
-        return this->size.equals(otherSlidingWindow->size) && this->slide.equals(otherSlidingWindow->slide)
-            && this->timeCharacteristic->equals(*otherSlidingWindow->timeCharacteristic);
+        return (this->size == otherSlidingWindow->size) && (this->slide == otherSlidingWindow->slide)
+            && (*this->timeCharacteristic == (*otherSlidingWindow->timeCharacteristic));
     }
     return false;
 }
