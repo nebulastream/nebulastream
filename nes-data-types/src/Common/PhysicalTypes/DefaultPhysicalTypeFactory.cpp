@@ -39,11 +39,11 @@ std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(const 
     }
     else if (const auto* integerPtr = dynamic_cast<const Integer*>(&dataType))
     {
-        return getPhysicalType(std::move(dataType));
+        return getPhysicalType(*integerPtr);
     }
     else if (const auto* floatPtr = dynamic_cast<const Float*>(&dataType))
     {
-        return getPhysicalType(std::move(dataType));
+        return getPhysicalType(*floatPtr);
     }
     else if (const auto* charPtr = dynamic_cast<const Char*>(&dataType))
     {
