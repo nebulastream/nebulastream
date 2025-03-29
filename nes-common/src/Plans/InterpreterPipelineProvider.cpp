@@ -22,7 +22,7 @@
 #include <ExecutablePipelineStage.hpp>
 #include <options.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 
 std::unique_ptr<ExecutablePipelineStage> InterpretationPipelineProvider::create(

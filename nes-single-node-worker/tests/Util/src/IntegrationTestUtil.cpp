@@ -107,7 +107,7 @@ namespace NES::IntegrationTestUtil
             tupleBuffer.setNumberOfTuples(tupleCount);
             tupleBuffer.setOriginId(OriginId(originId));
             tupleBuffer.setSequenceNumber(SequenceNumber(++sequenceNumber));
-            tupleBuffer.setWatermark(Runtime::Timestamp(watermarkTS));
+            tupleBuffer.setWatermark(Timestamp(watermarkTS));
             NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
 
             recordBuffers.emplace_back(tupleBuffer);
@@ -122,7 +122,7 @@ namespace NES::IntegrationTestUtil
         tupleBuffer.setNumberOfTuples(tupleCount);
         tupleBuffer.setOriginId(OriginId(originId));
         tupleBuffer.setSequenceNumber(SequenceNumber(++sequenceNumber));
-        tupleBuffer.setWatermark(Runtime::Timestamp(watermarkTS));
+        tupleBuffer.setWatermark(Timestamp(watermarkTS));
         recordBuffers.emplace_back(tupleBuffer);
         NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
     }
@@ -309,7 +309,7 @@ void querySummaryFailure(QueryId queryId, GRPCServer& uut, grpc::StatusCode stat
     EXPECT_EQ(response.error_code(), statusCode);
 }
 
-QueryStatus queryStatus(QueryId queryId, GRPCServer& uut)
+::QueryStatus queryStatus(QueryId queryId, GRPCServer& uut)
 {
     grpc::ServerContext context;
     QuerySummaryRequest request;
@@ -325,7 +325,7 @@ testing::AssertionResult waitForQueryToEnd(QueryId queryId, GRPCServer& uut)
     constexpr size_t maxNumberOfTimeoutChecks = 80;
     size_t numTimeouts = 0;
     auto currentQueryStatus = queryStatus(queryId, uut);
-    while (currentQueryStatus != Stopped && currentQueryStatus != Failed)
+    while (currentQueryStatus != ::QueryStatus::Stopped && currentQueryStatus != ::QueryStatus::Failed)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
         if (++numTimeouts > maxNumberOfTimeoutChecks)
@@ -337,18 +337,18 @@ testing::AssertionResult waitForQueryToEnd(QueryId queryId, GRPCServer& uut)
     return testing::AssertionSuccess();
 }
 
-std::vector<std::pair<Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut)
+std::vector<std::pair<QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut)
 {
     grpc::ServerContext context;
     QueryLogRequest request;
     QueryLogReply reply;
     request.set_queryid(queryId.getRawValue());
     EXPECT_TRUE(uut.RequestQueryLog(&context, &request, &reply).ok());
-    std::vector<std::pair<Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point>> logs;
+    std::vector<std::pair<QueryStatus, std::chrono::system_clock::time_point>> logs;
     for (const auto& log : reply.entries())
     {
         auto time_point = std::chrono::system_clock::time_point(std::chrono::milliseconds(log.unixtimeinms()));
-        auto status = magic_enum::enum_cast<Runtime::Execution::QueryStatus>(log.status());
+        auto status = magic_enum::enum_cast<QueryStatus>(log.status());
         if (status.has_value())
         {
             logs.emplace_back(status.value(), time_point);

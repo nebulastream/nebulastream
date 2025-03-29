@@ -20,7 +20,7 @@
 #include <fmt/ostream.h>
 
 
-namespace NES::Runtime
+namespace NES
 {
 
 class Timestamp
@@ -54,7 +54,7 @@ private:
 }
 
 template <typename T>
-requires(std::is_base_of_v<NES::Runtime::Timestamp, T>)
+requires(std::is_base_of_v<NES::Timestamp, T>)
 struct fmt::formatter<T> : fmt::ostream_formatter
 {
 };

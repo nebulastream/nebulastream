@@ -36,7 +36,7 @@
 
 namespace NES::QueryCompilation
 {
-using namespace Runtime::Execution::Functions;
+using namespace Functions;
 
 std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction)
 {

@@ -24,13 +24,13 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 struct WatermarkState final : OperatorState
 {
     explicit WatermarkState() = default;
-    nautilus::val<Timestamp> currentWatermark = Timestamp(Runtime::Timestamp::INITIAL_VALUE);
+    nautilus::val<Timestamp> currentWatermark = Timestamp(Timestamp::INITIAL_VALUE);
 };
 
 EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)

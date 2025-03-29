@@ -22,7 +22,7 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 /// @brief A multi origin version of the lock free watermark processor.

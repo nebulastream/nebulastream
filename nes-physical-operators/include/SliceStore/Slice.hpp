@@ -17,13 +17,13 @@
 #include <cstdint>
 #include <Time/Timestamp.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 using SliceStart = Timestamp;
 using SliceEnd = Timestamp;
 }
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 
 

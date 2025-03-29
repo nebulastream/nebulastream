@@ -79,9 +79,9 @@ QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut);
 void querySummaryFailure(QueryId queryId, GRPCServer& uut, grpc::StatusCode statusCode);
 
 /// Current status of the query.
-QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
+::QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
 
-std::vector<std::pair<Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut);
+std::vector<std::pair<QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut);
 
 /// Wating for the query to end, e.g. by finishing or failing. Returns assertion success if the query ended (also if it failed).
 testing::AssertionResult waitForQueryToEnd(QueryId queryId, GRPCServer& uut);

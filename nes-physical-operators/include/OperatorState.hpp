@@ -13,7 +13,7 @@
 */
 
 #pragma once
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 /// Base class of all operator state. Actual operators should inherit from this.

@@ -22,7 +22,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)

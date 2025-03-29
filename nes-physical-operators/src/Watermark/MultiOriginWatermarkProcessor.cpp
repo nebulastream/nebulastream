@@ -12,14 +12,14 @@
     limitations under the License.
 */
 #include <sstream>
-#include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins) : origins(origins)
