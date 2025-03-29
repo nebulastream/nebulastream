@@ -57,7 +57,7 @@ std::string ConstantValueLogicalFunction::getConstantValue() const
     return constantValue;
 }
 
-void ConstantValueLogicalFunction::inferStamp(std::shared_ptr<Schema>)
+void ConstantValueLogicalFunction::inferStamp(const Schema&)
 {
     /// the stamp of constant value functions is defined by the constant value type.
     /// thus ut is already assigned correctly when the function node is created.

@@ -22,19 +22,14 @@
 namespace NES
 {
 
-WindowOperator::WindowOperator(const std::shared_ptr<Windowing::LogicalWindowDescriptor>&  windowDefinition, OperatorId id)
-    : WindowOperator(std::move(windowDefinition), id, INVALID_ORIGIN_ID)
+WindowOperator::WindowOperator(OperatorId id)
+    : WindowOperator(id, INVALID_ORIGIN_ID)
 {
 }
 
-WindowOperator::WindowOperator(const std::shared_ptr<Windowing::LogicalWindowDescriptor>&  windowDefinition, const OperatorId id, const OriginId originId)
-    : Operator(id), UnaryLogicalOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(std::move(windowDefinition))
+WindowOperator::WindowOperator(const OperatorId id, const OriginId originId)
+    : Operator(id), UnaryLogicalOperator(id), OriginIdAssignmentOperator(id, originId)
 {
-}
-
-std::shared_ptr<Windowing::LogicalWindowDescriptor> WindowOperator::getWindowDefinition() const
-{
-    return windowDefinition;
 }
 
 std::vector<OriginId> WindowOperator::getOutputOriginIds() const
@@ -44,8 +39,6 @@ std::vector<OriginId> WindowOperator::getOutputOriginIds() const
 void WindowOperator::setOriginId(const OriginId originId)
 {
     OriginIdAssignmentOperator::setOriginId(originId);
-    windowDefinition->setOriginId(originId);
 }
-
 
 }

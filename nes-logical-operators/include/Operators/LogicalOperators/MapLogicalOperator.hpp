@@ -23,13 +23,15 @@
 namespace NES
 {
 
-/// @brief Map operator, which contains a field assignment function that manipulates a field of the record.
+/// Map operator, which contains a field assignment function that manipulates a field of the record.
 class MapLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    MapLogicalOperator(std::shared_ptr<FieldAssignmentBinaryLogicalFunction> const& mapFunction, OperatorId id);
+    static constexpr std::string_view NAME = "Map";
 
-    [[nodiscard]] std::shared_ptr<FieldAssignmentBinaryLogicalFunction> getMapFunction() const;
+    MapLogicalOperator(std::shared_ptr<FieldAssignmentLogicalFunction> const& mapFunction, OperatorId id);
+
+    [[nodiscard]] std::shared_ptr<FieldAssignmentLogicalFunction> getMapFunction() const;
 
     /// @brief Infers the schema of the map operator. We support two cases:
     /// 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
@@ -43,10 +45,26 @@ public:
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     std::shared_ptr<Operator> clone() const override;
 
+    [[nodiscard]] SerializableOperator serialize() const override;
+
+    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+    validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    struct ConfigParameters
+    {
+        static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> MAP_FUNCTION_NAME{
+            "mapFunctionName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return Configurations::DescriptorConfig::tryGet(MAP_FUNCTION_NAME, config);
+            }};
+
+        static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = Configurations::DescriptorConfig::createConfigParameterContainerMap(MAP_FUNCTION_NAME);
+    };
+
 protected:
     std::string toString() const override;
 
 private:
-    const std::shared_ptr<FieldAssignmentBinaryLogicalFunction> mapFunction;
+    const std::shared_ptr<FieldAssignmentLogicalFunction> mapFunction;
 };
 }

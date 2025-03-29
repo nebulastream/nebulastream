@@ -17,11 +17,10 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 #include <RewriteRuleRegistry.hpp>
 
-namespace NES
+namespace NES::Optimizer
 {
-
-LogicalOperator::LogicalOperator(OperatorId id) : Operator(id)
+std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalSelectionRewriteRule()
 {
+    return std::make_unique<LowerToPhysicalSelection>();
 }
-
 }

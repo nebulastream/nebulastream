@@ -14,19 +14,19 @@
 
 #include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/AddPhysicalFunction.hpp>
-#include <Functions/ArithmeticalFunctions/CeilUnaryLogicalFunction.hpp>
-#include <Functions/ArithmeticalFunctions/DivBinaryLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/CeilLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/DivPhysicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/MulPhysicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/SubPhysicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/LogicalFunctionAdd.hpp>
-#include <Functions/ArithmeticalFunctions/MulBinaryLogicalFunction.hpp>
-#include <Functions/ArithmeticalFunctions/SubBinaryLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/EqualsPhysicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegatePhysicalFunction.hpp>
-#include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
@@ -66,8 +66,8 @@ protected:
 TEST_F(FunctionProviderTest, testLoweringCurrentlyUnsupportedFunction)
 {
     const auto LogicalFunctionCeil = LogicalFunctionCeil::create(LogicalFunctionReadLeft);
-    LogicalFunctionCeil->inferStamp(dummySchema);
-    EXPECT_ANY_THROW(const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(LogicalFunctionCeil));
+    LogicalFunctionCeil->withInferredStamp(dummySchema);
+    EXPECT_ANY_THROW(const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(LogicalFunctionCeil));
 }
 
 TEST_F(FunctionProviderTest, testLoweringAdd)
@@ -81,45 +81,45 @@ TEST_F(FunctionProviderTest, testLoweringAdd)
 
 TEST_F(FunctionProviderTest, testLoweringDiv)
 {
-    const auto DivBinaryLogicalFunction = DivBinaryLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
-    DivBinaryLogicalFunction->inferStamp(dummySchema);
-    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(DivBinaryLogicalFunction);
+    const auto DivLogicalFunction = DivLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
+    DivLogicalFunction->inferStamp(dummySchema);
+    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(DivLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::DivPhysicalFunction*>(executableFunction.get()));
 }
 
 TEST_F(FunctionProviderTest, testLoweringSub)
 {
-    const auto SubBinaryLogicalFunction = SubBinaryLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
-    SubBinaryLogicalFunction->inferStamp(dummySchema);
-    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(SubBinaryLogicalFunction);
+    const auto SubLogicalFunction = SubLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
+    SubLogicalFunction->inferStamp(dummySchema);
+    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(SubLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::SubPhysicalFunction*>(executableFunction.get()));
 }
 
 TEST_F(FunctionProviderTest, testLoweringMul)
 {
-    const auto MulBinaryLogicalFunction = MulBinaryLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
-    MulBinaryLogicalFunction->inferStamp(dummySchema);
-    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(MulBinaryLogicalFunction);
+    const auto MulLogicalFunction = MulLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
+    MulLogicalFunction->inferStamp(dummySchema);
+    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(MulLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::MulPhysicalFunction*>(executableFunction.get()));
 }
 
 TEST_F(FunctionProviderTest, testLoweringEquals)
 {
-    const auto EqualsBinaryLogicalFunction = EqualsBinaryLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
-    EqualsBinaryLogicalFunction->inferStamp(dummySchema);
-    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(EqualsBinaryLogicalFunction);
+    const auto EqualsLogicalFunction = EqualsLogicalFunction::create(LogicalFunctionReadLeft, LogicalFunctionReadRight);
+    EqualsLogicalFunction->inferStamp(dummySchema);
+    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(EqualsLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::EqualsPhysicalFunction*>(executableFunction.get()));
 }
 
 TEST_F(FunctionProviderTest, testLoweringNegate)
 {
-    const auto NegateUnaryLogicalFunction = NegateUnaryLogicalFunction::create(LogicalFunctionReadBool);
-    NegateUnaryLogicalFunction->inferStamp(dummySchema);
-    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(NegateUnaryLogicalFunction);
+    const auto NegateLogicalFunction = NegateLogicalFunction::create(LogicalFunctionReadBool);
+    NegateLogicalFunction->inferStamp(dummySchema);
+    const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(NegateLogicalFunction);
     ASSERT_TRUE(executableFunction);
     EXPECT_TRUE(dynamic_cast<Functions::NegatePhysicalFunction*>(executableFunction.get()));
 }

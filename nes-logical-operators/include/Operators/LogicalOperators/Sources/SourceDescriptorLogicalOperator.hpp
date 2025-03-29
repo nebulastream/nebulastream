@@ -47,7 +47,9 @@ public:
     void inferInputOrigins() override;
     std::vector<OriginId> getOutputOriginIds() const override;
 
-protected:
+    [[nodiscard]] SerializableOperator serialize() const override;
+
+    protected:
     [[nodiscard]] std::string toString() const override;
 
 private:

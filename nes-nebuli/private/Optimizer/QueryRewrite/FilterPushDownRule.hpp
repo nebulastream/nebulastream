@@ -12,13 +12,11 @@
     limitations under the License.
 */
 
-/*
 #pragma once
 
 #include <memory>
 #include <string>
 #include <vector>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperator.hpp>
@@ -201,4 +199,3 @@ private:
 };
 
 }
-*/

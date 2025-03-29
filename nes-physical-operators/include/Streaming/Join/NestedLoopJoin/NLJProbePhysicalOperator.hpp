@@ -26,16 +26,17 @@ namespace NES
 {
 
 /// Performs the second phase of the join. The tuples are joined via two nested loops. The left stream is the outer loop, and the right stream is the inner loop.
-class NLJProbe final : public StreamJoinProbePhysicalOperator
+class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 {
 public:
-    NLJProbe(
-        uint64_t operatorHandlerIndex,
-        const std::unique_ptr<Functions::PhysicalFunction> joinFunction,
-        const WindowMetaData& windowMetaData,
+    NLJProbePhysicalOperator(
+        const uint64_t operatorHandlerIndex,
+        const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
+        const std::string windowStartFieldName,
+        const std::string windowEndFieldName,
         const JoinSchema& joinSchema,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider);
+        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
+        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 

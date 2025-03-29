@@ -30,12 +30,12 @@
 namespace NES
 {
 
-MapLogicalOperator::MapLogicalOperator(const std::shared_ptr<FieldAssignmentBinaryLogicalFunction>& mapFunction, OperatorId id)
+MapLogicalOperator::MapLogicalOperator(const std::shared_ptr<FieldAssignmentLogicalFunction>& mapFunction, OperatorId id)
     : Operator(id), UnaryLogicalOperator(id), mapFunction(mapFunction)
 {
 }
 
-std::shared_ptr<FieldAssignmentBinaryLogicalFunction> MapLogicalOperator::getMapFunction() const
+std::shared_ptr<FieldAssignmentLogicalFunction> MapLogicalOperator::getMapFunction() const
 {
     return mapFunction;
 }
@@ -92,20 +92,70 @@ std::string MapLogicalOperator::toString() const
 
 std::shared_ptr<Operator> MapLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<MapLogicalOperator>(Util::as<FieldAssignmentBinaryLogicalFunction>(mapFunction->clone()), id);
+    auto copy = std::make_shared<MapLogicalOperator>(Util::as<FieldAssignmentLogicalFunction>(mapFunction->clone()), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
 }
 
-std::unique_ptr<LogicalOperator> LogicalOperatorGeneratedRegistrar::deserializeMapLogicalOperator(const SerializableOperator& serializableOperator)
+SerializableOperator MapLogicalOperator::serialize() const
 {
-    auto details = serializableOperator.details();
-    std::shared_ptr<LogicalOperator> operatorNode;
-    auto serializedMapOperator = SerializableOperator_MapDetails();
-    details.UnpackTo(&serializedMapOperator);
-    const auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(serializedMapOperator.function());
-    return std::make_unique<MapLogicalOperator>(Util::as<FieldAssignmentBinaryLogicalFunction>(fieldAssignmentFunction), getNextOperatorId());
+    SerializableOperator serializedOperator;
+
+    auto* opDesc = new SerializableOperator_LogicalOperator();
+    opDesc->set_operatortype(NAME);
+    serializedOperator.set_operatorid(this->getId().getRawValue());
+    serializedOperator.add_childrenids(children[0]->getId().getRawValue());
+
+    NES::FunctionList list;
+    auto* serializedFunction = list.add_functions();
+    FunctionSerializationUtil::serializeFunction(this->getMapFunction(), serializedFunction);
+
+    Configurations::DescriptorConfig::ConfigType configVariant = list;
+    SerializableVariantDescriptor variantDescriptor =
+        Configurations::descriptorConfigTypeToProto(configVariant);
+    (*opDesc->mutable_config())["functionList"] = variantDescriptor;
+
+    auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
+    auto* outputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
+    unaryOpDesc->set_allocated_outputschema(outputSchema);
+
+    auto* inputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    unaryOpDesc->set_allocated_inputschema(inputSchema);
+
+    for (const auto& originId : this->getInputOriginIds()) {
+        unaryOpDesc->add_originids(originId.getRawValue());
+    }
+
+    opDesc->set_allocated_unaryoperator(unaryOpDesc);
+    serializedOperator.set_allocated_operator_(opDesc);
+
+    return serializedOperator;
 }
+
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+MapLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return Configurations::DescriptorConfig::validateAndFormat<MapLogicalOperator::ConfigParameters>(std::move(config), NAME);
+}
+
+std::unique_ptr<LogicalOperator>
+LogicalOperatorGeneratedRegistrar::RegisterMapLogicalOperator(NES::LogicalOperatorRegistryArguments config)
+{
+    auto functionVariant = config.config[MapLogicalOperator::ConfigParameters::MAP_FUNCTION_NAME];
+    if (std::holds_alternative<NES::FunctionList>(functionVariant)) {
+        const auto& functionList = std::get<NES::FunctionList>(functionVariant);
+        const auto& functions = functionList.functions();
+        INVARIANT(functions.size() == 1, "Expected exactly one function");
+        auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(functions[0]);
+        return std::make_unique<MapLogicalOperator>(Util::as<FieldAssignmentLogicalFunction>(fieldAssignmentFunction), getNextOperatorId());
+
+    }
+    //throw CannotDeserialize("Error while deserializing MapLogicalOperator with config {}", config);
+    return nullptr;
+}
+
 }

@@ -24,6 +24,8 @@ namespace NES
 class UnionLogicalOperator : public BinaryLogicalOperator
 {
 public:
+    static constexpr std::string_view NAME = "Union";
+
     explicit UnionLogicalOperator(OperatorId id);
     ~UnionLogicalOperator() override = default;
 
@@ -34,7 +36,20 @@ public:
     std::shared_ptr<Operator> clone() const override;
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
 
+    [[nodiscard]] SerializableOperator serialize() const override;
+
+    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+    validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    struct ConfigParameters
+    {
+        static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = Configurations::DescriptorConfig::createConfigParameterContainerMap();
+    };
+
 protected:
     std::string toString() const override;
 };
+
+
 }

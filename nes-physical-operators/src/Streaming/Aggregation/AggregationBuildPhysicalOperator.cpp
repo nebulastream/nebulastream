@@ -47,16 +47,16 @@ getHashMapProxy(const AggregationOperatorHandler* operatorHandler, const Timesta
     const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction);
     INVARIANT(
         hashMap.size() == 1,
-        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support slicing");
+        "We expect exactly one slice for the given timestamp during the AggregationBuildPhysicalOperator, as we currently solely support slicing");
 
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
-    INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
+    INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuildPhysicalOperator");
     return aggregationSlice->getHashMapPtr(workerThreadId);
 }
 
 
-void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
+void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
@@ -78,7 +78,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
             const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, fieldKeys, fieldValues);
-            auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
+            auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
             {
                 aggFunction->reset(state, ctx.pipelineMemoryProvider);
@@ -90,7 +90,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
 
     /// Updating the aggregation states
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
-    auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
+    auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
@@ -98,13 +98,13 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     }
 }
 
-AggregationBuild::AggregationBuild(
+AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     const uint64_t operatorHandlerIndex,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::vector<std::unique_ptr<Functions::Function>> keyFunctions,
-    WindowAggregationOperator windowAggregationOperator)
-    : WindowAggregationOperator(std::move(windowAggregationOperator))
-    , WindowOperatorBuild(operatorHandlerIndex, std::move(timeFunction))
+    std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions,
+    std::shared_ptr<WindowAggregationPhysicalOperator> windowAggregationOperator)
+    : WindowAggregationPhysicalOperator(windowAggregationOperator)
+    , WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
     , keyFunctions(std::move(keyFunctions))
 {
 }

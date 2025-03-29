@@ -21,30 +21,24 @@
 namespace NES
 {
 
-/// @brief Watermark assignment operator, creates a watermark timestamp per input buffer.
-class WatermarkAssignerLogicalOperator : public UnaryLogicalOperator
+class EventTimeWatermarkAssignerLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    WatermarkAssignerLogicalOperator(
-        std::shared_ptr<Windowing::WatermarkStrategyDescriptor> const& watermarkStrategyDescriptor, OperatorId id);
+    static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
 
-    /// @brief Returns the watermark strategy.
-    /// @return std::shared_ptr<Windowing::WatermarkStrategyDescriptor>
-    std::shared_ptr<Windowing::WatermarkStrategyDescriptor> getWatermarkStrategyDescriptor() const;
+    EventTimeWatermarkAssignerLogicalOperator(std::shared_ptr<LogicalFunction> onField, Windowing::TimeUnit unit, OperatorId id);
 
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
-
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-
     std::shared_ptr<Operator> clone() const override;
     bool inferSchema() override;
 
+    [[nodiscard]] SerializableOperator serialize() const override;
+
 protected:
     [[nodiscard]] std::string toString() const override;
-
 private:
-    std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor;
+    std::shared_ptr<LogicalFunction> onField;
+    Windowing::TimeUnit unit;
 };
-
-
 }

@@ -118,10 +118,52 @@ void UnionLogicalOperator::inferInputOrigins()
     this->leftInputOriginIds = combinedInputOriginIds;
 }
 
-std::unique_ptr<LogicalOperator> LogicalOperatorGeneratedRegistrar::deserializeUnionLogicalOperator(const SerializableOperator&)
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+UnionLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return Configurations::DescriptorConfig::validateAndFormat<UnionLogicalOperator::ConfigParameters>(std::move(config), NAME);
+}
+
+std::unique_ptr<LogicalOperator>
+LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
     /// nothing to da as this operator has no members
-    return std::make_unique<UnionLogicalOperator>(getNextOperatorId());
+    return std::make_unique<UnionLogicalOperator>( getNextOperatorId());
+}
+
+SerializableOperator UnionLogicalOperator::serialize() const
+{
+    SerializableOperator serializedOperator;
+
+    auto* opDesc = new SerializableOperator_LogicalOperator();
+    opDesc->set_operatortype(NAME);
+    serializedOperator.set_operatorid(this->getId().getRawValue());
+    serializedOperator.add_childrenids(children[0]->getId().getRawValue());
+
+    auto* binaryOpDesc = new SerializableOperator_BinaryLogicalOperator();
+    auto* outputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
+    binaryOpDesc->set_allocated_outputschema(outputSchema);
+
+    auto* rightInputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->getRightInputSchema(), rightInputSchema);
+    binaryOpDesc->set_allocated_rightinputschema(rightInputSchema);
+
+    auto* leftInputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->getLeftInputSchema(), leftInputSchema);
+    binaryOpDesc->set_allocated_leftinputschema(leftInputSchema);
+
+    for (const auto& originId : this->getLeftInputOriginIds()) {
+        binaryOpDesc->add_leftoriginids(originId.getRawValue());
+    }
+    for (const auto& originId : this->getRightInputOriginIds()) {
+        binaryOpDesc->add_rightoriginids(originId.getRawValue());
+    }
+
+    opDesc->set_allocated_binaryoperator(binaryOpDesc);
+    serializedOperator.set_allocated_operator_(opDesc);
+
+    return serializedOperator;
 }
 
 }

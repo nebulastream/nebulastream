@@ -10,10 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-    PhysicalAggregationBuild.cpp
-    PhysicalAggregationProbe.cpp
-    PhysicalWindowOperator.cpp
+add_source_files(nes-logical-operators
+    WindowAggregationFunction.cpp
 )
 
-add_subdirectory(ContentBasedWindow)
+add_plugin(Avg WindowAggregationFunction nes-logical-operators AvgAggregationFunction.cpp)
+add_plugin(Count WindowAggregationFunction nes-logical-operators CountAggregationFunction.cpp)
+add_plugin(Max WindowAggregationFunction nes-logical-operators MaxAggregationFunction.cpp)
+add_plugin(Median WindowAggregationFunction nes-logical-operators MedianAggregationFunction.cpp)
+add_plugin(Min WindowAggregationFunction nes-logical-operators MinAggregationFunction.cpp)
+add_plugin(Sum WindowAggregationFunction nes-logical-operators SumAggregationFunction.cpp)

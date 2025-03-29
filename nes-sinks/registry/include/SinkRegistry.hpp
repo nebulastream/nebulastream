@@ -13,9 +13,7 @@
 */
 
 #pragma once
-<<<<<<<< HEAD:nes-sinks/registry/include/SinkRegistry.hpp
 
-#include <memory>
 #include <string>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -24,35 +22,18 @@
 namespace NES::Sinks
 {
 
-using SinkRegistryReturnType = std::unique_ptr<Sink>;
+using SinkRegistryReturnType = Sink;
 struct SinkRegistryArguments
 {
     SinkDescriptor sinkDescriptor;
 };
 
 class SinkRegistry : public BaseRegistry<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>
-========
-#include <Functions/PhysicalFunction.hpp>
-#include <Util/PluginRegistry.hpp>
-namespace NES::Functions
-{
-
-using RegistrySignaturePhysicalFunction
-    = RegistrySignature<std::string, Functions::PhysicalFunction, std::vector<std::unique_ptr<Functions::PhysicalFunction>>>;
-class RegistryPhysicalFunction : public BaseRegistry<RegistryPhysicalFunction, RegistrySignaturePhysicalFunction>
->>>>>>>> eb6cc11b63 (WIP):nes-physical-operators/include/Functions/Registry/RegistryPhysicalFunction.hpp
 {
 };
 
 }
 
-<<<<<<<< HEAD:nes-sinks/registry/include/SinkRegistry.hpp
 #define INCLUDED_FROM_SINK_REGISTRY
 #include <SinkGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SINK_REGISTRY
-========
-
-#define INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
-#include <Functions/Registry/GeneratedRegistrarPhysicalFunction.inc>
-#undef INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
->>>>>>>> eb6cc11b63 (WIP):nes-physical-operators/include/Functions/Registry/RegistryPhysicalFunction.hpp

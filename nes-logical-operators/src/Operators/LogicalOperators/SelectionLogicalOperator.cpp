@@ -118,13 +118,56 @@ std::vector<std::string> SelectionLogicalOperator::getFieldNamesUsedByFilterPred
     return fieldsInPredicate;
 }
 
-std::unique_ptr<LogicalOperator> LogicalOperatorGeneratedRegistrar::deserializeSelectionLogicalOperator(const SerializableOperator& serializableOperator)
+std::unique_ptr<LogicalOperator>
+LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
 {
-    auto details = serializableOperator.details();
-    std::shared_ptr<LogicalOperator> operatorNode;
-    auto selectionDetails = SerializableOperator_SelectionDetails();
-    details.UnpackTo(&selectionDetails);
-    const auto filterFunction = FunctionSerializationUtil::deserializeFunction(selectionDetails.predicate());
-    return std::make_unique<SelectionLogicalOperator>(filterFunction, getNextOperatorId());
+    auto functionVariant = config.config[SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME];
+    if (std::holds_alternative<NES::FunctionList>(functionVariant)) {
+        const auto& functionList = std::get<NES::FunctionList>(functionVariant);
+        const auto& functions = functionList.functions();
+        INVARIANT(functions.size() == 1, "Expected exactly one function");
+        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
+        return std::make_unique<SelectionLogicalOperator>(function, getNextOperatorId());
+
+    }
+    //throw CannotDeserialize("Error while deserializing SelectionLogicalOperator with config {}", config);
+    return nullptr;
+}
+
+SerializableOperator SelectionLogicalOperator::serialize() const
+{
+    SerializableOperator serializedOperator;
+
+    auto* opDesc = new SerializableOperator_LogicalOperator();
+    opDesc->set_operatortype(NAME);
+    serializedOperator.set_operatorid(this->getId().getRawValue());
+    serializedOperator.add_childrenids(children[0]->getId().getRawValue());
+
+    NES::FunctionList list;
+    auto* serializedFunction = list.add_functions();
+    FunctionSerializationUtil::serializeFunction(this->getPredicate(), serializedFunction);
+
+    Configurations::DescriptorConfig::ConfigType configVariant = list;
+    SerializableVariantDescriptor variantDescriptor =
+        Configurations::descriptorConfigTypeToProto(configVariant);
+    (*opDesc->mutable_config())["selectionFunctionName"] = variantDescriptor;
+
+    auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
+    auto* outputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
+    unaryOpDesc->set_allocated_outputschema(outputSchema);
+
+    auto* inputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    unaryOpDesc->set_allocated_inputschema(inputSchema);
+
+    for (const auto& originId : this->getInputOriginIds()) {
+        unaryOpDesc->add_originids(originId.getRawValue());
+    }
+
+    opDesc->set_allocated_unaryoperator(unaryOpDesc);
+    serializedOperator.set_allocated_operator_(opDesc);
+
+    return serializedOperator;
 }
 }

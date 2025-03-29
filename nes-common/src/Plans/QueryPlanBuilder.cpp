@@ -77,7 +77,7 @@ QueryPlanBuilder::addSelection(std::shared_ptr<LogicalFunction> const& selection
 }
 
 std::shared_ptr<QueryPlan>
-QueryPlanBuilder::addMap(std::shared_ptr<FieldAssignmentBinaryLogicalFunction> const& mapFunction, std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanBuilder::addMap(std::shared_ptr<FieldAssignmentLogicalFunction> const& mapFunction, std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add map operator to query plan");
     if (!mapFunction->getFunctionByType<RenameLogicalFunction>().empty())
@@ -92,28 +92,22 @@ QueryPlanBuilder::addMap(std::shared_ptr<FieldAssignmentBinaryLogicalFunction> c
 std::shared_ptr<QueryPlan> QueryPlanBuilder::addWindowAggregation(
     std::shared_ptr<QueryPlan> queryPlan,
     const std::shared_ptr<Windowing::WindowType>& windowType,
-    const std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>>& windowAggs,
+    const std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>>& windowAggs,
     const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& onKeys)
 {
     PRECONDITION(not queryPlan->getRootOperators().empty(), "invalid query plan, as the root operator is empty");
 
     if (const auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType))
     {
-        /// check if query contain watermark assigner, and add if missing (as default behaviour)
-        if (not NES::Util::instanceOf<WatermarkAssignerLogicalOperator>(queryPlan->getRootOperators()[0]))
-            NES_DEBUG("add default watermark strategy as non is provided");
-
         switch (timeBasedWindowType->getTimeCharacteristic()->getType())
         {
             case Windowing::TimeCharacteristic::Type::IngestionTime:
-                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
-                    Windowing::IngestionTimeWatermarkStrategyDescriptor::create(), getNextOperatorId()));
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<IngestionTimeWatermarkAssignerLogicalOperator>(getNextOperatorId()));
                 break;
             case Windowing::TimeCharacteristic::Type::EventTime:
-                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
-                    Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<EventTimeWatermarkAssignerLogicalOperator>(
                         FieldAccessLogicalFunction::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
-                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()),
+                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit(),
                     getNextOperatorId()));
                 break;
         }
@@ -123,10 +117,8 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addWindowAggregation(
         throw NotImplemented("Only TimeBasedWindowType is supported for now");
     }
 
-
     auto inputSchema = queryPlan->getRootOperators()[0]->getOutputSchema();
-    const auto windowDefinition = Windowing::LogicalWindowDescriptor::create(onKeys, windowAggs, windowType);
-    const auto windowOperator = std::make_shared<WindowLogicalOperator>(windowDefinition, getNextOperatorId());
+    const auto windowOperator = std::make_shared<WindowedAggregationLogicalOperator>(onKeys, windowAggs, windowType, getNextOperatorId());
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return queryPlan;
@@ -145,10 +137,10 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addJoin(
     std::shared_ptr<QueryPlan> rightQueryPlan,
     std::shared_ptr<LogicalFunction> joinFunction,
     const std::shared_ptr<Windowing::WindowType>& windowType,
-    Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT)
+    JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::CARTESIAN_PRODUCT)
 {
     NES_TRACE("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
-    std::unordered_set<std::shared_ptr<BinaryLogicalFunction>> visitedFunctions;
+    std::unordered_set<std::shared_ptr<LogicalFunction>> visitedFunctions;
     /// We are iterating over all binary functions and check if each side's leaf is a constant value, as we are supposedly not supporting this
     /// I am not sure why this is the case, but I will keep it for now. IMHO, the whole QueryPlanBuilder should be refactored to be more readable and
     /// also to be more maintainable. TODO #506
@@ -188,13 +180,10 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addJoin(
     leftQueryPlan = checkAndAddWatermarkAssignment(leftQueryPlan, windowType);
     rightQueryPlan = checkAndAddWatermarkAssignment(rightQueryPlan, windowType);
 
+    NES_TRACE("QueryPlanBuilder: add join operator to query plan");
     ///TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     ///TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalJoinDescriptor(joinFunction, windowType, 1, 1, joinType);
-
-    NES_TRACE("QueryPlanBuilder: add join operator to query plan");
-    auto op = std::make_shared<JoinLogicalOperator>(joinDefinition, getNextOperatorId());
-    NES_INFO("Created join {}", *op, Util::as<JoinLogicalOperator>(op)->getJoinDefinition().getWindowType()->toString());
+    auto op = std::make_shared<JoinLogicalOperator>(joinFunction, windowType, 1, 1, joinType, getNextOperatorId());
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }
@@ -207,6 +196,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addSink(std::string sinkName, std::
     return queryPlan;
 }
 
+/*
 std::shared_ptr<QueryPlan> QueryPlanBuilder::assignWatermark(
     std::shared_ptr<QueryPlan> queryPlan, std::shared_ptr<Windowing::WatermarkStrategyDescriptor> const& watermarkStrategyDescriptor)
 {
@@ -239,6 +229,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::checkAndAddWatermarkAssignment(
     }
     return queryPlan;
 }
+*/
 
 std::shared_ptr<QueryPlan> QueryPlanBuilder::addBinaryOperatorAndUpdateSource(
     std::shared_ptr<Operator> operatorNode, std::shared_ptr<QueryPlan> leftQueryPlan, std::shared_ptr<QueryPlan> rightQueryPlan)

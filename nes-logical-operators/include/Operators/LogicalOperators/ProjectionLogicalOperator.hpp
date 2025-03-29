@@ -26,6 +26,8 @@ namespace NES
 class ProjectionLogicalOperator : public UnaryLogicalOperator
 {
 public:
+    static constexpr std::string_view NAME = "Projection";
+
     explicit ProjectionLogicalOperator(std::vector<std::shared_ptr<LogicalFunction>> functions, OperatorId id);
     ~ProjectionLogicalOperator() override = default;
 
@@ -37,6 +39,22 @@ public:
 
     bool inferSchema() override;
     std::shared_ptr<Operator> clone() const override;
+
+    [[nodiscard]] SerializableOperator serialize() const override;
+
+    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+    validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    struct ConfigParameters
+    {
+        static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> PROJECTION_FUNCTION_NAME{
+            "projectionFunctionName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return Configurations::DescriptorConfig::tryGet(PROJECTION_FUNCTION_NAME, config);
+            }};
+
+        static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = Configurations::DescriptorConfig::createConfigParameterContainerMap(PROJECTION_FUNCTION_NAME);
+    };
 
 protected:
     [[nodiscard]] std::string toString() const override;

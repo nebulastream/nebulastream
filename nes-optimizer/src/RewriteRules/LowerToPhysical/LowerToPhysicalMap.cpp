@@ -16,7 +16,7 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
 #include <RewriteRuleRegistry.hpp>
 
-namespace NES
+namespace NES::Optimizer
 {
 std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalMap()
 {

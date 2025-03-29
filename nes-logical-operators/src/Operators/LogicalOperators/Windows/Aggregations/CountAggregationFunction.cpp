@@ -29,34 +29,34 @@
 namespace NES::Windowing
 {
 
-CountAggregationDescriptor::CountAggregationDescriptor(const std::shared_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationDescriptor(field)
+CountAggregationFunction::CountAggregationFunction(const std::shared_ptr<FieldAccessLogicalFunction> field)
+    : WindowAggregationFunction(field)
 {
     this->aggregationType = Type::Count;
 }
-CountAggregationDescriptor::CountAggregationDescriptor(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
-    : WindowAggregationDescriptor(std::move(field), std::move(asField))
+CountAggregationFunction::CountAggregationFunction(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
+    : WindowAggregationFunction(std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Count;
 }
 
-std::shared_ptr<WindowAggregationDescriptor>
-CountAggregationDescriptor::create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField)
+std::shared_ptr<WindowAggregationFunction>
+CountAggregationFunction::create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
 {
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
+    return std::make_shared<CountAggregationFunction>(CountAggregationFunction(std::move(onField), std::move(asField)));
 }
 
-std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::on(const std::shared_ptr<NodeFunction>& keyFunction)
+std::shared_ptr<WindowAggregationFunction> CountAggregationFunction::on(const std::shared_ptr<LogicalFunction>& onField)
 {
-    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(keyFunction))
+    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(onField))
     {
-        throw DifferentFieldTypeExpected("Query: window key has to be an FieldAccessFunction but it was a  {}", *keyFunction);
+        throw DifferentFieldTypeExpected("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
     }
-    auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(keyFunction);
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(fieldAccess));
+    auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(onField);
+    return std::make_shared<CountAggregationFunction>(CountAggregationFunction(fieldAccess));
 }
 
-void CountAggregationDescriptor::inferStamp(const Schema& schema)
+void CountAggregationFunction::inferStamp(const Schema& schema)
 {
     const auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     const auto asFieldName = NES::Util::as<FieldAccessLogicalFunction>(asField)->getFieldName();
@@ -77,21 +77,38 @@ void CountAggregationDescriptor::inferStamp(const Schema& schema)
     asField->setStamp(onField->getStamp());
 }
 
-std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::clone()
+std::shared_ptr<WindowAggregationFunction> CountAggregationFunction::clone()
 {
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->clone(), this->asField->clone()));
+    return std::make_shared<CountAggregationFunction>(CountAggregationFunction(this->onField->clone(), this->asField->clone()));
 }
-std::shared_ptr<DataType> CountAggregationDescriptor::getInputStamp()
+
+std::shared_ptr<DataType> CountAggregationFunction::getInputStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UINT64);
 }
-std::shared_ptr<DataType> CountAggregationDescriptor::getPartialAggregateStamp()
+std::shared_ptr<DataType> CountAggregationFunction::getPartialAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UINT64);
 }
-std::shared_ptr<DataType> CountAggregationDescriptor::getFinalAggregateStamp()
+std::shared_ptr<DataType> CountAggregationFunction::getFinalAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UINT64);
+}
+
+NES::SerializableAggregationFunction CountAggregationFunction::serialize() const
+{
+    NES::SerializableAggregationFunction serializedAggregationFunction;
+    serializedAggregationFunction.set_type(NAME);
+
+    auto *onFieldFuc = new SerializableFunction();
+    FunctionSerializationUtil::serializeFunction(onField, onFieldFuc);
+
+    auto *asFieldFuc = new SerializableFunction();
+    FunctionSerializationUtil::serializeFunction(asField, asFieldFuc);
+
+    serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
+    serializedAggregationFunction.set_allocated_on_field(onFieldFuc);
+    return serializedAggregationFunction;
 }
 
 }

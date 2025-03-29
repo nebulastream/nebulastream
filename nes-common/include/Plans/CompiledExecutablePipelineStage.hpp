@@ -29,7 +29,7 @@ class CompiledExecutablePipelineStage final : public ExecutablePipelineStage
 {
 public:
     CompiledExecutablePipelineStage(
-        const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
+        const std::shared_ptr<OperatorPipeline>& operatorPipeline,
         std::vector<std::shared_ptr<OperatorHandler>> operatorHandler,
         nautilus::engine::Options options);
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
@@ -45,7 +45,7 @@ private:
     const nautilus::engine::Options options;
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*> compiledPipelineFunction;
     std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
-    std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
+    std::shared_ptr<OperatorPipeline> operatorPipeline;
 };
 
 }

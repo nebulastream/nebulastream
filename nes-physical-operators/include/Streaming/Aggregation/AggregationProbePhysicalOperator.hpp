@@ -24,10 +24,10 @@
 namespace NES
 {
 
-class AggregationProbe final : public WindowAggregationOperator, public WindowOperatorProbe
+class AggregationProbePhysicalOperator final : public WindowAggregationPhysicalOperator, public WindowProbePhysicalOperator
 {
 public:
-    AggregationProbe(WindowAggregationOperator windowAggregationOperator, uint64_t operatorHandlerIndex, WindowMetaData windowMetaData);
+    AggregationProbePhysicalOperator(std::shared_ptr<WindowAggregationPhysicalOperator> windowAggregationOperator, uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 };
 

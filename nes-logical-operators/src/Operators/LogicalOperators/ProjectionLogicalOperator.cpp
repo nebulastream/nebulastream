@@ -39,7 +39,7 @@ ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<std::shared_ptr
     {
         return not(
             NES::Util::instanceOf<FieldAccessLogicalFunction>(function)
-            or NES::Util::instanceOf<FieldAssignmentBinaryLogicalFunction>(function));
+            or NES::Util::instanceOf<FieldAssignmentLogicalFunction>(function));
     };
     bool allFunctionsAreSupported = true;
     for (const auto& function : this->functions | std::views::filter(functionTypeNotSupported))
@@ -49,7 +49,7 @@ ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<std::shared_ptr
     }
     INVARIANT(
         allFunctionsAreSupported,
-        "The Projection operator only supports FieldAccessLogicalFunction and FieldAssignmentBinaryLogicalFunction functions.");
+        "The Projection operator only supports FieldAccessLogicalFunction and FieldAssignmentLogicalFunction functions.");
 }
 
 const std::vector<std::shared_ptr<LogicalFunction>>& ProjectionLogicalOperator::getFunctions() const
@@ -77,7 +77,7 @@ std::string getFieldName(const LogicalFunction& function)
     {
         return FieldAccessLogicalFunction->getFieldName();
     }
-    return dynamic_cast<FieldAssignmentBinaryLogicalFunction const*>(&function)->getField()->getFieldName();
+    return dynamic_cast<FieldAssignmentLogicalFunction const*>(&function)->getField()->getFieldName();
 }
 
 std::string ProjectionLogicalOperator::toString() const
@@ -111,16 +111,16 @@ bool ProjectionLogicalOperator::inferSchema()
             const auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(function);
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
-        else if (NES::Util::instanceOf<FieldAssignmentBinaryLogicalFunction>(function))
+        else if (NES::Util::instanceOf<FieldAssignmentLogicalFunction>(function))
         {
-            const auto fieldAssignment = NES::Util::as<FieldAssignmentBinaryLogicalFunction>(function);
+            const auto fieldAssignment = NES::Util::as<FieldAssignmentLogicalFunction>(function);
             outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getField()->getStamp());
         }
         else
         {
             throw CannotInferSchema(fmt::format(
                 "ProjectionLogicalOperator: Function has to be an FieldAccessLogicalFunction, a "
-                "RenameLogicalFunction, or a FieldAssignmentBinaryLogicalFunction, but it was a {}",
+                "RenameLogicalFunction, or a FieldAssignmentLogicalFunction, but it was a {}",
                 *function));
         }
     }
@@ -138,19 +138,67 @@ std::shared_ptr<Operator> ProjectionLogicalOperator::clone() const
     return copy;
 }
 
-std::unique_ptr<LogicalOperator> LogicalOperatorGeneratedRegistrar::deserializeProjectionLogicalOperator(const SerializableOperator& serializableOperator)
+std::unique_ptr<LogicalOperator>
+LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
 {
-    auto details = serializableOperator.details();
-    std::shared_ptr<LogicalOperator> operatorNode;
-    auto projectionDetails = SerializableOperator_ProjectionDetails();
-    details.UnpackTo(&projectionDetails);
-    std::vector<std::shared_ptr<LogicalFunction>> functions;
-    for (const auto& serializedFunction : projectionDetails.function())
-    {
-        auto projectFunction = FunctionSerializationUtil::deserializeFunction(serializedFunction);
-        functions.push_back(projectFunction);
+    auto functionVariant = config.config[ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME];
+
+    if (std::holds_alternative<NES::FunctionList>(functionVariant)) {
+        const auto& functionList = std::get<FunctionList>(functionVariant);
+        const auto& functions = functionList.functions();
+
+        std::vector<std::shared_ptr<LogicalFunction>> functionVec(functions.size());
+        for (const auto &function : functions)
+        {
+            functionVec.push_back(FunctionSerializationUtil::deserializeFunction(function));
+        }
+
+        return std::make_unique<ProjectionLogicalOperator>(functionVec, getNextOperatorId());
+
     }
-    return std::make_unique<ProjectionLogicalOperator>(functions, getNextOperatorId());
+    //throw CannotDeserialize("Error while deserializing MapLogicalOperator with config {}", config);
+    return nullptr;
+}
+
+
+SerializableOperator ProjectionLogicalOperator::serialize() const
+{
+    SerializableOperator serializedOperator;
+
+    auto* opDesc = new SerializableOperator_LogicalOperator();
+    opDesc->set_operatortype(NAME);
+    serializedOperator.set_operatorid(this->getId().getRawValue());
+    serializedOperator.add_childrenids(children[0]->getId().getRawValue());
+
+    NES::FunctionList list;
+    for (const auto& function : this->getFunctions())
+    {
+        auto* serializedFunction = list.add_functions();
+        FunctionSerializationUtil::serializeFunction(function, serializedFunction);
+    }
+
+    Configurations::DescriptorConfig::ConfigType configVariant = list;
+    SerializableVariantDescriptor variantDescriptor =
+        Configurations::descriptorConfigTypeToProto(configVariant);
+    (*opDesc->mutable_config())["selectionFunctionName"] = variantDescriptor;
+
+    auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
+    auto* outputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
+    unaryOpDesc->set_allocated_outputschema(outputSchema);
+
+    auto* inputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    unaryOpDesc->set_allocated_inputschema(inputSchema);
+
+    for (const auto& originId : this->getInputOriginIds()) {
+        unaryOpDesc->add_originids(originId.getRawValue());
+    }
+
+    opDesc->set_allocated_unaryoperator(unaryOpDesc);
+    serializedOperator.set_allocated_operator_(opDesc);
+
+    return serializedOperator;
 }
 
 }

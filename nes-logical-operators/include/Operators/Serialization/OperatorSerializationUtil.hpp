@@ -44,6 +44,8 @@ public:
     /// Note: This method will not deserialize its children
     static std::shared_ptr<LogicalOperator> deserializeOperator(SerializableOperator serializedOperator);
 
+    static std::unique_ptr<LogicalOperator> deserializeLogicalOperator(const SerializableOperator_LogicalOperator& serializedOperator);
+
     static void serializeSourceOperator(SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
     static void serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator);
     static void serializeSourceDescriptor(
@@ -58,6 +60,10 @@ public:
     static std::unique_ptr<Sinks::SinkDescriptor>
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
 
+    static std::unique_ptr<Windowing::WindowAggregationFunction>
+    deserializeWindowAggregationFunction(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableWindowAggregationFunction);
+
+    /*
     static void serializeSelectionOperator(const SelectionLogicalOperator& selectionOperator, SerializableOperator& serializedOperator);
     static void serializeProjectionOperator(const ProjectionLogicalOperator& projectionOperator, SerializableOperator& serializedOperator);
     static void serializeMapOperator(const MapLogicalOperator& mapOperator, SerializableOperator& serializedOperator);
@@ -78,5 +84,6 @@ public:
 
     static void
     serializeInferModelOperator(const InferModel::InferModelLogicalOperator& inferModel, SerializableOperator& serializedOperator);
+     */
 };
 }

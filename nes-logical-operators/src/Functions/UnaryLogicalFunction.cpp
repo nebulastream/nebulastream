@@ -20,12 +20,22 @@
 
 namespace NES
 {
-UnaryLogicalFunction::UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
+LogicalFunction::LogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
     : LogicalFunction(std::move(stamp), std::move(name))
 {
 }
 
-UnaryLogicalFunction::UnaryLogicalFunction(UnaryLogicalFunction* other) : LogicalFunction(other)
+LogicalFunction::LogicalFunction(LogicalFunction* other) : LogicalFunction(other)
 {
+}
+
+void LogicalFunction::setChild(const std::shared_ptr<LogicalFunction> child)
+{
+    children[0] = child;
+}
+
+std::shared_ptr<LogicalFunction> LogicalFunction::getChild() const
+{
+    return children[0];
 }
 }

@@ -30,44 +30,44 @@
 namespace NES::Windowing
 {
 
-AvgAggregationDescriptor::AvgAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationDescriptor(field)
+AvgAggregationFunction::AvgAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)
 {
     this->aggregationType = Type::Avg;
 }
-AvgAggregationDescriptor::AvgAggregationDescriptor(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
-    : WindowAggregationDescriptor(field, asField)
+AvgAggregationFunction::AvgAggregationFunction(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
+    : WindowAggregationFunction(field, asField)
 {
     this->aggregationType = Type::Avg;
 }
 
-std::shared_ptr<WindowAggregationDescriptor>
-AvgAggregationDescriptor::create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
+std::shared_ptr<WindowAggregationFunction>
+AvgAggregationFunction::create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
 {
-    return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(std::move(onField), std::move(asField)));
+    return std::make_shared<AvgAggregationFunction>(AvgAggregationFunction(std::move(onField), std::move(asField)));
 }
 
-std::shared_ptr<WindowAggregationDescriptor> AvgAggregationDescriptor::on(const std::shared_ptr<LogicalFunction>& keyFunction)
+std::shared_ptr<WindowAggregationFunction> AvgAggregationFunction::on(const std::shared_ptr<LogicalFunction>& onField)
 {
-    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(keyFunction))
+    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(onField))
     {
         NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
     }
-    auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(keyFunction);
-    return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(fieldAccess));
+    auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(onField);
+    return std::make_shared<AvgAggregationFunction>(AvgAggregationFunction(fieldAccess));
 }
 
-std::shared_ptr<WindowAggregationDescriptor> AvgAggregationDescriptor::clone()
+std::shared_ptr<WindowAggregationFunction> AvgAggregationFunction::clone()
 {
-    return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(this->onField->clone(), this->asField->clone()));
+    return std::make_shared<AvgAggregationFunction>(AvgAggregationFunction(this->onField->clone(), this->asField->clone()));
 }
 
-void AvgAggregationDescriptor::inferStamp(const Schema& schema)
+void AvgAggregationFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
     if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
     {
-        NES_FATAL_ERROR("AvgAggregationDescriptor: aggregations on non numeric fields is not supported.");
+        NES_FATAL_ERROR("AvgAggregationFunction: aggregations on non numeric fields is not supported.");
     }
     ///Set fully qualified name for the as Field
     auto onFieldName = NES::Util::as<FieldAccessLogicalFunction>(onField)->getFieldName();
@@ -87,17 +87,33 @@ void AvgAggregationDescriptor::inferStamp(const Schema& schema)
     asField->setStamp(getFinalAggregateStamp());
 }
 
-std::shared_ptr<DataType> AvgAggregationDescriptor::getInputStamp()
+std::shared_ptr<DataType> AvgAggregationFunction::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> AvgAggregationDescriptor::getPartialAggregateStamp()
+std::shared_ptr<DataType> AvgAggregationFunction::getPartialAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
-std::shared_ptr<DataType> AvgAggregationDescriptor::getFinalAggregateStamp()
+std::shared_ptr<DataType> AvgAggregationFunction::getFinalAggregateStamp()
 {
     return DataTypeProvider::provideDataType(LogicalType::FLOAT64);
+}
+
+NES::SerializableAggregationFunction AvgAggregationFunction::serialize() const
+{
+    NES::SerializableAggregationFunction serializedAggregationFunction;
+    serializedAggregationFunction.set_type(NAME);
+
+    auto *onFieldFuc = new SerializableFunction();
+    FunctionSerializationUtil::serializeFunction(onField, onFieldFuc);
+
+    auto *asFieldFuc = new SerializableFunction();
+    FunctionSerializationUtil::serializeFunction(asField, asFieldFuc);
+
+    serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
+    serializedAggregationFunction.set_allocated_on_field(onFieldFuc);
+    return serializedAggregationFunction;
 }
 
 }

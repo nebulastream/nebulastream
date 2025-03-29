@@ -63,19 +63,19 @@ void setupProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* p
 }
 
 
-WindowOperatorProbe::WindowOperatorProbe(const uint64_t operatorHandlerIndex, WindowMetaData windowMetaData)
-    : operatorHandlerIndex(operatorHandlerIndex), windowMetaData(std::move(windowMetaData))
+WindowProbePhysicalOperator::WindowProbePhysicalOperator(const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
+    : operatorHandlerIndex(operatorHandlerIndex), windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName)
 {
 }
 
-void WindowOperatorProbe::setup(ExecutionContext& executionCtx) const
+void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx) const
 {
     /// Giving child operators the change to setup
-    Operator::setup(executionCtx);
+    AbstractPhysicalOperator::setup(executionCtx);
     nautilus::invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerIndex), executionCtx.pipelineContext);
 }
 
-void WindowOperatorProbe::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// Update the watermark for the probe and delete all slices that can be deleted
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -89,16 +89,16 @@ void WindowOperatorProbe::close(ExecutionContext& executionCtx, RecordBuffer& re
         executionCtx.originId);
 
     /// Now close for all children
-    Operator::close(executionCtx, recordBuffer);
+    AbstractPhysicalOperator::close(executionCtx, recordBuffer);
 }
 
-void WindowOperatorProbe::terminate(ExecutionContext& executionCtx) const
+void WindowProbePhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     /// Delete all slices as the query has ended
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     invoke(deleteAllSlicesAndWindowsProxy, operatorHandlerMemRef);
 
     /// Now terminate for all children
-    Operator::terminate(executionCtx);
+    AbstractPhysicalOperator::terminate(executionCtx);
 }
 }

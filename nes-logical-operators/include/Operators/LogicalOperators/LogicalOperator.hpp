@@ -18,6 +18,7 @@
 
 namespace NES
 {
+class SerializableOperator;
 
 /// Logical operator, enables schema inference and signature computation.
 class LogicalOperator : public virtual Operator
@@ -35,6 +36,6 @@ public:
     /// @return true if schema was correctly inferred
     virtual bool inferSchema() = 0;
 
-protected:
+    virtual SerializableOperator serialize() const = 0;
 };
 }

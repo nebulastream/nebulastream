@@ -32,7 +32,7 @@ public:
     AvgAggregationFunction(
         std::shared_ptr<PhysicalType> inputType,
         std::shared_ptr<PhysicalType> resultType,
-        std::unique_ptr<Functions::Function> inputFunction,
+        std::unique_ptr<Functions::PhysicalFunction> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<PhysicalType> countType);
 

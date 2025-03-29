@@ -22,19 +22,22 @@
 namespace NES
 {
 
-class WindowLogicalOperator : public WindowOperator
+class IngestionTimeWatermarkAssignerLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    WindowLogicalOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> const& windowDefinition, OperatorId id);
+    static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
+
+    IngestionTimeWatermarkAssignerLogicalOperator(OperatorId id);
+
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     std::shared_ptr<Operator> clone() const override;
     bool inferSchema() override;
 
-    std::vector<std::string> getGroupByKeyNames() const;
+    [[nodiscard]] SerializableOperator serialize() const override;
 
 protected:
-    std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
 };
 
 }

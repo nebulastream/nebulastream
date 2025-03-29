@@ -25,15 +25,15 @@ namespace NES
 
 /// Is the general probe operator for window operators. It is responsible for emitting slices and windows to the second phase (probe).
 /// It is part of the first phase (build) that builds up the state of the window operator.
-class WindowOperatorBuild : public ExecutableOperator
+class WindowBuildPhysicalOperator : public AbstractPhysicalOperator
 {
 public:
-    explicit WindowOperatorBuild(uint64_t operatorHandlerIndex, std::unique_ptr<TimeFunction> timeFunction);
+    explicit WindowBuildPhysicalOperator(uint64_t operatorHandlerIndex, std::unique_ptr<TimeFunction> timeFunction);
 
     /// This setup function can be called in a multithreaded environment. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
-    /// Therefore, any setup to the operator handler should happen in the WindowOperatorProbe.
-    void setup(ExecutionContext& executionCtx) const override { Operator::setup(executionCtx); };
+    /// Therefore, any setup to the operator handler should happen in the WindowProbePhysicalOperator.
+    void setup(ExecutionContext& executionCtx) const override { AbstractPhysicalOperator::setup(executionCtx); };
 
     /// Initializes the time function, e.g., method that extracts the timestamp from a record
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

@@ -28,11 +28,11 @@ namespace NES
 {
 
 /// Stores members that are needed for both phases of the aggregation, build and probe
-class WindowAggregationOperator
+class WindowAggregationPhysicalOperator
 {
 public:
-    WindowAggregationOperator(
-        std::vector<std::unique_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+    WindowAggregationPhysicalOperator(
+        std::vector<std::unique_ptr<AggregationFunction>> aggregationFunctions,
         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues,
@@ -52,19 +52,19 @@ public:
             "The number of aggregation functions must match the number of field values");
     }
 
-    WindowAggregationOperator(WindowAggregationOperator&& other) noexcept
-        : aggregationFunctions(std::move(other.aggregationFunctions))
-        , hashFunction(std::move(other.hashFunction))
-        , fieldKeys(std::move(other.fieldKeys))
-        , fieldValues(std::move(other.fieldValues))
-        , entriesPerPage(other.entriesPerPage)
-        , entrySize(other.entrySize)
+    WindowAggregationPhysicalOperator(std::shared_ptr<WindowAggregationPhysicalOperator>& other) noexcept
+        : aggregationFunctions(std::move(other->aggregationFunctions))
+        , hashFunction(std::move(other->hashFunction))
+        , fieldKeys(std::move(other->fieldKeys))
+        , fieldValues(std::move(other->fieldValues))
+        , entriesPerPage(other->entriesPerPage)
+        , entrySize(other->entrySize)
     {
     }
 
 protected:
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
-    std::vector<std::unique_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
+    std::vector<std::unique_ptr<AggregationFunction>> aggregationFunctions;
     std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys;
     std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues;

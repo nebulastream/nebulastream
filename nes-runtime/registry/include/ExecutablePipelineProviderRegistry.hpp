@@ -14,14 +14,13 @@
 
 #pragma once
 #include <string>
-#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Pipelines/ExecutablePipelineProvider.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES
 {
 /// TODO #323: !!!IMPORTANT!!! This is not how we should use registries. We have an open issue to address this problem
-using ExecutablePipelineProviderRegistryReturnType = std::unique_ptr<ExecutablePipelineProvider>;
-
+using ExecutablePipelineProviderRegistryReturnType = ExecutablePipelineProvider;
 struct ExecutablePipelineProviderRegistryArguments
 {
 };

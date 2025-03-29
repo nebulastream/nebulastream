@@ -26,7 +26,7 @@ class ModPhysicalFunction : public PhysicalFunction
 {
 public:
     ModPhysicalFunction(std::unique_ptr<PhysicalFunction> leftSubPhysicalFunction, std::unique_ptr<PhysicalFunction> rightSubPhysicalFunction);
-    VarVal execute(Record& record) const override;
+    VarVal execute(const Record& record) const override;
 
 private:
     std::unique_ptr<PhysicalFunction> leftSubPhysicalFunction;

@@ -43,6 +43,8 @@ public:
     [[nodiscard]] std::shared_ptr<Schema> getSchema() const;
     void setSchema(std::shared_ptr<Schema> schema);
 
+    [[nodiscard]]  SerializableOperator serialize() const override;
+
 protected:
     [[nodiscard]] std::string toString() const override;
 

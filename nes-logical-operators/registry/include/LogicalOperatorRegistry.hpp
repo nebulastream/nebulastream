@@ -22,17 +22,18 @@
 namespace NES
 {
 
-using RegistrySignatureLogicalOperator = RegistrySignature<std::string, LogicalOperator>;
-class RegistryLogicalOperator : public BaseRegistry<RegistryLogicalOperator, RegistrySignatureLogicalOperator>
+using LogicalOperatorRegistryReturnType = LogicalOperator;
+struct LogicalOperatorRegistryArguments
 {
+    Configurations::DescriptorConfig::Config config;
 };
 
-using RegistrySignatureDeserializeLogicalOperator = RegistrySignature<std::string, LogicalOperator, SerializableOperator>;
-class RegistryDeserializeLogicalOperator : public BaseRegistry<RegistryDeserializeLogicalOperator, RegistrySignatureDeserializeLogicalOperator>
+class LogicalOperatorRegistry
+    : public BaseRegistry<LogicalOperatorRegistry, std::string, LogicalOperatorRegistryReturnType, LogicalOperatorRegistryArguments>
 {
 };
 }
 
 #define INCLUDED_FROM_REGISTRY_LOGICAL_OPERATOR
-#include <Operators/LogicalOperatorGeneratedRegistrar.inc>
+#include <LogicalOperatorGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_LOGICAL_OPERATOR

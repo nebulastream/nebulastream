@@ -32,7 +32,7 @@ public:
 
     std::string getConstantValue() const;
 
-    void inferStamp(std::shared_ptr<Schema> schema) override;
+    void inferStamp(const Schema& schema) override;
 
     bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
 

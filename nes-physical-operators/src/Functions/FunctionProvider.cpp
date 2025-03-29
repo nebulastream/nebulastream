@@ -16,22 +16,16 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Functions/ExecutableFunctionConstantValue.hpp>
-#include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
-#include <Functions/ExecutableFunctionReadField.hpp>
-#include <Execution/Functions/Function.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/ConstantValuePhysicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Functions/FieldAccessPhysicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
-#include <Functions/Function.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -52,9 +46,9 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(const std::sha
 
     /// 3. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessNode = NES::Util::as_if<FieldAssignmentBinaryLogicalFunction>(nodeFunction); fieldAccessNode != nullptr)
+    if (const auto fieldAccessNode = NES::Util::as_if<FieldAccessLogicalFunction>(logicalFunction); fieldAccessNode != nullptr)
     {
-        return std::make_unique<ReadFieldPhysicalFunction>(fieldAccessNode->getFieldName());
+        return std::make_unique<FieldAccessPhysicalFunction>(fieldAccessNode->getFieldName());
     }
     if (const auto constantValueNode = NES::Util::as_if<ConstantValueLogicalFunction>(logicalFunction); constantValueNode != nullptr)
     {
@@ -62,8 +56,8 @@ std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(const std::sha
     }
 
     /// 4. Calling the registry to create an executable function.
-    auto executableFunctionArguments = ExecutableFunctionRegistryArguments(std::move(childFunction));
-    auto function = ExecutableFunctionRegistry::instance().create(nodeFunction->getType(), std::move(executableFunctionArguments));
+    auto executableFunctionArguments = PhysicalFunctionRegistryArguments(std::move(childFunction));
+    auto function = PhysicalFunctionRegistry::instance().create(logicalFunction->getType(), std::move(executableFunctionArguments));
     if (not function.has_value())
     {
         throw UnknownFunctionType(fmt::format("Can not lower function: {}", logicalFunction->getType()));

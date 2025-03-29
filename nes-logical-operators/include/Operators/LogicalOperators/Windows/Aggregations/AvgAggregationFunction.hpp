@@ -16,33 +16,37 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES::Windowing
 {
 
-class MaxAggregationDescriptor : public WindowAggregationDescriptor
+class AvgAggregationFunction : public WindowAggregationFunction
 {
 public:
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<LogicalFunction>& onField);
+    static constexpr std::string_view NAME = "Avg";
 
-    static std::shared_ptr<WindowAggregationDescriptor>
+    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
+
+    static std::shared_ptr<WindowAggregationFunction>
     create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
+
+    void inferStamp(const Schema& schema) override;
+
+    std::shared_ptr<WindowAggregationFunction> clone() override;
 
     std::shared_ptr<DataType> getInputStamp() override;
     std::shared_ptr<DataType> getPartialAggregateStamp() override;
     std::shared_ptr<DataType> getFinalAggregateStamp() override;
 
-    void inferStamp(const Schema& schema) override;
+    virtual ~AvgAggregationFunction() = default;
 
-    std::shared_ptr<WindowAggregationDescriptor> clone() override;
-    MaxAggregationDescriptor(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
-
-    virtual ~MaxAggregationDescriptor() = default;
+    NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit MaxAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    explicit AvgAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    AvgAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
 };
 }

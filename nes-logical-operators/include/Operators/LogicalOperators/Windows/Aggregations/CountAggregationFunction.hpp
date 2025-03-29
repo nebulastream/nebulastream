@@ -22,13 +22,14 @@
 namespace NES::Windowing
 {
 
-class CountAggregationDescriptor : public WindowAggregationDescriptor
+class CountAggregationFunction : public WindowAggregationFunction
 {
 public:
+    static constexpr std::string_view NAME = "Avg";
 
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<LogicalFunction>& keyFunction);
+    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
 
-    static std::shared_ptr<WindowAggregationDescriptor>
+    static std::shared_ptr<WindowAggregationFunction>
     create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
 
     std::shared_ptr<DataType> getInputStamp() override;
@@ -37,12 +38,14 @@ public:
 
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<WindowAggregationDescriptor> clone() override;
+    std::shared_ptr<WindowAggregationFunction> clone() override;
 
-    virtual ~CountAggregationDescriptor() = default;
+    virtual ~CountAggregationFunction() = default;
+
+    NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit CountAggregationDescriptor(const std::shared_ptr<FieldAccessLogicalFunction> onField);
-    CountAggregationDescriptor(const std::shared_ptr<LogicalFunction> onField, const std::shared_ptr<LogicalFunction> asField);
+    explicit CountAggregationFunction(const std::shared_ptr<FieldAccessLogicalFunction> onField);
+    CountAggregationFunction(const std::shared_ptr<LogicalFunction> onField, const std::shared_ptr<LogicalFunction> asField);
 };
 }

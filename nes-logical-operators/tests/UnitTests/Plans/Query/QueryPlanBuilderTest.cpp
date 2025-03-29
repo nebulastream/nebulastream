@@ -53,7 +53,7 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     EXPECT_EQ(queryPlan->getSourceConsumed(), "test_stream");
     ///test addSelection
     auto filterFunction = std::shared_ptr<LogicalFunction>(
-        EqualsBinaryLogicalFunction::create(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction()));
+        EqualsLogicalFunction::create(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction()));
     queryPlan = QueryPlanBuilder::addSelection(filterFunction, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<SelectionLogicalOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<SelectionLogicalOperator>()[0]->getPredicate(), filterFunction);

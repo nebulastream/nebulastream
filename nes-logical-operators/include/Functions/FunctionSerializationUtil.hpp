@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {

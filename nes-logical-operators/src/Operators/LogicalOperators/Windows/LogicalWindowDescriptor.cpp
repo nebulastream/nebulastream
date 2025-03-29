@@ -25,7 +25,7 @@ namespace NES::Windowing
 
 LogicalWindowDescriptor::LogicalWindowDescriptor(
     const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& keys,
-    std::vector<std::shared_ptr<WindowAggregationDescriptor>> windowAggregation,
+    std::vector<std::shared_ptr<WindowAggregationFunction>> windowAggregation,
     std::shared_ptr<WindowType> windowType)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(keys)
 {
@@ -38,14 +38,14 @@ bool LogicalWindowDescriptor::isKeyed() const
 }
 
 std::shared_ptr<LogicalWindowDescriptor> LogicalWindowDescriptor::create(
-    const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregations, const std::shared_ptr<WindowType>& windowType)
+    const std::vector<std::shared_ptr<WindowAggregationFunction>>& windowAggregations, const std::shared_ptr<WindowType>& windowType)
 {
     return create({}, windowAggregations, windowType);
 }
 
 LogicalWindowDescriptorPtr LogicalWindowDescriptor::create(
     const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& keys,
-    std::vector<std::shared_ptr<WindowAggregationDescriptor>> windowAggregation,
+    std::vector<std::shared_ptr<WindowAggregationFunction>> windowAggregation,
     const std::shared_ptr<WindowType>& windowType)
 {
     return std::make_shared<LogicalWindowDescriptor>(keys, windowAggregation, windowType);
@@ -59,7 +59,7 @@ void LogicalWindowDescriptor::setNumberOfInputEdges(const uint64_t numberOfInput
 {
     this->numberOfInputEdges = numberOfInputEdges;
 }
-std::vector<std::shared_ptr<WindowAggregationDescriptor>> LogicalWindowDescriptor::getWindowAggregation() const
+std::vector<std::shared_ptr<WindowAggregationFunction>> LogicalWindowDescriptor::getWindowAggregation() const
 {
     return windowAggregation;
 }
@@ -74,7 +74,7 @@ std::vector<std::shared_ptr<FieldAccessLogicalFunction>> LogicalWindowDescriptor
     return onKey;
 }
 
-void LogicalWindowDescriptor::setWindowAggregation(const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregation)
+void LogicalWindowDescriptor::setWindowAggregation(const std::vector<std::shared_ptr<WindowAggregationFunction>>& windowAggregation)
 {
     this->windowAggregation = windowAggregation;
 }
@@ -116,7 +116,7 @@ void LogicalWindowDescriptor::setOriginId(const OriginId originId)
     this->originId = originId;
 }
 
-bool LogicalWindowDescriptor::equal(const std::shared_ptr<LogicalWindowDescriptor>& otherWindowDefinition) const
+bool LogicalWindowDescriptor::operator=(const std::shared_ptr<LogicalWindowDescriptor>& otherWindowDefinition) const
 {
     if (this->isKeyed() != otherWindowDefinition->isKeyed())
     {

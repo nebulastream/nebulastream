@@ -23,24 +23,29 @@
 namespace NES::Windowing
 {
 
-class MinAggregationDescriptor : public WindowAggregationDescriptor
+class SumAggregationFunction : public WindowAggregationFunction
 {
 public:
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<LogicalFunction>& onField);
+    static constexpr std::string_view NAME = "Sum";
 
-    static std::shared_ptr<WindowAggregationDescriptor>
+    virtual ~SumAggregationFunction() = default;
+
+    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
+    static std::shared_ptr<WindowAggregationFunction>
     create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
-    std::shared_ptr<WindowAggregationDescriptor> clone() override;
+
+    std::shared_ptr<WindowAggregationFunction> clone() override;
+
     std::shared_ptr<DataType> getInputStamp() override;
     std::shared_ptr<DataType> getPartialAggregateStamp() override;
     std::shared_ptr<DataType> getFinalAggregateStamp() override;
 
-    virtual ~MinAggregationDescriptor() = default;
+    NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit MinAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> onField);
-    MinAggregationDescriptor(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
+    explicit SumAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    SumAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
 };
 }

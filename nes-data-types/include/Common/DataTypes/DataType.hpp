@@ -36,7 +36,7 @@ public:
 
     bool operator!=(const DataType& other) const { return !(*this == other); }
 
-    virtual std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) = 0;
+    virtual std::shared_ptr<DataType> join(const std::shared_ptr<DataType> otherDataType) const = 0;
 
     [[nodiscard]] virtual std::string toString() const = 0;
 };

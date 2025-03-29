@@ -138,7 +138,7 @@ void process(
     {
         processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperator);
     }
-    else if (true) // TODO we should check here at the nautilus operator if it is a pipeline breaker
+    else if (true) // TODO we should check here at the physical operator if it is a pipeline breaker
     {
         processFusibleOperator(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperator);
     }
@@ -148,23 +148,29 @@ void process(
     }
 }
 
-std::shared_ptr<PipelineQueryPlan> apply(const std::shared_ptr<PhysicalQueryPlan>& physicalQueryPlan)
+/// During this step we create a PipelineQueryPlan out of the QueryPlan obj
+std::shared_ptr<PipelineQueryPlan> apply(const std::unique_ptr<QueryPlan> queryPlan)
 {
     std::unordered_map<std::shared_ptr<Operator>, std::shared_ptr<OperatorPipeline>> pipelineOperatorMap;
-    auto pipelinePlan = std::make_shared<PipelineQueryPlan>(physicalQueryPlan->queryId);
+    auto pipelinePlan = std::make_shared<PipelineQueryPlan>(queryPlan->getQueryId()); // TODO can we make this unique?
 
     // Here we get source operators as the root, but we expected sink operators
-    for (const auto& sinkOperator : physicalQueryPlan->rootOperators)
+    for (const auto& sinkOperator : queryPlan->getRootOperators())
     {
-        INVARIANT(
-            std::holds_alternative<std::shared_ptr<SinkLogicalOperator>>(sinkOperator->op),
-            "We expect that all root operators in a physical query plan are sink operators");
+        INVARIANT(dynamic_cast<SinkLogicalOperator*>(sinkOperator.get()),
+                  "We expect that all root operators in a physical query plan are sink operators");
+        //INVARIANT(
+        //    std::holds_alternative<std::shared_ptr<SinkLogicalOperator>>(sinkOperator->op),
+        //    "We expect that all root operators in a physical query plan are sink operators");
 
         /// create a new pipeline for each sink
         auto pipeline = OperatorPipeline::createSinkPipeline();
+
         pipeline->prependOperator(
-            std::make_shared<PhysicalOperatorNode>(std::get<std::shared_ptr<SinkLogicalOperator>>(sinkOperator->op))); // urg, how ugly..
+            std::make_shared<PhysicalOperatorNode>(dynamic_cast<SinkLogicalOperator*>(sinkOperator.get())));
         pipelinePlan->pipelines.emplace_back(pipeline);
+
+        /// process next operators
         process(pipelinePlan, pipelineOperatorMap, pipeline, sinkOperator);
     }
 

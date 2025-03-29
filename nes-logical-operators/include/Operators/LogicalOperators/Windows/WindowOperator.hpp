@@ -27,23 +27,6 @@
 namespace NES
 {
 
-
-/// Stores the window start and window end field names
-struct WindowMetaData
-{
-    WindowMetaData(std::string windowStartFieldName, std::string windowEndFieldName)
-        : windowStartFieldName(std::move(windowStartFieldName)), windowEndFieldName(std::move(windowEndFieldName))
-    {
-    }
-    WindowMetaData() = default;
-
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
-};
-
-/**
- * @brief Window operator, which defines the window definition.
- */
 class WindowOperator : public UnaryLogicalOperator, public OriginIdAssignmentOperator
 {
 public:
@@ -53,11 +36,34 @@ public:
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
 
+    bool isKeyed() const;
 
-    WindowMetaData windowMetaData;
+    [[nodiscard]] uint64_t getNumberOfInputEdges() const;
+    void setNumberOfInputEdges(uint64_t numberOfInputEdges);
+
+    [[nodiscard]] std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>> getWindowAggregation() const;
+    void setWindowAggregation(const std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>>& windowAggregation);
+
+    [[nodiscard]]std::shared_ptr<Windowing::WindowType> getWindowType() const;
+    void setWindowType(std::shared_ptr<Windowing::WindowType> windowType);
+
+    [[nodiscard]]std::vector<std::shared_ptr<FieldAccessLogicalFunction>> getKeys() const;
+    void setOnKey(const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& keys);
+
+    [[nodiscard]] OriginId getOriginId() const;
+    // void setOriginId(OriginId originId);
+
+    ///std::shared_ptr<WindowOperator> clone() const;
+    const std::vector<OriginId>& getInputOriginIds() const;
+    void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
 protected:
-    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition;
+    std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>> windowAggregation;
+    std::shared_ptr<Windowing::WindowType> windowType;
+    std::vector<std::shared_ptr<FieldAccessLogicalFunction>> onKey;
+    uint64_t numberOfInputEdges = 0;
+    std::vector<OriginId> inputOriginIds;
+    OriginId originId = INVALID_ORIGIN_ID;
 };
 
 }

@@ -31,7 +31,7 @@ public:
     {
         /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
         /// For now, we just 'purely' lower to physical operators here.
-        return NES::LowerToPhysicalOperators::apply(std::move(plan));
+        return LowerToPhysicalOperators::apply(std::move(plan));
     }
 };
 

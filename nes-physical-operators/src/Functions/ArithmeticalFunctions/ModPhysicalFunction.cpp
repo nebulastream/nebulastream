@@ -20,7 +20,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES::Functions
 {
@@ -39,12 +39,12 @@ ModPhysicalFunction::ModPhysicalFunction(
 }
 
 
-ExecutableFunctionRegistryReturnType
-ExecutableFunctionGeneratedRegistrar::RegisterModExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterModPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
+    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
     return std::make_unique<ModPhysicalFunction>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+        std::move(PhysicalFunctionRegistryArguments.childFunctions[0]), std::move(PhysicalFunctionRegistryArguments.childFunctions[1]));
 }
 
 }

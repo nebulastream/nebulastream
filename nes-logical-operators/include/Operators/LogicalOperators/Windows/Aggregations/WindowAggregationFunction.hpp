@@ -25,7 +25,7 @@ class SerializableAggregationFunction;
 namespace NES::Windowing
 {
 
-class WindowAggregationDescriptor
+class WindowAggregationFunction
 {
 public:
     enum class Type : uint8_t
@@ -39,7 +39,7 @@ public:
     };
 
     /// Defines the field to which a aggregate output is assigned.
-    std::shared_ptr<WindowAggregationDescriptor> as(const std::shared_ptr<LogicalFunction>& asField);
+    std::shared_ptr<WindowAggregationFunction> as(const std::shared_ptr<LogicalFunction>& asField);
 
     /// Returns the result field of the aggregation
     std::shared_ptr<LogicalFunction> as() const;
@@ -51,10 +51,10 @@ public:
     Type getType() const;
 
     /// @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-    virtual void inferStamp(std::shared_ptr<Schema> schema) = 0;
+    virtual void inferStamp(const Schema& schema) = 0;
 
     /// @brief Creates a deep copy of the window aggregation
-    virtual std::shared_ptr<WindowAggregationDescriptor> clone() = 0;
+    virtual std::shared_ptr<WindowAggregationFunction> clone() = 0;
 
     virtual std::shared_ptr<DataType> getInputStamp() = 0;
     virtual std::shared_ptr<DataType> getPartialAggregateStamp() = 0;
@@ -64,12 +64,14 @@ public:
 
     std::string getTypeAsString() const;
 
-    bool equal(std::shared_ptr<WindowAggregationDescriptor> otherWindowAggregationDescriptor) const;
+    bool equal(std::shared_ptr<WindowAggregationFunction> otherWindowAggregationFunction) const;
+
+    virtual NES::SerializableAggregationFunction serialize() const = 0;
 
 protected:
-    explicit WindowAggregationDescriptor(const std::shared_ptr<FieldAccessLogicalFunction>& onField);
-    WindowAggregationDescriptor(const std::shared_ptr<LogicalFunction>& onField, const std::shared_ptr<LogicalFunction>& asField);
-    WindowAggregationDescriptor() = default;
+    explicit WindowAggregationFunction(const std::shared_ptr<FieldAccessLogicalFunction>& onField);
+    WindowAggregationFunction(const std::shared_ptr<LogicalFunction>& onField, const std::shared_ptr<LogicalFunction>& asField);
+    WindowAggregationFunction() = default;
     std::shared_ptr<LogicalFunction> onField;
     std::shared_ptr<LogicalFunction> asField;
     Type aggregationType;

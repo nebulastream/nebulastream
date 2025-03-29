@@ -29,39 +29,39 @@
 namespace NES::Windowing
 {
 
-SumAggregationDescriptor::SumAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationDescriptor(field)
+SumAggregationFunction::SumAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)
 {
     this->aggregationType = Type::Sum;
 }
-SumAggregationDescriptor::SumAggregationDescriptor(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
-    : WindowAggregationDescriptor(field, asField)
+SumAggregationFunction::SumAggregationFunction(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
+    : WindowAggregationFunction(field, asField)
 {
     this->aggregationType = Type::Sum;
 }
 
-std::shared_ptr<WindowAggregationDescriptor>
-SumAggregationDescriptor::create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
+std::shared_ptr<WindowAggregationFunction>
+SumAggregationFunction::create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
 {
-    return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(std::move(onField), std::move(asField)));
+    return std::make_shared<SumAggregationFunction>(SumAggregationFunction(std::move(onField), std::move(asField)));
 }
 
-std::shared_ptr<WindowAggregationDescriptor> SumAggregationDescriptor::on(const std::shared_ptr<LogicalFunction>& keyFunction)
+std::shared_ptr<WindowAggregationFunction> SumAggregationFunction::on(const std::shared_ptr<LogicalFunction>& onField)
 {
     if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(onField))
     {
         NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
     }
     const auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(onField);
-    return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(fieldAccess));
+    return std::make_shared<SumAggregationFunction>(SumAggregationFunction(fieldAccess));
 }
 
-void SumAggregationDescriptor::inferStamp(const Schema& schema)
+void SumAggregationFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
     if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
     {
-        NES_FATAL_ERROR("SumAggregationDescriptor: aggregations on non numeric fields is not supported.");
+        NES_FATAL_ERROR("SumAggregationFunction: aggregations on non numeric fields is not supported.");
     }
 
     ///Set fully qualified name for the as Field
@@ -82,22 +82,38 @@ void SumAggregationDescriptor::inferStamp(const Schema& schema)
     asField->setStamp(getFinalAggregateStamp());
 }
 
-std::shared_ptr<WindowAggregationDescriptor> SumAggregationDescriptor::clone()
+std::shared_ptr<WindowAggregationFunction> SumAggregationFunction::clone()
 {
-    return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(this->onField->clone(), this->asField->clone()));
+    return std::make_shared<SumAggregationFunction>(SumAggregationFunction(this->onField->clone(), this->asField->clone()));
 }
 
-std::shared_ptr<DataType> SumAggregationDescriptor::getInputStamp()
+std::shared_ptr<DataType> SumAggregationFunction::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> SumAggregationDescriptor::getPartialAggregateStamp()
+std::shared_ptr<DataType> SumAggregationFunction::getPartialAggregateStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> SumAggregationDescriptor::getFinalAggregateStamp()
+std::shared_ptr<DataType> SumAggregationFunction::getFinalAggregateStamp()
 {
     return onField->getStamp();
+}
+
+NES::SerializableAggregationFunction SumAggregationFunction::serialize() const
+{
+    NES::SerializableAggregationFunction serializedAggregationFunction;
+    serializedAggregationFunction.set_type(NAME);
+
+    auto *onFieldFuc = new SerializableFunction();
+    FunctionSerializationUtil::serializeFunction(onField, onFieldFuc);
+
+    auto *asFieldFuc = new SerializableFunction();
+    FunctionSerializationUtil::serializeFunction(asField, asFieldFuc);
+
+    serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
+    serializedAggregationFunction.set_allocated_on_field(onFieldFuc);
+    return serializedAggregationFunction;
 }
 
 }
