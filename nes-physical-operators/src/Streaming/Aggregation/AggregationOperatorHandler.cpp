@@ -78,7 +78,7 @@ void AggregationOperatorHandler::triggerSlices(
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
         /// Getting all hashmaps for each slice that has at least one tuple
-        std::vector<Interface::HashMap*> allHashMaps;
+        std::vector<Nautilus::Interface::HashMap*> allHashMaps;
         uint64_t totalNumberOfTuples = 0;
         for (const auto& slice : allSlices)
         {
@@ -98,7 +98,7 @@ void AggregationOperatorHandler::triggerSlices(
         /// - all pointers to all hashmaps of the window to be triggered
         /// - a new hashmap for the probe operator, so that we are not overwriting the thread local hashmaps
         /// - size of EmittedAggregationWindow
-        const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(Interface::HashMap*));
+        const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(Nautilus::Interface::HashMap*));
         Memory::TupleBuffer tupleBuffer;
         if (pipelineCtx->getBufferManager()->getBufferSize() >= neededBufferSize)
         {
@@ -130,10 +130,10 @@ void AggregationOperatorHandler::triggerSlices(
         auto* bufferMemory = tupleBuffer.getBuffer<EmittedAggregationWindow>();
         bufferMemory->windowInfo = windowInfo.windowInfo;
         bufferMemory->numberOfHashMaps = allHashMaps.size();
-        bufferMemory->finalHashMap = std::make_unique<Interface::ChainedHashMap>(keySize, valueSize, numberOfBuckets, pageSize);
+        bufferMemory->finalHashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfBuckets, pageSize);
         auto* addressFirstHashMapPtr = reinterpret_cast<int8_t*>(bufferMemory) + sizeof(EmittedAggregationWindow);
-        bufferMemory->hashMaps = reinterpret_cast<Interface::HashMap**>(addressFirstHashMapPtr);
-        std::memcpy(addressFirstHashMapPtr, allHashMaps.data(), allHashMaps.size() * sizeof(Interface::HashMap*));
+        bufferMemory->hashMaps = reinterpret_cast<Nautilus::Interface::HashMap**>(addressFirstHashMapPtr);
+        std::memcpy(addressFirstHashMapPtr, allHashMaps.data(), allHashMaps.size() * sizeof(Nautilus::Interface::HashMap*));
 
 
         /// Dispatching the buffer to the probe operator via the task queue.
