@@ -18,6 +18,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES
 {

@@ -14,7 +14,7 @@
 #pragma once
 #include <memory>
 #include <AbstractPhysicalOperator.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <Watermark/TimeFunction.hpp>
 
 namespace NES
 {

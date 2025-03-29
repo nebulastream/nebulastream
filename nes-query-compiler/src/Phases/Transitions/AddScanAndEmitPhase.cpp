@@ -14,8 +14,6 @@
 
 
 #include <memory>
-#include <Plans/DecomposedQueryPlan.hpp>
-#include <Plans/OperatorPipeline.hpp>
 #include <Plans/PipelineQueryPlan.hpp>
 #include <Phases/Translations/AddScanAndEmitPhase.hpp>
 #include <ScanPhysicalOperator.hpp>

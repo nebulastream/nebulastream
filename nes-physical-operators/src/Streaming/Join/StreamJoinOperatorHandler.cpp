@@ -17,20 +17,12 @@
 #include <ranges>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/SliceStore/Slice.hpp>
-#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
-#include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <WindowBasedOperatorHandler.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-
-#include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Streaming/WindowBasedOperatorHandler.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
 namespace NES
 {

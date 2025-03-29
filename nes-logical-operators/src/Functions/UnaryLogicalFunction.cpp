@@ -12,13 +12,11 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <string>
+#include <memory>
 #include <utility>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/UnaryLogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string>
 #include <cstdint>
 #include <API/TimeUnit.hpp>
 #include <fmt/format.h>

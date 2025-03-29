@@ -18,10 +18,11 @@
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES
 {

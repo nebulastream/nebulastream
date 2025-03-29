@@ -13,7 +13,9 @@
 */
 #pragma once
 
+#include <Plans/PhysicalQueryPlan.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::QueryCompilation
 {

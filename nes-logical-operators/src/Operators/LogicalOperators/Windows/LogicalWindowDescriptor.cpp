@@ -16,8 +16,7 @@
 #include <utility>
 #include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 

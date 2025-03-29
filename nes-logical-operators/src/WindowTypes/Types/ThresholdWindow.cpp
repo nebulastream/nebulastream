@@ -18,10 +18,9 @@
 #include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Types/ContentBasedWindowType.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Types/WindowType.hpp>
+#include <WindowTypes/Types/ContentBasedWindowType.hpp>
+#include <WindowTypes/Types/ThresholdWindow.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 

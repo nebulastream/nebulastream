@@ -15,10 +15,10 @@
 #pragma once
 
 #include <memory>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
-#include <Types/TimeBasedWindowType.hpp>
-#include <Types/WindowType.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES::Windowing
 {

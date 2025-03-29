@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <Util/PluginRegistry.hpp>
-
 namespace NES
 {
 

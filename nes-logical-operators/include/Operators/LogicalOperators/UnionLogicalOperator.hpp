@@ -15,8 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES
 {

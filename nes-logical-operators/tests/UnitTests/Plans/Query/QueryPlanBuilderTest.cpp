@@ -17,7 +17,7 @@
 #include <vector>
 #include <API/Functions/Functions.hpp>
 #include <API/Query.hpp>
-#include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperator.hpp>

@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Nodes/Node.hpp>
+
 #include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 
 namespace NES

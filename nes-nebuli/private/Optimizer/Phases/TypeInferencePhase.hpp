@@ -17,7 +17,6 @@
 #include <memory>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 
 namespace NES

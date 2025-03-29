@@ -15,7 +15,7 @@
 #pragma once
 #include <memory>
 #include <vector>
-#include <Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Plans/PipelineQueryPlan.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/options.hpp>
 

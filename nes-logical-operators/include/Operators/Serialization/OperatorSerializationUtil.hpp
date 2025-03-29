@@ -20,13 +20,14 @@
 #include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <SerializableOperator.pb.h>
+#include <Operators/LogicalOperators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 
 namespace NES
 {

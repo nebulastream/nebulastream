@@ -15,10 +15,10 @@
 
 #include <optional>
 #include <unordered_map>
-#include <Plans/DecomposedQueryPlan.hpp>
 #include <Plans/PhysicalQueryPlan.hpp>
-#include <QueryCompilationRequest.hpp>
-#include "OptimizerConfiguration.hpp"
+#include <Plans/QueryPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <ExecutableQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {

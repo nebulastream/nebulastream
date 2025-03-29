@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <cinttypes>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

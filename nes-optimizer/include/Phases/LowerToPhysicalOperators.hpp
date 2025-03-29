@@ -13,13 +13,6 @@
 */
 
 #include <memory>
-#include <utility>
-#include <vector>
-#include <Functions/WriteFieldPhysicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
-#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Plans/PhysicalQueryPlan.hpp>
 #include <Plans/QueryPlan.hpp>

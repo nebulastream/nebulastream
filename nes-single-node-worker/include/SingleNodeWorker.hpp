@@ -16,8 +16,8 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
+#include <QueryCompiler.hpp>
+#include <QueryOptimizer.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -25,11 +25,6 @@
 namespace NES
 {
 struct PrintingStatisticListener;
-}
-namespace Optimizer
-{
-class QueryOptimizer;
-}
 
 /// @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
 /// coordination. The SingleNodeWorker can register LogicalQueryPlans which are lowered into an executable format, by the

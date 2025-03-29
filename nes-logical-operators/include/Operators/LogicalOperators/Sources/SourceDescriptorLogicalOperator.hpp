@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <Nodes/Node.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>

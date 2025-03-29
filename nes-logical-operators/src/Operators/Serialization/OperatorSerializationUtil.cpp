@@ -11,51 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <fstream>
+
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Functions/FunctionSerializationUtil.hpp>
-#include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/WindowLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
-#include <Operators/LogicalOperatorRegistry.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <WindowTypes/Measures/TimeCharacteristic.hpp>
-#include <WindowTypes/Types/SlidingWindow.hpp>
-#include <WindowTypes/Types/ThresholdWindow.hpp>
-#include <WindowTypes/Types/TumblingWindow.hpp>
-#include <WindowTypes/Types/WindowType.hpp>
 #include <google/protobuf/json/json.h>
 #include <ErrorHandling.hpp>
+#include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <Operators/LogicalOperators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 
 namespace NES
 {

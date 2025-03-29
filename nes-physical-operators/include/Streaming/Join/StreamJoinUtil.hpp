@@ -17,29 +17,15 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <Sequencing/SequenceData.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES
 {
 
-namespace QueryCompilation
-{
 enum class JoinBuildSideType : uint8_t
 {
     Right,
     Left
-};
-}
-
-/// Stores the window start and window end field names
-struct WindowMetaData
-{
-    WindowMetaData(std::string windowStartFieldName, std::string windowEndFieldName)
-        : windowStartFieldName(std::move(windowStartFieldName)), windowEndFieldName(std::move(windowEndFieldName))
-    {
-    }
-
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
 };
 
 /// Stores the information of a window. The start, end, and the identifier

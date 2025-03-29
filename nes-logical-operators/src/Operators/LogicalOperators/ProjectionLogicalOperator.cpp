@@ -16,9 +16,8 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
-#include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,9 +25,9 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <Functions/FunctionSerializationUtil.hpp>
-#include <Operators/LogicalOperatorRegistry.hpp>
+#include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 
 namespace NES
 {

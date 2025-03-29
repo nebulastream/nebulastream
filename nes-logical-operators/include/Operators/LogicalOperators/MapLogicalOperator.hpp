@@ -15,10 +15,11 @@
 #pragma once
 
 #include <memory>
-#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
+#include <Configurations/Descriptor.hpp>
+
 namespace NES
 {
 

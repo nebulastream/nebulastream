@@ -14,16 +14,18 @@
 
 #include <memory>
 #include <string>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <LogicalOperatorRegistry.hpp>
+#include <SerializableOperator.pb.h>
+#include <SerializableSchema.pb.h>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 
 namespace NES
 {

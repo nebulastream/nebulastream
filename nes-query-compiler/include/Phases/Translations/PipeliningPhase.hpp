@@ -13,6 +13,7 @@
 */
 
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <unordered_map>
 #include <utility>
@@ -24,7 +25,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
-#include <Plans/PhysicalQueryPlan.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Plans/PipelineQueryPlan.hpp>
 #include <AbstractPhysicalOperator.hpp>
 #include <EmitPhysicalOperator.hpp>

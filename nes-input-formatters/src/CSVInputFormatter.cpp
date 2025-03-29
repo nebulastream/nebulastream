@@ -41,10 +41,10 @@
 #include <fmt/format.h>
 #include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include "../registry/include/InputFormatterRegistry.hpp"
 
 namespace NES::InputFormatters
 {

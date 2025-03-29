@@ -18,12 +18,11 @@
 #include <memory>
 #include <string>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <Operators/LogicalOperators/Windows/JoinLogicalOperator.hpp>
 
 namespace NES
 {

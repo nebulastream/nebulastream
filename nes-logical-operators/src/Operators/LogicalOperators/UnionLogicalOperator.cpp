@@ -14,17 +14,17 @@
 
 #include <memory>
 #include <API/Schema.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
 #include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <Operators/LogicalOperatorRegistry.hpp>
-#include <Functions/FunctionSerializationUtil.hpp>
-#include <Util/Common.hpp>
-#include <ErrorHandling.hpp>
+#include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <magic_enum.hpp>
+#include <SerializableSchema.pb.h>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
 
 namespace NES
 {
