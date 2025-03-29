@@ -21,7 +21,7 @@ namespace NES
 
 /// @brief Map operator that evaluates a map function on a input records.
 /// Map functions read record fields, apply transformations, and can set/update fields.
-class Map : public ExecutableOperator
+class Map : public PhysicalOperator
 {
 public:
     Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::Function> mapFunction);
