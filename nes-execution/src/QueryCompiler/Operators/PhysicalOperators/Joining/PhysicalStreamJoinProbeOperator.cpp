@@ -34,9 +34,9 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     const std::shared_ptr<Schema>& leftSchema,
     const std::shared_ptr<Schema>& rightSchema,
     const std::shared_ptr<Schema>& outputSchema,
-    const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
+    const std::shared_ptr<Operators::StreamJoinOperatorHandler>& operatorHandler,
     const Configurations::StreamJoinStrategy joinStrategy,
-    std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,
+    std::unique_ptr<Functions::Function> joinFunction,
     const std::vector<std::string>& joinFieldNamesLeft,
     const std::vector<std::string>& joinFieldNamesRight,
     WindowMetaData windowMetaData,
@@ -67,8 +67,7 @@ std::shared_ptr<Operator> PhysicalStreamJoinProbeOperator::copy()
         id);
 }
 
-const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>&
-PhysicalStreamJoinProbeOperator::getJoinOperatorHandler() const
+const std::shared_ptr<Operators::StreamJoinOperatorHandler>& PhysicalStreamJoinProbeOperator::getJoinOperatorHandler() const
 {
     return streamJoinOperatorHandler;
 }
@@ -78,7 +77,7 @@ Configurations::StreamJoinStrategy PhysicalStreamJoinProbeOperator::getJoinStrat
     return joinStrategy;
 }
 
-std::unique_ptr<Runtime::Execution::Functions::Function> PhysicalStreamJoinProbeOperator::getJoinFunction()
+std::unique_ptr<Functions::Function> PhysicalStreamJoinProbeOperator::getJoinFunction()
 {
     return std::move(joinFunction);
 }
@@ -93,7 +92,7 @@ std::vector<std::string> PhysicalStreamJoinProbeOperator::getJoinFieldNameRight(
     return joinFieldNamesRight;
 }
 
-Runtime::Execution::JoinSchema PhysicalStreamJoinProbeOperator::getJoinSchema() const
+JoinSchema PhysicalStreamJoinProbeOperator::getJoinSchema() const
 {
     return {leftInputSchema, rightInputSchema, outputSchema};
 }

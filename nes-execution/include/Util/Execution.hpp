@@ -37,7 +37,7 @@ enum class JoinBuildSideType : uint8_t
 }
 
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 
 /// Stores the information of a window. The start, end, and the identifier

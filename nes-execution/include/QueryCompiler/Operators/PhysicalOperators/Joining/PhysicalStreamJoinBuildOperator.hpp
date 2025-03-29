@@ -35,7 +35,7 @@ public:
     PhysicalStreamJoinBuildOperator(
         const std::shared_ptr<Schema>& inputSchema,
         const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
+        const std::shared_ptr<Operators::StreamJoinOperatorHandler>& operatorHandler,
         Configurations::StreamJoinStrategy joinStrategy,
         TimestampField timestampField,
         JoinBuildSideType buildSide,
@@ -44,13 +44,13 @@ public:
     /// Performs a deep copy of this physical operator
     std::shared_ptr<Operator> copy() override;
 
-    const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
+    const std::shared_ptr<Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
     Configurations::StreamJoinStrategy getJoinStrategy() const;
     const TimestampField& getTimeStampField() const;
     JoinBuildSideType getBuildSide() const;
 
 private:
-    std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
+    std::shared_ptr<Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
     Configurations::StreamJoinStrategy joinStrategy;
     TimestampField timeStampField;
     JoinBuildSideType buildSide;

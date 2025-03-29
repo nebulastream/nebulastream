@@ -26,8 +26,8 @@ namespace NES::QueryCompilation
 
 NautilusPipelineOperator::NautilusPipelineOperator(
     OperatorId id,
-    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers)
+    std::shared_ptr<PhysicalOperatorPipeline> nautilusPipeline,
+    std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers)
     : Operator(id), UnaryOperator(id), operatorHandlers(std::move(operatorHandlers)), nautilusPipeline(std::move(nautilusPipeline))
 {
 }
@@ -44,12 +44,12 @@ std::shared_ptr<Operator> NautilusPipelineOperator::copy()
     return result;
 }
 
-std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> NautilusPipelineOperator::getNautilusPipeline()
+std::shared_ptr<PhysicalOperatorPipeline> NautilusPipelineOperator::getNautilusPipeline()
 {
     return nautilusPipeline;
 }
 
-std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> NautilusPipelineOperator::getOperatorHandlers()
+std::vector<std::shared_ptr<OperatorHandler>> NautilusPipelineOperator::getOperatorHandlers()
 {
     return operatorHandlers;
 }

@@ -41,7 +41,7 @@ public:
         std::shared_ptr<Schema> inputSchema,
         std::shared_ptr<Schema> outputSchema,
         std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
-        std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler);
+        std::shared_ptr<Operators::WindowBasedOperatorHandler> windowHandler);
     const std::shared_ptr<Windowing::LogicalWindowDescriptor>& getWindowDefinition() const;
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> getOperatorHandler() const;
     std::unique_ptr<Runtime::Execution::Operators::TimeFunction> getTimeFunction() const;

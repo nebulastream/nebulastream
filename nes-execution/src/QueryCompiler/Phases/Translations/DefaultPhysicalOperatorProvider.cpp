@@ -238,7 +238,7 @@ std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOper
 
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
 {
-    using namespace Runtime::Execution::Operators;
+    using namespace Operators;
 
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
     const auto& joinDefinition = joinOperator->getJoinDefinition();
@@ -331,7 +331,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     streamJoinOperators.operatorNode->replace(joinProbeOperator);
 }
 
-std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(
+std::shared_ptr<Operators::StreamJoinOperatorHandler> DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(
     const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig) const
 {
     using namespace Runtime::Execution;
