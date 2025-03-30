@@ -181,7 +181,7 @@ std::pair<size_t, size_t> CSVSource::findWatermarkIndex(const std::vector<std::v
     for (size_t outerIndex = 0; outerIndex < records.size(); ++outerIndex) {
         const auto& innerVec = records[outerIndex];
         for (size_t innerIndex = 0; innerIndex < innerVec.size(); ++innerIndex) {
-            if (innerVec[innerIndex].processingTimestamp == sentUntil) {
+            if (innerVec[innerIndex].value == sentUntil) {
                 // Found, return indices as watermarkIndex
                 return {outerIndex, innerIndex};
             }
