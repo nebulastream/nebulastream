@@ -244,7 +244,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     uint64_t tupleCount = 0;
                     //todo: do not hardcode
                     auto valueSize = sizeof(uint64_t);
-                    auto incomingTupleSize = valueSize * 3;
+                    auto incomingTupleSize = valueSize * 4;
                     //todo: move to beginning
                     auto bytesPerBuffer = generatedTuplesThisPass * incomingTupleSize;
                     sourceInfo->incomingBuffer.reserve(bytesPerBuffer);
