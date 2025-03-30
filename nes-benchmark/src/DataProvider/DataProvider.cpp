@@ -56,7 +56,7 @@ void DataProvider::provideNextBuffer(Runtime::TupleBuffer& buffer, uint64_t sour
                 auto gcCallback = [dataPtr, this](Runtime::detail::MemorySegment*, Runtime::BufferRecycler*) {
                     NES_ASSERT(collector.erase(dataPtr), "Cannot recycler buffer");
                 };
-                providedBuffer.value().addRecycleCallback(std::move(gcCallback));
+                // providedBuffer.value().addRecycleCallback(std::move(gcCallback));
                 buffer = providedBuffer.value();
                 return;
             };

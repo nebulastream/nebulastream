@@ -91,15 +91,15 @@ void ExternalProvider::generateData() {
             auto buffer = preAllocatedBuffers[bufferIndex];
 
             // wrap the buffer in a tuple buffer and set its metadata
-            auto wrapBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), this);
-            wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-            wrapBuffer.setCreationTimestampInMS(
-                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-                    .count());
+//            auto wrapBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), this);
+//            wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+//            wrapBuffer.setCreationTimestampInMS(
+//                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+//                    .count());
 
             // create a buffer holder and write it to the queue
             TupleBufferHolder bufferHolder;
-            bufferHolder.bufferToHold = wrapBuffer;
+//            bufferHolder.bufferToHold = wrapBuffer;
 
             if (!bufferQueue.write(std::move(bufferHolder))) {
                 NES_ERROR_OR_THROW_RUNTIME(throwException, "The queue is too small! This should not happen!");

@@ -34,13 +34,13 @@ std::optional<Runtime::TupleBuffer> InternalProvider::readNextBuffer(uint64_t so
         auto buffer = preAllocatedBuffers[currentlyEmittedBuffer % preAllocatedBuffers.size()];
         ++currentlyEmittedBuffer;
 
-        auto wrapBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), this);
+//        auto wrapBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), this);
         auto currentTime = std::chrono::high_resolution_clock::now().time_since_epoch();
         auto timeStamp = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime).count();
 
-        wrapBuffer.setCreationTimestampInMS(timeStamp);
-        wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-        return wrapBuffer;
+//        wrapBuffer.setCreationTimestampInMS(timeStamp);
+//        wrapBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+        return buffer;
     }
 
     return std::nullopt;
