@@ -55,7 +55,9 @@ ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerCont
     auto* task = inputBuffer.getBuffer<ReconfigurationMessage>();
     switch (this->pipelineStatus.load()) {
         case PipelineStatus::PipelineRunning: {
+            isExecuted.fetch_add(1);
             auto res = executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
+            isExecuted.fetch_sub(1);
             return res;
         }
         case PipelineStatus::PipelineStopped: {
@@ -128,10 +130,11 @@ bool ExecutablePipeline::recreate() {
     }
     return false;
 }
-
 bool ExecutablePipeline::stop(QueryTerminationType) {
     auto expected = PipelineStatus::PipelineRunning;
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineStopped)) {
+        while (isExecuted.load() != 0) {
+        }
         return executablePipelineStage->stop(*pipelineContext.get()) == 0;
     }
     return expected == PipelineStatus::PipelineStopped;

@@ -1116,7 +1116,11 @@ NodeEngine::getWatermarkProcessorFor(std::string sinkName, uint64_t numberOfOrig
     auto processorPtr = synchronizedProcessorPtr.wlock();
 
     if (!*processorPtr) {
-        *processorPtr = Windowing::MultiOriginWatermarkProcessor::create(numberOfOrigins);
+        std::vector<OriginId> origins;
+        for (uint64_t i = 1; i <= numberOfOrigins; ++i) {
+            origins.emplace_back(OriginId(i));
+        }
+        *processorPtr = Windowing::MultiOriginWatermarkProcessor::create(origins);
     }
 
     return processorPtr;

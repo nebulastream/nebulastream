@@ -13,52 +13,53 @@
 */
 
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
-#include <Sinks/Mediums/WatermarkProcessor.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::Windowing {
 
-MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {
-    NES_ASSERT2_FMT(numberOfOrigins != 0, "The MultiOriginWatermarkProcessor should have at least one origin");
+MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins) : origins(origins) {
+    for (const auto& _ : origins) {
+        watermarkProcessors.emplace_back(std::make_shared<Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>());
+    }
+};
+
+std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const std::vector<OriginId>& origins) {
+    return std::make_shared<MultiOriginWatermarkProcessor>(origins);
 }
 
-MultiOriginWatermarkProcessor::~MultiOriginWatermarkProcessor() { localWatermarkProcessor.clear(); }
-
-std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const uint64_t numberOfOrigins) {
-    return std::make_shared<MultiOriginWatermarkProcessor>(numberOfOrigins);
+// TODO use here the BufferMetaData class for the params #4177
+uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, SequenceData sequenceData, OriginId origin) {
+    bool found = false;
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {
+        if (origins[originIndex] == origin) {
+            watermarkProcessors[originIndex]->emplace(sequenceData, ts);
+            found = true;
+        }
+    }
+    if (!found) {
+        std::stringstream ss;
+        for (auto& id : origins) {
+            ss << id << ",";
+        }
+        NES_THROW_RUNTIME_ERROR("update watermark for non existing origin " << origin << " number of origins=" << origins.size()
+                                                                            << " ids=" << ss.str());
+    }
+    return getCurrentWatermark();
 }
 
-void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId originId) {
-    std::unique_lock lock(watermarkLatch);
-    // insert new local watermark processor if the id is not present in the map
-    if (localWatermarkProcessor.find(originId) == localWatermarkProcessor.end()) {
-        localWatermarkProcessor[originId] = std::make_unique<WatermarkProcessor>();
+std::string MultiOriginWatermarkProcessor::getCurrentStatus() {
+    std::stringstream ss;
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex) {
+        ss << " id=" << origins[originIndex] << " watermark=" << watermarkProcessors[originIndex]->getCurrentValue();
     }
-    NES_ASSERT2_FMT(localWatermarkProcessor.size() <= numberOfOrigins,
-                    "The watermark processor maintains watermarks from " << localWatermarkProcessor.size()
-                                                                         << " origins but we only expected  " << numberOfOrigins);
-    localWatermarkProcessor[originId]->updateWatermark(ts, sequenceNumber);
+    return ss.str();
 }
 
-bool MultiOriginWatermarkProcessor::isWatermarkSynchronized(OriginId originId) const {
-    std::unique_lock lock(watermarkLatch);
-    auto iter = localWatermarkProcessor.find(originId);
-    if (iter != localWatermarkProcessor.end()) {
-        return iter->second->isWatermarkSynchronized();
+uint64_t MultiOriginWatermarkProcessor::getCurrentWatermark() {
+    auto minimalWatermark = UINT64_MAX;
+    for (const auto& wt : watermarkProcessors) {
+        minimalWatermark = std::min(minimalWatermark, wt->getCurrentValue());
     }
-    return false;
-}
-
-WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const {
-    std::unique_lock lock(watermarkLatch);
-    // check if we already registered each expected origin in the local watermark processor map
-    if (localWatermarkProcessor.size() != numberOfOrigins) {
-        return 0;
-    }
-    WatermarkTs maxWatermarkTs = UINT64_MAX;
-    for (const auto& localWatermarkManager : localWatermarkProcessor) {
-        maxWatermarkTs = std::min(maxWatermarkTs, localWatermarkManager.second->getCurrentWatermark());
-    }
-    return maxWatermarkTs;
+    return minimalWatermark;
 }
 
 }// namespace NES::Windowing

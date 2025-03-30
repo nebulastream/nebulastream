@@ -16,7 +16,6 @@
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
-
 #include <cstdint>
 #include <memory>
 #include <string>

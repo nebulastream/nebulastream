@@ -37,7 +37,7 @@ class MemorySegment;
 /**
  * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
  */
-class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
+class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider, public std::enable_shared_from_this<LocalBufferPool> {
   public:
     /**
      * @brief Construct a new LocalBufferPool

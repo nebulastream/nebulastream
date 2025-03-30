@@ -111,39 +111,39 @@ CSVSource::CSVSource(SchemaPtr schema,
     //todo: we are not usign the parser when timestamping
     //this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter, addTimeStampsAndReadOnStartup);
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
-    if (addTimeStampsAndReadOnStartup) {
-        NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
-        if (this->fileEnded) {
-            NES_WARNING("CSVSource::fillBuffer: but file has already ended");
-            return;
-        }
-
-        input.seekg(currentPositionInFile, std::ifstream::beg);
-
-        std::string line;
-        uint64_t tupleCount = 0;
-
-        if (skipHeader && currentPositionInFile == 0) {
-            NES_TRACE("CSVSource: Skipping header");
-            std::getline(input, line);
-            currentPositionInFile = input.tellg();
-        }
-        while (true) {
-            //Check if EOF has reached
-            if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1) {
-                NES_TRACE("CSVSource::fillBuffer: reset tellg()={} fileSize={}", input.tellg(), fileSize);
-                input.clear();
-                NES_TRACE("CSVSource::fillBuffer: break because file ended");
-                this->fileEnded = true;
-                break;
-            }
-
-            std::getline(input, line);
-            NES_NOT_IMPLEMENTED();
-            //            readLines.push_back(line);
-            NES_TRACE("CSVSource line={} val={}", tupleCount, line);
-        }
-    }
+//    if (addTimeStampsAndReadOnStartup) {
+//        NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
+//        if (this->fileEnded) {
+//            NES_WARNING("CSVSource::fillBuffer: but file has already ended");
+//            return;
+//        }
+//
+//        input.seekg(currentPositionInFile, std::ifstream::beg);
+//
+//        std::string line;
+//        uint64_t tupleCount = 0;
+//
+//        if (skipHeader && currentPositionInFile == 0) {
+//            NES_TRACE("CSVSource: Skipping header");
+//            std::getline(input, line);
+//            currentPositionInFile = input.tellg();
+//        }
+//        while (true) {
+//            //Check if EOF has reached
+//            if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1) {
+//                NES_TRACE("CSVSource::fillBuffer: reset tellg()={} fileSize={}", input.tellg(), fileSize);
+//                input.clear();
+//                NES_TRACE("CSVSource::fillBuffer: break because file ended");
+//                this->fileEnded = true;
+//                break;
+//            }
+//
+//            std::getline(input, line);
+//            NES_NOT_IMPLEMENTED();
+//            //            readLines.push_back(line);
+//            NES_TRACE("CSVSource line={} val={}", tupleCount, line);
+//        }
+//    }
 }
 
 struct Record {
@@ -151,7 +151,6 @@ struct Record {
     uint64_t value;
     uint64_t ingestionTimestamp;
     uint64_t processingTimestamp;
-    uint64_t outputTimestamp;
 };
 
 std::optional<Runtime::TupleBuffer>
@@ -168,20 +167,19 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
     buffer.setNumberOfTuples(replayVec.size());
-    auto returnBuffer = buffer.getBuffer();
     NES_DEBUG("setting sequence number replayed buffer to {} (id {}), fd {}", sentUntil, sourceInfo->records.front().front().id, sourceInfo->sockfd)
-    returnBuffer.setSequenceNumber(watermarkIndex.first);
+//    buffer.getBuffer().setSequenceNumber(watermarkIndex.first);
     watermarkIndex.first++;
     watermarkIndex.second = 0;
 
-    return returnBuffer;
+    return buffer.getBuffer();
 }
 
 std::pair<size_t, size_t> CSVSource::findWatermarkIndex(const std::vector<std::vector<Runtime::Record>>& records, uint64_t sentUntil) {
     for (size_t outerIndex = 0; outerIndex < records.size(); ++outerIndex) {
         const auto& innerVec = records[outerIndex];
         for (size_t innerIndex = 0; innerIndex < innerVec.size(); ++innerIndex) {
-            if (innerVec[innerIndex].ingestionTimestamp == sentUntil) {
+            if (innerVec[innerIndex].processingTimestamp == sentUntil) {
                 // Found, return indices as watermarkIndex
                 return {outerIndex, innerIndex};
             }
@@ -196,7 +194,12 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
+        auto recordsToSee = sourceInfo->records;
         if (getReplayData()) {
+            if (sourceInfo->records.empty()) {
+                // not to wait acknowledgment on the first start of source
+                shouldGetLastAck = false;
+            }
 //            NES_ERROR("there are {} stored buffers", sourceInfo->records.size());
             if (!sourceInfo->records.empty() && shouldGetLastAck) {
 //                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
@@ -220,7 +223,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
             }
         }
         if (!sourceInfo->records.empty()) {
-            NES_DEBUG("records {}, sent until {} (id {})", sourceInfo->records.size(), sentUntil,  sourceInfo->records.front().front().id);
+            NES_DEBUG("records {}, sent until {}", sourceInfo->records.size(), sentUntil);
         }
         NES_ASSERT(!getReplayData() || watermarkIndex.first <= sourceInfo->records.size(), "sent until cannot be more than recorded buffers");
         uint64_t generatedTuplesThisPass = 0;
@@ -228,122 +231,131 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         auto* records = buffer.getBuffer().getBuffer<Record>();
         //if port was set, use tcp as input
         if (numberOfTuplesToProducePerBuffer == 0) {
-            if (sourceInfo->port != 0) {
-                //init flush interval value
-                bool flushIntervalPassed = false;
-                auto flushIntervalTimerStart = std::chrono::system_clock::now();
+//            auto testUsingPort = false;
+//            if (testUsingPort) {
+                if (sourceInfo->port != 0) {
+                    //init flush interval value
+                    bool flushIntervalPassed = false;
+                    auto flushIntervalTimerStart = std::chrono::system_clock::now();
 
-                //init tuple count for buffer
-                uint64_t tupleCount = 0;
-                //todo: do not hardcode
-                auto valueSize = sizeof(uint64_t);
-                auto incomingTupleSize = valueSize * 3;
-                //todo: move to beginning
-                auto bytesPerBuffer = generatedTuplesThisPass * incomingTupleSize;
-                sourceInfo->incomingBuffer.reserve(bytesPerBuffer);
-                sourceInfo->leftOverBytes.reserve(incomingTupleSize);
-                for (uint16_t i = 0; i < sourceInfo->leftoverByteCount; ++i) {
-                    sourceInfo->incomingBuffer[i] = sourceInfo->leftOverBytes[i];
-                }
-                auto byteOffset = sourceInfo->leftoverByteCount;
-                //todo: this was new
-                while (byteOffset < incomingTupleSize) {
-                    NES_DEBUG("TCPSource::fillBuffer: filling buffer now");
-                    while (byteOffset < bytesPerBuffer) {
-                        NES_DEBUG("TCPSource::fillBuffer: reading from socket");
-                        int bytesRead =
-                            read(sourceInfo->sockfd, &sourceInfo->incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
-                        NES_DEBUG("TCPSource::fillBuffer: {} bytes read", bytesRead);
-                        if (bytesRead == 0) {
-                            if (byteOffset < incomingTupleSize) {
-                                NES_DEBUG("TCPSource::fillBuffer: inserting eos");
-                                //return std::nullopt;
-                                //                                buffer.setNumberOfTuples(0);
-                                //                                return buffer.getBuffer();
+                    //init tuple count for buffer
+                    uint64_t tupleCount = 0;
+                    //todo: do not hardcode
+                    auto valueSize = sizeof(uint64_t);
+                    auto incomingTupleSize = valueSize * 3;
+                    //todo: move to beginning
+                    auto bytesPerBuffer = generatedTuplesThisPass * incomingTupleSize;
+                    sourceInfo->incomingBuffer.reserve(bytesPerBuffer);
+                    sourceInfo->leftOverBytes.reserve(incomingTupleSize);
+                    for (uint16_t i = 0; i < sourceInfo->leftoverByteCount; ++i) {
+                        sourceInfo->incomingBuffer[i] = sourceInfo->leftOverBytes[i];
+                    }
+                    auto byteOffset = sourceInfo->leftoverByteCount;
+                    //todo: this was new
+                    while (byteOffset < incomingTupleSize) {
+                        NES_DEBUG("TCPSource::fillBuffer: filling buffer now");
+                        while (byteOffset < bytesPerBuffer) {
+                            NES_DEBUG("TCPSource::fillBuffer: reading from socket");
+                            int bytesRead =
+                                read(sourceInfo->sockfd, &sourceInfo->incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
+                            NES_DEBUG("TCPSource::fillBuffer: {} bytes read", bytesRead);
+                            if (bytesRead == 0) {
+                                if (byteOffset < incomingTupleSize) {
+                                    NES_DEBUG("TCPSource::fillBuffer: inserting eos");
+                                    //return std::nullopt;
+                                    //                                buffer.setNumberOfTuples(0);
+                                    //                                return buffer.getBuffer();
+                                    break;
+                                }
+                                //flushIntervalPassed = true;
+                            } else if (bytesRead < 0) {
+                                NES_DEBUG("TCPSource::fillBuffer: error while reading from socket");
                                 break;
                             }
-                            //flushIntervalPassed = true;
-                        } else if (bytesRead < 0) {
-                            NES_DEBUG("TCPSource::fillBuffer: error while reading from socket");
-                            break;
-                        }
-                        byteOffset += bytesRead;
-                        //todo: this was new
-                        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
-                                                                                  - flushIntervalTimerStart)
-                                .count()
-                            >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(250)).count()) {
-                            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
-                                      "TupleBuffer.");
-                            flushIntervalPassed = true;
-                            if (byteOffset > incomingTupleSize) {
-                                break;
+                            byteOffset += bytesRead;
+                            //todo: this was new
+                            if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now()
+                                                                                      - flushIntervalTimerStart)
+                                    .count()
+                                >= std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::milliseconds(250))
+                                       .count()) {
+                                NES_DEBUG(
+                                    "TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current "
+                                    "TupleBuffer.");
+                                flushIntervalPassed = true;
+                                if (byteOffset > incomingTupleSize) {
+                                    break;
+                                }
                             }
                         }
                     }
-                }
-                uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
+                    uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
 
-                NES_DEBUG("checking if replay is activated")
-                if (getReplayData()) {
-                    NES_DEBUG("replay activated creating new stored buffer")
-                    sourceInfo->records.push_back({});
-                }
-                auto& replayVector = sourceInfo->records.back();
-                for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
-                    auto index = i * incomingTupleSize;
-                    auto id = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index]));
-                    auto seqenceNr = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + valueSize]));
-                    auto ingestionTime = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + 2 * valueSize]));
-                    //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
-                    auto timeStamp = getTimestamp();
-                    records[i].id = *id;
-                    records[i].value = *seqenceNr;
-                    records[i].ingestionTimestamp = *ingestionTime;
-                    //                    records[i].processingTimestamp = getTimestamp();
-                    records[i].processingTimestamp = timeStamp;
-
+                    NES_DEBUG("checking if replay is activated")
                     if (getReplayData()) {
-                        //                    sourceInfo->records.emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
-                        sourceInfo->records.back().emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
-                        //totalTupleCount++;
+                        NES_DEBUG("replay activated creating new stored buffer")
+                        sourceInfo->records.push_back({});
                     }
-                }
-                auto bytesOfCompleteTuples = incomingTupleSize * numCompleteTuplesRead;
-                //todo: this is only for debugging
-                //auto oldLeftoverBytes = leftoverByteCount;
-                sourceInfo->leftoverByteCount = byteOffset % incomingTupleSize;
-                for (uint64_t i = 0; i < sourceInfo->leftoverByteCount; ++i) {
-                    sourceInfo->leftOverBytes[i] = sourceInfo->incomingBuffer[i + bytesOfCompleteTuples];
-                }
+                    for (uint64_t i = 0; i < numCompleteTuplesRead; ++i) {
+                        auto index = i * incomingTupleSize;
+                        auto id = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index]));
+                        auto seqenceNr = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + valueSize]));
+                        auto ingestionTime = reinterpret_cast<uint64_t*>(&(sourceInfo->incomingBuffer[index + 2 * valueSize]));
+                        //std::cout << "id: " << *id << " seq: " << *seqenceNr << " time: " << *ingestionTime << std::endl;
+                        auto timeStamp = getTimestamp();
+                        records[i].id = *id;
+                        records[i].value = *seqenceNr;
+                        records[i].ingestionTimestamp = *ingestionTime;
+                        //                    records[i].processingTimestamp = getTimestamp();
+                        records[i].processingTimestamp = timeStamp;
 
-                buffer.setNumberOfTuples(numCompleteTuplesRead);
-                generatedTuples += numCompleteTuplesRead;
+                        if (getReplayData()) {
+                            //                    sourceInfo->records.emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
+                            sourceInfo->records.back().emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
+                            //totalTupleCount++;
+                        }
+                    }
+                    auto bytesOfCompleteTuples = incomingTupleSize * numCompleteTuplesRead;
+                    //todo: this is only for debugging
+                    //auto oldLeftoverBytes = leftoverByteCount;
+                    sourceInfo->leftoverByteCount = byteOffset % incomingTupleSize;
+                    for (uint64_t i = 0; i < sourceInfo->leftoverByteCount; ++i) {
+                        sourceInfo->leftOverBytes[i] = sourceInfo->incomingBuffer[i + bytesOfCompleteTuples];
+                    }
+
+                    buffer.setNumberOfTuples(numCompleteTuplesRead);
+                    generatedTuples += numCompleteTuplesRead;
+                    generatedBuffers++;
+                    auto returnBuffer = buffer.getBuffer();
+                    if (getReplayData()) {
+                        //sequence numbers start at 1 which is why we can use size
+                        NES_DEBUG("setting sequence number first played buffer to {} (id {})",
+                                  sourceInfo->records.size(),
+                                  sourceInfo->records.front().front().id)
+                        returnBuffer.setSequenceNumber(sourceInfo->records.size());
+                    }
+                    // TODO: check this logic precisely
+                    sentUntil = sourceInfo->records.back().back().ingestionTimestamp;
+                    watermarkIndex.first++;
+
+                    return returnBuffer;
+                } else {
+                    uint64_t valCount = 0;
+                    for (auto u = 0u; u < generatedTuplesThisPass; ++u) {
+                        records[u].id = operatorId.getRawValue();
+                        records[u].value = valCount + u;
+                        records[u].ingestionTimestamp = getTimestamp();
+                        records[u].processingTimestamp = 0;
+                    }
+                    buffer.setNumberOfTuples(generatedTuplesThisPass);
+                }
+                generatedTuples += generatedTuplesThisPass;
                 generatedBuffers++;
-                auto returnBuffer = buffer.getBuffer();
-                if (getReplayData()) {
-                    //sequence numbers start at 1 which is why we can use size
-                    NES_DEBUG("setting sequence number first played buffer to {} (id {})", sourceInfo->records.size(), sourceInfo->records.front().front().id)
-                    returnBuffer.setSequenceNumber(sourceInfo->records.size());
-                }
-                // TODO: check this logic precisely
-                sentUntil = sourceInfo->records.back().back().ingestionTimestamp;
-                watermarkIndex.first++;
-
-                return returnBuffer;
-            } else {
-                uint64_t valCount = 0;
-                for (auto u = 0u; u < generatedTuplesThisPass; ++u) {
-                    records[u].id = operatorId.getRawValue();
-                    records[u].value = valCount + u;
-                    records[u].ingestionTimestamp = getTimestamp();
-                    records[u].processingTimestamp = 0;
-                }
-                buffer.setNumberOfTuples(generatedTuplesThisPass);
-            }
-            generatedTuples += generatedTuplesThisPass;
-            generatedBuffers++;
-            return buffer.getBuffer();
+                return buffer.getBuffer();
+//            } else {
+//                fillBufferFromFile(buffer, sourceInfo);
+//                return buffer.getBuffer();
+//            }
         } else {
             generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
             NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
@@ -380,6 +392,73 @@ std::string CSVSource::toString() const {
        << "ms"
        << " numBuff=" << this->numberOfBuffersToProduce << ")";
     return ss.str();
+}
+
+void CSVSource::fillBufferFromFile(Runtime::MemoryLayouts::TestTupleBuffer& buffer, folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr& sourceInfo) {
+    NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
+    if (this->fileEnded) {
+        NES_WARNING("CSVSource::fillBuffer: but file has already ended");
+        return;
+    }
+
+    input.seekg(currentPositionInFile, std::ifstream::beg);
+
+    uint64_t generatedTuplesThisPass = 0;
+    //fill buffer maximally
+    if (numberOfTuplesToProducePerBuffer == 0) {
+        generatedTuplesThisPass = buffer.getCapacity();
+    } else {
+        generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
+        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
+    }
+    NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
+
+    std::string line;
+    uint64_t tupleCount = 0;
+
+    if (skipHeader && currentPositionInFile == 0) {
+        NES_TRACE("CSVSource: Skipping header");
+        std::getline(input, line);
+        currentPositionInFile = input.tellg();
+    }
+
+    while (tupleCount < generatedTuplesThisPass) {
+
+        //Check if EOF has reached
+        if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1) {
+            NES_TRACE("CSVSource::fillBuffer: reset tellg()={} fileSize={}", input.tellg(), fileSize);
+            input.clear();
+            NES_TRACE("CSVSource::fillBuffer: break because file ended");
+            this->fileEnded = true;
+            break;
+        }
+
+        std::getline(input, line);
+        NES_TRACE("CSVSource line={} val={}", tupleCount, line);
+        // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
+
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
+        tupleCount++;
+    }//end of while
+
+    currentPositionInFile = input.tellg();
+    buffer.setNumberOfTuples(tupleCount);
+    generatedTuples += tupleCount;
+    generatedBuffers++;
+
+    if (getReplayData()) {
+        auto* records = buffer.getBuffer().getBuffer<Runtime::Record>();
+        std::vector<Runtime::Record> newRecords;
+        for (uint64_t i = 0; i < tupleCount; i++) {
+            newRecords.push_back(records[i]);
+        }
+
+        sourceInfo->records.push_back(newRecords);
+        watermarkIndex.first++;
+    }
+
+    NES_TRACE("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
+    NES_TRACE("CSVSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
@@ -444,9 +523,9 @@ std::string CSVSource::getFilePath() const { return filePath; }
 const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
 
 CSVSource::~CSVSource() {
-    auto count = std::dynamic_pointer_cast<Network::NetworkSink>(std::get<DataSinkPtr>(getExecutableSuccessors().front()))
-                     ->getReconnectCount();
-    NES_DEBUG("destroying source with reconnect count {}", count);
+//    auto count = std::dynamic_pointer_cast<Network::NetworkSink>(std::get<DataSinkPtr>(getExecutableSuccessors().front()))
+//                     ->getReconnectCount();
+//    NES_DEBUG("destroying source with reconnect count {}", count);
     //    ::close(sockfd);
 }
 }// namespace NES

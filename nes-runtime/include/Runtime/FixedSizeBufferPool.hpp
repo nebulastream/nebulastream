@@ -41,7 +41,7 @@ const std::chrono::seconds DEFAULT_BUFFER_TIMEOUT = std::chrono::seconds(10);
 /**
  * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
  */
-class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider {
+class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider, public std::enable_shared_from_this<FixedSizeBufferPool> {
   public:
     /**
      * @brief Construct a new LocalBufferPool

@@ -32,6 +32,7 @@
 #include <sys/un.h>
 #include <thread>
 #include <utility>
+#include <numeric>
 
 namespace NES {
 
@@ -54,7 +55,7 @@ FileSink::FileSink(SinkFormatPtr format,
                  decomposedQueryId,
                  decomposedQueryVersion,
                  numberOfOrigins),
-      filePath(filePath), append(append), timestampAndWriteToSocket(false) {
+      filePath(filePath), append(append), timestampAndWriteToSocket(true) {
     (void) timestampAndWriteToSocket;
 }
 
@@ -101,11 +102,25 @@ void FileSink::setup() {
                       outputFile.is_open(),
                       outputFile.good());
         }
-
     } else {
         NES_DEBUG("creating socket for file sink")
         auto sockfd = nodeEngine->getTcpDescriptor(filePath);
-        watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create(numberOfOrigins);
+        std::vector<OriginId> origins;
+        for (uint64_t i = 1; i <= numberOfOrigins; ++i) {
+            origins.emplace_back(OriginId(i));
+        }
+        watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create(origins);
+        // Open the file stream
+        if (!outputFile.is_open()) {
+            outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
+        }
+        isOpen = outputFile.is_open() && outputFile.good();
+        if (!isOpen) {
+            NES_ERROR("Could not open output file; filePath={}, is_open()={}, good={}",
+                      filePath,
+                      outputFile.is_open(),
+                      outputFile.good());
+        }
     }
 }
 
@@ -147,7 +162,10 @@ void FileSink::shutdown() {
                     bufferVec.erase(it, bufferVec.end());
                 }
                 NES_DEBUG("returning")
-                writeDataToTCP(vec, sinkInfo);
+//                for (auto buff: vec) {
+//                    writeDataToFile(buff);
+//                }
+                 writeDataToTCP(vec, sinkInfo);
             }
         }
         NES_DEBUG("notify checkpoint created");
@@ -189,13 +207,14 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         return true;
     } else {
         (void) context;
-        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
+         auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
-        NES_DEBUG("got buffer {}", inputBuffer.getSequenceNumber());
+        NES_DEBUG("got buffer {}.{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
         if (!getReplayData()) {
             NES_DEBUG("replay data not activated writing buffer");
             std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
-            return writeDataToTCP(vec, sinkInfo);
+//            return writeDataToFile(inputBuffer);
+             return writeDataToTCP(vec, sinkInfo);
         }
         numberOfReceivedBuffers++;
 
@@ -209,11 +228,11 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         const auto bufferChunkNumber = inputBuffer.getChunkNumber();
         const auto bufferLastChunk = inputBuffer.isLastChunk();
         const auto bufferWatermark = inputBuffer.getWatermark();
-        const auto bufferOriginId = inputBuffer.getOriginId().getRawValue();
+        const auto bufferOriginId = inputBuffer.getOriginId();
 
         // auto watermarksProcessor = nodeEngine->getWatermarkProcessorFor(filePath, numberOfOrigins);
         // auto bufferStorage = nodeEngine->writeLockSinkStorage(filePath);
-        buffersStorage[bufferOriginId].push_back(inputBuffer);
+        buffersStorage[bufferOriginId.getRawValue()].push_back(inputBuffer);
 
         auto currentWatermarkBeforeAdding = watermarksProcessor->getCurrentWatermark();
 
@@ -238,10 +257,11 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
         const auto seqData = SequenceData(bufferSeqNumber, bufferChunkNumber, bufferLastChunk);
         // insert input buffer sequence number to the queue
-        watermarksProcessor->updateWatermark(bufferWatermark, bufferSeqNumber, bufferOriginId);
+        watermarksProcessor->updateWatermark(bufferWatermark, seqData, bufferOriginId);
 
         // get the highest consecutive sequence number in the queue after adding new value
         auto currentWatermarkAfterAdding = watermarksProcessor->getCurrentWatermark();
+        NES_DEBUG("saved watermark: {}", currentWatermarkAfterAdding);
 
         NES_DEBUG("watermark before adding {}, after adding {}, source id {}, sharedQueryId {}",
                   currentWatermarkBeforeAdding,
@@ -263,222 +283,18 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         }
         NES_DEBUG("returning")
         return writeDataToTCP(vec, sinkInfo);
+//        for (auto buff: vec) {
+//            writeDataToFile(buff);
+//        }
+//        return true;
     }
 }
-
-//bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
-//    (void) context;
-//
-//    NES_DEBUG("got buffer {}", inputBuffer.getSequenceNumber());
-//    if (!getReplayData()) {
-//        NES_DEBUG("replay data not activated writing buffer");
-//        std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
-//        return writeDataToTCP(vec);
-//    }
-//
-//    // Stop execution if the file could not be opened during setup.
-//    // This results in ExecutionResult::Error for the task.
-//    numberOfReceivedBuffers++;
-//
-//    //    if (!isOpen) {
-//    //        NES_DEBUG("The output file could not be opened during setup of the file sink.");
-//    //        return false;
-//    //    }
-//
-//    if (!inputBuffer) {
-//        NES_DEBUG("Invalid input buffer");
-//        return false;
-//    }
-//
-//    //todo: get source id
-//    //todo: check if we can use origin id
-//    NES_ASSERT(inputBuffer.getNumberOfTuples() != 0, "number of tuples must not be 0");
-//    auto sourceId = ((Record*) inputBuffer.getBuffer())->id;
-//    NES_DEBUG("writing data for source id {}", sourceId);
-//    const auto bufferSeqNumber = inputBuffer.getSequenceNumber();
-//
-//    {
-//        auto lastWrittenMap = nodeEngine->lockLastWritten(filePath);
-//
-//        uint64_t lastWritten = 0;
-//        if (lastWrittenMap->contains(sourceId)) {
-//            lastWritten = lastWrittenMap->at(sourceId);
-//        }
-//
-//        //ignore this buffer if it was already written
-//        if (bufferSeqNumber <= lastWritten) {
-//            return true;
-//        }
-//
-//        if (!seqQueueMap.rlock()->contains(sourceId)) {
-//            auto readLock = seqQueueMap.wlock();
-//            if (!readLock->contains(sourceId)) {
-//
-//                Sequencing::NonBlockingMonotonicSeqQueue<uint64_t> newQueue;
-//                //todo: fixme
-//                for (uint64_t i = 0; i <= lastWritten; ++i) {
-//                    const auto seqData = SequenceData(i, 1, true);
-//                    newQueue.emplace(seqData, i);
-//                }
-//                readLock->operator[](sourceId) = newQueue;
-//                NES_DEBUG("creating new queue with start {}", readLock->at(sourceId).getCurrentValue());
-//            }
-//        }
-//    }
-//
-//    // get sequence number of received buffer
-//    //    auto bufferCopy = context.getUnpooledBuffer(inputBuffer.getBufferSize());
-//    //    std::memcpy(bufferCopy.getBuffer(), inputBuffer.getBuffer(), inputBuffer.getBufferSize());
-//    //    bufferCopy.setNumberOfTuples(inputBuffer.getNumberOfTuples());
-//    //    bufferCopy.setOriginId(inputBuffer.getOriginId());
-//    //    bufferCopy.setWatermark(inputBuffer.getWatermark());
-//    //    bufferCopy.setCreationTimestampInMS(inputBuffer.getCreationTimestampInMS());
-//    //    bufferCopy.setSequenceNumber(inputBuffer.getSequenceNumber());
-//    //    inputBuffer.release();
-//    {
-//        //        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, bufferCopy);
-//        if (bufferStorage.wlock()->operator[](sourceId).contains(bufferSeqNumber)) {
-//            NES_DEBUG("buffer already recorded, exiting");
-//            return true;
-//        }
-//        auto records = (Record*) inputBuffer.getBuffer();
-//        std::vector<Record> vector;
-//        for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
-//            records[i].outputTimestamp = getTimestamp();
-//            vector.push_back(records[i]);
-//        }
-//        bufferStorage.wlock()->operator[](sourceId).emplace(bufferSeqNumber, std::move(vector));
-//    }
-//
-//    // save the highest consecutive sequence number in the queue
-//
-//    //todo: there is a problem with locking here
-//    auto currentSeqNumberBeforeAdding = seqQueueMap.rlock()->at(sourceId).getCurrentValue();
-//
-//    // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
-//    const auto seqData = SequenceData(bufferSeqNumber, 1, true);
-//    // insert input buffer sequence number to the queue
-//    seqQueueMap.wlock()->at(sourceId).emplace(seqData, bufferSeqNumber);
-//
-//    // get the highest consecutive sequence number in the queue after adding new value
-//    auto currentSeqNumberAfterAdding = seqQueueMap.rlock()->at(sourceId).getCurrentValue();
-//
-//    NES_DEBUG("seq number before adding {}, after adding {}, source id {}, sharedQueryId {}", currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding, sourceId, sharedQueryId);
-//    // check if top value in the queue has changed after adding new sequence number
-//    //    if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
-//    NES_DEBUG("try to acquire lock for written map")
-//    auto lastWrittenMap = nodeEngine->tryLockLastWritten(filePath);
-//    if (lastWrittenMap) {
-//        NES_DEBUG("got lock for written map")
-//        //        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
-//        std::vector<std::vector<Record>> bulkWriteBatch;
-//
-//        if (!lastWrittenMap->contains(sourceId)) {
-//            lastWrittenMap->insert({sourceId, 0});
-//        };
-//        auto& lastWritten = lastWrittenMap->at(sourceId);
-//
-//        if (lastWritten < currentSeqNumberAfterAdding) {
-//            {
-//                NES_DEBUG("writing data: last written {} seq number before adding {}, after adding {}, source id {}, sharedQueryId {}", lastWritten, currentSeqNumberBeforeAdding, currentSeqNumberAfterAdding, sourceId, sharedQueryId);
-//                auto bufferStorageLocked = bufferStorage.wlock();
-//                //todo: reduce hashmap lookups
-//                //            for (auto it = bufferStorageLocked->operator[](sourceId).lower_bound(lastWritten + 1);
-//                //                 it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
-//                //                 ++it) {
-//                for (auto it = bufferStorageLocked->operator[](sourceId).find(lastWritten + 1);
-//                     it != bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding);
-//                     ++it) {
-//                    NES_DEBUG("adding element with id {}", it->second.front().id);
-//                    bulkWriteBatch.push_back(it->second);// Collect the value (TupleBuffer) into the batch
-//                }
-//                NES_DEBUG("erasing elements");
-//                bufferStorageLocked->operator[](sourceId).erase(
-//                    bufferStorageLocked->operator[](sourceId).find(lastWritten + 1),
-//                    bufferStorageLocked->operator[](sourceId).upper_bound(currentSeqNumberAfterAdding));
-//            }
-//
-//            //TODO: take care of cleanup
-//
-//            NES_DEBUG("writing data to tcp")
-//
-//            // Write all buffers at once
-//            writeDataToTCP(bulkWriteBatch);
-//
-//            NES_DEBUG("wrote data to tcp updatign last written count")
-//            // NES_ERROR("wrote from {} to {}", lastWritten + 1, currentSeqNumberAfterAdding);
-//
-//            // Update lastWritten to the latest sequence number
-//            lastWritten = currentSeqNumberAfterAdding;
-//        }
-//    }
-//    //    }
-//
-//    //todo: check if we need this
-//    //    if (numberOfReceivedBuffers == inputBuffer.getWatermark() && numberOfWrittenBuffers != numberOfReceivedBuffers) {
-//    //        lastWrittenMtx.lock();
-//    //        auto bufferStorageLocked = *bufferStorage.rlock();
-//    //        // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]
-//    //        std::vector<Runtime::TupleBuffer> bulkWriteBatch;
-//    //
-//    //        // Iterate through the map from (lastWritten + 1) to (currentSeqNumberAfterAdding)
-//    //        for (auto it = bufferStorageLocked.lower_bound(lastWritten + 1);
-//    //             it != bufferStorageLocked.upper_bound(inputBuffer.getWatermark());
-//    //             ++it) {
-//    //            bulkWriteBatch.push_back(it->second);  // Collect the value (TupleBuffer) into the batch
-//    //        }
-//    //
-//    //        // Write all buffers at once
-//    //        writeDataToTCP(bulkWriteBatch);
-//    //
-//    //        // Update lastWritten to the latest sequence number
-//    //        lastWritten = inputBuffer.getWatermark();
-//    //        lastWrittenMtx.unlock();
-//    //    }
-//
-//    NES_DEBUG("returning")
-//    return true;
-//}
-
-//bool FileSink::writeDataToTCP(std::vector<std::vector<Record>>& buffersToWrite) {
-//
-//    auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
-//    if (timestampAndWriteToSocket) {
-//        NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
-//
-//        for (auto records : buffersToWrite) {
-//            ssize_t bytes_written = write(sinkInfo->sockfd, records.data(), records.size() * sizeof(Record));
-//            //        NES_ERROR("{} bytes written to tcp sink", bytes_written);
-//            if (bytes_written == -1) {
-//                NES_ERROR("Could not write to socket in sink")
-//                perror("write");
-//                close(sinkInfo->sockfd);
-//                return 1;
-//            }
-//
-//            //        receivedBuffers.push_back(bufferContent);
-//            //        arrivalTimestamps.push_back(getTimestamp());
-//        }
-//        NES_DEBUG("finished writing to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
-//        return true;
-//    }
-//    return false;
-//}
 
 bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite,
                               folly::Synchronized<Runtime::TCPSinkInfo>::LockedPtr& sinkInfo) {
 
-    //    auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
     if (timestampAndWriteToSocket) {
         NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
-        //        std::string bufferContent;
-        //auto schema = sinkFormat->getSchemaPtr();
-        //schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
-        //bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
-        //totalTupleCountreceived += inputBuffer.getNumberOfTuples();
-
-        // Write data to the socket
-        //ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
 
         for (auto bufferToWrite : buffersToWrite) {
 
@@ -506,54 +322,6 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite,
     return false;
 }
 
-//bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
-//    // auto sockfd = nodeEngine->getTcpDescriptor(filePath);
-//    auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
-//    if (timestampAndWriteToSocket) {
-//        NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
-//        std::unique_lock lock(writeMutex);
-////        std::string bufferContent;
-//        //auto schema = sinkFormat->getSchemaPtr();
-//        //schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
-//        //bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, timestampAndWriteToSocket);
-//        //totalTupleCountreceived += inputBuffer.getNumberOfTuples();
-//
-//
-//        // Write data to the socket
-//        //ssize_t bytes_written = write(sockfd, bufferContent.c_str(), bufferContent.length());
-//
-//        auto* records = inputBuffer.getBuffer<Record>();
-//        //todo: do not checkpoint if incremental is enabled
-//        for (uint64_t i = 0; i < inputBuffer.getNumberOfTuples(); ++i) {
-//            records[i].outputTimestamp = getTimestamp();
-//            auto& checkpoint = sinkInfo->checkpoints[records[i].id];
-////            if (checkpoint != 0 && checkpoint >= records[i].value) {
-////                NES_ERROR("checkpoint is {}, tuple is {}. Replay cannot work with out of orderness", checkpoint, records[i].value);
-////                NES_ASSERT(false, "Checkpoints not increasing");
-////            }
-//            if (records[i].value == 0 || checkpoint == records[i].value + 1) {
-//                checkpoint = records[i].value;
-//            }
-//        }
-////        NES_ERROR("Writing to tcp sink");
-//        ssize_t bytes_written = write(sinkInfo->sockfd, inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * sizeof(Record));
-////        NES_ERROR("{} bytes written to tcp sink", bytes_written);
-//        if (bytes_written == -1) {
-//            NES_ERROR("Could not write to socket in sink")
-//            perror("write");
-//            close(sinkInfo->sockfd);
-//            return 1;
-//        }
-//
-//        //        receivedBuffers.push_back(bufferContent);
-//        //        arrivalTimestamps.push_back(getTimestamp());
-//
-//        NES_DEBUG("finished writing to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
-//        return true;
-//    }
-//    return writeDataToFile(inputBuffer);
-//}
-
 std::string FileSink::getFilePath() const { return filePath; }
 
 bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
@@ -579,9 +347,6 @@ bool FileSink::writeDataToFile(Runtime::TupleBuffer& inputBuffer) {
     }
 
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
-    if (fBuffer.empty()) {
-
-    }
     NES_DEBUG("Writing tuples to file sink; decomposed query id={} filePath={}, fBuffer={}",
               decomposedQueryId,
               filePath,

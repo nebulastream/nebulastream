@@ -86,10 +86,10 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
         // Set the sequence number of this buffer.
         // A data source generates a monotonic increasing sequence number
 
-        if (!getReplayData()) {
+//        if (!getReplayData()) {
             maxSequenceNumber++;
             buffer.setSequenceNumber(maxSequenceNumber);
-        }
+//        }
         buffer.setChunkNumber(1);
         buffer.setLastChunk(true);
         buffer.setStatisticId(statisticId);
@@ -385,7 +385,7 @@ void DataSource::close() {
             endOfStreamSent = queryManager->addEndOfStream(shared_from_base<DataSource>(), queryTerminationType);
         }
         NES_ASSERT2_FMT(endOfStreamSent, "Cannot send eos for source " << toString());
-        bufferManager->destroy();
+//        bufferManager->destroy();
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), queryTerminationType);
     }
 }

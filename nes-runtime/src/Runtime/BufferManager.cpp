@@ -46,18 +46,22 @@ BufferManager::BufferManager(uint32_t bufferSize,
 void BufferManager::destroy() {
     bool expected = false;
     if (isDestroyed.compare_exchange_strong(expected, true)) {
-        std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex, localBufferPoolsMutex);
+        const std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex, localBufferPoolsMutex);
         auto success = true;
         NES_DEBUG("Shutting down Buffer Manager");
         for (auto& localPool : localBufferPools) {
-            localPool->destroy();
+            /// If the weak ptr is invalid the local buffer pool has already been destroyed
+            if (auto pool = localPool.lock())
+            {
+                pool->destroy();
+            }
         }
+        localBufferPools.clear();
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
         size_t numOfAvailableBuffers = this->numOfAvailableBuffers.load();
 #else
         size_t numOfAvailableBuffers = availableBuffers.size();
 #endif
-        localBufferPools.clear();
         if (allBuffers.size() != numOfAvailableBuffers) {
             NES_ERROR("[BufferManager] total buffers {} :: available buffers {}", allBuffers.size(), numOfAvailableBuffers);
             success = false;
@@ -149,7 +153,6 @@ void BufferManager::initialize(uint32_t withAlignment) {
         allBuffers.emplace_back(
             payload,
             bufferSize,
-            this,
             [](detail::MemorySegment* segment, BufferRecycler* recycler) {
                 recycler->recyclePooledBuffer(segment);
             },
@@ -179,7 +182,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
     availableBuffers.blockingRead(memSegment);
     numOfAvailableBuffers.fetch_sub(1);
 #endif
-    if (memSegment->controlBlock->prepare()) {
+    if (memSegment->controlBlock->prepare(shared_from_this())) {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
@@ -200,7 +203,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
     }
     numOfAvailableBuffers.fetch_sub(1);
 #endif
-    if (memSegment->controlBlock->prepare()) {
+    if (memSegment->controlBlock->prepare(shared_from_this())) {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
@@ -225,7 +228,7 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
     }
     numOfAvailableBuffers.fetch_sub(1);
 #endif
-    if (memSegment->controlBlock->prepare()) {
+    if (memSegment->controlBlock->prepare(shared_from_this())) {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
@@ -242,7 +245,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
                 if (it->free) {
                     auto* memSegment = (*it).segment.get();
                     it->free = false;
-                    if (memSegment->controlBlock->prepare()) {
+                    if (memSegment->controlBlock->prepare(shared_from_this())) {
                         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
                     }
                     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
@@ -269,14 +272,13 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     auto memSegment = std::make_unique<detail::MemorySegment>(
         ptr + controlBlockSize,
         alignedBufferSize,
-        this,
         [](detail::MemorySegment* segment, BufferRecycler* recycler) {
             recycler->recycleUnpooledBuffer(segment);
         },
         ptr);
     auto* leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), alignedBufferSize);
-    if (leakedMemSegment->controlBlock->prepare()) {
+    if (leakedMemSegment->controlBlock->prepare(shared_from_this())) {
         return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
     }
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
@@ -293,6 +295,9 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment) {
 #else
     if (!segment->isAvailable()) {
         NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment");
+    }
+    if (segment->controlBlock->owningBufferRecycler != nullptr) {
+        NES_THROW_RUNTIME_ERROR("Buffer should not retain a reference to its parent while not in use");
     }
     availableBuffers.write(segment);
     numOfAvailableBuffers.fetch_add(1);
@@ -339,15 +344,9 @@ size_t BufferManager::getAvailableBuffers() const {
 }
 
 size_t BufferManager::getAvailableBuffersInFixedSizePools() const {
-    std::unique_lock lock(localBufferPoolsMutex);
-    size_t sum = 0;
-    for (auto& pool : localBufferPools) {
-        auto type = pool->getBufferManagerType();
-        if (type == BufferManagerType::FIXED) {
-            sum += pool->getAvailableBuffers();
-        }
-    }
-    return sum;
+    const std::unique_lock lock(localBufferPoolsMutex);
+    const auto numberOfAvailableBuffers = std::ranges::count_if(localBufferPools, [](auto& weak) { return !weak.expired(); });
+    return numberOfAvailableBuffers;
 }
 
 BufferManagerType BufferManager::getBufferManagerType() const { return BufferManagerType::GLOBAL; }
@@ -391,8 +390,13 @@ LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedB
 }
 
 FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers) {
-    std::unique_lock lock(availableBuffersMutex);
+    const std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
+
+    NES_DEBUG(
+        "Attempting to create fixed size buffer pool of {} Buffers. Currently available are {} buffers",
+        numberOfReservedBuffers,
+        numOfAvailableBuffers);
 
     NES_ASSERT2_FMT((size_t) availableBuffers.size() >= numberOfReservedBuffers,
                     "BufferManager: Not enough buffers: " << availableBuffers.size() << "<" << numberOfReservedBuffers);

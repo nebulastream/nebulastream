@@ -157,9 +157,9 @@ void BenchmarkSource::runningRoutine() {
                     break;
                 }
                 case SourceMode::WRAP_BUFFER: {
-                    buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
-                                                              bufferSize,
-                                                              this);
+//                    buffer = Runtime::TupleBuffer::wrapMemory(numaLocalMemoryArea.getBuffer() + currentPositionInBytes,
+//                                                              bufferSize,
+//                                                              this);
                     memoryAreaRefCnt.fetch_add(1);
                     break;
                 }

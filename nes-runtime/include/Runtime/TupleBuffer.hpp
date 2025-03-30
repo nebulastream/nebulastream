@@ -102,20 +102,6 @@ class TupleBuffer {
      */
     [[maybe_unused]] static TupleBuffer reinterpretAsTupleBuffer(void* bufferPointer);
 
-    /**
-     * @brief Creates a TupleBuffer of length bytes starting at ptr address.
-     *
-     * @param ptr    resource's address.
-     * @param length the size of the allocated memory.
-     * @param parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed,
-     *               which is the caller's responsibility.
-     *
-     */
-    [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
-    [[nodiscard]] static TupleBuffer
-    wrapMemory(uint8_t* ptr,
-               size_t length,
-               std::function<void(detail::MemorySegment* segment, BufferRecycler* recycler)>&& recycler);
 
     /**
      * Wrap an object in a tuple buffer.
@@ -135,7 +121,7 @@ class TupleBuffer {
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
     [[nodiscard]] constexpr TupleBuffer(TupleBuffer const& other) noexcept
         : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
-        if (controlBlock) {
+        if (controlBlock != nullptr) {
             controlBlock->retain();
         }
     }
@@ -312,11 +298,6 @@ class TupleBuffer {
 
     ///@brief set the buffer's statistic id (where it was last touched).
     inline void setStatisticId(StatisticId statisticId) noexcept { controlBlock->setStatisticId(statisticId); }
-
-    ///@brief set the buffer's recycle callback.
-    inline void addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept {
-        controlBlock->addRecycleCallback(std::move(newCallback));
-    }
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
     [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) const noexcept;

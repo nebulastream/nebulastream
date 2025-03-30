@@ -255,6 +255,7 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     std::atomic<bool> serialized = false;
     std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers = 0;
+    std::atomic<uint64_t> isExecuted = 0;
     std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 

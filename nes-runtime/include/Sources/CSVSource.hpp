@@ -72,6 +72,8 @@ class CSVSource : public DataSource {
      */
     void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
 
+    void fillBufferFromFile(Runtime::MemoryLayouts::TestTupleBuffer&, folly::Synchronized<Runtime::TcpSourceInfo>::LockedPtr&);
+
     /**
      * @brief override the toString method for the csv source
      * @return returns string describing the binary source

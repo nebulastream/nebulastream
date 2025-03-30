@@ -72,7 +72,7 @@ struct Record {
     uint64_t value;
     uint64_t ingestionTimestamp;
     uint64_t processingTimestamp;
-    uint64_t outputTimestamp;
+    // uint64_t outputTimestamp;
 };
 
 struct TcpSourceInfo {

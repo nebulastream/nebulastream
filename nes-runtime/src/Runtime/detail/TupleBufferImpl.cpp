@@ -39,11 +39,10 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
 
 MemorySegment::MemorySegment(uint8_t* ptr,
                              uint32_t size,
-                             BufferRecycler* recycler,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
                              uint8_t* controlBlock)
     : size(size) {
-    this->controlBlock = new (controlBlock) BufferControlBlock(this, recycler, std::move(recycleFunction));
+    this->controlBlock = new (controlBlock) BufferControlBlock(this, std::move(recycleFunction));
     this->ptr = ptr;
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
@@ -55,15 +54,13 @@ MemorySegment::MemorySegment(uint8_t* ptr,
 
 MemorySegment::MemorySegment(uint8_t* ptr,
                              uint32_t size,
-                             BufferRecycler* recycler,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
                              bool)
     : ptr(ptr), size(size) {
     NES_ASSERT2_FMT(this->ptr, "invalid ptr");
     NES_ASSERT2_FMT(this->size, "invalid size");
-    controlBlock.reset(new BufferControlBlock(this, recycler, std::move(recycleFunction)),
+    controlBlock.reset(new BufferControlBlock(this, std::move(recycleFunction)),
                        magic_enum::enum_integer(MemorySegmentType::Wrapped));
-    controlBlock->prepare();
 }
 
 MemorySegment::~MemorySegment() {
@@ -92,9 +89,8 @@ MemorySegment::~MemorySegment() {
 }
 
 BufferControlBlock::BufferControlBlock(MemorySegment* owner,
-                                       BufferRecycler* recycler,
                                        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
-    : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback)) {
+    : owner(owner), recycleCallback(std::move(recycleCallback)) {
     // nop
 }
 
@@ -102,6 +98,7 @@ BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
     numberOfTuples = that.numberOfTuples;
     creationTimestamp = that.creationTimestamp;
+    owningBufferRecycler = that.owningBufferRecycler;
     recycleCallback = that.recycleCallback;
     owner = that.owner;
     watermark = that.watermark;
@@ -112,6 +109,7 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
     referenceCounter.store(that.referenceCounter.load());
     numberOfTuples = that.numberOfTuples;
     recycleCallback = that.recycleCallback;
+    owningBufferRecycler = that.owningBufferRecycler;
     owner = that.owner;
     watermark = that.watermark;
     creationTimestamp = that.creationTimestamp;
@@ -120,20 +118,6 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
 }
 
 MemorySegment* BufferControlBlock::getOwner() const { return owner; }
-
-void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler) {
-    NES_ASSERT2_FMT(recycler, "invalid recycler");
-    auto* oldRecycler = owningBufferRecycler.exchange(recycler);
-    NES_ASSERT2_FMT(recycler != oldRecycler, "invalid recycler");
-}
-
-void BufferControlBlock::addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept {
-    auto oldRecycleCallback = this->recycleCallback;
-    recycleCallback = [oldRecycleCallback, func](MemorySegment* memorySegment, BufferRecycler* bufferRecycler) {
-        func(memorySegment, bufferRecycler);
-        oldRecycleCallback(memorySegment, bufferRecycler);
-    };
-}
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 /**
@@ -159,7 +143,7 @@ void fillThreadOwnershipInfo(std::string& threadName, std::string& callstack) {
     callstack = callStackBuffer.str();
 }
 #endif
-bool BufferControlBlock::prepare() {
+bool BufferControlBlock::prepare(const std::shared_ptr<BufferRecycler>& recycler) {
     int32_t expected = 0;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     // store the current thread that owns the buffer and track which function obtained the buffer
@@ -169,6 +153,8 @@ bool BufferControlBlock::prepare() {
     owningThreads[std::this_thread::get_id()].emplace_back(info);
 #endif
     if (referenceCounter.compare_exchange_strong(expected, 1)) {
+         const auto previousOwner = std::exchange(this->owningBufferRecycler, recycler);
+         NES_ASSERT2_FMT(previousOwner == nullptr, "Buffer should not retain a reference to its owner while unused");
         return true;
     }
     NES_ERROR("Invalid reference counter: {}", expected);
@@ -208,7 +194,8 @@ bool BufferControlBlock::release() {
             child->controlBlock->release();
         }
         children.clear();
-        recycleCallback(owner, owningBufferRecycler.load());
+        auto recycler = std::move(owningBufferRecycler);
+        recycleCallback(owner, recycler.get());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
