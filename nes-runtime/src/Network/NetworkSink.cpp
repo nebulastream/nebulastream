@@ -120,6 +120,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     //        channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
     //    }
 
+    // NES_ERROR("sent tuple buffer {}, watermark {}", inputBuffer.getSequenceNumber(), inputBuffer.getWatermark());
+
     NES_DEBUG("retrieving channel")
 
     auto pair = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
@@ -138,6 +140,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         if (!retrieveNewChannelAndUnbuffer(workerContext)) {
             NES_TRACE("context {} buffering data", workerContext.getId());
             workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
+            // NES_ERROR("not connected 1");
             return true;
         }
 
@@ -161,10 +164,11 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
                   changeCount,
                   actualReconnectCount);
         workerContext.insertIntoReconnectBufferStorage(getUniqueNetworkSinkDescriptorId(), inputBuffer);
+        // NES_ERROR("not connected 2");
         return true;
     }
 
-    NES_TRACE("Network Sink: {} data sent with sequence number {} successful", decomposedQueryId, messageSequenceNumber + 1);
+    // NES_ERROR("Network Sink: {} data sent with sequence number {} successful", decomposedQueryId, messageSequenceNumber + 1);
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
 }

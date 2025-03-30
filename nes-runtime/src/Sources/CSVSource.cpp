@@ -166,13 +166,22 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
     );
 //    auto replay = sourceInfo->records.at(replayOffset).data();
     auto* records = buffer.getBuffer().getBuffer<Record>();
-    std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
     buffer.setNumberOfTuples(replayVec.size());
+
+    for (uint64_t i = 0; i < replayVec.size(); ++i) {
+        records[i].id = replayVec[i].id;
+        records[i].joinId = replayVec[i].joinId;
+        records[i].value = replayVec[i].value;
+        records[i].ingestionTimestamp = replayVec[i].ingestionTimestamp;
+        //                    records[i].processingTimestamp = getTimestamp();
+        records[i].processingTimestamp = replayVec[i].processingTimestamp;
+         NES_DEBUG("record: id {}, joinId {}, value: {}", records[i].id, records[i].joinId, records[i].value);
+    }
     NES_DEBUG("setting sequence number replayed buffer to {} (id {}), fd {}", sentUntil, sourceInfo->records.front().front().id, sourceInfo->sockfd)
 //    buffer.getBuffer().setSequenceNumber(watermarkIndex.first);
     watermarkIndex.first++;
     watermarkIndex.second = 0;
-    // NES_ERROR("replay with watermark {} index {}, end of replay at {}", replayVec.front().value, watermarkIndex.first, sourceInfo->records.size());
+    NES_DEBUG("replay with watermark {} index {}, end of replay at {}", replayVec.front().value, watermarkIndex.first, sourceInfo->records.size());
 
     return buffer.getBuffer();
 }
@@ -196,7 +205,6 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
-        auto recordsToSee = sourceInfo->records;
         if (getReplayData()) {
             if (sourceInfo->records.empty()) {
                 // not to wait acknowledgment on the first start of source
@@ -326,7 +334,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                         if (getReplayData()) {
                             //                    sourceInfo->records.emplace_back(*id, *seqenceNr, *ingestionTime, timeStamp);
-                            sourceInfo->records.back().emplace_back(*id, *seqenceNr, *seqenceNr, *ingestionTime, timeStamp);
+                            sourceInfo->records.back().emplace_back(*id, *joinId, *seqenceNr, *ingestionTime, timeStamp, *ingestionTime);
                             //totalTupleCount++;
                         }
                     }
@@ -339,6 +347,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     }
 
                     buffer.setNumberOfTuples(numCompleteTuplesRead);
+                    // NES_ERROR("number of tuples: {}", numCompleteTuplesRead);
                     generatedTuples += numCompleteTuplesRead;
                     generatedBuffers++;
                     auto returnBuffer = buffer.getBuffer();
@@ -347,12 +356,11 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         NES_DEBUG("setting sequence number first played buffer to {} (id {})",
                                   sourceInfo->records.size(),
                                   sourceInfo->records.front().front().id)
-                        returnBuffer.setSequenceNumber(sourceInfo->records.size());
+//                        returnBuffer.setSequenceNumber(sourceInfo->records.size());
                     }
                     // TODO: check this logic precisely
                     sentUntil = sourceInfo->records.back().back().value;
                     watermarkIndex.first++;
-
                     return returnBuffer;
                 } else {
                     uint64_t valCount = 0;
