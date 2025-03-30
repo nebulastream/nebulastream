@@ -101,6 +101,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
                   buffer.getChunkNumber(),
                   buffer.isLastChunk(),
                   buffer.getStatisticId());
+        // NES_ERROR("Sent buffer {}, seqNum: {}", buffer.getOriginId(), buffer.getSequenceNumber());
     }
 
     uint64_t queueId = 0;

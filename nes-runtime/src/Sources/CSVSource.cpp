@@ -164,7 +164,6 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
         innerVec.begin() + watermarkIndex.second,
         innerVec.end()
     );
-    NES_DEBUG("replay with id {} buffer {}, end of replay at {}", replayVec.front().id, watermarkIndex.first + 1, sourceInfo->records.size());
 //    auto replay = sourceInfo->records.at(replayOffset).data();
     auto* records = buffer.getBuffer().getBuffer<Record>();
     std::memcpy(records, replayVec.data(), replayVec.size() * sizeof(Record));
@@ -173,6 +172,7 @@ CSVSource::fillReplayBuffer(folly::Synchronized<Runtime::TcpSourceInfo>::LockedP
 //    buffer.getBuffer().setSequenceNumber(watermarkIndex.first);
     watermarkIndex.first++;
     watermarkIndex.second = 0;
+    // NES_ERROR("replay with watermark {} index {}, end of replay at {}", replayVec.front().value, watermarkIndex.first, sourceInfo->records.size());
 
     return buffer.getBuffer();
 }
@@ -181,7 +181,7 @@ std::pair<size_t, size_t> CSVSource::findWatermarkIndex(const std::vector<std::v
     for (size_t outerIndex = 0; outerIndex < records.size(); ++outerIndex) {
         const auto& innerVec = records[outerIndex];
         for (size_t innerIndex = 0; innerIndex < innerVec.size(); ++innerIndex) {
-            if (innerVec[innerIndex].value >= sentUntil) {
+            if (innerVec[innerIndex].value > sentUntil) {
                 // Found, return indices as watermarkIndex
                 return {outerIndex, innerIndex};
             }
@@ -206,15 +206,16 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
             if (!sourceInfo->records.empty() && shouldGetLastAck) {
 //                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
                 auto decomposedQueryPlans = queryManager->getExecutablePlanIdsForSource(shared_from_base<DataSource>());
-                auto sharedQueryPlab = queryManager->getSharedQueryId(*decomposedQueryPlans.begin());
-                auto ack = queryManager->getSourceAck(sharedQueryPlab.getRawValue());
+                auto sharedQueryPlan = queryManager->getSharedQueryId(*decomposedQueryPlans.begin());
+                auto ack = queryManager->getSourceAck(sharedQueryPlan.getRawValue());
                 shouldGetLastAck = false;
                 if (ack.has_value() && ack.value() != 0) {
-                    NES_DEBUG("found ack, sent until {} ack {}", sentUntil, ack.value());
+                    NES_ERROR("{} found ack, sent until {} ack {}", sharedQueryPlan.getRawValue(), sentUntil, ack.value());
                     auto oldSentUntil = sentUntil;
                     sentUntil = std::max(sentUntil, ack.value());
                     if (oldSentUntil != sentUntil) {
                         watermarkIndex = findWatermarkIndex(sourceInfo->records, sentUntil);
+                        NES_ERROR("id {}, index: {}, of: {}", sharedQueryPlan.getRawValue(), watermarkIndex.first, sourceInfo->records.size());
                     }
                 }
             }

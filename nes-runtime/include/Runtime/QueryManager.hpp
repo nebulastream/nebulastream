@@ -69,6 +69,7 @@ using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
 struct Record {
     uint64_t id;
+    uint64_t joinId;
     uint64_t value;
     uint64_t ingestionTimestamp;
     uint64_t processingTimestamp;

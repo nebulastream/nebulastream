@@ -137,16 +137,17 @@ void FileSink::shutdown() {
             auto minWatermark = watermarksProcessor->getCurrentWatermark();
             auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId);
 
-            if (minWatermark > lastSavedWatermark) {
-                nodeEngine->updateLastSavedMinWatermark(sharedQueryId, minWatermark);
-                NES_DEBUG("sending checkpoint query id: {}, watermark: {}", sharedQueryId, watermarksProcessor->getCurrentWatermark());
-                // map.insert({sharedQueryId.getRawValue(), watermarkProcessor->get()->getCurrentWatermark()});
-                // }
-                std::thread thread([nodeEngine,sharedQueryId, minWatermark]() mutable {
-                    nodeEngine->notifyCheckpoints(sharedQueryId, minWatermark);
-                });
-                thread.detach();
+            auto newWatermark = std::max(minWatermark, lastSavedWatermark);
+            nodeEngine->updateLastSavedMinWatermark(sharedQueryId, newWatermark);
+            NES_ERROR("sending checkpoint query id: {}, watermark: {}", sharedQueryId, newWatermark);
+            // map.insert({sharedQueryId.getRawValue(), watermarkProcessor->get()->getCurrentWatermark()});
+            // }
+            std::thread thread([nodeEngine, sharedQueryId, newWatermark]() mutable {
+                nodeEngine->notifyCheckpoints(sharedQueryId, newWatermark);
+            });
+            thread.detach();
 
+//            if (minWatermark > lastSavedWatermark) {
                 auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
                 std::vector<Runtime::TupleBuffer> vec;
                 NES_DEBUG("writing and erasing elements");
@@ -166,7 +167,7 @@ void FileSink::shutdown() {
 //                    writeDataToFile(buff);
 //                }
                  writeDataToTCP(vec, sinkInfo);
-            }
+//            }
         }
         NES_DEBUG("notify checkpoint created");
     }
@@ -209,7 +210,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         (void) context;
          auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
-        NES_DEBUG("got buffer {}.{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
+        // NES_ERROR("got buffer {}.{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
         if (!getReplayData()) {
             NES_DEBUG("replay data not activated writing buffer");
             std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
