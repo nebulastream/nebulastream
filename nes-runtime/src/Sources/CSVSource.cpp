@@ -219,12 +219,8 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 shouldGetLastAck = false;
                 if (ack.has_value() && ack.value() != 0) {
                     NES_ERROR("{} found ack, sent until {} ack {}", sharedQueryPlan.getRawValue(), sentUntil, ack.value());
-                    auto oldSentUntil = sentUntil;
-                    sentUntil = std::max(sentUntil, ack.value());
-                    if (oldSentUntil != sentUntil) {
-                        watermarkIndex = findWatermarkIndex(sourceInfo->records, sentUntil);
-                        NES_ERROR("id {}, index: {}, of: {}", sharedQueryPlan.getRawValue(), watermarkIndex.first, sourceInfo->records.size());
-                    }
+                    watermarkIndex = findWatermarkIndex(sourceInfo->records, ack.value());
+                    NES_ERROR("id {}, index: {}, of: {}, watermark: {}", sharedQueryPlan.getRawValue(), watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
                 }
             }
 //            if (watermarkIndex < sourceInfo->records.back().back().ingestionTimestamp) {
