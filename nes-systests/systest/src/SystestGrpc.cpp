@@ -13,23 +13,14 @@
 */
 
 
-#include <chrono>
 #include <cstddef>
-#include <cstdint>
-#include <memory>
-#include <vector>
-#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <google/protobuf/empty.pb.h>
 #include <grpcpp/channel.h>
-#include <grpcpp/client_context.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <SystestGrpc.hpp>
 
@@ -73,6 +64,28 @@ void GRPCClient::start(size_t queryId) const
     else
     {
         throw NES::QueryStartFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
+            magic_enum::enum_name(status.error_code()),
+            status.error_message(),
+            status.error_details());
+    }
+}
+
+void GRPCClient::stop(size_t queryId) const
+{
+    grpc::ClientContext context;
+    StopQueryRequest request;
+    request.set_queryid(queryId);
+    request.set_terminationtype(StopQueryRequest::HardStop);
+    google::protobuf::Empty response;
+    auto status = stub->StopQuery(&context, request, &response);
+    if (status.ok())
+    {
+        NES_DEBUG("Stopping was successful.");
+    }
+    else
+    {
+        throw NES::QueryStopFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
