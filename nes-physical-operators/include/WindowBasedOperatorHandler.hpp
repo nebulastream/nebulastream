@@ -76,5 +76,6 @@ protected:
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads;
     const OriginId outputOriginId;
+    const std::vector<OriginId> inputOrigins;
 };
 }
