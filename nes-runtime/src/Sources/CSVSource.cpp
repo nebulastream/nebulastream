@@ -550,5 +550,7 @@ CSVSource::~CSVSource() {
 //                     ->getReconnectCount();
 //    NES_DEBUG("destroying source with reconnect count {}", count);
     //    ::close(sockfd);
+    auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
+    NES_ERROR("saved records: {}, watermark: {}", sourceInfo->records.size(), sourceInfo->records.back().back().value);
 }
 }// namespace NES
