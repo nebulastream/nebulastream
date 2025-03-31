@@ -34,6 +34,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <folly/MPMCQueue.h>
+#include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
 
