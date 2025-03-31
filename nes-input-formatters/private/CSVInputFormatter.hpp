@@ -41,14 +41,12 @@ public:
         FieldOffsetsType endIdxOfCurrentTuple,
         FieldOffsetsType currentFieldIndex) override;
 
-    void indexRawBuffer(
+    BufferOffsets indexRawBuffer(
         const char* rawTB,
         uint32_t numberOfBytesInRawTB,
         FieldOffsetIterator& fieldOffsets,
         std::string_view tupleDelimiter,
-        std::string_view fieldDelimiter,
-        FieldOffsetsType& offsetOfFirstTupleDelimiter,
-        FieldOffsetsType& offsetOfLastTupleDelimiter) override;
+        std::string_view fieldDelimiter) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 };

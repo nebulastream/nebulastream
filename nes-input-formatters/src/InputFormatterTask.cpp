@@ -310,6 +310,7 @@ void InputFormatterTask::processRawBuffer(
     }
 }
 
+
 void InputFormatterTask::processRawBufferWithTupleDelimiter(
     const NES::Memory::TupleBuffer& rawBuffer,
     const FieldOffsetsType offsetOfFirstTupleDelimiter,
@@ -464,29 +465,21 @@ void InputFormatterTask::execute(
         = FieldOffsetIterator(numberOfFieldsInSchema, sizeOfFormattedTupleBufferInBytes, pipelineExecutionContext.getBufferManager());
 
     /// Get indexes to raw buffer using the InputFormatter implementation
-    FieldOffsetsType offsetOfFirstTupleDelimiter = 0;
-    FieldOffsetsType offsetOfLastTupleDelimiter = 0;
-    inputFormatter->indexRawBuffer(
-        inputTupleBuffer.getBuffer<char>(),
-        inputTupleBuffer.getNumberOfTuples(),
-        fieldOffsets,
-        tupleDelimiter,
-        fieldDelimiter,
-        offsetOfFirstTupleDelimiter,
-        offsetOfLastTupleDelimiter);
+    const auto bufferOffsets = inputFormatter->indexRawBuffer(
+        inputTupleBuffer.getBuffer<char>(), inputTupleBuffer.getNumberOfTuples(), fieldOffsets, tupleDelimiter, fieldDelimiter);
 
     /// Finalize the state of the field offsets and get the final number of tuples.
     /// Determine whether raw input buffer delimits at least two tuples.
     const auto totalNumberOfTuples = fieldOffsets.finishRead();
 
-    if (/* hasTupleDelimiter */ offsetOfLastTupleDelimiter != static_cast<FieldOffsetsType>(std::string::npos))
+    if (/* hasTupleDelimiter */ bufferOffsets.offsetOfLastTupleDelimiter != static_cast<FieldOffsetsType>(std::string::npos))
     {
         /// If the buffer delimits at least two tuples, it may produce two (leading/trailing) spanning tuples and may contain full tuples
         /// in its raw input buffer.
         processRawBufferWithTupleDelimiter(
             inputTupleBuffer,
-            offsetOfFirstTupleDelimiter,
-            offsetOfLastTupleDelimiter,
+            bufferOffsets.offsetOfFirstTupleDelimiter,
+            bufferOffsets.offsetOfLastTupleDelimiter,
             sequenceNumberOfCurrentBuffer,
             *bufferManager,
             sizeOfFormattedTupleBufferInBytes,
@@ -501,8 +494,8 @@ void InputFormatterTask::execute(
         /// spanning tuple.
         processRawBufferWithoutTupleDelimiter(
             inputTupleBuffer,
-            offsetOfFirstTupleDelimiter,
-            offsetOfLastTupleDelimiter,
+            bufferOffsets.offsetOfFirstTupleDelimiter,
+            bufferOffsets.offsetOfLastTupleDelimiter,
             sequenceNumberOfCurrentBuffer,
             *bufferManager,
             runningChunkNumber,

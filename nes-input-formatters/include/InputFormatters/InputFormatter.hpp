@@ -28,8 +28,11 @@ namespace NES::InputFormatters
 class InputFormatter
 {
 public:
-    using IntegerParseFunctionSignature = std::function<void(std::string_view inputString, int8_t* fieldPointer)>;
-
+    struct BufferOffsets
+    {
+        FieldOffsetsType offsetOfFirstTupleDelimiter;
+        FieldOffsetsType offsetOfLastTupleDelimiter;
+    };
     InputFormatter() = default;
     virtual ~InputFormatter() = default;
 
@@ -53,14 +56,12 @@ public:
     /// Determines all indexes of all full tuples in a raw buffer. A raw buffer may start and end with a partial tuple.
     /// Must write all indexes to the FieldOffsets data structure.
     /// @Note Must be thread-safe (see description of class)
-    virtual void indexRawBuffer(
+    virtual BufferOffsets indexRawBuffer(
         const char* rawTB,
         uint32_t numberOfBytesInRawTB,
         FieldOffsetIterator& fieldOffsets,
         std::string_view tupleDelimiter,
-        std::string_view fieldDelimiter,
-        FieldOffsetsType& offsetOfFirstTupleDelimiter,
-        FieldOffsetsType& offsetOfLastTupleDelimiter)
+        std::string_view fieldDelimiter)
         = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatter& inputFormatter) { return inputFormatter.toString(os); }

@@ -53,19 +53,17 @@ void CSVInputFormatter::indexSpanningTuple(
     ++currentFieldIndex;
 }
 
-void CSVInputFormatter::indexRawBuffer(
+InputFormatter::BufferOffsets CSVInputFormatter::indexRawBuffer(
     const char* rawTB,
     const uint32_t numberOfBytesInRawTB,
     FieldOffsetIterator& fieldOffsets,
     const std::string_view tupleDelimiter,
-    const std::string_view fieldDelimiter,
-    FieldOffsetsType& offsetOfFirstTupleDelimiter,
-    FieldOffsetsType& offsetOfLastTupleDelimiter)
+    const std::string_view fieldDelimiter)
 {
     const auto sizeOfTupleDelimiter = tupleDelimiter.size();
     const auto bufferView = std::string_view(rawTB, numberOfBytesInRawTB);
 
-    offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(bufferView.find(tupleDelimiter));
+    const auto offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(bufferView.find(tupleDelimiter));
     size_t startIdxOfCurrentTuple = offsetOfFirstTupleDelimiter + sizeOfTupleDelimiter;
     size_t endIdxOfCurrentTuple = bufferView.find(tupleDelimiter, startIdxOfCurrentTuple);
 
@@ -95,7 +93,8 @@ void CSVInputFormatter::indexRawBuffer(
         endIdxOfCurrentTuple = bufferView.find(tupleDelimiter, startIdxOfCurrentTuple);
         ++tuplesInCurrentBuffer;
     }
-    offsetOfLastTupleDelimiter = static_cast<FieldOffsetsType>(startIdxOfCurrentTuple - sizeOfTupleDelimiter);
+    const auto offsetOfLastTupleDelimiter = static_cast<FieldOffsetsType>(startIdxOfCurrentTuple - sizeOfTupleDelimiter);
+    return {offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter};
 }
 
 std::ostream& CSVInputFormatter::toString(std::ostream& os) const
