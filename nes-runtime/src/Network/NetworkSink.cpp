@@ -134,7 +134,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     //           nodeEngine->getNodeId(),
     //           inputBuffer.getOriginId(),
     //           inputBuffer.getSequenceNumber());
-    NES_DEBUG("NetworkSink id: {}, inputBuffer SN {}", nesPartition.getOperatorId(), inputBuffer.getSequenceNumber());
+
     auto* channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId(), decomposedQueryVersion);
 
     //if async establishing of connection is in process, do not attempt to send data but buffer it instead

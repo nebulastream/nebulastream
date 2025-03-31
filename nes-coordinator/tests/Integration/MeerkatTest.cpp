@@ -584,20 +584,24 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
     workerConfig1->loadBalancing = 0;
     workerConfig1->connectSinksAsync = true;
     workerConfig1->connectSourceEventChannelsAsync = true;
+    workerConfig1->numberOfBuffersInGlobalBufferManager = 8192;
+    workerConfig1->numberOfBuffersInSourceLocalBufferPool = 1024;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     EXPECT_TRUE(wrk1->start(false, true));
 
     workerConfig->loadBalancing = 0;
     workerConfig->connectSinksAsync = true;
     workerConfig->connectSourceEventChannelsAsync = true;
+    workerConfig->numberOfBuffersInGlobalBufferManager = 8192;
+    workerConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
     NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig));
     wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
     EXPECT_TRUE(wrkLeaf1->start(false, true));
 
     wrkLeaf1->removeParent(crd->getNesWorker()->getWorkerId());
     wrkLeaf1->addParent(wrk1->getWorkerId());
-    // auto query = Query::from("window").filter(Attribute("id") > 0).sink(NullOutputSinkDescriptor::create());
-    auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from("window").filter(Attribute("id") > 0).sink(NullOutputSinkDescriptor::create());
+    // auto query = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());
     QueryId qId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                                    Optimizer::PlacementStrategy::BottomUp,
                                                                                    FaultToleranceType::NONE);

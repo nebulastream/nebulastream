@@ -186,6 +186,7 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
         lastWritten = inputBuffer.getWatermark();
         lastWrittenMtx.unlock();
     }
+    NES_DEBUG("number of written {} and received {} ", numberOfWrittenBuffers, numberOfReceivedBuffers);
 
     return true;
 }

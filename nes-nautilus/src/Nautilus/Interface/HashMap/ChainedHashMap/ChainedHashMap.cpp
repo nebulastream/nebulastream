@@ -100,6 +100,7 @@ std::vector<uint8_t> ChainedHashMap::serialize() const {
 
     // Serialize metadata
     uint64_t metadata[] = {keySize, valueSize, currentSize, capacity};
+    std::cout << "keySize " << keySize << "valueSize " << valueSize << "currentSize " << currentSize << "capacity " << capacity << std::endl;
     buffer.insert(buffer.end(), reinterpret_cast<uint8_t*>(metadata),
                   reinterpret_cast<uint8_t*>(metadata + 4));
 
@@ -131,7 +132,7 @@ std::unique_ptr<ChainedHashMap> ChainedHashMap::deserialize(const uint8_t* data,
     std::memcpy(&valueSize, data + sizeof(uint64_t), sizeof(uint64_t));
     std::memcpy(&currentSize, data + 2 * sizeof(uint64_t), sizeof(uint64_t));
     std::memcpy(&capacity, data + 3 * sizeof(uint64_t), sizeof(uint64_t));
-
+    std::cout << "Deserialoized keySize " << keySize << "valueSize " << valueSize << "currentSize " << currentSize << "capacity " << capacity << std::endl;
     uint64_t estimatedNrEntries = static_cast<uint64_t>(capacity * 0.7);
     while (estimatedNrEntries > 0 && getCapacity(estimatedNrEntries) != capacity) {
         estimatedNrEntries--;

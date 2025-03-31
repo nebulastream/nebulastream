@@ -397,7 +397,7 @@ FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfR
                     "BufferManager: Not enough buffers: " << availableBuffers.size() << "<" << numberOfReservedBuffers);
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i) {
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-        auto* memSegment = availableBuffers.front();
+        auto* memSegmeFnt = availableBuffers.front();
         availableBuffers.pop_front();
         buffers.emplace_back(memSegment);
 #else

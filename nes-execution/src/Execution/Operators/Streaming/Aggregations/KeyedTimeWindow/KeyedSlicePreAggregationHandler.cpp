@@ -85,13 +85,18 @@ void KeyedSlicePreAggregationHandler::recreateOperatorHandlerFromFile() {
     NES_DEBUG("Number of read watermark buffers: {}", numberOfWatermarkBuffers);
     uint64_t numberOfStateBuffers = metadataPtr[1];
     NES_DEBUG("Number of read state buffers: {}", numberOfStateBuffers);
-
+    auto ltw = metadataPtr[2];
+    lastTriggerWatermark.store(ltw, std::memory_order_relaxed);
+    auto rsn = metadataPtr[3];
+    resultSequenceNumber.store(rsn, std::memory_order_relaxed);
     // 2. read watermarks buffers
     auto recreatedWatermarkBuffers = readBuffers(fileStream, numberOfWatermarkBuffers);
 
     // 3. read state buffers
     auto recreatedStateBuffers = readBuffers(fileStream, numberOfStateBuffers);
 
+    std::cout << "recreatedWatermarkBuffers" << recreatedWatermarkBuffers.size() << std::endl;
+    std::cout << "recreatedStateBuffers" << recreatedStateBuffers.size() << std::endl;
     fileStream.close();
 
     // 5. recreate state and window info from read buffers
@@ -117,8 +122,9 @@ std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::serializeOper
 
     // add sizes to metadata
     auto metadata = bufferManager->getBufferBlocking();
+    std::memset(metadata.getBuffer<uint8_t>(), 0, metadata.getBufferSize());
     auto metadataPtr = metadata.getBuffer<uint64_t>();
-    metadata.setSequenceNumber(++resultSequenceNumber);
+    metadata.setSequenceNumber(++migratedSequenceNumber);
 
     // get watermarks, state and windows info to migrate
     auto watermarkBuffers = getWatermarksToMigrate();
@@ -128,6 +134,8 @@ std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::serializeOper
     NES_DEBUG("Number of serialized watermark buffers: {}", watermarkBuffers.size());
     metadataPtr[1] = stateBuffers.size();
     NES_DEBUG("Number of serialized state buffers: {}", stateBuffers.size());
+    metadataPtr[2] = lastTriggerWatermark.load(std::memory_order_relaxed);
+    metadataPtr[3] = resultSequenceNumber.load(std::memory_order_relaxed);
 
     std::vector<TupleBuffer> mergedBuffers = {metadata};
 
@@ -170,158 +178,123 @@ std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::getSerialized
 }
 
 std::vector<TupleBuffer> KeyedSlicePreAggregationHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
-    std::vector<TupleBuffer> buffersToTransfer;
-
-    // 1. create a "mainMetadata" buffer for high-level info
-    auto mainMetadata = bufferManager->getBufferBlocking();
-    uint64_t metadataBuffersCount = 0;
-    auto metadataPtr = mainMetadata.getBuffer<uint64_t>();
-    uint64_t metadataIdx = 1;
-
-    auto writeToMetadata =
-            [this, &mainMetadata, &metadataPtr, &metadataIdx, &metadataBuffersCount, &buffersToTransfer](uint64_t data) {
-                StateSerializationUtil::writeToBuffer(
-                    bufferManager,
-                    mainMetadata.getBufferSize(),
-                    metadataPtr,
-                    metadataIdx,
-                    metadataBuffersCount,
-                    buffersToTransfer,
-                    data
-                );
-    };
-
-    writeToMetadata(3ULL);
-    writeToMetadata(lastTriggerWatermark.load(std::memory_order_relaxed));
-    writeToMetadata(resultSequenceNumber.load(std::memory_order_relaxed));
-
-    auto watermarkBuffers = getWatermarksToMigrate();
-    writeToMetadata(watermarkBuffers.size());
-
-    for (auto& wb : watermarkBuffers) {
-        buffersToTransfer.push_back(std::move(wb));
-    }
-
     std::vector<std::vector<TupleBuffer>> allSlices;
-    allSlices.reserve(32);
-
-    // 2. gather all slices from each thread store that overlap [startTS..stopTS)
     uint64_t totalSlices = 0;
-
     for (auto& sliceStorePtr : threadLocalSliceStores) {
         auto allStoreSlices = std::move(sliceStorePtr->getSlices());
-        std::list<KeyedSlicePtr> filtered;
-
         for (auto& slice : allStoreSlices) {
             uint64_t sStart = slice->getStart();
             uint64_t sEnd   = slice->getEnd();
             bool overlaps = ((sStart >= startTS && sStart < stopTS) ||
                              (sEnd   >  startTS && sEnd   < stopTS));
             if (overlaps) {
-                filtered.emplace_back(std::move(slice));
+                auto sliceBuffers = slice->serialize(bufferManager);
+                allSlices.push_back(std::move(sliceBuffers));
+                totalSlices++;
             }
         }
+    }
 
-        for (auto& slice : filtered) {
-            auto sliceBuffers = slice->serialize(bufferManager); // e.g. 2 buffers
-            allSlices.push_back(std::move(sliceBuffers));
-            totalSlices++;
+    std::vector<TupleBuffer> aggregatorMetaBuffers;
+    aggregatorMetaBuffers.reserve(8); // just in case
+    {
+        auto newMetadataBuffer = bufferManager->getBufferBlocking();
+        std::memset(newMetadataBuffer.getBuffer<uint8_t>(), 0, newMetadataBuffer.getBufferSize());
+
+        uint64_t aggregatorBuffersCount = 1; // we start with 1
+        aggregatorMetaBuffers.push_back(std::move(newMetadataBuffer));
+
+        auto currAggBuf   = aggregatorMetaBuffers.back();
+        auto         aggBufPtr    = currAggBuf.getBuffer<uint64_t>();
+        uint64_t     aggBufIdx    = 0;
+
+        auto writeAggregator64 = [&](uint64_t value) {
+            if (!currAggBuf.hasSpaceLeft(aggBufIdx * sizeof(uint64_t), sizeof(uint64_t))) {
+                auto newBuf = bufferManager->getBufferBlocking();
+                std::memset(newBuf.getBuffer<uint8_t>(), 0, newBuf.getBufferSize());
+
+                aggregatorMetaBuffers.push_back(std::move(newBuf));
+                aggregatorBuffersCount++;
+
+                currAggBuf = aggregatorMetaBuffers.back();
+                aggBufPtr   = currAggBuf.getBuffer<uint64_t>();
+                aggBufIdx   = 0;
+            }
+            aggBufPtr[aggBufIdx++] = value;
+        };
+
+        writeAggregator64(totalSlices);
+
+        for (auto& sliceBuffers : allSlices) {
+            writeAggregator64(sliceBuffers.size());
+        }
+
+    }
+
+    std::vector<TupleBuffer> buffersToTransfer;
+
+    for (auto &buf : aggregatorMetaBuffers) {
+        buffersToTransfer.push_back(std::move(buf));
+    }
+
+    for (size_t i = 0, sliceIdx = 0; i < allSlices.size(); i++) {
+        for (auto& sb : allSlices[i]) {
+            buffersToTransfer.push_back(std::move(sb));
         }
     }
 
-    // 3. write the total number of slices
-    writeToMetadata(totalSlices);
-
-    // 4. for each slice, append numberOfBuffersForThisSlice
-    for (auto& sliceBuffers : allSlices) {
-
-        writeToMetadata(sliceBuffers.size());
-        for (auto& buf : sliceBuffers) {
-            buffersToTransfer.push_back(std::move(buf));
-        }
-    }
-
-    // 5. store the updated mainMetadata buffer as the first element
-    mainMetadata.getBuffer<uint64_t>()[0] = ++metadataBuffersCount;
-    buffersToTransfer.insert(buffersToTransfer.begin(), mainMetadata);
-
-    // 6. set sequence numbers
-    for (auto i = 0ULL; i < buffersToTransfer.size(); i++) {
-        buffersToTransfer[i].setSequenceNumber(resultSequenceNumber++);
+    for (auto& buf : buffersToTransfer) {
+        buf.setSequenceNumber(++migratedSequenceNumber);
     }
     return buffersToTransfer;
 }
 
+void KeyedSlicePreAggregationHandler::restoreState(std::vector<TupleBuffer>& buffers) {
 
-void KeyedSlicePreAggregationHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers) {
-    // 1. read the main metadata buffer
-    uint64_t metadataBuffersIdx = 0;
-    auto metadataPtr = buffers[metadataBuffersIdx].getBuffer<uint64_t>();
-    uint64_t metadataIdx = 0;
+    auto& aggregatorMetaBuf = buffers[0];
+    auto aggregatorPtr = aggregatorMetaBuf.getBuffer<uint64_t>();
+    size_t aggregatorIdx = 0;
 
-    // 2. read numberOfMetadataBuffers
-    auto numberOfMetadataBuffers = metadataPtr[metadataIdx++];
+    const uint64_t totalSlices = aggregatorPtr[aggregatorIdx++];
 
-    auto readFromMetadata = [&metadataPtr, &metadataIdx, &metadataBuffersIdx, &buffers]() -> uint64_t {
-        return StateSerializationUtil::readFromBuffer(
-            metadataPtr,
-            metadataIdx,
-            metadataBuffersIdx,
-            buffers
-        );
-    };
-    auto aggregatorFieldCount = readFromMetadata();
-    if (aggregatorFieldCount > 0) {
-        auto lw = readFromMetadata();
-        lastTriggerWatermark.store(lw, std::memory_order_relaxed);
-    }
-    if (aggregatorFieldCount > 1) {
-        auto rsn = readFromMetadata();
-        resultSequenceNumber.store(rsn, std::memory_order_relaxed);
+    std::vector<uint64_t> sliceBufferCounts;
+    sliceBufferCounts.reserve(totalSlices);
+    for (uint64_t i = 0; i < totalSlices; i++) {
+        sliceBufferCounts.push_back( aggregatorPtr[aggregatorIdx++] );
     }
 
-    auto numberOfWatermarkBuffers = readFromMetadata();
-    std::vector<TupleBuffer> watermarkBuffers;
-    watermarkBuffers.reserve(numberOfWatermarkBuffers);
+    size_t dataBufIndex = 1;
+    auto& targetStorePtr = threadLocalSliceStores[0];
+    auto sliceList = std::move(targetStorePtr->getSlices());
 
-    uint64_t bufferIndex = numberOfMetadataBuffers;
+    for (uint64_t i = 0; i < totalSlices; ++i) {
+        uint64_t nBufs = sliceBufferCounts[i];
 
-    for (auto i = 0ULL; i < numberOfWatermarkBuffers; i++) {
-        watermarkBuffers.push_back(std::move(buffers[bufferIndex++]));
-    }
-    restoreWatermarks(watermarkBuffers);
-
-    // 3. read how many slices total
-    auto numberOfSlices = readFromMetadata();
-
-    auto buffIdx = numberOfMetadataBuffers + numberOfWatermarkBuffers;
-
-    for (auto& sliceStorePtr : threadLocalSliceStores) {
-        auto listSlice = std::move(sliceStorePtr->getSlices());
-
-        for (auto sliceIdx = 0UL; sliceIdx < numberOfSlices; ++sliceIdx) {
-            auto numberOfBuffers = readFromMetadata();
-
-            const auto spanStart = buffers.data() + buffIdx;
-            auto recreatedSlice = deserializeSlice(std::span<const Runtime::TupleBuffer>(spanStart, numberOfBuffers));
-
-            auto indexToInsert = std::find_if(listSlice.begin(),
-                                              listSlice.end(),
-                                              [&recreatedSlice](const std::unique_ptr<KeyedSlice>& currSlice) {
-                                                  return recreatedSlice->getStart() > currSlice->getEnd();
-                                              });
-            listSlice.emplace(indexToInsert, std::move(recreatedSlice));
-
-            buffIdx += numberOfBuffers;
+        if (dataBufIndex + nBufs > buffers.size()) {
+            throw std::runtime_error("Corrupt data: not enough buffers for slice.");
         }
-        sliceStorePtr->replaceSlices(std::move(listSlice));
+        auto sliceBuffersBegin = buffers.data() + dataBufIndex;
+        auto sliceBuffersEnd   = sliceBuffersBegin + nBufs;
+
+        auto recreatedSlice = deserializeSlice(
+            std::span<const Runtime::TupleBuffer>(sliceBuffersBegin, sliceBuffersEnd)
+        );
+
+        sliceList.emplace_back(std::move(recreatedSlice));
+
+        dataBufIndex += nBufs;
     }
+
+    targetStorePtr->replaceSlices(std::move(sliceList));
 }
+
+
 
 std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::getWatermarksToMigrate() {
     auto watermarksBuffers = std::vector<Runtime::TupleBuffer>();
 
     auto buffer = bufferManager->getBufferBlocking();
+    std::memset(buffer.getBuffer<uint8_t>(), 0, buffer.getBufferSize());
     watermarksBuffers.emplace_back(buffer);
     uint64_t buffersCount = 1;
 
@@ -350,7 +323,7 @@ std::vector<Runtime::TupleBuffer> KeyedSlicePreAggregationHandler::getWatermarks
     watermarksBuffers.insert(watermarksBuffers.end(), serializedWatermarks.begin(), serializedWatermarks.end());
 
     for (auto& buffer : watermarksBuffers) {
-        buffer.setSequenceNumber(++resultSequenceNumber);
+        buffer.setSequenceNumber(++migratedSequenceNumber);
     }
 
     return watermarksBuffers;
@@ -395,6 +368,7 @@ std::vector<TupleBuffer> KeyedSlicePreAggregationHandler::readBuffers(std::ifstr
         if (size > 0) {
             //recreate vector of tuple buffers from the file
             auto newBuffer = bufferManager->getBufferBlocking();
+            std::memset(newBuffer.getBuffer<uint8_t>(), 0, newBuffer.getBufferSize());
             // 3. read buffer content
             stream.read(reinterpret_cast<char*>(newBuffer.getBuffer()), size);
             newBuffer.setNumberOfTuples(numberOfTuples);

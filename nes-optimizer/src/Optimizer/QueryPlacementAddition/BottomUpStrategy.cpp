@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
@@ -110,8 +111,17 @@ void BottomUpStrategy::identifyPinningLocation(const LogicalOperatorPtr& logical
         return;
     }
 
+    if (logicalOperator->hasProperty("WORKER_ID_TO_OFFLOAD")) {
+        NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
+        logicalOperator->addProperty(PINNED_WORKER_ID, std::any_cast<WorkerId>(logicalOperator->getProperty("WORKER_ID_TO_OFFLOAD")));
+        for (const auto& parent : logicalOperator->getParents()) {
+            identifyPinningLocation(parent->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
+        }
+        return;
+    }
+
     NES_DEBUG("Place {}", logicalOperator->toString());
-    if(logicalOperator->instanceOf<LogicalWindowOperator>())
+    if(logicalOperator->instanceOf<LogicalWindowOperator>() || logicalOperator->instanceOf<LogicalFilterOperator>())
         candidateTopologyNode = candidateTopologyNode->getParents()[0]->as<TopologyNode>();
     if ((logicalOperator->hasMultipleChildrenOrParents() && !logicalOperator->instanceOf<SourceLogicalOperator>())
         || logicalOperator->instanceOf<SinkLogicalOperator>()) {

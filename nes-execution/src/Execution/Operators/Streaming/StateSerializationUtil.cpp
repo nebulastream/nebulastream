@@ -30,6 +30,7 @@ void StateSerializationUtil::writeToBuffer(Runtime::BufferManagerPtr bufferManag
         dataPtr = newBuffer.getBuffer<uint64_t>();
         dataIdx = 0;
     }
+    std::cout << "dataIdx " << dataIdx << std::endl;
     dataPtr[dataIdx++] = dataToWrite;
 }
 
@@ -43,6 +44,7 @@ uint64_t StateSerializationUtil::readFromBuffer(uint64_t*& dataPtr,
         dataPtr = buffers[++dataBuffersIdx].getBuffer<uint64_t>();
         dataIdx = 0;
     }
+    std::cout << "d dataIdx " << dataIdx << std::endl;
     return dataPtr[dataIdx++];
 }
 

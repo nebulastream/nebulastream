@@ -79,6 +79,7 @@ class AbstractSlicePreAggregationHandler : public Runtime::Execution::OperatorHa
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::atomic<uint64_t> lastTriggerWatermark = 0;
     std::atomic<uint64_t> resultSequenceNumber = 1;
+  std::atomic<uint64_t> migratedSequenceNumber = 0;
     std::mutex triggerMutex;
 
   private:

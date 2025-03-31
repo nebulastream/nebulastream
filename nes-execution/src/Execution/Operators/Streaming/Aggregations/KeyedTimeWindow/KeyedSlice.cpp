@@ -26,6 +26,7 @@ std::vector<Runtime::TupleBuffer> KeyedSlice::serialize(BufferManagerPtr& buffer
     auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
 
     auto mainMetadata = bufferManager->getBufferBlocking();
+    std::memset(mainMetadata.getBuffer<uint8_t>(), 0, mainMetadata.getBufferSize());
     buffersToTransfer.emplace(buffersToTransfer.begin(), mainMetadata);
     uint64_t metadataBuffersCount = 1;
 
@@ -35,6 +36,7 @@ std::vector<Runtime::TupleBuffer> KeyedSlice::serialize(BufferManagerPtr& buffer
     }
 
     auto metadataPtr = mainMetadata.getBuffer<uint64_t>();
+
     uint64_t metadataIdx = 1;
 
     /** @brief Lambda to write to metadata buffers */
@@ -54,7 +56,9 @@ std::vector<Runtime::TupleBuffer> KeyedSlice::serialize(BufferManagerPtr& buffer
     auto stateSerialized = state->serialize();
 
     writeToMetadata(stateSerialized.size());
-
+    std::cout << "sliceStart " << start <<  std::endl;;
+    std::cout << "sliceEnd " << end << std::endl;
+    std::cout << "hashMapSize " << stateSerialized.size() << std::endl;
     if (stateSerialized.size() > 0) {
         auto stateBuffer = bufferManager->getBufferBlocking();
         if (stateBuffer.getBufferSize() < stateSerialized.size()) {
@@ -86,7 +90,9 @@ KeyedSlicePtr KeyedSlice::deserialize(std::span<const Runtime::TupleBuffer> buff
     uint64_t sliceStart = readFromMetadata();
     uint64_t sliceEnd = readFromMetadata();
     uint64_t hashMapSize = readFromMetadata();
-
+    std::cout << "d sliceStart " << sliceStart <<  std::endl;
+    std::cout << "d sliceEnd " << sliceEnd <<  std::endl;
+    std::cout << "d hashMapSize " << hashMapSize <<  std::endl;
     auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
     std::unique_ptr<Nautilus::Interface::ChainedHashMap> hashMap = Nautilus::Interface::ChainedHashMap::deserialize(hashMapData, hashMapSize, std::move(allocator));
     auto newSlice = std::make_unique<KeyedSlice>(std::move(hashMap), sliceStart, sliceEnd);
