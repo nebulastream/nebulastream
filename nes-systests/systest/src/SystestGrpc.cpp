@@ -21,6 +21,7 @@
 #include <grpcpp/channel.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <SingleNodeWorkerRPCService.pb.h>
 #include <SystestGrpc.hpp>
 
 GRPCClient::GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel))
@@ -63,6 +64,28 @@ void GRPCClient::start(size_t queryId) const
     else
     {
         throw NES::QueryStartFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
+            magic_enum::enum_name(status.error_code()),
+            status.error_message(),
+            status.error_details());
+    }
+}
+
+void GRPCClient::stop(size_t queryId) const
+{
+    grpc::ClientContext context;
+    StopQueryRequest request;
+    request.set_queryid(queryId);
+    request.set_terminationtype(StopQueryRequest::HardStop);
+    google::protobuf::Empty response;
+    auto status = stub->StopQuery(&context, request, &response);
+    if (status.ok())
+    {
+        NES_DEBUG("Stopping was successful.");
+    }
+    else
+    {
+        throw NES::QueryStopFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),

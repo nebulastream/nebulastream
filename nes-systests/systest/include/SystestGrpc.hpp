@@ -29,6 +29,7 @@ public:
 
     [[nodiscard]] size_t registerQuery(const NES::LogicalPlan& queryPlan) const;
     void start(size_t queryId) const;
+    void stop(size_t queryId) const;
     [[nodiscard]] NES::QuerySummary status(size_t queryId) const;
     void unregister(size_t queryId) const;
 };
