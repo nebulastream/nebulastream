@@ -31,7 +31,7 @@ SampleFunctionRef::SampleFunctionRef(
     ArenaRef& arena,
     const std::shared_ptr<Schema>& schema,
     const nautilus::val<uint64_t>& sampleSize,
-    const nautilus::val<uint64_t>& sampleDataSize)
+    const nautilus::val<uint32_t>& sampleDataSize)
     : schema(schema), sampleSize(sampleSize)
 {
     /// Set sampleDataSize member as given dataSize plus size of sample metadata
@@ -132,9 +132,9 @@ Record SampleFunctionRef::readRecord()
     return record;
 }
 
-void SampleFunctionRef::setReadPtrToPos(const nautilus::val<uint64_t>& pos)
+void SampleFunctionRef::setReadPtrToRecordIdx(const nautilus::val<uint64_t>& idx)
 {
-    if (pos >= sampleSize)
+    if (idx >= sampleSize)
     {
         throw UnsupportedOperation("Position exceeds sample size");
     }
@@ -143,7 +143,7 @@ void SampleFunctionRef::setReadPtrToPos(const nautilus::val<uint64_t>& pos)
     currReadPtr = memArea + nautilus::val<uint64_t>(sizeof(uint32_t) + sizeof(uint64_t));
     const auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
-    for (auto recordIdx = nautilus::val<uint64_t>(0UL); recordIdx < pos; ++recordIdx)
+    for (auto recordIdx = nautilus::val<uint64_t>(0UL); recordIdx < idx; ++recordIdx)
     {
         for (const auto& fieldName : schema->getFieldNames())
         {

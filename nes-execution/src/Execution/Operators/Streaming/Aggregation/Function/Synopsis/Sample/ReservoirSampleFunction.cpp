@@ -49,8 +49,8 @@ ReservoirSampleFunction::ReservoirSampleFunction(
 void ReservoirSampleFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
-    const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const Interface::PagedVectorRef pagedVectorRef(memArea, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
+    const auto pagedVectorPtr = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState);
+    const Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
 
     if (currRecordIdx < sampleSize)
     {
@@ -76,13 +76,13 @@ void ReservoirSampleFunction::combine(
     const nautilus::val<AggregationState*> aggregationState2,
     PipelineMemoryProvider&)
 {
-    const auto memArea1 = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState1);
-    const auto memArea2 = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState2);
+    const auto pagedVectorPtr1 = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState1);
+    const auto pagedVectorPtr2 = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState2);
 
     invoke(
         +[](Interface::PagedVector* vector1, const Interface::PagedVector* vector2) -> void { vector1->copyFrom(*vector2); },
-        memArea1,
-        memArea2);
+        pagedVectorPtr1,
+        pagedVectorPtr2);
 }
 
 Record ReservoirSampleFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)

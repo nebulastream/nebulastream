@@ -19,9 +19,11 @@
 namespace NES::Runtime::Execution::Aggregation::Synopsis
 {
 
+// TODO(nikla44): change VariableSizedData size to uint64_t
 class SampleFunctionRef
 {
 public:
+    /// @brief This constructor is used in the build phase to write records to the given memory and return the sample as a VarVal object
     /// @param arena reference to arena object
     /// @param schema schema that matches the records that are supposed to be stored
     /// @param sampleSize number of records in the sample
@@ -31,8 +33,9 @@ public:
         ArenaRef& arena,
         const std::shared_ptr<Schema>& schema,
         const nautilus::val<uint64_t>& sampleSize,
-        const nautilus::val<uint64_t>& sampleDataSize);
+        const nautilus::val<uint32_t>& sampleDataSize);
 
+    /// @brief This constructor is used in the probe phase to read records from the given VariableSizedData object
     /// @param sample sample wrapped in VariableSizedData object
     /// @param schema schema that matches the records that are supposed to be stored
     SampleFunctionRef(const VariableSizedData& sample, const std::shared_ptr<Schema>& schema);
@@ -45,14 +48,17 @@ public:
     /// increases it by the size of the record that was read
     [[nodiscard]] Record readRecord();
 
-    void setReadPtrToPos(const nautilus::val<uint64_t>& pos);
+    /// Sets the internal readPtr for readRecord to the tuple address corresponding to the given index
+    void setReadPtrToRecordIdx(const nautilus::val<uint64_t>& idx);
+
+    /// Returns the sample as a VarVal object
     [[nodiscard]] VarVal getSample() const;
 
 private:
     nautilus::val<int8_t*> memArea;
     std::shared_ptr<Schema> schema;
     nautilus::val<uint64_t> sampleSize;
-    nautilus::val<uint64_t> sampleDataSize;
+    nautilus::val<uint32_t> sampleDataSize;
     nautilus::val<int8_t*> currWritePtr;
     nautilus::val<int8_t*> currReadPtr;
 };
