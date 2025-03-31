@@ -38,6 +38,9 @@ class SequenceShredder;
 class InputFormatter;
 class FieldOffsetIterator;
 
+// Todo:
+struct BufferData;
+
 
 /// TODO #496: Implement InputFormatterTask a Nautilus Operator (CompiledExecutablePipelineStage/Special Scan)
 /// -> figure out how to best call SequenceShredder and handle return values of SequenceShredder
@@ -87,7 +90,7 @@ public:
     /// Second, uses the SequenceShredder to find partial tuples.
     /// Third, processes (leading) partial tuple and if it contains full tuples, process all full tuples and trailing partial tuple
     void
-    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    execute(const Memory::TupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
     std::ostream& toString(std::ostream& os) const override;
 
@@ -106,13 +109,11 @@ private:
     /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
     /// Iterates over all full tuples, using the indexes in FieldOffsets and parses the tuples into formatted data.
     void processRawBuffer(
-        const NES::Memory::TupleBuffer& rawBuffer,
+        const BufferData& bufferData,
         NES::ChunkNumber::Underlying& runningChunkNumber,
         FieldOffsetIterator& fieldOffsets,
         NES::Memory::TupleBuffer& formattedBuffer,
         Memory::AbstractBufferProvider& bufferProvider,
-        size_t totalNumberOfTuplesInRawBuffer,
-        size_t sizeOfFormattedTupleBufferInBytes,
         Runtime::Execution::PipelineExecutionContext& pec) const;
 
     /// Called by execute if the buffer delimits at least two tuples.
@@ -120,13 +121,7 @@ private:
     /// Second, processes the raw buffer, if it contains at least one full tuple.
     /// Third, processes the trailing spanning tuple, if the raw buffer completed it.
     void processRawBufferWithTupleDelimiter(
-        const NES::Memory::TupleBuffer& rawBuffer,
-        FieldOffsetsType offsetOfFirstTupleDelimiter,
-        FieldOffsetsType offsetOfLastTupleDelimiter,
-        SequenceNumber::Underlying sequenceNumberOfCurrentBuffer,
-        Memory::AbstractBufferProvider& bufferProvider,
-        size_t sizeOfFormattedTupleBufferInBytes,
-        size_t totalNumberOfTuplesInRawBuffer,
+        const BufferData& bufferData,
         ChunkNumber::Underlying& runningChunkNumber,
         FieldOffsetIterator& fieldOffsets,
         Runtime::Execution::PipelineExecutionContext& pec) const;
@@ -134,11 +129,7 @@ private:
     /// Called by execute, if the buffer does not delimit any tuples.
     /// Processes a spanning tuple, if the raw buffer connects two raw buffers that delimit tuples.
     void processRawBufferWithoutTupleDelimiter(
-        const NES::Memory::TupleBuffer& rawBuffer,
-        FieldOffsetsType offsetOfFirstTupleDelimiter,
-        FieldOffsetsType offsetOfLastTupleDelimiter,
-        SequenceNumber::Underlying sequenceNumberOfCurrentBuffer,
-        Memory::AbstractBufferProvider& bufferProvider,
+        const BufferData& bufferData,
         ChunkNumber::Underlying& runningChunkNumber,
         Runtime::Execution::PipelineExecutionContext& pec) const;
 };
