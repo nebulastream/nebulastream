@@ -5,10 +5,6 @@
 # Source definitions
 SourceCSV bid UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetime FLOAT64 price TESTDATA/large/nexmark/bid.csv
 SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/nexmark/auction_modified.csv
-SourceCSV bid_small UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetime FLOAT64 price TESTDATA/bid_small.csv
-SourceCSV auction_small UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/auction_small_modified.csv
-
-SINK bidSink UINT64 bid$timestamp INT32 bid$auction INT32 bid$bidder INT64 bid$datetime FLOAT64 bid$price
 
 # Query 0
 SELECT * FROM bid INTO CHECKSUM;
@@ -26,7 +22,7 @@ SELECT * FROM bid WHERE auctionId % 123 = 0 INTO CHECKSUM;
 146516 268224796
 
 # Query 5
-SELECT start, end, start, end, auctionId, num, start, end, auctionId, max_tmp
+SELECT start, end, start, end, auctionId, num, start, end, max_tmp
 FROM (SELECT auctionId, COUNT(auctionId) AS num, start, end
       FROM bid
       GROUP BY auctionId

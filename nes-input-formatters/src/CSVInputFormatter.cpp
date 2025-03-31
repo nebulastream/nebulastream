@@ -35,6 +35,7 @@
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
@@ -66,7 +67,7 @@ class ProgressTracker
 public:
     ProgressTracker(
         SequenceNumber sequenceNumber,
-        OriginId originId,
+        const OriginId originId,
         std::string tupleDelimiter,
         const size_t tupleSizeInBytes,
         const size_t numberOfSchemaFields)
@@ -75,7 +76,7 @@ public:
         , originId(originId)
         , tupleDelimiter(std::move(tupleDelimiter))
         , tupleSizeInBytes(tupleSizeInBytes)
-        , numSchemaFields(numberOfSchemaFields) {};
+        , numSchemaFields(numberOfSchemaFields){};
 
     ~ProgressTracker() = default;
 
@@ -140,9 +141,14 @@ public:
             /// Emit TBF and get new TBF
             setNumberOfTuplesInTBFormatted();
             NES_TRACE("emitting TupleBuffer with {} tuples.", numTuplesInTBFormatted);
-            /// true triggers adding sequence number, etc.
-            pipelineExecutionContext.emitBuffer(
-                getTupleBufferFormatted(), NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+
+            /// As we are not done with the current sequence number, we need to emit the TBF with the lastChunk flag set to false.
+            auto tbf = getTupleBufferFormatted();
+            tbf.setLastChunk(false);
+            pipelineExecutionContext.emitBuffer(tbf, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+
+
+            /// We need to increment the chunk number as we are not done with the current sequence number.
             chunkNumber = ChunkNumber(chunkNumber.getRawValue() + 1);
             setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
             currentFieldOffsetTBFormatted = 0;
@@ -183,7 +189,7 @@ public:
         currentTupleEndrawTB = findIndexOfNextTuple();
     }
 
-    [[nodiscard]] std::string_view getInitialPartialTuple(size_t sizeOfPartialTuple) const
+    [[nodiscard]] std::string_view getInitialPartialTuple(const size_t sizeOfPartialTuple) const
     {
         return this->tupleBufferRawSV.substr(0, sizeOfPartialTuple);
     }
@@ -513,6 +519,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         }
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(progressTracker.getNumTuplesInTBFormatted());
+        finalFormattedBuffer.setLastChunk(true);
         pipelineExecutionContext.emitBuffer(
             finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
@@ -537,6 +544,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         processPartialTuple(0, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
+        finalFormattedBuffer.setLastChunk(true);
         pipelineExecutionContext.emitBuffer(
             finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
@@ -605,6 +613,7 @@ void CSVInputFormatter::flushFinalTuple(
     {
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
+        finalFormattedBuffer.setLastChunk(true);
         pipelineExecutionContext.emitBuffer(
             finalFormattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
