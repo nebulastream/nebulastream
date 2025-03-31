@@ -24,13 +24,13 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Sequencing/ChunkCollector.hpp>
 #include <Time/Timestamp.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 
 using namespace ::testing;
 namespace NES
@@ -70,6 +70,14 @@ TEST(ChunkCollectorTest, MultipleChunksOutOfOrder)
     ASSERT_THAT(
         sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Runtime::Timestamp(2)),
         SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(42)));
+}
+
+TEST(CheckChunkCollector, MultipleTimesLastChunkSet)
+{
+    ChunkCollector sequence;
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Runtime::Timestamp(2)), std::nullopt);
+    ASSERT_THAT(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Runtime::Timestamp(12)), SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(12)));
+    EXPECT_DEATH_DEBUG(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 2), true}, Runtime::Timestamp(12)), "");
 }
 
 TEST(ChunkCollectorTest, DifferentSequenceNumbers)

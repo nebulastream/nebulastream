@@ -53,6 +53,7 @@ private:
     class Chunk
     {
         std::atomic<ChunkNumber::Underlying> counter;
+        std::atomic<bool> seenLastChunk = false;
         std::atomic<T> value = {InitialValue};
 
     public:
@@ -64,9 +65,16 @@ private:
             {
             }
 
+            /// Updating if the last chunk has been seen. We do not need to lock the value, as we only update the value once.
+            if (sequence.lastChunk)
+            {
+                INVARIANT(not std::atomic_exchange(&seenLastChunk, true), "Last chunk has already been seen for this sequence {}. We require that the last chunk is only seen once.", sequence.sequenceNumber);
+            }
+
             /// If the chunk is the last chunk, we update the counter with the current chunk number, otherwise we decrease the counter
             /// This way, we can release the chunk number once all chunks have been collected ---> counter == 0
             const auto updatedCounter = sequence.lastChunk ? counter.fetch_add(chunk) + chunk : counter.fetch_sub(1) - 1;
+
             if (updatedCounter == 0)
             {
                 return {value.load()};
