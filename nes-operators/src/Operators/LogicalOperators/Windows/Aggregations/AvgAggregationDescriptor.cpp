@@ -67,18 +67,18 @@ void AvgAggregationDescriptor::inferStamp(const Schema& schema)
     /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
     if (onField->getStamp().isInteger())
     {
-        if (onField->getStamp().physicalType.isSigned)
+        if (onField->getStamp().isSignedInteger())
         {
-            onField->setStamp(DataTypeProvider::provideDataType(PhysicalType::Type::INT64));
+            onField->setStamp(DataTypeProvider::provideDataType(DataType::Type::INT64));
         }
         else
         {
-            onField->setStamp(DataTypeProvider::provideDataType(PhysicalType::Type::UINT64));
+            onField->setStamp(DataTypeProvider::provideDataType(DataType::Type::UINT64));
         }
     }
     else
     {
-        onField->setStamp(DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64));
+        onField->setStamp(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
     }
 
 
@@ -111,11 +111,11 @@ DataType AvgAggregationDescriptor::getInputStamp()
 }
 DataType AvgAggregationDescriptor::getPartialAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(PhysicalType::Type::UNDEFINED);
+    return DataTypeProvider::provideDataType(DataType::Type::UNDEFINED);
 }
 DataType AvgAggregationDescriptor::getFinalAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64);
+    return DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
 }
 
 }

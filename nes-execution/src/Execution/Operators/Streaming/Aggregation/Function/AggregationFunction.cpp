@@ -22,8 +22,8 @@ namespace NES::Runtime::Execution::Aggregation
 {
 
 AggregationFunction::AggregationFunction(
-    PhysicalType inputType,
-    PhysicalType resultType,
+    DataType inputType,
+    DataType resultType,
     std::unique_ptr<Functions::Function> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : inputType(std::move(inputType))

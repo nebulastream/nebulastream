@@ -59,10 +59,10 @@ std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::on(cons
 
 void CountAggregationDescriptor::inferStamp(const Schema& schema)
 {
-    /// TODO(#764): move qualified field logic in central place and improve
+    /// TODO #764: move qualified field logic in central place and improve
     const auto optFieldName = schema.getSourceNameQualifier();
-    const auto fieldName = (optFieldName.has_value()) ? optFieldName.value() : std::string("Unnamed Source");
-    const auto attributeNameResolver = fieldName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+    INVARIANT(optFieldName.has_value(), "The schema does not have a source qualifier: {}", schema);
+    const auto attributeNameResolver = optFieldName.value() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     const auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
 
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
@@ -77,7 +77,7 @@ void CountAggregationDescriptor::inferStamp(const Schema& schema)
     }
 
     /// a count aggregation is always on an uint 64
-    onField->setStamp(DataTypeProvider::provideDataType(PhysicalType::Type::UINT64));
+    onField->setStamp(DataTypeProvider::provideDataType(DataType::Type::UINT64));
     asField->setStamp(onField->getStamp());
 }
 
@@ -87,15 +87,15 @@ std::shared_ptr<WindowAggregationDescriptor> CountAggregationDescriptor::copy()
 }
 DataType CountAggregationDescriptor::getInputStamp()
 {
-    return DataTypeProvider::provideDataType(PhysicalType::Type::UINT64);
+    return DataTypeProvider::provideDataType(DataType::Type::UINT64);
 }
 DataType CountAggregationDescriptor::getPartialAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(PhysicalType::Type::UINT64);
+    return DataTypeProvider::provideDataType(DataType::Type::UINT64);
 }
 DataType CountAggregationDescriptor::getFinalAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(PhysicalType::Type::UINT64);
+    return DataTypeProvider::provideDataType(DataType::Type::UINT64);
 }
 
 }

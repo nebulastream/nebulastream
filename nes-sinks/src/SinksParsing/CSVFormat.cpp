@@ -27,6 +27,7 @@
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES::Sinks
 {
@@ -37,7 +38,7 @@ CSVFormat::CSVFormat(Schema pSchema) : schema(std::move(pSchema))
     size_t offset = 0;
     for (const auto& field : schema.getFields())
     {
-        const auto physicalType = field.dataType.physicalType;
+        const auto physicalType = field.dataType;
         formattingContext.offsets.push_back(offset);
         offset += physicalType.getSizeInBytes();
         formattingContext.physicalTypes.emplace_back(physicalType);
@@ -50,10 +51,10 @@ std::string CSVFormat::getFormattedSchema() const
 {
     PRECONDITION(schema.hasFields(), "Encountered schema without fields in CSVFormat.");
     std::stringstream ss;
-    ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.physicalType.type);
+    ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type);
     for (const auto& field : schema.getFields() | std::views::drop(1))
     {
-        ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.physicalType.type);
+        ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type);
     }
     return fmt::format("{}\n", ss.str());
 }
@@ -77,7 +78,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
                           [&formattingContext, &tuple, &tbuffer](const auto& index)
                           {
                               const auto physicalType = formattingContext.physicalTypes[index];
-                              if (physicalType.type == PhysicalType::Type::VARSIZED)
+                              if (physicalType.type == DataType::Type::VARSIZED)
                               {
                                   auto childIdx = *reinterpret_cast<const uint32_t*>(&tuple[formattingContext.offsets[index]]);
                                   return Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);

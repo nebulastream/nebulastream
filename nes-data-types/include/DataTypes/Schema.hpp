@@ -50,7 +50,7 @@ public:
         DataType dataType{};
     };
 
-    /// TODO(#764): move qualified field logic in central place and improve
+    /// TODO #764: move qualified field logic in central place and improve
     struct QualifiedFieldName
     {
         explicit QualifiedFieldName(std::string streamName, std::string fieldName)
@@ -74,7 +74,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
     Schema addField(Field attribute);
-    Schema addField(std::string name, const PhysicalType::Type& type);
+    Schema addField(std::string name, const DataType::Type& type);
     Schema addField(std::string name, DataType dataType);
 
     /// Replaces the type of the field

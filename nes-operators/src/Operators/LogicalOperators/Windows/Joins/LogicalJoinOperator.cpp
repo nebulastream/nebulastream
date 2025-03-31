@@ -173,8 +173,8 @@ bool LogicalJoinOperator::inferSchema()
 
     windowMetaData.windowStartFieldName = newQualifierForSystemField + "$start";
     windowMetaData.windowEndFieldName = newQualifierForSystemField + "$end";
-    outputSchema.addField(windowMetaData.windowStartFieldName, PhysicalType::Type::UINT64);
-    outputSchema.addField(windowMetaData.windowEndFieldName, PhysicalType::Type::UINT64);
+    outputSchema.addField(windowMetaData.windowStartFieldName, DataType::Type::UINT64);
+    outputSchema.addField(windowMetaData.windowEndFieldName, DataType::Type::UINT64);
 
     /// create dynamic fields to store all fields from left and right sources
     for (const auto& field : leftInputSchema.getFields())

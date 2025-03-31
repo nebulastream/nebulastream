@@ -59,9 +59,9 @@ public:
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutCreateTest)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT8)
-                              .addField("t3", PhysicalType::Type::UINT8);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT8)
+                              .addField("t3", DataType::Type::UINT8);
 
     std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -74,9 +74,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutCreateTest)
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -100,9 +100,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecord)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -127,9 +127,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecor
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultipleRecord)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -164,9 +164,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultiple
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
     ASSERT_NE(columnLayout, nullptr);
@@ -204,9 +204,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -257,9 +257,9 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -284,9 +284,9 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
 TEST_F(ColumnarMemoryLayoutTest, accessDynamicColumnBufferTest)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -318,9 +318,9 @@ TEST_F(ColumnarMemoryLayoutTest, accessDynamicColumnBufferTest)
 TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
 {
     const Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                              .addField("t1", PhysicalType::Type::UINT8)
-                              .addField("t2", PhysicalType::Type::UINT16)
-                              .addField("t3", PhysicalType::Type::UINT32);
+                              .addField("t1", DataType::Type::UINT8)
+                              .addField("t2", DataType::Type::UINT16)
+                              .addField("t3", DataType::Type::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
@@ -360,9 +360,9 @@ TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
 TEST_F(ColumnarMemoryLayoutTest, getFieldOffset)
 {
     const auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                            .addField("t1", PhysicalType::Type::UINT8)
-                            .addField("t2", PhysicalType::Type::UINT8)
-                            .addField("t3", PhysicalType::Type::UINT8);
+                            .addField("t1", DataType::Type::UINT8)
+                            .addField("t2", DataType::Type::UINT8)
+                            .addField("t3", DataType::Type::UINT8);
     const auto columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
 
     ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(2, 4), ErrorCode::CannotAccessBuffer);
@@ -372,9 +372,9 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldOffset)
 TEST_F(ColumnarMemoryLayoutTest, deepCopy)
 {
     const auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                            .addField("t1", PhysicalType::Type::UINT8)
-                            .addField("t2", PhysicalType::Type::UINT8)
-                            .addField("t3", PhysicalType::Type::UINT8);
+                            .addField("t1", DataType::Type::UINT8)
+                            .addField("t2", DataType::Type::UINT8)
+                            .addField("t3", DataType::Type::UINT8);
     auto columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
 
     const auto deepCopy = columnLayout->deepCopy();
@@ -383,7 +383,7 @@ TEST_F(ColumnarMemoryLayoutTest, deepCopy)
     ASSERT_EQ(*deepCopy, *columnLayout);
 
     /// checking if changing the schema does not affect the deep copy
-    const auto schema2 = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("r1", PhysicalType::Type::UINT8);
+    const auto schema2 = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("r1", DataType::Type::UINT8);
     columnLayout = ColumnLayout::create(schema2, bufferManager->getBufferSize());
 
     ASSERT_TRUE(deepCopy->getSchema() != columnLayout->getSchema());
