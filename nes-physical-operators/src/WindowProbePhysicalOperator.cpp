@@ -18,6 +18,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <ErrorHandling.hpp>
@@ -30,7 +31,8 @@
 namespace NES
 {
 
-
+namespace
+{
 void garbageCollectSlicesProxy(
     OperatorHandler* ptrOpHandler,
     const Timestamp watermarkTs,
@@ -47,23 +49,25 @@ void garbageCollectSlicesProxy(
     opHandler->garbageCollectSlicesAndWindows(bufferMetaData);
 }
 
-void deleteAllSlicesAndWindowsProxy(OperatorHandler* ptrOpHandler)
-{
-    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-
-    const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    opHandler->getSliceAndWindowStore().deleteState();
-}
-
-void setupProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* pipelineCtx)
+void setupProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null!");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+    opHandler->start(*pipelineCtx, 0);
     opHandler->setWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
 }
 
+void terminateProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
+
+    auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+    opHandler->stop(QueryTerminationType::Graceful, *pipelineCtx);
+}
+}
 
 WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId operatorHandlerId, WindowMetaData windowMetaData)
     : operatorHandlerId(operatorHandlerId), windowMetaData(std::move(std::move(windowMetaData)))
@@ -104,4 +108,9 @@ void WindowProbePhysicalOperator::setChild(PhysicalOperator child)
     this->child = std::move(child);
 }
 
+void WindowProbePhysicalOperator::terminate(ExecutionContext& executionCtx) const
+{
+    nautilus::invoke(terminateProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
+    terminateChild(executionCtx);
+}
 }
