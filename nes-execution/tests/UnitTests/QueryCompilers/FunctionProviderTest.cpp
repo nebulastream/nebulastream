@@ -48,9 +48,9 @@ public:
         BaseUnitTest::SetUp();
 
         dummySchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
-                          .addField("f1", PhysicalType::Type::INT64)
-                          .addField("f2", PhysicalType::Type::INT64)
-                          .addField("f3", PhysicalType::Type::BOOLEAN);
+                          .addField("f1", DataType::Type::INT64)
+                          .addField("f2", DataType::Type::INT64)
+                          .addField("f3", DataType::Type::BOOLEAN);
         dummySchema.updateSourceName("src");
         nodeFunctionReadLeft = NodeFunctionFieldAccess::create("f1");
         nodeFunctionReadRight = NodeFunctionFieldAccess::create("f2");

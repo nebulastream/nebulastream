@@ -27,8 +27,7 @@ namespace NES
 
 bool NodeFunctionConcat::validateBeforeLowering() const
 {
-    return getLeft()->getStamp().physicalType.type == PhysicalType::Type::VARSIZED
-        and getRight()->getStamp().physicalType.type == PhysicalType::Type::VARSIZED;
+    return getLeft()->getStamp().type == DataType::Type::VARSIZED and getRight()->getStamp().type == DataType::Type::VARSIZED;
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionConcat::deepCopy()

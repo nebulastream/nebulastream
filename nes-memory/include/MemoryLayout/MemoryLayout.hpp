@@ -69,7 +69,7 @@ public:
     [[nodiscard]] uint64_t getBufferSize() const;
     void setBufferSize(uint64_t bufferSize);
     [[nodiscard]] const Schema& getSchema() const;
-    [[nodiscard]] PhysicalType getPhysicalType(uint64_t fieldIndex) const;
+    [[nodiscard]] DataType getPhysicalType(uint64_t fieldIndex) const;
     [[nodiscard]] uint64_t getFieldSize(uint64_t fieldIndex) const;
     [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
     void setKeyFieldNames(const std::vector<std::string>& keyFields);
@@ -83,7 +83,7 @@ protected:
     uint64_t recordSize;
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
-    std::vector<PhysicalType> physicalTypes;
+    std::vector<DataType> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
     std::vector<std::string> keyFieldNames;
 };

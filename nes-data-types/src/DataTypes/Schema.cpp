@@ -45,14 +45,14 @@ Schema::Schema(const MemoryLayoutType memoryLayoutType) : memoryLayoutType(memor
 
 Schema Schema::addField(Field newField)
 {
-    sizeOfSchemaInBytes += newField.dataType.physicalType.getSizeInBytes();
+    sizeOfSchemaInBytes += newField.dataType.getSizeInBytes();
     fields.emplace_back(std::move(newField));
     nameToField.emplace(fields.back().name, fields.size() - 1);
     return *this;
 }
 
 /// TODO #473: investigate if we can remove this method
-Schema Schema::addField(std::string name, const PhysicalType::Type& type)
+Schema Schema::addField(std::string name, const DataType::Type& type)
 {
     const auto dataType = DataTypeProvider::provideDataType(type);
     return addField(std::move(name), dataType);
@@ -68,8 +68,8 @@ void Schema::replaceTypeOfField(const std::string& name, DataType type)
 {
     if (const auto fieldIdx = nameToField.find(name); fieldIdx != nameToField.end())
     {
-        sizeOfSchemaInBytes -= fields.at(fieldIdx->second).dataType.physicalType.getSizeInBytes();
-        sizeOfSchemaInBytes += type.physicalType.getSizeInBytes();
+        sizeOfSchemaInBytes -= fields.at(fieldIdx->second).dataType.getSizeInBytes();
+        sizeOfSchemaInBytes += type.getSizeInBytes();
         fields.at(fieldIdx->second).dataType = std::move(type);
     }
     NES_WARNING("Could not find field with name '{}'", name);

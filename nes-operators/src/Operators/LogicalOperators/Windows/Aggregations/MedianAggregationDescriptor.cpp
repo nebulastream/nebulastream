@@ -91,11 +91,11 @@ DataType MedianAggregationDescriptor::getInputStamp()
 }
 DataType MedianAggregationDescriptor::getPartialAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(PhysicalType::Type::UNDEFINED);
+    return DataTypeProvider::provideDataType(DataType::Type::UNDEFINED);
 }
 DataType MedianAggregationDescriptor::getFinalAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64);
+    return DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
 }
 
 }

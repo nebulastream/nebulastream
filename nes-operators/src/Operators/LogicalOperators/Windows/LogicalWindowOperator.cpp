@@ -115,8 +115,8 @@ bool LogicalWindowOperator::inferSchema()
         const auto& newQualifierForSystemField = sourceName;
         windowMetaData.windowStartFieldName = newQualifierForSystemField.value() + "$start";
         windowMetaData.windowEndFieldName = newQualifierForSystemField.value() + "$end";
-        outputSchema.addField(windowMetaData.windowStartFieldName, PhysicalType::Type::UINT64);
-        outputSchema.addField(windowMetaData.windowEndFieldName, PhysicalType::Type::UINT64);
+        outputSchema.addField(windowMetaData.windowStartFieldName, DataType::Type::UINT64);
+        outputSchema.addField(windowMetaData.windowEndFieldName, DataType::Type::UINT64);
     }
     else if (Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {

@@ -36,7 +36,7 @@ public:
     {
         size_t schemaSizeInBytes{};
         std::vector<size_t> offsets;
-        std::vector<PhysicalType> physicalTypes;
+        std::vector<DataType> physicalTypes;
     };
 
     explicit CSVFormat(Schema schema);

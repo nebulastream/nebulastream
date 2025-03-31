@@ -32,8 +32,8 @@ Schema createJoinSchema(Schema leftSchema, Schema rightSchema)
     auto retSchema = Schema{leftSchema.memoryLayoutType};
     auto newQualifierForSystemField = leftSchema.getSourceNameQualifier() + rightSchema.getSourceNameQualifier();
 
-    retSchema.addField(newQualifierForSystemField + "$start", PhysicalType::Type::UINT64);
-    retSchema.addField(newQualifierForSystemField + "$end", PhysicalType::Type::UINT64);
+    retSchema.addField(newQualifierForSystemField + "$start", DataType::Type::UINT64);
+    retSchema.addField(newQualifierForSystemField + "$end", DataType::Type::UINT64);
 
     for (const auto& fields : leftSchema.getFields())
     {
