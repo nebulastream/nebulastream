@@ -23,6 +23,12 @@ namespace NES::Runtime::Execution::Aggregation::Synopsis
 class SampleFunction : public AggregationFunction
 {
 public:
+    /// @param inputType data type of the input
+    /// @param resultType data type of the result
+    /// @param inputFunction function for accessing the input
+    /// @param resultFieldIdentifier field name of the return record
+    /// @param memProviderPagedVector MemoryProvider for the pagedVector to store incoming records
+    /// @param sampleSize number of elements in the sample
     SampleFunction(
         std::shared_ptr<PhysicalType> inputType,
         std::shared_ptr<PhysicalType> resultType,
