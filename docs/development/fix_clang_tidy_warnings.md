@@ -20,23 +20,23 @@ Before running the command, please change the `<branch name>`, and `<no. threads
 The below command assumes that NebulaStream is mounted under `/tmp/nebulastream` in the docker image.
 We exclude '*.inc' files, since '*.inc' files are dependent header files that other header files include and that therefore don't need to compile on their own.
 ```bash
-export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-18 && \
+export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-19 && \
     git config --global --add safe.directory /tmp/nebulastream && \
     cd /tmp/nebulastream && \
     rm -rf build/ && mkdir build && \
     cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
-    git diff -U0 origin/<branch name> -- ':!*.inc' | clang-tidy-diff-18.py -clang-tidy-binary clang-tidy-18 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
+    git diff -U0 origin/<branch name> -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
 ```
 Since we generate some header files in the build process, clang-tidy might complain about missing header files.
 In this case, you have to build `NebulaStream` before running the clang-tidy check to create the missing header files.
 ```bash
-export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-18 && \
+export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-19 && \
     git config --global --add safe.directory /tmp/nebulastream && \
     cd /tmp/nebulastream && \
     rm -rf build/ && mkdir build && \
     cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
     cmake --build build -j -- -k 0 && \
-    git diff -U0 origin/<branch name> -- ':!*.inc' | clang-tidy-diff-18.py -clang-tidy-binary clang-tidy-18 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
+    git diff -U0 origin/<branch name> -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
 ```
 
 # Fixing clang-tidy warnings compared to a commit hash
