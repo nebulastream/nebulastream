@@ -62,13 +62,13 @@ SystestParser::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         const auto nameTrimmed = Util::trimWhiteSpaces(fieldAndType[0]);
         const auto typeTrimmed = Util::trimWhiteSpaces(fieldAndType[1]);
         DataType dataType;
-        if (auto type = magic_enum::enum_cast<PhysicalType::Type>(typeTrimmed); type.has_value())
+        if (auto type = magic_enum::enum_cast<DataType::Type>(typeTrimmed); type.has_value())
         {
             dataType = DataTypeProvider::provideDataType(type.value());
         }
         else if (NES::Util::toLowerCase(typeTrimmed) == "varsized")
         {
-            dataType = DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED);
+            dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
         }
         else
         {

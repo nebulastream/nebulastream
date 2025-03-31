@@ -18,12 +18,11 @@
 #include <ostream>
 #include <string>
 #include <Util/Logger/Formatter.hpp>
-#include <magic_enum/magic_enum.hpp>
 
 namespace NES
 {
 
-struct PhysicalType
+struct DataType final
 {
     enum class Type : uint8_t
     {
@@ -43,18 +42,8 @@ struct PhysicalType
         VARSIZED,
     };
 
-    uint32_t getSizeInBytes() const;
-
-    std::string formattedBytesToString(const void* data) const;
-
-    Type type{Type::UNDEFINED};
-    uint32_t sizeInBits{0};
-
-    bool operator==(const PhysicalType&) const = default;
-    friend std::ostream& operator<<(std::ostream& os, const PhysicalType& physicalType);
-
     template <class T>
-    bool isSamePhysicalType() const
+    bool isSameDataType() const
     {
         if (this->type == Type::VARSIZED && std::is_same_v<std::remove_cvref_t<T>, std::uint32_t>)
         {
@@ -110,15 +99,16 @@ struct PhysicalType
         }
         return false;
     }
-};
+    bool operator==(const DataType& other) const = default;
+    bool operator!=(const DataType& other) const = default;
+    friend std::ostream& operator<<(std::ostream& os, const DataType& dataType);
 
-
-struct DataType final
-{
+    uint32_t getSizeInBytes() const;
 
     /// Determines common data type for this and other data type. Returns @Type::UNDEFINED if it cannot find a common type.
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'
     DataType join(const DataType& otherDataType) const;
+    std::string formattedBytesToString(const void* data) const;
 
     [[nodiscard]] bool isInteger() const;
     [[nodiscard]] bool isSignedInteger() const;
@@ -129,14 +119,10 @@ struct DataType final
     [[nodiscard]] bool isVarSized() const;
     [[nodiscard]] bool isUndefined() const;
 
-    bool operator==(const DataType& other) const = default;
-    bool operator!=(const DataType& other) const = default;
-    friend std::ostream& operator<<(std::ostream& os, const DataType& dataType);
-
-    PhysicalType physicalType{};
+    Type type{Type::UNDEFINED};
+    uint32_t sizeInBits{0};
 };
 
 }
 
-FMT_OSTREAM(NES::PhysicalType);
 FMT_OSTREAM(NES::DataType);

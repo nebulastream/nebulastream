@@ -109,22 +109,22 @@ std::shared_ptr<NodeFunction> FLOOR(const std::shared_ptr<NodeFunction>& otherFu
 
 std::shared_ptr<NodeFunction> operator++(const std::shared_ptr<NodeFunction>& otherFunction)
 {
-    return otherFunction + NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::UINT16), "1");
+    return otherFunction + NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::UINT16), "1");
 }
 
 std::shared_ptr<NodeFunction> operator--(const std::shared_ptr<NodeFunction>& otherFunction)
 {
-    return otherFunction - NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::UINT16), "1");
+    return otherFunction - NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::UINT16), "1");
 }
 
 const std::shared_ptr<NodeFunction> operator++(const std::shared_ptr<NodeFunction>& otherFunction, int)
 {
-    return otherFunction + NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::UINT16), "1");
+    return otherFunction + NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::UINT16), "1");
 }
 
 const std::shared_ptr<NodeFunction> operator--(const std::shared_ptr<NodeFunction>& otherFunction, int)
 {
-    return otherFunction - NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(PhysicalType::Type::UINT16), "1");
+    return otherFunction - NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(DataType::Type::UINT16), "1");
 }
 
 /// calls of Binary operators with one or two FunctionItems

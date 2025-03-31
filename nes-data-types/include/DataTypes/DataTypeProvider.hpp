@@ -26,6 +26,6 @@ std::optional<DataType> tryProvideDataType(const std::string& type);
 /// @param type name of the data type (must be the exact name: INT8, INT16, CHAR, BOOLEAN, ...)
 /// Throws an UnknownPluginType, if the name does not match any type enum
 DataType provideDataType(const std::string& type);
+DataType provideDataType(DataType::Type type);
 
-DataType provideDataType(PhysicalType::Type type);
 }

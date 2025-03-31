@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -27,6 +28,7 @@
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Common.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
@@ -73,63 +75,96 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<
 std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
 {
     const auto stringValue = constantFunction->getConstantValue();
-    const auto physicalType = constantFunction->getStamp().physicalType;
-    switch (physicalType.type)
+    const auto dataType = constantFunction->getStamp();
+    switch (dataType.type)
     {
-        case PhysicalType::Type::UINT8: {
-            auto intValue = static_cast<uint8_t>(std::stoul(stringValue));
-            return std::make_unique<ConstantUInt8ValueFunction>(intValue);
+        case DataType::Type::UINT8: {
+            if (auto intValue = NES::Util::from_chars<uint8_t>(stringValue))
+            {
+                return std::make_unique<ConstantUInt8ValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to uint8", stringValue);
         };
-        case PhysicalType::Type::UINT16: {
-            auto intValue = static_cast<uint16_t>(std::stoul(stringValue));
-            return std::make_unique<ConstantUInt16ValueFunction>(intValue);
+        case DataType::Type::UINT16: {
+            if (auto intValue = NES::Util::from_chars<uint16_t>(stringValue))
+            {
+                return std::make_unique<ConstantUInt16ValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to uint16", stringValue);
         };
-        case PhysicalType::Type::UINT32: {
-            auto intValue = static_cast<uint32_t>(std::stoul(stringValue));
-            return std::make_unique<ConstantUInt32ValueFunction>(intValue);
+        case DataType::Type::UINT32: {
+            if (auto intValue = NES::Util::from_chars<uint32_t>(stringValue))
+            {
+                return std::make_unique<ConstantUInt32ValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to uint32", stringValue);
         };
-        case PhysicalType::Type::UINT64: {
-            auto intValue = static_cast<uint64_t>(std::stoull(stringValue));
-            return std::make_unique<ConstantUInt64ValueFunction>(intValue);
+        case DataType::Type::UINT64: {
+            if (auto intValue = NES::Util::from_chars<uint64_t>(stringValue))
+            {
+                return std::make_unique<ConstantUInt64ValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to uint64", stringValue);
         };
-        case PhysicalType::Type::INT8: {
-            auto intValue = static_cast<int8_t>(std::stoi(stringValue));
-            return std::make_unique<ConstantInt8ValueFunction>(intValue);
+        case DataType::Type::INT8: {
+            if (auto intValue = NES::Util::from_chars<int8_t>(stringValue))
+            {
+                return std::make_unique<ConstantInt8ValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to int8", stringValue);
         };
-        case PhysicalType::Type::INT16: {
-            auto intValue = static_cast<int16_t>(std::stoi(stringValue));
-            return std::make_unique<ConstantInt16ValueFunction>(intValue);
+        case DataType::Type::INT16: {
+            if (auto intValue = NES::Util::from_chars<int16_t>(stringValue))
+            {
+                return std::make_unique<ConstantInt16ValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to int16", stringValue);
         };
-        case PhysicalType::Type::INT32: {
-            auto intValue = static_cast<int32_t>(std::stoi(stringValue));
-            return std::make_unique<ConstantInt32ValueFunction>(intValue);
+        case DataType::Type::INT32: {
+            if (auto intValue = NES::Util::from_chars<int32_t>(stringValue))
+            {
+                return std::make_unique<ConstantInt32ValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to int32", stringValue);
         };
-        case PhysicalType::Type::INT64: {
-            auto intValue = static_cast<int64_t>(std::stol(stringValue));
-            return std::make_unique<ConstantInt64ValueFunction>(intValue);
+        case DataType::Type::INT64: {
+            if (auto intValue = NES::Util::from_chars<int64_t>(stringValue))
+            {
+                return std::make_unique<ConstantInt64ValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to int64", stringValue);
         };
-        case PhysicalType::Type::FLOAT32: {
-            auto floatValue = std::stof(stringValue);
-            return std::make_unique<ConstantFloatValueFunction>(floatValue);
+        case DataType::Type::FLOAT32: {
+            if (auto intValue = NES::Util::from_chars<float>(stringValue))
+            {
+                return std::make_unique<ConstantFloatValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to float", stringValue);
         };
-        case PhysicalType::Type::FLOAT64: {
-            auto doubleValue = std::stod(stringValue);
-            return std::make_unique<ConstantDoubleValueFunction>(doubleValue);
+        case DataType::Type::FLOAT64: {
+            if (auto intValue = NES::Util::from_chars<double>(stringValue))
+            {
+                return std::make_unique<ConstantDoubleValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to double", stringValue);
         };
-        case PhysicalType::Type::CHAR:
+        case DataType::Type::CHAR:
             break;
-        case PhysicalType::Type::BOOLEAN: {
-            auto boolValue = static_cast<bool>(std::stoi(stringValue)) == 1;
-            return std::make_unique<ConstantBooleanValueFunction>(boolValue);
+        case DataType::Type::BOOLEAN: {
+            if (auto intValue = NES::Util::from_chars<bool>(stringValue))
+            {
+                return std::make_unique<ConstantBooleanValueFunction>(intValue.value());
+            }
+            throw CannotFormatMalformedStringValue("Could not cast {} to bool", stringValue);
         }
-        case PhysicalType::Type::VARSIZED: {
+        case DataType::Type::VARSIZED: {
             return std::make_unique<ExecutableFunctionConstantValueVariableSize>(
                 reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
         };
-        case PhysicalType::Type::UNDEFINED: {
-            throw UnknownPhysicalType(fmt::format("the UNKNOWN type is not supported"));
+        case DataType::Type::UNDEFINED: {
+            throw UnknownPhysicalType("the UNKNOWN type is not supported");
         };
     }
-    throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", physicalType));
+    throw UnknownPhysicalType("the basic type {} is not supported", dataType);
 }
 }

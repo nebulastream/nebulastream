@@ -30,15 +30,15 @@ Schema createJoinSchema(Schema leftSchema, Schema rightSchema)
         magic_enum::enum_name(leftSchema.memoryLayoutType),
         magic_enum::enum_name(rightSchema.memoryLayoutType));
     auto retSchema = Schema{leftSchema.memoryLayoutType};
-    /// TODO(#764): move qualified field logic in central place and improve
+    /// TODO #764: move qualified field logic in central place and improve
     const auto optLeftFieldName = leftSchema.getSourceNameQualifier();
     const auto optRightFieldName = rightSchema.getSourceNameQualifier();
     INVARIANT(optLeftFieldName.has_value(), "The left schema does not have a source qualifier: {}", leftSchema);
     INVARIANT(optRightFieldName.has_value(), "The right schema does not have a source qualifier: {}", rightSchema);
     const auto newQualifierForSystemField = optLeftFieldName.value() + optRightFieldName.value();
 
-    retSchema.addField(newQualifierForSystemField + "$start", PhysicalType::Type::UINT64);
-    retSchema.addField(newQualifierForSystemField + "$end", PhysicalType::Type::UINT64);
+    retSchema.addField(newQualifierForSystemField + "$start", DataType::Type::UINT64);
+    retSchema.addField(newQualifierForSystemField + "$end", DataType::Type::UINT64);
 
     for (const auto& fields : leftSchema.getFields())
     {

@@ -31,7 +31,7 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-DynamicField::DynamicField(const uint8_t* address, PhysicalType physicalType)
+DynamicField::DynamicField(const uint8_t* address, DataType physicalType)
     : address(address), physicalType(std::move(std::move(physicalType)))
 {
 }
@@ -131,8 +131,8 @@ std::string DynamicTuple::toString(Schema schema) const
         }
         else if (dataType.isFloat())
         {
-            const auto formattedFloatValue = (dataType.physicalType.sizeInBits == 64) ? Util::formatFloat(currentField.read<double>())
-                                                                                      : Util::formatFloat(currentField.read<float>());
+            const auto formattedFloatValue = (dataType.sizeInBits == 64) ? Util::formatFloat(currentField.read<double>())
+                                                                         : Util::formatFloat(currentField.read<float>());
             ss << formattedFloatValue << fieldEnding;
         }
         else
@@ -203,7 +203,7 @@ bool DynamicField::operator!=(const DynamicField& rhs) const
     return not(*this == rhs);
 }
 
-const PhysicalType& DynamicField::getPhysicalType() const
+const DataType& DynamicField::getPhysicalType() const
 {
     return physicalType;
 }
@@ -277,10 +277,10 @@ std::string TestTupleBuffer::toString(Schema schema, const PrintMode printMode) 
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
-    std::vector<PhysicalType> types;
+    std::vector<DataType> types;
     for (const auto& field : schema.getFields())
     {
-        auto physicalType = field.dataType.physicalType;
+        auto physicalType = field.dataType;
         physicalSizes.push_back(physicalType.getSizeInBytes());
         types.push_back(physicalType);
         NES_TRACE(
@@ -297,7 +297,7 @@ std::string TestTupleBuffer::toString(Schema schema, const PrintMode printMode) 
         str << "|";
         for (const auto& field : schema.getFields())
         {
-            str << field.name << ":" << magic_enum::enum_name(field.dataType.physicalType.type) << "|";
+            str << field.name << ":" << magic_enum::enum_name(field.dataType.type) << "|";
         }
         str << std::endl;
         str << "+----------------------------------------------------+" << std::endl;

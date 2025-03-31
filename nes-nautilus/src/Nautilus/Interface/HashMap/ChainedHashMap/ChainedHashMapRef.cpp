@@ -292,7 +292,7 @@ ChainedHashMapRef::ChainedHashMapRef(
         {
             throw NotImplemented("Float32 and Float64 are not supported in the key fields for the chained hash map.");
         }
-        if (field.type.type == PhysicalType::Type::VARSIZED)
+        if (field.type.isType(DataType::Type::VARSIZED))
         {
             throw NotImplemented("Variable sized data types are not supported in the key fields for the chained hash map.");
         }
