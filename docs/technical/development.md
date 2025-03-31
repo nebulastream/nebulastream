@@ -19,8 +19,8 @@ docker container, which prevents permission issues. Building a local image will 
 image which matches the current set of dependencies (based on a hash). If you are using docker in rootless mode the
 user inside the container will be root.
 
-If no development image matches the current dependency hash, you can build the development environment locally (using the
-`-l` flag). If you want to use `libstdc++` instead of the default libc++, you can use the `--libstdcxx` flag.
+If no development image matches the current dependency hash, you can build the development environment locally (using
+the `-l` flag). If you want to use `libstdc++` instead of the default libc++, you can use the `--libstdcxx` flag.
 
 ```shell
 ./scripts/install-local-docker-environment.sh
@@ -114,6 +114,24 @@ docker-based toolchains if you plan to experiment with different sanitizer.
 Lastly, you need to create a new CMake profile which uses the newly created docker-based toolchain:
 
 ![CLion-CMake-Settings](../resources/SetupDockerCmakeClion.png)
+
+### Run with profiler (perf)
+
+Profiling NebulaStream in docker is possible but entails couple steps.
+
+1. You first need to set the access level to full access for performance counters on your host system:
+
+    ```shell
+    sudo sh -c 'echo -1 > /proc/sys/kernel/perf_event_paranoid'
+    ```
+
+2. You then need to add the following run options to your docker toolchain in order to add the needed capabilities:
+
+    ![CLion-Toolchain-Settings-Perf](../resources/EditDockerRunOptionsForPerf.png)
+
+3. Finally, you can profile any run configuration via
+
+   ![CLion-Profile-Run-Configuration](../resources/ClionProfileRunConfiguration.png)
 
 ## Non-Container Development Environment
 
