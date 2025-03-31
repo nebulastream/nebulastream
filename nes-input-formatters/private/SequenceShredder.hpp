@@ -116,6 +116,14 @@ namespace NES::InputFormatters
           the thread doubles the size of the ring buffer.
 */
 
+struct StagedBuffer
+{
+    Memory::TupleBuffer buffer;
+    size_t sizeOfBufferInBytes;
+    uint32_t offsetOfFirstTupleDelimiter;
+    uint32_t offsetOfLastTupleDelimiter;
+};
+
 class SequenceShredder
 {
 public:
@@ -124,14 +132,6 @@ public:
     static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(BitmapType) * 8; /// 8 bits in one byte
     static constexpr size_t INITIAL_NUM_BITMAPS = 8;
     using BitmapVectorType = std::vector<BitmapType>;
-
-    struct StagedBuffer
-    {
-        Memory::TupleBuffer buffer;
-        size_t sizeOfBufferInBytes;
-        uint32_t offsetOfFirstTupleDelimiter;
-        uint32_t offsetOfLastTupleDelimiter;
-    };
 
     struct SpanningTupleBuffers
     {

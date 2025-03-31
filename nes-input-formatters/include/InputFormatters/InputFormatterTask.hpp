@@ -40,7 +40,7 @@ class FieldOffsetIterator;
 
 // Todo:
 struct BufferData;
-
+struct StagedBuffer;
 
 /// TODO #496: Implement InputFormatterTask a Nautilus Operator (CompiledExecutablePipelineStage/Special Scan)
 /// -> figure out how to best call SequenceShredder and handle return values of SequenceShredder
@@ -113,7 +113,6 @@ private:
         NES::ChunkNumber::Underlying& runningChunkNumber,
         FieldOffsetIterator& fieldOffsets,
         NES::Memory::TupleBuffer& formattedBuffer,
-        Memory::AbstractBufferProvider& bufferProvider,
         Runtime::Execution::PipelineExecutionContext& pec) const;
 
     /// Called by execute if the buffer delimits at least two tuples.
@@ -132,6 +131,20 @@ private:
         const BufferData& bufferData,
         ChunkNumber::Underlying& runningChunkNumber,
         Runtime::Execution::PipelineExecutionContext& pec) const;
+
+    /// Constructs a spanning tuple (string) that spans over at least two buffers (buffersToFormat).
+    /// First, determines the start of the spanning tuple in the first buffer to format. Constructs a spanning tuple from the required bytes.
+    /// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
+    /// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
+    /// Lastly, formats the full spanning tuple.
+    void processSpanningTuple(
+        FieldOffsetsType partialTupleStartIdx,
+        FieldOffsetsType partialTupleEndIdx,
+        size_t sizeOfTupleDelimiter,
+        const std::vector<StagedBuffer>& buffersToFormat,
+        Memory::AbstractBufferProvider& bufferProvider,
+        Memory::TupleBuffer& formattedBuffer,
+        size_t offsetToFormattedBuffer) const;
 };
 
 

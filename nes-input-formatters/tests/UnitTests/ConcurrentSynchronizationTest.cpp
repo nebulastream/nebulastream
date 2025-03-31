@@ -121,7 +121,7 @@ public:
                 {
                 }
 
-                const auto dummyStagedBuffer = SequenceShredder::StagedBuffer{
+                const auto dummyStagedBuffer = NES::InputFormatters::StagedBuffer{
                     .buffer = NES::Memory::TupleBuffer{},
                     .sizeOfBufferInBytes = threadLocalSequenceNumber,
                     .offsetOfFirstTupleDelimiter = 0,

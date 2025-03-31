@@ -106,68 +106,6 @@ void processTuple(
     }
 }
 
-/// Constructs a spanning tuple (string) that spans over at least two buffers (buffersToFormat).
-/// First, determines the start of the spanning tuple in the first buffer to format. Constructs a spanning tuple from the required bytes.
-/// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
-/// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
-/// Lastly, formats the full spanning tuple.
-void processSpanningTuple(
-    const NES::InputFormatters::FieldOffsetsType partialTupleStartIdx,
-    const NES::InputFormatters::FieldOffsetsType partialTupleEndIdx,
-    const size_t sizeOfTupleDelimiter,
-    const std::vector<NES::InputFormatters::SequenceShredder::StagedBuffer>& buffersToFormat,
-    NES::Memory::AbstractBufferProvider& bufferProvider,
-    NES::Memory::TupleBuffer& formattedBuffer,
-    const size_t offsetToFormattedBuffer,
-    const size_t numberOfFieldsInSchema,
-    const std::string_view fieldDelimiter,
-    NES::InputFormatters::InputFormatter& inputFormatter,
-    const std::vector<NES::InputFormatters::InputFormatterTask::ParseFunctionSignature>& fieldParseFunctions,
-    const std::vector<size_t>& fieldSizes)
-{
-    /// If the buffers are not empty, there are at least three buffers
-    std::string partialTuple;
-    /// 1. Process the first buffer
-    const auto& firstBuffer = buffersToFormat[partialTupleStartIdx];
-    const auto sizeOfLeadingPartialTuple
-        = firstBuffer.sizeOfBufferInBytes - (firstBuffer.offsetOfLastTupleDelimiter + sizeOfTupleDelimiter);
-    const std::string_view firstPartialTuple = std::string_view(
-        firstBuffer.buffer.getBuffer<const char>() + (firstBuffer.offsetOfLastTupleDelimiter + 1), sizeOfLeadingPartialTuple);
-    partialTuple.append(firstPartialTuple);
-    /// 2. Process all buffers in-between the first and the last
-    for (size_t bufferIndex = partialTupleStartIdx + 1; bufferIndex < partialTupleEndIdx; ++bufferIndex)
-    {
-        const auto& currentBuffer = buffersToFormat[bufferIndex];
-        const std::string_view intermediatePartialTuple
-            = std::string_view(currentBuffer.buffer.getBuffer<const char>(), currentBuffer.sizeOfBufferInBytes);
-        partialTuple.append(intermediatePartialTuple);
-    }
-
-    /// 3. Process the last buffer
-    const auto& lastBuffer = buffersToFormat[partialTupleEndIdx];
-    const std::string_view lastPartialTuple
-        = std::string_view(lastBuffer.buffer.getBuffer<const char>(), lastBuffer.offsetOfFirstTupleDelimiter);
-    partialTuple.append(lastPartialTuple);
-
-    /// A partial tuple may currently be empty (the 'stop' call produces an empty tuple, if the last buffer ends in a tuple delimiter)
-    if (not partialTuple.empty())
-    {
-        std::vector<NES::InputFormatters::FieldOffsetsType> partialTupleOffset(numberOfFieldsInSchema + 1);
-        inputFormatter.indexSpanningTuple(partialTuple, fieldDelimiter, partialTupleOffset.data(), 0, partialTuple.size(), 0);
-
-        processTuple<NES::InputFormatters::FieldOffsetsType*>(
-            partialTuple.data(),
-            partialTupleOffset.data(),
-            numberOfFieldsInSchema,
-            fieldDelimiter.size(),
-            bufferProvider,
-            formattedBuffer,
-            fieldParseFunctions,
-            offsetToFormattedBuffer,
-            fieldSizes);
-        formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
-    }
-}
 }
 
 namespace NES::InputFormatters
@@ -227,6 +165,59 @@ InputFormatterTask::InputFormatterTask(
 }
 InputFormatterTask::~InputFormatterTask() = default;
 
+void InputFormatterTask::processSpanningTuple(
+    const FieldOffsetsType partialTupleStartIdx,
+    const FieldOffsetsType partialTupleEndIdx,
+    const size_t sizeOfTupleDelimiter,
+    const std::vector<StagedBuffer>& buffersToFormat,
+    Memory::AbstractBufferProvider& bufferProvider,
+    Memory::TupleBuffer& formattedBuffer,
+    const size_t offsetToFormattedBuffer) const
+{
+    /// If the buffers are not empty, there are at least three buffers
+    std::string partialTuple;
+    /// 1. Process the first buffer
+    const auto& firstBuffer = buffersToFormat[partialTupleStartIdx];
+    const auto sizeOfLeadingPartialTuple
+        = firstBuffer.sizeOfBufferInBytes - (firstBuffer.offsetOfLastTupleDelimiter + sizeOfTupleDelimiter);
+    const std::string_view firstPartialTuple = std::string_view(
+        firstBuffer.buffer.getBuffer<const char>() + (firstBuffer.offsetOfLastTupleDelimiter + 1), sizeOfLeadingPartialTuple);
+    partialTuple.append(firstPartialTuple);
+    /// 2. Process all buffers in-between the first and the last
+    for (size_t bufferIndex = partialTupleStartIdx + 1; bufferIndex < partialTupleEndIdx; ++bufferIndex)
+    {
+        const auto& currentBuffer = buffersToFormat[bufferIndex];
+        const std::string_view intermediatePartialTuple
+            = std::string_view(currentBuffer.buffer.getBuffer<const char>(), currentBuffer.sizeOfBufferInBytes);
+        partialTuple.append(intermediatePartialTuple);
+    }
+
+    /// 3. Process the last buffer
+    const auto& lastBuffer = buffersToFormat[partialTupleEndIdx];
+    const std::string_view lastPartialTuple
+        = std::string_view(lastBuffer.buffer.getBuffer<const char>(), lastBuffer.offsetOfFirstTupleDelimiter);
+    partialTuple.append(lastPartialTuple);
+
+    /// A partial tuple may currently be empty (the 'stop' call produces an empty tuple, if the last buffer ends in a tuple delimiter)
+    if (not partialTuple.empty())
+    {
+        std::vector<NES::InputFormatters::FieldOffsetsType> partialTupleOffset(numberOfFieldsInSchema + 1);
+        inputFormatter->indexSpanningTuple(partialTuple, fieldDelimiter, partialTupleOffset.data(), 0, partialTuple.size(), 0);
+
+        processTuple<NES::InputFormatters::FieldOffsetsType*>(
+            partialTuple.data(),
+            partialTupleOffset.data(),
+            numberOfFieldsInSchema,
+            fieldDelimiter.size(),
+            bufferProvider,
+            formattedBuffer,
+            fieldParseFunctions,
+            offsetToFormattedBuffer,
+            fieldSizes);
+        formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
+    }
+}
+
 void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
     const auto [resultBuffers, sequenceNumberToUseForFlushedTuple] = sequenceShredder->flushFinalPartialTuple();
@@ -247,12 +238,7 @@ void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipe
         flushedBuffers,
         *pipelineExecutionContext.getBufferManager(),
         formattedBuffer,
-        0,
-        numberOfFieldsInSchema,
-        fieldDelimiter,
-        *inputFormatter,
-        fieldParseFunctions,
-        fieldSizes);
+        0);
     /// Emit formatted buffer with single flushed tuple
     if (formattedBuffer.getNumberOfTuples() != 0)
     {
@@ -267,14 +253,13 @@ void InputFormatterTask::processRawBuffer(
     NES::ChunkNumber::Underlying& runningChunkNumber,
     FieldOffsetIterator& fieldOffsets,
     NES::Memory::TupleBuffer& formattedBuffer,
-    Memory::AbstractBufferProvider& bufferProvider,
     Runtime::Execution::PipelineExecutionContext& pec) const
 {
     const auto numberOfTuplesInFirstFormattedBuffer = formattedBuffer.getNumberOfTuples();
     const size_t numberOfTuplesPerBuffer = bufferData.sizeOfFormattedTupleBufferInBytes / sizeOfTupleInBytes;
     PRECONDITION(numberOfTuplesPerBuffer != 0, "The capacity of a buffer must suffice to hold at least one buffer");
-    const auto numberOfBuffersToFill
-        = estimateNumberOfRequiredBuffers(bufferData.numberOfTuplesInRawBuffer, numberOfTuplesInFirstFormattedBuffer, numberOfTuplesPerBuffer);
+    const auto numberOfBuffersToFill = estimateNumberOfRequiredBuffers(
+        bufferData.numberOfTuplesInRawBuffer, numberOfTuplesInFirstFormattedBuffer, numberOfTuplesPerBuffer);
 
     /// Determine the total number of tuples to produce, including potential prior (partial) tuples
     /// If the first buffer is full already, the first iteration of the for loop below does 'nothing'
@@ -293,7 +278,7 @@ void InputFormatterTask::processRawBuffer(
             formattedBuffer.setChunkNumber(NES::ChunkNumber(runningChunkNumber++));
             formattedBuffer.setOriginId(bufferData.rawBuffer.getOriginId());
             pec.emitBuffer(formattedBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-            formattedBuffer = bufferProvider.getBufferBlocking();
+            formattedBuffer = bufferData.bufferProvider->getBufferBlocking();
 
             tupleIdxOfCurrentFormattedBuffer = 0;
         }
@@ -306,7 +291,7 @@ void InputFormatterTask::processRawBuffer(
                 fieldOffsets,
                 numberOfFieldsInSchema,
                 fieldDelimiter.size(),
-                bufferProvider,
+                *bufferData.bufferProvider,
                 formattedBuffer,
                 fieldParseFunctions,
                 tupleIdxOfCurrentFormattedBuffer * sizeOfTupleInBytes,
@@ -326,7 +311,7 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
     Runtime::Execution::PipelineExecutionContext& pec) const
 {
     const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<true>(
-        SequenceShredder::StagedBuffer{
+        StagedBuffer{
             bufferData.rawBuffer,
             bufferData.rawBuffer.getNumberOfTuples(),
             bufferData.offsets.offsetOfFirstTupleDelimiter,
@@ -339,30 +324,13 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
     if (hasLeadingPartialTuple)
     {
         processSpanningTuple(
-            0,
-            indexOfSequenceNumberInStagedBuffers,
-            tupleDelimiter.size(),
-            stagedBuffers,
-            *bufferData.bufferProvider,
-            formattedBuffer,
-            0,
-            numberOfFieldsInSchema,
-            fieldDelimiter,
-            *inputFormatter,
-            fieldParseFunctions,
-            fieldSizes);
+            0, indexOfSequenceNumberInStagedBuffers, tupleDelimiter.size(), stagedBuffers, *bufferData.bufferProvider, formattedBuffer, 0);
     }
 
     /// 2. process tuples in buffer
     if (bufferData.numberOfTuplesInRawBuffer > 0)
     {
-        processRawBuffer(
-            bufferData,
-            runningChunkNumber,
-            fieldOffsets,
-            formattedBuffer,
-            *bufferData.bufferProvider,
-            pec);
+        processRawBuffer(bufferData, runningChunkNumber, fieldOffsets, formattedBuffer, pec);
     }
 
     /// 3. process trailing partial tuple if required
@@ -386,12 +354,7 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
             stagedBuffers,
             *bufferData.bufferProvider,
             formattedBuffer,
-            (formattedBuffer.getNumberOfTuples() * sizeOfTupleInBytes),
-            numberOfFieldsInSchema,
-            fieldDelimiter,
-            *inputFormatter,
-            fieldParseFunctions,
-            fieldSizes);
+            (formattedBuffer.getNumberOfTuples() * sizeOfTupleInBytes));
     }
     /// If a raw buffer contains exactly one delimiter, but does not complete a partial tuple, the formatted buffer does not contain a tuple
     if (formattedBuffer.getNumberOfTuples() != 0)
@@ -404,12 +367,14 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
 }
 
 void InputFormatterTask::processRawBufferWithoutTupleDelimiter(
-    const BufferData& bufferData,
-    ChunkNumber::Underlying& runningChunkNumber,
-    Runtime::Execution::PipelineExecutionContext& pec) const
+    const BufferData& bufferData, ChunkNumber::Underlying& runningChunkNumber, Runtime::Execution::PipelineExecutionContext& pec) const
 {
     const auto [indexOfSequenceNumberInStagedBuffers, stagedBuffers] = sequenceShredder->processSequenceNumber<false>(
-        SequenceShredder::StagedBuffer{bufferData.rawBuffer, bufferData.rawBuffer.getNumberOfTuples(), bufferData.offsets.offsetOfFirstTupleDelimiter, bufferData.offsets.offsetOfLastTupleDelimiter},
+        StagedBuffer{
+            bufferData.rawBuffer,
+            bufferData.rawBuffer.getNumberOfTuples(),
+            bufferData.offsets.offsetOfFirstTupleDelimiter,
+            bufferData.offsets.offsetOfLastTupleDelimiter},
         bufferData.sequenceNumberOfCurrentBuffer);
     if (stagedBuffers.size() < 3)
     {
@@ -417,19 +382,7 @@ void InputFormatterTask::processRawBufferWithoutTupleDelimiter(
     }
     /// If there is a spanning tuple, get a new buffer for formatted data and process the partial tuples
     auto formattedBuffer = bufferData.bufferProvider->getBufferBlocking();
-    processSpanningTuple(
-        0,
-        stagedBuffers.size() - 1,
-        tupleDelimiter.size(),
-        stagedBuffers,
-        *bufferData.bufferProvider,
-        formattedBuffer,
-        0,
-        numberOfFieldsInSchema,
-        fieldDelimiter,
-        *inputFormatter,
-        fieldParseFunctions,
-        fieldSizes);
+    processSpanningTuple(0, stagedBuffers.size() - 1, tupleDelimiter.size(), stagedBuffers, *bufferData.bufferProvider, formattedBuffer, 0);
 
     formattedBuffer.setSequenceNumber(bufferData.rawBuffer.getSequenceNumber());
     formattedBuffer.setChunkNumber(NES::ChunkNumber(runningChunkNumber++));
@@ -492,10 +445,7 @@ void InputFormatterTask::execute(
     {
         /// If the buffer does not delimit a single tuple, it may still connect two buffers that delimit tuples and therefore comple a
         /// spanning tuple.
-        processRawBufferWithoutTupleDelimiter(
-            bufferData,
-            runningChunkNumber,
-            pipelineExecutionContext);
+        processRawBufferWithoutTupleDelimiter(bufferData, runningChunkNumber, pipelineExecutionContext);
     }
 }
 std::ostream& InputFormatterTask::toString(std::ostream& os) const
