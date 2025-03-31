@@ -23,7 +23,6 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
@@ -32,8 +31,8 @@ class MedianAggregationFunction : public AggregationFunction
 {
 public:
     MedianAggregationFunction(
-        std::shared_ptr<PhysicalType> inputType,
-        std::shared_ptr<PhysicalType> resultType,
+        PhysicalType inputType,
+        PhysicalType resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);

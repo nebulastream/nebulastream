@@ -16,7 +16,6 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -55,9 +54,9 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
     /// read all fields
     const auto bufferAddress = recordBuffer.getBuffer();
     Record record;
-    for (nautilus::static_val<uint64_t> i = 0; i < schema->getFieldCount(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
-        const auto& fieldName = schema->getFieldByIndex(i)->getName();
+        const auto& fieldName = schema.getFieldAt(i).name;
         if (!includesField(projections, fieldName))
         {
             continue;
@@ -74,10 +73,10 @@ void ColumnTupleBufferMemoryProvider::writeRecord(
 {
     const auto& schema = columnMemoryLayout->getSchema();
     const auto bufferAddress = recordBuffer.getBuffer();
-    for (nautilus::static_val<size_t> i = 0; i < schema->getFieldCount(); ++i)
+    for (nautilus::static_val<size_t> i = 0; i < schema.getNumberOfFields(); ++i)
     {
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        const auto value = rec.read(schema->getFieldByIndex(i)->getName());
+        const auto value = rec.read(schema.getFieldAt(i).name);
         storeValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value);
     }
 }

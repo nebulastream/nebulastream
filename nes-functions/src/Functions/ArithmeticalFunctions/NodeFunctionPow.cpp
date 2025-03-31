@@ -14,20 +14,18 @@
 
 #include <memory>
 #include <utility>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionPow.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 namespace NES
 {
 
-NodeFunctionPow::NodeFunctionPow(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Pow") {};
+NodeFunctionPow::NodeFunctionPow(DataType stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Pow") {};
 
 NodeFunctionPow::NodeFunctionPow(NodeFunctionPow* other) : NodeFunctionArithmeticalBinary(other)
 {
@@ -35,7 +33,7 @@ NodeFunctionPow::NodeFunctionPow(NodeFunctionPow* other) : NodeFunctionArithmeti
 
 std::shared_ptr<NodeFunction> NodeFunctionPow::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
-    auto powNode = std::make_shared<NodeFunctionPow>(DataTypeProvider::provideDataType(LogicalType::FLOAT32));
+    auto powNode = std::make_shared<NodeFunctionPow>(DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT32));
     powNode->setChildren(left, right);
     return powNode;
 }

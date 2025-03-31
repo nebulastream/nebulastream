@@ -24,8 +24,10 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -46,14 +48,12 @@
 #include <fmt/ranges.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace YAML
 {
 using namespace NES::CLI;
 
-std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
+NES::DataType stringToFieldType(const std::string& fieldNodeType)
 {
     try
     {
@@ -161,7 +161,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
@@ -207,11 +207,11 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalSourceName, schemaFields] : config.logical)
     {
-        auto schema = Schema::create();
+        auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
         NES_INFO("Adding logical source: {}", logicalSourceName);
         for (const auto& [name, type] : schemaFields)
         {
-            schema = schema->addField(name, type);
+            schema = schema.addField(name, type);
         }
         sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }
@@ -248,7 +248,7 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     typeInference->performTypeInferenceQuery(query);
 
     NES_INFO("QEP:\n {}", query->toString());
-    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
+    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema());
     return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
@@ -267,7 +267,7 @@ SchemaField::SchemaField(std::string name, const std::string& typeName) : Schema
 {
 }
 
-SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
+SchemaField::SchemaField(std::string name, NES::DataType type) : name(std::move(name)), type(std::move(type))
 {
 }
 

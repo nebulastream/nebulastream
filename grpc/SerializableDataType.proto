@@ -15,57 +15,30 @@
 syntax = "proto3";
 import "google/protobuf/any.proto";
 package NES;
+message SerializableDataType {
+  message SerializablePhysicalDataType {
+    // Enum do identify the data type
+    enum Type {
+        UINT8 = 0;
+        UINT16 = 1;
+        UINT32 = 2;
+        UINT64 = 3;
+        INT8 = 4;
+        INT16 = 5;
+        INT32 = 6;
+        INT64 = 7;
+        FLOAT32 = 8;
+        FLOAT64 = 9;
+        BOOLEAN = 10;
+        CHAR = 11;
+        UNDEFINED = 12;
+        VARSIZED = 13;
+    }
 
-/*
-The serializable wrapper definition for data type objects
- */
-message SerializableDataType{
-  // Enum do identify the data type
-  enum Type{
-    UNDEFINED = 0;
-    INTEGER = 1;
-    FLOAT = 2;
-    CHAR = 3;
-    ARRAY = 4;
-    BOOLEAN = 5;
-    VARIABLE_SIZED_DATA = 6;
+    Type type = 1;
+    // field for custom type properties
+    uint32 sizeInBits = 2;
+    bool isSigned = 3;
   }
-
-  /**
-  Details for array data types
-   */
-  message ArrayDetails{
-    SerializableDataType componentType = 1;
-    uint64 dimensions = 2;
-  }
-
-  /**
-  Details for integer data types
-   */
-  message IntegerDetails{
-    uint64 bits = 1;
-    uint64 upperBound = 2;
-    int64 lowerBound = 3;
-  }
-
-  /**
- Details for Float data types
-  */
-  message FloatDetails{
-    uint64 bits = 1;
-    double upperBound = 2;
-    double lowerBound = 3;
-  }
-
-  /**
-  Details for char data types
-   */
-  message CharDetails{
-    uint64 dimensions = 2;
-  }
-
-  Type type = 1;
-  // field for custom type properties
-  google.protobuf.Any details = 2;
-
+  SerializablePhysicalDataType physicalType = 1;
 }

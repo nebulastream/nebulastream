@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/AttributeField.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Measures/TimeUnit.hpp>
 
@@ -30,14 +30,13 @@ class TimeCharacteristic final
 {
 public:
     constexpr static auto RECORD_CREATION_TS_FIELD_NAME = "$record.creationTs";
-
     enum class Type : uint8_t
     {
         IngestionTime,
         EventTime
     };
     explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit);
+    TimeCharacteristic(Type type, Schema::Field field, TimeUnit unit);
 
     static std::shared_ptr<TimeCharacteristic> createIngestionTime();
 
@@ -46,7 +45,7 @@ public:
 
     Type getType() const;
 
-    bool operator==(const TimeCharacteristic& other) const;
+    bool operator==(const TimeCharacteristic& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic);
 
     std::string getTypeAsString() const;
@@ -55,7 +54,8 @@ public:
     void setTimeUnit(const TimeUnit& unit);
 
     /// Public, since we need to both get and set it.
-    std::shared_ptr<AttributeField> field;
+    Schema::Field field;
+
 private:
     Type type;
     TimeUnit unit;

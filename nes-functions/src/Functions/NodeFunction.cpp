@@ -15,29 +15,28 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Util/Common.hpp>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-NodeFunction::NodeFunction(std::shared_ptr<DataType> stamp, std::string type) : stamp(std::move(stamp)), type(std::move(type))
+NodeFunction::NodeFunction(DataType stamp, std::string type) : stamp(std::move(stamp)), type(std::move(type))
 {
 }
 
 bool NodeFunction::isPredicate() const
 {
-    return NES::Util::instanceOf<Boolean>(stamp);
+    return stamp.physicalType.type == PhysicalType::Type::BOOLEAN;
 }
 
-std::shared_ptr<DataType> NodeFunction::getStamp() const
+DataType NodeFunction::getStamp() const
 {
     return stamp;
 }
 
-void NodeFunction::setStamp(std::shared_ptr<DataType> stamp)
+void NodeFunction::setStamp(DataType stamp)
 {
     this->stamp = std::move(stamp);
 }

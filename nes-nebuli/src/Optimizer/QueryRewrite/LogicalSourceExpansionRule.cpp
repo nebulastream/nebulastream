@@ -123,8 +123,7 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
             auto duplicateSourceOperator = NES::Util::as<SourceNameLogicalOperator>(sourceOperator->duplicate());
             NES_DEBUG(
-                "Catalog schema for current source: {}",
-                sourceCatalog->getSchemaForLogicalSource(sourceOperator->getLogicalSourceName())->toString());
+                "Catalog schema for current source: {}", sourceCatalog->getSchemaForLogicalSource(sourceOperator->getLogicalSourceName()));
             /// Add to the source operator the id of the physical node where we have to pin the operator
             /// NOTE: This is required at the time of placement to know where the source operator is pinned
             duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());

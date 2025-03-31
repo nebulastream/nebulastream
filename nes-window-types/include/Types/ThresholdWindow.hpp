@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/ContentBasedWindowType.hpp>

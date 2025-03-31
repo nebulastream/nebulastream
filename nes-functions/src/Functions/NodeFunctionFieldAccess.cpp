@@ -16,29 +16,29 @@
 #include <string>
 #include <utility>
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
+
 namespace NES
 {
-NodeFunctionFieldAccess::NodeFunctionFieldAccess(std::shared_ptr<DataType> stamp, std::string fieldName)
+NodeFunctionFieldAccess::NodeFunctionFieldAccess(DataType stamp, std::string fieldName)
     : NodeFunction(std::move(stamp), "FieldAccess"), fieldName(std::move(fieldName)) {};
 
 NodeFunctionFieldAccess::NodeFunctionFieldAccess(NodeFunctionFieldAccess* other) : NodeFunction(other), fieldName(other->getFieldName()) {};
 
-std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(std::shared_ptr<DataType> stamp, std::string fieldName)
+std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(DataType stamp, std::string fieldName)
 {
     return std::make_shared<NodeFunctionFieldAccess>(NodeFunctionFieldAccess(std::move(stamp), std::move(fieldName)));
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(std::string fieldName)
 {
-    return create(DataTypeProvider::provideDataType(LogicalType::UNDEFINED), std::move(fieldName));
+    return create(DataTypeProvider::provideDataType(PhysicalType::Type::UNDEFINED), std::move(fieldName));
 }
 
 bool NodeFunctionFieldAccess::equal(const std::shared_ptr<Node>& rhs) const
@@ -47,7 +47,7 @@ bool NodeFunctionFieldAccess::equal(const std::shared_ptr<Node>& rhs) const
     {
         auto otherFieldRead = NES::Util::as<NodeFunctionFieldAccess>(rhs);
         bool fieldNamesMatch = otherFieldRead->fieldName == fieldName;
-        const bool stampsMatch = *otherFieldRead->stamp == *stamp;
+        const bool stampsMatch = otherFieldRead->stamp == stamp;
         return fieldNamesMatch and stampsMatch;
     }
     return false;
@@ -65,7 +65,7 @@ void NodeFunctionFieldAccess::updateFieldName(std::string fieldName)
 
 std::string NodeFunctionFieldAccess::toString() const
 {
-    return std::format("NodeFunctionFieldAccess( {} [ {} ])", fieldName, stamp->toString());
+    return fmt::format("NodeFunctionFieldAccess( {} [ {} ])", fieldName, stamp);
 }
 
 void NodeFunctionFieldAccess::inferStamp(const Schema& schema)
@@ -73,11 +73,11 @@ void NodeFunctionFieldAccess::inferStamp(const Schema& schema)
     /// check if the access field is defined in the schema.
     if (const auto existingField = schema.getFieldByName(fieldName))
     {
-        fieldName = existingField.value()->getName();
-        stamp = existingField.value()->getDataType();
+        fieldName = existingField.value().name;
+        stamp = existingField.value().dataType;
         return;
     }
-    throw QueryInvalid("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema.toString());
+    throw QueryInvalid("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema);
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::deepCopy()

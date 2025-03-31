@@ -22,7 +22,6 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
@@ -31,8 +30,8 @@ class MinAggregationFunction : public AggregationFunction
 {
 public:
     MinAggregationFunction(
-        std::shared_ptr<PhysicalType> inputType,
-        std::shared_ptr<PhysicalType> resultType,
+        PhysicalType inputType,
+        PhysicalType resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(

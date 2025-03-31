@@ -15,8 +15,8 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Util/Common.hpp>
@@ -27,16 +27,11 @@
 #include <include/Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
 
-DynamicField::DynamicField(const uint8_t* address, std::shared_ptr<PhysicalType> physicalType)
+DynamicField::DynamicField(const uint8_t* address, PhysicalType physicalType)
     : address(address), physicalType(std::move(std::move(physicalType)))
 {
 }
@@ -120,25 +115,24 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(const std::shared_ptr<Schema>& schema) const
+std::string DynamicTuple::toString(Schema schema) const
 {
     std::stringstream ss;
-    for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
+    for (uint32_t i = 0; i < schema.getNumberOfFields(); ++i)
     {
-        const auto fieldEnding = (i < schema->getFieldCount() - 1) ? "|" : "";
-        const auto dataType = schema->getFieldByIndex(i)->getDataType();
+        const auto fieldEnding = (i < schema.getNumberOfFields() - 1) ? "|" : "";
+        const auto dataType = schema.getFieldAt(i).dataType;
         DynamicField currentField = this->operator[](i);
-        if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
+        if (dataType.isVarSized())
         {
             const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
             const auto string = readVarSizedData(buffer, index);
             ss << string << fieldEnding;
         }
-        else if (NES::Util::instanceOf<Float>(dataType))
+        else if (dataType.isFloat())
         {
-            const auto numBits = NES::Util::as<Float>(dataType)->getBits();
-            const auto formattedFloatValue
-                = (numBits == 64) ? Util::formatFloat(currentField.read<double>()) : Util::formatFloat(currentField.read<float>());
+            const auto formattedFloatValue = (dataType.physicalType.sizeInBits == 64) ? Util::formatFloat(currentField.read<double>())
+                                                                                      : Util::formatFloat(currentField.read<float>());
             ss << formattedFloatValue << fieldEnding;
         }
         else
@@ -155,23 +149,23 @@ bool DynamicTuple::operator!=(const DynamicTuple& other) const
 }
 bool DynamicTuple::operator==(const DynamicTuple& other) const
 {
-    if (!(*this->memoryLayout->getSchema() == *other.memoryLayout->getSchema()))
+    if (!(this->memoryLayout->getSchema() == other.memoryLayout->getSchema()))
     {
         NES_DEBUG("Schema is not the same! Therefore the tuple can not be the same!");
         return false;
     }
-    for (const auto& field : *this->memoryLayout->getSchema())
+    for (const auto& field : this->memoryLayout->getSchema().getFields())
     {
-        if (!other.memoryLayout->getSchema()->getFieldByName(field->getName()))
+        if (!other.memoryLayout->getSchema().getFieldByName(field.name))
         {
-            NES_ERROR("Field with name {} is not contained in both tuples!", field->getName());
+            NES_ERROR("Field with name {} is not contained in both tuples!", field.name);
             return false;
         }
 
-        auto thisDynamicField = (*this)[field->getName()];
-        auto otherDynamicField = other[field->getName()];
+        auto thisDynamicField = (*this)[field.name];
+        auto otherDynamicField = other[field.name];
 
-        if (NES::Util::instanceOf<VariableSizedDataType>(field->getDataType()))
+        if (field.dataType.isVarSized())
         {
             const auto thisString = readVarSizedData(buffer, thisDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
             const auto otherString = readVarSizedData(other.buffer, otherDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
@@ -194,18 +188,14 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
 
 std::string DynamicField::toString() const
 {
-    return this->physicalType->convertRawToString(this->address);
+    return this->physicalType.formattedBytesToString(this->address);
 }
 
 bool DynamicField::operator==(const DynamicField& rhs) const
 {
-    PRECONDITION(
-        *physicalType == *rhs.physicalType,
-        "Physical types have to be the same but are {} and {}",
-        physicalType->toString(),
-        rhs.physicalType->toString());
+    PRECONDITION(physicalType == rhs.physicalType, "Physical types have to be the same but are {} and {}", physicalType, rhs.physicalType);
 
-    return std::memcmp(address, rhs.address, physicalType->size()) == 0;
+    return std::memcmp(address, rhs.address, physicalType.getSizeInBytes()) == 0;
 };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const
@@ -213,7 +203,7 @@ bool DynamicField::operator!=(const DynamicField& rhs) const
     return not(*this == rhs);
 }
 
-const std::shared_ptr<PhysicalType>& DynamicField::getPhysicalType() const
+const PhysicalType& DynamicField::getPhysicalType() const
 {
     return physicalType;
 }
@@ -278,37 +268,36 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema) const
+std::string TestTupleBuffer::toString(Schema schema) const
 {
     return toString(schema, PrintMode::SHOW_HEADER_END_IN_NEWLINE);
 }
 
-std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, const PrintMode printMode) const
+std::string TestTupleBuffer::toString(Schema schema, const PrintMode printMode) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
-    std::vector<std::shared_ptr<PhysicalType>> types;
-    const auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (const auto& field : *schema)
+    std::vector<PhysicalType> types;
+    for (const auto& field : schema.getFields())
     {
-        auto physicalType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        physicalSizes.push_back(physicalType->size());
+        auto physicalType = field.dataType.physicalType;
+        physicalSizes.push_back(physicalType.getSizeInBytes());
         types.push_back(physicalType);
         NES_TRACE(
             "TestTupleBuffer: {} {} {} {}",
             std::string("Field Size "),
-            field->toString(),
+            field,
             std::string(": "),
-            std::to_string(physicalType->size()));
+            std::to_string(physicalType.getSizeInBytes()));
     }
 
     if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::SHOW_HEADER_END_WITHOUT_NEWLINE)
     {
         str << "+----------------------------------------------------+" << std::endl;
         str << "|";
-        for (const auto& field : *schema)
+        for (const auto& field : schema.getFields())
         {
-            str << field->getName() << ":" << physicalDataTypeFactory.getPhysicalType(field->getDataType())->toString() << "|";
+            str << field.name << ":" << magic_enum::enum_name(field.dataType.physicalType.type) << "|";
         }
         str << std::endl;
         str << "+----------------------------------------------------+" << std::endl;
@@ -381,21 +370,21 @@ std::shared_ptr<MemoryLayout> TestTupleBuffer::getMemoryLayout() const
     return memoryLayout;
 }
 
-TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema)
+TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, Schema schema)
 {
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         const auto memoryLayout = RowLayout::create(schema, buffer.getBufferSize());
         return TestTupleBuffer(memoryLayout, buffer);
     }
-    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    else if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         const auto memoryLayout = ColumnLayout::create(schema, buffer.getBufferSize());
         return TestTupleBuffer(memoryLayout, buffer);
     }
     else
     {
-        throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema->getLayoutType()));
+        throw NotImplemented("Schema MemoryLayoutType not supported", magic_enum::enum_name(schema.memoryLayoutType));
     }
 }
 

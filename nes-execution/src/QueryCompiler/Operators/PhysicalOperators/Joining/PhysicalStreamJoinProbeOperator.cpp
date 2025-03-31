@@ -16,7 +16,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
@@ -31,9 +31,9 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
-    const std::shared_ptr<Schema>& leftSchema,
-    const std::shared_ptr<Schema>& rightSchema,
-    const std::shared_ptr<Schema>& outputSchema,
+    Schema leftSchema,
+    Schema rightSchema,
+    Schema outputSchema,
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
     const Configurations::StreamJoinStrategy joinStrategy,
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,

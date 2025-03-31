@@ -18,63 +18,62 @@
 #include <random>
 #include <string>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
 #include <InputFormatterTestUtil.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::InputFormatterTestUtil
 {
 
-std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataTypes)
+Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
 {
-    auto schema = std::make_shared<Schema>();
+    auto schema = Schema{};
     for (size_t fieldNumber = 1; const auto& dataType : testDataTypes)
     {
         switch (dataType)
         {
             case TestDataTypes::UINT8:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::UINT8));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::UINT8));
                 break;
             case TestDataTypes::UINT16:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::UINT16));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::UINT16));
                 break;
             case TestDataTypes::UINT32:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::UINT32));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::UINT32));
                 break;
             case TestDataTypes::UINT64:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::UINT64));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::UINT64));
                 break;
             case TestDataTypes::INT8:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::INT8));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::INT8));
                 break;
             case TestDataTypes::INT16:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::INT16));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::INT16));
                 break;
             case TestDataTypes::INT32:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::INT32));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::INT32));
                 break;
             case TestDataTypes::INT64:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::INT64));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::INT64));
                 break;
             case TestDataTypes::FLOAT32:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::FLOAT32));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT32));
                 break;
             case TestDataTypes::FLOAT64:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::FLOAT64));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT64));
                 break;
             case TestDataTypes::BOOLEAN:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::BOOLEAN));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::BOOLEAN));
                 break;
             case TestDataTypes::CHAR:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::CHAR));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::CHAR));
                 break;
             case TestDataTypes::VARSIZED:
-                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(LogicalType::VARSIZED));
+                schema.addField("Field_" + std::to_string(fieldNumber), DataTypeProvider::provideDataType(PhysicalType::Type::VARSIZED));
                 break;
         }
         ++fieldNumber;
@@ -132,7 +131,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
     const std::string& filePath,
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
     const int numberOfLocalBuffersInSource)
 {

@@ -15,8 +15,8 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <DataTypes/DataType.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 /**
@@ -25,7 +25,7 @@ namespace NES
 class NodeFunctionUnary : public NodeFunction
 {
 public:
-    explicit NodeFunctionUnary(std::shared_ptr<DataType> stamp, std::string name);
+    explicit NodeFunctionUnary(DataType stamp, std::string name);
 
     /**
      * @brief set the child node of this function.

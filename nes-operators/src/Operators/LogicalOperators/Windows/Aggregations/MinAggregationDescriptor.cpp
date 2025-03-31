@@ -14,15 +14,14 @@
 
 #include <memory>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES::Windowing
@@ -55,15 +54,15 @@ std::shared_ptr<WindowAggregationDescriptor> MinAggregationDescriptor::on(const 
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(fieldAccess));
 }
 
-std::shared_ptr<DataType> MinAggregationDescriptor::getInputStamp()
+DataType MinAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> MinAggregationDescriptor::getPartialAggregateStamp()
+DataType MinAggregationDescriptor::getPartialAggregateStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> MinAggregationDescriptor::getFinalAggregateStamp()
+DataType MinAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();
 }
@@ -72,7 +71,7 @@ void MinAggregationDescriptor::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
+    if (not onField->getStamp().isNumeric())
     {
         NES_FATAL_ERROR("MinAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

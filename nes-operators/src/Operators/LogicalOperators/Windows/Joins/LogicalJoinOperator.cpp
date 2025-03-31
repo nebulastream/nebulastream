@@ -15,8 +15,7 @@
 #include <memory>
 #include <unordered_set>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
@@ -31,7 +30,6 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
@@ -79,23 +77,23 @@ bool LogicalJoinOperator::inferSchema()
     }
 
     ///reset left and right schema
-    leftInputSchema->clear();
-    rightInputSchema->clear();
+    leftInputSchema = Schema{leftInputSchema.memoryLayoutType};
+    rightInputSchema = Schema{rightInputSchema.memoryLayoutType};
 
     /// Finds the join schema that contains the joinKey and copies the fields to the input schema, if found
-    auto findSchemaInDistinctSchemas = [&](NodeFunctionFieldAccess& joinKey, const std::shared_ptr<Schema>& inputSchema)
+    auto findSchemaInDistinctSchemas = [&](NodeFunctionFieldAccess& joinKey, Schema& inputSchema)
     {
         for (const auto& distinctSchema : distinctSchemas)
         {
             const auto& joinKeyName = joinKey.getFieldName();
-            if (const auto attributeField = distinctSchema->getFieldByName(joinKeyName); attributeField.has_value())
+            if (const auto attributeField = distinctSchema.getFieldByName(joinKeyName); attributeField.has_value())
             {
                 /// If we have not copied the fields from the schema, copy them for the first time
-                if (inputSchema->getSchemaSizeInBytes() == 0)
+                if (inputSchema.getSizeOfSchemaInBytes() == 0)
                 {
-                    inputSchema->copyFields(distinctSchema);
+                    inputSchema.assignToFields(distinctSchema);
                 }
-                joinKey.inferStamp(*inputSchema);
+                joinKey.inferStamp(inputSchema);
                 return true;
             }
         }
@@ -141,48 +139,49 @@ bool LogicalJoinOperator::inferSchema()
     distinctSchemas.clear();
 
     /// Checking if left and right input schema are not empty and are not equal
-    if (leftInputSchema->getSchemaSizeInBytes() == 0)
+    if (leftInputSchema.getSizeOfSchemaInBytes() == 0)
     {
         throw CannotInferSchema("left schema is empty");
     }
-    if (rightInputSchema->getSchemaSizeInBytes() == 0)
+    if (rightInputSchema.getSizeOfSchemaInBytes() == 0)
     {
         throw CannotInferSchema("right schema is empty");
     }
-    if (*rightInputSchema == *leftInputSchema)
+    if (rightInputSchema == leftInputSchema)
     {
         throw CannotInferSchema("found both left and right input schema to be same.");
     }
 
     ///Infer stamp of window definition
     const auto windowType = Util::as<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
-    windowType->inferStamp(*leftInputSchema);
+    windowType->inferStamp(leftInputSchema);
 
     ///Reset output schema and add fields from left and right input schema
-    outputSchema->clear();
-    const auto& sourceNameLeft = leftInputSchema->getQualifierNameForSystemGeneratedFields();
-    const auto& sourceNameRight = rightInputSchema->getQualifierNameForSystemGeneratedFields();
-    const auto& newQualifierForSystemField = sourceNameLeft + sourceNameRight;
+    outputSchema = Schema{outputSchema};
+    const auto& sourceNameLeft = leftInputSchema.getQualifierNameForSystemGeneratedFields();
+    const auto& sourceNameRight = rightInputSchema.getQualifierNameForSystemGeneratedFields();
+    INVARIANT(sourceNameLeft.has_value() and sourceNameRight.has_value(), "All source names must have values.");
+    const auto& newQualifierForSystemField = sourceNameLeft.value() + sourceNameRight.value();
 
     windowMetaData.windowStartFieldName = newQualifierForSystemField + "$start";
     windowMetaData.windowEndFieldName = newQualifierForSystemField + "$end";
-    outputSchema->addField(windowMetaData.windowStartFieldName, BasicType::UINT64);
-    outputSchema->addField(windowMetaData.windowEndFieldName, BasicType::UINT64);
+    outputSchema.addField(windowMetaData.windowStartFieldName, PhysicalType::Type::UINT64);
+    outputSchema.addField(windowMetaData.windowEndFieldName, PhysicalType::Type::UINT64);
 
     /// create dynamic fields to store all fields from left and right sources
-    for (const auto& field : *leftInputSchema)
+    for (const auto& field : leftInputSchema.getFields())
     {
-        outputSchema->addField(field->getName(), field->getDataType());
+        outputSchema.addField(field.name, field.dataType);
     }
 
-    for (const auto& field : *rightInputSchema)
+    for (const auto& field : rightInputSchema.getFields())
     {
-        outputSchema->addField(field->getName(), field->getDataType());
+        outputSchema.addField(field.name, field.dataType);
     }
 
-    NES_DEBUG("LeftInput schema for join={}", leftInputSchema->toString());
-    NES_DEBUG("RightInput schema for join={}", rightInputSchema->toString());
-    NES_DEBUG("Output schema for join={}", outputSchema->toString());
+    NES_DEBUG("LeftInput schema for join={}", leftInputSchema);
+    NES_DEBUG("RightInput schema for join={}", rightInputSchema);
+    NES_DEBUG("Output schema for join={}", outputSchema);
     joinDefinition->updateOutputDefinition(outputSchema);
     joinDefinition->updateSourceTypes(leftInputSchema, rightInputSchema);
     return true;
@@ -214,9 +213,9 @@ bool LogicalJoinOperator::equal(const std::shared_ptr<Node>& rhs) const
         const auto rhsJoin = NES::Util::as<LogicalJoinOperator>(rhs);
         return joinDefinition->getWindowType()->equal(rhsJoin->joinDefinition->getWindowType())
             && joinDefinition->getJoinFunction()->equal(rhsJoin->joinDefinition->getJoinFunction())
-            && (*joinDefinition->getOutputSchema() == *rhsJoin->joinDefinition->getOutputSchema())
-            && (*joinDefinition->getRightSourceType() == *rhsJoin->joinDefinition->getRightSourceType())
-            && (*joinDefinition->getLeftSourceType() == *rhsJoin->joinDefinition->getLeftSourceType());
+            && (joinDefinition->getOutputSchema() == rhsJoin->joinDefinition->getOutputSchema())
+            && (joinDefinition->getRightSourceType() == rhsJoin->joinDefinition->getRightSourceType())
+            && (joinDefinition->getLeftSourceType() == rhsJoin->joinDefinition->getLeftSourceType());
     }
     return false;
 }

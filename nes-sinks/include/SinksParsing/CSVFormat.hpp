@@ -14,16 +14,14 @@
 
 #pragma once
 #include <cstddef>
-#include <memory>
 #include <ostream>
-#include <variant>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <fmt/core.h>
 #include <fmt/ostream.h>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::Sinks
 {
@@ -38,17 +36,17 @@ public:
     {
         size_t schemaSizeInBytes{};
         std::vector<size_t> offsets;
-        std::vector<std::variant<std::shared_ptr<VariableSizedDataPhysicalType>, std::shared_ptr<BasicPhysicalType>>> physicalTypes;
+        std::vector<PhysicalType> physicalTypes;
     };
 
-    explicit CSVFormat(std::shared_ptr<Schema> schema);
+    explicit CSVFormat(Schema schema);
     virtual ~CSVFormat() noexcept = default;
 
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.
     std::string getFormattedSchema() const;
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
-    std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer);
+    std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer) const;
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
     static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext);
@@ -57,7 +55,7 @@ public:
 
 private:
     FormattingContext formattingContext;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
 };
 
 }

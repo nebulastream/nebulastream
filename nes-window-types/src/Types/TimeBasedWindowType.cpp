@@ -14,14 +14,12 @@
 
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/Integer.hpp>
 
 namespace NES::Windowing
 {
@@ -35,15 +33,15 @@ bool TimeBasedWindowType::inferStamp(const Schema& schema)
 {
     if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime)
     {
-        auto fieldName = timeCharacteristic->field->getName();
+        auto fieldName = timeCharacteristic->field.name;
         auto existingField = schema.getFieldByName(fieldName);
         if (existingField)
         {
-            if (!NES::Util::instanceOf<Integer>(existingField.value()->getDataType()))
+            if (not existingField.value().dataType.isInteger())
             {
                 throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field {}", fieldName);
             }
-            timeCharacteristic->field->setName(existingField.value()->getName());
+            timeCharacteristic->field.name = existingField.value().name;
             return true;
         }
         if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
