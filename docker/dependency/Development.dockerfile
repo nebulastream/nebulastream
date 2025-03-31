@@ -11,7 +11,8 @@ RUN apt-get update && apt-get install -y \
         default-jre-headless \
         python3              \
         python3-venv         \
-        python3-bs4
+        python3-bs4          \
+        linux-tools-generic
 
 # The vcpkg port of antlr requires the jar to be available somewhere
 ADD --checksum=sha256:eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76 --chmod=744 \
