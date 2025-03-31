@@ -41,6 +41,8 @@ public:
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
+    void terminate(ExecutionContext& executionCtx) const override;
+
 protected:
     std::optional<PhysicalOperator> child;
     OperatorHandlerId operatorHandlerId;
