@@ -38,6 +38,8 @@ public:
     /// Checks the current watermark and then deletes all slices and windows that are not valid anymore
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
+    void terminate(ExecutionContext& executionCtx) const override;
+
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
