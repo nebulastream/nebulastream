@@ -75,9 +75,17 @@ std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::sha
 {
     const auto stringValue = constantFunction->getConstantValue();
     const auto physicalType = constantFunction->getStamp();
-    if (physicalType.type == DataType::Type::CHAR or physicalType.type == DataType::Type::UNDEFINED)
+    if (physicalType.type == DataType::Type::UNDEFINED)
     {
         throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", physicalType));
+    }
+    if (physicalType.type == DataType::Type::CHAR)
+    {
+        if (const auto value = NES::Util::from_chars<char>(stringValue); not value.has_value())
+        {
+            throw UnknownPhysicalType(fmt::format("the value {} is not a valid value of type: {}", stringValue, physicalType));
+        }
+        return std::make_unique<ExecutableFunctionConstantValue<uint8_t>>(NES::Util::from_chars<char>(stringValue).value());
     }
     if (physicalType.type == DataType::Type::VARSIZED)
     {
@@ -89,6 +97,10 @@ std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::sha
         [&stringValue]<typename T>()
         {
             auto value = NES::Util::from_chars<T>(stringValue);
+            if (not value.has_value())
+            {
+                throw UnknownPhysicalType(fmt::format("the value {} is not a valid value of type: {}", stringValue, typeid(T).name()));
+            }
             std::unique_ptr<Function> function = std::make_unique<ExecutableFunctionConstantValue<T>>(value.value());
             return std::move(function);
         });
