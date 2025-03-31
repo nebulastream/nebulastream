@@ -154,7 +154,7 @@ void FileSink::shutdown() {
                 for (auto& [id, bufferVec] : buffersStorage) {
                     auto it = std::remove_if(bufferVec.begin(), bufferVec.end(),
                                              [&](const Runtime::TupleBuffer& buf) {
-                                                 if (buf.getWatermark() <= newWatermark) {
+                                                 if (buf.getWatermark() < newWatermark) {
                                                      vec.push_back(buf);
                                                      return true;
                                                  }
@@ -274,7 +274,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         for (auto& [id, bufferVec] : buffersStorage) {
             auto it = std::remove_if(bufferVec.begin(), bufferVec.end(),
                                      [&](const Runtime::TupleBuffer& buf) {
-                                         if (buf.getWatermark() <= currentWatermarkAfterAdding) {
+                                         if (buf.getWatermark() < currentWatermarkAfterAdding) {
                                              vec.push_back(buf);
                                              return true;
                                          }
