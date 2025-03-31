@@ -75,8 +75,20 @@ public:
     /// schema qualifier separator
     constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
     Schema() = default;
-    Schema(std::initializer_list<Field> fields) noexcept;
-    Schema(std::initializer_list<Schema> fields) noexcept;
+    explicit Schema(std::initializer_list<Field> fields) noexcept;
+    explicit Schema(std::initializer_list<Schema> fields) noexcept;
+
+    template <std::ranges::input_range Range, typename T>
+    explicit Schema(Range input) noexcept = delete;
+
+    template <std::ranges::input_range Range, typename T>
+    requires std::same_as<T, Field> && !std::same_as<Range, std::initializer_list<T>>
+    explicit Schema(Range input) noexcept;
+
+    template <std::ranges::input_range Range, typename T>
+    requires std::same_as<T, Schema> && !std::same_as<Range, std::initializer_list<T>>
+    explicit Schema(Range input) noexcept;
+
     explicit Schema(MemoryLayoutType memoryLayoutType);
     ~Schema() = default;
 

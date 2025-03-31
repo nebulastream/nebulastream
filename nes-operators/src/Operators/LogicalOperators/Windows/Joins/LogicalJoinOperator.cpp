@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <initializer_list>
 #include <memory>
+#include <ranges>
 #include <unordered_set>
 #include <utility>
 #include <DataTypes/Schema.hpp>
@@ -30,6 +32,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include "Util/Ranges.hpp"
 
 namespace NES
 {
@@ -75,65 +78,86 @@ bool LogicalJoinOperator::inferSchema()
         throw CannotInferSchema("Found {} distinct schemas but expected 2 distinct schemas", distinctSchemas.size());
     }
 
+    auto inputSchema = Schema{distinctSchemas | ranges::to<std::initializer_list<Schema>>()};
+
+
     ///reset left and right schema
-    leftInputSchema = Schema{leftInputSchema.memoryLayoutType};
-    rightInputSchema = Schema{rightInputSchema.memoryLayoutType};
+    // leftInputSchema = Schema{leftInputSchema.memoryLayoutType};
+    // rightInputSchema = Schema{rightInputSchema.memoryLayoutType};
 
     /// Finds the join schema that contains the joinKey and copies the fields to the input schema, if found
-    auto findSchemaInDistinctSchemas = [&](NodeFunctionFieldAccess& joinKey, Schema& inputSchema)
-    {
-        for (const auto& distinctSchema : distinctSchemas)
-        {
-            const auto& joinKeyName = joinKey.getFieldName();
-            if (const auto attributeField = distinctSchema.getFieldByName(joinKeyName); attributeField.has_value())
-            {
-                /// If we have not copied the fields from the schema, copy them for the first time
-                if (inputSchema.getSizeOfSchemaInBytes() == 0)
-                {
-                    inputSchema.assignToFields(distinctSchema);
-                }
-                joinKey.inferStamp(inputSchema);
-                return true;
-            }
-        }
-        return false;
-    };
+    // auto findSchemaInDistinctSchemas = [&](NodeFunctionFieldAccess& joinKey, Schema& inputSchema)
+    // {
+    //     for (const auto& distinctSchema : distinctSchemas)
+    //     {
+    //         const auto& joinKeyName = joinKey.getFieldName();
+    //         if (const auto attributeField = distinctSchema.getFieldByName(joinKeyName); attributeField.has_value())
+    //         {
+    //             /// If we have not copied the fields from the schema, copy them for the first time
+    //             if (inputSchema.getSizeOfSchemaInBytes() == 0)
+    //             {
+    //                 inputSchema.assignToFields(distinctSchema);
+    //             }
+    //             joinKey.inferStamp(inputSchema);
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // };
 
-    NES_DEBUG("LogicalJoinOperator: Iterate over all NodeFunction to check if join field is in schema.");
-    /// Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
-    const auto bfsIterator = BreadthFirstNodeIterator(joinDefinition->getJoinFunction());
+
+    //Goal: Assert that somewhere in the join predicate fields from different relations are used.
+    //If it wouldn't, then there would be no join, but rather just an cartesian product, which I don't believe
+    //we should permit implicitly.
+    //(see Neumann, Leis "A Critique of Modern SQL And A Proposal Towards A Simple and Expressive Query Language")
+    //We do permit something like (s1.x = 1 AND s2.y = 2), because imo its selective enough to be safe.
+    //We might want to add some extra warnings for the user in the future for such cases, but I'd consider them valid queries.
+    std::unordered_set<std::span<Identifier>, std::hash<Identifier>, IdentifierList::SpanEquals> foundSources = {};
+    auto bfsIterator = BreadthFirstNodeIterator(joinDefinition->getJoinFunction());
+
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if (NES::Util::instanceOf<NodeFunctionBinary>(*itr))
+        if (NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr))
         {
-            auto visitingOp = NES::Util::as<NodeFunctionBinary>(*itr);
-            if (not visitedFunctions.contains(visitingOp))
-            {
-                visitedFunctions.insert(visitingOp);
-                if (!Util::instanceOf<NodeFunctionBinary>(Util::as<NodeFunctionBinary>(*itr)->getLeft()))
-                {
-                    ///Find the schema for left and right join key
-                    const auto leftJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>(*itr)->getLeft());
-                    const auto leftJoinKeyName = leftJoinKey->getFieldName();
-                    const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
-                    if (!foundLeftKey)
-                    {
-                        throw CannotInferSchema("unable to find left join key \"{}\" in schemas", leftJoinKeyName);
-                    }
-                    const auto rightJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>(*itr)->getRight());
-                    const auto rightJoinKeyName = rightJoinKey->getFieldName();
-                    const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
-                    if (!foundRightKey)
-                    {
-                        throw CannotInferSchema("unable to find right join key \"{}\" in schemas", rightJoinKeyName);
-                    }
-                    NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
-                    visitedFunctions.insert(visitingOp);
-                }
-            }
+            auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(*itr);
+            foundSources.insert(std::span<Identifier>{std::ranges::begin(fieldAccess->getFieldName()), std::ranges::size(fieldAccess->getFieldName()) - 1});
         }
     }
+
+    /// Maintain a list of visited nodes as there are multiple root nodes
+    // std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
+    // const auto bfsIterator = BreadthFirstNodeIterator(joinDefinition->getJoinFunction());
+    // for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
+    // {
+    //     if (NES::Util::instanceOf<NodeFunctionBinary>(*itr))
+    //     {
+    //         auto visitingOp = NES::Util::as<NodeFunctionBinary>(*itr);
+    //         if (not visitedFunctions.contains(visitingOp))
+    //         {
+    //             visitedFunctions.insert(visitingOp);
+    //             if (!Util::instanceOf<NodeFunctionBinary>(Util::as<NodeFunctionBinary>(*itr)->getLeft()))
+    //             {
+    //                 ///Find the schema for left and right join key
+    //                 const auto leftJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>(*itr)->getLeft());
+    //                 const auto leftJoinKeyName = leftJoinKey->getFieldName();
+    //                 const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
+    //                 if (!foundLeftKey)
+    //                 {
+    //                     throw CannotInferSchema("unable to find left join key \"{}\" in schemas", leftJoinKeyName);
+    //                 }
+    //                 const auto rightJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>(*itr)->getRight());
+    //                 const auto rightJoinKeyName = rightJoinKey->getFieldName();
+    //                 const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
+    //                 if (!foundRightKey)
+    //                 {
+    //                     throw CannotInferSchema("unable to find right join key \"{}\" in schemas", rightJoinKeyName);
+    //                 }
+    //                 NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
+    //                 visitedFunctions.insert(visitingOp);
+    //             }
+    //         }
+    //     }
+    // }
     /// Clearing now the distinct schemas
     distinctSchemas.clear();
 

@@ -65,7 +65,7 @@ std::pair<
         IdentifierList& fullName = field.first.name;
         for (size_t i = 0; i < std::ranges::size(fullName); i++)
         {
-            IdSpan idSubSpan = std::span{std::ranges::begin(fullName) + i, std::ranges::size(fullName)};
+            IdSpan idSubSpan = std::span{std::ranges::begin(fullName) + i, std::ranges::size(fullName) - i};
             if (auto existingCollisions = collisions.find(idSubSpan); existingCollisions == collisions.end())
             {
                 if (auto existingIdList = fieldsByName.find(idSubSpan); existingIdList != fieldsByName.end())
@@ -87,29 +87,87 @@ std::pair<
     return {fieldsByName, collisions};
 }
 
-static std::optional<IdentifierList> findCommonPrefix(
-    size_t numFields, std::unordered_map<IdSpan, std::vector<size_t>, std::hash<IdSpan>, IdentifierList::SpanEquals> collisions)
+static std::optional<IdentifierList> findCommonPrefix(const std::ranges::input_range auto& fields)
 {
-    //maybe we can remove the limitation on the identifier list length
-    auto prefixCandidates = collisions
-        | std::views::filter([numFields](auto pair)
-                             { return std::ranges::size(pair.first) == 1 && std::ranges::size(pair.second) == numFields; })
-        | std::views::transform([](auto pair) { return pair.first; }) | ranges::to<std::vector<IdSpan>>();
-    if (std::ranges::size(prefixCandidates) == 0)
+    IdSpan candidate{};
+    if (std::ranges::size(fields) > 0)
+    {
+        const Schema::Field& current = *std::ranges::begin(fields);
+        candidate = std::span{std::ranges::begin(current.name), std::ranges::end(current.name)};
+    }
+    //A fold over the fields, trying to find the common subspan starting from 0 in the names of all fields
+    //Using Spans again to avoid unnecessary copies.
+    if (std::ranges::size(fields) > 1)
+    {
+        for (const Schema::Field& field : std::span{std::ranges::begin(fields) + 1, std::ranges::size(fields) - 1})
+        {
+            const auto compareUpTo = std::min(std::ranges::size(candidate), std::ranges::size(field.name));
+            IdSpan previousCandidate = candidate;
+            candidate = {};
+            for (size_t i = 0; i < compareUpTo; ++i)
+            {
+                const IdSpan candidateSubspan = std::span{std::ranges::begin(previousCandidate), compareUpTo - i};
+                const IdSpan currentSubspan = std::span{std::ranges::begin(field.name), compareUpTo - i};
+                if (IdentifierList::SpanEquals{}(candidateSubspan, currentSubspan))
+                {
+                    candidate = candidateSubspan;
+                    break;
+                }
+            }
+            if (std::ranges::empty(candidate))
+            {
+                NES_DEBUG("Did not find a common prefix for schema");
+                return std::nullopt;
+            }
+        }
+    }
+    //last check to catch corner cases such as fields having an empty name
+    if (std::ranges::empty(candidate))
     {
         NES_DEBUG("Did not find a common prefix for schema");
         return std::nullopt;
     }
-    if (std::ranges::size(prefixCandidates) > 1)
-    {
-        NES_DEBUG("Found more then one common prefix for schema");
-        return std::nullopt;
-    }
-    return IdentifierList{prefixCandidates[0]};
+    return IdentifierList{candidate};
 }
 Schema::Schema(const MemoryLayoutType memoryLayoutType)
 
     : memoryLayoutType(memoryLayoutType) { };
+
+
+template <std::ranges::input_range Range, typename T>
+requires std::same_as<T, Schema::Field>
+    && !std::same_as<Range, std::initializer_list<T>>
+    Schema::Schema(Range input) noexcept : fields(input | ranges::to<std::vector<Field>>())
+{
+    auto enumerated = std::vector<std::pair<Field, size_t>>{};
+    enumerated.reserve(std::ranges::size(fields));
+    for (size_t i = 0; i < std::ranges::size(fields); ++i)
+    {
+        enumerated.push_back({this->fields[i], i});
+    }
+    auto [fieldsByName, collisions] = initializeFields(enumerated);
+    nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
+        | ranges::to<std::unordered_map<IdentifierList, size_t>>();
+    currentPrefix = findCommonPrefix(fields);
+}
+
+template <std::ranges::input_range Range, typename T>
+requires std::same_as<T, Schema>
+    && !std::same_as<Range, std::initializer_list<T>>
+    Schema::Schema(Range input) noexcept
+{
+    fields = input | std::views::transform(&Schema::getFields) | std::views::join | ranges::to<std::vector<Field>>();
+    auto enumerated = std::vector<std::pair<Field, size_t>>{};
+    enumerated.reserve(std::ranges::size(fields));
+    for (size_t i = 0; i < std::ranges::size(fields); ++i)
+    {
+        enumerated.push_back({this->fields[i], i});
+    }
+    auto [fieldsByName, collisions] = initializeFields(enumerated);
+    nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
+        | ranges::to<std::unordered_map<IdentifierList, size_t>>();
+    currentPrefix = findCommonPrefix(fields);
+}
 
 
 Schema::Schema(std::initializer_list<Field> fields) noexcept : fields(fields)
@@ -123,7 +181,7 @@ Schema::Schema(std::initializer_list<Field> fields) noexcept : fields(fields)
     auto [fieldsByName, collisions] = initializeFields(enumerated);
     nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
         | ranges::to<std::unordered_map<IdentifierList, size_t>>();
-    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
+    currentPrefix = findCommonPrefix(fields);
 }
 
 Schema::Schema(std::initializer_list<Schema> schemata) noexcept
@@ -138,7 +196,7 @@ Schema::Schema(std::initializer_list<Schema> schemata) noexcept
     auto [fieldsByName, collisions] = initializeFields(enumerated);
     nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
         | ranges::to<std::unordered_map<IdentifierList, size_t>>();
-    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
+    currentPrefix = findCommonPrefix(fields);
 }
 Schema Schema::addField(const IdentifierList& name, const DataType& dataType)
 {
@@ -158,7 +216,7 @@ Schema Schema::addField(const IdentifierList& name, const DataType::Type type)
     auto [fieldsByName, collisions] = initializeFields(enumerated);
     nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
         | ranges::to<std::unordered_map<IdentifierList, size_t>>();
-    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
+    currentPrefix = findCommonPrefix(fields);
     return *this;
 }
 
@@ -272,7 +330,7 @@ void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
     auto [fieldsByName, collisions] = initializeFields(enumerated);
     nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
         | ranges::to<std::unordered_map<IdentifierList, size_t>>();
-    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
+    currentPrefix = findCommonPrefix(fields);
 }
 
 void Schema::renameField(const IdentifierList& oldFieldName, const IdentifierList newFieldName)
@@ -292,7 +350,7 @@ void Schema::renameField(const IdentifierList& oldFieldName, const IdentifierLis
     auto [fieldsByName, collisions] = initializeFields(enumerated);
     nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
         | ranges::to<std::unordered_map<IdentifierList, size_t>>();
-    currentPrefix = findCommonPrefix(std::ranges::size(fields), collisions);
+    currentPrefix = findCommonPrefix(fields);
 }
 size_t Schema::getSizeOfSchemaInBytes() const
 {
@@ -304,4 +362,7 @@ bool Schema::hasFields() const
     return not fields.empty();
 }
 
+
+template <>
+Schema::Schema<std::vector<Schema::Field>, Schema::Field>() noexcept;
 }

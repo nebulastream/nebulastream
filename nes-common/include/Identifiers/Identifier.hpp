@@ -220,6 +220,7 @@ public:
     }
     struct SpanEquals
     {
+        constexpr SpanEquals() = default;
         constexpr bool operator()(std::span<const Identifier> first, const std::span<const Identifier>& second) const
         {
             if (std::ranges::size(first) != std::ranges::size(second))
