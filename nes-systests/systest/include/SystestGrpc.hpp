@@ -18,7 +18,6 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
-#include <SingleNodeWorkerRPCService.pb.h>
 
 /// TODO #460: We should use on GRPC client class for nebuli and systests
 class GRPCClient
@@ -30,5 +29,6 @@ public:
     [[nodiscard]] size_t registerQuery(const NES::LogicalPlan& queryPlan) const;
     void start(size_t queryId) const;
     [[nodiscard]] NES::QuerySummary status(size_t queryId) const;
+    void stop(size_t queryId) const;
     void unregister(size_t queryId) const;
 };
