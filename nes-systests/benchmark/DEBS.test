@@ -4,28 +4,38 @@
 
 # Source definitions
 SourceCSV solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp TESTDATA/large/debs/SOLAR_PANELS_TOPIC.csv
-SourceCSV windTurbines INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp TESTDATA/large/debs/WIND_TURBINES_TOPIC.csv
 SourceCSV consumers INT32 consumerId INT32 sectorId FLOAT64 consumedPower VARSIZED consumerType UINT64 timestamp TESTDATA/large/debs/CONSUMERS_TOPIC.csv
+
+
+# Query 0a - Simple Source Sink with consumers stream
+SELECT * FROM consumers INTO CHECKSUM;
+----
+42700000, 105028347050
+
+# Query 0b - Simple Source Sink with solarPanels stream
+SELECT * FROM solarPanels INTO CHECKSUM;
+----
+42700000, 74759775379
 
 # Query 1 - Filter tuples
 SELECT * FROM consumers WHERE consumedPower >= 400 INTO CHECKSUM;
 ----
-16805, 33433889
+14236360, 35170842947
 
 # Query 2 - Filter with multiple attributes
 SELECT * FROM consumers WHERE consumedPower >= 400 AND sectorId = 1 INTO CHECKSUM;
 ----
-3361, 6680728
+3556803, 8785569627
 
 # Query 3 - Filter with complex expression
 SELECT * FROM consumers WHERE consumedPower >= 1 AND consumedPower < (60 + 1) INTO CHECKSUM;
 ----
-47384, 104551824
+4271223, 10289477496
 
 # Query 4 - Filter with complex expression
 SELECT consumedPower / 1000 AS consumedPower FROM consumers INTO CHECKSUM;
 ----
-346183, 65575550
+42700000, 15336467257
 
 
 # Query 7 - Window aggregations with tumbling windows
@@ -35,7 +45,7 @@ GROUP BY groupId
 WINDOW TUMBLING(timestamp, SIZE 1 HOUR)
 INTO CHECKSUM;
 ----
-676, 1297126
+1914020, 3897819033
 
 # Query 8 - Window aggregations with sliding windows
 SELECT groupId, SUM(producedPower) AS producedPower
@@ -44,4 +54,4 @@ GROUP BY groupId
 WINDOW SLIDING(timestamp, SIZE 1 HOUR, ADVANCE BY 10 MINUTES)
 INTO CHECKSUM;
 ----
-4056, 7785054
+11484119, 23389063574
