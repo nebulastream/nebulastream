@@ -140,7 +140,7 @@ essential to replicate the development environment built into the base docker im
 for its query compilation, which will take a while to build locally. You can follow the instructions of the instructions
 of the [base.dockerfile](../docker/dependency/Base.dockerfile) to replicate on Ubuntu or Debian systems.
 
-The compiler toolchain is based on `llvm-18` and libc++-18, and we use the mold linker for its better performance.
+The compiler toolchain is based on `llvm-19` and libc++-19, and we use the mold linker for its better performance.
 Follow the [llvm documentation](https://apt.llvm.org/) to install a recent toolchain via your package manager.
 
 ### Local VCPKG with DCMAKE_TOOLCHAIN_FILE
