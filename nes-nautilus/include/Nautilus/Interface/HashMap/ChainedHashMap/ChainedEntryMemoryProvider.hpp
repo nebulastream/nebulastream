@@ -31,7 +31,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 struct FieldOffsets
 {
     Record::RecordFieldIdentifier fieldIdentifier;
-    PhysicalType type;
+    DataType type;
     uint64_t fieldOffset;
 };
 

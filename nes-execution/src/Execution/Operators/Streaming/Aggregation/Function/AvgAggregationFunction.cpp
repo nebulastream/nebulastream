@@ -32,11 +32,11 @@ namespace NES::Runtime::Execution::Aggregation
 {
 
 AvgAggregationFunction::AvgAggregationFunction(
-    PhysicalType inputType,
-    PhysicalType resultType,
+    DataType inputType,
+    DataType resultType,
     std::unique_ptr<Functions::Function> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    PhysicalType countType)
+    DataType countType)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , countType(std::move(countType))
 {

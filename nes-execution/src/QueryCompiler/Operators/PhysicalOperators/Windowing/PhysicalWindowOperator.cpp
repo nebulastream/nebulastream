@@ -131,8 +131,8 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
     const auto aggregationDescriptors = getWindowDefinition()->getWindowAggregation();
     for (const auto& descriptor : aggregationDescriptors)
     {
-        auto physicalInputType = descriptor->getInputStamp().physicalType;
-        auto physicalFinalType = descriptor->getFinalAggregateStamp().physicalType;
+        auto physicalInputType = descriptor->getInputStamp();
+        auto physicalFinalType = descriptor->getFinalAggregateStamp();
 
         auto aggregationInputExpression = FunctionProvider::lowerFunction(descriptor->on());
         if (const auto fieldAccessExpression = NES::Util::as_if<NodeFunctionFieldAccess>(descriptor->as()))
@@ -142,7 +142,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
             {
                 case Windowing::WindowAggregationDescriptor::Type::Avg: {
                     /// We assume that the count is a u64
-                    const auto countType = DataTypeProvider::provideDataType(PhysicalType::Type::UINT64).physicalType;
+                    const auto countType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::AvgAggregationFunction>(
                         physicalInputType,
                         physicalFinalType,
@@ -158,7 +158,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Count: {
                     /// We assume that a count is a u64
-                    const auto countType = DataTypeProvider::provideDataType(PhysicalType::Type::UINT64).physicalType;
+                    const auto countType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::CountAggregationFunction>(
                         countType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;

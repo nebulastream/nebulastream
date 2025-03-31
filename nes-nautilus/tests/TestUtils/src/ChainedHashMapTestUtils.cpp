@@ -66,8 +66,8 @@ TestParams::TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue
 }
 
 void ChainedHashMapTestUtils::setUpChainedHashMapTest(
-    const std::vector<PhysicalType::Type>& keyTypes,
-    const std::vector<PhysicalType::Type>& valueTypes,
+    const std::vector<DataType::Type>& keyTypes,
+    const std::vector<DataType::Type>& valueTypes,
     const Nautilus::Configurations::NautilusBackend backend)
 {
     /// Setting the correct options for the engine, depending on the enum value from the backend

@@ -37,7 +37,7 @@ DataType provideDataType(const std::string& type)
     throw std::runtime_error("Failed to create data type of type: " + type);
 }
 
-DataType provideDataType(const PhysicalType::Type type)
+DataType provideDataType(const DataType::Type type)
 {
     auto typeAsString = std::string(magic_enum::enum_name(type));
     return provideDataType(std::move(typeAsString));

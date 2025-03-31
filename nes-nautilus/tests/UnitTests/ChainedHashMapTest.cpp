@@ -36,7 +36,7 @@ namespace NES::Nautilus::Interface
 class ChainedHashMapTest
     : public Testing::BaseUnitTest,
       public testing::WithParamInterface<
-          std::tuple<int, std::vector<PhysicalType::Type>, std::vector<PhysicalType::Type>, Nautilus::Configurations::NautilusBackend>>,
+          std::tuple<int, std::vector<DataType::Type>, std::vector<DataType::Type>, Nautilus::Configurations::NautilusBackend>>,
       public TestUtils::ChainedHashMapTestUtils
 {
 public:
@@ -128,33 +128,29 @@ INSTANTIATE_TEST_CASE_P(
         /// Running the test for 3 times for each key, value schema and backend.
         /// This entails three different random number of items, number of buckets and page size.
         ::testing::Range(0, 3),
-        ::testing::ValuesIn<std::vector<PhysicalType::Type>>(
-            {{PhysicalType::Type::UINT8},
-             {PhysicalType::Type::INT64,
-              PhysicalType::Type::UINT64,
-              PhysicalType::Type::INT8,
-              PhysicalType::Type::INT16,
-              PhysicalType::Type::INT32},
-             {PhysicalType::Type::INT64,
-              PhysicalType::Type::INT32,
-              PhysicalType::Type::INT16,
-              PhysicalType::Type::INT8,
-              PhysicalType::Type::UINT64,
-              PhysicalType::Type::UINT32,
-              PhysicalType::Type::UINT16,
-              PhysicalType::Type::UINT8}}),
-        ::testing::ValuesIn<std::vector<PhysicalType::Type>>(
-            {{PhysicalType::Type::INT8},
-             {PhysicalType::Type::INT64,
-              PhysicalType::Type::INT32,
-              PhysicalType::Type::INT16,
-              PhysicalType::Type::INT8,
-              PhysicalType::Type::FLOAT32,
-              PhysicalType::Type::UINT64,
-              PhysicalType::Type::UINT32,
-              PhysicalType::Type::UINT16,
-              PhysicalType::Type::UINT8,
-              PhysicalType::Type::FLOAT64}}),
+        ::testing::ValuesIn<std::vector<DataType::Type>>(
+            {{DataType::Type::UINT8},
+             {DataType::Type::INT64, DataType::Type::UINT64, DataType::Type::INT8, DataType::Type::INT16, DataType::Type::INT32},
+             {DataType::Type::INT64,
+              DataType::Type::INT32,
+              DataType::Type::INT16,
+              DataType::Type::INT8,
+              DataType::Type::UINT64,
+              DataType::Type::UINT32,
+              DataType::Type::UINT16,
+              DataType::Type::UINT8}}),
+        ::testing::ValuesIn<std::vector<DataType::Type>>(
+            {{DataType::Type::INT8},
+             {DataType::Type::INT64,
+              DataType::Type::INT32,
+              DataType::Type::INT16,
+              DataType::Type::INT8,
+              DataType::Type::FLOAT32,
+              DataType::Type::UINT64,
+              DataType::Type::UINT32,
+              DataType::Type::UINT16,
+              DataType::Type::UINT8,
+              DataType::Type::FLOAT64}}),
         ::testing::Values(Nautilus::Configurations::NautilusBackend::COMPILER, Nautilus::Configurations::NautilusBackend::INTERPRETER)),
     [](const testing::TestParamInfo<ChainedHashMapTest::ParamType>& info)
     {

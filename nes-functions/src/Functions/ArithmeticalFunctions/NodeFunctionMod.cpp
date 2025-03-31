@@ -36,7 +36,7 @@ NodeFunctionMod::NodeFunctionMod(NodeFunctionMod* other) : NodeFunctionArithmeti
 
 std::shared_ptr<NodeFunction> NodeFunctionMod::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
-    auto addNode = std::make_shared<NodeFunctionMod>(DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT32));
+    auto addNode = std::make_shared<NodeFunctionMod>(DataTypeProvider::provideDataType(DataType::Type::FLOAT32));
     addNode->setChildren(left, right);
     return addNode;
 }

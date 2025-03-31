@@ -79,8 +79,8 @@ bool NodeFunctionAnd::validateBeforeLowering() const
     {
         return false;
     }
-    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp().physicalType.type == PhysicalType::Type::BOOLEAN
-        and Util::as<NodeFunction>(this->getChildren()[1])->getStamp().physicalType.type == PhysicalType::Type::BOOLEAN;
+    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp().type == DataType::Type::BOOLEAN
+        and Util::as<NodeFunction>(this->getChildren()[1])->getStamp().type == DataType::Type::BOOLEAN;
 }
 
 

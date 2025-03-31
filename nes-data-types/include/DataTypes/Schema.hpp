@@ -75,7 +75,7 @@ public:
     void updateSourceName(std::string_view srcName);
 
     Schema addField(Field attribute);
-    Schema addField(std::string name, const PhysicalType::Type& type);
+    Schema addField(std::string name, const DataType::Type& type);
     Schema addField(std::string name, DataType dataType);
 
     /// Replaces the type of the field

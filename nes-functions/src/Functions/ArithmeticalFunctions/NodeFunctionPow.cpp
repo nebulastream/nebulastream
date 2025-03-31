@@ -37,7 +37,7 @@ NodeFunctionPow::NodeFunctionPow(NodeFunctionPow* other) : NodeFunctionArithmeti
 
 std::shared_ptr<NodeFunction> NodeFunctionPow::create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right)
 {
-    auto powNode = std::make_shared<NodeFunctionPow>(DataTypeProvider::provideDataType(PhysicalType::Type::FLOAT32));
+    auto powNode = std::make_shared<NodeFunctionPow>(DataTypeProvider::provideDataType(DataType::Type::FLOAT32));
     powNode->setChildren(left, right);
     return powNode;
 }

@@ -38,7 +38,7 @@ std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(DataType stamp, st
 
 std::shared_ptr<NodeFunction> NodeFunctionFieldAccess::create(std::string fieldName)
 {
-    return create(DataTypeProvider::provideDataType(PhysicalType::Type::UNDEFINED), std::move(fieldName));
+    return create(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED), std::move(fieldName));
 }
 
 bool NodeFunctionFieldAccess::equal(const std::shared_ptr<Node>& rhs) const

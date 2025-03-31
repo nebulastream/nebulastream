@@ -143,13 +143,13 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     return buffers;
 }
 
-Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<PhysicalType::Type>& basicTypes)
+Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes)
 {
     constexpr auto typeIdxOffset = 0;
     return createSchemaFromBasicTypes(basicTypes, typeIdxOffset);
 }
 
-Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<PhysicalType::Type>& basicTypes, const uint64_t typeIdxOffset)
+Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, const uint64_t typeIdxOffset)
 {
     /// Creating a schema for the memory provider
     auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
@@ -185,7 +185,7 @@ void NautilusTestUtils::compileFillBufferFunction(
             for (nautilus::static_val<size_t> fieldIndex = 0; fieldIndex < schema.getNumberOfFields(); ++fieldIndex)
             {
                 const auto field = schema.getFieldAt(fieldIndex);
-                const auto physicalType = field.dataType.physicalType;
+                const auto physicalType = field.dataType;
                 const auto fieldName = field.name;
                 if (not field.dataType.isVarSized())
                 {
