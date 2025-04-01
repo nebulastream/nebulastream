@@ -42,7 +42,29 @@ DISABLE_WARNING(-Wunused-parameter)
 
 singleStatement: statement ';'* EOF;
 
-statement: query;
+statement: query | createSourceStatement | dropQueryStatement;
+
+createSourceStatement: CREATE SOURCE sourceName=IDENTIFIER sourceDefinition fromQuery?;
+
+sourceDefinition: '(' columnDefinition (',' columnDefinition)* ')';
+columnDefinition: IDENTIFIER typeDefinition;
+
+typeDefinition: TYPE_ENUM;
+
+fromQuery: AS query;
+
+dropStatement: DROP dropSubject;
+dropSubject: dropQuery | dropSource;
+dropQuery: QUERY id=IDENTIFIER;
+dropSource: SOURCE name=IDENTIFIER;
+
+
+
+showStatement: SHOW DB_OBJECT_TYPE (FORMAT (TEXT | JSON))?;
+
+
+
+
 
 query : queryTerm queryOrganization;
 
@@ -588,3 +610,25 @@ WS
 UNRECOGNIZED
     : .
     ;
+
+DB_OBJECT_TYPE : SOURCES | QUERIES;
+
+SOURCES: 'SOURCES' | 'sources';
+QUERIES: 'QUERIES' | 'queries';
+
+
+DATA_TYPE: INTEGER_SIGNED | INTEGER_UNSIGNED;
+
+INTEGER_UNSIGNED: UNSIGNED INTEGER_SIGNED;
+
+UNSIGNED: 'UNSIGNED';
+
+INTEGER_SIGNED: INT8 | INT4 | INT2 | INT1;
+
+INT1: 'TINYINT';
+
+INT2: 'SMALLINT';
+
+INT4: 'INT' | 'INTEGER';
+
+INT8: 'BIGINT';
