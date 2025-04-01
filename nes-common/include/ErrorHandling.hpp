@@ -92,7 +92,7 @@ private:
 
     /// This documents (and checks) requirements for calling a function. If violated, the function was called incorrectly.
     /// @param condition must be true to correctly call function guarded by precondition
-    /// @param formatString can contain `{}` to reference varargs. Must not contain positional referencen like `{0}`.
+    /// @param formatString can contain `{}` to reference varargs. Must not contain positional reference like `{0}`.
     #define PRECONDITION(condition, formatString, ...) \
         do \
         { \
