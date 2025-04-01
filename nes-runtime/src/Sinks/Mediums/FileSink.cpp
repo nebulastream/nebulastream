@@ -177,10 +177,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     uint64_t size = 0;
     for (auto& [id, bufferVec] : buffersStorage) {
         //sum up the size of all buffers
-         size = std::accumulate(bufferVec.begin(), bufferVec.end(), 0,
-                                     [](size_t sum, const Runtime::TupleBuffer& buffer) {
-                                         return sum + buffer.getBufferSize();
-                                     });
+         size += bufferVec.size();
         NES_ERROR("buffer id {}, size {}", id, bufferVec.size());
     }
         NES_ERROR("buffer size {}", size);

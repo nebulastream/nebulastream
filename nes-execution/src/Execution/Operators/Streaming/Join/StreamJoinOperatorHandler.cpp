@@ -553,6 +553,8 @@ void StreamJoinOperatorHandler::deleteAllSlices() {
 
 void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData,
                                                        PipelineExecutionContext* pipelineCtx) {
+    //print number of slices
+    NES_ERROR("Number of slices {}", getNumberOfSlices());
     // The watermark processor handles the minimal watermark across both streams
     uint64_t newGlobalWatermark =
         watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
