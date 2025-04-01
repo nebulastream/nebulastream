@@ -42,7 +42,6 @@ FieldOffsets::FieldOffsets(
 {
 }
 
-
 FieldOffsetsType* FieldOffsets::writeOffsetsOfNextTuple()
 {
     const auto getNextWriteBuffer = [this]() -> void { allocateNewChildBuffer(); };
@@ -54,7 +53,7 @@ FieldOffsetsType* FieldOffsets::readOffsetsOfNextTuple()
     const auto getNextReadBuffer = [this]() -> void
     {
         INVARIANT(
-            this->currentFieldOffsetBuffer.getNumberOfChildrenBuffer() > 0,
+            this->currentFieldOffsetBuffer.getNumberOfChildBuffers() > 0,
             "Cannot get next fields if current buffer does not have child buffer.");
         const auto childBufferIndex = this->currentFieldOffsetBuffer.getBuffer< ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             FieldOffsetsType>()[OFFSET_OF_INDEX_TO_CHILD_BUFFER];
@@ -82,10 +81,6 @@ void FieldOffsets::allocateNewChildBuffer()
 {
     auto newBuffer = bufferProvider->getBufferBlocking();
     const auto indexOfNewBuffer = currentFieldOffsetBuffer.storeChildBuffer(newBuffer);
-    /// The number of tuples communicate whether the buffer has a child buffer or not. Thus, the index to the child buffer is optional.
-    /// We could write it to the last bytes of the buffer, if necessary, but that creates room for error when writing actual offsets.
-    /// Overall a few bytes 'lost' is a good trait for better clarity/safety.
-    /// (it also does not seem like we can simply assume that the first index is '0' and so on, so we need to store it somewhere)
     INVARIANT(
         (currentIndex - NUMBER_OF_RESERVED_FIELDS) % (numberOfFieldsInSchema + 1) == 0,
         "Number of indexes {} must be a multiple of number of fields in tuple {}",
