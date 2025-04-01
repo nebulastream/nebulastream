@@ -374,7 +374,9 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     }
 
                     // receive buffer content
+                    NES_ERROR("trying to get buffer from buffer manager partition: {}", nesPartition->toString());
                     auto buffer = bufferManager->getBufferBlocking();
+                    NES_ERROR("acquired buffer partition: {}", nesPartition->toString());
                     NES_ASSERT2_FMT(bufferHeader->payloadSize <= buffer.getBufferSize(),
                                     "Buffer size [" << buffer.getBufferSize() << " is smaller than payload "
                                                     << bufferHeader->payloadSize);
