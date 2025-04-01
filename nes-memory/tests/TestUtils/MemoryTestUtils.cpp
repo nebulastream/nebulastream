@@ -44,7 +44,7 @@ Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::Abstra
     copiedBuffer.setLastChunk(buffer.isLastChunk());
     copiedBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
-    for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildrenBuffer(); ++childIdx)
+    for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
     {
         auto childBuffer = buffer.loadChildBuffer(childIdx);
         auto copiedChildBuffer = copyBuffer(childBuffer, provider);
