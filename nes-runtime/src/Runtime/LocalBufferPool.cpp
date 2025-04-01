@@ -33,8 +33,8 @@ LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
         auto* memSegment = buffers.front();
         buffers.pop_front();
         NES_VERIFY(memSegment, "null memory segment");
+        memSegment->controlBlock->resetBufferRecycler(this);
         NES_ASSERT2_FMT(memSegment->isAvailable(), "Buffer not available");
-        NES_ASSERT2_FMT(memSegment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use.");
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         exclusiveBuffers.emplace_back(memSegment);
 #else
@@ -47,7 +47,7 @@ LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
 }
 
 LocalBufferPool::~LocalBufferPool() {
-    LocalBufferPool::destroy();
+    // nop
 }
 
 BufferManagerType LocalBufferPool::getBufferManagerType() const { return BufferManagerType::LOCAL; }
@@ -84,9 +84,8 @@ void LocalBufferPool::destroy() {
 #else
     detail::MemorySegment* memSegment = nullptr;
     while (exclusiveBuffers.read(memSegment)) {
-        NES_ASSERT2_FMT(
-            memSegment->controlBlock->owningBufferRecycler == nullptr,
-            "Buffer should not retain a reference to its parent while not in use");
+        // return exclusive buffers to the global pool
+        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
 #endif
@@ -124,7 +123,7 @@ TupleBuffer LocalBufferPool::getBufferBlocking() {
 #else
     detail::MemorySegment* memSegment;
     if (exclusiveBuffers.read(memSegment)) {
-        if (memSegment->controlBlock->prepare(shared_from_this())) {
+        if (memSegment->controlBlock->prepare()) {
             exclusiveBufferCount.fetch_sub(1);
             return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
         } else {

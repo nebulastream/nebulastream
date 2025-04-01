@@ -65,6 +65,7 @@ class MemorySegment;
 class alignas(64) BufferControlBlock {
   public:
     explicit BufferControlBlock(MemorySegment* owner,
+                                BufferRecycler* recycler,
                                 std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
 
     BufferControlBlock(const BufferControlBlock&);
@@ -78,11 +79,23 @@ class alignas(64) BufferControlBlock {
     MemorySegment* getOwner() const;
 
     /**
+     * @brief Resets the recycler
+     * @param recycler the new recycler
+     */
+    void resetBufferRecycler(BufferRecycler* recycler);
+
+    /**
+     * @brief Add recycle callback to be called upon reaching 0 as ref cnt
+     * @param func the callbac to call
+     */
+    void addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept;
+
+    /**
      * @brief This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
      * reference counter is zero. If that's not the case, an exception is thrown.
      * @return true if the mem segment can be used to create a TupleBuffer.
      */
-    bool prepare(const std::shared_ptr<BufferRecycler>& recycler);
+    bool prepare();
 
     /**
      * @brief Increase the reference counter by one.
@@ -220,7 +233,7 @@ class alignas(64) BufferControlBlock {
 
   public:
     MemorySegment* owner;
-    std::shared_ptr<BufferRecycler> owningBufferRecycler = nullptr;
+    std::atomic<BufferRecycler*> owningBufferRecycler{};
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -280,6 +293,7 @@ class MemorySegment {
 
     explicit MemorySegment(uint8_t* ptr,
                            uint32_t size,
+                           BufferRecycler* recycler,
                            std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
                            uint8_t* controlBlock);
 
@@ -297,6 +311,7 @@ class MemorySegment {
      */
     explicit MemorySegment(uint8_t* ptr,
                            uint32_t size,
+                           BufferRecycler* recycler,
                            std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
                            bool);
 

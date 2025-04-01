@@ -143,7 +143,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * Controls how much memory is consumed by the system.
      */
     UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
-                                                       "200000",
+                                                       "300000",
                                                        "Number buffers in global buffer pool.",
                                                        {std::make_shared<NumberValidation>()}};
     /**

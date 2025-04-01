@@ -28,6 +28,21 @@ TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer) {
     return tb;
 }
 
+TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent) {
+    auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+        recycler->recyclePooledBuffer(segment);
+        delete segment;
+    };
+    auto* memSegment = new detail::MemorySegment(ptr, length, parent, std::move(callback), true);
+    return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
+}
+
+TupleBuffer
+TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback) {
+    auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), true);
+    return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
+}
+
 uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept {
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
