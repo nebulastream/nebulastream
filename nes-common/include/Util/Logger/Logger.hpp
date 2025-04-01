@@ -131,6 +131,14 @@ struct LogCaller<LogLevel::LOG_WARNING>
     }
 };
 
+/// Macro to suppress unused warnings
+#define SUPPRESS_UNUSED_WARNING(...) \
+    do \
+    { \
+        [](auto&&... args) { ((void)args, ...); }(__VA_ARGS__); \
+    } while (0)
+
+
 /// @brief this is the new logging macro that is the entry point for logging calls
 #define NES_LOG(LEVEL, ...) \
     do \
@@ -140,6 +148,11 @@ struct LogCaller<LogLevel::LOG_WARNING>
         { \
             NES::LogCaller<LEVEL>::do_call(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, __VA_ARGS__); \
         } \
+        else \
+        { \
+            SUPPRESS_UNUSED_WARNING(__VA_ARGS__); \
+        } \
+         \
     } while (0)
 
 /// Creates a log message with log level trace.
