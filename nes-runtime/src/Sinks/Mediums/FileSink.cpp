@@ -174,7 +174,7 @@ void FileSink::shutdown() {
 }
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
-
+    NES_ERROR("Size of buffer storage {}", buffersStorage.size());
     if (!timestampAndWriteToSocket) {
         if (!isOpen) {
             NES_DEBUG("The output file could not be opened during setup of the file sink.");
