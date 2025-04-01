@@ -93,7 +93,7 @@ EXCEPTION(MalformatedTuple, 4001, "malformed tuple")
 EXCEPTION(RunningRoutineFailure, 4002, "error in running routine of SourceThread") ///Todo #237: Improve error handling in sources
 EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started") ///Todo #237: Improve error handling in sources
 EXCEPTION(CannotOpenSource, 4004, "failed to open a source")
-EXCEPTION(CSVParsingError, 4005, "error during csv parsing")
+EXCEPTION(FormattingError, 4005, "error during formatting")
 EXCEPTION(CannotOpenSink, 4006, "failed to open a sink")
 
 /// 5XXX Network errors
