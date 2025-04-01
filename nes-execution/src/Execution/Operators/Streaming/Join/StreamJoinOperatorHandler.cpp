@@ -584,7 +584,7 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
 void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaData) {
     uint64_t newGlobalWaterMarkProbe =
         watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
-    NES_DEBUG("newGlobalWaterMarkProbe {} bufferMetaData {}", newGlobalWaterMarkProbe, bufferMetaData.toString());
+    NES_ERROR("newGlobalWaterMarkProbe {} bufferMetaData {}", newGlobalWaterMarkProbe, bufferMetaData.toString());
 
     if (setForReuse) {
         return;
@@ -599,7 +599,7 @@ void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaDat
                  < newGlobalWaterMarkProbe)//In approach one #5114 a window can contain a slice that is not completely contained so we are only allowed to remove slices once there is no overlap
             || (curSlice->getSliceEnd() + windowSize < newGlobalWaterMarkProbe)) {
             // We can delete this slice/window
-            NES_DEBUG("Deleting slice: {} as sliceStart+windowSize {} is smaller then watermark {}",
+            NES_ERROR("Deleting slice: {} as sliceStart+windowSize {} is smaller then watermark {}",
                       curSlice->toString(),
                       curSlice->getSliceStart() + windowSize,
                       newGlobalWaterMarkProbe);
