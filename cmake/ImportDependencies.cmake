@@ -1,4 +1,3 @@
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -96,7 +95,7 @@ else ()
     # been set by cmake. LLVM has a few shared libraries (which we do not use), that require the target machine to
     # support dynamic linking (which is usually the case unless working with small embedded devices).
     SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
-    find_package(MLIR CONFIG REQUIRED)
+    find_package(MLIR CONFIG QUIET)
     # One way to propagate configurations to third-party libraries (in this case nautilus) is via environment variables.
     # The nautilus vcpkg port script will pick up the MLIR_DIR environment variable during build, which allows the
     # nautilus cmake configuration to find the locally installed version of MLIR.
