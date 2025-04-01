@@ -9,16 +9,18 @@ ARG TAG=latest
 FROM alpine:latest AS llvm-download
 # Which architecture to build the dependencies for. Either x64 or arm64, matches the names in our vcpkg toolchains
 ARG ARCH
-RUN apk update && apk add wget 7zip
-ADD https://github.com/nebulastream/clang-binaries/releases/download/vllvm-18-libc%2B%2B-mlir-only/nes-clang-18-ubuntu-22.04-libc++-${ARCH}.7z libcxx/nes-clang
-ADD https://github.com/nebulastream/clang-binaries/releases/download/vllvm-18-libc%2B%2B-mlir-only/nes-clang-18-ubuntu-22.04-stdlibc++-${ARCH}.7z libstdcxx/nes-clang
-RUN cd libcxx && 7z x nes-clang && rm nes-clang
-RUN cd libstdcxx && 7z x nes-clang && rm nes-clang
+ARG STDLIB=libcxx
+ARG VARIANT=none
+ARG LLVM_VERSION=20
+ENV LLVM_VERSION=${LLVM_VERSION}
+RUN apk update && apk add wget zstd
+ADD https://github.com/nebulastream/clang-binaries/releases/download/vmlir-${LLVM_VERSION}/nes-llvm-${LLVM_VERSION}-${ARCH}-${VARIANT}-${STDLIB}.tar.zstd .
+RUN  zstd --decompress nes-llvm-${LLVM_VERSION}-${ARCH}-${VARIANT}-${STDLIB}.tar.zstd --stdout | tar -xf - && rm nes-llvm-${LLVM_VERSION}-${ARCH}-${VARIANT}-${STDLIB}.tar.zstd
 
 FROM nebulastream/nes-development-base:${TAG}
 ARG STDLIB=libcxx
 
-COPY --from=llvm-download ${STDLIB}/clang /clang
+COPY --from=llvm-download /clang /clang
 ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
 
 ADD vcpkg /vcpkg_input
