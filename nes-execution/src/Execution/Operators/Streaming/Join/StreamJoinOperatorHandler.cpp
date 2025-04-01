@@ -161,7 +161,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getSerializedPortio
         return {};
     }
     asked[id] = true;
-    auto numberOfThreads = 4;
+    auto numberOfThreads = 1;
     size_t totalSize = stateToTransfer.size();
     size_t chunkSize = (totalSize + numberOfThreads - 1) / numberOfThreads;
 

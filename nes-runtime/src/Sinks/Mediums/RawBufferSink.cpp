@@ -84,7 +84,7 @@ void RawBufferSink::setup() {
 }
 
 void RawBufferSink::shutdown() {
-    NES_DEBUG("Closing file sink, filePath={}", filePath);
+    NES_ERROR("Closing file sink, filePath={}", filePath);
     // rename file after dumping completed
     if (isClosed) {
         return;

@@ -260,6 +260,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
 
             // if this is pipeline for migration and reconfiguration is of type drain, then migration should be started
             if (event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>() && isMigrationPipeline) {
+                NES_ERROR("serializing");
                 if (!serialized) {
                     for (auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                         // NES_ERROR("sync context wait {}", context.getId());
@@ -314,7 +315,7 @@ void ExecutablePipeline::sendBuffers(OperatorHandlerPtr operatorHandler, WorkerC
         pipelineContext->migrateBuffer(buffer, context);
     }
     auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_ERROR("context {} finished sending buffers from pipeline at {}", context.getId(), endTime);
+    NES_ERROR("context {} finished sending {} buffers from pipeline at {}", context.getId(), dataToMigrate.size(), endTime);
 }
 
 void ExecutablePipeline::propagateReconfiguration(ReconfigurationMessage& task) {
