@@ -100,7 +100,7 @@ size_t FieldOffsets::finishWrite()
     /// Make sure that the number of read fields matches the expected value.
     if ((currentIndex - NUMBER_OF_RESERVED_FIELDS) % (numberOfFieldsInSchema + 1) != 0)
     {
-        throw CSVParsingError(
+        throw FormattingError(
             "Number of indexes {} must be a multiple of number of fields in tuple {}",
             currentIndex - NUMBER_OF_RESERVED_FIELDS,
             (numberOfFieldsInSchema + 1));
