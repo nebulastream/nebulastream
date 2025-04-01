@@ -181,9 +181,9 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                                      [](size_t sum, const Runtime::TupleBuffer& buffer) {
                                          return sum + buffer.getBufferSize();
                                      });
-        NES_DEBUG("buffer id {}, size {}", id, bufferVec.size());
+        NES_ERROR("buffer id {}, size {}", id, bufferVec.size());
     }
-        NES_DEBUG("buffer size {}", size);
+        NES_ERROR("buffer size {}", size);
     if (!timestampAndWriteToSocket) {
         if (!isOpen) {
             NES_DEBUG("The output file could not be opened during setup of the file sink.");
