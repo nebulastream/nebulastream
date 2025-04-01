@@ -165,6 +165,8 @@ void BufferManager::initialize(uint32_t withAlignment) {
 }
 
 TupleBuffer BufferManager::getBufferBlocking() {
+    //print available buffers
+    NES_ERROR("BufferManager::getBufferBlocking: available buffers {}", numOfAvailableBuffers);
     //TODO: remove this
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::unique_lock lock(availableBuffersMutex);

@@ -38,7 +38,7 @@
 #include <utility>
 namespace NES::Runtime {
 
-static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
+static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024 * 512;
 
 AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                            std::vector<BufferManagerPtr> bufferManagers,

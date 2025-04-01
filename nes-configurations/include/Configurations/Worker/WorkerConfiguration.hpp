@@ -159,7 +159,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
      */
     UIntOption numberOfBuffersInSourceLocalBufferPool = {NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG,
-                                                         "200000",
+                                                         "2000",
                                                          "Number buffers in source local buffer pool.",
                                                          {std::make_shared<NumberValidation>()}};
 
