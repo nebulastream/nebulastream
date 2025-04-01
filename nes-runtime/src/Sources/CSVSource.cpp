@@ -218,9 +218,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 auto ack = queryManager->getSourceAck(sharedQueryPlan.getRawValue());
                 shouldGetLastAck = false;
                 if (ack.has_value() && ack.value() != 0) {
-                    NES_ERROR("{} found ack, sent until {} ack {}", sharedQueryPlan.getRawValue(), sentUntil, ack.value());
+                    // NES_ERROR("{} found ack, sent until {} ack {}", sharedQueryPlan.getRawValue(), sentUntil, ack.value());
                     watermarkIndex = findWatermarkIndex(sourceInfo->records, ack.value());
-                    NES_ERROR("id {}, index: {}, of: {}, watermark: {}", sharedQueryPlan.getRawValue(), watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
+                    // NES_ERROR("id {}, index: {}, of: {}, watermark: {}", sharedQueryPlan.getRawValue(), watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
                 }
             }
 //            if (watermarkIndex < sourceInfo->records.back().back().ingestionTimestamp) {
@@ -547,6 +547,6 @@ CSVSource::~CSVSource() {
 //    NES_DEBUG("destroying source with reconnect count {}", count);
     //    ::close(sockfd);
     auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
-    NES_ERROR("saved records: {}, watermark: {}", sourceInfo->records.size(), sourceInfo->records.back().back().value);
+    // NES_ERROR("saved records: {}, watermark: {}", sourceInfo->records.size(), sourceInfo->records.back().back().value);
 }
 }// namespace NES

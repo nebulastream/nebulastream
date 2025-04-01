@@ -139,7 +139,7 @@ void FileSink::shutdown() {
 
             auto newWatermark = std::max(minWatermark, lastSavedWatermark);
             nodeEngine->updateLastSavedMinWatermark(sharedQueryId, newWatermark);
-            NES_ERROR("sending checkpoint query id: {}, watermark: {}", sharedQueryId, newWatermark);
+            // NES_ERROR("sending checkpoint query id: {}, watermark: {}", sharedQueryId, newWatermark);
             // map.insert({sharedQueryId.getRawValue(), watermarkProcessor->get()->getCurrentWatermark()});
             // }
             std::thread thread([nodeEngine, sharedQueryId, newWatermark]() mutable {
