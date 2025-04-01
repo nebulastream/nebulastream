@@ -174,13 +174,7 @@ void FileSink::shutdown() {
 }
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
-    uint64_t size = 0;
-    for (auto& [id, bufferVec] : buffersStorage) {
-        //sum up the size of all buffers
-         size += bufferVec.size();
-        NES_ERROR("buffer id {}, size {}", id, bufferVec.size());
-    }
-        NES_ERROR("buffer size {}", size);
+
     if (!timestampAndWriteToSocket) {
         if (!isOpen) {
             NES_DEBUG("The output file could not be opened during setup of the file sink.");
@@ -310,7 +304,7 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite,
                 records[i].outputTimestamp_1 = getTimestamp();
                 records[i].outputTimestamp_2 = getTimestamp();
                 // log the record to error
-                NES_DEBUG("writing record win start {}, win end {} Left: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}; Right: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}, buffer watermark: {}", records[i].winStart, records[i].winEnd, records[i].id_1, records[i].joinId_1, records[i].value_1, records[i].ingestionTimestamp_1, records[i].processingTimestamp_1, records[i].outputTimestamp_1, records[i].id_2, records[i].joinId_2, records[i].value_2, records[i].ingestionTimestamp_2, records[i].processingTimestamp_2, records[i].outputTimestamp_2, bufferToWrite.getWatermark());
+                NES_ERROR("writing record win start {}, win end {} Left: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}; Right: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}, buffer watermark: {}", records[i].winStart, records[i].winEnd, records[i].id_1, records[i].joinId_1, records[i].value_1, records[i].ingestionTimestamp_1, records[i].processingTimestamp_1, records[i].outputTimestamp_1, records[i].id_2, records[i].joinId_2, records[i].value_2, records[i].ingestionTimestamp_2, records[i].processingTimestamp_2, records[i].outputTimestamp_2, bufferToWrite.getWatermark());
             }
             //        NES_ERROR("Writing to tcp sink");
             ssize_t bytes_written =
