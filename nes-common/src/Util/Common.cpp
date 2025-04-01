@@ -61,24 +61,6 @@ void writeRowToCsvFile(const std::string& csvFileName, const std::string& row)
     ofstream.close();
 }
 
-IdentifierList updateSourceName(IdentifierList queryPlanSourceConsumed, IdentifierList subQueryPlanSourceConsumed)
-{
-    ///Update the Source names by sorting and then concatenating the source names from the sub query plan
-    // std::vector<IdentifierList> sourceNames;
-    // sourceNames.emplace_back(subQueryPlanSourceConsumed);
-    // sourceNames.emplace_back(queryPlanSourceConsumed);
-    // std::sort(sourceNames.begin(), sourceNames.end());
-    /// accumulating sourceNames with delimiters between all sourceNames to enable backtracking of origin
-
-    //If one source name is shorter than the other, the longer one get trimmed through the zip
-    auto updatedSourceName = IdentifierList{
-        std::views::zip(queryPlanSourceConsumed, subQueryPlanSourceConsumed)
-        | std::views::transform([](auto pair) { return Identifier{pair.first.getRawValue() + "_" + pair.second.getRawValue(), false}; })};
-    return updatedSourceName;
-    // auto updatedSourceName = std::accumulate(
-    //     sourceNames.begin(), sourceNames.end(), std::string("-"), [](IdentifierList a, IdentifierList b) { return std::ranges::zip_view<>a + "_" + b; });
-    // return updatedSourceName;
-}
 
 uint64_t murmurHash(const uint64_t key)
 {

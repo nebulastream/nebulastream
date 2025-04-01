@@ -286,7 +286,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addBinaryOperatorAndUpdateSource(
     leftQueryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     leftQueryPlan->appendOperatorAsNewRoot(operatorNode);
     NES_TRACE("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
-    auto newSourceName = Util::updateSourceName(leftQueryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
+    auto newSourceName = zipIdentifierLists(leftQueryPlan->getSourceConsumed(), rightQueryPlan->getSourceConsumed());
     leftQueryPlan->setSourceConsumed(newSourceName);
     return leftQueryPlan;
 }

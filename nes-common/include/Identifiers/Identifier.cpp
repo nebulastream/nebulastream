@@ -13,3 +13,14 @@
 */
 
 #include <Identifiers/Identifier.hpp>
+namespace NES
+{
+IdentifierList zipIdentifierLists(const IdentifierList& firstIdList, const IdentifierList& secondIdList)
+{
+    //If one source name is shorter than the other, the longer one get trimmed through the zip
+    auto updatedSourceName = IdentifierList{
+        std::views::zip(firstIdList, secondIdList)
+        | std::views::transform([](auto pair) { return Identifier{pair.first.getRawValue() + "_" + pair.second.getRawValue(), false}; })};
+    return updatedSourceName;
+}
+}

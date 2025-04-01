@@ -17,6 +17,7 @@
 #include <Identifiers/Identifier.hpp>
 
 
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
@@ -30,6 +31,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -37,17 +39,7 @@ namespace NES
 
 class Schema
 {
-    // template <std::ranges::input_range Range>
-    // std::pair<std::unordered_map<std::span<const Identifier>, size_t>, std::unordered_map<std::span<const Identifier>, std::vector<size_t>>>
-    // initializeFields(Range& fields) noexcept;
-
 public:
-    /// Enum to identify the memory layout in which we want to represent the schema physically.
-    enum class MemoryLayoutType : uint8_t
-    {
-        ROW_LAYOUT = 0,
-        COLUMNAR_LAYOUT = 1
-    };
     struct Field
     {
         Field() = default;
@@ -60,6 +52,117 @@ public:
         DataType dataType{};
     };
 
+private:
+    using IdSpan = std::span<const Identifier>;
+    //take const reference to make sure that the spans don't dangle
+    template <std::ranges::input_range Range>
+    std::pair<
+        std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals>,
+        std::unordered_map<
+            IdSpan,
+            std::vector<size_t>,
+            std::hash<IdSpan>,
+            IdentifierList::SpanEquals>> static initializeFields(Range& fields) noexcept
+    {
+        std::unordered_map<IdSpan, size_t, std::hash<IdSpan>, IdentifierList::SpanEquals> fieldsByName{};
+        std::unordered_map<IdSpan, std::vector<size_t>, std::hash<IdSpan>, IdentifierList::SpanEquals> collisions{};
+
+        for (std::pair<Schema::Field, size_t>& field : fields)
+        {
+            IdentifierList& fullName = field.first.name;
+            for (size_t i = 0; i < std::ranges::size(fullName); i++)
+            {
+                IdSpan idSubSpan = std::span{std::ranges::begin(fullName) + i, std::ranges::size(fullName) - i};
+                if (auto existingCollisions = collisions.find(idSubSpan); existingCollisions == collisions.end())
+                {
+                    if (auto existingIdList = fieldsByName.find(idSubSpan); existingIdList != fieldsByName.end())
+                    {
+                        collisions.insert(std::pair<IdSpan, std::vector<size_t>>{idSubSpan, std::vector{field.second}});
+                        fieldsByName.erase(existingIdList);
+                    }
+                    else
+                    {
+                        fieldsByName.insert(std::pair{idSubSpan, field.second});
+                    }
+                }
+                else
+                {
+                    existingCollisions->second.push_back(field.second);
+                }
+            }
+        }
+        return {fieldsByName, collisions};
+    }
+
+    static std::optional<IdentifierList> findCommonPrefix(const std::ranges::input_range auto& fields)
+    {
+        IdSpan candidate{};
+        if (std::ranges::size(fields) > 0)
+        {
+            const Schema::Field& current = *std::ranges::begin(fields);
+            candidate = std::span{std::ranges::begin(current.name), std::ranges::end(current.name)};
+        }
+        //A fold over the fields, trying to find the common subspan starting from 0 in the names of all fields
+        //Using Spans again to avoid unnecessary copies.
+        if (std::ranges::size(fields) > 1)
+        {
+            for (const Schema::Field& field : std::span{std::ranges::begin(fields) + 1, std::ranges::size(fields) - 1})
+            {
+                const auto compareUpTo = std::min(std::ranges::size(candidate), std::ranges::size(field.name));
+                IdSpan previousCandidate = candidate;
+                candidate = {};
+                for (size_t i = 0; i < compareUpTo; ++i)
+                {
+                    const IdSpan candidateSubspan = std::span{std::ranges::begin(previousCandidate), compareUpTo - i};
+                    const IdSpan currentSubspan = std::span{std::ranges::begin(field.name), compareUpTo - i};
+                    if (IdentifierList::SpanEquals{}(candidateSubspan, currentSubspan))
+                    {
+                        candidate = candidateSubspan;
+                        break;
+                    }
+                }
+                if (std::ranges::empty(candidate))
+                {
+                    NES_DEBUG("Did not find a common prefix for schema");
+                    return std::nullopt;
+                }
+            }
+        }
+        //last check to catch corner cases such as fields having an empty name
+        if (std::ranges::empty(candidate))
+        {
+            NES_DEBUG("Did not find a common prefix for schema");
+            return std::nullopt;
+        }
+        return IdentifierList{candidate};
+    }
+    struct Private
+    {
+    };
+
+    template <std::ranges::input_range Range>
+    requires(std::same_as<Schema::Field, std::ranges::range_value_t<Range>>)
+    explicit Schema(Private, const Range& input) noexcept : fields(input | ranges::to<std::vector<Schema::Field>>())
+{
+    auto enumerated = std::vector<std::pair<Field, size_t>>{};
+    enumerated.reserve(std::ranges::size(fields));
+    for (size_t i = 0; i < std::ranges::size(fields); ++i)
+    {
+        enumerated.push_back({this->fields[i], i});
+    }
+    auto [fieldsByName, collisions] = initializeFields(enumerated);
+    nameToField = fieldsByName | std::views::transform([](auto pair) { return std::pair{IdentifierList{pair.first}, pair.second}; })
+        | ranges::to<std::unordered_map<IdentifierList, size_t>>();
+    currentPrefix = findCommonPrefix(fields);
+}
+
+public:
+    /// Enum to identify the memory layout in which we want to represent the schema physically.
+    enum class MemoryLayoutType : uint8_t
+    {
+        ROW_LAYOUT = 0,
+        COLUMNAR_LAYOUT = 1
+    };
     struct QualifiedFieldName
     {
         explicit QualifiedFieldName(std::string streamName, std::string fieldName)
@@ -72,22 +175,26 @@ public:
         std::string fieldName;
     };
 
-    /// schema qualifier separator
-    constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
     Schema() = default;
-    explicit Schema(std::initializer_list<Field> fields) noexcept;
-    explicit Schema(std::initializer_list<Schema> fields) noexcept;
+    Schema(std::initializer_list<Field> fields) noexcept;
+    Schema(std::initializer_list<Schema> fields) noexcept;
 
-    template <std::ranges::input_range Range, typename T>
-    explicit Schema(Range input) noexcept = delete;
 
-    template <std::ranges::input_range Range, typename T>
-    requires std::same_as<T, Field> && !std::same_as<Range, std::initializer_list<T>>
-    explicit Schema(Range input) noexcept;
+    //template overloading on input ranges for fields and schemas which require separate handling
+    //Since std::initializer_list also implements std::input_range we need to make sure we don't overload it and exclude it
+    //While we are implementing them in the header,
+    //we should explicitly instantiate as many of the used specializations as possible at the end of the cpp to reduce compile times
+    template <std::ranges::input_range Range>
+    requires(std::same_as<Schema::Field, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Schema::Field>>)
+    explicit Schema(const Range& input) noexcept : Schema(Private{}, input)
+    {
+    }
 
-    template <std::ranges::input_range Range, typename T>
-    requires std::same_as<T, Schema> && !std::same_as<Range, std::initializer_list<T>>
-    explicit Schema(Range input) noexcept;
+    template <std::ranges::input_range Range>
+    requires(std::same_as<Schema, std::ranges::range_value_t<Range>> && !std::same_as<Range, std::initializer_list<Schema>>)
+    explicit Schema(const Range& input) noexcept : Schema(Private{}, input | std::views::transform(&Schema::getFields) | std::views::join)
+    {
+    }
 
     explicit Schema(MemoryLayoutType memoryLayoutType);
     ~Schema() = default;

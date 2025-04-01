@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <functional>
 #include <initializer_list>
 #include <memory>
 #include <ranges>
+#include <span>
 #include <unordered_set>
 #include <utility>
 #include <DataTypes/Schema.hpp>
@@ -22,6 +24,7 @@
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
@@ -31,8 +34,8 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
-#include "Util/Ranges.hpp"
 
 namespace NES
 {
@@ -78,7 +81,7 @@ bool LogicalJoinOperator::inferSchema()
         throw CannotInferSchema("Found {} distinct schemas but expected 2 distinct schemas", distinctSchemas.size());
     }
 
-    auto inputSchema = Schema{distinctSchemas | ranges::to<std::initializer_list<Schema>>()};
+    auto inputSchema = Schema{distinctSchemas};
 
 
     ///reset left and right schema
@@ -112,17 +115,34 @@ bool LogicalJoinOperator::inferSchema()
     //(see Neumann, Leis "A Critique of Modern SQL And A Proposal Towards A Simple and Expressive Query Language")
     //We do permit something like (s1.x = 1 AND s2.y = 2), because imo its selective enough to be safe.
     //We might want to add some extra warnings for the user in the future for such cases, but I'd consider them valid queries.
-    std::unordered_set<std::span<Identifier>, std::hash<Identifier>, IdentifierList::SpanEquals> foundSources = {};
-    auto bfsIterator = BreadthFirstNodeIterator(joinDefinition->getJoinFunction());
 
+    std::unordered_set<std::span<const Identifier>, std::hash<std::span<const Identifier>>, IdentifierList::SpanEquals> foundSources{};
+    auto bfsIterator = BreadthFirstNodeIterator(joinDefinition->getJoinFunction());
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
         if (NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr))
         {
             auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(*itr);
-            foundSources.insert(std::span<Identifier>{std::ranges::begin(fieldAccess->getFieldName()), std::ranges::size(fieldAccess->getFieldName()) - 1});
+            auto fieldName = fieldAccess->getFieldName();
+            foundSources.insert(
+                std::span<const Identifier>{std::ranges::begin(fieldName), std::ranges::size(fieldAccess->getFieldName()) - 1});
         }
     }
+
+    if (std::ranges::size(foundSources) == 0)
+    {
+        throw CannotInferSchema("Implicit cartesian product: no fields referenced");
+    }
+    if (std::ranges::size(foundSources) == 1)
+    {
+        throw CannotInferSchema("Implicit cartesian product: join predicate only uses fields from one source");
+    }
+
+    if (std::ranges::size(foundSources) > 2)
+    {
+        throw CannotInferSchema("Join predicate refers to fields from more then two streams");
+    }
+
 
     /// Maintain a list of visited nodes as there are multiple root nodes
     // std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
@@ -159,51 +179,44 @@ bool LogicalJoinOperator::inferSchema()
     //     }
     // }
     /// Clearing now the distinct schemas
+    //TODO why do we need to clear distinct schemas?
     distinctSchemas.clear();
 
-    /// Checking if left and right input schema are not empty and are not equal
-    if (leftInputSchema.getSizeOfSchemaInBytes() == 0)
-    {
-        throw CannotInferSchema("left schema is empty");
-    }
-    if (rightInputSchema.getSizeOfSchemaInBytes() == 0)
-    {
-        throw CannotInferSchema("right schema is empty");
-    }
-    if (rightInputSchema == leftInputSchema)
-    {
-        throw CannotInferSchema("found both left and right input schema to be same.");
-    }
+    // /// Checking if left and right input schema are not empty and are not equal
+    // if (leftInputSchema.getSizeOfSchemaInBytes() == 0)
+    // {
+    //     throw CannotInferSchema("left schema is empty");
+    // }
+    // if (rightInputSchema.getSizeOfSchemaInBytes() == 0)
+    // {
+    //     throw CannotInferSchema("right schema is empty");
+    // }
+    // if (rightInputSchema == leftInputSchema)
+    // {
+    //     throw CannotInferSchema("found both left and right input schema to be same.");
+    // }
 
     ///Infer stamp of window definition
     const auto windowType = Util::as<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
-    windowType->inferStamp(leftInputSchema);
+    windowType->inferStamp(inputSchema);
 
     ///Reset output schema and add fields from left and right input schema
-    outputSchema = Schema{outputSchema};
     const auto& sourceNameLeft = leftInputSchema.getCommonPrefix();
     const auto& sourceNameRight = rightInputSchema.getCommonPrefix();
     INVARIANT(!std::ranges::empty(sourceNameLeft) && !std::ranges::empty(sourceNameRight), "All source names must have values.");
-    const auto& newQualifierForSystemField = sourceNameLeft + sourceNameRight;
+    const auto newQualifierForSystemField = zipIdentifierLists(sourceNameLeft, sourceNameRight);
 
     windowMetaData.windowStartFieldName = newQualifierForSystemField + Identifier{"start", false};
     windowMetaData.windowEndFieldName = newQualifierForSystemField + Identifier{"end", false};
+
+    const auto fieldView = distinctSchemas | std::views::transform(&Schema::getFields) | std::views::join
+        | std::views::transform([&](const Schema::Field& field)
+                                { return Schema::Field{newQualifierForSystemField + field.name, field.dataType}; });
+    outputSchema = Schema{fieldView};
+    //we can add these fields to the view as soon as std::views::concat lands in c++ 16
     outputSchema.addField(windowMetaData.windowStartFieldName, DataType::Type::UINT64);
     outputSchema.addField(windowMetaData.windowEndFieldName, DataType::Type::UINT64);
 
-    /// create dynamic fields to store all fields from left and right sources
-    for (const auto& field : leftInputSchema.getFields())
-    {
-        outputSchema.addField(field.name, field.dataType);
-    }
-
-    for (const auto& field : rightInputSchema.getFields())
-    {
-        outputSchema.addField(field.name, field.dataType);
-    }
-
-    NES_DEBUG("LeftInput schema for join={}", leftInputSchema);
-    NES_DEBUG("RightInput schema for join={}", rightInputSchema);
     NES_DEBUG("Output schema for join={}", outputSchema);
     joinDefinition->updateOutputDefinition(outputSchema);
     joinDefinition->updateSourceTypes(leftInputSchema, rightInputSchema);

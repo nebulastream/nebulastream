@@ -39,8 +39,6 @@ std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, USED_IN_DEBUG const std:
     return ptr;
 }
 
-/// Update the source names by sorting and then concatenating the source names from the sub- and query plan
-IdentifierList updateSourceName(IdentifierList queryPlanSourceConsumed, IdentifierList subQueryPlanSourceConsumed);
 
 /// Truncates the file and then writes the header string as is to the file
 void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header);

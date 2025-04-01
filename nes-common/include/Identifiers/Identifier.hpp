@@ -246,6 +246,8 @@ static_assert(std::ranges::input_range<std::initializer_list<Identifier>>);
 static_assert(std::ranges::random_access_range<IdentifierList>);
 static_assert(std::ranges::random_access_range<const IdentifierList>);
 static_assert(std::ranges::sized_range<IdentifierList>);
+
+IdentifierList zipIdentifierLists(const IdentifierList& firstIdList, const IdentifierList& secondIdList);
 }
 
 template <>
