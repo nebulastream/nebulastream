@@ -106,7 +106,7 @@ public:
     [[nodiscard]] Runtime::Timestamp getCreationTimestamp() const noexcept;
     [[nodiscard]] uint32_t storeChildBuffer(BufferControlBlock* control);
     [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
-    [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept { return children.size(); }
+    [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
 #endif

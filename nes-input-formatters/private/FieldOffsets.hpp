@@ -88,7 +88,7 @@ private:
             {
                 /// Set the next child buffer as the current buffer
                 INVARIANT(
-                    this->currentFieldOffsetBuffer.getNumberOfChildrenBuffer() > 0,
+                    this->currentFieldOffsetBuffer.getNumberOfChildBuffers() > 0,
                     "Cannot get next fields if current buffer does not have child buffer.");
                 const auto childBufferIndex = this->currentFieldOffsetBuffer.getBuffer<FieldOffsetsType>()[OFFSET_OF_INDEX_TO_CHILD_BUFFER];
                 this->currentFieldOffsetBuffer = currentFieldOffsetBuffer.loadChildBuffer(childBufferIndex);
