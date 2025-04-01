@@ -18,7 +18,7 @@ diff --git a/bolt/cmake/modules/AddBOLT.cmake b/bolt/cmake/modules/AddBOLT.cmake
 index 1f69b9046320..b0de5186dde4 100644
 --- a/bolt/cmake/modules/AddBOLT.cmake
 +++ b/bolt/cmake/modules/AddBOLT.cmake
-@@ -17,7 +17,7 @@ macro(add_bolt_tool name)
+@@ -16,7 +16,7 @@ macro(add_bolt_tool name)
      get_target_export_arg(${name} BOLT export_to_bolttargets)
      install(TARGETS ${name}
        ${export_to_bolttargets}
@@ -31,7 +31,7 @@ diff --git a/clang-tools-extra/clang-tidy/tool/CMakeLists.txt b/clang-tools-extr
 index b220cbea80f1..b94501ec82ab 100644
 --- a/clang-tools-extra/clang-tidy/tool/CMakeLists.txt
 +++ b/clang-tools-extra/clang-tidy/tool/CMakeLists.txt
-@@ -65,6 +65,6 @@ install(PROGRAMS clang-tidy-diff.py
+@@ -66,6 +66,6 @@ install(PROGRAMS clang-tidy-diff.py
    DESTINATION "${CMAKE_INSTALL_DATADIR}/clang"
    COMPONENT clang-tidy)
  install(PROGRAMS run-clang-tidy.py
@@ -54,7 +54,7 @@ diff --git a/clang/cmake/modules/AddClang.cmake b/clang/cmake/modules/AddClang.c
 index 75b0080f6715..46e32ddbe0cd 100644
 --- a/clang/cmake/modules/AddClang.cmake
 +++ b/clang/cmake/modules/AddClang.cmake
-@@ -169,7 +169,7 @@ macro(add_clang_tool name)
+@@ -183,7 +183,7 @@ macro(add_clang_tool name)
        get_target_export_arg(${name} Clang export_to_clangtargets)
        install(TARGETS ${name}
          ${export_to_clangtargets}
@@ -67,7 +67,7 @@ diff --git a/clang/tools/c-index-test/CMakeLists.txt b/clang/tools/c-index-test/
 index 0ae1b4e55244..7774cd27afcd 100644
 --- a/clang/tools/c-index-test/CMakeLists.txt
 +++ b/clang/tools/c-index-test/CMakeLists.txt
-@@ -49,7 +49,7 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+@@ -48,7 +48,7 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
      set_property(TARGET c-index-test APPEND PROPERTY INSTALL_RPATH
         "@executable_path/../../lib")
    else()
@@ -141,7 +141,7 @@ diff --git a/flang/cmake/modules/AddFlang.cmake b/flang/cmake/modules/AddFlang.c
 index 41ce8738e7bf..d9659c4cf53a 100644
 --- a/flang/cmake/modules/AddFlang.cmake
 +++ b/flang/cmake/modules/AddFlang.cmake
-@@ -115,7 +115,7 @@ macro(add_flang_tool name)
+@@ -116,7 +116,7 @@ macro(add_flang_tool name)
      get_target_export_arg(${name} Flang export_to_flangtargets)
      install(TARGETS ${name}
        ${export_to_flangtargets}
@@ -150,34 +150,28 @@ index 41ce8738e7bf..d9659c4cf53a 100644
        COMPONENT ${name})
  
      if(NOT LLVM_ENABLE_IDE)
-diff --git a/flang/tools/f18/CMakeLists.txt b/flang/tools/f18/CMakeLists.txt
-index ba6c6642c0b6..ab2802aeeaaa 100644
---- a/flang/tools/f18/CMakeLists.txt
-+++ b/flang/tools/f18/CMakeLists.txt
-@@ -83,7 +83,7 @@ if (NOT WIN32)
-     @ONLY
-   )
-   add_custom_target(flang-to-external-fc ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/flang-to-external-fc)
--  install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/flang-to-external-fc DESTINATION "${CMAKE_INSTALL_BINDIR}")
-+  install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/flang-to-external-fc DESTINATION "${FLANG_TOOLS_INSTALL_DIR}")
- endif()
- 
- # TODO Move this to a more suitable location
 diff --git a/flang/tools/flang-driver/CMakeLists.txt b/flang/tools/flang-driver/CMakeLists.txt
-index 3ce8b407450d..6b2e2b0dc33a 100644
---- a/flang/tools/flang-driver/CMakeLists.txt
-+++ b/flang/tools/flang-driver/CMakeLists.txt
-@@ -43,4 +43,4 @@ if(FLANG_PLUGIN_SUPPORT)
-   export_executable_symbols_for_plugins(flang-new)
+--- a/flang/tools/flang-driver/CMakeLists.txt	(revision 424c2d9b7e4de40d0804dd374721e6411c27d1d1)
++++ b/flang/tools/flang-driver/CMakeLists.txt	(date 1742994314530)
+@@ -39,10 +39,10 @@
+
+ # Enable support for plugins, which need access to symbols from flang
+ if(FLANG_PLUGIN_SUPPORT)
+-  export_executable_symbols_for_plugins(flang)
++  export_executable_symbols_for_plugins(flang-new)
  endif()
- 
--install(TARGETS flang-new DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+-install(TARGETS flang DESTINATION "${CMAKE_INSTALL_BINDIR}")
 +install(TARGETS flang-new DESTINATION "${FLANG_TOOLS_INSTALL_DIR}")
+
+ # Keep "flang-new" as a symlink for backwards compatiblity. Remove once "flang"
+ # is a widely adopted name.
+
 diff --git a/lld/cmake/modules/AddLLD.cmake b/lld/cmake/modules/AddLLD.cmake
 index 2ee066b41535..c6a4740ab9eb 100644
 --- a/lld/cmake/modules/AddLLD.cmake
 +++ b/lld/cmake/modules/AddLLD.cmake
-@@ -56,7 +56,7 @@ macro(add_lld_tool name)
+@@ -54,7 +54,7 @@ macro(add_lld_tool name)
        get_target_export_arg(${name} LLD export_to_lldtargets)
        install(TARGETS ${name}
          ${export_to_lldtargets}
@@ -190,7 +184,7 @@ diff --git a/lldb/cmake/modules/AddLLDB.cmake b/lldb/cmake/modules/AddLLDB.cmake
 index 328e883ddbe5..86eebba45e01 100644
 --- a/lldb/cmake/modules/AddLLDB.cmake
 +++ b/lldb/cmake/modules/AddLLDB.cmake
-@@ -221,7 +221,7 @@ function(add_lldb_executable name)
+@@ -219,7 +219,7 @@ function(add_lldb_executable name)
    endif()
  
    if(ARG_GENERATE_INSTALL)
