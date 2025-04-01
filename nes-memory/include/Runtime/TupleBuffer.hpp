@@ -204,7 +204,7 @@ public:
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
     [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept;
 
-    [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept;
+    [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
     bool hasSpaceLeft(uint64_t used, uint64_t needed) const;
 

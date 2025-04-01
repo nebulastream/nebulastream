@@ -223,9 +223,9 @@ OriginId TupleBuffer::getOriginId() const noexcept
 {
     return controlBlock->getOriginId();
 }
-uint32_t TupleBuffer::getNumberOfChildrenBuffer() const noexcept
+uint32_t TupleBuffer::getNumberOfChildBuffers() const noexcept
 {
-    return controlBlock->getNumberOfChildrenBuffer();
+    return controlBlock->getNumberOfChildBuffers();
 }
 ChunkNumber TupleBuffer::getChunkNumber() const noexcept
 {
