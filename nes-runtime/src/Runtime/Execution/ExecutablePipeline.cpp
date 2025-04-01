@@ -310,7 +310,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
 void ExecutablePipeline::sendBuffers(OperatorHandlerPtr operatorHandler, WorkerContext& context) {
     auto dataToMigrate = operatorHandler->getSerializedPortion(context.getId().getRawValue() % 4);
     auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_ERROR("context {} started sending buffers from pipeline at {}", context.getId(), startTime);
+    NES_ERROR("context {} started sending {} buffers from pipeline at {}", context.getId(), dataToMigrate.size(), startTime);
     for (auto& buffer : dataToMigrate) {
         pipelineContext->migrateBuffer(buffer, context);
     }
