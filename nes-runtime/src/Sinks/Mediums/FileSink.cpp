@@ -174,7 +174,16 @@ void FileSink::shutdown() {
 }
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
-    NES_ERROR("Size of buffer storage {}", buffersStorage.size());
+    uint64_t size = 0;
+    for (auto& [id, bufferVec] : buffersStorage) {
+        //sum up the size of all buffers
+         size = std::accumulate(bufferVec.begin(), bufferVec.end(), 0,
+                                     [](size_t sum, const Runtime::TupleBuffer& buffer) {
+                                         return sum + buffer.getBufferSize();
+                                     });
+        NES_DEBUG("buffer id {}, size {}", id, bufferVec.size());
+    }
+        NES_DEBUG("buffer size {}", size);
     if (!timestampAndWriteToSocket) {
         if (!isOpen) {
             NES_DEBUG("The output file could not be opened during setup of the file sink.");
