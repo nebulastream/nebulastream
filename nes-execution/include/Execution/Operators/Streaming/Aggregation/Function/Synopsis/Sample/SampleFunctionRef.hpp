@@ -52,7 +52,7 @@ public:
     void setReadPtrToRecordIdx(const nautilus::val<uint64_t>& idx);
 
     /// Returns the sample as a VarVal object
-    [[nodiscard]] VarVal getSample() const;
+    [[nodiscard]] VariableSizedData getSample() const;
 
 private:
     nautilus::val<int8_t*> memArea;

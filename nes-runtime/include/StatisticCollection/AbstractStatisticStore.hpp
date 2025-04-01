@@ -33,21 +33,24 @@ enum class StatisticType : uint8_t
 struct Statistic
 {
     Statistic(
-        const StatisticType type, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, int8_t* statisticPtr)
-        : type(type), startTs(startTs), endTs(endTs), statistic(statisticPtr)
+        const StatisticType type,
+        const Windowing::TimeMeasure& startTs,
+        const Windowing::TimeMeasure& endTs,
+        std::vector<int8_t>& statistic)
+        : type(type), startTs(startTs), endTs(endTs), statistic(std::move(statistic))
     {
     }
 
     [[nodiscard]] StatisticType getType() const { return type; }
     [[nodiscard]] Windowing::TimeMeasure getStartTs() const { return startTs; }
     [[nodiscard]] Windowing::TimeMeasure getEndTs() const { return endTs; }
-    [[nodiscard]] int8_t* getStatisticData() const { return statistic; }
+    [[nodiscard]] int8_t* getStatisticData() { return statistic.data(); }
 
 private:
     StatisticType type;
     Windowing::TimeMeasure startTs;
     Windowing::TimeMeasure endTs;
-    int8_t* statistic;
+    std::vector<int8_t> statistic;
 };
 
 using StatisticHash = uint64_t;

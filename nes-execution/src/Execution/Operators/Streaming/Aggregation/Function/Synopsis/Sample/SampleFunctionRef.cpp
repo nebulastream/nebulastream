@@ -161,9 +161,9 @@ void SampleFunctionRef::setReadPtrToRecordIdx(const nautilus::val<uint64_t>& idx
     }
 }
 
-VarVal SampleFunctionRef::getSample() const
+VariableSizedData SampleFunctionRef::getSample() const
 {
-    return VarVal(VariableSizedData(memArea));
+    return VariableSizedData(memArea);
 }
 
 }
