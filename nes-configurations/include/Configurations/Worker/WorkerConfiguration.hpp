@@ -143,14 +143,14 @@ class WorkerConfiguration : public BaseConfiguration {
      * Controls how much memory is consumed by the system.
      */
     UIntOption numberOfBuffersInGlobalBufferManager = {NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG,
-                                                       "300000",
+                                                       "3000000",
                                                        "Number buffers in global buffer pool.",
                                                        {std::make_shared<NumberValidation>()}};
     /**
      * @brief Indicates how many buffers a single worker thread can allocate.
      */
     UIntOption numberOfBuffersPerWorker = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG,
-                                           "200000",
+                                           "2000000",
                                            "Number buffers in task local buffer pool.",
                                            {std::make_shared<NumberValidation>()}};
 
