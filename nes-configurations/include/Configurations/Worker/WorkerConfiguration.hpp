@@ -150,7 +150,7 @@ class WorkerConfiguration : public BaseConfiguration {
      * @brief Indicates how many buffers a single worker thread can allocate.
      */
     UIntOption numberOfBuffersPerWorker = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG,
-                                           "20000",
+                                           "200000",
                                            "Number buffers in task local buffer pool.",
                                            {std::make_shared<NumberValidation>()}};
 
