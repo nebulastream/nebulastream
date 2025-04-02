@@ -76,8 +76,11 @@ TEST(CheckChunkCollector, MultipleTimesLastChunkSet)
 {
     ChunkCollector sequence;
     EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Runtime::Timestamp(2)), std::nullopt);
-    ASSERT_THAT(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Runtime::Timestamp(12)), SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(12)));
-    EXPECT_DEATH_DEBUG(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 2), true}, Runtime::Timestamp(12)), "");
+    ASSERT_THAT(
+        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Runtime::Timestamp(12)),
+        SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(12)));
+    EXPECT_DEATH_DEBUG(
+        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 2), true}, Runtime::Timestamp(12)), "");
 }
 
 TEST(ChunkCollectorTest, DifferentSequenceNumbers)

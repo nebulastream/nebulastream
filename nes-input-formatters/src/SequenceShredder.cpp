@@ -567,7 +567,7 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
             const auto adjustedSpanningTupleIndex = sequenceNumber & stagedBufferSizeModulo;
             const auto sequenceShredderStillOwnsBuffer = stagedBuffers[adjustedSpanningTupleIndex].buffer.getBuffer() != nullptr
                 and (stagedBuffers[adjustedSpanningTupleIndex].buffer.getSequenceNumber()
-                    == stagedBufferOfSequenceNumber.buffer.getSequenceNumber());
+                     == stagedBufferOfSequenceNumber.buffer.getSequenceNumber());
             /// If the sequence shredder still owns the 'stagedBufferOfSequenceNumber', return its ownerhip
             auto returnBuffer = (sequenceShredderStillOwnsBuffer) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex])
                                                                   : std::move(stagedBufferOfSequenceNumber);
