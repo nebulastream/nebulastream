@@ -56,6 +56,11 @@ namespace NES::Runtime
 {
 
 
+/// The Query has not been started yet. But a slot in the QueryCatalog has been reserved.
+struct Reserved
+{
+};
+
 /// The ExecutableQueryPlan moved into a RunningQueryPlan.
 /// Pipelines and Sources in the RunningQueryPlan have been scheduled to be initialized
 /// Once all initialization is done the query transitions into the running state.
@@ -95,7 +100,7 @@ struct Terminated
 class QueryCatalog
 {
 public:
-    using State = std::shared_ptr<AtomicState<Starting, Running, Stopping, Terminated>>;
+    using State = std::shared_ptr<AtomicState<Reserved, Starting, Running, Stopping, Terminated>>;
     using WeakStateRef = State::weak_type;
     using StateRef = State::element_type;
 
@@ -757,7 +762,13 @@ void QueryCatalog::start(
             const auto timestamp = std::chrono::system_clock::now();
             if (const auto locked = state.lock())
             {
-                locked->transition([](Starting&& starting) { return Running{std::move(starting.plan)}; });
+                locked->transition(
+                    [](Reserved&&)
+                    {
+                        INVARIANT(false, "Bug: Jumping from reserved to running state should be impossible.");
+                        return Terminated{Terminated::Failed};
+                    },
+                    [](Starting&& starting) { return Running{std::move(starting.plan)}; });
                 listener->logQueryStatusChange(queryId, Execution::QueryStatus::Running, timestamp);
             }
         }
@@ -769,6 +780,11 @@ void QueryCatalog::start(
             {
                 /// Regardless of its current state the query should move into the Terminated::Failed state.
                 locked->transition(
+                    [](Reserved&&)
+                    {
+                        ENGINE_LOG_DEBUG("Query was stopped before all pipeline starts were submitted");
+                        return Terminated{Terminated::Failed};
+                    },
                     [](Starting&& starting)
                     {
                         RunningQueryPlan::dispose(std::move(starting.plan));
@@ -825,12 +841,26 @@ void QueryCatalog::start(
 
     auto queryListener = std::make_shared<RealQueryLifeTimeListener>(queryId, listener);
     const auto startTimestamp = std::chrono::system_clock::now();
+    auto state = std::make_shared<StateRef>(Reserved{});
+    this->queryStates.emplace(queryId, state);
+    queryListener->state = state;
+
     auto [runningQueryPlan, callback] = RunningQueryPlan::start(queryId, std::move(plan), controller, emitter, queryListener);
 
-    auto state = std::make_shared<StateRef>(Starting{std::move(runningQueryPlan)});
-    listener->logQueryStatusChange(queryId, Execution::QueryStatus::Started, startTimestamp);
-    queryListener->state = state;
-    this->queryStates.emplace(queryId, state);
+    if (state->transition([&](Reserved&&) { return Starting{std::move(runningQueryPlan)}; }))
+    {
+        listener->logQueryStatusChange(queryId, Execution::QueryStatus::Started, startTimestamp);
+    }
+    else
+    {
+        /// The move did not happen.
+        INVARIANT(
+            state->is<Terminated>(),
+            "Bug: There is no other option for the state. The only transition from reserved to Starting happens here. Starting will "
+            "not "
+            "transition into running until the callback is dropped.");
+        RunningQueryPlan::dispose(std::move(runningQueryPlan));
+    }
 }
 
 void QueryCatalog::stopQuery(QueryId id)
