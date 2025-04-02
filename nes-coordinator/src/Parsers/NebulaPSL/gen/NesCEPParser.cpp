@@ -2886,7 +2886,7 @@ NesCEPParser::EventIterationContext* NesCEPParser::eventIteration() {
                     & ((1ULL << (NesCEPParser::QUOTE - 75)) | (1ULL << (NesCEPParser::AVG - 75))
                        | (1ULL << (NesCEPParser::SUM - 75)) | (1ULL << (NesCEPParser::MIN - 75))
                        | (1ULL << (NesCEPParser::MAX - 75)) | (1ULL << (NesCEPParser::COUNT - 75))
-                       | (1ULL << (NesCEPParser::NAME - 75))))
+                       | (1ULL << (NesCEPParser::VARIATION - 75)) | (1ULL << (NesCEPParser::NAME - 75))))
                     != 0)) {
             setState(384);
             mathExpression();
@@ -3013,6 +3013,9 @@ tree::TerminalNode* NesCEPParser::AggregationContext::MIN() { return getToken(Ne
 
 tree::TerminalNode* NesCEPParser::AggregationContext::MAX() { return getToken(NesCEPParser::MAX, 0); }
 
+tree::TerminalNode* NesCEPParser::AggregationContext::VARIATION() { return getToken(NesCEPParser::VARIATION, 0); }
+
+
 tree::TerminalNode* NesCEPParser::AggregationContext::COUNT() { return getToken(NesCEPParser::COUNT, 0); }
 
 size_t NesCEPParser::AggregationContext::getRuleIndex() const { return NesCEPParser::RuleAggregation; }
@@ -3082,6 +3085,13 @@ NesCEPParser::AggregationContext* NesCEPParser::aggregation() {
                 enterOuterAlt(_localctx, 6);
                 setState(405);
                 match(NesCEPParser::COUNT);
+                break;
+            }
+
+            case NesCEPParser::VARIATION: {
+                enterOuterAlt(_localctx, 7);
+                setState(406);
+                match(NesCEPParser::VARIATION);
                 break;
             }
 
@@ -4466,6 +4476,7 @@ std::vector<std::string> NesCEPParser::_literalNames = {"",
                                                         "'MIN'",
                                                         "'MAX'",
                                                         "'COUNT'",
+                                                        "'VARIATION'",
                                                         "'IF'",
                                                         "'||'",
                                                         "'&&'",
@@ -4553,6 +4564,7 @@ std::vector<std::string> NesCEPParser::_symbolicNames = {"",
                                                          "MIN",
                                                          "MAX",
                                                          "COUNT",
+                                                         "VARIATION",
                                                          "IF",
                                                          "LOGOR",
                                                          "LOGAND",

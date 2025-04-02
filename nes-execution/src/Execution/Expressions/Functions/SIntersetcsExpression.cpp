@@ -56,8 +56,6 @@ std::string convertSecondsToTimestampMEOS(long long seconds) {
  * @return true if the point is within the STBox at the given time, false otherwise
  */
 double seintersects(double lon, double lat, int t, int lon2, int lat2, int t2) {
-    NES_INFO("seintersects called with lon: {}, lat: {}, t: {}", lon, lat, t);
-    NES_INFO("seintersects called with lon2: {}, lat2: {}, t2: {}", lon2, lat2, t2);
     meos_initialize("UTC", NULL);
     std::string t_out = convertSecondsToTimestampMEOS(t);
     std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);

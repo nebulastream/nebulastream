@@ -599,6 +599,7 @@ class Query {
                       std::initializer_list<ExpressionItem> inputFields,
                       std::initializer_list<ExpressionItem> outputFields);
 
+    
     /**
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.

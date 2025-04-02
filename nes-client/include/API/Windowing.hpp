@@ -96,6 +96,13 @@ API::WindowAggregationPtr Median(const ExpressionItem& onField);
 API::WindowAggregationPtr Avg(const ExpressionItem& onField);
 
 /**
+ * @brief Defines a Variation Aggregation function on a particular field.
+ * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @return A descriptor of the aggregation function.
+ */
+ API::WindowAggregationPtr Variation(const ExpressionItem& onField);
+
+/**
  * @brief Defines event time as a time characteristic for a window.
  * @param ExpressionItem which defines the field name.
  * @return A descriptor of the time characteristic.

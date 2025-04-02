@@ -1,0 +1,119 @@
+
+MEOS is a C library, threfore we can call it from Nebula.
+String convertion is needed.
+Since nebulaStream uses linux timestamp without timezone, I had to convert inside the expression implementation the time to this format "%Y-%m-%d %H:%M:%S" and add the timezone as UTC. 
+In the futute, I will explore a better integration by using MEOS to convert the times.
+
+What is currently missing in my implementation is to define a custom aggregation function. 
+For instance, I need call MEOS and look for the nearest neigbor between elements in the stream.
+
+
+Additions:
+- MEOS plugin definition
+    Defined MEOS namespace 
+    Included MEOS library
+
+- Expressions definitions, implementation and test creation.
+    Expressions teintersects
+    Expressions tpointatstbox
+    Expressions tpointatsworkshop
+    Expressions distancetpointstbox
+    Expressions tedwithin
+    Expressions seintersects
+
+- Expression types
+    TernaryExpressionNode for functions with three parameters (timestamp, latitude and longitude)
+    SenaryExpressionNode for functions with six parameters (timestamp1, latitude1, longitude1,timestamp2, latitude2, longitude2)
+
+
+- Expression/Functions types
+    MeosSenaryFunction
+    MeosTernaryFunctionTdwithin
+    MeosTernaryFunctionAtStBox
+    MeosTernaryFunctionAtWorkshop
+    MeosTernaryFunctionDistance
+
+- Operators/ PhysicalOperators / Function Registry / Logical Function
+    Ternary Operator for functions with three parameters (timestamp, latitude and longitude)
+    Senary Operator for functions with six parameters (timestamp1, latitude1, longitude1,timestamp2, latitude2, longitude2)
+
+
+- Integration queries 
+1. Alert Filtering - a train is within a maintenance area, alerts are filtered out. We have obtained throughput of 2.24 MB with 20K events per second.
+2. Noise Impact Analysis – Monitors noise levels and correlates them with train positions. We have obtained throughput of 2.24 MB with 20K events per second.
+3. Battery Monitoring - monitoring battery usage to prevent overheating and excessive discharge. We have obtained a throughput of 0.61 MB with 8K events per second.
+4. Heavy load of passengers - detects if there are too many passengers, so more trains can be added. We have obtained a throughput of 3.68 MB with 32K events per second.
+5. Unscheduled stops - system emits alerts if the train is stopped outside a station or workshop. We have a throughput of 0.40 MB with 10K events per second.
+6. Monitoring breaks - system emits alerts when it detects repeated emergency brakes in specific track segments or low-pressure readings that could indicate a decrease in the break effectiveness. We achieved a throughput of 2.24 MB with 20K events per second.
+
+There are three main sensor installed in each train (GPS, Break pressure and Battery).
+Here is an except of the dataset:
+time_utc,device_id,Vbat,PCFA_mbar,PCFF_mbar,PCF1_mbar,PCF2_mbar,T1_mbar,T2_mbar,Code1,Code2,gps_speed,gps_lat,gps_lon
+1722520348,3,29.4,4.376,1.451,0.003,1.316,46.18,4.518,0.0,1296.0,1.4671,50.6456,4.3658
+1722520348,5,29.7,5.043,0.0,0.011,0.0,39.81,3.462,0.0,1024.0,94.9161,51.3001,4.4325
+1722520358,5,29.7,5.043,0.0,0.003,0.0,39.75,3.493,0.0,1024.0,97.5431,51.3024,4.4318
+
+device_id is the id of the edge device that recieves all reading.
+Vbat is the train battery voltage.
+PCFA_mbar,PCFF_mbar,PCF1_mbar,PCF2_mbar,T1_mbar,T2_mbar are reading from the break sensor.
+Code1,Code2 are used to define if there are any know errors in the train system.
+
+
+- Added files:
+cmake/Findmeos.cmake
+
+nes-execution/include/Execution/Expressions/Funcstions/MeosAtStboxExpression.hpp
+nes-execution/include/Execution/Expressions/Functions/MeosAtWorkshopExpression.hpp
+nes-execution/include/Execution/Expressions/Functions/MeosDistancePointSTBoxExpression.hpp
+nes-execution/include/Execution/Expressions/Functions/MeosExpression.hpp
+nes-execution/include/Execution/Expressions/Functions/PrintRecordExpression.hpp
+nes-execution/include/Execution/Expressions/Functions/SIntersetcsExpression.hpp
+nes-execution/include/Execution/Expressions/Functions/TedwithinExpression.hpp
+
+
+nes-execution/include/QueryCompiler/Operators/PhysicalOperators/PhysicalSenaryOperator.hpp
+nes-execution/include/QueryCompiler/Operators/PhysicalOperators/PhysicalTernaryOperator.hpp
+
+
+nes-execution/src/QueryCompiler/Operators/PhysicalOperators/PhysicalSenaryOperator.cpp
+nes-execution/src/QueryCompiler/Operators/PhysicalOperators/PhysicalTernaryOperator.cpp
+nes-execution/src/QueryCompiler/Phases/Translations/ExpressionProvider.cpp
+
+
+nes-execution/src/Execution/Expressions/Functions/MeosAtStboxExpression.cpp
+nes-execution/src/Execution/Expressions/Functions/MeosDistancePointSTBoxExpression.cpp
+nes-execution/src/Execution/Expressions/Functions/MeosExpression.cpp
+nes-execution/src/Execution/Expressions/Functions/ReadExpression.cpp
+nes-execution/src/Execution/Expressions/Functions/ReadTernaryExpression.cpp
+nes-execution/src/Execution/Expressions/Functions/SIntersetcsExpression.cpp
+nes-execution/src/Execution/Expressions/Functions/TedwithinExpression.cpp
+
+
+nes-execution/tests/UnitTests/Execution/Expressions/Functions/SIntersetcsExpressionTest.cpp
+nes-execution/tests/include/TestUtils/ExpressionWrapper.hpp
+
+nes-expressions/include/Expressions/Functions/LogicalFunctionRegistry.hpp
+nes-expressions/include/Expressions/SenaryExpressionNode.hpp
+nes-expressions/include/Expressions/TernaryExpressionNode.hpp
+
+nes-expressions/src/Expressions/Functions/MeosSenaryFunction.cpp
+nes-expressions/src/Expressions/Functions/MeosTernaryFunctionAtStBox.cpp
+nes-expressions/src/Expressions/Functions/MeosTernaryFunctionAtWorkshop.cpp
+nes-expressions/src/Expressions/Functions/MeosTernaryFunctionDistance.cpp
+nes-expressions/src/Expressions/Functions/MeosTernaryFunctionTdwithin.cpp
+nes-expressions/src/Expressions/SenaryExpressionNode.cpp
+nes-expressions/src/Expressions/TernaryExpressionNode.cpp
+
+nes-operators/include/Operators/AbstractOperators/Arity/TernaryOperator.hpp
+nes-operators/include/Operators/AbstractOperators/Arity/SenaryOperator.hpp
+nes-operators/include/Operators/LogicalOperators/LogicalTernaryOperator.hpp
+nes-operators/include/Operators/LogicalOperators/LogicalSenaryOperator.hpp
+
+nes-operators/src/Operators/AbstractOperators/Arity/TernaryOperator.cpp
+nes-operators/src/Operators/AbstractOperators/Arity/SenaryOperator.cpp
+
+nes-operators/src/Operators/LogicalOperators/LogicalSenaryOperator.cpp
+nes-operators/src/Operators/LogicalOperators/LogicalTernaryOperator.cpp
+
+nes-plugins/meos/
+

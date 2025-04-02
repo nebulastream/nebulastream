@@ -18,6 +18,7 @@
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
+
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
@@ -41,6 +42,11 @@ API::WindowAggregationPtr Sum(const ExpressionItem& onField) {
 API::WindowAggregationPtr Avg(const ExpressionItem& onField) {
     return std::make_shared<API::WindowAggregation>(Windowing::AvgAggregationDescriptor::on(onField.getExpressionNode()));
 }
+
+// API::WindowAggregationPtr Variation(const ExpressionItem& onField) {
+//     return std::make_shared<API::WindowAggregation>(Windowing::VariAggregationDescriptor::on(onField.getExpressionNode()));
+// }
+
 
 API::WindowAggregationPtr Min(const ExpressionItem& onField) {
     return std::make_shared<API::WindowAggregation>(Windowing::MinAggregationDescriptor::on(onField.getExpressionNode()));

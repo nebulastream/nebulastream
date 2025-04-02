@@ -19,4 +19,5 @@ add_source_files(nes-execution
         MaxAggregation.cpp
         HyperLogLogDistinctCountApproximation.cpp
         QuantileEstimationAggregation.cpp
+        VariAggregation.cpp
         )

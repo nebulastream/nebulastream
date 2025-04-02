@@ -100,7 +100,8 @@ class NesCEPParser : public antlr4::Parser {
         URL = 86,
         NAME = 87,
         ID = 88,
-        PATH = 89
+        PATH = 89,
+        VARIATION = 90
     };
 
     enum {
@@ -892,6 +893,7 @@ class NesCEPParser : public antlr4::Parser {
         antlr4::tree::TerminalNode* SUM();
         antlr4::tree::TerminalNode* MIN();
         antlr4::tree::TerminalNode* MAX();
+        antlr4::tree::TerminalNode* VARIATION();
         antlr4::tree::TerminalNode* COUNT();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
