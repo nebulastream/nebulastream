@@ -247,10 +247,18 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
         alignedBufferSize,
         alignedBufferSizePlusControlBlock,
         controlBlockSize);
+
     auto memSegment = std::make_unique<detail::MemorySegment>(
         ptr + controlBlockSize,
         alignedBufferSize,
-        [](detail::MemorySegment* segment, BufferRecycler* recycler) { recycler->recycleUnpooledBuffer(segment); },
+        [this, ptr, alignedBufferSizePlusControlBlock](detail::MemorySegment* memorySegment, BufferRecycler*)
+        {
+            const std::unique_lock lock(unpooledBuffersMutex);
+            memoryResource->deallocate(ptr, alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT);
+            const auto ptrCopy = memorySegment->ptr;
+            memorySegment->ptr = nullptr;
+            unpooledBuffers.erase(ptrCopy);
+        },
         ptr);
     auto* leakedMemSegment = memSegment.get();
 
@@ -272,15 +280,9 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     numOfAvailableBuffers.fetch_add(1);
 }
 
-void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment)
+void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*)
 {
-    const std::unique_lock lock(unpooledBuffersMutex);
-    INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
-    const UnpooledBufferHolder probe(segment->getSize());
-    INVARIANT(
-        segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
-
-    unpooledBuffers[segment->ptr].markFree();
+    INVARIANT(false, "This method should not be called!");
 }
 
 size_t BufferManager::getBufferSize() const
