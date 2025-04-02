@@ -572,7 +572,7 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
             auto returnBuffer = (sequenceShredderStillOwnsBuffer) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex])
                                                                   : std::move(stagedBufferOfSequenceNumber);
             returnBuffers.emplace_back(std::move(returnBuffer));
-            return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = sequenceNumber, .stagedBuffers = std::move(returnBuffers)};
+            return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = 0, .stagedBuffers = std::move(returnBuffers)};
         }
         for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
         {
