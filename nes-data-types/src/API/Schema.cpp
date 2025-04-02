@@ -87,12 +87,6 @@ std::shared_ptr<Schema> Schema::addField(const std::shared_ptr<AttributeField>& 
     if (attribute)
     {
         fields.push_back(attribute->deepCopy());
-        /// If it is nullable, we have to add a boolean field
-        if (attribute->getDataType()->nullable)
-        {
-            fields.push_back(AttributeField::create(
-                attribute->getName() + DataTypeProvider::NULLABLE_POSTFIX, DataTypeProvider::provideBasicType(BasicType::BOOLEAN, false)));
-        }
     }
     return copy();
 }
@@ -115,12 +109,7 @@ void Schema::removeField(const std::shared_ptr<AttributeField>& field)
     {
         if ((*fieldIt)->getName() == field->getName())
         {
-            fieldIt = fields.erase(fieldIt);
-            /// We have to remove the next field, if the field to remove is nullable.
-            if (field->getDataType()->nullable or DataTypeProvider::isNullable(field->getName()))
-            {
-                fields.erase(fieldIt);
-            }
+            fields.erase(fieldIt);
             return;
         }
     }
@@ -128,27 +117,11 @@ void Schema::removeField(const std::shared_ptr<AttributeField>& field)
 
 void Schema::replaceField(const std::string& name, const std::shared_ptr<DataType>& type)
 {
-    for (auto fieldIt = fields.begin(); fieldIt != fields.end(); ++fieldIt)
+    for (auto& field : fields)
     {
-        if ((*fieldIt)->getName() == name)
+        if (field->getName() == name)
         {
-            /// We have to remove the next field, if the field to replace is nullable
-            if ((*fieldIt)->getDataType()->nullable or DataTypeProvider::isNullable((*fieldIt)->getName()))
-            {
-                fieldIt = fields.erase(fieldIt);
-            }
-
-            const auto fieldToAddIsNullable = type->nullable;
-            (*fieldIt) = AttributeField::create(name, type);
-
-            /// If the field to add is nullable, we have to add a boolean field
-            if (fieldToAddIsNullable)
-            {
-                fields.insert(
-                    fieldIt + 1,
-                    AttributeField::create(
-                        name + DataTypeProvider::NULLABLE_POSTFIX, DataTypeProvider::provideBasicType(BasicType::BOOLEAN, false)));
-            }
+            field = AttributeField::create(name, type);
             return;
         }
     }

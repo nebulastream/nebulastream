@@ -1,0 +1,32 @@
+# name: selection/Selection_Null.test
+# description: Selection tests with null values
+# groups: [Selection]
+
+Source stream UINT64 timestamp_NULLABLE INT32 value1_NULLABLE VARSIZED value2_NULLABLE
+1,,
+,,
+3,1,one
+4,1,one
+5,1,one
+6,,empty
+7,2,two
+8,0,zero
+9,-1,
+10,,
+
+SINK sink0 UINT64 stream$timestamp_NULLABLE INT32 stream$value1_NULLABLE VARSIZED stream$value2_NULLABLE
+SINK sink1 UINT64 stream$timestamp_NULLABLE INT32 stream$value1_NULLABLE
+
+# Filter equal on INT32 with null
+SELECT * FROM stream WHERE value1_NULLABLE == 1 INTO sink0
+----
+3,1,one
+4,1,one
+5,1,one
+
+# Filter equal on VARSIZED with null
+SELECT timestamp_NULLABLE, value1_NULLABLE FROM stream WHERE value2_NULLABLE == "one" INTO sink1
+----
+3,1
+4,1
+5,1

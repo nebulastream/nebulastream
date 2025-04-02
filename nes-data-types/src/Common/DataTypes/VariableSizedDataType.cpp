@@ -23,17 +23,13 @@ namespace NES
 
 bool VariableSizedDataType::operator==(const NES::DataType& other) const
 {
-    return dynamic_cast<const VariableSizedDataType*>(&other) != nullptr;
+    return dynamic_cast<const VariableSizedDataType*>(&other) != nullptr && nullable == other.nullable;
 }
 
-/// A VariableSizedDataType can only be joined with another VariableSizedDataType.
-std::shared_ptr<DataType> VariableSizedDataType::join(std::shared_ptr<DataType> otherDataType)
+/// A VariableSizedData type cannot be joined with another type.
+std::shared_ptr<DataType> VariableSizedDataType::join(const std::shared_ptr<DataType> otherDataType)
 {
-    if (not Util::instanceOf<VariableSizedDataType>(otherDataType))
-    {
-        throw DifferentFieldTypeExpected("Cannot join a VARSIZED datatype with a non-VARSIZED datatype.");
-    }
-    return DataTypeProvider::provideDataType(LogicalType::VARSIZED);
+    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED, nullable || otherDataType->nullable);
 }
 
 std::string VariableSizedDataType::toString()
@@ -41,9 +37,9 @@ std::string VariableSizedDataType::toString()
     return "VARSIZED";
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<VariableSizedDataType>();
+    return std::make_shared<VariableSizedDataType>(args.nullable);
 }
 
 }

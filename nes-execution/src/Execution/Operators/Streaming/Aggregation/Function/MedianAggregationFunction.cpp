@@ -123,35 +123,30 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
         nautilus::val<int64_t> countLessThan = 0;
         nautilus::val<int64_t> countEqual = 0;
         const auto candidateRecord = pagedVectorRef.readRecord(candidateCnt, allFieldNames);
-        const auto candidateValue = inputFunction->execute(candidateRecord, pipelineMemoryProvider.arena);
+        // const auto candidateValue = inputFunction->execute(candidateRecord, pipelineMemoryProvider.arena);
 
         /// Counting how many items are smaller or equal for the current candidate
-        for (nautilus::val<uint64_t> itemCnt = 0; itemCnt < numberOfEntries; ++itemCnt)
-        {
-            const auto itemRecord = pagedVectorRef.readRecord(itemCnt, allFieldNames);
-            const auto itemValue = inputFunction->execute(itemRecord, pipelineMemoryProvider.arena);
-            const auto lessThanIncrement = (itemValue < candidateValue) * nautilus::val<int64_t>(1);
-            const auto equalIncrement = (itemValue == candidateValue) * nautilus::val<int64_t>(1);
-            countLessThan = countLessThan + (lessThanIncrement.getRawValueAs<nautilus::val<int64_t>>());
-            countEqual = countEqual + (equalIncrement.getRawValueAs<nautilus::val<int64_t>>());
-        }
-
-        /// Checking if the current candidate is the median, and if so, storing the position of the median
-        /// The current candidate is the median if the number of items that are smaller or equal to the candidate is larger than the median position
-        if (not medianFound1 && countLessThan <= medianPos1 && medianPos1 < countLessThan + countEqual)
-        {
-            medianItemPos1 = candidateCnt;
-            medianFound1 = true;
-        }
-        if (not medianFound2 && countLessThan <= medianPos2 && medianPos2 < countLessThan + countEqual)
-        {
-            medianItemPos2 = candidateCnt;
-            medianFound2 = true;
-        }
-
-        // if (medianFound1 and medianFound2)
+        // for (nautilus::val<uint64_t> itemCnt = 0; itemCnt < numberOfEntries; ++itemCnt)
         // {
-        //     break;
+        //     const auto itemRecord = pagedVectorRef.readRecord(itemCnt, allFieldNames);
+        //     const auto itemValue = inputFunction->execute(itemRecord, pipelineMemoryProvider.arena);
+        //     const auto lessThanIncrement = (itemValue < candidateValue) * nautilus::val<int64_t>(1);
+        //     const auto equalIncrement = (itemValue == candidateValue) * nautilus::val<int64_t>(1);
+        //     countLessThan = countLessThan + (lessThanIncrement.getRawValueAs<nautilus::val<int64_t>>());
+        //     countEqual = countEqual + (equalIncrement.getRawValueAs<nautilus::val<int64_t>>());
+        // }
+        //
+        // /// Checking if the current candidate is the median, and if so, storing the position of the median
+        // /// The current candidate is the median if the number of items that are smaller or equal to the candidate is larger than the median position
+        // if (not medianFound1 && countLessThan <= medianPos1 && medianPos1 < countLessThan + countEqual)
+        // {
+        //     medianItemPos1 = candidateCnt;
+        //     medianFound1 = true;
+        // }
+        // if (not medianFound2 && countLessThan <= medianPos2 && medianPos2 < countLessThan + countEqual)
+        // {
+        //     medianItemPos2 = candidateCnt;
+        //     medianFound2 = true;
         // }
     }
 

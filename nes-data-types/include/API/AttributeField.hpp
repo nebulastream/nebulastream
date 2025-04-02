@@ -39,6 +39,7 @@ public:
     [[nodiscard]] bool isEqual(const std::shared_ptr<AttributeField>& attr) const;
     uint64_t hash() const;
     [[nodiscard]] std::shared_ptr<AttributeField> deepCopy() const;
+    bool isNullable() const;
 
 private:
     AttributeField(std::string name, std::shared_ptr<DataType> dataType);

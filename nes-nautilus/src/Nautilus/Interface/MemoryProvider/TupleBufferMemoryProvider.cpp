@@ -117,16 +117,19 @@ TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 std::shared_ptr<TupleBufferMemoryProvider>
 TupleBufferMemoryProvider::create(const uint64_t bufferSize, const std::shared_ptr<Schema>& schema)
 {
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    switch (schema->getLayoutType())
     {
-        auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(std::move(schema), bufferSize);
-        return std::make_unique<RowTupleBufferMemoryProvider>(rowMemoryLayout);
+        case Schema::MemoryLayoutType::ROW_LAYOUT: {
+            auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferSize);
+            return std::make_shared<RowTupleBufferMemoryProvider>(rowMemoryLayout);
+        }
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
+            auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+            return std::make_unique<ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
+        }
+        default: {
+            throw NotImplemented("Currently only row and column layout are supported");
+        }
     }
-    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
-        return std::make_unique<ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
-    }
-    throw NotImplemented("Currently only row and column layout are supported");
 }
 }

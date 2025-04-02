@@ -134,6 +134,15 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
         NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
         validParserConfig.fieldDelimiter = ",";
     }
+    if (const auto nullRepresentation = parserConfig.find("nullRepresentation"); nullRepresentation != parserConfig.end())
+    {
+        validParserConfig.nullRepresentation = nullRepresentation->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: nullRepresentation, using default empty string");
+        validParserConfig.nullRepresentation = "";
+    }
     return validParserConfig;
 }
 

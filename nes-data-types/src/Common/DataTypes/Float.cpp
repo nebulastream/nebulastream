@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <memory>
 #include <string>
-#include <Util/Common.hpp>
+
 #include <fmt/format.h>
+
+#include <Util/Common.hpp>
 #include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 
@@ -33,7 +33,8 @@ bool Float::operator==(const NES::DataType& other) const
 {
     if (const auto otherFloat = dynamic_cast<const Float*>(&other))
     {
-        return bits == otherFloat->bits;
+        return bits == otherFloat->bits && lowerBound == otherFloat->lowerBound && upperBound == otherFloat->upperBound
+            && nullable == other.nullable;
     }
     return false;
 }
@@ -42,7 +43,7 @@ std::shared_ptr<DataType> Float::join(const std::shared_ptr<DataType> otherDataT
 {
     if (NES::Util::instanceOf<Undefined>(otherDataType))
     {
-        return std::make_shared<Float>(bits);
+        return std::make_shared<Float>(nullable || otherDataType->nullable, bits, lowerBound, upperBound);
     }
     if (not NES::Util::instanceOf<Numeric>(otherDataType))
     {
@@ -61,14 +62,14 @@ std::string Float::toString()
     return fmt::format("FLOAT{}", bits);
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Float>(32);
+    return std::make_shared<Float>(args.nullable, 32, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Float>(64);
+    return std::make_shared<Float>(args.nullable, 64, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
 }
 
 }

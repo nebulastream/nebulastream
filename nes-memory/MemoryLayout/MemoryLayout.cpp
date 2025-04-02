@@ -15,22 +15,23 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <string>
-#include <utility>
-#include <API/AttributeField.hpp>
+#include <string_view>
+#include <vector>
+
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
 
-std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t childBufferIdx)
+std::string readVarSizedData(const TupleBuffer& buffer, const uint64_t childBufferIdx)
 {
     auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
     const auto stringSize = *childBuffer.getBuffer<uint32_t>();
@@ -40,11 +41,10 @@ std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t c
 }
 
 std::optional<uint32_t>
-writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view value, Memory::AbstractBufferProvider& bufferProvider)
+writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferProvider)
 {
     const auto valueLength = value.length();
-    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
-    if (childBuffer.has_value())
+    if (auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t)); childBuffer.has_value())
     {
         auto& childBufferVal = childBuffer.value();
         *childBufferVal.getBuffer<uint32_t>() = valueLength;
