@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
 #include <Measures/TimeMeasure.hpp>
 
 namespace NES::Runtime
