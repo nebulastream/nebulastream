@@ -96,11 +96,11 @@ InputFormatterTask::InputFormatterTask(
         /// Store the parsing function in a vector.
         if (const auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
         {
-            fieldConfigs.emplace_back(physicalType->size(), RawInputDataParser::getBasicTypeParseFunction(*basicPhysicalType));
+            fieldConfigs.emplace_back(physicalType->getSizeInBytes(), RawInputDataParser::getBasicTypeParseFunction(*basicPhysicalType, parserConfig, field->isNullable()));
         }
         else
         {
-            fieldConfigs.emplace_back(physicalType->size(), RawInputDataParser::getBasicStringParseFunction());
+            fieldConfigs.emplace_back(physicalType->getSizeInBytes(), RawInputDataParser::getBasicStringParseFunction(parserConfig, field->isNullable()));
         }
     }
 }

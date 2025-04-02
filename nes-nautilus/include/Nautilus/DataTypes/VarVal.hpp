@@ -269,8 +269,8 @@ protected:
 
     detail::var_val_t value;
     nautilus::val<bool> null;
-    /// If this is set, the null value will be taking into account. For example, it will be written and read from memory.
-    /// This is a trace-time-constants, i.e., it is not part of the actual value. This is fine, as we need to know if a value is nullable during the tracing.
+    /// If this is set, the null value will be taken into account. For example, it will be written and read from memory.
+    /// This is a trace-time-constant, i.e., it is not part of the actual value. This is fine, as we need to know if a value is nullable during the tracing.
     /// For example, if it is nullable, we need to write and read the null value from/to memory.
     bool nullable;
 };

@@ -306,7 +306,7 @@ TEST_F(VarValTest, readFromMemoryTest)
         using namespace NES::Nautilus;
         std::vector<int8_t> memory(sizeof(T));
         std::memcpy(memory.data(), &value, sizeof(T));
-        const VarVal varVal = VarVal::readVarValFromMemory(memory.data(), type);
+        const VarVal varVal = VarVal::readVarValFromMemory(memory.data(), *type);
         EXPECT_EQ(varVal.getRawValueAs<nautilus::val<T>>(), value);
         return 0;
     };
@@ -349,7 +349,7 @@ TEST_F(VarValTest, readFromMemoryTest)
         std::vector<int8_t> memory(sizeof(T) + sizeof(bool));
         std::memcpy(memory.data(), &value, sizeof(T));
         std::memcpy(memory.data() + sizeof(T), &expectedNull, sizeof(bool));
-        const VarVal varVal = VarVal::readVarValFromMemory(memory.data(), type);
+        const VarVal varVal = VarVal::readVarValFromMemory(memory.data(), *type);
         EXPECT_EQ(varVal.getRawValueAs<nautilus::val<T>>(), value);
         EXPECT_EQ(varVal.isNull(), expectedNull);
         return 0;

@@ -84,6 +84,15 @@ FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStreamAllF64
 200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
 300,400,1,2,3,4,6,7,8,9,10,11
 
+# Checking if a median over a tumbling window works for all data types
+SELECT MEDIAN(i8) as i8_out, MEDIAN(u8) as u8_out,
+       MEDIAN(i16) as i16_out, MEDIAN(f32) as f32_out,
+       MEDIAN(i32) as i32_out, MEDIAN(u32) as u32_out
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStreamAllF64
+----
+100,200,1,2,3,4,5,6,7,8,9
+200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5
+300,400,1,2,3,4,6,7,8,9
 
 # Checking if all aggregations over a tumbling window work for all data types in one query
 SELECT AVG(i8) as i8_out, MIN(i16) as i16_out, MAX(i32) as i32_out, MAX(i64) as i64_out,

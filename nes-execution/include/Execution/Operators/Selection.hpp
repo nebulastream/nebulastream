@@ -32,7 +32,7 @@ public:
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    const std::unique_ptr<Runtime::Execution::Functions::Function> function;
+    const std::unique_ptr<Functions::Function> function;
 };
 
 }

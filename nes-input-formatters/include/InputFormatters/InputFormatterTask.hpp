@@ -65,7 +65,10 @@ class InputFormatterTask final : public NES::Runtime::Execution::ExecutablePipel
 {
 public:
     explicit InputFormatterTask(
-        OriginId originId, std::unique_ptr<InputFormatter> inputFormatter, const Schema& schema, const Sources::ParserConfig& parserConfig);
+        OriginId originId,
+        std::unique_ptr<InputFormatter> inputFormatter,
+        const Schema& schema,
+        const Sources::ParserConfig& parserConfig);
     ~InputFormatterTask() override;
 
     InputFormatterTask(const InputFormatterTask&) = delete;

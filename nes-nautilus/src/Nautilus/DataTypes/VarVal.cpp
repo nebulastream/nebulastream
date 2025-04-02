@@ -192,8 +192,7 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
                 return {Util::readValueFromMemRef<int64_t>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::UINT_8: {
-                const auto varVal = VarVal{Util::readValueFromMemRef<uint8_t>(memRef), null, type.type->nullable};
-                return varVal;
+                return {Util::readValueFromMemRef<uint8_t>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::UINT_16: {
                 return {Util::readValueFromMemRef<uint16_t>(memRef), null, type.type->nullable};

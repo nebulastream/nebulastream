@@ -11,8 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
 #include <memory>
 #include <random>
+#include <ranges>
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -40,7 +42,7 @@ public:
     }
     static void TearDownTestCase() { NES_INFO("SchemaTest test class TearDownTestCase."); }
 
-    std::pair<std::vector<std::shared_ptr<AttributeField>>, uint64_t> getRandomFields(const auto numberOfFields)
+    std::vector<std::shared_ptr<AttributeField>> getRandomFields(const auto numberOfFields)
     {
         auto getRandomBasicType = [](const unsigned long rndPos)
         {
@@ -53,13 +55,11 @@ public:
         std::mt19937 mt(RND_SEED);
 
         std::vector<std::shared_ptr<AttributeField>> rndFields;
-        uint64_t numberOfNullableFields = 0;
         for (auto fieldCnt = 0_u64; fieldCnt < numberOfFields; ++fieldCnt)
         {
             const auto fieldName = fmt::format("field{}", fieldCnt);
             const auto basicType = getRandomBasicType(mt());
             const auto isNullable = mt() % 2 == 0;
-            numberOfNullableFields += isNullable;
             rndFields.emplace_back(AttributeField::create(fieldName, DataTypeProvider::provideBasicType(basicType, isNullable)));
         }
         std::stringstream ss;
@@ -68,7 +68,7 @@ public:
             ss << field->toString() << ", ";
         }
         NES_DEBUG("Random fields: {}", ss.str());
-        return {rndFields, numberOfNullableFields};
+        return rndFields;
     }
 };
 
@@ -120,25 +120,22 @@ TEST_F(SchemaTest, addFieldTest)
     {
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
-        auto [rndFields, numberOfNullableFields] = getRandomFields(NUM_FIELDS);
-        auto testSchema = Schema::create();
+        auto rndFields = getRandomFields(NUM_FIELDS);
+        const auto testSchema = Schema::create();
         for (const auto& field : rndFields)
         {
             ASSERT_TRUE(testSchema->addField(field));
         }
 
-        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size() + numberOfNullableFields);
-        uint64_t testSchemaFieldCnt = 0;
-        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt, ++testSchemaFieldCnt)
+        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
+        for (const auto& [idx, field] : std::views::enumerate(rndFields))
         {
-            const auto& curField = rndFields[fieldCnt];
-            EXPECT_TRUE(testSchema->getFieldByIndex(testSchemaFieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
-            if (testSchema->getFieldByName(curField->getName()).has_value())
+            EXPECT_TRUE(testSchema->getFieldByIndex(idx)->isEqual(field));
+            EXPECT_TRUE(testSchema->getFieldByName(field->getName()).has_value());
+            if (testSchema->getFieldByName(field->getName()).has_value())
             {
-                EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+                EXPECT_TRUE(testSchema->getFieldByName(field->getName()).value()->isEqual(field));
             }
-            testSchemaFieldCnt += curField->getDataType()->nullable;
         }
     }
 }
@@ -182,25 +179,22 @@ TEST_F(SchemaTest, removeFieldsTest)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     constexpr auto NUM_FIELDS = 10_u64;
-    auto [rndFields, numberOfNullableFields] = getRandomFields(NUM_FIELDS);
-    auto testSchema = Schema::create();
+    auto rndFields = getRandomFields(NUM_FIELDS);
+    const auto testSchema = Schema::create();
     for (const auto& field : rndFields)
     {
         ASSERT_TRUE(testSchema->addField(field));
     }
 
-    ASSERT_EQ(testSchema->getFieldCount(), rndFields.size() + numberOfNullableFields);
-    uint64_t testSchemaFieldCnt = 0;
-    for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt, ++testSchemaFieldCnt)
+    ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
+    for (const auto& [idx, field]: std::views::enumerate(rndFields))
     {
-        const auto& curField = rndFields[fieldCnt];
-        EXPECT_TRUE(testSchema->getFieldByIndex(testSchemaFieldCnt)->isEqual(curField));
-        EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
-        if (testSchema->getFieldByName(curField->getName()).has_value())
+        EXPECT_TRUE(testSchema->getFieldByIndex(idx)->isEqual(field));
+        EXPECT_TRUE(testSchema->getFieldByName(field->getName()).has_value());
+        if (testSchema->getFieldByName(field->getName()).has_value())
         {
-            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByName(field->getName()).value()->isEqual(field));
         }
-        testSchemaFieldCnt += curField->getDataType()->nullable;
     }
 
     /// Removing fields while we still have one field
@@ -211,7 +205,7 @@ TEST_F(SchemaTest, removeFieldsTest)
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
         if (testSchema->getFieldCount() < 1)
         {
-            EXPECT_DEATH_DEBUG([&]() { auto field = testSchema->getFieldByName(fieldToRemove->getName()); }(), "");
+            EXPECT_DEATH_DEBUG([&] { auto field = testSchema->getFieldByName(fieldToRemove->getName()); }(), "");
         }
         else
         {
@@ -239,7 +233,7 @@ TEST_F(SchemaTest, replaceFieldTest)
                 *DataTypeProvider::provideBasicType(basicTypeVal, testSchema->getFieldByIndex(0)->getDataType()->nullable));
 
             /// Replacing field
-            const auto [randomFields, numberOfNullableFields] = getRandomFields(1_u64);
+            const auto randomFields = getRandomFields(1_u64);
             const auto newDataType = randomFields[0]->getDataType();
             ASSERT_NO_THROW(testSchema->replaceField("field", newDataType));
             ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *newDataType);
@@ -249,45 +243,39 @@ TEST_F(SchemaTest, replaceFieldTest)
     {
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
-        auto [rndFields, numberOfNullableFields] = getRandomFields(NUM_FIELDS);
+        auto rndFields = getRandomFields(NUM_FIELDS);
         auto testSchema = Schema::create();
         for (const auto& field : rndFields)
         {
             ASSERT_TRUE(testSchema->addField(field));
         }
 
-        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size() + numberOfNullableFields);
-        uint64_t testSchemaFieldCnt = 0;
-        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt, ++testSchemaFieldCnt)
+        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
+        for (const auto& [idx, field] : std::views::enumerate(rndFields))
         {
-            const auto& curField = rndFields[fieldCnt];
-            EXPECT_TRUE(testSchema->getFieldByIndex(testSchemaFieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
-            if (testSchema->getFieldByName(curField->getName()).has_value())
+            EXPECT_TRUE(testSchema->getFieldByIndex(idx)->isEqual(field));
+            EXPECT_TRUE(testSchema->getFieldByName(field->getName()).has_value());
+            if (testSchema->getFieldByName(field->getName()).has_value())
             {
-                EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+                EXPECT_TRUE(testSchema->getFieldByName(field->getName()).value()->isEqual(field));
             }
-            testSchemaFieldCnt += curField->getDataType()->nullable;
         }
 
         /// Replacing multiple fields with new data types
-        auto [replacingFields, numberOfNullableFieldsReplaced] = getRandomFields(NUM_FIELDS);
+        auto replacingFields = getRandomFields(NUM_FIELDS);
         for (const auto& replaceField : replacingFields)
         {
             testSchema->replaceField(replaceField->getName(), replaceField->getDataType());
         }
 
-        testSchemaFieldCnt = 0;
-        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt, ++testSchemaFieldCnt)
+        for (const auto& [idx, field] : std::views::enumerate(rndFields))
         {
-            const auto& curField = rndFields[fieldCnt];
-            EXPECT_TRUE(testSchema->getFieldByIndex(testSchemaFieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
-            if (testSchema->getFieldByName(curField->getName()).has_value())
+            EXPECT_TRUE(testSchema->getFieldByIndex(idx)->isEqual(field));
+            EXPECT_TRUE(testSchema->getFieldByName(field->getName()).has_value());
+            if (testSchema->getFieldByName(field->getName()).has_value())
             {
-                EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+                EXPECT_TRUE(testSchema->getFieldByName(field->getName()).value()->isEqual(field));
             }
-            testSchemaFieldCnt += curField->getDataType()->nullable;
         }
     }
 }
@@ -410,11 +398,6 @@ TEST_F(SchemaTest, copyTest)
             EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
         }
     }
-}
-
-TEST_F(SchemaTest, updateSourceNameTest)
-{
-    /// TODO once #4355 is done, we can test updateSourceName(source1) here
 }
 
 }
