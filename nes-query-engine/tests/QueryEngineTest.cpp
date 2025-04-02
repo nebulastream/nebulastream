@@ -415,6 +415,33 @@ TEST_F(QueryEngineTest, failureDuringPipelineStopMultipleSources)
     test.stop();
 }
 
+TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultiplePipelines)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source1 = builder.addSource();
+    auto failingPipeline = builder.addPipeline({source1});
+    builder.addSink({failingPipeline});
+    for (size_t i = 0; i < 100; i++)
+    {
+        auto okayPipeline = builder.addPipeline({source1});
+        builder.addSink({okayPipeline});
+    }
+
+    auto query = test.addNewQuery(std::move(builder));
+    auto id = query->queryId;
+    test.pipelineControls[failingPipeline]->failOnStart = true;
+
+    test.expectQueryStatusEvents(id, {Runtime::Execution::QueryStatus::Failed});
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        ASSERT_TRUE(test.waitForQepTermination(id, DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+}
+
 TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultipleSources)
 {
     TestingHarness test;
