@@ -144,6 +144,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
 
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), numberOfLocalBuffersInSource);
 }
+
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
@@ -152,10 +153,8 @@ std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(co
 
     return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
         OriginId(0),
-        validatedParserConfiguration.parserType,
         schema,
-        validatedParserConfiguration.tupleDelimiter,
-        validatedParserConfiguration.fieldDelimiter);
+        validatedParserConfiguration);
 }
 
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)

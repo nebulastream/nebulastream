@@ -16,8 +16,8 @@
 
 #include <cstdint>
 #include <string_view>
-#include <vector>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <functional>
+
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Strings.hpp>
@@ -25,6 +25,18 @@
 
 namespace NES::InputFormatters::RawInputDataParser
 {
+
+using ParseFunctionSignature = std::function<void(
+    std::string_view inputString,
+    int8_t* fieldPointer,
+    Memory::AbstractBufferProvider& bufferProvider,
+    Memory::TupleBuffer& tupleBufferFormatted)>;
+
+struct FieldConfig
+{
+    size_t size;
+    ParseFunctionSignature parseFunction;
+};
 
 /// Takes a target integer type and an integer value represented as a string. Attempts to parse the string to a C++ integer of the target type.
 /// @Note throws CannotFormatMalformedStringValue if the parsing fails.
@@ -40,9 +52,8 @@ auto parseFieldString()
 }
 
 /// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
-void addBasicStringParseFunction(std::vector<InputFormatterTask::ParseFunctionSignature>& fieldParseFunctions);
+ParseFunctionSignature getBasicStringParseFunction();
 
 /// Takes a vector containing parse function for fields. Adds a parse function that parses a basic NebulaStream type to the vector.
-void addBasicTypeParseFunction(
-    const BasicPhysicalType& basicPhysicalType, std::vector<InputFormatterTask::ParseFunctionSignature>& fieldParseFunctions);
+ParseFunctionSignature getBasicTypeParseFunction(const BasicPhysicalType& basicPhysicalType);
 }

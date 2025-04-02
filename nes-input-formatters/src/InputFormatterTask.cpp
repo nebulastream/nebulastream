@@ -14,14 +14,11 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
-#include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <utility>
-#include <vector>
+
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -37,7 +34,6 @@
 #include <SequenceShredder.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace
 {
@@ -73,48 +69,40 @@ struct BufferData
 
 InputFormatterTask::InputFormatterTask(
     const OriginId originId,
-    std::string tupleDelimiter,
-    std::string fieldDelimiter,
+    std::unique_ptr<InputFormatter> inputFormatter,
     const Schema& schema,
-    std::unique_ptr<InputFormatter> inputFormatter)
+    const Sources::ParserConfig& parserConfig)
     : originId(originId)
-    , sequenceShredder(std::make_unique<SequenceShredder>(tupleDelimiter.size()))
-    , tupleDelimiter(std::move(tupleDelimiter))
-    , fieldDelimiter(std::move(fieldDelimiter))
-    , numberOfFieldsInSchema(schema.getFieldCount())
     , inputFormatter(std::move(inputFormatter))
+    , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))
+    , tupleDelimiter(parserConfig.tupleDelimiter)
+    , fieldDelimiter(parserConfig.fieldDelimiter)
+    , numberOfFieldsInSchema(schema.getFieldCount())
     , sizeOfTupleInBytes(schema.getSchemaSizeInBytes())
 {
-    this->fieldSizes.reserve(numberOfFieldsInSchema);
-    this->fieldParseFunctions.reserve(numberOfFieldsInSchema);
-    std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
-    const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    physicalTypes.reserve(numberOfFieldsInSchema);
-    for (const std::shared_ptr<AttributeField>& field : schema)
-    {
-        physicalTypes.emplace_back(defaultPhysicalTypeFactory.getPhysicalType(field->getDataType()));
-    }
+    this->fieldConfigs.reserve(numberOfFieldsInSchema);
 
     /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
     /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
     /// field number, load the correct function for parsing from the vector.
-    for (const auto& physicalType : physicalTypes)
+    for (const std::shared_ptr<AttributeField>& field : schema)
     {
+        const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+        const auto physicalType = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         /// Store the size of the field in bytes (for offset calculations).
-        this->fieldSizes.emplace_back(physicalType->size());
         /// Store the parsing function in a vector.
         if (const auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
         {
-            RawInputDataParser::addBasicTypeParseFunction(*basicPhysicalType, this->fieldParseFunctions);
+            fieldConfigs.emplace_back(physicalType->size(), RawInputDataParser::getBasicTypeParseFunction(*basicPhysicalType));
         }
         else
         {
-            RawInputDataParser::addBasicStringParseFunction(this->fieldParseFunctions);
+            fieldConfigs.emplace_back(physicalType->size(), RawInputDataParser::getBasicStringParseFunction());
         }
     }
 }
-InputFormatterTask::~InputFormatterTask() = default;
 
+InputFormatterTask::~InputFormatterTask() = default;
 
 void InputFormatterTask::execute(const Memory::TupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pec)
 {
@@ -145,8 +133,7 @@ void InputFormatterTask::execute(const Memory::TupleBuffer& rawBuffer, Runtime::
 
     /// Get indexes field delimiters in the raw buffer using the InputFormatter implementation
     const auto bufferView = std::string_view(bufferData.rawBuffer.getBuffer<char>(), bufferData.rawBuffer.getNumberOfTuples());
-    bufferData.bufferOffsets = inputFormatter->indexRawBuffer(
-        bufferView, fieldOffsets, tupleDelimiter, fieldDelimiter);
+    bufferData.bufferOffsets = inputFormatter->indexRawBuffer(bufferView, fieldOffsets, tupleDelimiter, fieldDelimiter);
 
     /// Finalize the state of the field offsets and get the final number of tuples.
     /// Determine whether raw input buffer delimits at least two tuples.
@@ -180,7 +167,7 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
             bufferData.bufferOffsets.offsetOfLastTupleDelimiter},
         bufferData.sequenceNumberOfCurrentBuffer);
 
-    /// 1. process leading partial tuple if required
+    /// 1. process leading spanning tuple if required
     auto formattedBuffer = bufferData.bufferProvider->getBufferBlocking();
     if (/* hasLeadingSpanningTuple */ indexOfSequenceNumberInStagedBuffers != 0)
     {
@@ -194,7 +181,7 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
         processRawBuffer(bufferData, runningChunkNumber, fieldOffsets, formattedBuffer, pec);
     }
 
-    /// 3. process trailing partial tuple if required
+    /// 3. process trailing spanning tuple if required
     if (/* hasTrailingPartialTuple */ indexOfSequenceNumberInStagedBuffers < (stagedBuffers.size() - 1))
     {
         const auto numBytesInFormattedBuffer = formattedBuffer.getNumberOfTuples() * sizeOfTupleInBytes;
@@ -271,10 +258,10 @@ void InputFormatterTask::processTuple(
         const auto isLastField = fieldIndex == numberOfFieldsInSchema - 1;
         sizeOfCurrentRawField = (isLastField) ? sizeOfCurrentRawField : sizeOfCurrentRawField - fieldDelimiter.size();
 
-        const auto sizeOfCurrentFormattedField = fieldSizes[fieldIndex];
+        const auto sizeOfCurrentFormattedField = fieldConfigs[fieldIndex].size;
 
         const auto currentFieldSV = std::string_view(currentRawFieldsPtr, sizeOfCurrentRawField);
-        fieldParseFunctions[fieldIndex](currentFieldSV, currentFormattedFieldsPtr, bufferProvider, formattedBuffer);
+        fieldConfigs[fieldIndex].parseFunction(currentFieldSV, currentFormattedFieldsPtr, bufferProvider, formattedBuffer);
 
         fieldOffsetInRawData += sizeOfCurrentRawField;
         fieldOffsetInFormattedData += sizeOfCurrentFormattedField;
@@ -316,7 +303,7 @@ void InputFormatterTask::processSpanningTuple(
     if (not partialTuple.empty())
     {
         std::vector<FieldOffsetsType> partialTupleOffset(numberOfFieldsInSchema + 1);
-        inputFormatter->indexSpanningTuple(partialTuple, fieldDelimiter, partialTupleOffset.data(), 0, partialTuple.size(), 0);
+        inputFormatter->indexTuple(partialTuple, fieldDelimiter, partialTupleOffset.data(), 0, partialTuple.size());
 
         processTuple(partialTuple.data(), partialTupleOffset.data(), bufferProvider, formattedBuffer);
         formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);

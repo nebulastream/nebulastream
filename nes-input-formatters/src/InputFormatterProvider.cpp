@@ -12,26 +12,28 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <API/Schema.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
+
+#include <memory>
+
 #include <InputFormatters/InputFormatterTask.hpp>
+#include <Sources/SourceDescriptor.hpp>
+
+#include <Identifiers/Identifiers.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
+#include <API/Schema.hpp>
 
 namespace NES::InputFormatters::InputFormatterProvider
 {
 
-std::unique_ptr<InputFormatterTask> provideInputFormatterTask(
-    const OriginId originId, const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
+std::unique_ptr<InputFormatterTask> provideInputFormatterTask(const OriginId originId, const Schema& schema, const Sources::ParserConfig& config)
 {
-    if (auto inputFormatter = InputFormatterRegistry::instance().create(parserType, InputFormatterRegistryArguments{}))
+    if (auto inputFormatter
+        = InputFormatterRegistry::instance().create(config.parserType, InputFormatterRegistryArguments{}))
     {
-        return std::make_unique<InputFormatterTask>(
-            originId, std::move(tupleDelimiter), std::move(fieldDelimiter), std::move(schema), std::move(inputFormatter.value()));
+        return std::make_unique<InputFormatterTask>(originId, std::move(inputFormatter.value()), schema, config);
     }
-    throw UnknownParserType("unknown type of parser: {}", parserType);
+    throw UnknownParserType("unknown type of parser: {}", config.parserType);
 }
 }

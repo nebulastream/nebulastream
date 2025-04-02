@@ -41,26 +41,23 @@ public:
     InputFormatter(InputFormatter&&) = delete;
     InputFormatter& operator=(InputFormatter&&) = delete;
 
-    /// Determines all indexes of a spanning tuple (a tuple that spans at least two raw buffers).
+    // TODO:
+    /// Determines all indexes of a tuple (a tuple that spans at least two raw buffers).
     /// Must write all indexes to the correct position to the fieldOffsets pointer.
     /// @Note Must be thread-safe (see description of class)
-    virtual void indexSpanningTuple(
+    virtual void indexTuple(
         std::string_view tuple,
         std::string_view fieldDelimiter,
         FieldOffsetsType* fieldOffsets,
         FieldOffsetsType startIdxOfCurrentTuple,
-        FieldOffsetsType endIdxOfCurrentTuple,
-        FieldOffsetsType currentFieldIndex)
+        FieldOffsetsType endIdxOfCurrentTuple)
         = 0;
 
     /// Determines all indexes of all full tuples in a raw buffer. A raw buffer may start and end with a partial tuple.
     /// Must write all indexes to the fieldOffsets pointer.
     /// @Note Must be thread-safe (see description of class)
     virtual BufferOffsets indexRawBuffer(
-        std::string_view bufferView,
-        FieldOffsets& fieldOffsets,
-        std::string_view tupleDelimiter,
-        std::string_view fieldDelimiter)
+        std::string_view bufferView, FieldOffsets& fieldOffsets, std::string_view tupleDelimiter, std::string_view fieldDelimiter)
         = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatter& inputFormatter) { return inputFormatter.toString(os); }

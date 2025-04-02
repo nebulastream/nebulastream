@@ -25,6 +25,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -41,6 +42,11 @@ class FieldOffsets;
 struct BufferData;
 struct SpanningTuple;
 struct StagedBuffer;
+
+namespace RawInputDataParser
+{
+struct FieldConfig;
+}
 
 /// TODO #496: Implement InputFormatterTask a Nautilus Operator (CompiledExecutablePipelineStage/Special Scan)
 /// -> figure out how to best call SequenceShredder and handle return values of SequenceShredder
@@ -60,19 +66,8 @@ struct StagedBuffer;
 class InputFormatterTask final : public NES::Runtime::Execution::ExecutablePipelineStage
 {
 public:
-    ///
-    using ParseFunctionSignature = std::function<void(
-        std::string_view inputString,
-        int8_t* fieldPointer,
-        Memory::AbstractBufferProvider& bufferProvider,
-        Memory::TupleBuffer& tupleBufferFormatted)>;
-
     explicit InputFormatterTask(
-        OriginId originId,
-        std::string tupleDelimiter,
-        std::string fieldDelimiter,
-        const Schema& schema,
-        std::unique_ptr<InputFormatter> inputFormatter);
+        OriginId originId, std::unique_ptr<InputFormatter> inputFormatter, const Schema& schema, const Sources::ParserConfig& parserConfig);
     ~InputFormatterTask() override;
 
     InputFormatterTask(const InputFormatterTask&) = delete;
@@ -95,13 +90,12 @@ public:
 
 private:
     OriginId originId;
+    std::unique_ptr<InputFormatter> inputFormatter;
     std::unique_ptr<SequenceShredder> sequenceShredder;
+    std::vector<RawInputDataParser::FieldConfig> fieldConfigs;
     std::string tupleDelimiter;
     std::string fieldDelimiter;
-    uint32_t numberOfFieldsInSchema;
-    std::vector<size_t> fieldSizes;
-    std::vector<ParseFunctionSignature> fieldParseFunctions;
-    std::unique_ptr<InputFormatter> inputFormatter;
+    const uint32_t numberOfFieldsInSchema;
     uint32_t sizeOfTupleInBytes;
 
 private:

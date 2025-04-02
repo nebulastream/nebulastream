@@ -34,13 +34,12 @@ public:
     CSVInputFormatter(CSVInputFormatter&&) = delete;
     CSVInputFormatter& operator=(CSVInputFormatter&&) = delete;
 
-    void indexSpanningTuple(
+    void indexTuple(
         std::string_view tuple,
         std::string_view fieldDelimiter,
         FieldOffsetsType* fieldOffsets,
         FieldOffsetsType startIdxOfCurrentTuple,
-        FieldOffsetsType endIdxOfCurrentTuple,
-        FieldOffsetsType currentFieldIndex) override;
+        FieldOffsetsType endIdxOfCurrentTuple) override;
 
     BufferOffsets indexRawBuffer(
         std::string_view bufferView,

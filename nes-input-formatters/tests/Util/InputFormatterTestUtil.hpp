@@ -224,10 +224,8 @@ std::vector<Runtime::Execution::TestPipelineTask> createTasks(const TestHandle<T
     const std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask
         = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
             OriginId(0),
-            testHandle.testConfig.parserConfig.parserType,
             *testHandle.schema,
-            testHandle.testConfig.parserConfig.tupleDelimiter,
-            testHandle.testConfig.parserConfig.fieldDelimiter);
+            testHandle.testConfig.parserConfig);
     std::vector<Runtime::Execution::TestPipelineTask> tasks;
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
