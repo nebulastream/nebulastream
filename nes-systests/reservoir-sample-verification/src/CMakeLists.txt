@@ -10,5 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(reservoir-sample-verification)
-add_tests_if_enabled(systest)
+#add_source_files(nes-systest-lib)
