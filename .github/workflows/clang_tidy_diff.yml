@@ -24,7 +24,8 @@ on:
 
 jobs:
   check-clang-tidy:
-    runs-on: [ self-hosted, linux, Build ]
+    # Due to limited ARM server capacity we only run on x64
+    runs-on: [ self-hosted, linux, Build, x64]
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
       options: --user root
