@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -250,10 +252,10 @@ public:
         {
             case Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
                 addTaskOrDoItInPlace(std::move(task));
-            return true;
+                return true;
             case Execution::PipelineExecutionContext::ContinuationPolicy::IMMEDIATE:
                 doTaskInPlace(std::move(task));
-            return true;
+                return true;
             case Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT:
             case Execution::PipelineExecutionContext::ContinuationPolicy::NEVER:
                 if (not internalTaskQueue.tryWriteUntil(
@@ -373,9 +375,9 @@ private:
     void addTaskOrDoItInPlace(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        if (not internalTaskQueue.write(std::move(task)))
+        if (not internalTaskQueue.write(std::move(task))) /// NOLINT no move will happen if tryWriteUntil has failed
         {
-            doTaskInPlace(std::move(task));
+            doTaskInPlace(std::move(task)); /// NOLINT no move will happen
         }
     }
 
@@ -392,7 +394,7 @@ private:
         }
 
 
-        if (not internalTaskQueue.writeIfNotFull(std::move(task)))
+        if (not internalTaskQueue.writeIfNotFull(std::move(task))) /// NOLINT no move will happen if writeIfNotFull has failed
         {
             /// The order below is important. We want to make sure that we pick up a next task before we write the current task into the queue.
             Task nextTask;
@@ -447,13 +449,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                 {
                     pool.statistic->onEvent(
                         TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
-                    return pool.emitWork(
-                        task.queryId,
-                        pipeline,
-                        tupleBuffer,
-                        {},
-                        {},
-                        continuationPolicy);
+                    return pool.emitWork(task.queryId, pipeline, tupleBuffer, {}, {}, continuationPolicy);
                 }
                 /// Otherwise, get the successor of the pipeline, and emit a work task for it.
                 return std::ranges::all_of(

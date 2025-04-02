@@ -24,6 +24,7 @@
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <Interfaces.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
 
