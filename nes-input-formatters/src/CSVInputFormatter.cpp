@@ -492,6 +492,8 @@ void CSVInputFormatter::parseTupleBufferRaw(
         /// 0. Allocate formatted buffer to write formatted tuples into.
         progressTracker.setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
 
+        INVARIANT(indexOfBuffer < buffersToFormat.size(), "Index of buffer must be smaller than the size of the buffers.");
+
         /// 1. Process leading partial tuple if exists
         const auto hasLeadingPartialTuple = (indexOfBuffer != 0);
         if (hasLeadingPartialTuple)
@@ -501,7 +503,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         progressTracker.getTupleBufferFormatted().setNumberOfTuples(progressTracker.getNumTuplesInTBFormatted());
 
         /// 2. Process buffer itself
-        const auto& bufferOfSequenceNumber = buffersToFormat[indexOfBuffer];
+        const auto& bufferOfSequenceNumber = buffersToFormat.at(indexOfBuffer);
         progressTracker.resetForNewRawTB(
             bufferOfSequenceNumber.sizeOfBufferInBytes,
             bufferOfSequenceNumber.buffer.getBuffer<const char>(),
@@ -557,6 +559,10 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(
     ProgressTracker& progressTracker,
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
+
+    PRECONDITION(partialTupleStartIdx < partialTupleEndIdx, "Partial tuple start index must be smaller than the end index.");
+    PRECONDITION(partialTupleEndIdx <= buffersToFormat.size(), "Partial tuple end index must be smaller than the size of the buffers.");
+
     /// If the buffers are not empty, there are at least three buffers
     /// 1. Process the first buffer
     const auto& firstBuffer = buffersToFormat[partialTupleStartIdx];
