@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <ostream>
+#include <string_view>
+
 #include <InputFormatters/InputFormatterTask.hpp>
 
 namespace NES::InputFormatters
@@ -47,18 +50,15 @@ public:
     /// @Note Must be thread-safe (see description of class)
     virtual void indexTuple(
         std::string_view tuple,
-        std::string_view fieldDelimiter,
         FieldOffsetsType* fieldOffsets,
         FieldOffsetsType startIdxOfCurrentTuple,
-        FieldOffsetsType endIdxOfCurrentTuple)
+        FieldOffsetsType endIdxOfCurrentTuple) const
         = 0;
 
     /// Determines all indexes of all full tuples in a raw buffer. A raw buffer may start and end with a partial tuple.
     /// Must write all indexes to the fieldOffsets pointer.
     /// @Note Must be thread-safe (see description of class)
-    virtual BufferOffsets indexRawBuffer(
-        std::string_view bufferView, FieldOffsets& fieldOffsets, std::string_view tupleDelimiter, std::string_view fieldDelimiter)
-        = 0;
+    virtual BufferOffsets indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatter& inputFormatter) { return inputFormatter.toString(os); }
 

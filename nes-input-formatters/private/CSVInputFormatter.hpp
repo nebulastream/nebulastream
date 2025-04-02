@@ -19,6 +19,7 @@
 #include <string_view>
 #include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
+#include "Sources/SourceDescriptor.hpp"
 
 namespace NES::InputFormatters
 {
@@ -26,7 +27,7 @@ namespace NES::InputFormatters
 class CSVInputFormatter final : public InputFormatter
 {
 public:
-    CSVInputFormatter() = default;
+    explicit CSVInputFormatter(Sources::ParserConfig parserConfig);
     ~CSVInputFormatter() override = default;
 
     CSVInputFormatter(const CSVInputFormatter&) = delete;
@@ -36,18 +37,18 @@ public:
 
     void indexTuple(
         std::string_view tuple,
-        std::string_view fieldDelimiter,
         FieldOffsetsType* fieldOffsets,
         FieldOffsetsType startIdxOfCurrentTuple,
-        FieldOffsetsType endIdxOfCurrentTuple) override;
+        FieldOffsetsType endIdxOfCurrentTuple) const override;
 
-    BufferOffsets indexRawBuffer(
+    BufferOffsets indexBuffer(
         std::string_view bufferView,
-        FieldOffsets& fieldOffsets,
-        std::string_view tupleDelimiter,
-        std::string_view fieldDelimiter) override;
+        FieldOffsets& fieldOffsets) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+
+private:
+    Sources::ParserConfig config;
 };
 
 }

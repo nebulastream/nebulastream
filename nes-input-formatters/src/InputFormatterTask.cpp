@@ -133,7 +133,7 @@ void InputFormatterTask::execute(const Memory::TupleBuffer& rawBuffer, Runtime::
 
     /// Get indexes field delimiters in the raw buffer using the InputFormatter implementation
     const auto bufferView = std::string_view(bufferData.rawBuffer.getBuffer<char>(), bufferData.rawBuffer.getNumberOfTuples());
-    bufferData.bufferOffsets = inputFormatter->indexRawBuffer(bufferView, fieldOffsets, tupleDelimiter, fieldDelimiter);
+    bufferData.bufferOffsets = inputFormatter->indexBuffer(bufferView, fieldOffsets);
 
     /// Finalize the state of the field offsets and get the final number of tuples.
     /// Determine whether raw input buffer delimits at least two tuples.
@@ -303,7 +303,7 @@ void InputFormatterTask::processSpanningTuple(
     if (not partialTuple.empty())
     {
         std::vector<FieldOffsetsType> partialTupleOffset(numberOfFieldsInSchema + 1);
-        inputFormatter->indexTuple(partialTuple, fieldDelimiter, partialTupleOffset.data(), 0, partialTuple.size());
+        inputFormatter->indexTuple(partialTuple, partialTupleOffset.data(), 0, partialTuple.size());
 
         processTuple(partialTuple.data(), partialTupleOffset.data(), bufferProvider, formattedBuffer);
         formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);

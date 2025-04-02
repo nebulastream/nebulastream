@@ -30,7 +30,7 @@ namespace NES::InputFormatters::InputFormatterProvider
 std::unique_ptr<InputFormatterTask> provideInputFormatterTask(const OriginId originId, const Schema& schema, const Sources::ParserConfig& config)
 {
     if (auto inputFormatter
-        = InputFormatterRegistry::instance().create(config.parserType, InputFormatterRegistryArguments{}))
+        = InputFormatterRegistry::instance().create(config.parserType, InputFormatterRegistryArguments{config}))
     {
         return std::make_unique<InputFormatterTask>(originId, std::move(inputFormatter.value()), schema, config);
     }
