@@ -70,7 +70,10 @@ private:
             /// Updating if the last chunk has been seen. We do not need to lock the value, as we only update the value once.
             if (sequence.lastChunk)
             {
-                INVARIANT(not std::atomic_exchange(&seenLastChunk, true), "Last chunk has already been seen for this sequence {}. We require that the last chunk is only seen once.", sequence.sequenceNumber);
+                INVARIANT(
+                    not std::atomic_exchange(&seenLastChunk, true),
+                    "Last chunk has already been seen for this sequence {}. We require that the last chunk is only seen once.",
+                    sequence.sequenceNumber);
             }
 
             /// If the chunk is the last chunk, we update the counter with the current chunk number, otherwise we decrease the counter

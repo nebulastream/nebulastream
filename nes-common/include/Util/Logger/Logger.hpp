@@ -152,7 +152,7 @@ struct LogCaller<LogLevel::LOG_WARNING>
         { \
             SUPPRESS_UNUSED_WARNING(__VA_ARGS__); \
         } \
-         \
+\
     } while (0)
 
 /// Creates a log message with log level trace.

@@ -35,7 +35,6 @@
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sequencing/SequenceData.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
@@ -76,7 +75,7 @@ public:
         , originId(originId)
         , tupleDelimiter(std::move(tupleDelimiter))
         , tupleSizeInBytes(tupleSizeInBytes)
-        , numSchemaFields(numberOfSchemaFields){};
+        , numSchemaFields(numberOfSchemaFields) {};
 
     ~ProgressTracker() = default;
 
@@ -559,7 +558,6 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(
     ProgressTracker& progressTracker,
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
-
     PRECONDITION(partialTupleStartIdx < partialTupleEndIdx, "Partial tuple start index must be smaller than the end index.");
     PRECONDITION(partialTupleEndIdx <= buffersToFormat.size(), "Partial tuple end index must be smaller than the size of the buffers.");
 
@@ -568,8 +566,11 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(
     const auto& firstBuffer = buffersToFormat[partialTupleStartIdx];
     const auto sizeOfLeadingPartialTuple
         = firstBuffer.sizeOfBufferInBytes - (firstBuffer.offsetOfLastTupleDelimiter + tupleDelimiter.size());
-    INVARIANT(sizeOfLeadingPartialTuple <= firstBuffer.buffer.getBufferSize(), "Partial tuple is larger {} than buffer size {}",
-              sizeOfLeadingPartialTuple, firstBuffer.buffer.getBufferSize());
+    INVARIANT(
+        sizeOfLeadingPartialTuple <= firstBuffer.buffer.getBufferSize(),
+        "Partial tuple is larger {} than buffer size {}",
+        sizeOfLeadingPartialTuple,
+        firstBuffer.buffer.getBufferSize());
     const std::string_view firstBytesOfPartialTuple = std::string_view(
         firstBuffer.buffer.getBuffer<const char>() + (firstBuffer.offsetOfLastTupleDelimiter + 1), sizeOfLeadingPartialTuple);
 
