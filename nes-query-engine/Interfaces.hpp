@@ -18,6 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <Task.hpp>
 
 namespace NES::Runtime

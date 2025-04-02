@@ -255,7 +255,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
         {
             const std::unique_lock lock(unpooledBuffersMutex);
             memoryResource->deallocate(ptr, alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT);
-            const auto ptrCopy = memorySegment->ptr;
+            auto* const ptrCopy = memorySegment->ptr;
             memorySegment->ptr = nullptr;
             unpooledBuffers.erase(ptrCopy);
         },
