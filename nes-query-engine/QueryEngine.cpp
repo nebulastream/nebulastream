@@ -392,7 +392,7 @@ private:
         }
 
 
-        if (not internalTaskQueue.write(std::move(task)))
+        if (not internalTaskQueue.writeIfNotFull(std::move(task)))
         {
             /// The order below is important. We want to make sure that we pick up a next task before we write the current task into the queue.
             Task nextTask;
