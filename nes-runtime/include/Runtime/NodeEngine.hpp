@@ -420,7 +420,7 @@ std::map<DecomposedQueryId, QueryPreviousMetrics> getNeighbourStatistics(WorkerI
  std::map<WorkerId, uint64_t> getNeighbours() const;
  void clearNeighbours();
  uint64_t getNeighbourResources(WorkerId neighbourId);
-
+uint64_t getNumberOfQueriesDeployed() const;
   private:
     /**
      * @brief method to start a already deployed query

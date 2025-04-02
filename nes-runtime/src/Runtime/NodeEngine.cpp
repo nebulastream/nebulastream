@@ -978,4 +978,7 @@ void NodeEngine::rpcTrimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp) 
     nesWorker->rpcTrimCheckpoint(nesPartitionId, timestamp);
 }
 
+uint64_t NodeEngine::getNumberOfQueriesDeployed() const {
+    return deployedExecutableQueryPlans.size();
+}
 }// namespace NES::Runtime

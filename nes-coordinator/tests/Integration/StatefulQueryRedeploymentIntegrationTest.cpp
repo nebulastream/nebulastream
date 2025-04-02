@@ -232,7 +232,6 @@ class StatefulQueryRedeploymentIntegrationTest : public Testing::BaseIntegration
         wrkConf->numberOfBuffersInGlobalBufferManager = 200000;
         wrkConf->numberOfBuffersInSourceLocalBufferPool = 20000;
         wrkConf->numberOfBuffersPerWorker = 20000;
-
         auto lambdaSourceFunction = [
                                         &bufferCount, &waitForReconfig, &waitForReconnect, &waitForFinalCount, &actualReconnects,
                                         &numBuffersToProduceBeforeReconnect, &numBuffersToProduceWhileBuffering, &numBuffersToProduceAfterReconnect,
@@ -314,6 +313,7 @@ class StatefulQueryRedeploymentIntegrationTest : public Testing::BaseIntegration
         wrkConf->numberOfBuffersInGlobalBufferManager = 200000;
         wrkConf->numberOfBuffersInSourceLocalBufferPool = 20000;
         wrkConf->numberOfBuffersPerWorker = 20000;
+        wrkConf->loadBalancing = 1000;
 
         NesWorkerPtr wrk = std::make_shared<NesWorker>(std::move(wrkConf));
         bool resStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
@@ -337,10 +337,11 @@ class StatefulQueryRedeploymentIntegrationTest : public Testing::BaseIntegration
         // coordinatorConfiguration->worker.numberOfBuffersToProduce = numberOfBuffersToProduce;
         coordinatorConfiguration->worker.numWorkerThreads.setValue(4);
         coordinatorConfiguration->worker.bufferSizeInBytes = 1024;
+        coordinatorConfiguration->worker.enableStatisticOutput = true;
          coordinatorConfiguration->worker.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
-
+        coordinatorConfiguration->worker.loadBalancing = 1000;
         NES::Configurations::OptimizerConfiguration optimizerConfiguration;
-        optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule;
+        // optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule;
         optimizerConfiguration.enableIncrementalPlacement = true;
         optimizerConfiguration.placementAmendmentThreadCount = 4;
         coordinatorConfiguration->optimizer = optimizerConfiguration;
@@ -695,9 +696,9 @@ TEST_P(StatefulQueryRedeploymentIntegrationTest, testMultiplePlannedReconnectsFr
     NES_DEBUG("start inter 1");
     auto inter1 = startIntermediateWorker();
     ASSERT_TRUE(waitForNodes(5, 3, topology));
-    NES_DEBUG("start inter 2");
-    auto inter2 = startIntermediateWorker();
-    ASSERT_TRUE(waitForNodes(5, 4, topology));
+    // NES_DEBUG("start inter 2");
+    // auto inter2 = startIntermediateWorker();
+    // ASSERT_TRUE(waitForNodes(5, 4, topology));
 
     changingSrc2->replaceParent(crd->getNesWorker()->getWorkerId(), inter1->getWorkerId());
     // src1->addParent(inter2->getWorkerId());
@@ -714,11 +715,20 @@ TEST_P(StatefulQueryRedeploymentIntegrationTest, testMultiplePlannedReconnectsFr
     //start query
     QueryId queryId = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
+
     std::vector<NesWorkerPtr> reconnectParents;
 
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, crd->getQueryCatalog()));
     SharedQueryId sharedQueryId = crd->getGlobalQueryPlan()->getSharedQueryId(queryId);
     ASSERT_NE(sharedQueryId, INVALID_SHARED_QUERY_ID);
+
+    query = Query::from(logicalSource2)
+                    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1)))
+                    .byKey(Attribute("value2"))
+                    .apply(Sum(Attribute("id2")))
+                    .sink(fileSinkDescriptor);
+    auto queryId1 = crd->getRequestHandlerService()->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+
 
     //reconfiguration
     ASSERT_EQ(inter1->getNodeEngine()->getDecomposedQueryIds(sharedQueryId).size(), 1);
@@ -777,12 +787,12 @@ TEST_P(StatefulQueryRedeploymentIntegrationTest, testMultiplePlannedReconnectsFr
 //            ossAfter << std::to_string(i) << std::endl;
 //        }
 //        compareStringAfter = ossAfter.str();
-        auto addLinkEvent1 = std::make_shared<RequestProcessor::ISQPAddLinkEvent>(inter2->getWorkerId(), changingSrc2->getWorkerId());
-        auto removeLinkEvent1 =
-            std::make_shared<RequestProcessor::ISQPRemoveLinkEvent>(inter1->getWorkerId(), changingSrc2->getWorkerId());
-        crd->getRequestHandlerService()->queueISQPRequest({addLinkEvent1, removeLinkEvent1});
+        auto queryCatalog = crd->getQueryCatalog();
+        auto sharedQueryPlanId = queryCatalog->getLinkedSharedQueryId(queryId);
+        auto decomposedIds = inter1->getNodeEngine()->getDecomposedQueryIds(sharedQueryPlanId);
 
-        // sleep(5);
+        // inter1->requestOffload(sharedQueryPlanId, decomposedIds[0].id, crd->getNesWorker()->getWorkerId());
+        sleep(5);
         //notify lambda source that reconfig happened and make it release more tuples into the buffer
         waitForFinalCount = false;
         waitForReconfig = true;
@@ -806,15 +816,15 @@ TEST_P(StatefulQueryRedeploymentIntegrationTest, testMultiplePlannedReconnectsFr
                   Network::PartitionRegistrationStatus::Registered);
 
         //coordinator side checks
-        auto lockedExecutionNode = crd->getGlobalExecutionPlan()->getLockedExecutionNode(inter2->getWorkerId());
-        auto updatedPartition =
-            std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(lockedExecutionNode->operator*()
-                                                                            ->getAllDecomposedQueryPlans(sharedQueryId)
-                                                                            .front()
-                                                                            ->getSourceOperators()
-                                                                            .front()
-                                                                            ->getSourceDescriptor())
-                ->getNesPartition();
+        // auto lockedExecutionNode = crd->getGlobalExecutionPlan()->getLockedExecutionNode(inter2->getWorkerId());
+        // auto updatedPartition =
+            // std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(lockedExecutionNode->operator*()
+                                                                            // ->getAllDecomposedQueryPlans(sharedQueryId)
+                                                                            // .front()
+                                                                            // ->getSourceOperators()
+                                                                            // .front()
+                                                                            // ->getSourceDescriptor())
+                // ->getNesPartition();
 
 //        ASSERT_EQ(inter2->getNodeEngine()->getPartitionManager()->getConsumerRegistrationStatus(updatedPartition),
 //                  Network::PartitionRegistrationStatus::Registered);

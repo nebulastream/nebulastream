@@ -584,8 +584,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
     workerConfig1->loadBalancing = 0;
     workerConfig1->connectSinksAsync = true;
     workerConfig1->connectSourceEventChannelsAsync = true;
-    workerConfig1->numberOfBuffersInGlobalBufferManager = 8192;
-    workerConfig1->numberOfBuffersInSourceLocalBufferPool = 1024;
+    workerConfig1->numWorkerThreads = 1;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
     EXPECT_TRUE(wrk1->start(false, true));
 
@@ -594,6 +593,7 @@ TEST_F(MeerkatTest, testMeerkatThreeWorkersOffload) {
     workerConfig->connectSourceEventChannelsAsync = true;
     workerConfig->numberOfBuffersInGlobalBufferManager = 8192;
     workerConfig->numberOfBuffersInSourceLocalBufferPool = 1024;
+    workerConfig->numWorkerThreads = 1;
     NesWorkerPtr wrkLeaf1 = std::make_shared<NesWorker>(std::move(workerConfig));
     wrkLeaf1->getWorkerConfiguration()->physicalSourceTypes.add(lambdaSource);
     EXPECT_TRUE(wrkLeaf1->start(false, true));

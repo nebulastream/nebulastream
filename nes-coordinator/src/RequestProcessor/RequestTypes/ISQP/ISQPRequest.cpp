@@ -351,8 +351,6 @@ void ISQPRequest::handleOffloadQueryRequest(ISQPOffloadQueryEventPtr offloadEven
 
             //4.1. Iterate over impacted shared query plan ids to identify the shared query plans placed on the
             // upstream and downstream execution nodes
-            for (auto const& impactedSharedQueryId : impactedSharedQueryIds) {
-
                 auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamTopologyNode);
                 auto downstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(downstreamTopologyNode);
 
@@ -363,14 +361,14 @@ void ISQPRequest::handleOffloadQueryRequest(ISQPOffloadQueryEventPtr offloadEven
 
                 //4.3. Only process the upstream and downstream execution node pairs when both have shared query plans
                 // with the impacted shared query id
-                if (upstreamExecutionNode->operator*()->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)
-                    && downstreamExecutionNode->operator*()->hasRegisteredDecomposedQueryPlans(impactedSharedQueryId)) {
+                if (upstreamExecutionNode->operator*()->hasRegisteredDecomposedQueryPlans(sharedQueryId)
+                    && downstreamExecutionNode->operator*()->hasRegisteredDecomposedQueryPlans(sharedQueryId)) {
 
                     //Fetch the shared query plan and update its status
-                    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(impactedSharedQueryId);
+                    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
                     sharedQueryPlan->setStatus(SharedQueryPlanStatus::MIGRATING);
 
-                    queryCatalog->updateSharedQueryStatus(impactedSharedQueryId, QueryState::MIGRATING, "");
+                    queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::MIGRATING, "");
 
                     //find the pinned operators for the changelog
                     auto [upstreamOperatorIds, downstreamOperatorIds] =  offloadPlanner.findUpstreamAndDownstreamPinnedOperators(originWorkerId, sharedQueryId, decomposedQueryId, targetWorkerId);
@@ -386,7 +384,6 @@ void ISQPRequest::handleOffloadQueryRequest(ISQPOffloadQueryEventPtr offloadEven
                 auto valueAfter = std::chrono::duration_cast<std::chrono::milliseconds>(epoch);
 
                 std::cout << "The ISQP decision time was: " << valueAfter.count() - value.count();
-            }
         }
     }
 }
