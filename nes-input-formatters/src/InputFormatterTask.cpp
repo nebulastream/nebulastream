@@ -63,7 +63,7 @@ struct BufferData
     SequenceNumber::Underlying sequenceNumberOfCurrentBuffer;
     Memory::AbstractBufferProvider* bufferProvider;
     size_t sizeOfFormattedTupleBufferInBytes;
-    InputFormatter::BufferOffsets bufferOffsets;
+    InputFormatter::FirstAndLastTupleDelimiterOffsets bufferOffsets;
     size_t numberOfTuplesInRawBuffer;
 };
 
@@ -137,7 +137,7 @@ void InputFormatterTask::execute(const Memory::TupleBuffer& rawBuffer, Runtime::
 
     /// Finalize the state of the field offsets and get the final number of tuples.
     /// Determine whether raw input buffer delimits at least two tuples.
-    bufferData.numberOfTuplesInRawBuffer = fieldOffsets.finishRead();
+    bufferData.numberOfTuplesInRawBuffer = fieldOffsets.finishWrite();
 
     if (/* hasTupleDelimiter */ bufferData.bufferOffsets.offsetOfLastTupleDelimiter != static_cast<FieldOffsetsType>(std::string::npos))
     {

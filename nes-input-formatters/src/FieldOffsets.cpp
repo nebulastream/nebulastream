@@ -83,7 +83,7 @@ void FieldOffsets::allocateNewChildBuffer()
     this->currentIndex = NUMBER_OF_RESERVED_FIELDS;
 }
 
-size_t FieldOffsets::finishRead()
+size_t FieldOffsets::finishWrite()
 {
     /// Make sure that the number of read fields matches the expected value.
     if ((currentIndex - NUMBER_OF_RESERVED_FIELDS) % (numberOfFieldsInTuple + 1) != 0)

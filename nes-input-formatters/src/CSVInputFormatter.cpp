@@ -22,6 +22,7 @@
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
@@ -58,15 +59,21 @@ void CSVInputFormatter::indexTuple(
     *fieldOffsets = endIdxOfCurrentTuple;
 }
 
-InputFormatter::BufferOffsets CSVInputFormatter::indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const
+InputFormatter::FirstAndLastTupleDelimiterOffsets
+CSVInputFormatter::indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const
 {
-    // Todo: add PRECONDITION/INVARIANT on the caller side (for bufferView!)
     const auto sizeOfTupleDelimiter = this->config.tupleDelimiter.size();
-
     const auto offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(bufferView.find(this->config.tupleDelimiter));
+
+    /// If the buffer does not contain a delimiter, exit early
+    if (offsetOfFirstTupleDelimiter == static_cast<FieldOffsetsType>(std::string::npos))
+    {
+        return {.offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter, . offsetOfLastTupleDelimiter = offsetOfFirstTupleDelimiter};
+    }
+
+    /// If the buffer contains at least one delimiter, check if it contains more and index all tuples between the tuple delimiters
     size_t startIdxOfCurrentTuple = offsetOfFirstTupleDelimiter + sizeOfTupleDelimiter;
     size_t endIdxOfCurrentTuple = bufferView.find(this->config.tupleDelimiter, startIdxOfCurrentTuple);
-
     while (endIdxOfCurrentTuple != std::string::npos)
     {
         auto* tupleOffsetPtr = fieldOffsets.writeNextTuple();
@@ -80,13 +87,13 @@ InputFormatter::BufferOffsets CSVInputFormatter::indexBuffer(std::string_view bu
         endIdxOfCurrentTuple = bufferView.find(this->config.tupleDelimiter, startIdxOfCurrentTuple);
     }
     const auto offsetOfLastTupleDelimiter = static_cast<FieldOffsetsType>(startIdxOfCurrentTuple - sizeOfTupleDelimiter);
-    return {offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter};
+    return {.offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter, . offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter};
 }
 
 std::ostream& CSVInputFormatter::toString(std::ostream& os) const
 {
-    os << "CSVInputFormatter: {}\n";
-    return os;
+    return os << fmt::format(
+               "CSVInputFormatter(tupleDelimiter: {}, fieldDelimiter: {})", this->config.tupleDelimiter, this->config.fieldDelimiter);
 }
 
 InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments arguments)

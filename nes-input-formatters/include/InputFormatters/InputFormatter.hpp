@@ -31,7 +31,7 @@ namespace NES::InputFormatters
 class InputFormatter
 {
 public:
-    struct BufferOffsets
+    struct FirstAndLastTupleDelimiterOffsets
     {
         FieldOffsetsType offsetOfFirstTupleDelimiter;
         FieldOffsetsType offsetOfLastTupleDelimiter;
@@ -58,7 +58,7 @@ public:
     /// Determines all indexes of all full tuples in a raw buffer. A raw buffer may start and end with a partial tuple.
     /// Must write all indexes to the fieldOffsets pointer.
     /// @Note Must be thread-safe (see description of class)
-    virtual BufferOffsets indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const = 0;
+    virtual FirstAndLastTupleDelimiterOffsets indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatter& inputFormatter) { return inputFormatter.toString(os); }
 

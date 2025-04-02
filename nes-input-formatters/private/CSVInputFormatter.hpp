@@ -41,7 +41,7 @@ public:
         FieldOffsetsType startIdxOfCurrentTuple,
         FieldOffsetsType endIdxOfCurrentTuple) const override;
 
-    BufferOffsets indexBuffer(
+    FirstAndLastTupleDelimiterOffsets indexBuffer(
         std::string_view bufferView,
         FieldOffsets& fieldOffsets) const override;
 

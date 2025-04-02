@@ -56,7 +56,7 @@ public:
     [[nodiscard]] FieldOffsetsType* readNextTuple();
 
     /// Resets the indexes and pointers, calculates and sets the number of tuples in the current buffer, returns the total number of tuples.
-    [[nodiscard]] size_t finishRead();
+    [[nodiscard]] size_t finishWrite();
 
 
 private:
