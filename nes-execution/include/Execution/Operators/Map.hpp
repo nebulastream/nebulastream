@@ -29,7 +29,7 @@ public:
 
 private:
     Record::RecordFieldIdentifier fieldToWriteTo;
-    std::unique_ptr<Runtime::Execution::Functions::Function> mapFunction;
+    std::unique_ptr<Functions::Function> mapFunction;
 };
 
 }

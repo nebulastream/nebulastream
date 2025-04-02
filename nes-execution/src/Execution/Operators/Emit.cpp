@@ -15,6 +15,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+
+#include <nautilus/val.hpp>
+#include <function.hpp>
+
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -27,8 +31,7 @@
 #include <Nautilus/Util.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <nautilus/val.hpp>
-#include <function.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -102,7 +105,7 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
 
 void Emit::execute(ExecutionContext& ctx, Record& record) const
 {
-    const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
+    auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(this));
     /// emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer)
     {

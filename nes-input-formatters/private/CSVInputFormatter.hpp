@@ -45,6 +45,8 @@ public:
         std::string_view bufferView,
         FieldOffsets& fieldOffsets) const override;
 
+    std::string getNullRepresentation() override;
+
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:

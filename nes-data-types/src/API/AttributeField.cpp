@@ -78,4 +78,8 @@ std::shared_ptr<AttributeField> AttributeField::deepCopy() const
     return create(name, dataType);
 }
 
+bool AttributeField::isNullable() const
+{
+    return dataType->nullable;
+}
 }
