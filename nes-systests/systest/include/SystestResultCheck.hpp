@@ -78,7 +78,7 @@ bool compareStringAsTypeWithError(const std::string& left, const std::string& ri
         const auto allowedError = relativeErrorCalculated < epsilonAllowed;
         if (not allowedError)
         {
-            NES_ERROR(
+            NES_TRACE(
                 "Relative error {} is greater than allowed error {} for values {} and {}",
                 relativeErrorCalculated,
                 epsilonAllowed,
