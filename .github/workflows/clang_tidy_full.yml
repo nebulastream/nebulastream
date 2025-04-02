@@ -17,7 +17,8 @@ on:
 
 jobs:
   clang-tidy-full:
-    runs-on: [ self-hosted, linux, Build ]
+    # Due to limited ARM server capacity we only run on x64
+    runs-on: [ self-hosted, linux, Build, x64 ]
     container:
       # TODO #401 Investigate rootless docker containers
       options: --user root
