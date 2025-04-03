@@ -129,6 +129,14 @@ std::optional<CallbackRef> CallbackOwner::getRef() const
     return {};
 }
 
+/// The RunningQueryPlanNodeDeleter ensures that a RunningQueryPlan Node properly stopped.
+/// If a node has been started the requiresTermination flag will be set. In a graceful stop this requires
+/// the engine to stop the pipeline. Since a pipeline stop is potentially an expensive operation this is moved into
+/// the task queue.
+/// Because we use shared ptr to implement the reference counting, we can create a custom deleter, that instead of deleting the
+/// resource of the shared_ptr rescues it in a unique_ptr. At this point there cannot be references onto the pipeline only the PipelineStop
+/// task keeps the Node alive. The node however keeps all of its successors alive. If the pipeline stop has been performed the onSuccess
+/// callback emits PendingPipelineStops for all successors and is destroyed.
 void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryPlanNode* ptr)
 {
     std::unique_ptr<RunningQueryPlanNode> node(ptr);
