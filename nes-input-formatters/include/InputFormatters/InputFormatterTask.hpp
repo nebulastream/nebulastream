@@ -70,7 +70,7 @@ public:
         OriginId originId,
         std::unique_ptr<InputFormatter> inputFormatter,
         const Schema& schema,
-        const Sources::InputFormatterConfig& parserConfig);
+        const Sources::ParserConfig& parserConfig);
     ~InputFormatterTask() override;
 
     InputFormatterTask(const InputFormatterTask&) = delete;

@@ -31,7 +31,7 @@
 namespace NES::InputFormatters
 {
 
-CSVInputFormatter::CSVInputFormatter(Sources::InputFormatterConfig config) : config(std::move(config))
+CSVInputFormatter::CSVInputFormatter(Sources::ParserConfig config) : config(std::move(config))
 {
 }
 

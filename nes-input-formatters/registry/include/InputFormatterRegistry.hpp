@@ -27,7 +27,7 @@ using InputFormatterRegistryReturnType = std::unique_ptr<InputFormatter>;
 /// A InputFormatter requires a schema, a tuple separator and a field delimiter.
 struct InputFormatterRegistryArguments
 {
-    Sources::InputFormatterConfig inputFormatterConfig;
+    Sources::ParserConfig inputFormatterConfig;
 };
 
 class InputFormatterRegistry

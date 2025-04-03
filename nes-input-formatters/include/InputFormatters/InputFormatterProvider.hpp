@@ -22,5 +22,5 @@
 namespace NES::InputFormatters::InputFormatterProvider
 {
 std::unique_ptr<InputFormatterTask>
-provideInputFormatterTask(OriginId originId, const Schema& schema, const Sources::InputFormatterConfig& config);
+provideInputFormatterTask(OriginId originId, const Schema& schema, const Sources::ParserConfig& config);
 }

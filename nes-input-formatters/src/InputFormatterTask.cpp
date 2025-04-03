@@ -71,7 +71,7 @@ InputFormatterTask::InputFormatterTask(
     const OriginId originId,
     std::unique_ptr<InputFormatter> inputFormatter,
     const Schema& schema,
-    const Sources::InputFormatterConfig& parserConfig)
+    const Sources::ParserConfig& parserConfig)
     : originId(originId)
     , inputFormatter(std::move(inputFormatter))
     , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))

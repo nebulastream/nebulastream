@@ -26,7 +26,7 @@ namespace NES::InputFormatters
 class CSVInputFormatter final : public InputFormatter
 {
 public:
-    explicit CSVInputFormatter(Sources::InputFormatterConfig config);
+    explicit CSVInputFormatter(Sources::ParserConfig config);
     ~CSVInputFormatter() override = default;
 
     CSVInputFormatter(const CSVInputFormatter&) = delete;
@@ -45,7 +45,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    Sources::InputFormatterConfig config;
+    Sources::ParserConfig config;
 };
 
 }

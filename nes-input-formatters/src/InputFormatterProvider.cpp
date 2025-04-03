@@ -34,6 +34,6 @@ std::unique_ptr<InputFormatterTask> provideInputFormatterTask(const OriginId ori
     {
         return std::make_unique<InputFormatterTask>(originId, std::move(inputFormatter.value()), schema, config);
     }
-    throw UnknownInputFormatterType("unknown type of parser: {}", config.type);
+    throw UnknownParserType("unknown type of parser: {}", config.type);
 }
 }
