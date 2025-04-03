@@ -16,8 +16,11 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
-#include <magic_enum/magic_enum.hpp>
+
+#include <magic_enum.hpp>
+
 #include <DataTypeRegistry.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>

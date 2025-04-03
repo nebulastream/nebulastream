@@ -14,16 +14,20 @@
 
 #include <NebuLI.hpp>
 
-#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <istream>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <regex>
 #include <stdexcept>
 #include <string>
 #include <utility>
+
+#include <fmt/ranges.h>
+#include <yaml-cpp/yaml.h>
+
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -59,7 +63,7 @@ std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeTyp
     {
         return NES::DataTypeProvider::provideDataType(fieldNodeType, nullable);
     }
-    catch (std::runtime_error& e)
+    catch (std::runtime_error&)
     {
         throw NES::SLTWrongSchema("Found Invalid Logical Source Configuration. {} is not a proper Schema Field Type.", fieldNodeType);
     }
@@ -136,6 +140,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
     {
         throw InvalidConfigParameter("Parser configuration must contain: type");
     }
+
     if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
@@ -147,6 +152,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
         NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
         validParserConfig.tupleDelimiter = '\n';
     }
+
     if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
     {
         validParserConfig.fieldDelimiter = fieldDelimiter->second;
@@ -155,6 +161,30 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
     {
         NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
         validParserConfig.fieldDelimiter = ",";
+    }
+
+    if (const auto nullRepresentation = inputFormatterConfig.find("nullRepresentation"); nullRepresentation != inputFormatterConfig.end())
+    {
+        validInputFormatterConfig.nullRepresentation.emplace(nullRepresentation->second);
+    }
+    else
+    {
+        NES_DEBUG("InputFormatter configuration did not contain: fieldDelimiter, using default: ,");
+        validInputFormatterConfig.nullRepresentation = std::nullopt;
+    }
+
+    if (const auto inputFormatterIsAsync = inputFormatterConfig.find("isAsync"); inputFormatterIsAsync != inputFormatterConfig.end())
+    {
+        if (const auto isAsync = Util::from_chars<bool>(inputFormatterIsAsync->second); isAsync.has_value())
+        {
+            validInputFormatterConfig.isAsync = isAsync.value();
+        }
+        else
+        {
+            throw InvalidConfigParameter(
+                "InputFormatter configuration contained isAsync field, but it was not a supported boolean value: {}",
+                inputFormatterIsAsync->second);
+        }
     }
     return validParserConfig;
 }
@@ -193,7 +223,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     else
     {
         throw UnknownSinkType(
-            "Sinkname {} not specified in the configuration {}",
+            "Sink name {} not specified in the configuration {}",
             query.getSinkOperators().front()->sinkName,
             fmt::join(std::views::keys(config.sinks), ","));
     }
