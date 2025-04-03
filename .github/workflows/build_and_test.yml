@@ -61,12 +61,19 @@ jobs:
         arch: [ x64, arm64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
         build_type: [ 'Debug', 'RelWithDebInfo' ]
+        sanitizer: ['address', 'undefined', 'thread', 'none']
+        exclude:
+          - arch: arm64
+        include:
+          - arch: arm64
+            sanitizer: 'none'
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
       - name: Configure NebulaStream
-        run: cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+        run: |
+          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
       - name: Run Tests
