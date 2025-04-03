@@ -232,7 +232,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AllSources'
+                $ref: '#/components/schemas/AllSourcesOverview'
         "500":
           description: Server Error
           content:
@@ -480,6 +480,12 @@ components:
       description: Unique name of the source
       type: string
       example: tcp_source
+    SourceOverview:
+      description: For the response of all sources
+      type: object
+      properties:
+        source_name:
+          $ref: '#/components/schemas/SourceName'
     SinkName:
       description: Unique name of the sink
       type: string
@@ -629,6 +635,14 @@ components:
           type: array
           items: 
             $ref: '#/components/schemas/Source'
+    AllSourcesOverview:
+      description: Object with an array of all the registered queries
+      type: object
+      properties:
+        sources:
+          type: array
+          items: 
+            $ref: '#/components/schemas/SourceOverview'
     AllSinks:
       description: Object with an array of all the registered sinks
       type: object
