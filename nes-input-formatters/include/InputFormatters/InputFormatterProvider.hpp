@@ -16,10 +16,11 @@
 
 #include <memory>
 
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES::InputFormatters::InputFormatterProvider
 {
-std::unique_ptr<InputFormatterTask> provideInputFormatterTask(OriginId originId, const Schema& schema, const Sources::ParserConfig& config);
+std::unique_ptr<InputFormatterTask>
+provideInputFormatterTask(OriginId originId, const Schema& schema, const Sources::InputFormatterConfig& config);
 }

@@ -96,12 +96,12 @@ getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers)
     };
 }
 
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+Sources::InputFormatterConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
 {
-    auto validParserConfig = Sources::ParserConfig{};
+    auto validParserConfig = Sources::InputFormatterConfig{};
     if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
     {
-        validParserConfig.parserType = parserType->second;
+        validParserConfig.type = parserType->second;
     }
     else
     {
@@ -140,7 +140,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
 
     const auto sourceDescriptor = Sources::SourceDescriptor(
-        std::move(schema), "TestSource", "File", Sources::ParserConfig{}, std::move(validatedSourceConfiguration));
+        std::move(schema), "TestSource", "File", Sources::InputFormatterConfig{}, std::move(validatedSourceConfiguration));
 
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), numberOfLocalBuffersInSource);
 }

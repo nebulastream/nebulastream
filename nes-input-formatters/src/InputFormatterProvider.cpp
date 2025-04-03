@@ -27,13 +27,13 @@
 namespace NES::InputFormatters::InputFormatterProvider
 {
 
-std::unique_ptr<InputFormatterTask> provideInputFormatterTask(const OriginId originId, const Schema& schema, const Sources::ParserConfig& config)
+std::unique_ptr<InputFormatterTask> provideInputFormatterTask(const OriginId originId, const Schema& schema, const Sources::InputFormatterConfig& config)
 {
     if (auto inputFormatter
-        = InputFormatterRegistry::instance().create(config.parserType, InputFormatterRegistryArguments{config}))
+        = InputFormatterRegistry::instance().create(config.type, InputFormatterRegistryArguments{config}))
     {
         return std::make_unique<InputFormatterTask>(originId, std::move(inputFormatter.value()), schema, config);
     }
-    throw UnknownParserType("unknown type of parser: {}", config.parserType);
+    throw UnknownInputFormatterType("unknown type of parser: {}", config.type);
 }
 }

@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -15,7 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <string>
 
 #include <InputFormatters/InputFormatter.hpp>
 #include <Util/Registry.hpp>
@@ -28,7 +27,7 @@ using InputFormatterRegistryReturnType = std::unique_ptr<InputFormatter>;
 /// A InputFormatter requires a schema, a tuple separator and a field delimiter.
 struct InputFormatterRegistryArguments
 {
-    Sources::ParserConfig inputFormatterConfig;
+    Sources::InputFormatterConfig inputFormatterConfig;
 };
 
 class InputFormatterRegistry

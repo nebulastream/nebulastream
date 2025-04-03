@@ -78,7 +78,7 @@ struct TestConfig
     size_t numRequiredBuffers{};
     uint64_t sizeOfRawBuffers{};
     uint64_t sizeOfFormattedBuffers{};
-    Sources::ParserConfig parserConfig;
+    Sources::InputFormatterConfig parserConfig;
     std::vector<TestDataTypes> testSchema;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
     std::vector<WorkerThreadResults<TupleSchemaTemplate>> expectedResults;
@@ -92,7 +92,7 @@ std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataT
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
 getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers);
 
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
+Sources::InputFormatterConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
     const std::string& filePath,
