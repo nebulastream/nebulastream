@@ -45,8 +45,8 @@ RUN \
     cd /vcpkg_input \
     && git clone https://github.com/microsoft/vcpkg.git vcpkg_repository \
     && vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics \
-    && vcpkg_repository/vcpkg install --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VCPKG_VARIANT}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-${VCPKG_VARIANT}-${VCPKG_STDLIB}" \
-    && vcpkg_repository/vcpkg export --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VCPKG_VARIANT}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-${VCPKG_VARIANT}-${VCPKG_STDLIB}" --raw --output-dir / --output vcpkg \
+    && vcpkg_repository/vcpkg install --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VCPKG_VARIANT}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}" \
+    && vcpkg_repository/vcpkg export --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VCPKG_VARIANT}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-none-${VCPKG_STDLIB}" --raw --output-dir / --output vcpkg \
     && rm -rf /vcpkg_input \
     && chmod -R g=u,o=u /vcpkg
 
