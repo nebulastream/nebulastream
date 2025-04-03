@@ -1,0 +1,666 @@
+openapi: 3.0.3
+info:
+  title: NebulaStream REST API
+  description: |
+    This is a sample API for demonstrating OpenAPI specification.  
+    It includes endpoints for user management and health checks.
+  version: 0.1.0
+  contact:
+    name: NebulaStream Team
+    url: https://nebula.stream
+  x-repository-url: https://github.com/nebulastream
+  x-docs-url: https://docs.nebula.stream/
+  license:
+    name: APACHE 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: http://localhost:8081/api/v1
+    description: Local development server
+paths:
+  /healthCheck:
+    get:
+      summary: Health Check
+      description: Checks if NEBULI+REST services are running and responsive.
+      operationId: healthCheck
+      responses:
+        "200":
+          description: API is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /queries:
+    post:
+      summary: Submit a query.
+      description: Register and Start a Query from plain text code.
+      operationId: postQuery
+      requestBody: 
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuerySubmission'
+      responses:
+        "201":
+          description: Query accepted to be registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryChangeStatus'
+              example:
+                query_id: 12
+                status: REGISTERED
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+    get:
+      summary: Get all registered queries overview
+      description: Get an overview for each of the registered queries
+      operationId: getAllQueries
+      responses:
+        "200":
+          description: Queries registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllRegisteredQueries'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /queries/{query_id}:
+    parameters:
+      - name: query_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/QueryId'
+    get:
+      summary: Specific query description
+      description: Get the full description of the query with ID _id_
+      operationId: getQueryOverview
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Query'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+    delete: 
+      summary: Stop a specific Query
+      description: Stop a specific query without unregistering it
+      operationId: StopQuery
+      responses:
+        "202":
+          description: Stop Query, the query still exists, but the status changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryChangeStatus'
+        "204":
+          description: Unregister Query, the query does not exist anymore, the id is returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryIdResponse'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /queries/{query_id}/plan:
+    parameters:
+      - name: query_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/QueryId'
+    get:
+      summary: Get a specific query plan
+      description: Get the query plan of the query with ID _id_
+      operationId: getQueryPlan
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryPlan'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /queries/{query_id}/execution:
+    parameters:
+      - name: query_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/QueryId'
+    get:
+      summary: Get a specific execution plan
+      description: Get the execution plan of the query with ID _id_, this includes the nodes and the operator placement
+      operationId: getExecutionPlan
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionPlan'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /sinks:
+    get:
+      summary: Get all registered sinks
+      description: Get an array with an overview of all registered sinks
+      operationId: getAllSinks
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllSinks'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /sinks/{sink_name}:
+    parameters:
+      - name: sink_name
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/SinkName'
+    get:
+      summary: Get a specific sink details
+      description: Get details of a specific sink, this includes connector and formatter
+      operationId: getSinkDetails
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sink'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /sources:
+    get:
+      summary: Get all registered sources
+      description: Get an array with an overview of all registered sources
+      operationId: getAllSources
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllSources'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /sources/{source_name}:
+    parameters:
+      - name: source_name
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/SourceName'
+    get:
+      summary: Get a specific logical source details
+      description: Get details of a specific source, this excludes the physical sources
+      operationId: getSourceOverview
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /sources/{source_name}/physical:
+    parameters:
+      - name: source_name
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/SourceName'
+    get:
+      summary: Get list of physical sources
+      description: Get an array of all the physical sources for the logical source with NAME _name_
+      operationId: getPhysicalSources
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhysicalSources'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /sources/physical:
+    get:
+      summary: Get list of physical sources
+      description: Get an array of all the physical sources for the logical source with NAME _name_
+      operationId: getAllPhysicalSources
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllPhysicalSources'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /topology:
+    get:
+      summary: Get the current topology
+      description: Get nodes and edges to render the hierarchy of the worker nodes registered in the system
+      operationId: getTopology
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topology'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /topology/nodes:
+    get:
+      summary: Get nodes overview
+      description: Get an array of the overview for all nodes registered in the system, includes status, but excludes the edges
+      operationId: getAllNodes
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllWorkerNodes'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+  /topology/nodes/{worker_id}:
+    parameters:
+      - name: worker_id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/WorkerNodeId'
+    get:
+      summary: Get specific node overview
+      description: Get an overview of the node with ID _id_, includes some general metadata, TBD
+      operationId: getWorkerNodeOverview
+      responses:
+        "200":
+          description: Something
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerNode'
+        "500":
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerErrorResponse'
+components:
+  schemas:
+    Query:
+      description: A full description of the query, represents the desired actions over a source stream into a sink stream
+      type: object
+      properties:
+        query_id:
+          $ref: '#/components/schemas/QueryId'
+        status:
+          $ref: '#/components/schemas/QueryStatus'
+        code:
+          $ref: '#/components/schemas/QueryCode'
+        query_plan:
+          $ref: '#/components/schemas/QueryPlan'
+        execution_plan:
+          $ref: '#/components/schemas/ExecutionPlan'
+    QueryPlan:
+      description: A set of nodes (logical operators) and edges
+      type: object
+      properties:
+        query_id:
+          $ref: '#/components/schemas/QueryId'
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryPlanOperator'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueryPlanLink'
+    ExecutionPlan:
+      description: A set of nodes and edges with the worker_id and the operators executed
+      type: object
+      properties:
+        query_id:
+          $ref: '#/components/schemas/QueryId'
+        topology:
+          $ref: '#/components/schemas/Topology'
+        operator_placement:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperatorPlacement'
+    Sink:
+      description: A combination of connector and formatter
+      type: object
+      properties:
+        sink_name:
+          $ref: '#/components/schemas/SinkName'
+        worker_id:
+          type: integer
+          example: 26
+        connector:
+          $ref: '#/components/schemas/Connector'
+        formatter:
+          $ref: '#/components/schemas/Formatter'
+    Source:
+      description: A logical source description
+      type: object
+      properties:
+        source_name:
+          $ref: '#/components/schemas/SourceName'
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/StreamSchemaField'
+    Topology:
+      description: A collection of Worker Nodes and its hierarchy
+      type: object
+      properties:
+        topology_nodes:
+          type: array
+          items: 
+            $ref: '#/components/schemas/WorkerNode'
+        topology_edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyLink'
+    WorkerNode:
+      description: An instance of NebulaStream that computes tuples
+      type: object
+      properties:
+        worker_id:
+          $ref: '#/components/schemas/WorkerNodeId'
+        status:
+          type: string
+          enum: ['ONLINE', 'OFFLINE']
+    WorkerNodeId:
+      description: A unique worker node id
+      type: integer
+      example: 57
+    TaskQueue:
+      description: Store Tasks that will be processed by the Engine
+    Pipeline:
+      description: Subsequence of a query to be processed in a concrete WorkerNode by a TaskQueue, a.k.a. RunningQueryPlanNode
+    PhysicalOperator:
+      description: The concrete instance of an operator that is applied over a tuple
+      type: object
+      properties:
+        operator_id:
+          type: integer
+          example: 546
+    TopologyLink:
+      description: Link between Worker Nodes, creates a hierarchy
+      type: object
+      properties:
+        parent:
+          type: integer
+          example: 21
+        child:
+          type: integer
+          example: 45
+    SourceName:
+      description: Unique name of the source
+      type: string
+      example: tcp_source
+    SinkName:
+      description: Unique name of the sink
+      type: string
+      example: csv_sink
+    StreamSchemaField:
+      description: Description of the fields and datatypes in a stream, either source or sink
+      type: object
+      properties:
+        field_name:
+          type: string
+          example: id
+        field_type:
+          type: string
+          enum: [UINT64, INT32, STRING]
+    PhysicalSource:
+      description: Concrete connector and formatter
+      type: object
+      properties: 
+        physical_source:
+          type: string
+          example: "tcp_source"
+        worker_id:
+          type: integer
+          example: 25
+        connector:
+            $ref: '#/components/schemas/Connector'
+        formatter:
+            $ref: '#/components/schemas/Formatter'
+    PhysicalSourceOverview:
+      description: Concrete connector and formatter for a specific physical source
+      type: object
+      properties: 
+        worker_id:
+          type: integer
+          example: 25
+        connector:
+            $ref: '#/components/schemas/Connector'
+        formatter:
+            $ref: '#/components/schemas/Formatter'
+    Connector:
+      description: A connector to a stream
+      type: string
+      enum: [FILE, TCP, MQTT]
+    Formatter:
+      description: A formatter for a stream
+      type: string
+      enum: [CSV, JSON]
+    SupportedOperator:
+      description: Supported operators
+      type: string
+      enum: [FILTER, JOIN]
+    QueryPlanOperator:
+      description: Concrete logical operator
+      type: object
+      properties:
+        operator_id:
+          type: integer
+          example: 3
+        type:
+          $ref: '#/components/schemas/SupportedOperator'
+    QueryPlanLink:
+      description: Links between operators for the logical plan
+      type: object
+      properties:
+          source:
+            type: integer
+            example: 2
+          target:
+            type: integer
+            example: 4
+    OperatorPlacement:
+      description: Concrete operator and Worker node where it is executed
+      type: object
+      properties:
+        operator_id:
+          type: integer
+          example: 3
+        type:
+          $ref: '#/components/schemas/SupportedOperator'
+        worker_id:
+          $ref: '#/components/schemas/WorkerNodeId'
+    ServerErrorResponse:
+      description: Server Error
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Server is having problems with..."
+    QueryCode:
+      description: Query Code
+      type: string
+      example: "SELECT * FROM stream_a INTO sink_b"
+    QueryId:
+      description: A numeric value assigned by the NES coordinator, unique  identifier for this query.
+      type: integer
+      example: 25
+    QueryStatus:
+      description: Last tracked status in the coordinator
+      type: string
+      enum:
+        - RUNNING
+        - STOPPED
+        - REGISTERED
+        - FAILED
+        - STARTED
+    QuerySubmission:
+      type: object
+      properties:
+        code: 
+          $ref: '#/components/schemas/QueryCode'
+    QueryIdResponse:
+      type: object
+      properties:
+        query_id:
+          $ref: '#/components/schemas/QueryId'
+    QueryOverview:
+      description: A simple object representing a Query
+      type: object
+      properties:
+        query_id:
+          $ref: '#/components/schemas/QueryId'
+        status:
+          $ref: '#/components/schemas/QueryStatus'
+        code:
+          $ref: '#/components/schemas/QueryCode'
+    QueryChangeStatus:
+      description: Object representing the change of status
+      type: object
+      properties:
+        query_id:
+          $ref: '#/components/schemas/QueryId'
+        status:
+          $ref: '#/components/schemas/QueryStatus'
+    AllRegisteredQueries:
+      description: Object with an array of all the registered queries
+      type: object
+      properties:
+        queries:
+          type: array
+          items: 
+            $ref: '#/components/schemas/QueryOverview'
+    AllSources:
+      description: Object with an array of all the registered queries
+      type: object
+      properties:
+        sources:
+          type: array
+          items: 
+            $ref: '#/components/schemas/Source'
+    AllSinks:
+      description: Object with an array of all the registered sinks
+      type: object
+      properties:
+        sinks:
+          type: array
+          items: 
+            $ref: '#/components/schemas/Sink'
+    AllPhysicalSources:
+      description: Object with an array of all the registered physical sources
+      type: object
+      properties:
+        physical_sources:
+          type: array
+          items: 
+            $ref: '#/components/schemas/PhysicalSource'
+    PhysicalSources:
+      description: Object with an array of all the registered physical sources for one logical source
+      type: object
+      properties:
+        logical_source:
+          $ref: '#/components/schemas/SourceName'
+        physical_sources:
+          type: array
+          items: 
+            $ref: '#/components/schemas/PhysicalSource'
+    AllWorkerNodes:
+      description: Object with an array of all the registered physical sources
+      type: object
+      properties:
+        worker_nodes:
+          type: array
+          items: 
+            $ref: '#/components/schemas/WorkerNode'
+
