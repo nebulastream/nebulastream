@@ -45,6 +45,8 @@ public:
     }
     void complete() const
     {
+        /// NOLINTNEXTLINE bugprone-assignment-in-if-condition. Does not work in the INVARIANT macro. This is equivalent to !called.exchange(true)
+        INVARIANT(!onCompletionCalled && (onCompletionCalled = true, true), "Completion callback should only be called once");
         if (onCompletion)
         {
             onCompletion();
@@ -52,6 +54,8 @@ public:
     }
     void fail(Exception exception) const
     {
+        /// NOLINTNEXTLINE bugprone-assignment-in-if-condition
+        INVARIANT(!onErrorCalled && (onErrorCalled = true, true), "Error callback should only be called once");
         if (onError)
         {
             onError(std::move(exception));
@@ -61,9 +65,14 @@ public:
     QueryId queryId = INVALID<QueryId>;
 
 private:
+#ifndef NDEBUG /// Only used in debug INVARIANT
+    mutable bool onCompletionCalled = false;
+    mutable bool onErrorCalled = false;
+#endif
+
     std::chrono::high_resolution_clock::time_point creation = std::chrono::high_resolution_clock::now();
     std::function<void()> onCompletion = [] {};
-    std::function<void(Exception)> onError = [](const Exception&) {};
+    std::function<void(Exception)> onError = [](Exception) {};
 };
 
 struct WorkTask : BaseTask
