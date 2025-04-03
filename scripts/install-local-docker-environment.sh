@@ -12,9 +12,9 @@ usage() {
     echo "  -r, --rootless       Force rootless Docker mode"
     echo "  --libstdcxx          Use libstdcxx standard library"
     echo "  --libcxx             Use libcxx standard library"
-    echo "  --asan               Enable Address Sanitizer"
-    echo "  --tsan               Enable Thread Sanitizer"
-    echo "  --ubsan              Enable Undefined Behavior Sanitizer"
+    echo "  --address               Enable Address Sanitizer"
+    echo "  --thread               Enable Thread Sanitizer"
+    echo "  --undefined              Enable Undefined Behavior Sanitizer"
     exit 1
 }
 
@@ -22,7 +22,7 @@ usage() {
 BUILD_LOCAL=0
 FORCE_ROOTLESS=0
 STDLIB=""
-SANITIZER="None"
+SANITIZER="none"
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -44,19 +44,19 @@ while [[ "$#" -gt 0 ]]; do
             STDLIB=libcxx
             shift
             ;;
-        --asan)
+        --address)
             echo "Enabling Address Sanitizer"
-            SANITIZER="Address"
+            SANITIZER="address"
             shift
             ;;
-        --tsan)
+        --thread)
             echo "Enabling Thread Sanitizer"
-            SANITIZER="Thread"
+            SANITIZER="thread"
             shift
             ;;
-        --ubsan)
+        --undefined)
             echo "Enabling Undefined Behavior Sanitizer"
-            SANITIZER="Undefined"
+            SANITIZER="undefined"
             shift
             ;;
         -h|--help)
@@ -147,7 +147,7 @@ if [ $BUILD_LOCAL -eq 1 ]; then
           --build-arg TAG=local \
           --build-arg STDLIB=${STDLIB} \
           --build-arg ARCH=${ARCH} \
-          --build-arg ENABLE_SANITIZER=${SANITIZER} \
+          --build-arg SANITIZER=${SANITIZER} \
           -t nebulastream/nes-development-dependency:local .
 
   docker build -f docker/dependency/Development.dockerfile \
