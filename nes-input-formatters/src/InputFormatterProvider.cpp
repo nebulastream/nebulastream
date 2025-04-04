@@ -20,21 +20,23 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatIndexer.hpp>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 
 namespace NES::InputFormatters::InputFormatterProvider
 {
 
-std::unique_ptr<InputFormatterTask> provideInputFormatterTask(const OriginId originId, const Schema& schema, const ParserConfig& config)
+std::unique_ptr<InputFormatterTaskPipeline>
+provideInputFormatterTask(const OriginId originId, const Schema& schema, const ParserConfig& config)
 {
-    if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
-            config.parserType,
-            InputFormatIndexerRegistryArguments{.inputFormatIndexerConfig = config, .numberOfFieldsInSchema = schema.getNumberOfFields()}))
+    if (auto inputFormatter
+        = InputFormatIndexerRegistry::instance().create(config.parserType, InputFormatIndexerRegistryArguments(config, originId, schema)))
     {
-        return std::make_unique<InputFormatterTask>(originId, std::move(inputFormatter.value()), schema, config);
+        return std::move(inputFormatter.value());
     }
-    throw UnknownParserType("unknown type of parser: {}", config.parserType);
+    throw UnknownParserType("unknown type of input formatter: {}", config.parserType);
 }
 bool contains(const std::string& parserType)
 {
