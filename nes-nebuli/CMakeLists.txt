@@ -20,12 +20,12 @@ set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
 
 get_source(nes-clients CLIENT_SOURCE_FILES)
-get_source(nes-catalogs CATALOG_SOURCE_FILES)
 get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
 get_source(nes-operators OPERATORS_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 
-add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${OPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+
 
 target_compile_definitions(nes-nebuli-lib PRIVATE PATH_TO_BINARY_DIR="${PATH_TO_BINARY_DIR}")
 target_compile_definitions(nes-nebuli-lib PRIVATE CLANG_EXECUTABLE="${CLANG_EXECUTABLE}")
@@ -40,6 +40,7 @@ target_include_directories(nes-nebuli-lib
 
 target_link_libraries(nes-nebuli-lib
         PUBLIC nes-operators
+        PUBLIC nes-catalogs
         PRIVATE nes-sql-parser yaml-cpp::yaml-cpp nes-client
 )
 

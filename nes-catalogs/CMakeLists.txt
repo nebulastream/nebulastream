@@ -10,5 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Optimizer)
-add_subdirectory(QueryValidation)
+# Set Sources and Headers
+add_subdirectory(src)
+
+get_source(nes-catalogs NES_CATALOGS_SOURCE_FILES)
+
+# Add Library
+add_library(nes-catalogs ${NES_CATALOGS_SOURCE_FILES})
+target_link_libraries(nes-catalogs PUBLIC nes-operators)
+target_include_directories(nes-catalogs PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
