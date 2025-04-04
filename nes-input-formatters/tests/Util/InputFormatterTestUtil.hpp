@@ -26,7 +26,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -154,7 +154,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
     int numberOfLocalBuffersInSource);
 
-std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema);
+std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema);
 
 /// Waits until source reached EoS
 void waitForSource(const std::vector<Memory::TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
@@ -166,7 +166,7 @@ TestPipelineTask createInputFormatterTask(
     SequenceNumber sequenceNumber,
     WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask);
+    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle
@@ -363,7 +363,7 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
-    const std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask
+    const std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask
         = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
             OriginId(0), testHandle.schema, testHandle.testConfig.parserConfig);
     std::vector<TestPipelineTask> tasks;
