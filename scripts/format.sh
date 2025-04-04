@@ -92,6 +92,15 @@ then
     FAIL=1
 fi
 
+# warning: no includes with double quotes
+#
+# CLion uses double quotes when adding includes (automatically).
+# This check warns the author of a PR about includes with double quotes to avoid burdening the reviewers
+echo
+echo "New includes with double quotes:"
+git diff --name-only $(git merge-base HEAD origin/main 2>/dev/null) | grep -E '\.cpp$|\.hpp$' | xargs -I{} git grep -n -E -e "#include \".*\"" -- {} 2>/dev/null || echo "None found"
+echo
+
 python3 scripts/check_preamble.py || FAIL=1
 
 python3 scripts/check_todos.py || FAIL=1
