@@ -25,7 +25,6 @@
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
@@ -63,13 +62,13 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
 
     const std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
-    auto inputFormatterTask = NES::InputFormatters::InputFormatterProvider::provideInputFormatterTask(
+    auto inputFormatterTaskPipeline = NES::InputFormatters::InputFormatterProvider::provideInputFormatterTask(
         sourceOperator.getOriginId(),
         *sourceOperator.getDescriptor().getLogicalSource().getSchema(),
         sourceOperator.getDescriptor().getParserConfig());
 
     auto executableInputFormatterPipeline
-        = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTask), executableSuccessorPipelines);
+        = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTaskPipeline), executableSuccessorPipelines);
 
     for (const auto& successor : pipeline->getSuccessors())
     {
