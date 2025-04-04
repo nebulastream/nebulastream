@@ -17,9 +17,9 @@
 namespace NES::Runtime
 {
 
-StatisticStoreManager& StatisticStoreManager::getInstance()
+std::shared_ptr<StatisticStoreManager> StatisticStoreManager::getInstance()
 {
-    static StatisticStoreManager instance;
+    static const auto instance = std::make_shared<StatisticStoreManager>();
     return instance;
 }
 
@@ -35,12 +35,12 @@ std::vector<StatisticValue<T>> StatisticStoreManager::getStatistics(
     return {};
 }
 
-AbstractStatisticStore* StatisticStoreManager::getStatisticStore() const
+std::shared_ptr<AbstractStatisticStore> StatisticStoreManager::getStatisticStore() const
 {
-    return statisticStore.get();
+    return statisticStore;
 }
 
-StatisticStoreManager::StatisticStoreManager() : statisticStore(std::make_unique<DefaultStatisticStore>())
+StatisticStoreManager::StatisticStoreManager() : statisticStore(std::make_shared<DefaultStatisticStore>())
 {
 }
 

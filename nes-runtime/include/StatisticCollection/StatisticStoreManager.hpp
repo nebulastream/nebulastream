@@ -27,7 +27,7 @@ using StatisticValue = T;
 class StatisticStoreManager
 {
 public:
-    static StatisticStoreManager& getInstance();
+    static std::shared_ptr<StatisticStoreManager> getInstance();
 
     // Delete copy constructor and assignment operator to prevent copying
     StatisticStoreManager(const StatisticStoreManager&) = delete;
@@ -36,12 +36,12 @@ public:
     template <typename T>
     std::vector<StatisticValue<T>>
     getStatistics(const StatisticHash& statisticHash, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs);
-    [[nodiscard]] AbstractStatisticStore* getStatisticStore() const;
+    [[nodiscard]] std::shared_ptr<AbstractStatisticStore> getStatisticStore() const;
 
 private:
     StatisticStoreManager();
 
-    std::unique_ptr<AbstractStatisticStore> statisticStore;
+    std::shared_ptr<AbstractStatisticStore> statisticStore;
 };
 
 }
