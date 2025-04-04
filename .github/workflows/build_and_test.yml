@@ -32,7 +32,7 @@ jobs:
     name: "Clean build and tests"
     needs: [ get-resources ]
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
       env:
         MOLD_JOBS: 1
       options: --user root
@@ -44,6 +44,7 @@ jobs:
         arch: [ x64 ]
         stdlib: [ 'libcxx' ]
         build_type: [ 'Debug' ]
+        sanitizer: [ 'none' ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,7 +52,7 @@ jobs:
       - name: Configure NebulaStream
         run: |
           rm -rf build || true
-          cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
         run: cmake --build build -j ${{needs.get-resources.outputs.number_of_jobs}} -- -k 0
       - name: Run Tests
@@ -67,10 +68,10 @@ jobs:
             build/**/*.stats
 
   build-and-test-linux:
-    name: "Build and tests: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}"
+    name: "Build and tests: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-${{ matrix.sanitizer }}"
     needs: [ get-resources ]
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
       volumes:
         - ccache:/ccache
       env:
@@ -86,12 +87,20 @@ jobs:
         arch: [ x64, arm64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
         build_type: [ 'Debug', 'RelWithDebInfo' ]
-        sanitizer: ['address', 'undefined', 'thread', 'none']
+        sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
         exclude:
+          # Due to limited capacity, we disable sanitizer and libstdc++ tests on arm machines
           - arch: arm64
-        include:
+            stdlib: 'libstdcxx'
           - arch: arm64
-            sanitizer: 'none'
+            sanitizer: 'address'
+          - arch: arm64
+            sanitizer: 'undefined'
+          - arch: arm64
+            sanitizer: 'thread'
+          # TODO #808 Enable TSAN with libc++
+          - stdlib: 'libcxx'
+            sanitizer: 'thread'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -117,7 +126,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && !github.event.act }}
         with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}.xml
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
           path: /junit.xml
 
   # We want to test if our cmake log level flag works correctly. Therefore, we need to build and run the tests with different log levels.
@@ -125,7 +134,7 @@ jobs:
   build-and-test-log-level:
     name: "Build and test log level: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}-log-level"
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-none
       volumes:
         - ccache:/ccache
       env:
@@ -166,7 +175,7 @@ jobs:
   build-without-tests:
     name: "Build with disabled tests: ${{matrix.arch}}-${{matrix.stdlib}}"
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-none
       volumes:
         - ccache:/ccache
       env:
