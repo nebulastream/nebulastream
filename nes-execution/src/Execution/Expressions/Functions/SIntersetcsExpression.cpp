@@ -58,10 +58,10 @@ std::string convertSecondsToTimestampMEOS(long long seconds) {
 double seintersects(double lon, double lat, int t, int lon2, int lat2, int t2) {
     meos_initialize("UTC", NULL);
     std::string t_out = convertSecondsToTimestampMEOS(t);
-    std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
+    std::string str_pointbuffer = fmt::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
 
     std::string t_out2 = convertSecondsToTimestampMEOS(t2);
-    std::string str_pointbuffer2 = std::format("SRID=4326;POINT({} {})@{}", lon2, lat2, t_out);
+    std::string str_pointbuffer2 = fmt::format("SRID=4326;POINT({} {})@{}", lon2, lat2, t_out);
     NES_INFO("Point buffer created {}", str_pointbuffer);
     TInstant *inst = (TInstant *)tgeompoint_in(str_pointbuffer.c_str());
     TInstant *inst2 = (TInstant *)tgeompoint_in(str_pointbuffer2.c_str());

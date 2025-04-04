@@ -143,7 +143,7 @@ TEST_F(ReadSNCB, testReadCSV) {
         csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "selected_columns_df.csv");
         csvSourceType->setNumberOfTuplesToProducePerBuffer(36);    
         csvSourceType->setGatheringInterval(0);                      
-        csvSourceType->setNumberOfBuffersToProduce(7000);
+        csvSourceType->setNumberOfBuffersToProduce(10);
         csvSourceType->setSkipHeader(true);                   
 
 

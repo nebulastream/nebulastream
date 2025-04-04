@@ -60,7 +60,7 @@ double teintersects(double lon, double lat, int t) {
     STBox* stbx = stbox_in("SRID=4326;STBOX X((3.5, 50.5),(4.5, 51.5))");
     GSERIALIZED *geom = stbox_to_geo(stbx);
     std::string t_out = convertSecondsToTimestamp(t);
-    std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
+    std::string str_pointbuffer = fmt::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
     TInstant *inst = (TInstant *)tgeompoint_in(str_pointbuffer.c_str());
 
     if (eintersects_tpoint_geo((const Temporal *)inst, geom))

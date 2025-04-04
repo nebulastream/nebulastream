@@ -68,7 +68,7 @@ double tpointatsworkshop(double lon, double lat, int t) {
 
 
     std::string t_out = convertSecondsToTimestampATWorkshop(t);
-    std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
+    std::string str_pointbuffer = fmt::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
    // NES_INFO("Point buffer created {}", str_pointbuffer);
     TInstant *inst = (TInstant *)tgeompoint_in(str_pointbuffer.c_str());
 

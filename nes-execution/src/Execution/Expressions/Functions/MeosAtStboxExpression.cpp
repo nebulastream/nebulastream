@@ -60,7 +60,7 @@ double tpointatstbox(double lon, double lat, int t) {
     meos_initialize("UTC", NULL);
     STBox* stbx = stbox_in("SRID=4326;STBOX X((2.8, 50.5),(4.5, 51.5))");
     std::string t_out = convertSecondsToTimestampAT(t);
-    std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
+    std::string str_pointbuffer = fmt::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
     NES_INFO("Point buffer created {}", str_pointbuffer);
     TInstant *inst = (TInstant *)tgeompoint_in(str_pointbuffer.c_str());
 
