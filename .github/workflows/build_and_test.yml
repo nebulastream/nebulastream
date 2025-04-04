@@ -49,6 +49,7 @@ jobs:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
       volumes:
         - ccache:/ccache
+        - test-file-cache:/test-file-cache
       env:
         CCACHE_DIR: /ccache
         MOLD_JOBS: 1
@@ -82,7 +83,7 @@ jobs:
           ref: ${{ inputs.ref }}
       - name: Configure NebulaStream
         run: |
-          cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
       - name: Run Tests
