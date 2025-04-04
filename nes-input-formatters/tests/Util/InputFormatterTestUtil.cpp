@@ -37,7 +37,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -177,7 +177,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }
 
-std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
+std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
         {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
@@ -218,7 +218,7 @@ TestPipelineTask createInputFormatterTask(
     const SequenceNumber sequenceNumber,
     const WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTask> inputFormatterTask)
+    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
     return TestPipelineTask(workerThreadId, taskBuffer, std::move(inputFormatterTask));
