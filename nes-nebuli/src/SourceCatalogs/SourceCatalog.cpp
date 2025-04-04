@@ -14,6 +14,7 @@
 
 #include <map>
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
@@ -22,6 +23,7 @@
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Catalogs::Source
@@ -79,26 +81,27 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
     }
     NES_DEBUG("SourceCatalog: logical source {} exists.", logicalSourceName);
 
+
     /// get current physical source for this logical source
-    const std::vector<std::shared_ptr<SourceCatalogEntry>> existingSCEs = logicalToPhysicalSourceMapping[logicalSourceName];
+    const auto existingSCEs = logicalToPhysicalSourceMapping.find(logicalSourceName);
+    INVARIANT(
+        existingSCEs != logicalToPhysicalSourceMapping.end(), "Schema for logical source {} existed, but no mapping of physical sources");
+    const auto insertResult = existingSCEs->second.insert({sourceCatalogEntry->getPhysicalSourceName(), sourceCatalogEntry});
 
-    /// Todo 241: check if physical source does not exist yet
-
-    if (testIfLogicalSourceExistsInLogicalToPhysicalMapping(logicalSourceName))
+    if (!insertResult.second)
     {
-        NES_DEBUG("SourceCatalog: Logical source already exists, add new physical entry");
-        logicalToPhysicalSourceMapping[logicalSourceName].push_back(sourceCatalogEntry);
-    }
-    else
-    {
-        NES_DEBUG("SourceCatalog: Logical source does not exist, create new item");
-        logicalToPhysicalSourceMapping.insert(
-            std::pair<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>>(
-                logicalSourceName, std::vector<std::shared_ptr<SourceCatalogEntry>>()));
-        logicalToPhysicalSourceMapping[logicalSourceName].push_back(sourceCatalogEntry);
+        NES_ERROR(
+            "Trying to add physical source \"{}\" to logical source \"{}\" but a physical source with that name already exists: {}",
+            sourceCatalogEntry->getPhysicalSourceName(),
+            logicalSourceName,
+            insertResult.first->second->toString());
+        return false;
     }
 
-    NES_DEBUG("SourceCatalog: physical source with id={} successful added", sourceCatalogEntry->getTopologyNodeId());
+    NES_DEBUG(
+        "SourceCatalog: physical source with name={} and id={} successful added",
+        sourceCatalogEntry->getPhysicalSourceName(),
+        sourceCatalogEntry->getTopologyNodeId());
     return true;
 }
 
@@ -201,31 +204,28 @@ bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName)
     return logicalSourceNameToSchemaMapping.contains(logicalSourceName);
 }
 
-bool SourceCatalog::testIfLogicalSourceExistsInLogicalToPhysicalMapping(const std::string& logicalSourceName)
-{
-    std::unique_lock lock(catalogMutex);
-    return logicalToPhysicalSourceMapping.contains(logicalSourceName);
-}
-
 std::vector<WorkerId> SourceCatalog::getSourceNodesForLogicalSource(const std::string& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
-    std::vector<WorkerId> listOfSourceNodes;
 
-    /// get current physical source for this logical source
-    const std::vector<std::shared_ptr<SourceCatalogEntry>> physicalSources = logicalToPhysicalSourceMapping[logicalSourceName];
-
-    if (physicalSources.empty())
-    {
-        return listOfSourceNodes;
-    }
-
-    for (const std::shared_ptr<SourceCatalogEntry>& entry : physicalSources)
-    {
-        listOfSourceNodes.push_back(entry->getTopologyNodeId());
-    }
-
-    return listOfSourceNodes;
+    return logicalToPhysicalSourceMapping.at(logicalSourceName) | std::views::transform([](auto pair) { pair.second->getTopologyNodeId(); })
+        | ranges::to<std::vector<WorkerId>>();
+    // std::vector<WorkerId> listOfSourceNodes;
+    //
+    // /// get current physical source for this logical source
+    // const std::vector<std::shared_ptr<SourceCatalogEntry>> physicalSources = logicalToPhysicalSourceMapping[logicalSourceName];
+    //
+    // if (physicalSources.empty())
+    // {
+    //     return listOfSourceNodes;
+    // }
+    //
+    // for (const std::shared_ptr<SourceCatalogEntry>& entry : physicalSources)
+    // {
+    //     listOfSourceNodes.push_back(entry->getTopologyNodeId());
+    // }
+    //
+    // return listOfSourceNodes;
 }
 
 std::string SourceCatalog::getPhysicalSourceAndSchemaAsString()

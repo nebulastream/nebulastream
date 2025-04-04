@@ -47,10 +47,14 @@ WorkerId SourceCatalogEntry::getTopologyNodeId() const
     return topologyNodeId;
 }
 
-std::string SourceCatalogEntry::toString()
+std::string SourceCatalogEntry::toString() const
 {
     std::stringstream ss;
     ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource << " on node=" << topologyNodeId;
     return ss.str();
+}
+std::string SourceCatalogEntry::getPhysicalSourceName() const
+{
+    return physicalSourceName;
 }
 }

@@ -120,16 +120,11 @@ public:
     bool updateLogicalSource(const std::string& logicalSourceName, Schema schema);
 
 private:
-    /// @brief test if logical source with this name exists
-    /// @param logicalSourceName name of the logical source to test
-    /// @return bool indicating if source exists
-    bool testIfLogicalSourceExistsInLogicalToPhysicalMapping(const std::string& logicalSourceName);
-
     std::recursive_mutex catalogMutex;
     /// map logical source to schema
     std::map<std::string, Schema> logicalSourceNameToSchemaMapping;
     /// map logical source to physical source
-    std::map<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>> logicalToPhysicalSourceMapping;
+    std::unordered_map<std::string, std::unordered_map<std::string, std::shared_ptr<SourceCatalogEntry>>> logicalToPhysicalSourceMapping;
 };
 }
 }

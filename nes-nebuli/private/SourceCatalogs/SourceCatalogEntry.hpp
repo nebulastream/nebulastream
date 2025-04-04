@@ -69,7 +69,8 @@ public:
      * @brief Get the string rep of the source catalog entry
      * @return string rep of the source catalog entry
      */
-    std::string toString();
+    std::string toString() const;
+    std::string getPhysicalSourceName() const;
 
 private:
     /**
@@ -81,6 +82,7 @@ private:
     explicit SourceCatalogEntry(
         std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId);
 
+    std::string physicalSourceName;
     std::shared_ptr<PhysicalSource> physicalSource;
     std::shared_ptr<LogicalSource> logicalSource;
     WorkerId topologyNodeId;

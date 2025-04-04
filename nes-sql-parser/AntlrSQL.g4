@@ -42,14 +42,14 @@ DISABLE_WARNING(-Wunused-parameter)
 
 singleStatement: statement ';'* EOF;
 
-statement: query | createSourceStatement | dropQueryStatement;
+statement: query | createSourceStatement | dropStatement;
 
 createSourceStatement: CREATE SOURCE sourceName=IDENTIFIER sourceDefinition fromQuery?;
 
 sourceDefinition: '(' columnDefinition (',' columnDefinition)* ')';
-columnDefinition: IDENTIFIER typeDefinition;
 
-typeDefinition: TYPE_ENUM;
+columnDefinition: IDENTIFIER type=DATA_TYPE;
+
 
 fromQuery: AS query;
 
@@ -57,7 +57,6 @@ dropStatement: DROP dropSubject;
 dropSubject: dropQuery | dropSource;
 dropQuery: QUERY id=IDENTIFIER;
 dropSource: SOURCE name=IDENTIFIER;
-
 
 
 showStatement: SHOW DB_OBJECT_TYPE (FORMAT (TEXT | JSON))?;
@@ -617,18 +616,37 @@ SOURCES: 'SOURCES' | 'sources';
 QUERIES: 'QUERIES' | 'queries';
 
 
-DATA_TYPE: INTEGER_SIGNED | INTEGER_UNSIGNED;
+//We can always drop the explicit matching on names here and use the registry in the Binder.
+//I'd like to have them in the parser anyway as keywords
+DATA_TYPE: INTEGER_SIGNED | INTEGER_UNSIGNED | FLOAT | BOOLEAN | VARSIZED | CHARACTER_VARYING | CHAR_ARRAY;
 
 INTEGER_UNSIGNED: UNSIGNED INTEGER_SIGNED;
-
 UNSIGNED: 'UNSIGNED';
+INTEGER_SIGNED: INT8 | INT16 | INT32 | INT64;
+INT8: 'TINYINT';
+INT16: 'SMALLINT';
+INT32: 'INT' | 'INTEGER';
+INT64: 'BIGINT';
 
-INTEGER_SIGNED: INT8 | INT4 | INT2 | INT1;
+FLOAT: FLOAT32 | FLOAT64;
+FLOAT32: 'FLOAT32' | 'REAL';
+FLOAT64: 'FLOAT64' | 'DOUBLE PRECISION';
 
-INT1: 'TINYINT';
+BOOLEAN: 'BOOLEAN';
 
-INT2: 'SMALLINT';
+VARSIZED: 'VARSIZED';
 
-INT4: 'INT' | 'INTEGER';
+//Standard dictates that these are array types that should be able to take a parameter (e.g. CHAR(10))
+// but if you omit the parameter, it should default to 1
+CHARACTER_VARYING: CHAR 'VARYING' LENGTH_SPECIFIER? | 'VARCHAR' LENGTH_SPECIFIER?;
+CHAR_ARRAY: CHAR LENGTH_SPECIFIER?;
+CHAR: 'CHAR' | 'CHARACTER';
 
-INT8: 'BIGINT';
+LENGTH_SPECIFIER: '(' INTEGER_VALUE ')';
+
+CREATE : 'CREATE';
+SOURCE : 'SOURCE';
+SHOW : 'SHOW';
+FORMAT : 'FORMAT';
+TEXT : 'TEXT';
+JSON : 'JSON';
