@@ -18,19 +18,47 @@
 #include <memory>
 #include <string>
 
-#include <InputFormatters/InputFormatIndexer.hpp>
+#include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
+#include <InputFormatterTask.hpp>
 
 namespace NES::InputFormatters
 {
 
-using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatIndexer>;
-/// A InputFormatIndexer requires a schema, a tuple separator and a field delimiter.
+
+using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTaskPipeline>;
+
+/// Allows specific InputFormatter to construct templated Formatter using the 'createInputFormatterTaskPipeline()' method.
+/// Calls constructor of specific InputFormatter and exposes public members to it.
 struct InputFormatIndexerRegistryArguments
 {
+    InputFormatIndexerRegistryArguments(ParserConfig config, const OriginId originId, Schema schema)
+        : inputFormatIndexerConfig(std::move(config))
+        , originId(originId)
+        , schema(std::move(schema))
+    {
+    }
+
+    /// @tparam: FormatterType: the concrete formatter implementation, e.g., CSVInputFormatter
+    /// @tparam: FieldAccessType: function used to index fields when parsing/processing the data of the (raw) input buffer
+    /// @tparam: HasSpanningTuple: hardcode to 'true' if format cannot guarantee buffers with tuples that never span across buffers
+    template <typename FormatterType, typename FieldAccessType, bool HasSpanningTuple>
+    InputFormatIndexerRegistryReturnType createInputFormatterTaskPipeline(std::unique_ptr<FormatterType> inputFormatter)
+    {
+        auto inputFormatterTask = InputFormatterTask<FormatterType, FieldAccessType, HasSpanningTuple>(
+            originId, std::move(inputFormatter), schema, inputFormatIndexerConfig);
+        return std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatterTask));
+    }
+
+    size_t getNumberOfFieldsInSchema() const { return schema.getNumberOfFields(); }
     ParserConfig inputFormatIndexerConfig;
-    size_t numberOfFieldsInSchema;
+
+private:
+    OriginId originId{NES::OriginId(NES::OriginId::INVALID)};
+    Schema schema;
 };
 
 class InputFormatIndexerRegistry
