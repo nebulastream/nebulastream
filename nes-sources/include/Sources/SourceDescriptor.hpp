@@ -55,8 +55,8 @@ public:
     std::shared_ptr<Schema> getSchema() const { return this->schema; }
     [[nodiscard]] std::string getLogicalSourceName() const { return this->logicalSourceName; }
     [[nodiscard]] std::string getSourceType() const { return this->sourceType; }
-    [[nodiscard]] ParserConfig getParserConfig() const { return this->parserConfig; }
     [[nodiscard]] int getNumberOfBuffersInSourceLocalBufferPool() const { return this->numberOfBuffersInSourceLocalBufferPool; }
+    [[nodiscard]] ParserConfig getParserConfig() const { return this->parserConfig; }
 
 private:
     /// The below members should remain immutable, i.e., there should be no setters or other functions that change the members

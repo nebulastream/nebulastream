@@ -19,7 +19,7 @@
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
@@ -27,13 +27,13 @@
 namespace NES::InputFormatters::InputFormatterProvider
 {
 
-std::unique_ptr<InputFormatterTask>
+std::unique_ptr<InputFormatterTaskPipeline>
 provideInputFormatterTask(const OriginId originId, const Schema& schema, const Sources::ParserConfig& config)
 {
-    if (auto inputFormatter
-        = InputFormatterRegistry::instance().create(config.parserType, InputFormatterRegistryArguments{config, schema.getFieldCount()}))
+    if (auto inputFormatter = InputFormatterRegistry::instance().create(
+            config.parserType, InputFormatterRegistryArguments(config, schema.getFieldCount(), originId, schema)))
     {
-        return std::make_unique<InputFormatterTask>(originId, std::move(inputFormatter.value()), schema, config);
+        return std::move(inputFormatter.value());
     }
     throw UnknownParserType("unknown type of parser: {}", config.parserType);
 }

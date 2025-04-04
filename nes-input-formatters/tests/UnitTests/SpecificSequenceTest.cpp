@@ -17,7 +17,6 @@
 #include <tuple>
 
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -47,7 +46,7 @@ public:
     void TearDown() override { BaseUnitTest::TearDown(); }
 };
 
-TEST_F(SpecificSequenceTest, oneTupleWithoutTupleDelimiters)
+TEST_F(SpecificSequenceTest, oneTupleWithTupleDelimiters)
 {
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
@@ -149,7 +148,7 @@ TEST_F(SpecificSequenceTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 4, /// 3 buffers for raw data, 1 buffer from results
         .sizeOfRawBuffers = 16,
-        .sizeOfFormattedBuffers = 16,
+        .sizeOfFormattedBuffers = 28,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
@@ -167,7 +166,7 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
     runTest<TestTuple>(TestConfig<TestTuple>{
         .numRequiredBuffers = 6, /// 4 buffers for raw data, 2 buffer from results
         .sizeOfRawBuffers = 16,
-        .sizeOfFormattedBuffers = 16,
+        .sizeOfFormattedBuffers = 28,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32, INT32, INT32},
         .expectedResults
@@ -176,7 +175,7 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
         .rawBytesPerThread
         = {{SequenceNumber(4), ",456789\n"},
            {SequenceNumber(1), "123,123,"},
-           {SequenceNumber(2), "123,123\n123,123"}, /// only full buffer
+           {SequenceNumber(2), "123,123\n123,123"},
            {SequenceNumber(3), ",123"}}});
 }
 

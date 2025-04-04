@@ -26,10 +26,10 @@ namespace NES::InputFormatters::RawInputDataParser
 
 ParseFunctionSignature getBasicStringParseFunction()
 {
-    return [](std::string_view inputString,
-              int8_t* fieldPointer,
+    return [](const std::string_view inputString,
+              const size_t writeOffsetInBytes,
               Memory::AbstractBufferProvider& bufferProvider,
-              const NES::Memory::TupleBuffer& tupleBufferFormatted)
+              Memory::TupleBuffer& tupleBufferFormatted)
     {
         const auto valueLength = inputString.length();
         auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
@@ -45,7 +45,8 @@ ParseFunctionSignature getBasicStringParseFunction()
             inputString.data(),
             valueLength);
         const auto indexToChildBuffer = tupleBufferFormatted.storeChildBuffer(childBufferVal);
-        auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>(fieldPointer); ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>(
+            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         *childBufferIndexPointer = indexToChildBuffer;
     };
 }

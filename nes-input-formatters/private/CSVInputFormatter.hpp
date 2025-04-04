@@ -16,20 +16,19 @@
 
 #include <cstddef>
 #include <ostream>
-#include <string_view>
 
 #include <InputFormatters/InputFormatter.hpp>
-#include <InputFormatters/InputFormatterTask.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <FieldOffsets.hpp>
 #include <InputFormatterRegistry.hpp>
 
 namespace NES::InputFormatters
 {
 
-class CSVInputFormatter final : public InputFormatter
+class CSVInputFormatter final : public InputFormatter<FieldOffsets, /* IsInternalFormat */ false>
 {
 public:
-    explicit CSVInputFormatter(InputFormatterRegistryArguments args);
+    explicit CSVInputFormatter(Sources::ParserConfig config, size_t numberOfFieldsInSchema);
     ~CSVInputFormatter() override = default;
 
     CSVInputFormatter(const CSVInputFormatter&) = delete;
@@ -37,9 +36,7 @@ public:
     CSVInputFormatter(CSVInputFormatter&&) = delete;
     CSVInputFormatter& operator=(CSVInputFormatter&&) = delete;
 
-    void indexTuple(std::string_view tuple, FieldOffsetsType* fieldOffsets, FieldOffsetsType startIdxOfTuple) const override;
-
-    FirstAndLastTupleDelimiterOffsets indexBuffer(std::string_view bufferView, FieldOffsets& fieldOffsets) const override;
+    void setupFieldAccessFunctionForBuffer(FieldOffsets& fieldOffsets, const BufferData& bufferData, const TupleMetaData&) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
