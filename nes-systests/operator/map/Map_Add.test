@@ -17,7 +17,7 @@ SINK streamSinkWithNew2 UINT64 stream$id UINT64 stream$value UINT64 stream$times
 SINK sinkOnlyIdAndNew2 UINT64 stream$new2 UINT64 stream$id
 
 # Map with add function touches one field
-SELECT id + 1 AS id, value, timestamp FROM stream INTO streamSink
+SELECT id + 1 as id, id + 1, value, timestamp FROM stream INTO streamSink
 ----
 2,1,1000
 3,1,1001
