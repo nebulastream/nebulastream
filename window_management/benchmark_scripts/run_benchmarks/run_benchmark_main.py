@@ -44,6 +44,7 @@ NUMBER_OF_TUPLES_GENERATE_PER_SOURCE = 1 * 1000 * 1000 * 1000 # 0 means the sour
 
 # Compilation for misc.
 COMBINED_CSV_FILE_WORKER_STATISTICS = "combined_worker_statistics.csv"
+COMBINED_CSV_FILE_EMIT_STATISTICS = "combined_worker_emit_statistics.csv"
 PIPELINE_TXT = "pipelines.txt"
 CACHE_HITS_MISSES_TXT = "cache_hits_and_misses.txt"
 WORKER_STATISTICS_CSV_PATH = f"/tmp/worker_statistics_{int(time.time())}.csv"
