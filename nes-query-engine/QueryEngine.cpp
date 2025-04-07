@@ -335,7 +335,7 @@ public:
     /// This allows the thread to access into the internalTaskQueue, which is prohibited for non-worker threads.
     /// The terminator thread does not count towards numberOfThreads
     constexpr static WorkerThreadId terminatorThreadId = INITIAL<WorkerThreadId>;
-    [[nodiscard]] size_t numberOfThreads() const { return pool.size(); }
+    [[nodiscard]] size_t numberOfThreads() const { return numberOfThreads_.load(); }
 
 private:
     struct WorkerThread
@@ -419,7 +419,12 @@ private:
     detail::Queue admissionQueue;
     detail::Queue internalTaskQueue;
 
+    /// Class Invariant: numberOfThreads == pool.size().
+    /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
+    /// The number of threads is only available via the atomic.
     std::vector<std::jthread> pool;
+    std::atomic<int32_t> numberOfThreads_;
+
     friend class QueryEngine;
 };
 
@@ -439,7 +444,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
     {
         ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
         DefaultPEC pec(
-            pool.pool.size(),
+            pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
             pool.bufferProvider,
@@ -554,7 +559,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
 {
     ENGINE_LOG_DEBUG("Stop Pipeline Task for {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     DefaultPEC pec(
-        pool.pool.size(),
+        pool.numberOfThreads(),
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
         pool.bufferProvider,
@@ -638,7 +643,7 @@ bool ThreadPool::WorkerThread::operator()(const FailSourceTask& failSource) cons
 void ThreadPool::addThread()
 {
     pool.emplace_back(
-        [this, id = pool.size() + 1](const std::stop_token& stopToken)
+        [this, id = numberOfThreads_++](const std::stop_token& stopToken)
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
             setThreadName(fmt::format("WorkerThread-{}", id));
