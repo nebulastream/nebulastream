@@ -92,7 +92,7 @@ endif ()
 
 
 include(cmake/Sanitizers.cmake)
-include(cmake/UseLibcxx.cmake)
+include(cmake/CheckToolchain.cmake)
 include(cmake/UseCCache.cmake)
 include(cmake/UseMold.cmake)
 
