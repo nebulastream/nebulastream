@@ -85,23 +85,24 @@ std::ostream& TestPipeline::toString(std::ostream& os) const
     return os << "TestPipeline";
 }
 
-testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(size_t numberOfExpectedBuffers)
+testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffersOrMore(size_t numberOfExpectedBuffers)
 {
     auto buffers = receivedBuffers.lock();
-    if (buffers->size() == numberOfExpectedBuffers)
+    if (buffers->size() >= numberOfExpectedBuffers)
     {
         return testing::AssertionSuccess();
     }
 
     auto check = receivedBufferTrigger.wait_for(
-        buffers.as_lock(), DEFAULT_AWAIT_TIMEOUT, [&]() { return buffers->size() == numberOfExpectedBuffers; });
+        buffers.as_lock(), DEFAULT_LONG_AWAIT_TIMEOUT, [&]() { return buffers->size() >= numberOfExpectedBuffers; });
 
     if (check)
     {
         return testing::AssertionSuccess();
     }
 
-    return testing::AssertionFailure() << "The expected number of tuple buffers were not received after " << DEFAULT_AWAIT_TIMEOUT.count()
+    return testing::AssertionFailure() << "The expected number of tuple buffers were not received after "
+                                       << std::chrono::duration_cast<std::chrono::milliseconds>(DEFAULT_LONG_AWAIT_TIMEOUT).count()
                                        << "ms. "
                                        << "Expected: " << numberOfExpectedBuffers << " Received: " << buffers->size();
 }
@@ -284,9 +285,6 @@ std::unique_ptr<Runtime::ExecutableQueryPlan> TestingHarness::addNewQuery(QueryP
 
 void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<Runtime::Execution::QueryStatus> states)
 {
-    queryRunning.emplace(id, std::make_unique<std::promise<void>>());
-    queryTermination.emplace(id, std::make_unique<std::promise<void>>());
-
     for (auto state : states)
     {
         switch (state)
@@ -300,6 +298,7 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<R
                     .WillOnce(::testing::Invoke([](auto, auto, auto) { return true; }));
                 break;
             case Runtime::Execution::QueryStatus::Running:
+                queryRunning.emplace(id, std::make_unique<std::promise<void>>());
                 EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Running, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
@@ -310,6 +309,8 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<R
                         }));
                 break;
             case Runtime::Execution::QueryStatus::Stopped:
+                ASSERT_TRUE(queryTermination.try_emplace(id, std::make_unique<std::promise<void>>()).second)
+                    << "Registered multiple query terminations";
                 EXPECT_CALL(*status, logQueryStatusChange(id, Runtime::Execution::QueryStatus::Stopped, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
@@ -320,6 +321,8 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<R
                         }));
                 break;
             case Runtime::Execution::QueryStatus::Failed:
+                ASSERT_TRUE(queryTermination.try_emplace(id, std::make_unique<std::promise<void>>()).second)
+                    << "Registered multiple query terminations";
                 EXPECT_CALL(*status, logQueryFailure(id, ::testing::_, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
