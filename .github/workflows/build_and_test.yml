@@ -88,7 +88,11 @@ jobs:
         run: cmake --build build -j -- -k 0
       - name: Run Tests
         # timeout of 600 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
-        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          printenv
+          ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600 ${ADDTIONAL_CTEST_ARGS}
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && !github.event.act }}
