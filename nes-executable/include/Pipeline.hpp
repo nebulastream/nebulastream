@@ -13,14 +13,11 @@
 */
 #pragma once
 
-#include <iterator>
-#include <memory>
 #include <vector>
 #include <Abstract/PhysicalOperator.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <ErrorHandling.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <SourcePhysicalOperator.hpp>
 
@@ -36,9 +33,9 @@ struct Pipeline
     Pipeline(SinkPhysicalOperator op);
     Pipeline() = delete;
 
-    bool isSourcePipeline();
-    bool isOperatorPipeline();
-    bool isSinkPipeline();
+    bool isSourcePipeline() const;
+    bool isOperatorPipeline() const;
+    bool isSinkPipeline() const;
 
     void appendOperator(PhysicalOperator newOp);
     void prependOperator(PhysicalOperator newOp);
