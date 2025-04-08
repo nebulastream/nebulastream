@@ -189,7 +189,7 @@ RewriteRuleResult LowerToPhysicalWindowedAggregation::apply(LogicalOperator logi
     PRECONDITION(logicalOperator.tryGet<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
     const size_t operatorHandlerIndex = 0; /// TODO this should be a singleton as for the queryid?
 
-    auto aggregation = *logicalOperator.get<WindowedAggregationLogicalOperator>();
+    auto aggregation = logicalOperator.get<WindowedAggregationLogicalOperator>();
 
     const auto inSchema = logicalOperator.getInputSchemas()[0];
     const auto outSchema = logicalOperator.getOutputSchema();

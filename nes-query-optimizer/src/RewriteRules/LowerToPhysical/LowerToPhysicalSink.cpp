@@ -26,7 +26,7 @@ namespace NES::Optimizer
 RewriteRuleResult LowerToPhysicalSink::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<SinkLogicalOperator>(), "Expected a SinkLogicalOperator");
-    auto sink = *logicalOperator.get<SinkLogicalOperator>();
+    auto sink = logicalOperator.get<SinkLogicalOperator>();
     auto physicalOperator = SinkPhysicalOperator(sink.sinkDescriptor);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema());
     return {wrapper, {wrapper}};

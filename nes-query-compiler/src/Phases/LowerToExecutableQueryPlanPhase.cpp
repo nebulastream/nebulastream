@@ -91,20 +91,20 @@ Source processSource(
     std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
     for (const auto& successor : pipeline->successorPipelines)
     {
-        if (auto executableSuccessor = processSuccessor(sourceOperator->getOriginId(), successor, pipelineQueryPlan, loweringContext))
+        if (auto executableSuccessor = processSuccessor(sourceOperator.getOriginId(), successor, pipelineQueryPlan, loweringContext))
         {
             executableSuccessorPipelines.emplace_back(*executableSuccessor);
         }
     }
 
     loweringContext.sources.emplace_back(
-        sourceOperator->getOriginId(), sourceOperator->getDescriptor(), executableSuccessorPipelines);
+        sourceOperator.getOriginId(), sourceOperator.getDescriptor(), executableSuccessorPipelines);
     return loweringContext.sources.back();
 }
 
 void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline, LoweringContext& loweringContext)
 {
-    const auto sinkOperator = pipeline->rootOperator.get<SinkPhysicalOperator>()->getDescriptor();
+    const auto sinkOperator = pipeline->rootOperator.get<SinkPhysicalOperator>().getDescriptor();
     loweringContext.sinks[sinkOperator].emplace_back(predecessor);
 }
 

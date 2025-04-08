@@ -147,7 +147,7 @@ RewriteRuleResult LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
 
     const auto operatorHandlerIndex = 0; // TODO this should change. In the best case we have setIndex() for all the operators.
 
-    auto join = *logicalOperator.get<JoinLogicalOperator>();
+    auto join = logicalOperator.get<JoinLogicalOperator>();
     auto outSchema = logicalOperator.getOutputSchema();
     auto joinFunction = ::NES::QueryCompilation::FunctionProvider::lowerFunction(join.getJoinFunction());
 

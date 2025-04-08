@@ -26,7 +26,7 @@ namespace NES::Optimizer
 RewriteRuleResult LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<MapLogicalOperator>(), "Expected a MapLogicalOperator");
-    auto map = *logicalOperator.get<MapLogicalOperator>();
+    auto map = logicalOperator.get<MapLogicalOperator>();
     auto function = map.getMapFunction();
     auto fieldName = function.getField().getFieldName();
     auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
