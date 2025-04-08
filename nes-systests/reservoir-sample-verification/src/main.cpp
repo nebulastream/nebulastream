@@ -14,110 +14,126 @@
 #include <algorithm>
 #include <charconv>
 #include <cstdint>
-#include <expected>
 #include <iostream>
 #include <map>
 #include <optional>
 #include <random>
+#include <cctype>
 #include <ranges>
+#include <string_view>
+#include <fstream>
 #include <string>
 #include <tuple>
 #include <vector>
 #include <Execution/Operators/Streaming/Aggregation/Function/Synopsis/Sample/ReservoirSampleFunction.hpp>
-/// TODO(nmlt) Fix CMake to include Logger.h
-///#include <Util/Logger/Logger.h>
+#include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
-#include <fmt/ranges.h>
 
 /// Per Window Reservoir
 class WindowReservoir
 {
+private:
     std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> reservoir;
-    uint64_t index = 0;
+    /// How many records have already passed through the window (regardless of whether they were added to the reservoir or not)
+    uint64_t currRecordIdx = 0;
 
 public:
-    void emplaceBack(std::tuple<uint64_t, uint64_t, uint64_t> tuple)
+    void emplaceBack(std::tuple<uint64_t, uint64_t, uint64_t> record)
     {
-        reservoir.emplace_back(tuple);
-        ++index;
+        reservoir.emplace_back(record);
+        ++currRecordIdx;
     }
-    void replace(uint64_t index, std::tuple<uint64_t, uint64_t, uint64_t> tuple) { reservoir.at(index) = tuple; }
-    void increaseIndex() { ++index; }
-    [[nodiscard]] uint64_t getIndex() const { return index; }
+    void replace(uint64_t index, std::tuple<uint64_t, uint64_t, uint64_t> record) { reservoir.at(index) = record; }
+    void increaseIndex() { ++currRecordIdx; }
+    [[nodiscard]] uint64_t getIndex() const { return currRecordIdx; }
     [[nodiscard]] uint64_t size() const { return reservoir.size(); }
     [[nodiscard]] std::vector<std::tuple<uint64_t, uint64_t, uint64_t>> getReservoir() const { return reservoir; }
 };
 
-/// Hardcoded values to be changed for different queries:
-/// We expect: id,value,timestamp in msec
-const std::string input = R"(1,1,1000
-12,1,1001
-4,1,1002
-1,2,2000
-11,2,2001
-16,2,2002
-1,3,3000
-11,3,3001
-1,3,3003
-1,3,3200
-1,4,4000
-1,5,5000
-1,6,6000
-1,7,7000
-1,8,8000
-1,9,9000
-1,10,10000
-1,11,11000
-1,12,12000
-1,13,13000
-1,14,14000
-1,15,15000
-1,16,16000
-1,17,17000
-1,18,18000
-1,19,19000
-1,20,20000
-1,21,21000)";
-
-struct Reservoir
+struct ReservoirSampleStore
 {
-    std::map<uint64_t, WindowReservoir> map;
-    /// Number of tuples in the reservoir
-    const uint64_t reservoirSize = 5;
-    /// Size of the window in milliseconds
-    const uint64_t windowSizeMSec = 5000;
-
+    ReservoirSampleStore(const uint64_t reservoirSize, const uint64_t windowSizeMSec)
+        : reservoirSize(reservoirSize), windowSizeMSec(windowSizeMSec)
+    {
+    }
     std::optional<uint64_t> findCorrespondingWindow(uint64_t ts)
     {
         auto it = std::find_if(
-            map.begin(),
-            map.end(),
+            windowReservoirs.begin(),
+            windowReservoirs.end(),
             [&](const auto& pair)
             {
                 auto key = pair.first;
                 return ts >= key && ts < key + windowSizeMSec;
             });
-        if (it != map.end())
+        if (it != windowReservoirs.end())
         {
             return it->first;
         }
         return std::nullopt;
     }
-    size_t getReservoirSize(uint64_t ts)
+    size_t getCorrespondingWindowReservoirSize(uint64_t ts)
     {
         auto key = findCorrespondingWindow(ts);
-        if (key.has_value() && map.contains(key.value()))
+        if (key.has_value() && windowReservoirs.contains(key.value()))
         {
-            return map.at(key.value()).size();
+            return windowReservoirs.at(key.value()).size();
         }
         return 0;
     }
+    uint64_t getWindowStart(uint64_t timestamp, uint64_t previousWindowStart)
+    {
+        uint64_t windowStart = previousWindowStart;
+        uint64_t windowEnd = windowStart + this->windowSizeMSec;
+        /// `windowStart` (current window) has overtaken input
+        if (timestamp < windowStart)
+        {
+            /// Go back in the map until we find the window this record belongs to
+            auto key = this->findCorrespondingWindow(timestamp);
+            if (key.has_value())
+            {
+                windowStart = key.value();
+            }
+            else
+            {
+                NES_ERROR("Failed to find older window.");
+                exit(1);
+            }
+        }
+        /// New window necessary
+        else if (timestamp >= windowEnd)
+        {
+            while (timestamp >= windowEnd)
+            {
+                windowEnd += this->windowSizeMSec;
+            }
+            windowStart = windowEnd - this->windowSizeMSec;
+        }
+        /// else we are still in the same window: timestamp >= windowStart && timestamp < upperBound
+        return windowStart;
+    }
+    void addRecordToCorrespondingWindowReservoir(uint64_t windowStart, std::tuple<uint64_t, uint64_t, uint64_t> record)
+    {
+        this->windowReservoirs.try_emplace(windowStart).first->second.emplaceBack(record);
+    }
+    void replaceRecordInCorrespondingWindowReservoir(uint64_t windowStart, uint64_t index, std::tuple<uint64_t, uint64_t, uint64_t> record)
+    {
+        this->windowReservoirs.try_emplace(windowStart).first->second.replace(index, record);
+    }
+    WindowReservoir& getCorrespondingWindowReservoir(uint64_t windowStart)
+    {
+        return this->windowReservoirs.at(windowStart);
+    }
+    std::map<uint64_t, WindowReservoir>& getSampleStore() { return windowReservoirs; }
+    uint64_t getReservoirSize() const { return reservoirSize; }
+    uint64_t getWindowSizeMSec() const { return windowSizeMSec; }
+private:
+    std::map<uint64_t, WindowReservoir> windowReservoirs;
+    /// Number of tuples in the reservoir
+    uint64_t reservoirSize;
+    /// Size of the window in milliseconds
+    uint64_t windowSizeMSec;
 };
-
-/// std::string formatTuple(const std::tuple<uint64_t, uint64_t, uint64_t>& tuple)
-/// {
-///     return fmt::format("({}, {}, {})", std::get<0>(tuple), std::get<1>(tuple), std::get<2>(tuple));
-/// }
 
 std::optional<std::tuple<uint64_t, uint64_t, uint64_t>> parseLine(const std::string_view& line)
 {
@@ -133,19 +149,19 @@ std::optional<std::tuple<uint64_t, uint64_t, uint64_t>> parseLine(const std::str
     auto result = std::from_chars(idString.data(), idString.data() + idString.size(), id);
     if (result.ec == std::errc::invalid_argument || result.ec == std::errc::result_out_of_range)
     {
-        NES_ERROR("Failed to convert field id");
+        NES_ERROR("Failed to convert field id in line {}", line);
         return std::nullopt;
     }
     result = std::from_chars(valueString.data(), valueString.data() + valueString.size(), value);
     if (result.ec == std::errc::invalid_argument || result.ec == std::errc::result_out_of_range)
     {
-        NES_ERROR("Failed to convert field value");
+        NES_ERROR("Failed to convert field value in line {}", line);
         return std::nullopt;
     }
     result = std::from_chars(timestampString.data(), timestampString.data() + timestampString.size(), timestamp);
     if (result.ec == std::errc::invalid_argument || result.ec == std::errc::result_out_of_range)
     {
-        NES_ERROR("Failed to convert field timestamp");
+        NES_ERROR("Failed to convert field timestamp in line {}", line);
         return std::nullopt;
     }
 
@@ -153,85 +169,77 @@ std::optional<std::tuple<uint64_t, uint64_t, uint64_t>> parseLine(const std::str
 }
 
 /// Simulate a reservoir sample over a tumbling window
-int main()
+int main(int argc, char* argv[])
 {
-    auto reservoir = Reservoir();
-    for (auto line : input | std::views::split('\n'))
+    if (argc != 2)
     {
-        //std::cout << std::string_view(line.begin(), line.end()) << '\n';
-        auto parsedTuple = parseLine(std::string_view(line.begin(), line.end()));
-        if (not parsedTuple.has_value())
-        {
-            NES_ERROR("Failed to parse line: `{}`", line);
-            return 1;
-        }
-        auto tuple = parsedTuple.value();
-        auto timestamp = std::get<2>(tuple);
+        std::cerr << "Usage: " << argv[0] << " <csv_file_path>\nCSV layout: id,value,timestamp in msec\n";
+        return 1;
+    }
+    std::ifstream file(argv[1]);
+    if (!file.is_open())
+    {
+        std::cerr << "Failed to open file: " << argv[1] << '\n';
+        return 1;
+    }
+    std::string fileContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
+    auto lines = fileContent | std::views::split('\n');
+    auto firstLine = *lines.begin();
+    /// Check whether there is a header.
+    auto filteredLines =(not firstLine.empty() && std::isalpha(*firstLine.begin()))
+    ? lines | std::views::drop(1)
+    : lines | std::views::drop(0);
+    auto parsedRecords = filteredLines
+        | std::views::transform([](auto&& line)
+        {
+            return parseLine(std::string_view(line.begin(), line.end()));
+        })
+        | std::views::filter([](const auto& result)
+        {
+            return result.has_value();
+        });
+    auto sampleStore = ReservoirSampleStore(5, 5000);
+    uint64_t windowStart = 0;
+    for (const auto& parsedRecord : parsedRecords)
+    {
         /// Probably still assumes timestamps are ordered at some point in the code
-        uint64_t lowerBound = 0;
-        uint64_t upperBound = lowerBound + reservoir.windowSizeMSec;
-        /// `lowerBound` (current window) has overtaken input
-        if (timestamp < lowerBound)
-        {
-            /// Go back in the map until we find the window this tuple belongs to
-            auto key = reservoir.findCorrespondingWindow(timestamp);
-            if (key.has_value())
-            {
-                lowerBound = key.value();
-            }
-            else
-            {
-                NES_ERROR("Failed to find older window.");
-                return 1;
-            }
-        }
-        /// New window necessary
-        else if (timestamp >= upperBound)
-        {
-            while (timestamp >= upperBound)
-            {
-                upperBound += reservoir.windowSizeMSec;
-            }
-            lowerBound = upperBound - reservoir.windowSizeMSec;
-        }
-        /// else we are still in the same window: timestamp >= lowerBound && timestamp < upperBound
+        auto record = parsedRecord.value();
+        auto timestamp = std::get<2>(record);
+        windowStart = sampleStore.getWindowStart(timestamp, windowStart);
 
-        /// Reservoir is still not full
-        if (reservoir.getReservoirSize(lowerBound) < reservoir.reservoirSize)
+        /// Reservoir is not yet full
+        if (sampleStore.getCorrespondingWindowReservoirSize(windowStart) < sampleStore.getReservoirSize())
         {
-            reservoir.map.try_emplace(lowerBound).first->second.emplaceBack(tuple);
+            sampleStore.addRecordToCorrespondingWindowReservoir(windowStart, record);
         }
-        /// Draw to find out if we need to replace a tuple in the reservoir
+        /// Draw to find out if we need to replace a record in the reservoir
         else
         {
             static std::mt19937 gen(NES::Runtime::Execution::Aggregation::Synopsis::ReservoirSampleFunction::GENERATOR_SEED);
-            uint64_t currentIndex = reservoir.map.at(lowerBound).getIndex();
+            uint64_t currentIndex = sampleStore.getCorrespondingWindowReservoir(windowStart).getIndex();
             std::uniform_int_distribution<> dis(0, static_cast<int>(currentIndex));
             uint64_t random = dis(gen);
-            NES_DEBUG("We generated a random number!");
-            if (random < reservoir.reservoirSize)
+            if (random < sampleStore.getReservoirSize())
             {
-                NES_DEBUG("The random number was < reservoirSize!");
-                reservoir.map.try_emplace(lowerBound).first->second.replace(random, tuple);
+                sampleStore.replaceRecordInCorrespondingWindowReservoir(windowStart, random, record);
             }
-            reservoir.map.at(lowerBound).increaseIndex();
+            sampleStore.getCorrespondingWindowReservoir(windowStart).increaseIndex();
         }
     }
 
-    std::cout << "window start, window end, [reservoir sample]\n";
-    for (const auto& [key, value] : reservoir.map)
+    std::cout << "window start, window end, (reservoir sample)\n";
+    for (const auto& [windowStart, windowReservoir] : sampleStore.getSampleStore())
     {
-        ///std::cout << fmt::format("{}, {}, [{}]\n", key, key + reservoir.windowSizeMSec, fmt::join(value.getReservoir() | std::views::transform(formatTuple), ", "));
-        for (auto tuples : value.getReservoir())
+        for (auto record : windowReservoir.getReservoir())
         {
             std::cout << fmt::format(
                 "{}, {}, ({}, {}, {})\n",
-                key,
-                key + reservoir.windowSizeMSec,
-                std::get<0>(tuples),
-                std::get<1>(tuples),
-                std::get<2>(tuples));
+                windowStart,
+                windowStart + sampleStore.getWindowSizeMSec(),
+                std::get<0>(record),
+                std::get<1>(record),
+                std::get<2>(record));
         }
     }
     return 0;

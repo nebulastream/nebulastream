@@ -9,5 +9,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-#add_source_files(nes-systest-lib)
+add_executable(reservoir-sample-verification main.cpp)
+target_link_libraries(reservoir-sample-verification PUBLIC nes-execution nes-common)

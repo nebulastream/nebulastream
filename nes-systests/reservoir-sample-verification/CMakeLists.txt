@@ -9,9 +9,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 add_subdirectory(src)
-add_executable(reservoir-sample-verification src/main.cpp)
-target_link_libraries(reservoir-sample-verification PUBLIC nes-execution nes-common)
