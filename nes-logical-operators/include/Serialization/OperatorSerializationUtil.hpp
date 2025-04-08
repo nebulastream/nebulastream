@@ -36,29 +36,16 @@ namespace NES
 class OperatorSerializationUtil
 {
 public:
-    /// Serializes an operator node and all its children to a SerializableOperator object.
-    static SerializableOperator serializeOperator(LogicalOperator operatorNode);
-
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
     static LogicalOperator deserializeOperator(SerializableOperator serializedOperator);
-
     static LogicalOperator deserializeLogicalOperator(const SerializableOperator_LogicalOperator& serializedOperator);
-
-    static void serializeSourceOperator(const SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
-    static void serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator);
-    static void serializeSourceDescriptor(
-        const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
-    static void serializeSinkDescriptor(
-        const Schema& schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails);
-
     static LogicalOperator deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
     static LogicalOperator deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
     static std::unique_ptr<Sources::SourceDescriptor>
     deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
     static std::unique_ptr<Sinks::SinkDescriptor>
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
-
     static std::unique_ptr<WindowAggregationLogicalFunction> deserializeWindowAggregationFunction(
         const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableWindowAggregationFunction);
 };
