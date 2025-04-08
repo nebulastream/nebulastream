@@ -37,7 +37,7 @@ class PhysicalSlicePreAggregationOperator : public PhysicalWindowOperator, publi
                                       const SchemaPtr& inputSchema,
                                       const SchemaPtr& outputSchema,
                                       const Windowing::LogicalWindowDescriptorPtr& windowDefinition,
-                                       Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr preAggHandler);
+                                       Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr preAggHandler = nullptr);
     std::string toString() const override;
     OperatorPtr copy() override;
   Runtime::Execution::Operators::KeyedSlicePreAggregationHandlerPtr getPreAggregationHandler() const;
