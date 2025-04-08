@@ -23,8 +23,12 @@
 namespace NES
 {
 
-// Requires that T contains a function getChildren()
 template <typename T>
+concept HasGetChildren = requires(T t) {
+    t.getChildren();
+};
+
+template <HasGetChildren T>
 class BFSIterator {
 public:
     using iterator_category = std::forward_iterator_tag;
@@ -44,7 +48,6 @@ public:
             nodeQueue.pop();
 
             for (const auto& child : current.getChildren()) {
-                // child is a const std::unique_ptr<T>&, so take its raw pointer.
                 nodeQueue.push(child);
             }
         }
