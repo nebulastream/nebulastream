@@ -115,6 +115,7 @@ protected:
     static void lowerUnaryOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerProjectOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerMapOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
+    static void lowerInferModelOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerTimeBasedWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
     static void lowerWatermarkAssignmentOperator(const std::shared_ptr<LogicalOperator>& operatorNode);

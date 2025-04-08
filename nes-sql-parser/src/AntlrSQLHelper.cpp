@@ -32,6 +32,7 @@ const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getHaving
 {
     return this->havingClauses;
 }
+
 const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getProjectionFields() const
 {
     return this->projectionFields;

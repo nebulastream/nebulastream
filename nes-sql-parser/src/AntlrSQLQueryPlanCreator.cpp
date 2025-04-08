@@ -345,10 +345,13 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         const auto key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(context->getText()));
         helper.groupByFields.push_back(key);
     }
-    else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
+    else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && !helper.isInferModelInput && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
         /// add identifiers in select, window, where and having clauses to the function builder list
+        /// if inference is in select, ignore the model input fields
         helper.functionBuilder.push_back(Attribute(context->getText()));
+        if (helper.isInferModelOutput)
+            helper.inferModelOutputs.push_back(Attribute(context->getText()));
     }
     else if (helper.isFrom and not helper.isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
@@ -399,6 +402,13 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             helper.functionBuilder.push_back(renamedAttribute);
             helper.mapBuilder.push_back(renamedAttribute);
         }
+    }
+    else if (helper.isInferModelInput)
+    {
+        if (helper.isFunctionCall)
+            helper.functionBuilder.push_back(Attribute(context->getText()));
+        else
+            helper.inferModelInputs.push_back(Attribute(context->getText()));
     }
     else if (helper.isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
@@ -459,6 +469,15 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = QueryPlanBuilder::addRename(helper.newSourceName, queryPlan);
     }
 
+    if (!helper.inferModelInputFields.empty())
+    {
+        for (int i = 0; i < helper.inferModelInputModel.size(); ++i)
+        {
+            queryPlan = QueryPlanBuilder::addInferModel(helper.inferModelInputModel[i],
+                helper.inferModelInputFields[i], helper.inferModelOutputFields[i], queryPlan);
+        }
+    }
+
     for (auto whereExpr = helper.getWhereClauses().rbegin(); whereExpr != helper.getWhereClauses().rend(); ++whereExpr)
     {
         queryPlan = QueryPlanBuilder::addSelection(*whereExpr, queryPlan);
@@ -487,6 +506,16 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             queryPlan = QueryPlanBuilder::addSelection(*havingExpr, queryPlan);
         }
     }
+
+    if (!helper.inferModelAggInputFields.empty())
+    {
+        for (int i = 0; i < helper.inferModelInputModel.size(); ++i)
+        {
+            queryPlan = QueryPlanBuilder::addInferModel(helper.inferModelInputModel[i],
+                helper.inferModelAggInputFields[i], helper.inferModelOutputFields[i], queryPlan);
+        }
+    }
+
     helpers.pop();
     if (helpers.empty() || helper.isSetOperation)
     {
@@ -719,6 +748,70 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
     AntlrSQLBaseListener::exitComparison(context);
 }
 
+void AntlrSQLQueryPlanCreator::enterInference(AntlrSQLParser::InferenceContext* context)
+{
+    helpers.top().isInferModel = true;
+    const AntlrSQLHelper helper = helpers.top();
+    poppush(helper);
+    AntlrSQLBaseListener::enterInference(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitInference(AntlrSQLParser::InferenceContext* context)
+{
+    helpers.top().isInferModel = false;
+    AntlrSQLHelper helper = helpers.top();
+    std::string model = context->children[2]->getText();
+    model.erase(0, 1);
+    model.erase(model.size() - 1);
+    helper.inferModelInputModel.push_back(model);
+    poppush(helper);
+    AntlrSQLBaseListener::exitInference(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterInferModelInputFields(AntlrSQLParser::InferModelInputFieldsContext* context)
+{
+    AntlrSQLHelper helper = helpers.top();
+    helper.isInferModelInput = true;
+    poppush(helper);
+    AntlrSQLBaseListener::enterInferModelInputFields(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitInferModelInputFields(AntlrSQLParser::InferModelInputFieldsContext* context)
+{
+    AntlrSQLHelper helper = helpers.top();
+    if (!helper.inferModelInputs.empty())
+    {
+        helper.inferModelInputFields.push_back(helper.inferModelInputs);
+        helper.inferModelInputs.clear();
+    }
+    else
+    {
+        helper.inferModelAggInputFields.push_back(helper.inferModelAggInputs);
+        helper.inferModelAggInputs.clear();
+    }
+    helper.isInferModelInput = false;
+    poppush(helper);
+    AntlrSQLBaseListener::exitInferModelInputFields(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterInferModelOutputFields(AntlrSQLParser::InferModelOutputFieldsContext* context)
+{
+    AntlrSQLHelper helper = helpers.top();
+    helper.isInferModelOutput = true;
+    poppush(helper);
+    AntlrSQLBaseListener::enterInferModelOutputFields(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitInferModelOutputFields(AntlrSQLParser::InferModelOutputFieldsContext* context)
+{
+    AntlrSQLHelper helper = helpers.top();
+    helper.inferModelOutputFields.push_back(helper.inferModelOutputs);
+    helper.inferModelOutputs.clear();
+    helper.isInferModelOutput = false;
+    poppush(helper);
+    AntlrSQLBaseListener::exitInferModelOutputFields(context);
+}
+
 void AntlrSQLQueryPlanCreator::enterJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
     auto helper = helpers.top();
@@ -903,6 +996,11 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     const auto funcName = Util::toLowerCase(context->children[0]->getText());
     auto tokenType = context->getStart()->getType();
 
+    if (helper.isInferModelInput)
+    {
+        parentHelper.inferModelAggInputs.push_back(helper.functionBuilder.back());
+    }
+
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::COUNT:
@@ -951,7 +1049,8 @@ void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::Thr
 void AntlrSQLQueryPlanCreator::enterValueExpressionDefault(AntlrSQLParser::ValueExpressionDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    helper.identCountHelper++;
+    if (!helper.isInferModel)
+        helper.identCountHelper++;
     poppush(helper);
     AntlrSQLBaseListener::enterValueExpressionDefault(context);
 }

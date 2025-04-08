@@ -5,6 +5,8 @@ vcpkg_from_github(
         SHA512 e152ecd75fc881bf12622fd443890d7a33c86ce1f31ce3b59ecce5878ac03bb75210048af53dbf714095332c9d6acd86434ea1ef7e59a20c2fd97fd5e8023b08
 		PATCHES
 		0001_fixes_clang_tidy.patch
+		0002_cmake_cxx_flags.patch
+		0003_mlir_pass_manager_patch.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
