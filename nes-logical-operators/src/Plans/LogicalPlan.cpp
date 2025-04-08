@@ -68,28 +68,106 @@ LogicalPlan::LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOpera
 {
 }
 
-void LogicalPlan::addRootOperator(LogicalOperator newRootOperator)
-{
-    /// Check if a root with the id already present
-    auto found = std::find_if(
-        rootOperators.begin(),
-        rootOperators.end(),
-        [&](const LogicalOperator& root) { return newRootOperator.getId() == root.getId(); });
-    if (found == rootOperators.end())
-    {
-        rootOperators.push_back(std::move(newRootOperator));
-    }
-    else
-    {
-        NES_WARNING("Root operator with id {} already present in the plan. Will not add it to the roots.", newRootOperator.getId());
-    }
-}
-
 void LogicalPlan::promoteOperatorToRoot(LogicalOperator newRoot)
 {
     newRoot.setChildren(rootOperators);
     rootOperators.clear();
     rootOperators.push_back(newRoot);
+}
+
+bool replaceOperatorHelper(LogicalOperator& current,
+                        const LogicalOperator& target,
+                        LogicalOperator replacement) {
+    if (current.getId() == target.getId()) {
+        replacement.setChildren(current.getChildren());
+        current = replacement;
+        return true;
+    }
+    bool replaced = false;
+    auto children = current.getChildren();
+    for (size_t i = 0; i < children.size(); ++i) {
+        if (replaceOperatorHelper(children[i], target, replacement)) {
+            replaced = true;
+        }
+    }
+    if (replaced) {
+        current.setChildren(children);
+    }
+    return replaced;
+}
+
+bool LogicalPlan::replaceOperator(const LogicalOperator& target, LogicalOperator replacement) {
+    bool replaced = false;
+    for (auto& root : rootOperators) {
+        if (root.getId() == target.getId()) {
+            replacement.setChildren(root.getChildren());
+            root = replacement;
+
+            replaced = true;
+        } else if (replaceOperatorHelper(root, target, replacement)) {
+            replaced = true;
+        }
+    }
+    return replaced;
+}
+
+std::unique_ptr<LogicalPlan> LogicalPlan::flip() const
+{
+    std::unordered_map<OperatorId, std::vector<LogicalOperator>> reversedEdges;
+    std::unordered_map<OperatorId, LogicalOperator> idToOperator;
+    std::set<OperatorId> allOperators;
+
+    for (const auto& root : rootOperators) {
+        for (auto op : BFSRange<LogicalOperator>(root)) {
+            idToOperator[op.getId()] = op;
+            allOperators.insert(op.getId());
+            for (const auto& child : op.getChildren()) {
+                reversedEdges[child.getId()].push_back(op);
+            }
+        }
+    }
+
+    std::vector<LogicalOperator> newRoots;
+    for (const auto& id : allOperators) {
+        if (idToOperator[id].getChildren().empty()) {
+            newRoots.push_back(idToOperator[id]);
+        }
+    }
+
+    std::unordered_map<OperatorId, LogicalOperator> flippedOperators;
+    std::unordered_set<OperatorId> visited;
+
+    std::function<LogicalOperator(const LogicalOperator&)> flipOperator;
+    flipOperator = [&](const LogicalOperator& op) -> LogicalOperator {
+        auto opId = op.getId();
+        if (visited.contains(opId)) {
+            return flippedOperators[opId];
+        }
+        visited.insert(opId);
+
+        LogicalOperator flippedOp = op;
+        flippedOp.setChildren({});
+        flippedOperators[opId] = flippedOp;
+
+        std::vector<LogicalOperator> newChildren;
+        for (const auto& parent : reversedEdges[opId]) {
+            newChildren.push_back(flipOperator(parent));
+        }
+        flippedOperators[opId].setChildren(newChildren);
+
+        return flippedOperators[opId];
+    };
+
+    std::vector<LogicalOperator> flippedRoots;
+    std::unordered_set<OperatorId> rootIds;
+    for (const auto& root : newRoots) {
+        if (!rootIds.contains(root.getId())) {
+            flippedRoots.push_back(flipOperator(root));
+            rootIds.insert(root.getId());
+        }
+    }
+
+    return std::make_unique<LogicalPlan>(getQueryId(), flippedRoots);
 }
 
 std::string LogicalPlan::toString() const
@@ -101,16 +179,6 @@ std::string LogicalPlan::toString() const
         dumpHandler.dump(rootOperator);
     }
     return ss.str();
-}
-
-std::vector<LogicalOperator> LogicalPlan::getRootOperators() const
-{
-    std::vector<LogicalOperator> rawOps;
-    rawOps.reserve(rootOperators.size());
-    for (const auto& op : rootOperators) {
-        rawOps.push_back(op);
-    }
-    return rawOps;
 }
 
 std::vector<LogicalOperator> LogicalPlan::getLeafOperators() const
@@ -169,8 +237,8 @@ void LogicalPlan::setQueryId(QueryId queryId)
 
 bool LogicalPlan::operator==(const LogicalPlan& otherPlan) const
 {
-    auto leftRootOperators = this->getRootOperators();
-    auto rightRootOperators = otherPlan.getRootOperators();
+    auto leftRootOperators = this->rootOperators;
+    auto rightRootOperators = otherPlan.rootOperators;
 
     if (leftRootOperators.size() != rightRootOperators.size())
     {
