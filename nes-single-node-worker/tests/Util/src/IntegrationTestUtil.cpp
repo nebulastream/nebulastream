@@ -438,7 +438,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
         auto sinkLogicalOperatorUpdated = SinkLogicalOperator(deserializedSinkOperator.getSinkName());
         sinkLogicalOperatorUpdated.sinkDescriptor = std::move(sinkDescriptorUpdated);
         sinkLogicalOperatorUpdated.setOutputSchema(deserializedOutputSchema);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(sinkLogicalOperatorUpdated);
+        auto serializedOperator = sinkLogicalOperatorUpdated.serialize();
 
         /// Reconfigure the original operator id, and childrenIds because deserialization/serialization changes them.
         serializedOperator.set_operatorid(rootOperator.operatorid());
@@ -470,7 +470,7 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
                     std::move(configUpdated));
 
                 auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdated));
-                auto serializedOperator = OperatorSerializationUtil::serializeOperator(std::move(sourceDescriptorLogicalOperatorUpdated));
+                auto serializedOperator = sourceDescriptorLogicalOperatorUpdated.serialize();
 
                 /// Reconfigure the original operator id, because deserialization/serialization changes them.
                 serializedOperator.set_operatorid(value.operatorid());
@@ -505,7 +505,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
                         std::move(configUpdated));
 
                     auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdated));
-                    auto serializedOperator = OperatorSerializationUtil::serializeOperator(sourceDescriptorLogicalOperatorUpdated);
+                    auto serializedOperator = sourceDescriptorLogicalOperatorUpdated.serialize();
 
                     /// Reconfigure the original operator id, because deserialization/serialization changes them.
                     serializedOperator.set_operatorid(value.operatorid());
