@@ -41,5 +41,14 @@ add_tests_if_enabled(tests)
 # Create library for the registries, and privately link it against nes-execution so that nes-execution can access its registries
 create_plugin_registry_library(nes-execution-registry nes-execution)
 target_link_libraries(nes-execution PRIVATE nes-execution-registry)
+
+find_library(iree_plugin_library NAMES iree_inference_plugin_library PATHS ${CMAKE_BINARY_DIR}/nes-plugins/Inference/IREE/src)
+target_link_libraries(nes-execution PRIVATE
+        ${iree_plugin_library}
+        iree::runtime
+        iree_compiler_API_Internal_CompilerDriver
+        iree_compiler_plugins_input_Torch_torch-mlir_CAPI
+)
+
 # Generate a registrar for each registry in nes-executions
 generate_plugin_registrars(nes-execution ExecutableFunction)

@@ -326,6 +326,10 @@ public:
      */
     Query& map(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
 
+    Query& inferModel(std::string const& model,
+        std::vector<std::shared_ptr<NodeFunction>> const& inputFields,
+        std::vector<std::shared_ptr<NodeFunction>> const& outputFields);
+
     /// Add a sink operator to the query plan that contains a SinkName. In a later step, we look up all sinks that registered using that SinkName
     /// and replace the operator containing only the sink name with operators containing the concrete descriptor of the sink.
     virtual Query& sink(std::string sinkName, WorkerId workerId = INVALID_WORKER_NODE_ID);

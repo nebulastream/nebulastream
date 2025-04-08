@@ -29,6 +29,7 @@
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
@@ -47,6 +48,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
@@ -150,6 +152,10 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
     {
         lowerMapOperator(operatorNode);
     }
+    else if (NES::Util::instanceOf<InferModel::LogicalInferModelOperator>(operatorNode))
+    {
+        lowerInferModelOperator(operatorNode);
+    }
     else if (NES::Util::instanceOf<LogicalProjectionOperator>(operatorNode))
     {
         lowerProjectOperator(operatorNode);
@@ -212,6 +218,19 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const std::shared_ptr<Log
         mapOperator->getInputSchema(), mapOperator->getOutputSchema(), mapOperator->getMapFunction());
     physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerInferModelOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
+{
+    const auto inferModelOperator = NES::Util::as<InferModel::LogicalInferModelOperator>(operatorNode);
+    const auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(
+        inferModelOperator->getInputSchema(),
+        inferModelOperator->getOutputSchema(),
+        inferModelOperator->getModel(),
+        inferModelOperator->getInputFields(),
+        inferModelOperator->getOutputFields());
+    physicalInferModelOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+    operatorNode->replace(physicalInferModelOperator);
 }
 
 std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(

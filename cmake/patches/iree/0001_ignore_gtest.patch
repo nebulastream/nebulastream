@@ -1,0 +1,20 @@
+Subject: [PATCH] googletest_patch
+---
+Index: CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	(revision f3bef2de123f08b4fc3b0ce691494891bd6760d0)
++++ b/CMakeLists.txt	(date 1740734406512)
+@@ -887,9 +887,6 @@
+   )
+ endif()
+ 
+-iree_set_googletest_cmake_options()
+-add_subdirectory(third_party/googletest EXCLUDE_FROM_ALL)
+-
+ if(IREE_ENABLE_THREADING)
+   # Benchmark.
+   iree_set_benchmark_cmake_options()

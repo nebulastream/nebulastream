@@ -29,6 +29,7 @@
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -114,6 +115,19 @@ QueryPlanBuilder::addMap(const std::shared_ptr<NodeFunctionFieldAssignment>& map
         throw UnsupportedQuery("Map function cannot have a FieldRenameFunction");
     }
     const std::shared_ptr<Operator> op = std::make_shared<LogicalMapOperator>(mapFunction, getNextOperatorId());
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
+std::shared_ptr<QueryPlan>
+QueryPlanBuilder::addInferModel(std::string const& model,
+    std::vector<std::shared_ptr<NodeFunction>> const& inputFields,
+    std::vector<std::shared_ptr<NodeFunction>> const& outputFields,
+    std::shared_ptr<QueryPlan> queryPlan)
+{
+    NES_TRACE("QueryPlanBuilder: add map inferModel to query plan");
+    const std::shared_ptr<Operator> op = std::make_shared<NES::InferModel::LogicalInferModelOperator>(
+        model, inputFields, outputFields, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

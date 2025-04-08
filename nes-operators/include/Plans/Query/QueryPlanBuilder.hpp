@@ -87,6 +87,11 @@ public:
     static std::shared_ptr<QueryPlan>
     addMap(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction, std::shared_ptr<QueryPlan> queryPlan);
 
+    static std::shared_ptr<QueryPlan> addInferModel(std::string const& model,
+        std::vector<std::shared_ptr<NodeFunction>>const& inputFields,
+        std::vector<std::shared_ptr<NodeFunction>>const& outputFields,
+        std::shared_ptr<QueryPlan> queryPlan);
+
     static std::shared_ptr<QueryPlan> addWindowAggregation(
         std::shared_ptr<QueryPlan> queryPlan,
         const std::shared_ptr<Windowing::WindowType>& windowType,
