@@ -20,5 +20,5 @@
 namespace NES::FunctionSerializationUtil
 {
 /// Note: corresponding serialization is implemented as member function of each function
-static inline LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction);
+LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction);
 }
