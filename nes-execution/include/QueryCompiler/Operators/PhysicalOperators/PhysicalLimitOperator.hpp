@@ -34,8 +34,7 @@ public:
     create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, uint64_t limit);
     static std::shared_ptr<PhysicalOperator>
     create(const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, uint64_t limit);
-    std::shared_ptr<Operator> copy() override;
-    uint64_t getLimit();
+    std::shared_ptr<Operator> copy() override;    uint64_t getLimit() const;
 
 protected:
     std::string toString() const override;

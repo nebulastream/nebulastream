@@ -15,6 +15,7 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Util/OperatorsUtil.hpp>
 #include <fmt/format.h>
@@ -71,11 +72,15 @@ std::vector<OriginId> UnaryOperator::getOutputOriginIds() const
 std::string UnaryOperator::toString() const
 {
     return fmt::format(
-        "inputSchema: {}\n"
-        "outputSchema: {}\n"
+        "inputSchema: {} "
+        "dataLayout: {}\n"
+        "outputSchema: {} "
+        "dataLayout: {}\n"
         "inputOriginIds: {}",
         inputSchema->toString(),
+        magic_enum::enum_name(inputSchema->getLayoutType()),
         outputSchema->toString(),
+        magic_enum::enum_name(outputSchema->getLayoutType()),
         fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
 }
 

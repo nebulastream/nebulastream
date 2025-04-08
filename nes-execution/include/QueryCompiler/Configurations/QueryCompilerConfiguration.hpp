@@ -21,6 +21,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <API/Schema.hpp>
 #include <Nautilus/NautilusBackend.hpp>
 #include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
@@ -46,6 +47,16 @@ public:
            Nautilus::Configurations::NautilusBackend::COMPILER,
            "Nautilus backend for the nautilus query compiler "
            "[COMPILER|INTERPRETER]."};
+    NES::Configurations::EnumOption<MemorySelectionPhaseType> memorySelectionPhase
+        = {"memorySelectionPhase",
+           MemorySelectionPhaseType::NONE,
+           "Memory layout selection phase for the nautilus query compiler "
+           "[FIXED|NONE]."};
+    NES::Configurations::EnumOption<Schema::MemoryLayoutType> memoryLayoutType
+        = {"memoryLayoutType",
+           Schema::MemoryLayoutType::ROW_LAYOUT,
+           "Memory layout for the tuple buffer"
+           "[ROW_LAYOUT|COLUMNAR_LAYOUT]."};
     NES::Configurations::UIntOption numberOfPartitions
         = {"numberOfPartitions",
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
@@ -66,7 +77,7 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&nautilusBackend, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath};
+        return {&nautilusBackend, &memoryLayoutType, &memorySelectionPhase, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath};
     }
 };
 }

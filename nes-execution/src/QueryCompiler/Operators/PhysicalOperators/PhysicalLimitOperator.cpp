@@ -35,7 +35,7 @@ std::shared_ptr<PhysicalOperator> PhysicalLimitOperator::create(
     return std::make_shared<PhysicalLimitOperator>(id, inputSchema, outputSchema, limit);
 }
 
-uint64_t PhysicalLimitOperator::getLimit()
+uint64_t PhysicalLimitOperator::getLimit() const
 {
     return limit;
 }

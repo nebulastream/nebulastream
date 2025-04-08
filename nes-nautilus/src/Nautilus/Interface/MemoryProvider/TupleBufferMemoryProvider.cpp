@@ -113,7 +113,7 @@ TupleBufferMemoryProvider::create(const uint64_t bufferSize, const std::shared_p
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+        auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(std::move(schema), bufferSize);
         return std::make_unique<ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
     }
     throw NotImplemented("Currently only row and column layout are supported");

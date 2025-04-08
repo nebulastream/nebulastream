@@ -23,4 +23,15 @@ enum class StreamJoinStrategy : uint8_t
 {
     NESTED_LOOP_JOIN
 };
+
+
+enum class MemorySelectionPhaseType : uint8_t
+{
+    /// Sets all operators / pipelines to the same memory layout type
+    FIXED,
+
+    /// Does not change the memory layout type any operator / pipeline
+    NONE
+};
+
 }
