@@ -78,7 +78,8 @@ set_nes_log_level_value(NES_LOGGING_VALUE)
 
 # Set Optimization Flags
 set(NES_WARNINGS "-Wall -Wconstant-conversion -Wbitwise-instead-of-logical -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=integer-overflow -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations -Wno-invalid-offsetof ")
-set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer ${NES_SPECIFIC_FLAGS}")
+set(IREE_SPECIFIC_FLAGS " -Wno-missing-field-initializers -Wno-gnu-anonymous-struct -Wno-c11-extensions -Wno-nested-anon-types -Wno-c99-extensions -Wno-gnu-zero-variadic-macro-arguments -Wno-unused-parameter -Wno-zero-length-array -Wno-unused-function -Wno-sign-compare ")
+set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer ${NES_SPECIFIC_FLAGS} ${IREE_SPECIFIC_FLAGS}")
 
 # setup rpath for linker
 set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")

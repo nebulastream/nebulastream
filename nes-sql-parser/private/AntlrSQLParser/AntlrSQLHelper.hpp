@@ -42,8 +42,8 @@ enum class AntlrSQLWindowType : uint8_t
 };
 class AntlrSQLHelper
 {
-    std::vector<std::shared_ptr<NodeFunction>> projectionFields; ///vector needed for logicalProjectionOperator constructor
-    std::vector<std::shared_ptr<NodeFunction>> whereClauses; ///where and having clauses need to be accessed in reverse
+    std::vector<std::shared_ptr<NodeFunction>> projectionFields;
+    std::vector<std::shared_ptr<NodeFunction>> whereClauses;
     std::vector<std::shared_ptr<NodeFunction>> havingClauses;
     std::string source;
 
@@ -96,6 +96,18 @@ public:
     size_t timeUnitAdvanceBy;
     std::optional<int> minimumCount;
     int implicitMapCountHelper = 0;
+
+    /// Inference helpers
+    bool isInferModel = false;
+    bool isInferModelInput = false;
+    bool isInferModelOutput = false;
+    std::vector<std::string> inferModelInputModel;
+    std::vector<std::shared_ptr<NodeFunction>> inferModelInputs;
+    std::vector<std::shared_ptr<NodeFunction>> inferModelAggInputs;
+    std::vector<std::shared_ptr<NodeFunction>> inferModelOutputs;
+    std::vector<std::vector<std::shared_ptr<NodeFunction>>> inferModelInputFields;
+    std::vector<std::vector<std::shared_ptr<NodeFunction>>> inferModelAggInputFields;
+    std::vector<std::vector<std::shared_ptr<NodeFunction>>> inferModelOutputFields;
 
     [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getWhereClauses() const;
     [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getHavingClauses() const;

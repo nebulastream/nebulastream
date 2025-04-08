@@ -1,0 +1,26 @@
+Subject: [PATCH] mlir_pass_manager_patch
+---
+Index: nautilus/src/nautilus/compiler/backends/mlir/MLIRPassManager.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRPassManager.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRPassManager.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRPassManager.cpp	(revision 364c89c184430e1ccd0d9422fc73b1cc54c33ca8)
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRPassManager.cpp	(date 1742475548385)
+@@ -2,6 +2,7 @@
+ 
+ #include "nautilus/compiler/backends/mlir/MLIRPassManager.hpp"
+ #include "nautilus/exceptions/NotImplementedException.hpp"
++#include <mlir/Conversion/ArithToLLVM/ArithToLLVM.h>
+ #include <mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h>
+ #include <mlir/Conversion/FuncToLLVM/ConvertFuncToLLVMPass.h>
+ #include <mlir/ExecutionEngine/OptUtils.h>
+@@ -43,6 +44,7 @@
+ 	// Apply lowering passes.
+ 	passManager.addPass(mlir::createConvertFuncToLLVMPass());
+ 	passManager.addPass(mlir::createConvertControlFlowToLLVMPass());
++	passManager.addPass(mlir::createArithToLLVMConversionPass());
+ 
+ 	// Run passes.
+ 	if (mlir::failed(passManager.run(*module))) {

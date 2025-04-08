@@ -1,0 +1,19 @@
+Subject: [PATCH] cmake_cxx_flags_patch
+---
+Index: CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	(revision 364c89c184430e1ccd0d9422fc73b1cc54c33ca8)
++++ b/CMakeLists.txt	(date 1741357891988)
+@@ -32,7 +32,7 @@
+ else ()
+     set(CMAKE_CXX_WARNINGS "${CMAKE_CXX_WARNINGS} -Woverflow -Werror=return-type -Werror=return-local-addr  -Werror=write-strings")
+ endif ()
+-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_WARNINGS} -fpermissive -fno-omit-frame-pointer")
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_WARNINGS} -fpermissive -fno-omit-frame-pointer -Wno-unused-result")
+ 
+ if (ENABLE_TEST_COVERAGE)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fcoverage-mapping -fprofile-instr-generate")

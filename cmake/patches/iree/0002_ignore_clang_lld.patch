@@ -1,0 +1,50 @@
+Subject: [PATCH] llvm_patch
+---
+Index: build_tools/cmake/iree_llvm.cmake
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build_tools/cmake/iree_llvm.cmake b/build_tools/cmake/iree_llvm.cmake
+--- a/build_tools/cmake/iree_llvm.cmake	(revision f3bef2de123f08b4fc3b0ce691494891bd6760d0)
++++ b/build_tools/cmake/iree_llvm.cmake	(date 1742499234860)
+@@ -96,13 +96,13 @@
+   list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
+   include_directories(${MLIR_INCLUDE_DIRS})
+ 
+-  find_package(LLD REQUIRED)
+-  list(APPEND CMAKE_MODULE_PATH "${LLD_CMAKE_DIR}")
+-  include_directories(${LLD_INCLUDE_DIRS})
+-
+-  find_package(Clang REQUIRED)
+-  list(APPEND CMAKE_MODULE_PATH "${CLANG_CMAKE_DIR}")
+-  include_directories(${CLANG_INCLUDE_DIRS})
++#  find_package(LLD REQUIRED)
++#  list(APPEND CMAKE_MODULE_PATH "${LLD_CMAKE_DIR}")
++#  include_directories(${LLD_INCLUDE_DIRS})
++#
++#  find_package(Clang REQUIRED)
++#  list(APPEND CMAKE_MODULE_PATH "${CLANG_CMAKE_DIR}")
++#  include_directories(${CLANG_INCLUDE_DIRS})
+ 
+   # Lit never gets installed with LLVM. So we have to reach into our copy
+   # of the monorepo to get it. I'm sorry. If this doesn't work for you,
+@@ -114,12 +114,12 @@
+   endif()
+ 
+   set(IREE_LLVM_LINK_BINARY "$<TARGET_FILE:llvm-link>")
+-  set(IREE_LLD_BINARY "$<TARGET_FILE:lld>")
+-  set(IREE_CLANG_BINARY "$<TARGET_FILE:clang>")
+-  set(IREE_CLANG_BUILTIN_HEADERS_PATH "${LLVM_LIBRARY_DIR}/clang/${LLVM_VERSION_MAJOR}/include")
+-  if(NOT EXISTS "${IREE_CLANG_BUILTIN_HEADERS_PATH}")
+-    message(WARNING "Could not find installed clang-resource-headers (tried ${IREE_CLANG_BUILTIN_HEADERS_PATH})")
+-  endif()
++#  set(IREE_LLD_BINARY "$<TARGET_FILE:lld>")
++#  set(IREE_CLANG_BINARY "$<TARGET_FILE:clang>")
++#  set(IREE_CLANG_BUILTIN_HEADERS_PATH "${LLVM_LIBRARY_DIR}/clang/${LLVM_VERSION_MAJOR}/include")
++#  if(NOT EXISTS "${IREE_CLANG_BUILTIN_HEADERS_PATH}")
++#    message(WARNING "Could not find installed clang-resource-headers (tried ${IREE_CLANG_BUILTIN_HEADERS_PATH})")
++#  endif()
+ endmacro()
+ 
+ # iree_llvm_set_bundled_cmake_options()
