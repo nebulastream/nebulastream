@@ -24,10 +24,11 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutablePipelineProviderRegistry.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <Pipeline.hpp>
 #include <options.hpp>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
+#include <Pipelines/CompiledExecutablePipelineStage.hpp>
 
 namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
 {
@@ -111,13 +112,24 @@ void processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>
 std::unique_ptr<ExecutablePipelineStage> getStage(const std::shared_ptr<Pipeline>& pipeline)
 {
     nautilus::engine::Options options;
+    switch (pipeline->providerType)
+    {
+        case Pipeline::ProviderType::Compiler: {
+            options.setOption("engine.Compilation", true);
+            break;
+        }
+        case Pipeline::ProviderType::Interpreter: {
+            options.setOption("engine.Compilation", false);
+            break;
+        }
+        default: {
+            INVARIANT(false, "Invalid backend");
+        }
+    }
     options.setOption("toConsole", true);
     options.setOption("toFile", true);
 
-    auto providerArguments = ExecutablePipelineProviderRegistryArguments{};
-    const auto provider = ExecutablePipelineProviderRegistry::instance().create(pipeline->getProviderType(), providerArguments);
-    INVARIANT(provider, "Cannot find ExecutablePipelineProvider");
-    return  provider.value()->create(pipeline, pipeline->operatorHandlers, options);
+    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->operatorHandlers, options);
 }
 
 std::shared_ptr<ExecutablePipeline> processOperatorPipeline(

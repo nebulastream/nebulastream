@@ -13,6 +13,3 @@
 add_source_files(nes-runtime
         CompiledExecutablePipelineStage.cpp
 )
-
-add_plugin(Compilation ExecutablePipelineProvider nes-runtime CompilationPipelineProvider.cpp)
-add_plugin(Interpreter ExecutablePipelineProvider nes-runtime InterpretationPipelineProvider.cpp)
