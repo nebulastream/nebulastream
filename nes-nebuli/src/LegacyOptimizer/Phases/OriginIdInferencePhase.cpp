@@ -34,7 +34,7 @@ void inferInputOrigins(LogicalOperator& logicalOperator)
     {
         auto unionOp = logicalOperator.get<UnionLogicalOperator>();
         std::vector<OriginId> combinedInputOriginIds;
-        for (auto child : unionOp->getChildren())
+        for (auto child : unionOp.getChildren())
         {
             inferInputOrigins(child);
             auto childInputOriginIds = child.getOutputOriginIds();
@@ -76,7 +76,7 @@ void OriginIdInferencePhase::apply(LogicalPlan& queryPlan)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
-    for (auto operatorWithOriginId : queryPlan.getOperatorsWithTraits<Optimizer::OriginIdAssignerTrait>())
+    for (auto operatorWithOriginId : queryPlan.getOperatorsByTraits<Optimizer::OriginIdAssignerTrait>())
     {
         auto id = OriginId(originIdCounter++);
 
