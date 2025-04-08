@@ -32,6 +32,8 @@ struct RunningQueryPlanNode;
 /// the WorkerThreads can handle them. We cannot allow that the SourceThread causes the RunningSource to be destroyed, which would cause a
 /// deadlock. Additionally, the RunningSource prevents the SourceThread from accidentally triggering the successor pipeline termination, by
 /// saving references to the successors. Only if both the SourceThread and the RunningSource are destroyed are successor pipelines terminated.
+/// Starting and Stopping of the SourceThread is done asynchronously. Destroying the RunningSource guarantees that the SourceThread was
+/// requested to stop, however it might still be active.
 class RunningSource
 {
 public:
