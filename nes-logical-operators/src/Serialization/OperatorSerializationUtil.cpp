@@ -14,10 +14,9 @@
 
 #include <vector>
 #include <Operators/UnionLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
+#include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <google/protobuf/json/json.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>

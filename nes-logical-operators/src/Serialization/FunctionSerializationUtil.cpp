@@ -13,7 +13,7 @@
 */
 
 #include <memory>
-#include <utility>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
@@ -21,15 +21,18 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableFunction.pb.h>
 
-namespace NES
+namespace NES::FunctionSerializationUtil
 {
 
-LogicalFunction deserializeUnaryFunction(const SerializableFunction& serializedFunction)
+LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction)
 {
     const auto& functionType = serializedFunction.functiontype();
 
-    const auto& unaryFunction = serializedFunction.unaryfunction();
-    auto child = FunctionSerializationUtil::deserializeFunction(unaryFunction.child());
+    std::vector<LogicalFunction> deserializedChildren;
+    for (const auto& child : serializedFunction.children())
+    {
+        deserializedChildren.emplace_back(deserializeFunction(child));
+    }
 
     NES::Configurations::DescriptorConfig::Config functionDescriptorConfig{};
     for (const auto& [key, value] : serializedFunction.config())
@@ -40,46 +43,7 @@ LogicalFunction deserializeUnaryFunction(const SerializableFunction& serializedF
     if (auto function
         = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
     {
-        return function.value().withChildren({child});
-    }
-    throw CannotDeserialize("Binary Logical Function: {}", serializedFunction.DebugString());
-}
-
-LogicalFunction deserializeBinaryFunction(const SerializableFunction& serializedFunction)
-{
-    const auto& functionType = serializedFunction.functiontype();
-
-    const auto& unaryFunction = serializedFunction.binaryfunction();
-    auto leftChild = FunctionSerializationUtil::deserializeFunction(unaryFunction.leftchild());
-    auto rightChild = FunctionSerializationUtil::deserializeFunction(unaryFunction.rightchild());
-
-    NES::Configurations::DescriptorConfig::Config functionDescriptorConfig{};
-    for (const auto& [key, value] : serializedFunction.config())
-    {
-        functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
-    }
-
-    if (auto function
-        = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
-    {
-        return function.value().withChildren({leftChild, rightChild});
-    }
-    throw CannotDeserialize("Binary Logical Function: {}", serializedFunction.DebugString());
-}
-
-LogicalFunction FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
-{
-    if (serializedFunction.has_unaryfunction())
-    {
-        return deserializeUnaryFunction(serializedFunction);
-    }
-    else if (serializedFunction.has_binaryfunction())
-    {
-        return deserializeBinaryFunction(serializedFunction);
-    }
-    else if (serializedFunction.has_naryfunction())
-    {
-        throw UnsupportedOperation("Currently no support for N-ary functions");
+        return function.value().withChildren(deserializedChildren);
     }
     throw CannotDeserialize("Logical Function: {}", serializedFunction.DebugString());
 }

@@ -16,29 +16,12 @@ syntax = "proto3";
 import "SerializableDataType.proto";
 package NES;
 
-
 message SerializableFunction {
-    message UnaryFunction {
-        SerializableFunction child = 1;
-    }
-    message BinaryFunction {
-        SerializableFunction leftChild = 1;
-        SerializableFunction rightChild = 2;
-    }
-    message NaryFunction {
-        repeated SerializableFunction children = 1;
-    }
-
-    oneof value {
-        UnaryFunction unaryFunction = 1;
-        BinaryFunction binaryFunction = 2;
-        NaryFunction naryFunction = 3;
-    }
-    string functionType = 4;
-    SerializableDataType stamp = 5;
-    map<string, SerializableVariantDescriptor> config = 6;
+    repeated SerializableFunction children = 1;
+    string functionType = 2;
+    SerializableDataType stamp = 3;
+    map<string, SerializableVariantDescriptor> config = 4;
 }
-
 
 message FunctionList {
   repeated SerializableFunction functions = 1;
