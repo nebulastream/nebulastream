@@ -106,7 +106,10 @@ RunningSource::~RunningSource()
     if (source)
     {
         ENGINE_LOG_DEBUG("Stopping Running Source");
-        source->stop();
+        if (source->tryStop(std::chrono::milliseconds(0)) == Sources::SourceReturnType::TryStopResult::TIMEOUT)
+        {
+            ENGINE_LOG_DEBUG("Source was requested to stop. Stop will happen asynchronously.");
+        }
     }
 }
 bool RunningSource::attemptUnregister()
