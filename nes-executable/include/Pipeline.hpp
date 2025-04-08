@@ -39,8 +39,6 @@ struct Pipeline {
     bool isOperatorPipeline();
     bool isSinkPipeline();
 
-    std::string getProviderType() const;
-
     void appendOperator(PhysicalOperator newOp);
     void prependOperator(PhysicalOperator newOp);
     std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> releaseOperatorHandlers();
