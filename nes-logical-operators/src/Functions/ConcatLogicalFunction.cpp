@@ -77,6 +77,7 @@ LogicalFunction ConcatLogicalFunction::withChildren(std::vector<LogicalFunction>
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
+    copy.stamp = children[0].getStamp().join(children[1].getStamp());
     return copy;
 };
 
