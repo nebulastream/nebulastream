@@ -22,6 +22,7 @@
 #include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <SourceCatalogs/SourceCatalog.hpp>
 
 namespace NES::CLI
 {
@@ -67,4 +68,6 @@ struct QueryConfig
 std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& file);
 std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream);
 std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
+QueryConfig loadConfig(std::istream& inputStream);
+void addSources(const std::shared_ptr<NES::Catalogs::Source::SourceCatalog>& sourceCatalog, const QueryConfig& config);
 }

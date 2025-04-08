@@ -283,4 +283,44 @@ std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
         throw QueryDescriptionNotParsable("{}", pex.what());
     }
 }
+
+QueryConfig loadConfig(std::istream& inputStream)
+{
+    try
+    {
+        auto config = YAML::Load(inputStream).as<QueryConfig>();
+        return config;
+    }
+    catch (const YAML::ParserException& pex)
+    {
+        throw QueryDescriptionNotParsable("{}", pex.what());
+    }
+}
+q
+void addSources(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog, const QueryConfig& config) {
+    /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
+    for (const auto& [logicalSourceName, schemaFields] : config.logical)
+    {
+        auto schema = Schema::create();
+        NES_INFO("Adding logical source: {}", logicalSourceName);
+        for (const auto& [name, type] : schemaFields)
+        {
+            schema = schema->addField(name, type);
+        }
+        sourceCatalog->addLogicalSource(logicalSourceName, schema);
+    }
+
+    /// Add physical sources to corresponding logical sources.
+    for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
+    {
+        auto sourceDescriptor = createSourceDescriptor(
+            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
+        sourceCatalog->addPhysicalSource(
+            logicalSourceName,
+            Catalogs::Source::SourceCatalogEntry::create(
+                NES::PhysicalSource::create(std::move(sourceDescriptor)),
+                sourceCatalog->getLogicalSource(logicalSourceName),
+                INITIAL<WorkerId>));
+    }
+}
 }

@@ -9,8 +9,13 @@
 
 #include "controller/QueryController.hpp"
 
+#include <SourceCatalogs/SourceCatalog.hpp>q
+#include <NebuLi.hpp>
+#include <ErrorHandling.hpp>
+#include <yaml-cpp/yaml.h>
 
 void run(int port) {
+
     // // Create a JSON ObjectMapper manually
     auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared();
 
@@ -37,11 +42,32 @@ void run(int port) {
 
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " PORT\n";
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " PORT CONFIG_FILE\n";
         return 1;
     }
     int port = std::stoi(argv[1]);
+    const std::filesystem::path& filePath = argv[2];
+
+     // create and fill the source catalog based on the provided YAML file
+     auto sourceCatalog = std::make_shared<NES::Catalogs::Source::SourceCatalog>();
+
+     std::ifstream file(filePath);
+     if (!file)
+     {
+        throw NES::QueryDescriptionNotReadable(std::strerror(errno));
+     }
+     auto config = NES::CLI::loadConfig(file);
+     addSources(sourceCatalog, config);
+
+     for (auto const& [key, val] : sourceCatalog->getAllLogicalSourceAsString())
+     {
+        std::cout << key        // string (key)
+                  << ':'
+                  << val        // string's value
+                  << std::endl;
+     }
+
 
     /* Init oatpp Environment */
     oatpp::base::Environment::init();

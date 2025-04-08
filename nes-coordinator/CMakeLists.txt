@@ -9,8 +9,9 @@ add_executable(nes-rest_server src/rest_server.cpp)
 # target_include_directories(nes-rest_server PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+
 # Link Oat++ to the executable
-target_link_libraries(nes-rest_server PRIVATE oatpp::oatpp)
+target_link_libraries(nes-rest_server PUBLIC nes-catalogs PUBLIC nes-nebuli-lib PRIVATE oatpp::oatpp)
 
 # Enable C++17 (or later)
 set_target_properties(nes-rest_server PROPERTIES
