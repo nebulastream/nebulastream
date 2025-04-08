@@ -35,7 +35,7 @@ jobs:
           ref: ${{ inputs.ref }}
       - name: Configure NebulaStream
         run: |
-          rm -rf
+          rm -rf build || true
           cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
