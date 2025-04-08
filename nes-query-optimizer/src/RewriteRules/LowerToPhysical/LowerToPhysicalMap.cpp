@@ -26,8 +26,8 @@ RewriteRuleResult LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<MapLogicalOperator>(), "Expected a MapLogicalOperator");
     auto map = logicalOperator.get<MapLogicalOperator>();
-    auto function = map.getMapFunction();
-    auto fieldName = function.getField().getFieldName();
+    auto function = map.getMapFunction().getAssignment();
+    auto fieldName = map.getMapFunction().getField().getFieldName();
     auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
