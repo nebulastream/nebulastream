@@ -3,8 +3,8 @@
 # groups: [milestone, benchmark, large]
 
 # Source definitions
-SourceCSV bid UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetime FLOAT64 price TESTDATA/nexmark/bid.csv
-SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/nexmark/auction_modified.csv
+SourceCSV bid UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetime FLOAT64 price TESTDATA/large/nexmark/bid.csv
+SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/nexmark/auction_modified.csv
 
 # Query 0
 SELECT * FROM bid INTO CHECKSUM;

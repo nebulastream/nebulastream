@@ -3,8 +3,8 @@
 # groups: [WindowOperators, Join]
 
 # Source definitions
-SourceCSV stream UINT64 id UINT64 value UINT64 timestamp TESTDATA/stream.csv
-SourceCSV stream2 UINT64 id2 UINT64 value2 UINT64 timestamp TESTDATA/stream2.csv
+SourceCSV stream UINT64 id UINT64 value UINT64 timestamp TESTDATA/small/stream.csv
+SourceCSV stream2 UINT64 id2 UINT64 value2 UINT64 timestamp TESTDATA/small/stream2.csv
 
 SINK sinkStreamStream2 UINT64 streamstream2$start UINT64 streamstream2$end UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp UINT64 stream2$id2 UINT64 stream2$value2 UINT64 stream2$timestamp
 
