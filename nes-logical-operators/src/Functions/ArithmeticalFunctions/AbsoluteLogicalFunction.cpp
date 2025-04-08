@@ -40,7 +40,7 @@ LogicalFunction AbsoluteLogicalFunction::withStamp(std::shared_ptr<DataType> sta
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction AbsoluteLogicalFunction::withInferredStamp(Schema schema) const

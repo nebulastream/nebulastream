@@ -44,7 +44,7 @@ LogicalFunction ConstantValueLogicalFunction::withStamp(std::shared_ptr<DataType
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 std::vector<LogicalFunction> ConstantValueLogicalFunction::getChildren() const

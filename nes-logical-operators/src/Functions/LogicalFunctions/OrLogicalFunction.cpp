@@ -59,7 +59,7 @@ LogicalFunction OrLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) co
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 std::vector<LogicalFunction> OrLogicalFunction::getChildren() const

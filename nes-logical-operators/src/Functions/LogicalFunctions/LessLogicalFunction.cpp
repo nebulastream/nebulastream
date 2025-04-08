@@ -58,7 +58,7 @@ LogicalFunction LessLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) 
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction LessLogicalFunction::withInferredStamp(Schema schema) const

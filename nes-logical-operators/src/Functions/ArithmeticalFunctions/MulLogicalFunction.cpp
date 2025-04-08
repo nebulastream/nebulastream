@@ -57,7 +57,7 @@ LogicalFunction MulLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction MulLogicalFunction::withInferredStamp(Schema schema) const

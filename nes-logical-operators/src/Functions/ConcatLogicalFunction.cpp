@@ -54,7 +54,7 @@ LogicalFunction ConcatLogicalFunction::withStamp(std::shared_ptr<DataType> stamp
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction ConcatLogicalFunction::withInferredStamp(Schema schema) const

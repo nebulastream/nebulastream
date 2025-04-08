@@ -44,7 +44,7 @@ LogicalFunction AndLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 std::vector<LogicalFunction> AndLogicalFunction::getChildren() const

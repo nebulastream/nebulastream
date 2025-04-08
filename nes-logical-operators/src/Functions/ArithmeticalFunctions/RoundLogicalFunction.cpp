@@ -58,7 +58,7 @@ LogicalFunction RoundLogicalFunction::withStamp(std::shared_ptr<DataType> stamp)
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction RoundLogicalFunction::withInferredStamp(Schema schema) const

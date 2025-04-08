@@ -57,7 +57,7 @@ LogicalFunction PowLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction PowLogicalFunction::withInferredStamp(Schema schema) const

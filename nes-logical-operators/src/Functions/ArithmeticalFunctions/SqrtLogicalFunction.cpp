@@ -57,7 +57,7 @@ LogicalFunction SqrtLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) 
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction SqrtLogicalFunction::withInferredStamp(Schema schema) const
