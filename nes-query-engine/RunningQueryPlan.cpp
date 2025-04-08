@@ -385,6 +385,7 @@ std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::sto
     /// Source stop will emit a the PendingPipelineStop which stops a pipeline once no more tasks are depending on it.
     /// The blocking nature of waiting for all sources to be stopped introduces a potential deadlock, if the source is blocked
     /// waiting on submitting work into the TaskQueue, while all WorkerThreads are waiting for the source to terminate.
+    /// Note: the attemptUnregister function will eventually remove the source from the internal.sources map, thus you should not directly iterate!
     auto sources = internal.sources | std::views::values | ranges::to<std::vector>();
     auto pendingSourceStops
         = sources | std::views::filter([](auto& source) { return source->attemptUnregister(); }) | ranges::to<std::vector>();
