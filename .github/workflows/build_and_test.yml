@@ -13,6 +13,35 @@ on:
         description: "ref of the branch"
 
 jobs:
+  clean-build-and-test-linux:
+    # Ensures that the build works from a clean build directory.
+    name: "Clean build and tests"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
+      env:
+        MOLD_JOBS: 1
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64 ]
+        stdlib: [ 'libcxx' ]
+        build_type: [ 'Debug' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Configure NebulaStream
+        run: |
+          rm -rf
+          cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Run Tests
+        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600
+
   build-and-test-linux:
     name: "Build and tests: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}"
     container:
