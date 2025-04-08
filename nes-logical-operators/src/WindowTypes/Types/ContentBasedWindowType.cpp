@@ -26,6 +26,10 @@ ContentBasedWindowType::ContentBasedWindowType() = default;
 std::unique_ptr<ThresholdWindow>
 ContentBasedWindowType::asThresholdWindow(std::unique_ptr<ContentBasedWindowType> contentBasedWindowType)
 {
-    return Util::unique_ptr_dynamic_cast<ThresholdWindow>(std::move(contentBasedWindowType));
+    if (auto* casted = dynamic_cast<ThresholdWindow*>(contentBasedWindowType.get())) {
+        contentBasedWindowType.release();
+        return std::unique_ptr<ThresholdWindow>(casted);
+    }
+    return std::unique_ptr<ThresholdWindow>(nullptr);
 }
 }
