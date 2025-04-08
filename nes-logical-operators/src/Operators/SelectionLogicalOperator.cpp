@@ -55,7 +55,7 @@ bool SelectionLogicalOperator::operator==(LogicalOperatorConcept const& rhs) con
 std::string SelectionLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "FILTER(opId: " << id << ": predicate: " << predicate << ")";
+    ss << "SELECTION(opId: " << id << ": predicate: " << predicate << ")";
     return ss.str();
 }
 
@@ -64,7 +64,7 @@ bool SelectionLogicalOperator::inferSchema(Schema inputSchema)
     predicate = predicate.withInferredStamp(inputSchema);
     if (predicate.getStamp() != Boolean())
     {
-        throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
+        throw CannotInferSchema("the filter expression is not a valid predicate");
     }
     this->inputSchema = inputSchema;
     this->outputSchema = inputSchema;
@@ -75,7 +75,7 @@ bool SelectionLogicalOperator::inferSchema(Schema inputSchema)
     {
         if (!child.inferSchema(outputSchema))
         {
-            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
+            throw CannotInferSchema("failed inferring the schema of the child operator");
         }
         newChildren.push_back(child);
     }
