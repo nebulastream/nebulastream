@@ -74,19 +74,6 @@ bool Pipeline::isSinkPipeline()
     return rootOperator.tryGet<SinkPhysicalOperator>().has_value();
 }
 
-std::string Pipeline::getProviderType() const
-{
-    switch (providerType)
-    {
-        case ProviderType::Interpreter:
-            return "Interpreter";
-        case ProviderType::Compiler:
-            return "Compiler";
-        default:
-            return "Unknown";
-    }
-}
-
 void Pipeline::prependOperator(PhysicalOperator newOp)
 {
     PRECONDITION(not(isSourcePipeline() or isSinkPipeline()), "Cannot add new operator to source or sink pipeline");
@@ -120,9 +107,11 @@ std::string Pipeline::toString() const
 {
     std::ostringstream oss;
     oss << "PipelineId: " << pipelineId.getRawValue() << "\n";
-    oss << "Provider: " << getProviderType() << "\n";
-    oss << "Successors: " << successorPipelines.size() << "\n";
-    oss << "Predecessors: " << predecessorPipelines.size() << "\n";
+    oss << "Provider: " << magic_enum::enum_name(providerType) << "\n";
+    for (const auto& successor : successorPipelines)
+    {
+        oss << "Successor PipelineId: " << successor->pipelineId.getRawValue() << "\n";
+    }
     oss << "Operator Chain:\n";
     oss << operatorChainToString(rootOperator);
     return oss.str();

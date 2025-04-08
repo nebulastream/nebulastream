@@ -40,10 +40,3 @@ endif ()
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 
 add_tests_if_enabled(tests)
-
-# Create library for the registries, and privately link it against nes-execution so that nes-execution can access its registries
-create_plugin_registry_library(nes-runtime-registry nes-runtime)
-# PUBLIC to get referenced by nes-query-optimizer
-target_link_libraries(nes-runtime PUBLIC nes-runtime-registry)
-# Generate a registrar for each registry in nes-executions
-generate_plugin_registrars(nes-runtime ExecutablePipelineProvider)
