@@ -85,15 +85,10 @@ public:
 
     static LogicalPlan addSink(std::string sinkName, LogicalPlan queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
-    // TODO
-    /// Create watermark assigner operator and adds it to the queryPlan
-    //static std::shared_ptr<LogicalPlan> assignWatermark(
-    //    std::shared_ptr<LogicalPlan> queryPlan, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
-
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
-    //static std::shared_ptr<LogicalPlan>
-    //checkAndAddWatermarkAssignment(std::shared_ptr<LogicalPlan> queryPlan, std::shared_ptr<Windowing::WindowType> windowType);
+    static LogicalPlan
+    checkAndAddWatermarkAssignment(LogicalPlan queryPlan, std::shared_ptr<Windowing::WindowType> windowType);
 
 private:
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources
