@@ -15,12 +15,10 @@
 #include <vector>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <google/protobuf/json/json.h>
+#include <Serialization/FunctionSerializationUtil.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
-#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
-#include <Operators/UnionLogicalOperator.hpp>
 
 namespace NES
 {

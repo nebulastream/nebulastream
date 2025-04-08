@@ -91,20 +91,15 @@ SerializableFunction SqrtLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
-    auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child_ = funcDesc->mutable_child();
-    child_->CopyFrom(getChildren()[0].serialize());
-
+    serializedFunction.add_children()->CopyFrom(child.serialize());
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
-
     return serializedFunction;
 }
 
-UnaryLogicalFunctionRegistryReturnType
-UnaryLogicalFunctionGeneratedRegistrar::RegisterSqrtUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
-{
-    return SqrtLogicalFunction(arguments.child);
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments) {
+    return SqrtLogicalFunction(arguments.children[0]);
 }
 
 }

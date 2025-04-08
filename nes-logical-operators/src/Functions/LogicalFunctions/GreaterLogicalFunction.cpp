@@ -91,20 +91,15 @@ SerializableFunction GreaterLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
-    auto* funcDesc = new SerializableFunction_BinaryFunction();
-    auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(left.serialize());
-    auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(right.serialize());
-
+    serializedFunction.add_children()->CopyFrom(left.serialize());
+    serializedFunction.add_children()->CopyFrom(right.serialize());
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
-
     return serializedFunction;
 }
 
-std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
-BinaryLogicalFunctionGeneratedRegistrar::RegisterGreaterBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     return GreaterLogicalFunction(arguments.children[0], arguments.children[1]);
 }

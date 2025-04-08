@@ -89,18 +89,14 @@ SerializableFunction FloorLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
-    auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child_ = funcDesc->mutable_child();
-    child_->CopyFrom(child.serialize());
-
+    serializedFunction.add_children()->CopyFrom(child.serialize());
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
-
     return serializedFunction;
 }
 
-UnaryLogicalFunctionRegistryReturnType
-UnaryLogicalFunctionGeneratedRegistrar::RegisterFloorUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterFloorLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     return FloorLogicalFunction(arguments.children[0]);
 }
