@@ -159,7 +159,7 @@ std::shared_ptr<ExecutablePipeline> processOperatorPipeline(
 }
 }
 
-std::unique_ptr<CompiledQueryPlan> LowerToExecutableQueryPlanPhase::apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan)
+std::unique_ptr<CompiledQueryPlan> apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan)
 {
     LoweringContext loweringContext;
     ///Process all pipelines recursively.
