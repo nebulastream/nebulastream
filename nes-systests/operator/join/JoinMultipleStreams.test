@@ -3,12 +3,12 @@
 # groups: [WindowOperators, Join]
 
 # Source definitions
-SourceCSV stream UINT64 id UINT64 value UINT64 timestamp TESTDATA/stream.csv
-SourceCSV stream2 UINT64 id2 UINT64 value2 UINT64 timestamp TESTDATA/stream2.csv
-SourceCSV stream4 UINT64 id4 UINT64 value4 UINT64 timestamp TESTDATA/stream4.csv
-SourceCSV stream4_1 UINT64 id4_1 UINT64 value4_1 UINT64 timestamp TESTDATA/stream4.csv
-SourceCSV stream7 UINT64 id7 UINT64 value7 UINT64 timestamp TESTDATA/stream7.csv
-SourceCSV stream7_1 UINT64 id7_1 UINT64 value7_1 UINT64 timestamp TESTDATA/stream7.csv
+SourceCSV stream UINT64 id UINT64 value UINT64 timestamp TESTDATA/small/stream.csv
+SourceCSV stream2 UINT64 id2 UINT64 value2 UINT64 timestamp TESTDATA/small/stream2.csv
+SourceCSV stream4 UINT64 id4 UINT64 value4 UINT64 timestamp TESTDATA/small/stream4.csv
+SourceCSV stream4_1 UINT64 id4_1 UINT64 value4_1 UINT64 timestamp TESTDATA/small/stream4.csv
+SourceCSV stream7 UINT64 id7 UINT64 value7 UINT64 timestamp TESTDATA/small/stream7.csv
+SourceCSV stream7_1 UINT64 id7_1 UINT64 value7_1 UINT64 timestamp TESTDATA/small/stream7.csv
 
 SINK sinkStreamStream2 UINT64 streamstream2$start UINT64 streamstream2$end UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp UINT64 stream2$id2 UINT64 stream2$value2 UINT64 stream2$timestamp
 SINK sinkStreamStream2Stream4 UINT64 streamstream2stream4$start  UINT64 streamstream2stream4$end  UINT64 streamstream2$start  UINT64 streamstream2$end  UINT64 stream$id  UINT64 stream$value  UINT64 stream$timestamp  UINT64 stream2$id2  UINT64 stream2$value2  UINT64 stream2$timestamp  UINT64 stream4$id4  UINT64 stream4$value4  UINT64 stream4$timestamp

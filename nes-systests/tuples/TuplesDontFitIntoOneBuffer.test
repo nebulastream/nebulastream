@@ -2,7 +2,7 @@
 # description: Simple source/buffer tests
 # groups: [Tuples]
 
-SourceCSV multiBuffer UINT64 field_1 UINT64 field_2 UINT64 field_3 UINT64 field_4 UINT64 field_5 UINT64 field_6 UINT64 field_7 UINT64 field_8 TESTDATA/200x8-rows-fields.csv
+SourceCSV multiBuffer UINT64 field_1 UINT64 field_2 UINT64 field_3 UINT64 field_4 UINT64 field_5 UINT64 field_6 UINT64 field_7 UINT64 field_8 TESTDATA/small/200x8-rows-fields.csv
 
 SINK sinkMultiBuffer UINT64 multiBuffer$field_1 UINT64 multiBuffer$field_2 UINT64 multiBuffer$field_3 UINT64 multiBuffer$field_4 UINT64 multiBuffer$field_5 UINT64 multiBuffer$field_6 UINT64 multiBuffer$field_7 UINT64 multiBuffer$field_8
 
