@@ -14,12 +14,11 @@
 
 #pragma once
 
-#include <memory>
 #include <Functions/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
 
 namespace NES::FunctionSerializationUtil
 {
 /// Note: corresponding serialization is implemented as member function of each function
-static LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction);
+static inline LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction);
 }

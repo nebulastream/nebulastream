@@ -103,15 +103,10 @@ SerializableFunction OrLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
-    auto* funcDesc = new SerializableFunction_BinaryFunction();
-    auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(left.serialize());
-    auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(right.serialize());
-
+    serializedFunction.add_children()->CopyFrom(left.serialize());
+    serializedFunction.add_children()->CopyFrom(right.serialize());
     DataTypeSerializationUtil::serializeDataType(
         this->getStamp(), serializedFunction.mutable_stamp());
-
     return serializedFunction;
 }
 

@@ -146,15 +146,9 @@ SerializableFunction FieldAssignmentLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
-
-    auto* funcDesc = new SerializableFunction_BinaryFunction();
-    auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(fieldAccess.serialize());
-    auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(logicalFunction.serialize());
-
+    serializedFunction.add_children()->CopyFrom(fieldAccess.serialize());
+    serializedFunction.add_children()->CopyFrom(logicalFunction.serialize());
     DataTypeSerializationUtil::serializeDataType(getStamp(), serializedFunction.mutable_stamp());
-
     return serializedFunction;
 }
 

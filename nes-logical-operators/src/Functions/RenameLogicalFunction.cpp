@@ -127,10 +127,7 @@ SerializableFunction RenameLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
-
-    auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child_ = funcDesc->mutable_child();
-    child_->CopyFrom(child.serialize());
+    serializedFunction.add_children()->CopyFrom(child.serialize());
 
     NES::Configurations::DescriptorConfig::ConfigType configVariant = getNewFieldName();
     SerializableVariantDescriptor variantDescriptor =
