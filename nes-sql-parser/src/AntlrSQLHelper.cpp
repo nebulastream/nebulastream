@@ -54,9 +54,9 @@ void AntlrSQLHelper::addProjectionField(LogicalFunction expressionNode)
     this->projectionFields.push_back(std::move(expressionNode));
 }
 
-std::unique_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType()
+std::shared_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType()
 {
-    return std::unique_ptr<NES::Windowing::WindowType>();
+    return {};
 }
 
 void AntlrSQLHelper::addMapExpression(FieldAssignmentLogicalFunction expressionNode)
