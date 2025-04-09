@@ -43,10 +43,10 @@ const DataType& ConstantValueLogicalFunction::getStamp() const
     return *stamp;
 };
 
-LogicalFunction ConstantValueLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction ConstantValueLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp;
+    copy.stamp = stamp->clone();
     return copy;
 };
 

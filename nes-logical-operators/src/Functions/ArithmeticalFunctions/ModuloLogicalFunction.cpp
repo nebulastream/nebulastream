@@ -47,10 +47,10 @@ const DataType& ModuloLogicalFunction::getStamp() const
     return *stamp;
 };
 
-LogicalFunction ModuloLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction ModuloLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp;
+    copy.stamp = stamp->clone();
     return copy;
 };
 

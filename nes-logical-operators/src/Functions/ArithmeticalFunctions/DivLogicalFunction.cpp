@@ -43,10 +43,10 @@ const DataType& DivLogicalFunction::getStamp() const
     return *stamp;
 };
 
-LogicalFunction DivLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction DivLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp;
+    copy.stamp = stamp->clone();
     return copy;
 };
 
