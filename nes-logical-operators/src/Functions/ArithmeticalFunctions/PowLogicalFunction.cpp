@@ -53,10 +53,10 @@ const DataType& PowLogicalFunction::getStamp() const
     return *stamp;
 };
 
-LogicalFunction PowLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction PowLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp;
+    copy.stamp = stamp->clone();
     return copy;
 };
 

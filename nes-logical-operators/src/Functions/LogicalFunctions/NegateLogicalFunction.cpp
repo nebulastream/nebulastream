@@ -69,10 +69,10 @@ const DataType& NegateLogicalFunction::getStamp() const
     return *stamp;
 };
 
-LogicalFunction NegateLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction NegateLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp;
+    copy.stamp = stamp->clone();
     return copy;
 };
 
