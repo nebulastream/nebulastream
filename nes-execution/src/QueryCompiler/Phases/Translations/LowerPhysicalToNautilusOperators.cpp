@@ -335,11 +335,11 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     if (auto registryType = operatorNode->registryType())
     {
         auto optOperator = Runtime::Execution::Operators::ExecutableOperatorRegistry::instance().create(
-            std::string(*registryType), Runtime::Execution::Operators::ExecutableOperatorRegistryArguments{operatorNode});
+            std::string(*registryType), Runtime::Execution::Operators::ExecutableOperatorRegistryArguments{operatorNode, operatorHandlers});
         if (!optOperator)
         {
             throw UnknownPhysicalOperator(
-                fmt::format("Cannot lower '{}' via OperatorRegistry. Operator: {}", *registryType, *operatorNode));
+                fmt::format("Cannot lower '{}' via OperatorRegistry. Operator: {}", registryType->get(), *operatorNode));
         }
         parentOperator->setChild(*optOperator);
         return *optOperator;

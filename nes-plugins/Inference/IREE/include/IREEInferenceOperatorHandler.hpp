@@ -14,12 +14,11 @@
 
 #pragma once
 
-#include "IREEAdapter.hpp"
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
-
+class IREEAdapter;
 class IREEInferenceOperatorHandler : public OperatorHandler
 {
 public:

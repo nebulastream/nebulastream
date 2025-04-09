@@ -12,7 +12,7 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/FetchIREE.cmake)
 
-add_plugin_as_library(IREE Operator nes-execution-registry iree_inference_plugin_library
+add_plugin_as_library(IREE ExecutableOperator nes-execution-registry iree_inference_plugin_library
         IREEInferenceOperator.cpp
         IREEInferenceOperatorHandler.cpp
         IREEAdapter.cpp

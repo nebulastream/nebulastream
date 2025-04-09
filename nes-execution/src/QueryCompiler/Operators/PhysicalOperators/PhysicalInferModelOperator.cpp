@@ -59,13 +59,7 @@ std::shared_ptr<PhysicalOperator> PhysicalInferModelOperator::create(
 }
 
 std::string PhysicalInferModelOperator::toString() const {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalInferModelOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    out << "model: " << model;
-    out << std::endl;
-    return out.str();
+    return "IREE";
 }
 
 std::shared_ptr<Operator> PhysicalInferModelOperator::copy()
