@@ -11,20 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        LogicalOperator.cpp
-        LogicalSelectionOperator.cpp
-        LogicalProjectionOperator.cpp
-        LogicalMapOperator.cpp
-        LogicalInferModelOperator.cpp
-        LogicalUnionOperator.cpp
-        RenameSourceOperator.cpp
-        LogicalBinaryOperator.cpp
-        LogicalUnaryOperator.cpp
-        LogicalLimitOperator.cpp
+        LogicalStatisticStoreReadOperator.cpp
+        LogicalStatisticStoreWriteOperator.cpp
 )
-
-add_subdirectory(Sinks)
-add_subdirectory(Sources)
-add_subdirectory(Statistics)
-add_subdirectory(Watermarks)
-add_subdirectory(Windows)
