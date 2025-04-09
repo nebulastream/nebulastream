@@ -53,10 +53,10 @@ const DataType& EqualsLogicalFunction::getStamp() const
     return *stamp;
 };
 
-LogicalFunction EqualsLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction EqualsLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp;
+    copy.stamp = stamp->clone();
     return copy;
 };
 

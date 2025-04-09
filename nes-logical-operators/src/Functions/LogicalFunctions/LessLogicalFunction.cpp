@@ -56,10 +56,10 @@ const DataType& LessLogicalFunction::getStamp() const
     return *stamp;
 };
 
-LogicalFunction LessLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction LessLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp;
+    copy.stamp = stamp->clone();
     return copy;
 };
 
