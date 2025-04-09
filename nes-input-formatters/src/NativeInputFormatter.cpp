@@ -24,6 +24,12 @@ namespace NES::InputFormatters
 
 InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterNativeInputFormatter(InputFormatterRegistryArguments arguments)
 {
+    if (arguments.inputFormatterConfig.hasSpanningTuples)
+    {
+        auto inputFormatter = std::make_unique<NativeInputFormatter<true>>();
+        return arguments.createInputFormatterTaskPipeline<NativeInputFormatter<true>, NativeFormatFieldAccess<true>, true>(
+            std::move(inputFormatter));
+    }
     auto inputFormatter = std::make_unique<NativeInputFormatter<false>>();
     return arguments.createInputFormatterTaskPipeline<NativeInputFormatter<false>, NativeFormatFieldAccess<false>, false>(
         std::move(inputFormatter));

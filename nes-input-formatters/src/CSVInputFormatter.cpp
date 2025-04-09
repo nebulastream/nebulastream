@@ -119,8 +119,12 @@ std::ostream& CSVInputFormatter::toString(std::ostream& os) const
 
 InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments arguments)
 {
+    constexpr bool hasSpanningTuples = true;
+    PRECONDITION(
+        arguments.inputFormatterConfig.hasSpanningTuples == hasSpanningTuples,
+        "The CSVInputFormatter does not support parsing buffers without spanning tuples.");
     auto inputFormatter = std::make_unique<CSVInputFormatter>(arguments.inputFormatterConfig, arguments.numberOfFieldsInSchema);
-    return arguments.createInputFormatterTaskPipeline<CSVInputFormatter, FieldOffsets, true>(std::move(inputFormatter));
+    return arguments.createInputFormatterTaskPipeline<CSVInputFormatter, FieldOffsets, hasSpanningTuples>(std::move(inputFormatter));
 }
 
 }

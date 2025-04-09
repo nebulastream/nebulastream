@@ -954,6 +954,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     serializedParserConfig->set_type(sourceDescriptor.getParserConfig().parserType);
     serializedParserConfig->set_tupledelimiter(sourceDescriptor.getParserConfig().tupleDelimiter);
     serializedParserConfig->set_fielddelimiter(sourceDescriptor.getParserConfig().fieldDelimiter);
+    serializedParserConfig->set_hasspanningtuples(sourceDescriptor.getParserConfig().hasSpanningTuples);
     serializedSourceDescriptor->set_allocated_parserconfig(serializedParserConfig);
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
@@ -1011,6 +1012,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     deserializedParserConfig.parserType = serializedParserConfig.type();
     deserializedParserConfig.tupleDelimiter = serializedParserConfig.tupledelimiter();
     deserializedParserConfig.fieldDelimiter = serializedParserConfig.fielddelimiter();
+    deserializedParserConfig.hasSpanningTuples = serializedParserConfig.hasspanningtuples();
 
     /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
     Configurations::DescriptorConfig::Config SourceDescriptorConfig{};

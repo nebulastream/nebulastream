@@ -25,6 +25,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -50,6 +51,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace YAML
 {
@@ -127,12 +129,42 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig, const Schema& schema)
 {
     auto validParserConfig = Sources::ParserConfig{};
+    const auto parseHasSpanningTuple = [](const std::string_view hasSpanningTupleString)
+    {
+        const auto hasSpanningTuplesBool = Util::from_chars<bool>(hasSpanningTupleString);
+        if (not hasSpanningTuplesBool.has_value())
+        {
+            throw InvalidConfigParameter("hasSpanningTuples must be a valid bool");
+        }
+        return hasSpanningTuplesBool.value();
+    };
+
     if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
     {
+        /// TODO #804: improve InputFormatter validation (make sure the type exists and that the args below are valid)
+        if (not(parserType->second == "CSV" or parserType->second == "Internal"))
+        {
+            throw InvalidConfigParameter("Not supporting parser type: {}", parserType->second);
+        }
         validParserConfig.parserType = parserType->second;
+        bool hasSpanningTuplesBool = true;
+        if (const auto hasSpanningTuplesString = parserConfig.find("hasSpanningTuples"); hasSpanningTuplesString != parserConfig.end())
+        {
+            hasSpanningTuplesBool = parseHasSpanningTuple(hasSpanningTuplesString->second);
+        }
+        if (hasSpanningTuplesBool and validParserConfig.parserType == "Internal")
+        {
+            if (std::ranges::any_of(
+                    schema.getFieldNames(),
+                    [&schema](const auto& fieldName)
+                    { return Util::instanceOf<VariableSizedDataType>(schema.getFieldByName(fieldName).value()->getDataType()); }))
+            {
+                throw InvalidConfigParameter("Not supporting variable sized data for the internal format with spanning tuples.");
+            }
+        }
     }
     else
     {
@@ -157,6 +189,15 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
     {
         NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
         validParserConfig.fieldDelimiter = ",";
+    }
+    if (const auto hasSpanningTuplesString = parserConfig.find("hasSpanningTuples"); hasSpanningTuplesString != parserConfig.end())
+    {
+        validParserConfig.hasSpanningTuples = parseHasSpanningTuple(hasSpanningTuplesString->second);
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: hasSpanningTuples, using default: true");
+        validParserConfig.hasSpanningTuples = true;
     }
     return validParserConfig;
 }
@@ -187,7 +228,7 @@ Sources::SourceDescriptor createSourceDescriptor(
         return numSourceLocalBuffers;
     }(sourceConfiguration);
 
-    auto validParserConfig = validateAndFormatParserConfig(parserConfig);
+    auto validParserConfig = validateAndFormatParserConfig(parserConfig, *schema);
     auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
     return Sources::SourceDescriptor(
         std::move(schema),

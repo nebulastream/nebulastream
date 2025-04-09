@@ -19,11 +19,9 @@
 #include <string>
 
 #include <API/Schema.hpp>
-#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 
 namespace NES::Sources
 {
@@ -33,6 +31,17 @@ struct ParserConfig
     std::string parserType;
     std::string tupleDelimiter;
     std::string fieldDelimiter;
+    bool hasSpanningTuples;
+
+    friend std::ostream& operator<<(std::ostream& os, const ParserConfig& config)
+    {
+        return os << fmt::format(
+                   "ParserConfig(type: {}, tupleDelimiter: {}, fieldDelimiter: {}, hasSpanningTuples: {})",
+                   config.parserType,
+                   config.tupleDelimiter,
+                   config.fieldDelimiter,
+                   config.hasSpanningTuples);
+    }
 };
 
 class SourceDescriptor : public Configurations::Descriptor

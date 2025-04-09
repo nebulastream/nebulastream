@@ -104,6 +104,7 @@ getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
     };
 }
 
+/// Taken from Nebuli.cpp
 Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
 {
     auto validParserConfig = Sources::ParserConfig{};
@@ -134,6 +135,20 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
     {
         NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
         validParserConfig.fieldDelimiter = ",";
+    }
+    if (const auto hasSpanningTuples = parserConfig.find("hasSpanningTuples"); hasSpanningTuples != parserConfig.end())
+    {
+        const auto hasSpanningTuplesBool = Util::from_chars<bool>(hasSpanningTuples->second);
+        if (not hasSpanningTuplesBool.has_value())
+        {
+            throw InvalidConfigParameter("hasSpanningTuples must be a valid: true");
+        }
+        validParserConfig.hasSpanningTuples = hasSpanningTuplesBool.value();
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: hasSpanningTuples, using default: false");
+        validParserConfig.hasSpanningTuples = true;
     }
     return validParserConfig;
 }
