@@ -883,27 +883,27 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::COUNT:
-            helper.windowAggs.push_back(
+            parentHelper.windowAggs.push_back(
                 CountAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::AVG:
-            helper.windowAggs.push_back(
+            parentHelper.windowAggs.push_back(
                 AvgAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::MAX:
-            helper.windowAggs.push_back(
+            parentHelper.windowAggs.push_back(
                 MaxAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::MIN:
-            helper.windowAggs.push_back(
+            parentHelper.windowAggs.push_back(
                 MinAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::SUM:
-            helper.windowAggs.push_back(
+            parentHelper.windowAggs.push_back(
                 SumAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::MEDIAN:
-            helper.windowAggs.push_back(
+            parentHelper.windowAggs.push_back(
                 MedianAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         default:
@@ -914,7 +914,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 helper.functionBuilder.pop_back();
                 const auto leftFunction = helper.functionBuilder.back();
                 helper.functionBuilder.pop_back();
-                helper.functionBuilder.push_back(ConcatLogicalFunction(leftFunction, rightFunction));
+                parentHelper.functionBuilder.push_back(ConcatLogicalFunction(leftFunction, rightFunction));
             }
             else
             {
