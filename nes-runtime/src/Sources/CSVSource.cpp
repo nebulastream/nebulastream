@@ -271,7 +271,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     NES_DEBUG("TCPSource::fillBuffer: {} bytes read", bytesRead);
                     if (bytesRead == 0) {
                         if (byteOffset < incomingTupleSize) {
-                            NES_ERROR("Read timed out before complete tuple was read");
+                            //NES_ERROR("Read timed out before complete tuple was read");
                             //return std::nullopt;
                             //                                buffer.setNumberOfTuples(0);
                             //                                return buffer.getBuffer();
@@ -333,7 +333,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 }
 
                 if (numCompleteTuplesRead == 0) {
-                    NES_ERROR("No complete tuples read, returning empty buffer");
+                    //NES_ERROR("No complete tuples read, returning empty buffer");
                     buffer.setNumberOfTuples(numCompleteTuplesRead);
                     return  buffer.getBuffer();
                 }
