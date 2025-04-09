@@ -26,13 +26,14 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/Statistics/LogicalStatisticStoreReadOperator.hpp>
+#include <Operators/LogicalOperators/Statistics/LogicalStatisticStoreWriteOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
@@ -51,6 +52,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalStatisticStoreReadOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalStatisticStoreWriteOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
@@ -160,6 +163,22 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
         const auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(
             limitOperator->getInputSchema(), limitOperator->getOutputSchema(), limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
+    }
+    else if (NES::Util::instanceOf<LogicalStatisticStoreWriteOperator>(operatorNode))
+    {
+        const auto statisticStoreWriteOperator = NES::Util::as<LogicalStatisticStoreWriteOperator>(operatorNode);
+        const auto physicalStatisticStoreWriteOperator = PhysicalOperators::PhysicalStatisticStoreWriteOperator::create(
+            statisticStoreWriteOperator->getInputSchema(), statisticStoreWriteOperator->getOutputSchema());
+        physicalStatisticStoreWriteOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+        operatorNode->replace(physicalStatisticStoreWriteOperator);
+    }
+    else if (NES::Util::instanceOf<LogicalStatisticStoreReadOperator>(operatorNode))
+    {
+        const auto statisticStoreReadOperator = NES::Util::as<LogicalStatisticStoreReadOperator>(operatorNode);
+        const auto physicalStatisticStoreReadOperator = PhysicalOperators::PhysicalStatisticStoreReadOperator::create(
+            statisticStoreReadOperator->getInputSchema(), statisticStoreReadOperator->getOutputSchema());
+        physicalStatisticStoreReadOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+        operatorNode->replace(physicalStatisticStoreReadOperator);
     }
     else
     {

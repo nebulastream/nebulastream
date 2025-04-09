@@ -26,6 +26,8 @@
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Selection.hpp>
+#include <Execution/Operators/Statistic/StatisticStoreReader.hpp>
+#include <Execution/Operators/Statistic/StatisticStoreWriter.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationProbe.hpp>
@@ -59,6 +61,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalStatisticStoreReadOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/StatisticCollection/PhysicalStatisticStoreWriteOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -152,6 +156,18 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto map = lowerMap(operatorNode);
         parentOperator->setChild(map);
         return map;
+    }
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStatisticStoreReadOperator>(operatorNode))
+    {
+        auto statisticStoreReader = std::make_shared<Runtime::Execution::Operators::StatisticStoreReader>(operatorHandlers.size() - 1);
+        parentOperator->setChild(statisticStoreReader);
+        return statisticStoreReader;
+    }
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStatisticStoreWriteOperator>(operatorNode))
+    {
+        auto statisticStoreWriter = std::make_shared<Runtime::Execution::Operators::StatisticStoreWriter>(operatorHandlers.size() - 1);
+        parentOperator->setChild(statisticStoreWriter);
+        return statisticStoreWriter;
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationBuild>(operatorNode))
     {
