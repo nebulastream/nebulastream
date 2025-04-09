@@ -16,7 +16,8 @@
 
 #include <cstddef>
 #include <stop_token>
-#include <string>
+#include <ostream>
+
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
