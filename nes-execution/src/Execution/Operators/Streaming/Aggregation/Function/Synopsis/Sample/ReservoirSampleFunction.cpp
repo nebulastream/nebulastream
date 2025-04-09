@@ -20,9 +20,9 @@
 namespace NES::Runtime::Execution::Aggregation::Synopsis
 {
 
-static uint64_t getRandomNumberProxy(const uint64_t upperBound)
+uint64_t getRandomNumberProxy(const uint64_t upperBound)
 {
-    std::mt19937 gen(ReservoirSampleFunction::GENERATOR_SEED);
+    static std::mt19937 gen(ReservoirSampleFunction::GENERATOR_SEED);
     std::uniform_int_distribution<> dis(0, upperBound);
 
     return dis(gen);
@@ -44,6 +44,7 @@ ReservoirSampleFunction::ReservoirSampleFunction(
           reservoirSize)
     , currRecordIdx(0)
 {
+    PRECONDITION(reservoirSize != 0, "Reservoir size cannot be zero");
 }
 
 void ReservoirSampleFunction::lift(
