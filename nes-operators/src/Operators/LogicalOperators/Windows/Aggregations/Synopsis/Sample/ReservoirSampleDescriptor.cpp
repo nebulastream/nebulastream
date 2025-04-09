@@ -12,43 +12,55 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/Synopsis/Sample/ReservoirSampleDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES::Windowing
 {
 
-ReservoirSampleDescriptor::ReservoirSampleDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField)
-    : WindowAggregationDescriptor(onField)
+ReservoirSampleDescriptor::ReservoirSampleDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField, uint64_t reservoirSize)
+    : WindowAggregationDescriptor(onField, NodeFunctionFieldAccess::create("reservoir")), reservoirSize(reservoirSize)
 {
     this->aggregationType = Type::Reservoir;
-    this->reservoirSize = RESERVOIR_SIZE;
 }
 ReservoirSampleDescriptor::ReservoirSampleDescriptor(
-    const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField)
-    : WindowAggregationDescriptor(onField, asField)
+    const std::shared_ptr<NodeFunctionFieldAccess>& onField,
+    const std::shared_ptr<NodeFunctionFieldAccess>& asField,
+    uint64_t reservoirSize)
+    : WindowAggregationDescriptor(onField, asField), reservoirSize(reservoirSize)
 {
     this->aggregationType = Type::Reservoir;
-    this->reservoirSize = RESERVOIR_SIZE;
+}
+
+std::shared_ptr<WindowAggregationDescriptor> ReservoirSampleDescriptor::create(
+    std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField, uint64_t reservoirSize)
+{
+    return std::make_shared<ReservoirSampleDescriptor>(ReservoirSampleDescriptor(std::move(onField), std::move(asField), reservoirSize));
 }
 
 std::shared_ptr<WindowAggregationDescriptor>
-ReservoirSampleDescriptor::create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField)
+ReservoirSampleDescriptor::on(const std::shared_ptr<NodeFunction>& onField, uint64_t reservoirSize)
 {
-    return std::make_shared<ReservoirSampleDescriptor>(ReservoirSampleDescriptor(std::move(onField), std::move(asField)));
-}
-
-std::shared_ptr<WindowAggregationDescriptor> ReservoirSampleDescriptor::on(const std::shared_ptr<NodeFunction>& onField)
-{
-    // TODO(nikla44): use NodeFunction that gets parameter from query instead of accessing fields
-    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(onField))
-    {
-        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
-    }
+    INVARIANT(
+        NES::Util::instanceOf<NodeFunctionFieldAccess>(onField),
+        "Query: window key has to be an NodeFunctionFieldAccess but it was a {}",
+        *onField);
     const auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(onField);
-    return std::make_shared<ReservoirSampleDescriptor>(ReservoirSampleDescriptor(fieldAccess));
+    return std::make_shared<ReservoirSampleDescriptor>(ReservoirSampleDescriptor(fieldAccess, reservoirSize));
 }
 
 void ReservoirSampleDescriptor::inferStamp(const Schema& schema)
@@ -60,10 +72,9 @@ void ReservoirSampleDescriptor::inferStamp(const Schema& schema)
         NES_FATAL_ERROR("ReservoirSampleDescriptor: aggregations on non numeric fields is not supported.");
     }
     ///Set fully qualified name for the as Field
-    const auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
     const auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
 
-    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    const auto attributeNameResolver = "stream$";
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
@@ -79,7 +90,10 @@ void ReservoirSampleDescriptor::inferStamp(const Schema& schema)
 
 std::shared_ptr<WindowAggregationDescriptor> ReservoirSampleDescriptor::copy()
 {
-    return std::make_shared<ReservoirSampleDescriptor>(ReservoirSampleDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
+    return std::make_shared<ReservoirSampleDescriptor>(ReservoirSampleDescriptor(
+        NES::Util::as<NodeFunctionFieldAccess>(this->onField->deepCopy()),
+        NES::Util::as<NodeFunctionFieldAccess>(this->asField->deepCopy()),
+        this->reservoirSize));
 }
 
 std::shared_ptr<DataType> ReservoirSampleDescriptor::getInputStamp()

@@ -70,9 +70,9 @@ std::shared_ptr<API::WindowAggregation> Median(const FunctionItem& onField)
     return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-std::shared_ptr<API::WindowAggregation> Reservoir(const FunctionItem& onField)
+std::shared_ptr<API::WindowAggregation> Reservoir(const FunctionItem& onField, uint64_t reservoirSize)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::ReservoirSampleDescriptor::on(onField.getNodeFunction()));
+    return std::make_shared<API::WindowAggregation>(Windowing::ReservoirSampleDescriptor::on(onField.getNodeFunction(), reservoirSize));
 }
 
 Windowing::TimeMeasure Milliseconds(const uint64_t milliseconds)

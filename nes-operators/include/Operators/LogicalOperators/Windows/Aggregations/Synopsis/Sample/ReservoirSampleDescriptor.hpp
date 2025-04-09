@@ -14,24 +14,27 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
 {
 
-// TODO(nikla44): get reservoirSize from query
-constexpr auto RESERVOIR_SIZE = 5;
-
 class ReservoirSampleDescriptor final : public WindowAggregationDescriptor
 {
 public:
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
+    /// This function creates a ReservoirSampleDescriptor even though the name doesn't make sense
+    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField, uint64_t reservoirSize);
 
     /// Creates a new ReservoirSampleDescriptor
-    /// @param onField field on which the aggregation should be performed
-    /// @param asField function describing how the aggregated field should be called
+    /// @param asField used when the reservoir should be renamed
     static std::shared_ptr<WindowAggregationDescriptor>
-    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
+    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField, uint64_t reservoirSize);
 
     [[nodiscard]] uint64_t getReservoirSize() const;
 
@@ -46,8 +49,11 @@ public:
     virtual ~ReservoirSampleDescriptor() = default;
 
 private:
-    explicit ReservoirSampleDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
-    ReservoirSampleDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
+    explicit ReservoirSampleDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField, uint64_t reservoirSize);
+    ReservoirSampleDescriptor(
+        const std::shared_ptr<NodeFunctionFieldAccess>& onField,
+        const std::shared_ptr<NodeFunctionFieldAccess>& asField,
+        uint64_t reservoirSize);
 
     uint64_t reservoirSize;
 };

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <charconv>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -54,6 +55,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Common/DataTypes/Integer.hpp>
 
 namespace NES::Parsers
 {
@@ -864,6 +866,16 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 helper.functionBuilder.pop_back();
 
                 parentHelper.functionBuilder.push_back(NodeFunctionConcat::create(leftFunction, rightFunction));
+            }
+            else if (funcName == "reservoir")
+            {
+                auto constantValue = NES::Util::as<NodeFunctionConstantValue>(helper.functionBuilder.back());
+                auto constantString = constantValue->getConstantValue();
+                uint64_t reservoirSize;
+                auto parseResult = std::from_chars(constantString.data(), constantString.data() + constantString.size(), reservoirSize);
+                INVARIANT(parseResult.ec == std::errc(), "Failed to parse reservoir size: {}", constantString);
+                const FunctionItem hardcodedField = NodeFunctionFieldAccess::create("timestamp");
+                parentHelper.windowAggs.push_back(API::Reservoir(hardcodedField, reservoirSize)->aggregation);
             }
             else
             {

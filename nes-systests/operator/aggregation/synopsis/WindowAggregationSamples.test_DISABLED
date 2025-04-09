@@ -33,10 +33,29 @@ Source stream UINT64 id UINT64 value UINT64 timestamp
 1,20,20000
 1,21,21000
 
-# TODO(nikla44):
-SINK sinkStream UINT64 stream$start UINT64 stream$end UINT64 stream$id TEXT stream$sample
+SINK sinkStream UINT64 stream$start UINT64 stream$end UINT64 stream$id VARSIZED stream$reservoir
 
 # Simple reservoir sample
-SELECT RESERVOIR(5) as reservoir FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 10 sec) INTO sinkStream;
+SELECT RESERVOIR(5) FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 5 sec) INTO sinkStream;
 ----
-# TODO(nikla44):
+1000, 6000, (1, 1, 1000)
+1000, 6000, (12, 1, 1001)
+1000, 6000, (4, 1, 1002)
+1000, 6000, (16, 2, 2002)
+1000, 6000, (11, 2, 2001)
+6000, 11000, (1, 6, 6000)
+6000, 11000, (1, 7, 7000)
+6000, 11000, (1, 8, 8000)
+6000, 11000, (1, 9, 9000)
+6000, 11000, (1, 10, 10000)
+11000, 16000, (1, 11, 11000)
+11000, 16000, (1, 12, 12000)
+11000, 16000, (1, 13, 13000)
+11000, 16000, (1, 14, 14000)
+11000, 16000, (1, 15, 15000)
+16000, 21000, (1, 16, 16000)
+16000, 21000, (1, 17, 17000)
+16000, 21000, (1, 18, 18000)
+16000, 21000, (1, 19, 19000)
+16000, 21000, (1, 20, 20000)
+21000, 26000, (1, 21, 21000)
