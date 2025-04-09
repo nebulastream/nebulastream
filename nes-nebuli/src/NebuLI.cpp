@@ -296,7 +296,7 @@ QueryConfig loadConfig(std::istream& inputStream)
         throw QueryDescriptionNotParsable("{}", pex.what());
     }
 }
-q
+
 void addSources(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog, const QueryConfig& config) {
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalSourceName, schemaFields] : config.logical)
