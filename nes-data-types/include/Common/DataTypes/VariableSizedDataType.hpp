@@ -26,8 +26,7 @@ public:
 
     ~VariableSizedDataType() override = default;
     [[nodiscard]] bool operator==(const DataType& other) const override;
-    [[nodiscard]] std::unique_ptr<DataType> join(const DataType& otherDataType) const override;
-    [[nodiscard]] std::unique_ptr<DataType> clone() const override;
+    [[nodiscard]] std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) const override;
     [[nodiscard]] std::string toString() const override;
 };
 

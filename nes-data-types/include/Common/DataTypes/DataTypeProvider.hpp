@@ -48,11 +48,11 @@ namespace NES::DataTypeProvider
 /// @param type name of the logical data type
 /// @brief Currently supported are the types BOOLEAN, CHAR, FLOAT32, FLOAT64, INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64, VARSIZED and UNDEFINED.
 /// Throws a runtime error, if the name does not match any of the mentioned data types.
-std::unique_ptr<DataType> provideDataType(const std::string& type);
+std::shared_ptr<DataType> provideDataType(const std::string& type);
 
 /// @return a shared pointer to a basic logical data type
 /// @param type object of the BasicType enum class whose corresponding data type should be provided
-std::unique_ptr<DataType> provideBasicType(BasicType type);
+std::shared_ptr<DataType> provideBasicType(BasicType type);
 
-std::unique_ptr<DataType> provideDataType(LogicalType type);
+std::shared_ptr<DataType> provideDataType(LogicalType type);
 }

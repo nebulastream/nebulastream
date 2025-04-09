@@ -164,13 +164,13 @@ bool WindowedAggregationLogicalOperator::inferSchema(Schema inputSchema)
         for (auto& key : keys)
         {
             auto newKey = key.withInferredStamp(inputSchema).get<FieldAccessLogicalFunction>();
-            outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getStamp().clone()));
+            outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getStamp()));
         }
     }
     for (const auto& agg : aggs)
     {
         outputSchema.addField(
-            AttributeField(agg->as().getFieldName(), agg->as().getStamp().clone()));
+            AttributeField(agg->as().getFieldName(), agg->as().getStamp()));
     }
 
     NES_DEBUG("Outputschema for window={}", outputSchema.toString());

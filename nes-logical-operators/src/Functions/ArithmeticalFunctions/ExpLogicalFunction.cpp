@@ -21,7 +21,7 @@
 namespace NES
 {
 
-ExpLogicalFunction::ExpLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
+ExpLogicalFunction::ExpLogicalFunction(LogicalFunction child) : stamp(child.getStamp()), child(child)
 {
 };
 
@@ -39,15 +39,15 @@ bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-const DataType& ExpLogicalFunction::getStamp() const
+std::shared_ptr<DataType> ExpLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction ExpLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction ExpLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

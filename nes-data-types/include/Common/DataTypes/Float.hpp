@@ -49,10 +49,9 @@ public:
     * @param other data type
     * @return std::shared_ptr<DataType> joined data type
     */
-    std::unique_ptr<DataType> join(const DataType& otherDataType) const override;
+    std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) const override;
 
     std::string toString() const override;
-    std::unique_ptr<DataType> clone() const override;
 
     double lowerBound;
     double upperBound;

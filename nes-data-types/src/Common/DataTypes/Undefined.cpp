@@ -26,18 +26,13 @@ bool Undefined::operator==(const DataType& other) const
     return dynamic_cast<const Undefined*>(&other) != nullptr;
 }
 
-std::unique_ptr<DataType> Undefined::join(const DataType&) const
+std::shared_ptr<DataType> Undefined::join(std::shared_ptr<DataType>) const
 {
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
 std::string Undefined::toString() const
 {
     return "Undefined";
-}
-
-std::unique_ptr<DataType> Undefined::clone() const
-{
-    return std::make_unique<Undefined>(*this);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)

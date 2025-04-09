@@ -22,7 +22,7 @@
 namespace NES
 {
 
-LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunction& other) : left(other.left), right(other.right), stamp(other.stamp->clone())
+LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunction& other) : left(other.left), right(other.right), stamp(other.stamp)
 {
 }
 
@@ -48,15 +48,15 @@ std::string LessEqualsLogicalFunction::toString() const
 }
 
 
-const DataType& LessEqualsLogicalFunction::getStamp() const
+std::shared_ptr<DataType> LessEqualsLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction LessEqualsLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction LessEqualsLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

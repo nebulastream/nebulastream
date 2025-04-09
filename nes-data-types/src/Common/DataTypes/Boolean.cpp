@@ -29,18 +29,13 @@ bool Boolean::operator==(const NES::DataType& other) const
 }
 
 
-std::unique_ptr<DataType> Boolean::join(const DataType& otherDataType) const
+std::shared_ptr<DataType> Boolean::join(std::shared_ptr<DataType> otherDataType) const
 {
-    if (dynamic_cast<const Boolean*>(&otherDataType))
+    if (dynamic_cast<const Boolean*>(otherDataType.get()))
     {
         return DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
     }
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
-}
-
-std::unique_ptr<DataType> Boolean::clone() const
-{
-    return std::make_unique<Boolean>(*this);
 }
 
 std::string Boolean::toString() const

@@ -21,11 +21,11 @@
 namespace NES
 {
 
-DivLogicalFunction::DivLogicalFunction(LogicalFunction left, LogicalFunction right) : stamp(left.getStamp().clone()), left(left), right(right)
+DivLogicalFunction::DivLogicalFunction(LogicalFunction left, LogicalFunction right) : stamp(left.getStamp()), left(left), right(right)
 {
 };
 
-DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
+DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : stamp(other.stamp), left(other.left), right(other.right)
 {
 }
 
@@ -39,15 +39,15 @@ bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-const DataType& DivLogicalFunction::getStamp() const
+std::shared_ptr<DataType> DivLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction DivLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction DivLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 
@@ -71,7 +71,7 @@ LogicalFunction DivLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.stamp = children[0].getStamp().join(children[1].getStamp());
+    copy.stamp = children[0].getStamp()->join(children[1].getStamp());
     return copy;
 };
 

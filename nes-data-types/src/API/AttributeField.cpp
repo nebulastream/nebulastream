@@ -37,10 +37,10 @@ void AttributeField::setName(std::string newName)
     this->name = std::move(newName);
 }
 
-DataType& AttributeField::getDataType() const
+std::shared_ptr<DataType> AttributeField::getDataType() const
 {
     INVARIANT(dataType != nullptr, "DataType pointer is null in AttributeField");
-    return *dataType;
+    return dataType;
 }
 
 std::string AttributeField::toString() const

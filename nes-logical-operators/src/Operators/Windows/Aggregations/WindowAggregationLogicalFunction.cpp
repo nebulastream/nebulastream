@@ -24,13 +24,13 @@
 namespace NES
 {
 
-WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField)
+WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(std::shared_ptr<DataType> inputStamp, std::shared_ptr<DataType> partialAggregateStamp, std::shared_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField)
     :  inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)), onField(onField), asField(onField)
 {
 }
 
 WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
+    std::shared_ptr<DataType> inputStamp, std::shared_ptr<DataType> partialAggregateStamp, std::shared_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
     : inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)),onField(onField), asField(asField)
 {
 }
@@ -72,19 +72,19 @@ FieldAccessLogicalFunction WindowAggregationLogicalFunction::on() const
     return onField;
 }
 
-DataType& WindowAggregationLogicalFunction::getInputStamp() const
+std::shared_ptr<DataType> WindowAggregationLogicalFunction::getInputStamp() const
 {
-    return *inputStamp;
+    return inputStamp;
 }
 
-DataType& WindowAggregationLogicalFunction::getPartialAggregateStamp() const
+std::shared_ptr<DataType> WindowAggregationLogicalFunction::getPartialAggregateStamp() const
 {
-    return *partialAggregateStamp;
+    return partialAggregateStamp;
 }
 
-DataType& WindowAggregationLogicalFunction::getFinalAggregateStamp() const
+std::shared_ptr<DataType> WindowAggregationLogicalFunction::getFinalAggregateStamp() const
 {
-    return *finalAggregateStamp;
+    return finalAggregateStamp;
 }
 
 bool WindowAggregationLogicalFunction::operator==(std::shared_ptr<WindowAggregationLogicalFunction> otherWindowAggregationLogicalFunction) const

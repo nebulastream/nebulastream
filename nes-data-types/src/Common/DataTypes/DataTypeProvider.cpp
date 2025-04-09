@@ -26,25 +26,25 @@
 namespace NES::DataTypeProvider
 {
 
-std::unique_ptr<DataType> provideDataType(const std::string& type)
+std::shared_ptr<DataType> provideDataType(const std::string& type)
 {
     /// Empty argument struct, since we do not have data types that take arguments at the moment.
     /// However, we provide the empty struct to be consistent with the design of our registries.
     auto args = DataTypeRegistryArguments{};
     if (auto dataType = DataTypeRegistry::instance().create(type, args))
     {
-        std::unique_ptr<DataType> sharedType = std::move(dataType.value());
+        std::shared_ptr<DataType> sharedType = std::move(dataType.value());
         return sharedType;
     }
     throw std::runtime_error("Failed to create data type of type: " + type);
 }
 
-std::unique_ptr<DataType> provideDataType(LogicalType type)
+std::shared_ptr<DataType> provideDataType(LogicalType type)
 {
     return provideDataType(std::string(magic_enum::enum_name(type)));
 }
 
-std::unique_ptr<DataType> provideBasicType(const BasicType type)
+std::shared_ptr<DataType> provideBasicType(const BasicType type)
 {
     return provideDataType(std::string(magic_enum::enum_name(type)));
 }

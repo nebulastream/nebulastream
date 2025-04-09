@@ -25,9 +25,9 @@
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)  {};
+RoundLogicalFunction::RoundLogicalFunction(LogicalFunction child) : stamp(child.getStamp()), child(child)  {};
 
-RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) :  stamp(other.stamp->clone()), child(other.child)
+RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) :  stamp(other.stamp), child(other.child)
 {
 }
 
@@ -49,15 +49,15 @@ std::string RoundLogicalFunction::toString() const
 }
 
 
-const DataType& RoundLogicalFunction::getStamp() const
+std::shared_ptr<DataType> RoundLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction RoundLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction RoundLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

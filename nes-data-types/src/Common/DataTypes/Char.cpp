@@ -28,9 +28,9 @@ bool Char::operator==(const NES::DataType& other) const
     return dynamic_cast<const Char*>(&other) != nullptr;
 }
 
-std::unique_ptr<DataType> Char::join(const DataType& otherDataType) const
+std::shared_ptr<DataType> Char::join(std::shared_ptr<DataType> otherDataType) const
 {
-    if (dynamic_cast<const Char*>(&otherDataType))
+    if (dynamic_cast<const Char*>(otherDataType.get()))
     {
         return DataTypeProvider::provideDataType(LogicalType::CHAR);
     }
@@ -40,11 +40,6 @@ std::unique_ptr<DataType> Char::join(const DataType& otherDataType) const
 std::string Char::toString() const
 {
     return std::string(magic_enum::enum_name(BasicType::CHAR));
-}
-
-std::unique_ptr<DataType> Char::clone() const
-{
-    return std::make_unique<Char>(*this);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)

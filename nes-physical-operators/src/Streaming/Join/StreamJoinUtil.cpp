@@ -39,12 +39,12 @@ Schema createJoinSchema(const Schema& leftSchema, const Schema& rightSchema)
 
     for (auto& fields : leftSchema)
     {
-        retSchema.addField(fields.getName(), fields.getDataType().clone());
+        retSchema.addField(fields.getName(), fields.getDataType());
     }
 
     for (auto& fields : rightSchema)
     {
-        retSchema.addField(fields.getName(), fields.getDataType().clone());
+        retSchema.addField(fields.getName(), fields.getDataType());
     }
 
     return retSchema;

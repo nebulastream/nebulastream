@@ -34,13 +34,13 @@ namespace NES
 {
 
 SerializableDataType*
-DataTypeSerializationUtil::serializeDataType(const DataType& dataType, SerializableDataType* serializedDataType)
+DataTypeSerializationUtil::serializeDataType(std::shared_ptr<DataType> dataType, SerializableDataType* serializedDataType)
 {
-    if (dynamic_cast<const Undefined*>(&dataType))
+    if (dynamic_cast<const Undefined*>(dataType.get()))
     {
         serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
     }
-    else if (const auto* intDataType = dynamic_cast<const Integer*>(&dataType))
+    else if (const auto* intDataType = dynamic_cast<const Integer*>(dataType.get()))
     {
         SerializableDataType_IntegerDetails serializedInteger;
         serializedInteger.set_bits(intDataType->getBits());
@@ -49,7 +49,7 @@ DataTypeSerializationUtil::serializeDataType(const DataType& dataType, Serializa
         serializedDataType->mutable_details()->PackFrom(serializedInteger);
         serializedDataType->set_type(SerializableDataType_Type_INTEGER);
     }
-    else if (const auto* floatDataType = dynamic_cast<const Float*>(&dataType))
+    else if (const auto* floatDataType = dynamic_cast<const Float*>(dataType.get()))
     {
         SerializableDataType_FloatDetails serializableFloat;
         serializableFloat.set_bits(floatDataType->getBits());
@@ -58,27 +58,27 @@ DataTypeSerializationUtil::serializeDataType(const DataType& dataType, Serializa
         serializedDataType->mutable_details()->PackFrom(serializableFloat);
         serializedDataType->set_type(SerializableDataType_Type_FLOAT);
     }
-    else if (dynamic_cast<const Boolean*>(&dataType))
+    else if (dynamic_cast<const Boolean*>(dataType.get()))
     {
         serializedDataType->set_type(SerializableDataType_Type_BOOLEAN);
     }
-    else if (dynamic_cast<const Char*>(&dataType))
+    else if (dynamic_cast<const Char*>(dataType.get()))
     {
         serializedDataType->set_type(SerializableDataType_Type_CHAR);
     }
-    else if (dynamic_cast<const VariableSizedDataType*>(&dataType))
+    else if (dynamic_cast<const VariableSizedDataType*>(dataType.get()))
     {
         serializedDataType->set_type(SerializableDataType_Type_VARIABLE_SIZED_DATA);
     }
     else
     {
-        throw CannotSerialize("serialization is not possible for " + dataType.toString());
+        throw CannotSerialize("serialization is not possible for " + dataType.get()->toString());
     }
-    NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType.toString(), serializedDataType->SerializeAsString());
+    NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType.get()->toString(), serializedDataType->SerializeAsString());
     return serializedDataType;
 }
 
-std::unique_ptr<DataType> DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType)
+std::shared_ptr<DataType> DataTypeSerializationUtil::deserializeDataType(const SerializableDataType& serializedDataType)
 {
     NES_TRACE("DataTypeSerializationUtil:: de-serialized {}", serializedDataType.DebugString());
     if (serializedDataType.type() == SerializableDataType_Type_UNDEFINED)

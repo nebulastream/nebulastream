@@ -21,23 +21,23 @@
 namespace NES
 {
 
-CeilLogicalFunction::CeilLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
+CeilLogicalFunction::CeilLogicalFunction(LogicalFunction child) : stamp(child.getStamp()), child(child)
 {
 };
 
-CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : stamp(other.stamp->clone()), child(other.child)
+CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : stamp(other.stamp), child(other.child)
 {
 }
 
-const DataType& CeilLogicalFunction::getStamp() const
+std::shared_ptr<DataType> CeilLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction CeilLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction CeilLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

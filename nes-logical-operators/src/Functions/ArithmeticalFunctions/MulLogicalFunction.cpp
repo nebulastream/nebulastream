@@ -22,10 +22,10 @@
 
 namespace NES
 {
-MulLogicalFunction::MulLogicalFunction(LogicalFunction left, LogicalFunction right) : stamp(left.getStamp().join(right.getStamp())), left(left), right(right)
+MulLogicalFunction::MulLogicalFunction(LogicalFunction left, LogicalFunction right) : stamp(left.getStamp()->join(right.getStamp())), left(left), right(right)
 {}
 
-MulLogicalFunction::MulLogicalFunction(const MulLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
+MulLogicalFunction::MulLogicalFunction(const MulLogicalFunction& other) : stamp(other.stamp), left(other.left), right(other.right)
 {
 }
 
@@ -48,15 +48,15 @@ std::string MulLogicalFunction::toString() const
     return ss.str();
 }
 
-const DataType& MulLogicalFunction::getStamp() const
+std::shared_ptr<DataType> MulLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction MulLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction MulLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 
@@ -80,7 +80,7 @@ LogicalFunction MulLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.stamp = children[0].getStamp().join(children[1].getStamp());
+    copy.stamp = children[0].getStamp()->join(children[1].getStamp());
     return copy;
 };
 

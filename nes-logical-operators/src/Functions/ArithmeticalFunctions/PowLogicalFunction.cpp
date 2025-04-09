@@ -24,11 +24,11 @@
 namespace NES
 {
 
-PowLogicalFunction::PowLogicalFunction(LogicalFunction left, LogicalFunction right) :stamp(left.getStamp().join(right.getStamp())), left(left), right(right)
+PowLogicalFunction::PowLogicalFunction(LogicalFunction left, LogicalFunction right) :stamp(left.getStamp()->join(right.getStamp())), left(left), right(right)
 {
 };
 
-PowLogicalFunction::PowLogicalFunction(const PowLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
+PowLogicalFunction::PowLogicalFunction(const PowLogicalFunction& other) : stamp(other.stamp), left(other.left), right(other.right)
 {
 }
 
@@ -48,15 +48,15 @@ std::string PowLogicalFunction::toString() const
     return ss.str();
 }
 
-const DataType& PowLogicalFunction::getStamp() const
+std::shared_ptr<DataType> PowLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction PowLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction PowLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 
@@ -80,7 +80,7 @@ LogicalFunction PowLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.stamp = children[0].getStamp().join(children[1].getStamp());
+    copy.stamp = children[0].getStamp()->join(children[1].getStamp());
     return copy;
 };
 

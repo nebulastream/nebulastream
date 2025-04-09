@@ -127,7 +127,7 @@ std::string DynamicTuple::toString(const Schema& schema) const
     {
         const auto& dataType = schema.getFieldByIndex(i).getDataType();
         DynamicField currentField = this->operator[](i);
-        if (nullptr != dynamic_cast<const VariableSizedDataType*>(&dataType))
+        if (nullptr != dynamic_cast<const VariableSizedDataType*>(dataType.get()))
         {
             const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
             const auto string = readVarSizedData(buffer, index);
@@ -163,7 +163,7 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
         auto thisDynamicField = (*this)[field.getName()];
         auto otherDynamicField = other[field.getName()];
 
-        if (dynamic_cast<VariableSizedDataType*>(&field.getDataType()))
+        if (dynamic_cast<VariableSizedDataType*>(field.getDataType().get()))
         {
             const auto thisString = readVarSizedData(buffer, thisDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
             const auto otherString = readVarSizedData(other.buffer, otherDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
