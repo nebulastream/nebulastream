@@ -271,7 +271,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     NES_DEBUG("TCPSource::fillBuffer: {} bytes read", bytesRead);
                     if (bytesRead == 0) {
                         if (byteOffset < incomingTupleSize) {
-                            // NES_ERROR("TCPSource::fillBuffer: inserting eos");
+                            NES_ERROR("Read timed out before complete tuple was read");
                             //return std::nullopt;
                             //                                buffer.setNumberOfTuples(0);
                             //                                return buffer.getBuffer();
@@ -295,6 +295,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     byteOffset += bytesRead;
                 }
                 uint64_t numCompleteTuplesRead = byteOffset / incomingTupleSize;
+
 
                 NES_DEBUG("checking if replay is activated")
                 if (getReplayData()) {
@@ -329,6 +330,12 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 sourceInfo->leftoverByteCount = byteOffset % incomingTupleSize;
                 for (uint64_t i = 0; i < sourceInfo->leftoverByteCount; ++i) {
                     sourceInfo->leftOverBytes[i] = sourceInfo->incomingBuffer[i + bytesOfCompleteTuples];
+                }
+
+                if (numCompleteTuplesRead == 0) {
+                    NES_ERROR("No complete tuples read, returning empty buffer");
+                    buffer.setNumberOfTuples(numCompleteTuplesRead);
+                    return  buffer.getBuffer();
                 }
 
                 buffer.setNumberOfTuples(numCompleteTuplesRead);
