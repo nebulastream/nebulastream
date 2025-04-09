@@ -72,7 +72,7 @@ bool NES::Sources::TestSourceControl::injectEoS()
     {
         return true;
     }
-    throw std::runtime_error{"Sources::TestSourceControl::injectEoS failed, maybe source has already been stopped"};
+    throw TestException("Sources::TestSourceControl::injectEoS failed, maybe source has already been stopped");
 }
 bool NES::Sources::TestSourceControl::injectData(std::vector<std::byte> data, size_t numberOfTuples)
 {
@@ -86,7 +86,7 @@ bool NES::Sources::TestSourceControl::injectError(std::string error)
     {
         return true;
     }
-    throw std::runtime_error{"Sources::TestSourceControl::injectError failed, maybe source has already been stopped"};
+    throw TestException("Sources::TestSourceControl::injectError failed, maybe source has already been stopped");
 }
 
 testing::AssertionResult assertFutureStatus(std::future_status status)
@@ -160,7 +160,7 @@ size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tuple
             [](const TestSourceControl::Error& error) -> std::optional<TestSourceControl::Data>
             {
                 NES_DEBUG("Test Source is injecting error");
-                throw std::runtime_error(error.error);
+                throw TestException(error.error);
             },
             [](TestSourceControl::Data data)
             {
@@ -189,7 +189,7 @@ void NES::Sources::TestSource::open()
     if (control->fail_during_open)
     {
         std::this_thread::sleep_for(control->fail_during_open_duration.load());
-        throw std::runtime_error("I should throw here");
+        throw TestException("I should throw here");
     }
 }
 void NES::Sources::TestSource::close()
@@ -198,7 +198,7 @@ void NES::Sources::TestSource::close()
     if (control->fail_during_close)
     {
         std::this_thread::sleep_for(control->fail_during_close_duration.load());
-        throw std::runtime_error("I should throw here");
+        throw TestException("I should throw here");
     }
 }
 std::ostream& NES::Sources::TestSource::toString(std::ostream& str) const
