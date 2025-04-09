@@ -89,9 +89,11 @@ Optimizer::TraitSet MapLogicalOperator::getTraitSet() const
     return {};
 }
 
-void MapLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator MapLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> MapLogicalOperator::getInputSchemas() const

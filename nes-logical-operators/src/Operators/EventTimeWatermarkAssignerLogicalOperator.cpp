@@ -69,9 +69,11 @@ Optimizer::TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() con
     return {};
 }
 
-void EventTimeWatermarkAssignerLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> EventTimeWatermarkAssignerLogicalOperator::getInputSchemas() const

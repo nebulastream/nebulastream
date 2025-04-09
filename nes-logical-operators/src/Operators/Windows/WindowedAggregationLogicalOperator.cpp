@@ -178,9 +178,11 @@ Optimizer::TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
     return {};
 }
 
-void WindowedAggregationLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator WindowedAggregationLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> WindowedAggregationLogicalOperator::getInputSchemas() const
