@@ -305,7 +305,7 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite,
                 records[i].outputTimestamp_1 = timestamp;
                 records[i].outputTimestamp_2 = timestamp;
                 // log the record to error
-                // NES_ERROR("writing record win start {}, win end {} Left: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}; Right: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}, buffer watermark: {}", records[i].winStart, records[i].winEnd, records[i].id_1, records[i].joinId_1, records[i].value_1, records[i].ingestionTimestamp_1, records[i].processingTimestamp_1, records[i].outputTimestamp_1, records[i].id_2, records[i].joinId_2, records[i].value_2, records[i].ingestionTimestamp_2, records[i].processingTimestamp_2, records[i].outputTimestamp_2, bufferToWrite.getWatermark());
+                NES_ERROR("writing record win start {}, win end {} Left: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}; Right: id  {}, join id  {}, value {}, event timestamp {}, processing timestamp {}, output timestamp {}, buffer watermark: {}", records[i].winStart, records[i].winEnd, records[i].id_1, records[i].joinId_1, records[i].value_1, records[i].ingestionTimestamp_1, records[i].processingTimestamp_1, records[i].outputTimestamp_1, records[i].id_2, records[i].joinId_2, records[i].value_2, records[i].ingestionTimestamp_2, records[i].processingTimestamp_2, records[i].outputTimestamp_2, bufferToWrite.getWatermark());
             }
             //        NES_ERROR("Writing to tcp sink");
             ssize_t bytes_written =
