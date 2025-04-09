@@ -59,9 +59,11 @@ Optimizer::TraitSet IngestionTimeWatermarkAssignerLogicalOperator::getTraitSet()
     return {};
 }
 
-void IngestionTimeWatermarkAssignerLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> IngestionTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
