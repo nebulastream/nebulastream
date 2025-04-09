@@ -69,9 +69,8 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableOperatorRegistry.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include "../../../../../nes-plugins/Inference/IREE/include/IREEInferenceOperator.hpp"
-#include "../../../../../nes-plugins/Inference/IREE/include/IREEInferenceOperatorHandler.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -333,42 +332,17 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         }
     }
 
-    if (NES::Util::instanceOf<PhysicalOperators::PhysicalInferModelOperator>(operatorNode))
+    if (auto registryType = operatorNode->registryType())
     {
-        if (!NES::Util::instanceOf<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>(operatorNode))
+        auto optOperator = Runtime::Execution::Operators::ExecutableOperatorRegistry::instance().create(
+            std::string(*registryType), Runtime::Execution::Operators::ExecutableOperatorRegistryArguments{operatorNode});
+        if (!optOperator)
         {
-            return {};
+            throw UnknownPhysicalOperator(
+                fmt::format("Cannot lower '{}' via OperatorRegistry. Operator: {}", *registryType, *operatorNode));
         }
-        NES_INFO("Lower infer model operator to IREE operator");
-        auto inferModelOperator = NES::Util::as<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>(operatorNode);
-        auto model = inferModelOperator->getModel();
-
-        // TODO: check model file extension (when it's clear what types are accepted)
-        // if (!model.ends_with(".foo"))
-        // {
-        //     return {};
-        // }
-
-        std::vector<std::string> inputFields;
-        for (const auto& inputField : inferModelOperator->getInputFields())
-        {
-            auto nodeFunctionFieldAccess = NES::Util::as<NodeFunctionFieldAccess>(inputField);
-            inputFields.push_back(nodeFunctionFieldAccess->getFieldName());
-        }
-
-        std::vector<std::string> outputFields;
-        for (const auto& outputField : inferModelOperator->getOutputFields())
-        {
-            auto nodeFunctionFieldAccess = NES::Util::as<NodeFunctionFieldAccess>(outputField);
-            outputFields.push_back(nodeFunctionFieldAccess->getFieldName());
-        }
-
-        auto handler = std::make_shared<Runtime::Execution::Operators::IREEInferenceOperatorHandler>(model);
-        operatorHandlers.push_back(handler);
-
-        auto ireeOperator = std::make_shared<Runtime::Execution::Operators::IREEInferenceOperator>(operatorHandlers.size() - 1, inputFields, outputFields);
-        parentOperator->setChild(ireeOperator);
-        return ireeOperator;
+        parentOperator->setChild(*optOperator);
+        return *optOperator;
     }
 
     throw UnknownPhysicalOperator(fmt::format("Cannot lower {}", *operatorNode));

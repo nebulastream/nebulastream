@@ -28,5 +28,9 @@ std::string PhysicalOperator::toString() const
     out << Operator::toString();
     return out.str();
 }
+std::optional<std::reference_wrapper<const std::string>> PhysicalOperator::registryType() const
+{
+    return {};
+}
 
 }
