@@ -42,12 +42,12 @@ struct LogicalOperatorConcept
 {
     virtual ~LogicalOperatorConcept() = default;
 
-    explicit LogicalOperatorConcept() : id(getNextOperatorId()) {}
-    explicit LogicalOperatorConcept(OperatorId existingId) : id(existingId) {}
+    explicit LogicalOperatorConcept();
+    explicit LogicalOperatorConcept(OperatorId existingId);
 
     [[nodiscard]] virtual std::string toString() const = 0;
     [[nodiscard]] virtual std::vector<struct LogicalOperator> getChildren() const = 0;
-    virtual void setChildren(std::vector<struct LogicalOperator>) = 0;
+    [[nodiscard]] virtual LogicalOperator withChildren(std::vector<struct LogicalOperator>) const = 0;
 
     [[nodiscard]] virtual bool operator==(struct LogicalOperatorConcept const& rhs) const = 0;
 
@@ -64,58 +64,29 @@ struct LogicalOperatorConcept
     virtual void setInputOriginIds(std::vector<std::vector<OriginId>>) = 0;
     virtual void setOutputOriginIds(std::vector<OriginId>) = 0;
 
+    [[nodiscard]] virtual struct LogicalOperator withInferredSchema(Schema inputSchema) const = 0;
+
     OperatorId id = INVALID_OPERATOR_ID;
 };
 
 /// Enables default construction of LogicalOperator.
 /// Necessary to enable more ergonomic usage in e.g. unordered maps etc.
-class NullLogicalOperator : public NES::LogicalOperatorConcept {
+class NullLogicalOperator : public LogicalOperatorConcept {
 public:
-    std::string toString() const override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-
-    std::vector<NES::LogicalOperator> getChildren() const override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-
-    void setChildren(std::vector<NES::LogicalOperator>) override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-    bool operator==(NES::LogicalOperatorConcept const&) const override {
-        return false;
-    }
-    std::string_view getName() const noexcept override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-    NES::SerializableOperator serialize() const override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-    Optimizer::TraitSet getTraitSet() const override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-    std::vector<Schema> getInputSchemas() const override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-    Schema getOutputSchema() const override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-    std::vector<std::vector<OriginId>> getInputOriginIds() const override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-    std::vector<OriginId> getOutputOriginIds() const override {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-
-    void setInputOriginIds(std::vector<std::vector<OriginId>>) override
-    {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-    void setOutputOriginIds(std::vector<OriginId>) override
-    {
-        PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
-    }
-
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
+    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator>) const override;
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const&) const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
+    [[nodiscard]] SerializableOperator serialize() const override;
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
+    [[nodiscard]] Schema getOutputSchema() const override;
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
+    void setInputOriginIds(std::vector<std::vector<OriginId>>) override;
+    void setOutputOriginIds(std::vector<OriginId>) override;
+    [[nodiscard]] LogicalOperator withInferredSchema(Schema) const override;
 };
 
 /// Id is preserved during copy
@@ -123,9 +94,8 @@ struct LogicalOperator {
     template<typename T>
     LogicalOperator(const T& op) : self(std::make_unique<Model<T>>(op, op.id)) {}
 
-    LogicalOperator() : self(std::make_unique<Model<NullLogicalOperator>>(NullLogicalOperator{})) {}
-
-    LogicalOperator(const LogicalOperator& other) : self(other.self->clone()) {}
+    LogicalOperator();
+    LogicalOperator(const LogicalOperator& other);
 
     template<typename T>
     [[nodiscard]] const T* tryGet() const {
@@ -144,81 +114,32 @@ struct LogicalOperator {
         throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
 
-    LogicalOperator(LogicalOperator&&) noexcept = default;
+    LogicalOperator(LogicalOperator&&) noexcept;
 
-    LogicalOperator& operator=(const LogicalOperator& other) {
-        if (this != &other)
-        {
-            self = other.self->clone();
-        }
-        return *this;
-    }
+    LogicalOperator& operator=(const LogicalOperator& other);
 
-    [[nodiscard]] std::string toString() const
-    {
-        return self->toString();
-    }
+    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const;
 
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const {
-        return self->getChildren();
-    }
+    [[nodiscard]] OperatorId getId() const;
 
-    void setChildren(std::vector<LogicalOperator> children) {
-        self->setChildren(children);
-    }
+    [[nodiscard]] bool operator==(const LogicalOperator &other) const;
+    [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] OperatorId getId() const {
-        return self->id;
-    }
+    [[nodiscard]] SerializableOperator serialize() const;
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const;
 
-    bool operator==(const LogicalOperator &other) const {
-        return self->equals(*other.self);
-    }
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
+    [[nodiscard]] Schema getOutputSchema() const;
 
-    std::string_view getName() const noexcept
-    {
-        return self->getName();
-    }
+    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const;
+    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const;
 
-    SerializableOperator serialize() const
-    {
-        return self->serialize();
-    }
+    void setInputOriginIds(std::vector<std::vector<OriginId>> ids);
+    void setOutputOriginIds(std::vector<OriginId> ids);
 
-    Optimizer::TraitSet getTraitSet() const
-    {
-        return self->getTraitSet();
-    }
-
-    std::vector<Schema> getInputSchemas() const
-    {
-        return self->getInputSchemas();
-    }
-
-    Schema getOutputSchema() const
-    {
-        return self->getOutputSchema();
-    }
-
-    std::vector<std::vector<OriginId>> getInputOriginIds() const
-    {
-            return self->getInputOriginIds();
-    }
-
-    std::vector<OriginId> getOutputOriginIds() const
-    {
-        return self->getOutputOriginIds();
-    }
-
-    void setInputOriginIds(std::vector<std::vector<OriginId>> ids)
-    {
-        return self->setInputOriginIds(ids);
-    }
-
-    void setOutputOriginIds(std::vector<OriginId> ids)
-    {
-        return self->setOutputOriginIds(ids);
-    }
+    [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const;
 
 private:
     struct Concept : LogicalOperatorConcept {
@@ -251,9 +172,9 @@ private:
             return data.getChildren();
         }
 
-        void setChildren(std::vector<LogicalOperator> children) override
+        LogicalOperator withChildren(std::vector<LogicalOperator> children) const override
         {
-            data.setChildren(children);
+            return data.withChildren(children);
         }
 
         [[nodiscard]] std::string_view getName() const noexcept override
@@ -299,6 +220,11 @@ private:
         void setOutputOriginIds(std::vector<OriginId> ids) override
         {
             return data.setOutputOriginIds(ids);
+        }
+
+        LogicalOperator withInferredSchema(Schema inputSchema) const override
+        {
+            return data.withInferredSchema(inputSchema);
         }
 
         [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override {
