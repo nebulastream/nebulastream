@@ -19,7 +19,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical InferModel operator.
@@ -54,6 +55,12 @@ public:
     const std::string& getModel() const;
     const std::vector<std::shared_ptr<NodeFunction>>& getInputFields() const;
     const std::vector<std::shared_ptr<NodeFunction>>& getOutputFields() const;
+
+    std::optional<std::reference_wrapper<const std::string>> registryType() const override
+    {
+        constexpr static std::string type = "IREE";
+        return type;
+    }
 
 protected:
     std::string toString() const override;

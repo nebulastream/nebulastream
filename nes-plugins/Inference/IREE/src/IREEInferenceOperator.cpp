@@ -15,16 +15,25 @@
 #include "IREEInferenceOperator.hpp"
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <Util/Common.hpp>
 #include <nautilus/function.hpp>
 
+#include <ExecutableOperatorRegistry.hpp>
+
+#include "IREEAdapter.hpp"
 #include "IREEInferenceOperatorHandler.hpp"
 
+namespace NES::QueryCompilation::PhysicalOperators
+{
+class PhysicalInferModelOperator;
+}
 namespace NES::Runtime::Execution::Operators
 {
 
-template<class T>
+template <class T>
 void addValueToModel(int index, float value, void* inferModelHandler)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
@@ -65,6 +74,47 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
     }
 
     child->execute(ctx, record);
+}
+}
+namespace NES::Runtime::Execution::Operators::ExecutableOperatorGeneratedRegistrar
+{
+
+ExecutableOperatorRegistryReturnType RegisterIREEExecutableOperator(ExecutableOperatorRegistryArguments arguments)
+{
+    if (!NES::Util::instanceOf<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>(arguments.physical))
+    {
+        throw UnknownPhysicalOperator("Attempted to lower to IREE, but received: {}", *arguments.physical);
+    }
+    auto inferModelOperator = NES::Util::as<QueryCompilation::PhysicalOperators::PhysicalInferModelOperator>(arguments.physical);
+
+    NES_INFO("Lower infer model operator to IREE operator");
+    auto model = inferModelOperator->getModel();
+
+    // TODO: check model file extension (when it's clear what types are accepted)
+    // if (!model.ends_with(".foo"))
+    // {
+    //     return {};
+    // }
+
+    std::vector<std::string> inputFields;
+    for (const auto& inputField : inferModelOperator->getInputFields())
+    {
+        auto nodeFunctionFieldAccess = NES::Util::as<NodeFunctionFieldAccess>(inputField);
+        inputFields.push_back(nodeFunctionFieldAccess->getFieldName());
+    }
+
+    std::vector<std::string> outputFields;
+    for (const auto& outputField : inferModelOperator->getOutputFields())
+    {
+        auto nodeFunctionFieldAccess = NES::Util::as<NodeFunctionFieldAccess>(outputField);
+        outputFields.push_back(nodeFunctionFieldAccess->getFieldName());
+    }
+
+    auto handler = std::make_shared<IREEInferenceOperatorHandler>(model);
+    arguments.operatorHandlers.push_back(handler);
+
+    auto ireeOperator = std::make_shared<IREEInferenceOperator>(arguments.operatorHandlers.size() - 1, inputFields, outputFields);
+    return ireeOperator;
 }
 
 }
