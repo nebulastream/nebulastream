@@ -39,7 +39,7 @@ ModPhysicalFunction::ModPhysicalFunction(
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterModPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterModuloPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
     PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
     return ModPhysicalFunction(
