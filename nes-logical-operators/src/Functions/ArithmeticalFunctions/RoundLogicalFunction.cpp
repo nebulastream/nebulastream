@@ -54,10 +54,10 @@ const DataType& RoundLogicalFunction::getStamp() const
     return *stamp;
 };
 
-LogicalFunction RoundLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction RoundLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp;
+    copy.stamp = stamp->clone();
     return copy;
 };
 

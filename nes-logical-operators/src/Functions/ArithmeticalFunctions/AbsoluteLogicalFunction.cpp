@@ -36,10 +36,10 @@ const DataType& AbsoluteLogicalFunction::getStamp() const
     return *stamp;
 };
 
-LogicalFunction AbsoluteLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction AbsoluteLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp;
+    copy.stamp = stamp->clone();
     return copy;
 };
 
