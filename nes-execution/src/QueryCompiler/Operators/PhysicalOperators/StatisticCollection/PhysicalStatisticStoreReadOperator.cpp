@@ -18,43 +18,38 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalStatisticStoreReadOperator::PhysicalStatisticStoreReadOperator(
-    OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema)
+    OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
 {
 }
 
 std::shared_ptr<PhysicalOperator> PhysicalStatisticStoreReadOperator::create(
-    OperatorId id,
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema)
+    OperatorId id, const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema)
 {
     return std::make_shared<PhysicalStatisticStoreReadOperator>(id, inputSchema, outputSchema);
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalStatisticStoreReadOperator::create(
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema)
+std::shared_ptr<PhysicalOperator>
+PhysicalStatisticStoreReadOperator::create(const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema));
 }
 
-std::string PhysicalStatisticStoreReadOperator::toString() const
+std::ostream& PhysicalStatisticStoreReadOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalStatisticStoreReadOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    out << std::endl;
-    return out.str();
+    os << "\nPhysicalStatisticStoreReadOperator:\n";
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalStatisticStoreReadOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalStatisticStoreReadOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalStatisticStoreReadOperator::copy()
 {
-    auto result = create(id, inputSchema, outputSchema);
-    result->addAllProperties(properties);
-    return result;
+    return create(id, inputSchema, outputSchema);
 }
 
 }

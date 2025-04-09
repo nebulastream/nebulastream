@@ -22,9 +22,9 @@ namespace NES::Runtime::Execution::Operators
 void insertStatisticIntoStoreProxy(
     OperatorHandler* ptrOpHandler,
     const StatisticHash hash,
-    const StatisticType type,
-    const Timestamp startTs,
-    const Timestamp endTs,
+    const std::underlying_type_t<StatisticType> type,
+    const Timestamp::Underlying startTs,
+    const Timestamp::Underlying endTs,
     int8_t* data)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
@@ -38,7 +38,7 @@ void insertStatisticIntoStoreProxy(
     std::memcpy(statisticData.data(), data, statisticDataSize);
 
     const auto statistic = std::make_shared<Statistic>(
-        type, Windowing::TimeMeasure(startTs.getRawValue()), Windowing::TimeMeasure(endTs.getRawValue()), statisticData);
+        static_cast<StatisticType>(type), Windowing::TimeMeasure(startTs), Windowing::TimeMeasure(endTs), statisticData);
 
     statisticStore->insertStatistic(hash, statistic);
 }
@@ -54,8 +54,8 @@ void StatisticStoreWriter::execute(ExecutionContext& executionCtx, Record& recor
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto statisticHash = record.read("hash").cast<nautilus::val<StatisticHash>>();
     const auto statisticType = record.read("type").cast<nautilus::val<std::underlying_type_t<StatisticType>>>();
-    const auto startTs = record.read("startTs").cast<nautilus::val<Timestamp>>();
-    const auto endTs = record.read("endTs").cast<nautilus::val<Timestamp>>();
+    const auto startTs = record.read("startTs").cast<nautilus::val<Timestamp::Underlying>>();
+    const auto endTs = record.read("endTs").cast<nautilus::val<Timestamp::Underlying>>();
     const auto statisticData = record.read("data").cast<VariableSizedData>().getReference();
     invoke(insertStatisticIntoStoreProxy, operatorHandlerMemRef, statisticHash, statisticType, startTs, endTs, statisticData);
 }

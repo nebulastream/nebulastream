@@ -23,6 +23,8 @@ namespace NES::Runtime
 class DefaultStatisticStore final : public AbstractStatisticStore
 {
 public:
+    DefaultStatisticStore() = default;
+
     /// Inserts a statistic with the statisticHash into a StatisticStore. Returns false, if statistic already exists
     bool insertStatistic(const StatisticHash& statisticHash, StatisticPtr statistic) override;
 

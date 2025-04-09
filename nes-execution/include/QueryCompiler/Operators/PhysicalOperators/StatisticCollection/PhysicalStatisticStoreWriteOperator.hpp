@@ -23,22 +23,17 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalStatisticStoreWriteOperator final : public PhysicalUnaryOperator
 {
 public:
-    PhysicalStatisticStoreWriteOperator(
-        OperatorId id,
-        std::shared_ptr<Schema> inputSchema,
-        std::shared_ptr<Schema> outputSchema);
-    static std::shared_ptr<PhysicalOperator> create(
-        OperatorId id,
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema);
-    static std::shared_ptr<PhysicalOperator> create(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema);
+    PhysicalStatisticStoreWriteOperator(OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema);
+    static std::shared_ptr<PhysicalOperator>
+    create(OperatorId id, const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema);
+    static std::shared_ptr<PhysicalOperator>
+    create(const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema);
 
     std::shared_ptr<Operator> copy() override;
 
 protected:
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 };
 
 }

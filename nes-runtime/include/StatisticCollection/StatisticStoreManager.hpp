@@ -15,7 +15,6 @@
 #pragma once
 
 #include <StatisticCollection/AbstractStatisticStore.hpp>
-#include <StatisticCollection/DefaultStatisticStore.hpp>
 
 namespace NES::Runtime
 {
@@ -27,11 +26,7 @@ using StatisticValue = T;
 class StatisticStoreManager
 {
 public:
-    static std::shared_ptr<StatisticStoreManager> getInstance();
-
-    // Delete copy constructor and assignment operator to prevent copying
-    StatisticStoreManager(const StatisticStoreManager&) = delete;
-    StatisticStoreManager& operator=(const StatisticStoreManager&) = delete;
+    static StatisticStoreManager& getStatisticStoreManagerInstance();
 
     template <typename T>
     std::vector<StatisticValue<T>>
@@ -40,6 +35,10 @@ public:
 
 private:
     StatisticStoreManager();
+
+    // Delete copy constructor and assignment operator to prevent copying
+    StatisticStoreManager(const StatisticStoreManager&) = delete;
+    StatisticStoreManager& operator=(const StatisticStoreManager&) = delete;
 
     std::shared_ptr<AbstractStatisticStore> statisticStore;
 };

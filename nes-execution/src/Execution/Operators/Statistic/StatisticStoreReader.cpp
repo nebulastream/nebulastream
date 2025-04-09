@@ -19,18 +19,17 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-// TODO(nikla44): what if I don't want to get a single statistic but all in the given bounds?
+// TODO(nikla44): what if I don't want to get a single statistic but all in the given bounds? -> adapt execute()
 
-int8_t* getStatisticFromStoreProxy(OperatorHandler* ptrOpHandler, const StatisticHash hash, const Timestamp startTs, const Timestamp endTs)
+int8_t* getStatisticFromStoreProxy(
+    OperatorHandler* ptrOpHandler, const StatisticHash hash, const Timestamp::Underlying startTs, const Timestamp::Underlying endTs)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
 
     const auto* opHandler = dynamic_cast<StatisticStoreOperatorHandler*>(ptrOpHandler);
     const auto statisticStore = opHandler->getStatisticStore();
 
-    const auto statistic = statisticStore->getSingleStatistic(
-        hash, Windowing::TimeMeasure(startTs.getRawValue()), Windowing::TimeMeasure(endTs.getRawValue()));
-
+    const auto statistic = statisticStore->getSingleStatistic(hash, Windowing::TimeMeasure(startTs), Windowing::TimeMeasure(endTs));
     if (statistic.has_value())
     {
         return statistic.value()->getStatisticData();
@@ -48,8 +47,8 @@ void StatisticStoreReader::execute(ExecutionContext& executionCtx, Record& recor
     // TODO(nikla44): should recordFieldIdentifiers be hardcoded? What about the statisticType field?
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto statisticHash = record.read("hash").cast<nautilus::val<StatisticHash>>();
-    const auto startTs = record.read("startTs").cast<nautilus::val<Timestamp>>();
-    const auto endTs = record.read("endTs").cast<nautilus::val<Timestamp>>();
+    const auto startTs = record.read("startTs").cast<nautilus::val<Timestamp::Underlying>>();
+    const auto endTs = record.read("endTs").cast<nautilus::val<Timestamp::Underlying>>();
     const auto statisticData = invoke(getStatisticFromStoreProxy, operatorHandlerMemRef, statisticHash, startTs, endTs);
     record.write("data", VariableSizedData(statisticData));
 }

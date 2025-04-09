@@ -17,13 +17,14 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-StatisticStoreOperatorHandler::StatisticStoreOperatorHandler() : statisticStoreManager(StatisticStoreManager::getInstance())
+StatisticStoreOperatorHandler::StatisticStoreOperatorHandler()
+    : statisticStoreManager(StatisticStoreManager::getStatisticStoreManagerInstance())
 {
 }
 
 std::shared_ptr<AbstractStatisticStore> StatisticStoreOperatorHandler::getStatisticStore() const
 {
-    return statisticStoreManager->getStatisticStore();
+    return statisticStoreManager.getStatisticStore();
 }
 
 }

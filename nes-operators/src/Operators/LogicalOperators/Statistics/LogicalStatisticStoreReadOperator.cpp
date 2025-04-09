@@ -35,11 +35,14 @@ bool LogicalStatisticStoreReadOperator::equal(const std::shared_ptr<Node>& rhs) 
     return false;
 };
 
-std::string LogicalStatisticStoreReadOperator::toString() const
+std::ostream& LogicalStatisticStoreReadOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "SSREAD(" << id << ")";
-    return ss.str();
+    return os << "SSREAD(" << id << ")";
+}
+
+std::ostream& LogicalStatisticStoreReadOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "SSREAD";
 }
 
 bool LogicalStatisticStoreReadOperator::inferSchema()
@@ -71,7 +74,8 @@ std::shared_ptr<Operator> LogicalStatisticStoreReadOperator::copy()
 void LogicalStatisticStoreReadOperator::inferStringSignature()
 {
     // TODO(nikla44): check this function
-    NES_TRACE("LogicalStatisticStoreReadOperator: Inferring String signature for {}", toString());
+    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
+    NES_TRACE("LogicalStatisticStoreReadOperator: Inferring String signature for {}", *operatorNode);
     INVARIANT(!children.empty(), "StatisticStoreRead should have children");
 
     ///Infer query signatures for child operator

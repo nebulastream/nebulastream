@@ -28,7 +28,7 @@ public:
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 
 private:
-   const uint64_t operatorHandlerIndex;
+    const uint64_t operatorHandlerIndex;
 };
 
 }

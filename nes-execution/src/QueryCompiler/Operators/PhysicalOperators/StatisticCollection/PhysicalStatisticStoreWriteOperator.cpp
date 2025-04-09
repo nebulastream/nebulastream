@@ -18,43 +18,38 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalStatisticStoreWriteOperator::PhysicalStatisticStoreWriteOperator(
-    OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema)
+    OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
 {
 }
 
 std::shared_ptr<PhysicalOperator> PhysicalStatisticStoreWriteOperator::create(
-    OperatorId id,
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema)
+    OperatorId id, const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema)
 {
     return std::make_shared<PhysicalStatisticStoreWriteOperator>(id, inputSchema, outputSchema);
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalStatisticStoreWriteOperator::create(
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema)
+std::shared_ptr<PhysicalOperator>
+PhysicalStatisticStoreWriteOperator::create(const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema));
 }
 
-std::string PhysicalStatisticStoreWriteOperator::toString() const
+std::ostream& PhysicalStatisticStoreWriteOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalStatisticStoreWriteOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    out << std::endl;
-    return out.str();
+    os << "\nPhysicalStatisticStoreWriteOperator:\n";
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalStatisticStoreWriteOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalStatisticStoreWriteOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalStatisticStoreWriteOperator::copy()
 {
-    auto result = create(id, inputSchema, outputSchema);
-    result->addAllProperties(properties);
-    return result;
+    return create(id, inputSchema, outputSchema);
 }
 
 }

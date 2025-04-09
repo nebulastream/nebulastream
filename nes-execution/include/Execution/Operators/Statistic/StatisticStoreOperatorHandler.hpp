@@ -32,7 +32,7 @@ public:
     [[nodiscard]] std::shared_ptr<AbstractStatisticStore> getStatisticStore() const;
 
 private:
-    std::shared_ptr<StatisticStoreManager> statisticStoreManager;
+    StatisticStoreManager& statisticStoreManager;
 };
 
 }

@@ -86,7 +86,8 @@ void ReservoirSampleFunction::combine(
         pagedVectorPtr2);
 }
 
-Record ReservoirSampleFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
+Record
+ReservoirSampleFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
 {
     const auto pagedVectorPtr = static_cast<nautilus::val<Interface::PagedVector*>>(aggregationState);
     const Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);

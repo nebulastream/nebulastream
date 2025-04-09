@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
+#include <StatisticCollection/DefaultStatisticStore.hpp>
 #include <StatisticCollection/StatisticStoreManager.hpp>
 
 namespace NES::Runtime
 {
 
-std::shared_ptr<StatisticStoreManager> StatisticStoreManager::getInstance()
+StatisticStoreManager& StatisticStoreManager::getStatisticStoreManagerInstance()
 {
-    static const auto instance = std::make_shared<StatisticStoreManager>();
+    static StatisticStoreManager instance;
     return instance;
 }
 

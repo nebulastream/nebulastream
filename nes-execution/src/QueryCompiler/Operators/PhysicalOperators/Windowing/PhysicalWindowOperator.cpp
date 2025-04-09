@@ -149,52 +149,46 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                 case Windowing::WindowAggregationDescriptor::Type::Avg: {
                     /// We assume that the count is a u64
                     const auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
-                    aggregationFunctions.emplace_back(
-                        std::make_unique<Runtime::Execution::Aggregation::AvgAggregationFunction>(
-                            physicalInputType,
-                            physicalFinalType,
-                            std::move(aggregationInputExpression),
-                            aggregationResultFieldIdentifier,
-                            countType));
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::AvgAggregationFunction>(
+                        physicalInputType,
+                        physicalFinalType,
+                        std::move(aggregationInputExpression),
+                        aggregationResultFieldIdentifier,
+                        countType));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Sum: {
-                    aggregationFunctions.emplace_back(
-                        std::make_unique<Runtime::Execution::Aggregation::SumAggregationFunction>(
-                            physicalInputType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::SumAggregationFunction>(
+                        physicalInputType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Count: {
                     /// We assume that a count is a u64
                     const auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
-                    aggregationFunctions.emplace_back(
-                        std::make_unique<Runtime::Execution::Aggregation::CountAggregationFunction>(
-                            countType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::CountAggregationFunction>(
+                        countType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Max: {
-                    aggregationFunctions.emplace_back(
-                        std::make_unique<Runtime::Execution::Aggregation::MaxAggregationFunction>(
-                            physicalInputType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::MaxAggregationFunction>(
+                        physicalInputType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Min: {
-                    aggregationFunctions.emplace_back(
-                        std::make_unique<Runtime::Execution::Aggregation::MinAggregationFunction>(
-                            physicalInputType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::MinAggregationFunction>(
+                        physicalInputType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Median: {
                     auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(inputSchema, options.pageSize.getValue());
                     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                         = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
-                    aggregationFunctions.emplace_back(
-                        std::make_unique<Runtime::Execution::Aggregation::MedianAggregationFunction>(
-                            physicalInputType,
-                            physicalFinalType,
-                            std::move(aggregationInputExpression),
-                            aggregationResultFieldIdentifier,
-                            memoryProvider));
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::MedianAggregationFunction>(
+                        physicalInputType,
+                        physicalFinalType,
+                        std::move(aggregationInputExpression),
+                        aggregationResultFieldIdentifier,
+                        memoryProvider));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Reservoir: {
@@ -203,14 +197,13 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                         = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
                     const auto reservoirSampleDesc = std::dynamic_pointer_cast<Windowing::ReservoirSampleDescriptor>(descriptor);
                     auto reservoirSize = reservoirSampleDesc->getReservoirSize();
-                    aggregationFunctions.emplace_back(
-                        std::make_unique<Runtime::Execution::Aggregation::Synopsis::ReservoirSampleFunction>(
-                            physicalInputType,
-                            physicalFinalType,
-                            std::move(aggregationInputExpression),
-                            aggregationResultFieldIdentifier,
-                            memoryProvider,
-                            reservoirSize));
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::Synopsis::ReservoirSampleFunction>(
+                        physicalInputType,
+                        physicalFinalType,
+                        std::move(aggregationInputExpression),
+                        aggregationResultFieldIdentifier,
+                        memoryProvider,
+                        reservoirSize));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::None: {
