@@ -66,18 +66,25 @@ void addDefaultEmit(Pipeline* pipeline, const PhysicalOperatorWrapper& wrappedOp
 
 void buildPipelineRecursive(
     const std::shared_ptr<PhysicalOperatorWrapper>& opWrapper,
+    const std::shared_ptr<PhysicalOperatorWrapper>& prevOpWrapper,
     Pipeline* currentPipeline,
     bool forceNewPipeline = false)
 {
     /// Case 1: Custom Scan – if the wrapped operator explicitly acts as a scan,
     /// then it should open its own pipeline. No default scan is needed.
     if (opWrapper->isScan) {
+        // Add emit first if there is one needed
+        if(prevOpWrapper)
+        {
+            addDefaultEmit(currentPipeline, *prevOpWrapper);
+        }
+
         auto newPipeline = std::make_unique<Pipeline>(opWrapper->physicalOperator);
         currentPipeline->successorPipelines.push_back(std::move(newPipeline));
         Pipeline* newPipelinePtr = currentPipeline->successorPipelines.back().get();
         // Process children in a new pipeline (force new pipeline for each branch).
         for (const auto& child : opWrapper->children) {
-            buildPipelineRecursive(child, newPipelinePtr, true);
+            buildPipelineRecursive(child, opWrapper, newPipelinePtr, true);
         }
         return;
     }
@@ -92,18 +99,24 @@ void buildPipelineRecursive(
             currentPipeline->operatorHandlers.emplace(opWrapper->handlerId.value().getRawValue(), opWrapper->handler.value());
         }
         for (const auto& child : opWrapper->children) {
-            buildPipelineRecursive(child, currentPipeline, true);
+            buildPipelineRecursive(child, opWrapper, currentPipeline, true);
         }
         return;
     }
 
     /// Case 3: Sink Operator – treat sinks as pipeline breakers.
     if (auto sink = opWrapper->physicalOperator.tryGet<SinkPhysicalOperator>()) {
+        // Add emit first if there is one needed
+        if(prevOpWrapper)
+        {
+            addDefaultEmit(currentPipeline, *prevOpWrapper);
+        }
+
         auto newPipeline = std::make_unique<Pipeline>(*sink);
         currentPipeline->successorPipelines.push_back(std::move(newPipeline));
         Pipeline* newPipelinePtr = currentPipeline->successorPipelines.back().get();
         for (const auto& child : opWrapper->children) {
-            buildPipelineRecursive(child, newPipelinePtr);
+            buildPipelineRecursive(child, opWrapper, newPipelinePtr);
         }
         return;
     }
@@ -117,10 +130,8 @@ void buildPipelineRecursive(
         addDefaultScan(newPipelinePtr, *opWrapper);
 
         for (const auto& child : opWrapper->children) {
-            buildPipelineRecursive(child, newPipelinePtr);
+            buildPipelineRecursive(child, opWrapper, newPipelinePtr);
         }
-
-        addDefaultEmit(newPipelinePtr, *opWrapper);
         return;
     }
 
@@ -133,7 +144,7 @@ void buildPipelineRecursive(
     } else {
         /// Continue processing children within the current pipeline.
         for (const auto& child : opWrapper->children) {
-            buildPipelineRecursive(child, currentPipeline);
+            buildPipelineRecursive(child, opWrapper, currentPipeline);
         }
     }
 }
@@ -153,7 +164,7 @@ std::shared_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PhysicalPlan> physical
         /// Process each child of the root operator.
         /// Here we force a new pipeline for each branch to ensure proper boundaries.
         for (const auto& child : rootWrapper->children) {
-            buildPipelineRecursive(child, rootPipelinePtr, true);
+            buildPipelineRecursive(child, nullptr, rootPipelinePtr,true);
         }
     }
 
