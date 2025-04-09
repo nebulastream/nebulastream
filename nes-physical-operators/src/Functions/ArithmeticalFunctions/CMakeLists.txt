@@ -12,6 +12,6 @@
 
 add_plugin(Add PhysicalFunction nes-physical-operators AddPhysicalFunction.cpp)
 add_plugin(Div PhysicalFunction nes-physical-operators DivPhysicalFunction.cpp)
-add_plugin(Mod PhysicalFunction nes-physical-operators ModPhysicalFunction.cpp)
+add_plugin(Modulo PhysicalFunction nes-physical-operators ModPhysicalFunction.cpp)
 add_plugin(Mul PhysicalFunction nes-physical-operators MulPhysicalFunction.cpp)
 add_plugin(Sub PhysicalFunction nes-physical-operators SubPhysicalFunction.cpp)
