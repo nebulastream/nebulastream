@@ -34,6 +34,8 @@ protected:
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 
 public:
+    /// If an operator is accessiable via a plugin it has to implement the `registryType` function.
+    virtual std::optional<std::reference_wrapper<const std::string>> registryType() const;
     ~PhysicalOperator() noexcept override = default;
 };
 }
