@@ -85,11 +85,6 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
     this->asField = newAsField.get<FieldAccessLogicalFunction>();
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::clone()
-{
-    return std::make_shared<CountAggregationLogicalFunction>(onField, asField);
-}
-
 NES::SerializableAggregationFunction CountAggregationLogicalFunction::serialize() const
 {
     NES::SerializableAggregationFunction serializedAggregationFunction;

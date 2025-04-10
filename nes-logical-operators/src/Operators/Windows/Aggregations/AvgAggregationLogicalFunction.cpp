@@ -61,11 +61,6 @@ std::shared_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction:
     return std::make_shared<AvgAggregationLogicalFunction>(onField);
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::clone()
-{
-    return std::make_shared<AvgAggregationLogicalFunction>(onField, asField);
-}
-
 std::string_view AvgAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;

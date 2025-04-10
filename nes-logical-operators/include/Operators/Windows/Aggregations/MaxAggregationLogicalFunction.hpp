@@ -33,7 +33,6 @@ public:
     explicit MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
     void inferStamp(const Schema& schema) override;
-    std::shared_ptr<WindowAggregationLogicalFunction> clone() override;
     virtual ~MaxAggregationLogicalFunction() = default;
     NES::SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;

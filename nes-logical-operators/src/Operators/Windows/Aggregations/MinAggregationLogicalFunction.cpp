@@ -47,11 +47,6 @@ std::shared_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction:
     return std::make_shared<MinAggregationLogicalFunction>(onField);
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::clone()
-{
-    return std::make_shared<MinAggregationLogicalFunction>(onField, asField);
-}
-
 std::string_view MinAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;

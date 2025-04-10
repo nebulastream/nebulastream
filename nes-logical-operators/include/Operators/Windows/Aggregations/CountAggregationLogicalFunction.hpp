@@ -32,7 +32,6 @@ public:
     virtual ~CountAggregationLogicalFunction() = default;
 
     void inferStamp(const Schema& schema) override;
-    std::shared_ptr<WindowAggregationLogicalFunction> clone() override;
     NES::SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 

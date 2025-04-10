@@ -37,9 +37,6 @@ public:
     /// @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
     virtual void inferStamp(const Schema& schema) = 0;
 
-    /// @brief Creates a deep copy of the window aggregation
-    virtual std::shared_ptr<WindowAggregationLogicalFunction> clone() = 0;
-
     std::shared_ptr<DataType> getInputStamp() const;
     std::shared_ptr<DataType> getPartialAggregateStamp() const;
     std::shared_ptr<DataType> getFinalAggregateStamp() const;
