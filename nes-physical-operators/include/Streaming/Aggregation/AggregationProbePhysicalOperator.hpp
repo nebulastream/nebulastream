@@ -38,7 +38,7 @@ public:
 
 private:
     std::optional<PhysicalOperator> child;
-    static constexpr bool PIPELINE_BREAKER = false;
+
 };
 
 }

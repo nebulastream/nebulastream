@@ -36,7 +36,7 @@ public:
 private:
     Record::RecordFieldIdentifier fieldToWriteTo;
     Functions::PhysicalFunction mapFunction;
-    static constexpr bool PIPELINE_BREAKER = false;
+
     std::optional<PhysicalOperator> child;
 };
 
