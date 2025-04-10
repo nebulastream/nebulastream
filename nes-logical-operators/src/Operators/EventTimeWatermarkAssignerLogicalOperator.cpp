@@ -53,15 +53,17 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(LogicalOperatorConcep
 }
 
 
-LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(Schema) const
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(Schema schema) const
 {
     auto copy = *this;
     std::vector<LogicalOperator> newChildren;
     for (auto& child : children)
     {
-        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
+        newChildren.push_back(child.withInferredSchema(schema));
     }
     copy.children = newChildren;
+    copy.inputSchema = schema;
+    copy.outputSchema = schema;
     return copy;
 }
 

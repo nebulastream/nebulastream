@@ -44,18 +44,19 @@ bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(LogicalOperatorCo
     return false;
 }
 
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema(Schema) const
+LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema(Schema schema) const
 {
     auto copy = *this;
     std::vector<LogicalOperator> newChildren;
     for (auto& child : children)
     {
-        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
+        newChildren.push_back(child.withInferredSchema(schema));
     }
     copy.children = newChildren;
+    copy.inputSchema = schema;
+    copy.outputSchema = schema;
     return copy;
 }
-
 
 Optimizer::TraitSet IngestionTimeWatermarkAssignerLogicalOperator::getTraitSet() const
 {
