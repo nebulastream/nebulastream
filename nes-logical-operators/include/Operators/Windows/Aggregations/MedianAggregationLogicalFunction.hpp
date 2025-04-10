@@ -28,17 +28,17 @@ class MedianAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
     MedianAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
     explicit MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
     /// Creates a new MedianAggregationLogicalFunction
     /// @param onField field on which the aggregation should be performed
     /// @param asField function describing how the aggregated field should be called
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
 
     void inferStamp(const Schema& schema) override;
 
-    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
+    std::shared_ptr<WindowAggregationLogicalFunction> clone() override;
     virtual ~MedianAggregationLogicalFunction() = default;
 
     NES::SerializableAggregationFunction serialize() const override;

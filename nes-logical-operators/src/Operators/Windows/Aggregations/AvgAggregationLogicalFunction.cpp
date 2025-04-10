@@ -42,20 +42,20 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLo
     this->aggregationType = Type::Avg;
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction>
+std::shared_ptr<WindowAggregationLogicalFunction>
 AvgAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
-    return std::make_unique<AvgAggregationLogicalFunction>(std::move(onField), std::move(asField));
+    return std::make_shared<AvgAggregationLogicalFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
 {
-    return std::make_unique<AvgAggregationLogicalFunction>(onField);
+    return std::make_shared<AvgAggregationLogicalFunction>(onField);
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::clone()
+std::shared_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::clone()
 {
-    return std::make_unique<AvgAggregationLogicalFunction>(onField, asField);
+    return std::make_shared<AvgAggregationLogicalFunction>(onField, asField);
 }
 
 void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)

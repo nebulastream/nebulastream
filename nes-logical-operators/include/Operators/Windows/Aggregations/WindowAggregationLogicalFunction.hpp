@@ -35,7 +35,7 @@ public:
     virtual ~WindowAggregationLogicalFunction() = default;
 
     /// Defines the field to which a aggregate output is assigned.
-    std::unique_ptr<WindowAggregationLogicalFunction> as(const FieldAccessLogicalFunction& asField);
+    std::shared_ptr<WindowAggregationLogicalFunction> as(const FieldAccessLogicalFunction& asField);
 
     /// Returns the result field of the aggregation
     FieldAccessLogicalFunction as() const;
@@ -50,7 +50,7 @@ public:
     virtual void inferStamp(const Schema& schema) = 0;
 
     /// @brief Creates a deep copy of the window aggregation
-    virtual std::unique_ptr<WindowAggregationLogicalFunction> clone() = 0;
+    virtual std::shared_ptr<WindowAggregationLogicalFunction> clone() = 0;
 
     std::shared_ptr<DataType> getInputStamp() const;
     std::shared_ptr<DataType> getPartialAggregateStamp() const;

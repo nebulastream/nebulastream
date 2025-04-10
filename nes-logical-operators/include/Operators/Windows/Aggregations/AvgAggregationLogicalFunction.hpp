@@ -27,13 +27,13 @@ namespace NES
 class AvgAggregationLogicalFunction final : public WindowAggregationLogicalFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
     AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
     explicit AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
     void inferStamp(const Schema& schema) override;
-    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
+    std::shared_ptr<WindowAggregationLogicalFunction> clone() override;
     virtual ~AvgAggregationLogicalFunction() = default;
     NES::SerializableAggregationFunction serialize() const override;
 

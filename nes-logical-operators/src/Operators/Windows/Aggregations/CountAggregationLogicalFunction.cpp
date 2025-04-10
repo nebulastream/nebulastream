@@ -39,15 +39,15 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogi
     this->aggregationType = Type::Count;
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction>
+std::shared_ptr<WindowAggregationLogicalFunction>
 CountAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
-    return std::make_unique<CountAggregationLogicalFunction>(std::move(onField), std::move(asField));
+    return std::make_shared<CountAggregationLogicalFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
 {
-    return std::make_unique<CountAggregationLogicalFunction>(onField);
+    return std::make_shared<CountAggregationLogicalFunction>(onField);
 }
 
 void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
@@ -73,9 +73,9 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
     this->asField = newAsField.get<FieldAccessLogicalFunction>();
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::clone()
+std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::clone()
 {
-    return std::make_unique<CountAggregationLogicalFunction>(onField, asField);
+    return std::make_shared<CountAggregationLogicalFunction>(onField, asField);
 }
 
 NES::SerializableAggregationFunction CountAggregationLogicalFunction::serialize() const

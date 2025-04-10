@@ -35,10 +35,10 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
 {
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(const FieldAccessLogicalFunction& asField)
+std::shared_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(const FieldAccessLogicalFunction& asField)
 {
     this->asField = asField;
-    return std::unique_ptr<WindowAggregationLogicalFunction>(this);
+    return std::shared_ptr<WindowAggregationLogicalFunction>(this);
 }
 
 FieldAccessLogicalFunction WindowAggregationLogicalFunction::as() const

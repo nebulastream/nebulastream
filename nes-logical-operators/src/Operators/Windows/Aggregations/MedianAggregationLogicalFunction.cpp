@@ -34,14 +34,14 @@ MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(FieldAccessLo
     this->aggregationType = Type::Median;
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
+std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
-    return std::make_unique<MedianAggregationLogicalFunction>(onField, asField);
+    return std::make_shared<MedianAggregationLogicalFunction>(onField, asField);
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
 {
-    return std::make_unique<MedianAggregationLogicalFunction>(onField);
+    return std::make_shared<MedianAggregationLogicalFunction>(onField);
 }
 
 
@@ -69,9 +69,9 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
     asField = asField.withStamp(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::clone()
+std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::clone()
 {
-    return std::make_unique<MedianAggregationLogicalFunction>(onField, asField);
+    return std::make_shared<MedianAggregationLogicalFunction>(onField, asField);
 }
 
 NES::SerializableAggregationFunction MedianAggregationLogicalFunction::serialize() const
