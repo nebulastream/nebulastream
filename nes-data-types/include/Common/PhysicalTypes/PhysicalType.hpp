@@ -27,7 +27,7 @@ namespace NES
 class PhysicalType
 {
 public:
-    explicit PhysicalType(std::unique_ptr<DataType> type) noexcept : type(std::move(type)) { }
+    explicit PhysicalType(std::shared_ptr<DataType> type) noexcept : type(type) { }
 
     virtual ~PhysicalType() = default;
 
@@ -46,7 +46,7 @@ public:
     bool operator==(const PhysicalType& rhs) const { return *type == *rhs.type; }
 
     /// Type that is contained by this PhysicalType container
-    std::unique_ptr<DataType> type;
+    std::shared_ptr<DataType> type;
 };
 
 }

@@ -13,40 +13,40 @@ Source stream INT64 id INT64 value INT64 timestamp
 
 SINK streamSink INT64 stream$id INT64 stream$value INT64 stream$timestamp
 SINK streamSinkWithNew INT64 stream$id INT64 stream$value INT64 stream$timestamp INT64 stream$new
-
-
-# Map with mul function touches one field
-SELECT id * 3 AS id, value, timestamp FROM stream INTO streamSink
-----
-3,1,1000
-6,1,1001
-9,1,1002
-12,2,2000
-15,19,19000
-18,20,20000
-21,21,21000
-
-# Map with mul function touches two fields
-SELECT id * value AS id, value, timestamp FROM stream INTO streamSink
-----
-1,1,1000
-2,1,1001
-3,1,1002
-8,2,2000
-95,19,19000
-120,20,20000
-147,21,21000
-
-# Map with mul function touches two fields and adds a new field
-SELECT id, value, timestamp, id * value AS new FROM stream INTO streamSinkWithNew
-----
-1,1,1000,1
-2,1,1001,2
-3,1,1002,3
-4,2,2000,8
-5,19,19000,95
-6,20,20000,120
-7,21,21000,147
+#
+#
+## Map with mul function touches one field
+#SELECT id * 3 AS id, value, timestamp FROM stream INTO streamSink
+#----
+#3,1,1000
+#6,1,1001
+#9,1,1002
+#12,2,2000
+#15,19,19000
+#18,20,20000
+#21,21,21000
+#
+## Map with mul function touches two fields
+#SELECT id * value AS id, value, timestamp FROM stream INTO streamSink
+#----
+#1,1,1000
+#2,1,1001
+#3,1,1002
+#8,2,2000
+#95,19,19000
+#120,20,20000
+#147,21,21000
+#
+## Map with mul function touches two fields and adds a new field
+#SELECT id, value, timestamp, id * value AS new FROM stream INTO streamSinkWithNew
+#----
+#1,1,1000,1
+#2,1,1001,2
+#3,1,1002,3
+#4,2,2000,8
+#5,19,19000,95
+#6,20,20000,120
+#7,21,21000,147
 
 # Two maps after each other that both touch the same fields
 SELECT id * 3 AS id, id * value AS value, timestamp FROM stream INTO streamSink

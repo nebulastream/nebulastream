@@ -23,11 +23,11 @@
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
+SqrtLogicalFunction::SqrtLogicalFunction(LogicalFunction child) : stamp(child.getStamp()), child(child)
 {
 };
 
-SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : stamp(other.stamp->clone()), child(other.child)
+SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : stamp(other.stamp), child(other.child)
 {
 }
 
@@ -48,15 +48,15 @@ std::string SqrtLogicalFunction::toString() const
     return ss.str();
 }
 
-const DataType& SqrtLogicalFunction::getStamp() const
+std::shared_ptr<DataType> SqrtLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction SqrtLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction SqrtLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

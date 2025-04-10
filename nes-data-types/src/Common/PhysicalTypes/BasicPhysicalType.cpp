@@ -24,13 +24,13 @@ namespace NES
 {
 
 BasicPhysicalType::BasicPhysicalType(std::shared_ptr<DataType> type, NativeType nativeType)
-    : PhysicalType(std::move(type)), nativeType(nativeType)
+    : PhysicalType(type), nativeType(nativeType)
 {
 }
 
 std::unique_ptr<PhysicalType> BasicPhysicalType::create(std::shared_ptr<DataType> type, NativeType nativeType)
 {
-    return std::make_unique<BasicPhysicalType>(std::move(type), nativeType);
+    return std::make_unique<BasicPhysicalType>(type, nativeType);
 }
 
 uint64_t BasicPhysicalType::size() const

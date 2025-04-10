@@ -30,7 +30,7 @@ public:
     virtual ~PhysicalTypeFactory() = default;
 
     /// @brief Translates a nes data type into a corresponding physical type.
-    virtual std::unique_ptr<PhysicalType> getPhysicalType(const DataType& dataType) const = 0;
+    virtual std::unique_ptr<PhysicalType> getPhysicalType(std::shared_ptr<DataType> dataType) const = 0;
 };
 
 }

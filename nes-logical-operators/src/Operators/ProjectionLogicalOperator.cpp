@@ -17,6 +17,7 @@
 #include <utility>
 #include <variant>
 #include <memory>
+#include <vector>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
@@ -26,6 +27,7 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -46,7 +48,7 @@ ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<LogicalFunction
     }
     INVARIANT(
         allFunctionsAreSupported,
-        "The Projection operator only supports FieldAccessLogicalFunction and FieldAssignmentLogicalFunction functions.");
+        "The projection operator only supports FieldAccessLogicalFunction and FieldAssignmentLogicalFunction functions.");
 }
 
 std::string_view ProjectionLogicalOperator::getName() const noexcept
@@ -91,44 +93,61 @@ std::string ProjectionLogicalOperator::toString() const
 }
 
 
-bool ProjectionLogicalOperator::inferSchema(Schema inputSchema)
+LogicalOperator ProjectionLogicalOperator::withInferredSchema(Schema inputSchema) const
 {
-    this->inputSchema = inputSchema;
-    outputSchema.clear();
+    auto copy = *this;
+    copy.inputSchema = inputSchema;
+    copy.outputSchema.clear();
+
+    std::vector<LogicalFunction> newFunctions;
     for (auto& function : functions)
     {
-        // Infer the stamp for the function using the input schema.
-        function = function.withInferredStamp(inputSchema);
+        std::cout << "Projection: " << function.toString() << "\n";
+        std::cout << "Projection: " << function.getStamp()->toString() << "\n";
 
-        // Try casting to FieldAccessLogicalFunction.
         if (function.tryGet<FieldAccessLogicalFunction>())
         {
-            auto fieldAccess = function.get<FieldAccessLogicalFunction>();
-            outputSchema.addField(fieldAccess.getFieldName(), fieldAccess.getStamp().clone());
+            const auto& fieldAccess = function.get<FieldAccessLogicalFunction>();
+            copy.outputSchema.addField(fieldAccess.getFieldName(), fieldAccess.getStamp());
+            std::cout << "Projection access: " << fieldAccess.getFieldName() << "\n";
+            std::cout << "Projection access: " << fieldAccess.getStamp()->toString() << "\n";
+            newFunctions.emplace_back(fieldAccess);
         }
-        // Otherwise, try casting to FieldAssignmentLogicalFunction.
         else if (function.tryGet<FieldAssignmentLogicalFunction>())
         {
-            auto fieldAssignment = function.get<FieldAssignmentLogicalFunction>();
-            outputSchema.addField(fieldAssignment.getField().getFieldName(), fieldAssignment.getField().getStamp().clone());
+            std::cout << "Projection assignment2: " << function.getStamp()->toString() << "\n";
+            const auto& fieldAssignment = function.withInferredStamp(inputSchema).get<FieldAssignmentLogicalFunction>();
+            auto stampPtr = fieldAssignment.getField().getStamp();
+            if (!stampPtr.get()) {
+                std::cerr << "Error: Stamp is null for field " << fieldAssignment.getField().getFieldName() << "\n";
+            } else {
+                std::cout << "Projection assignment2: \n";
+                auto i = stampPtr.get();
+                std::cout << "Projection assignment2: " << stampPtr->toString() << "\n";
+            }
+            copy.outputSchema = copy.outputSchema.addField(fieldAssignment.getField().getFieldName(), fieldAssignment.getField().getStamp());
+            std::cout << "Projection assignment1: " << fieldAssignment.getField().getFieldName() << "\n";
+            std::cout << "Projection assignment2: " << fieldAssignment.getField().getStamp()->toString() << "\n";
+            newFunctions.emplace_back(fieldAssignment);
+            std::cout << "proj output schema inner2: " <<  copy.outputSchema.toString() << "\n";
         }
         else
         {
             throw CannotInferSchema(
-                "ProjectionLogicalOperator: Function has to be a FieldAccessLogicalFunction, a RenameLogicalFunction, or a FieldAssignmentLogicalFunction, but it was a {}",
+                "Function has to be a FieldAccessLogicalFunction or a FieldAssignmentLogicalFunction, but it was a {}",
                 function);
         }
     }
+    copy.functions = newFunctions;
 
-    /// Infer schema of all child operators
+    std::cout << "proj output schema before: " <<  copy.outputSchema.toString() << "\n";
+    std::vector<LogicalOperator> newChildren;
     for (auto& child : children)
     {
-        if (!child.inferSchema(outputSchema))
-        {
-            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
-        }
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
     }
-    return true;
+    std::cout << "proj output schema: " <<  copy.outputSchema.toString() << "\n";
+    return copy.withChildren(newChildren);
 }
 
 Optimizer::TraitSet ProjectionLogicalOperator::getTraitSet() const
@@ -136,9 +155,11 @@ Optimizer::TraitSet ProjectionLogicalOperator::getTraitSet() const
     return {};
 }
 
-void ProjectionLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator ProjectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> ProjectionLogicalOperator::getInputSchemas() const

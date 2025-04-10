@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
+#include <Nautilus/Util.hpp>
 
 namespace NES::Functions
 {
@@ -29,7 +30,9 @@ VarVal MulPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftPhysicalFunction.execute(record, arena);
     const auto rightValue = rightPhysicalFunction.execute(record, arena);
-    return leftValue * rightValue;
+    auto result =  leftValue * rightValue;
+    NES_ERROR_EXEC("result " << result);
+    return result;
 }
 
 MulPhysicalFunction::MulPhysicalFunction(

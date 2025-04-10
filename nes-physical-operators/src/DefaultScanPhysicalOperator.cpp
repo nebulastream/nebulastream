@@ -47,6 +47,8 @@ void DefaultScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = memoryProvider->readRecord(projections, recordBuffer, i);
+        NES_INFO_EXEC("default scan physical operator " << record);
+        NES_INFO_EXEC("scan memory provider: " << memoryProvider->getMemoryLayout()->getSchema().toString().c_str());
         PhysicalOperatorConcept::execute(executionCtx, record);
     }
 }

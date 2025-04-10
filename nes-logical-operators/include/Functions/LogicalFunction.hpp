@@ -39,7 +39,7 @@ struct LogicalFunctionConcept
     virtual ~LogicalFunctionConcept() = default;
     [[nodiscard]] virtual std::string toString() const = 0;
 
-    [[nodiscard]] virtual const DataType& getStamp() const = 0;
+    [[nodiscard]] virtual std::shared_ptr<DataType> getStamp() const = 0;
     [[nodiscard]] virtual LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const = 0;
 
     [[nodiscard]] virtual LogicalFunction withInferredStamp(Schema schema) const = 0;
@@ -65,7 +65,7 @@ public:
     NullLogicalFunction();
     [[nodiscard]] std::string toString() const override;
 
-    [[nodiscard]] const DataType& getStamp() const override;
+    [[nodiscard]] std::shared_ptr<DataType> getStamp() const override;
     [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType>) const override;
     [[nodiscard]] LogicalFunction withInferredStamp(Schema Schema) const override;
 
@@ -121,7 +121,7 @@ struct LogicalFunction final
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const;
 
-    [[nodiscard]] const DataType& getStamp() const;
+    [[nodiscard]] std::shared_ptr<DataType> getStamp() const;
     [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const;
 
     [[nodiscard]] SerializableFunction serialize() const;
@@ -145,7 +145,7 @@ private:
         explicit Model(T d) : data(std::move(d)) {}
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override {
-            return std::unique_ptr<Concept>(new Model<T>(data));
+            return std::unique_ptr<Concept>(new Model(data));
         }
 
         [[nodiscard]] std::string toString() const override
@@ -173,7 +173,7 @@ private:
             return data.getType();
         }
 
-        [[nodiscard]] const DataType& getStamp() const override
+        [[nodiscard]] std::shared_ptr<DataType> getStamp() const override
         {
             return data.getStamp();
         }
@@ -197,7 +197,7 @@ private:
         }
 
         [[nodiscard]] bool equals(const Concept& other) const override {
-            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
+            if (auto p = dynamic_cast<const Model*>(&other)) {
                 return data.operator==(p->data);
             }
             return false;

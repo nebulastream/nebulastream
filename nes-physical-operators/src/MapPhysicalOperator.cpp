@@ -16,6 +16,7 @@
 #include <utility>
 #include <Nautilus/Interface/Record.hpp>
 #include <MapPhysicalOperator.hpp>
+#include <Nautilus/Util.hpp>
 
 namespace NES
 {
@@ -31,6 +32,8 @@ void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// write the result to the record
     record.write(fieldToWriteTo, value);
     /// call next operator
+    // NES_INFO_EXEC("field to write to " << fieldToWriteTo.c_str());
+    // NES_ERROR_EXEC("Map physical: " << record);
     PhysicalOperatorConcept::execute(ctx, record);
 }
 

@@ -53,56 +53,38 @@ bool MapLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
     return false;
 };
 
-bool MapLogicalOperator::inferSchema(Schema inputSchema)
+LogicalOperator MapLogicalOperator::withInferredSchema(Schema inputSchema) const
 {
+    auto copy = *this;
     /// use the default input schema to calculate the out schema of this operator.
-    mapFunction = mapFunction.withInferredStamp(inputSchema).get<FieldAssignmentLogicalFunction>();
+    copy.mapFunction = mapFunction.withInferredStamp(inputSchema).get<FieldAssignmentLogicalFunction>();
+    std::cout << "Map function:1 " << copy.mapFunction.getStamp()->toString() << "\n";
 
-    if (std::string fieldName = mapFunction.getField().getFieldName(); outputSchema.getFieldByName(fieldName))
+    copy.inputSchema = inputSchema;
+    copy.outputSchema = inputSchema;
+
+    if (std::string fieldName = copy.mapFunction.getField().getFieldName(); copy.outputSchema.getFieldByName(fieldName))
     {
         /// The assigned field is part of the current schema.
         /// Thus we check if it has the correct type.
-        NES_TRACE("MAP Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
-        outputSchema.replaceField(fieldName, mapFunction.getField().getStamp().clone());
+        NES_TRACE("The field {} is already in the schema, so we updated its type.", fieldName);
+        copy.outputSchema.replaceField(fieldName, copy.mapFunction.getField().getStamp());
     }
     else
     {
         /// The assigned field is not part of the current schema.
         /// Thus we extend the schema by the new attribute.
-        NES_TRACE("MAP Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
-        outputSchema.addField(fieldName, mapFunction.getField().getStamp().clone());
+        NES_TRACE("The field {} is not part of the schema, so we added it.", fieldName);
+        copy.outputSchema.addField(fieldName, copy.mapFunction.getField().getStamp());
     }
 
-
-    std::vector<Schema> distinctSchemas;
-
-    /// Infer schema of all child operators
-    for (auto& child : children)
-    {
-        if (!child.inferSchema(outputSchema))
-        {
-            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
-        }
-    }
-
-    /// Identify different type of schemas from children operators
+    std::cout << "MAP schemas: " << copy.inputSchema.toString() << " out: " << copy.outputSchema.toString() << "\n";
+    std::vector<LogicalOperator> newChildren;
     for (const auto& child : children)
     {
-        auto childOutputSchema = child.getInputSchemas()[0];
-        auto found = std::find_if(
-            distinctSchemas.begin(),
-            distinctSchemas.end(),
-            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
-        if (found == distinctSchemas.end())
-        {
-            distinctSchemas.push_back(childOutputSchema);
-        }
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
     }
-
-    ///validate that only two different type of schema were present
-    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
-
-    return true;
+    return copy.withChildren(newChildren);
 }
 
 Optimizer::TraitSet MapLogicalOperator::getTraitSet() const
@@ -110,9 +92,11 @@ Optimizer::TraitSet MapLogicalOperator::getTraitSet() const
     return {};
 }
 
-void MapLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator MapLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> MapLogicalOperator::getInputSchemas() const

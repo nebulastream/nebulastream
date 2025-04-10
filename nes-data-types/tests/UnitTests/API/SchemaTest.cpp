@@ -183,8 +183,8 @@ TEST_F(SchemaTest, replaceFieldTest)
             ASSERT_EQ(testSchema.getFieldByIndex(0).getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
 
             /// Replacing field
-            auto newDataType = getRandomFields(1_u64)[0].getDataType().clone();
-            auto clone = newDataType->clone();
+            auto newDataType = getRandomFields(1_u64)[0].getDataType();
+            auto clone = newDataType;
             ASSERT_NO_THROW(testSchema.replaceField("field", std::move(newDataType)));
             ASSERT_EQ(testSchema.getFieldByIndex(0).getDataType(), *clone);
         }

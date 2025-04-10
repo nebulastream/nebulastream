@@ -80,7 +80,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
             if (child != operatorIdToOperatorMap.end()) {
                 auto it = operatorIdToOperatorMap.find(serializedOperator.operatorid());
                 if (it != operatorIdToOperatorMap.end()) {
-                    it->second.setChildren({ child->second });
+                    it->second = it->second.withChildren({ child->second });
                 }
             }
         }

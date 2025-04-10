@@ -34,7 +34,7 @@ FieldAssignmentLogicalFunction::FieldAssignmentLogicalFunction(const FieldAssign
     : stamp(other.stamp), fieldAccess(other.fieldAccess), logicalFunction(other.logicalFunction) {};
 
 FieldAssignmentLogicalFunction::FieldAssignmentLogicalFunction(const FieldAccessLogicalFunction& fieldAccess, LogicalFunction logicalFunction)
-    : stamp(logicalFunction.getStamp().clone()), fieldAccess(fieldAccess), logicalFunction(logicalFunction)
+    : stamp(logicalFunction.getStamp()), fieldAccess(fieldAccess), logicalFunction(logicalFunction)
 {
 }
 
@@ -57,7 +57,7 @@ std::string FieldAssignmentLogicalFunction::toString() const
     return ss.str();
 }
 
-const FieldAccessLogicalFunction& FieldAssignmentLogicalFunction::getField() const
+FieldAccessLogicalFunction FieldAssignmentLogicalFunction::getField() const
 {
     return fieldAccess;
 }
@@ -68,16 +68,16 @@ LogicalFunction FieldAssignmentLogicalFunction::getAssignment() const
 }
 
 
-const DataType& FieldAssignmentLogicalFunction::getStamp() const
+std::shared_ptr<DataType> FieldAssignmentLogicalFunction::getStamp() const
 {
-return *stamp;
+    return stamp;
 };
 
 LogicalFunction FieldAssignmentLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 std::vector<LogicalFunction> FieldAssignmentLogicalFunction::getChildren() const
@@ -100,14 +100,16 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredStamp(Schema schema)
     auto copy = *this;
     /// infer stamp of assignment function
     copy.logicalFunction = getAssignment().withInferredStamp(schema);
+    std::cout <<  "Field Assignment logical function 0:" << copy.logicalFunction.getStamp()->toString() << " " << copy.logicalFunction.toString() <<"\n";
 
     ///Update the field name with fully qualified field name
     auto fieldName = getField().getFieldName();
     auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
-        const auto stamp = getAssignment().getStamp().join(getField().getStamp());
-        copy.fieldAccess = fieldAccess.withFieldName(existingField.value().getName()).get<FieldAccessLogicalFunction>();
+        const auto stamp = copy.logicalFunction.getStamp()->join(copy.fieldAccess.getStamp());
+        copy.fieldAccess = fieldAccess.withFieldName(existingField.value().getName()).withStamp(stamp).get<FieldAccessLogicalFunction>();
+        std::cout << "after updating the existing field: " << copy.fieldAccess.getStamp()->toString() << " " << fieldAccess.getFieldName() << "\n";
     }
     else
     {
@@ -115,30 +117,33 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredStamp(Schema schema)
         ///Check if field name is already fully qualified
         if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
         {
-            return copy.fieldAccess.withFieldName(fieldName);
+            copy.fieldAccess = copy.fieldAccess.withFieldName(fieldName).get<FieldAccessLogicalFunction>();
         }
         else
         {
-            return copy.fieldAccess.withFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
+            copy.fieldAccess = copy.fieldAccess.withFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName).get<FieldAccessLogicalFunction>();
         }
     }
 
-    if (dynamic_cast<const Undefined*>(&getField().getStamp()) != nullptr)
+    if (!copy.fieldAccess.getStamp() || dynamic_cast<const Undefined*>(copy.fieldAccess.getStamp().get()) != nullptr)
     {
-        /// if the field has no stamp set it to the one of the assignment
-        return copy.fieldAccess.withStamp(getAssignment().getStamp().clone());
+        copy.fieldAccess = copy.fieldAccess.withStamp(copy.getAssignment().getStamp()).get<FieldAccessLogicalFunction>();
     }
     else
     {
         /// the field already has a type, check if it is compatible with the assignment
-        if (getField().getStamp() != getAssignment().getStamp())
+        if (copy.logicalFunction.getStamp() != copy.fieldAccess.getStamp())
         {
             NES_WARNING(
                 "Field {} stamp is incompatible with assignment stamp. Overwriting field stamp with assignment stamp.",
                 getField().getFieldName())
-            auto newFieldAccess = fieldAccess.withStamp(getAssignment().getStamp().clone());
+            copy.fieldAccess = copy.fieldAccess.withStamp(copy.getAssignment().getStamp()).get<FieldAccessLogicalFunction>();
         }
     }
+    copy.stamp = copy.getAssignment().getStamp();
+    std::cout << "Field Assignment 1:" << copy.logicalFunction.getStamp()->toString() << " " << copy.logicalFunction.toString() <<"\n";
+    std::cout << "Field Assignment 1:" << copy.fieldAccess.getStamp()->toString() << " " << copy.fieldAccess.toString() <<"\n";
+    std::cout << "Field Assignment 1:" << copy.getField().getStamp()->toString() << "\n";
     return copy;
 }
 
