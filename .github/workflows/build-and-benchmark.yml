@@ -22,6 +22,7 @@ jobs:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
       volumes:
         - ccache:/ccache
+        - test-file-cache:/test-file-cache
       env:
         CCACHE_DIR: /ccache
         MOLD_JOBS: 1
