@@ -36,7 +36,7 @@ public:
     std::vector<std::string> getGroupByKeyNames() const;
     bool isKeyed() const;
 
-    [[nodiscard]] const std::vector<std::shared_ptr<WindowAggregationLogicalFunction>>& getWindowAggregation() const;
+    [[nodiscard]] std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> getWindowAggregation() const;
     void setWindowAggregation(std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation);
 
     [[nodiscard]] Windowing::WindowType& getWindowType() const;
