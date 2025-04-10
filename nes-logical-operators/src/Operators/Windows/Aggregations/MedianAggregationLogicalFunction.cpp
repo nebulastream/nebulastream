@@ -71,11 +71,6 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
     asField = asField.withStamp(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::clone()
-{
-    return std::make_shared<MedianAggregationLogicalFunction>(onField, asField);
-}
-
 NES::SerializableAggregationFunction MedianAggregationLogicalFunction::serialize() const
 {
     NES::SerializableAggregationFunction serializedAggregationFunction;
