@@ -14,9 +14,10 @@
 
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
-#include <Operators/MapLogicalOperator.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalEventTimeWatermarkAssigner.hpp>
+#include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
+#include <Watermark/TimeFunction.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 
@@ -25,12 +26,10 @@ namespace NES::Optimizer
 
 RewriteRuleResult LowerToPhysicalEventTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<MapLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
-    auto map = logicalOperator.get<MapLogicalOperator>();
-    auto function = map.getMapFunction().getAssignment();
-    auto fieldName = map.getMapFunction().getField().getFieldName();
-    auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
-    auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
+    PRECONDITION(logicalOperator.tryGet<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
+    auto assigner = logicalOperator.get<EventTimeWatermarkAssignerLogicalOperator>();
+    auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner.onField);
+    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner.unit));
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
     return {wrapper, {wrapper}};
