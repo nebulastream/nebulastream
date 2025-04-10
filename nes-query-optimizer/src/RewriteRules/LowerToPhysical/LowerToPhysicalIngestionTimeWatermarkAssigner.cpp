@@ -16,7 +16,9 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <MapPhysicalOperator.hpp>
-#include <Operators/MapLogicalOperator.hpp>
+#include <Watermark/TimeFunction.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalIngestionTimeWatermarkAssigner.hpp>
 
@@ -25,12 +27,8 @@ namespace NES::Optimizer
 
 RewriteRuleResult LowerToPhysicalIngestionTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<MapLogicalOperator>(), "Expected a IngestionTimeWatermarkAssigner");
-    auto map = logicalOperator.get<MapLogicalOperator>();
-    auto function = map.getMapFunction().getAssignment();
-    auto fieldName = map.getMapFunction().getField().getFieldName();
-    auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
-    auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
+    PRECONDITION(logicalOperator.tryGet<IngestionTimeWatermarkAssignerLogicalOperator>(), "Expected a IngestionTimeWatermarkAssigner");
+    auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
     return {wrapper, {wrapper}};
 }
