@@ -39,8 +39,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     std::vector<FieldAccessLogicalFunction> onKey,
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation,
     std::shared_ptr<Windowing::WindowType> windowType)
-    : WindowOperator()
-    , windowAggregation(std::move(windowAggregation))
+    : windowAggregation(std::move(windowAggregation))
     , windowType(std::move(windowType))
     , onKey(onKey)
 {
@@ -155,7 +154,7 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema in
     for (const auto& agg : aggs)
     {
         copy.outputSchema.addField(
-            AttributeField(agg->as().getFieldName(), agg->as().getStamp()));
+            AttributeField(agg->asField.get<FieldAccessLogicalFunction>().getFieldName(), agg->asField.getStamp()));
     }
     return copy;
 }

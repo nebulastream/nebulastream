@@ -63,19 +63,19 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()), "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = onField.getFieldName();
-    const auto asFieldName = asField.getFieldName();
+    const auto onFieldName = onField.get<FieldAccessLogicalFunction>().getFieldName();
+    const auto asFieldName = asField.get<FieldAccessLogicalFunction>().getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
+        asField = asField.get<FieldAccessLogicalFunction>().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
+        asField = asField.get<FieldAccessLogicalFunction>().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
     auto newAsField = asField.withStamp(getFinalAggregateStamp());
     this->asField = newAsField.get<FieldAccessLogicalFunction>();

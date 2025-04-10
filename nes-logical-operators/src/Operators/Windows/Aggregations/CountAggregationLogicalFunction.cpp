@@ -28,22 +28,22 @@
 namespace NES
 {
 
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(LogicalFunction field)
     : WindowAggregationLogicalFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), field)
 {
 }
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(LogicalFunction field, LogicalFunction asField)
     : WindowAggregationLogicalFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), field, asField)
 {
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction>
-CountAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
+CountAggregationLogicalFunction::create(LogicalFunction onField, LogicalFunction asField)
 {
-    return std::make_shared<CountAggregationLogicalFunction>(std::move(onField), std::move(asField));
+    return std::make_shared<CountAggregationLogicalFunction>(onField, asField);
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(LogicalFunction onField)
 {
     return std::make_shared<CountAggregationLogicalFunction>(onField);
 }
@@ -56,17 +56,17 @@ std::string_view CountAggregationLogicalFunction::getName() const noexcept
 void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     const auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    const auto asFieldName = asField.getFieldName();
+    const auto asFieldName = asField.get<FieldAccessLogicalFunction>().getFieldName();
 
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField = asField.withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
+        asField = asField.get<FieldAccessLogicalFunction>().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>();
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
+        asField = asField.get<FieldAccessLogicalFunction>().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
 
     /// a count aggregation is always on an uint 64

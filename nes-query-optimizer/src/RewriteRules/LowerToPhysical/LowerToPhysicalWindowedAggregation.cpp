@@ -60,7 +60,7 @@ getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
     }
     for (const auto& descriptor : logicalOperator.getWindowAggregation())
     {
-        const auto aggregationResultFieldIdentifier = descriptor->on().getFieldName();
+        const auto aggregationResultFieldIdentifier = descriptor->onField.get<FieldAccessLogicalFunction>().getFieldName();
         fieldValueNames.emplace_back(aggregationResultFieldIdentifier);
     }
     return {fieldKeyNames, fieldValueNames};
@@ -108,8 +108,8 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
         auto physicalInputType = physicalTypeFactory.getPhysicalType(descriptor->getInputStamp());
         auto physicalFinalType = physicalTypeFactory.getPhysicalType(descriptor->getFinalAggregateStamp());
 
-        auto aggregationInputExpression = QueryCompilation::FunctionProvider::lowerFunction(descriptor->on());
-        const auto aggregationResultFieldIdentifier = descriptor->as().getFieldName();
+        auto aggregationInputExpression = QueryCompilation::FunctionProvider::lowerFunction(descriptor->onField);
+        const auto aggregationResultFieldIdentifier = descriptor->asField.get<FieldAccessLogicalFunction>().getFieldName();
         auto name = descriptor->getName();
         if (name == "Avg")
         {
