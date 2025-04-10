@@ -11,8 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        EventTimeWatermarkAssigner.cpp
-        IngestionTimeWatermarkAssigner.cpp
+        EventTimeWatermarkAssignerPhysicalOperator.cpp
+        IngestionTimeWatermarkAssignerPhysicalOperator.cpp
         MultiOriginWatermarkProcessor.cpp
         TimeFunction.cpp
 )

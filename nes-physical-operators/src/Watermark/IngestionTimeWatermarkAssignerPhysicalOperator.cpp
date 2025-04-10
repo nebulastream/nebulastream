@@ -14,24 +14,22 @@
 
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Util/StdInt.hpp>
-#include <Watermark/IngestionTimeWatermarkAssigner.hpp>
+#include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <OperatorState.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-IngestionTimeWatermarkAssigner::IngestionTimeWatermarkAssigner(std::shared_ptr<TimeFunction> timeFunction)
+IngestionTimeWatermarkAssignerPhysicalOperator::IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction timeFunction)
     : timeFunction(std::move(timeFunction)) {};
 
-void IngestionTimeWatermarkAssigner::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void IngestionTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PhysicalOperatorConcept::open(executionCtx, recordBuffer);
-    timeFunction->open(executionCtx, recordBuffer);
+    timeFunction.open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
-    const auto tsField = timeFunction->getTs(executionCtx, emptyRecord);
+    const auto tsField = timeFunction.getTs(executionCtx, emptyRecord);
     const auto currentWatermark = executionCtx.watermarkTs;
     if (tsField > currentWatermark)
     {
@@ -39,7 +37,7 @@ void IngestionTimeWatermarkAssigner::open(ExecutionContext& executionCtx, Record
     }
 }
 
-void IngestionTimeWatermarkAssigner::execute(ExecutionContext& executionCtx, Record& record) const
+void IngestionTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
    PhysicalOperatorConcept::execute(executionCtx, record);
 }

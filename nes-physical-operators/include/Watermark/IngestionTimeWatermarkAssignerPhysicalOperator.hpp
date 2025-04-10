@@ -14,24 +14,24 @@
 #pragma once
 #include <Functions/PhysicalFunction.hpp>
 #include <Abstract/PhysicalOperator.hpp>
+#include <Watermark/TimeFunction.hpp>
 
 namespace NES
 {
-class TimeFunction;
 /// @brief Watermark assignment operator.
 /// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
-class IngestionTimeWatermarkAssigner : public PhysicalOperatorConcept
+class IngestionTimeWatermarkAssignerPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
     /// @brief Creates a IngestionTimeWatermarkAssigner operator without function
-    IngestionTimeWatermarkAssigner(std::shared_ptr<TimeFunction> timeFunction);
+    IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     std::optional<PhysicalOperator> getChild() const override { return child; }
     void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
-    std::shared_ptr<TimeFunction> timeFunction;
+    IngestionTimeFunction timeFunction;
     std::optional<PhysicalOperator> child;
 };
 
