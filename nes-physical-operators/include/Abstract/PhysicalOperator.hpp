@@ -86,15 +86,15 @@ public:
         : self(other.self->clone()) {}
 
     template<typename T>
-    [[nodiscard]] const T* tryGet() const {
+    [[nodiscard]] std::optional<T> tryGet() const {
         if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
-            return &(p->data);
+            return p->data;
         }
-        return nullptr;
+        return std::nullopt;
     }
 
     template<typename T>
-    [[nodiscard]] const T& get() const {
+    [[nodiscard]] const T get() const {
         if (auto p = dynamic_cast<const Model<T>*>(self.get()))
         {
             return p->data;

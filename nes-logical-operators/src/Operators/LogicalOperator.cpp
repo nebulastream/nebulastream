@@ -155,16 +155,16 @@ std::vector<OriginId> LogicalOperator::getOutputOriginIds() const
 
 void LogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
 {
-    return self->setInputOriginIds(ids);
+    self->setInputOriginIds(ids);
 }
 
 void LogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
 {
-    return self->setOutputOriginIds(ids);
+    self->setOutputOriginIds(std::move(ids));
 }
 
 LogicalOperator LogicalOperator::withInferredSchema(Schema inputSchema) const
 {
-    return self->withInferredSchema(inputSchema);
+    return self->withInferredSchema(std::move(inputSchema));
 }
 }

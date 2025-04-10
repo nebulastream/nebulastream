@@ -115,21 +115,11 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(Schema inputSchema
         }
         else if (function.tryGet<FieldAssignmentLogicalFunction>())
         {
-            std::cout << "Projection assignment2: " << function.getStamp()->toString() << "\n";
             const auto& fieldAssignment = function.withInferredStamp(inputSchema).get<FieldAssignmentLogicalFunction>();
             auto stampPtr = fieldAssignment.getField().getStamp();
-            if (!stampPtr.get()) {
-                std::cerr << "Error: Stamp is null for field " << fieldAssignment.getField().getFieldName() << "\n";
-            } else {
-                std::cout << "Projection assignment2: \n";
-                auto i = stampPtr.get();
-                std::cout << "Projection assignment2: " << stampPtr->toString() << "\n";
-            }
             copy.outputSchema = copy.outputSchema.addField(fieldAssignment.getField().getFieldName(), fieldAssignment.getField().getStamp());
-            std::cout << "Projection assignment1: " << fieldAssignment.getField().getFieldName() << "\n";
-            std::cout << "Projection assignment2: " << fieldAssignment.getField().getStamp()->toString() << "\n";
+
             newFunctions.emplace_back(fieldAssignment);
-            std::cout << "proj output schema inner2: " <<  copy.outputSchema.toString() << "\n";
         }
         else
         {

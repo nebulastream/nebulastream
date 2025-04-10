@@ -29,8 +29,6 @@ public:
 
     FieldAccessLogicalFunction(std::string fieldName);
     FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName);
-    FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other);
-    FieldAccessLogicalFunction& operator=(const FieldAccessLogicalFunction& other) = default;
 
     [[nodiscard]] std::string getFieldName() const;
     [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;

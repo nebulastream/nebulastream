@@ -30,8 +30,6 @@
 namespace NES
 {
 
-FieldAssignmentLogicalFunction::FieldAssignmentLogicalFunction(const FieldAssignmentLogicalFunction& other)
-    : stamp(other.stamp), fieldAccess(other.fieldAccess), logicalFunction(other.logicalFunction) {};
 
 FieldAssignmentLogicalFunction::FieldAssignmentLogicalFunction(const FieldAccessLogicalFunction& fieldAccess, LogicalFunction logicalFunction)
     : stamp(logicalFunction.getStamp()), fieldAccess(fieldAccess), logicalFunction(logicalFunction)
