@@ -263,7 +263,7 @@ SchemaField::SchemaField(std::string name, const std::string& typeName) : Schema
 {
 }
 
-SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
+SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(type)
 {
 }
 

@@ -104,15 +104,9 @@ bool WindowedAggregationLogicalOperator::operator==(LogicalOperatorConcept const
     return false;
 }
 
-bool WindowedAggregationLogicalOperator::inferSchema(Schema inputSchema)
+LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema inputSchema) const
 {
-    //if (!WindowOperator::inferSchema())
-    //{
-    //    return false;
-    //}
-    // Infer the default input and output schema.
-    NES_DEBUG("WindowLogicalOperator: TypeInferencePhase: infer types for window operator with input schema {}",
-              inputSchema.toString());
+    auto copy = *this;
 
     // Infer type of aggregation.
     auto &aggs = getWindowAggregation();
@@ -122,23 +116,18 @@ bool WindowedAggregationLogicalOperator::inferSchema(Schema inputSchema)
     }
 
     // Construct output schema: clear first.
-    outputSchema.clear();
+    copy.outputSchema.clear();
 
     // Distinguish processing for different window types (time-based or content-based).
     if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(&getWindowType()))
     {
-        // Type inference for time-based windows.
-        if (!timeWindow->inferStamp(inputSchema))
-        {
-            return false;
-        }
         const auto& sourceName = inputSchema.getQualifierNameForSystemGeneratedFields();
         const auto& newQualifierForSystemField = sourceName;
 
-        windowStartFieldName = newQualifierForSystemField + "$start";
-        windowEndFieldName   = newQualifierForSystemField + "$end";
-        outputSchema.addField(windowStartFieldName, BasicType::UINT64);
-        outputSchema.addField(windowEndFieldName, BasicType::UINT64);
+        copy.windowStartFieldName = newQualifierForSystemField + "$start";
+        copy.windowEndFieldName   = newQualifierForSystemField + "$end";
+        copy.outputSchema.addField(copy.windowStartFieldName, BasicType::UINT64);
+        copy.outputSchema.addField(copy.windowEndFieldName, BasicType::UINT64);
     }
     else if (auto* contentBasedWindowType = dynamic_cast<Windowing::ContentBasedWindowType*>(&getWindowType()))
     {
@@ -146,10 +135,6 @@ bool WindowedAggregationLogicalOperator::inferSchema(Schema inputSchema)
             Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
         {
             auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(std::unique_ptr<Windowing::ContentBasedWindowType>(contentBasedWindowType));
-            if (!thresholdWindow->inferStamp(inputSchema))
-            {
-                return false;
-            }
         }
     }
     else
@@ -164,17 +149,15 @@ bool WindowedAggregationLogicalOperator::inferSchema(Schema inputSchema)
         for (auto& key : keys)
         {
             auto newKey = key.withInferredStamp(inputSchema).get<FieldAccessLogicalFunction>();
-            outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getStamp()));
+            copy.outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getStamp()));
         }
     }
     for (const auto& agg : aggs)
     {
-        outputSchema.addField(
+        copy.outputSchema.addField(
             AttributeField(agg->as().getFieldName(), agg->as().getStamp()));
     }
-
-    NES_DEBUG("Outputschema for window={}", outputSchema.toString());
-    return true;
+    return copy;
 }
 
 Optimizer::TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
@@ -182,9 +165,11 @@ Optimizer::TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
     return {};
 }
 
-void WindowedAggregationLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator WindowedAggregationLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> WindowedAggregationLogicalOperator::getInputSchemas() const

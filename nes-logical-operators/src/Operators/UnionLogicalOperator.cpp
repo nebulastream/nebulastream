@@ -49,8 +49,9 @@ std::string UnionLogicalOperator::toString() const
     return ss.str();
 }
 
-bool UnionLogicalOperator::inferSchema(Schema)
+LogicalOperator UnionLogicalOperator::withInferredSchema(Schema) const
 {
+    auto copy = *this;
     std::vector<Schema> distinctSchemas;
 
     /// Identify different type of schemas from children operators
@@ -70,17 +71,17 @@ bool UnionLogicalOperator::inferSchema(Schema)
     ///validate that only two different type of schema were present
     INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
 
-    leftInputSchema.clear();
-    rightInputSchema.clear();
+    copy.leftInputSchema.clear();
+    copy.rightInputSchema.clear();
     if (distinctSchemas.size() == 1)
     {
-        leftInputSchema.copyFields(distinctSchemas[0]);
-        rightInputSchema.copyFields(distinctSchemas[0]);
+        copy.leftInputSchema.copyFields(distinctSchemas[0]);
+        copy.rightInputSchema.copyFields(distinctSchemas[0]);
     }
     else
     {
-        leftInputSchema.copyFields(distinctSchemas[0]);
-        rightInputSchema.copyFields(distinctSchemas[1]);
+        copy.leftInputSchema.copyFields(distinctSchemas[0]);
+        copy.rightInputSchema.copyFields(distinctSchemas[1]);
     }
 
     if (!(leftInputSchema == rightInputSchema))
@@ -97,19 +98,17 @@ bool UnionLogicalOperator::inferSchema(Schema)
     }
 
     ///Copy the schema of left input
-    outputSchema.clear();
-    outputSchema.copyFields(leftInputSchema);
-    outputSchema.setLayoutType(leftInputSchema.getLayoutType());
+    copy.outputSchema.clear();
+    copy.outputSchema.copyFields(leftInputSchema);
+    copy.outputSchema.setLayoutType(leftInputSchema.getLayoutType());
 
-    /// Infer schema of all child operators
+    std::vector<LogicalOperator> newChildren;
     for (auto& child : children)
     {
-        if (!child.inferSchema(outputSchema))
-        {
-            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
-        }
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
     }
-    return true;
+    copy.children = newChildren;
+    return copy;
 }
 
 /*
@@ -133,9 +132,11 @@ Optimizer::TraitSet UnionLogicalOperator::getTraitSet() const
     return {};
 }
 
-void UnionLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator UnionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> UnionLogicalOperator::getInputSchemas() const

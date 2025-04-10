@@ -53,36 +53,16 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(LogicalOperatorConcep
 }
 
 
-bool EventTimeWatermarkAssignerLogicalOperator::inferSchema(Schema)
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(Schema) const
 {
-    std::vector<Schema> distinctSchemas;
-
-    /// Infer schema of all child operators
+    auto copy = *this;
+    std::vector<LogicalOperator> newChildren;
     for (auto& child : children)
     {
-        if (!child.inferSchema(outputSchema))
-        {
-            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
-        }
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
     }
-
-    /// Identify different type of schemas from children operators
-    for (const auto& child : children)
-    {
-        auto childOutputSchema = child.getInputSchemas()[0];
-        auto found = std::find_if(
-            distinctSchemas.begin(),
-            distinctSchemas.end(),
-            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
-        if (found == distinctSchemas.end())
-        {
-            distinctSchemas.push_back(childOutputSchema);
-        }
-    }
-
-    ///validate that only two different type of schema were present
-    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
-    return true;
+    copy.children = newChildren;
+    return copy;
 }
 
 
@@ -91,9 +71,11 @@ Optimizer::TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() con
     return {};
 }
 
-void EventTimeWatermarkAssignerLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> EventTimeWatermarkAssignerLogicalOperator::getInputSchemas() const

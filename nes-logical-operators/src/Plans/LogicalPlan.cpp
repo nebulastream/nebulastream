@@ -87,16 +87,16 @@ void LogicalPlan::addRootOperator(LogicalOperator newRootOperator)
 
 void LogicalPlan::promoteOperatorToRoot(LogicalOperator newRoot)
 {
-    newRoot.setChildren(rootOperators);
+    auto root = newRoot.withChildren(rootOperators);
     rootOperators.clear();
-    rootOperators.push_back(newRoot);
+    rootOperators.push_back(root);
 }
 
 bool replaceOperatorHelper(LogicalOperator& current,
                         const LogicalOperator& target,
                         LogicalOperator replacement) {
     if (current.getId() == target.getId()) {
-        replacement.setChildren(current.getChildren());
+        replacement = replacement.withChildren(current.getChildren());
         current = replacement;
         return true;
     }
@@ -108,7 +108,7 @@ bool replaceOperatorHelper(LogicalOperator& current,
         }
     }
     if (replaced) {
-        current.setChildren(children);
+        current = current.withChildren(children);
     }
     return replaced;
 }
@@ -117,7 +117,7 @@ bool LogicalPlan::replaceOperator(const LogicalOperator& target, LogicalOperator
     bool replaced = false;
     for (auto& root : rootOperators) {
         if (root.getId() == target.getId()) {
-            replacement.setChildren(root.getChildren());
+            replacement = replacement.withChildren(root.getChildren());
             root = replacement;
 
             replaced = true;
@@ -163,16 +163,14 @@ std::unique_ptr<LogicalPlan> LogicalPlan::flip() const
         visited.insert(opId);
 
         LogicalOperator flippedOp = op;
-        flippedOp.setChildren({});
+        flippedOp = flippedOp.withChildren({});
         flippedOperators[opId] = flippedOp;
 
         std::vector<LogicalOperator> newChildren;
         for (const auto& parent : reversedEdges[opId]) {
             newChildren.push_back(flipOperator(parent));
         }
-        flippedOperators[opId].setChildren(newChildren);
-
-        return flippedOperators[opId];
+        return flippedOperators[opId].withChildren(newChildren);
     };
 
     std::vector<LogicalOperator> flippedRoots;

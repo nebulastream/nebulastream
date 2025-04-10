@@ -45,11 +45,12 @@ bool SourceNameLogicalOperator::operator==(LogicalOperatorConcept const& rhs) co
 
 }
 
-bool SourceNameLogicalOperator::inferSchema(Schema)
+LogicalOperator SourceNameLogicalOperator::withInferredSchema(Schema) const
 {
-    inputSchema = schema;
-    outputSchema = schema;
-    return true;
+    auto copy = *this;
+    copy.inputSchema = schema;
+    copy.outputSchema = schema;
+    return copy;
 }
 
 std::string SourceNameLogicalOperator::toString() const
@@ -82,9 +83,11 @@ Optimizer::TraitSet SourceNameLogicalOperator::getTraitSet() const
     return {};
 }
 
-void SourceNameLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator SourceNameLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> SourceNameLogicalOperator::getInputSchemas() const

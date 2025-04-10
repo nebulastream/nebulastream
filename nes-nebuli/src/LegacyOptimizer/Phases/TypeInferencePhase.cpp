@@ -70,14 +70,7 @@ void TypeInferencePhase::apply(LogicalPlan& queryPlan)
     std::vector<LogicalOperator> newSources;
     for (auto& source : sourceOperators)
     {
-        auto emptySchema = Schema();
-
-        if (not source.inferSchema(emptySchema))
-        {
-            throw TypeInferenceException("TypeInferencePhase failed for query with id: {}", queryPlan.getQueryId());
-        }
-
-        newSources.push_back(source);
+        newSources.push_back(source.withInferredSchema(Schema()));
     }
     queryPlan.rootOperators = newSources;
 }

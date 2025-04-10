@@ -62,12 +62,16 @@ LogicalFunction MulLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
 
 LogicalFunction MulLogicalFunction::withInferredStamp(Schema schema) const
 {
+    auto copy = *this;
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
     {
         newChildren.push_back(child.withInferredStamp(schema));
     }
-    return withChildren(newChildren);
+    std::cout << "Mul: " << newChildren.at(0).getStamp()->toString() << "\n";
+    std::cout << "Mul: " << newChildren.at(1).getStamp()->toString() << "\n";
+    copy.stamp = newChildren[0].getStamp()->join(newChildren[1].getStamp());
+    return copy.withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> MulLogicalFunction::getChildren() const

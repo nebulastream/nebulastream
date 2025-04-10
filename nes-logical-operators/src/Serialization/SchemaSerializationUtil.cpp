@@ -57,7 +57,7 @@ Schema SchemaSerializationUtil::deserializeSchema(const SerializableSchema& seri
         const auto& fieldName = serializedField.name();
         /// de-serialize data type
         auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.type());
-        deserializedSchema.addField(fieldName, std::move(type));
+        deserializedSchema.addField(fieldName, type);
     }
 
     /// Deserialize layoutType

@@ -14,10 +14,8 @@
 
 #include <memory>
 #include <sstream>
-#include <../../include/Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
-#include <../../../nes-common/include/Util/Common.hpp>
-#include <../../../cmake-build-debug-docker/grpc_generated_src/SerializableFunction.pb.h>
-#include <../../../nes-data-types/include/Serialization/DataTypeSerializationUtil.hpp>
+#include <Util/Common.hpp>
+#include <SerializableFunction.pb.h>
 #include <Functions/LogicalFunction.hpp>
 
 namespace NES
@@ -30,7 +28,7 @@ std::string NullLogicalFunction::toString() const
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
 
-const DataType& NullLogicalFunction::getStamp() const
+std::shared_ptr<DataType> NullLogicalFunction::getStamp() const
 {
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
@@ -112,16 +110,19 @@ LogicalFunction LogicalFunction::withChildren(std::vector<LogicalFunction> child
     return self->withChildren(children);
 }
 
-const DataType& LogicalFunction::getStamp() const
-{
-    return self->getStamp();
+std::shared_ptr<DataType> LogicalFunction::getStamp() const {
+    auto s = self->getStamp();
+    PRECONDITION(s != nullptr, "Invariant violation: Stamp is null in LogicalFunction::getStamp()");
+    return s;
 }
 
-LogicalFunction LogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
-{
-    return self->withStamp(stamp);
+LogicalFunction LogicalFunction::withStamp(std::shared_ptr<DataType> newStamp) const {
+    PRECONDITION(newStamp != nullptr, "Stamp provided to LogicalFunction::withStamp() must not be null");
+    LogicalFunction updated = self->withStamp(newStamp);
+    // Also check that the updated function’s stamp is not null.
+    PRECONDITION(updated.getStamp() != nullptr, "Invariant violation: Stamp is null after LogicalFunction::withStamp()");
+    return updated;
 }
-
 SerializableFunction LogicalFunction::serialize() const
 {
     return self->serialize();
