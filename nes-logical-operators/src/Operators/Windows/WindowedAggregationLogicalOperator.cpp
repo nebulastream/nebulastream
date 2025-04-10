@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -106,12 +107,15 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema in
     auto copy = *this;
 
     // Infer type of aggregation.
-    auto& aggs = getWindowAggregation();
-    for (const auto& agg : aggs)
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> newFunctions;
+    for (const auto& agg : getWindowAggregation())
     {
         agg->inferStamp(inputSchema);
+        newFunctions.push_back(agg);
     }
+    copy.windowAggregation = newFunctions;
 
+    copy.inputSchema = inputSchema;
     // Construct output schema: clear first.
     copy.outputSchema.clear();
 
@@ -150,10 +154,17 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema in
             copy.outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getStamp()));
         }
     }
-    for (const auto& agg : aggs)
+    for (const auto& agg : getWindowAggregation())
     {
         copy.outputSchema.addField(AttributeField(agg->as().getFieldName(), agg->as().getStamp()));
     }
+
+    std::vector<LogicalOperator> newChildren;
+    for (auto& child : children)
+    {
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
+    }
+    copy.children = newChildren;
     return copy;
 }
 
@@ -209,7 +220,7 @@ bool WindowedAggregationLogicalOperator::isKeyed() const
     return !onKey.empty();
 }
 
-const std::vector<std::shared_ptr<WindowAggregationLogicalFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
+std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> WindowedAggregationLogicalOperator::getWindowAggregation() const
 {
     return windowAggregation;
 }
