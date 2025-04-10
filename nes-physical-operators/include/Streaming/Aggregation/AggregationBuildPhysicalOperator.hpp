@@ -42,7 +42,6 @@ public:
 private:
     std::optional<PhysicalOperator> child;
     const std::vector<Functions::PhysicalFunction> keyFunctions;
-    static constexpr bool PIPELINE_BREAKER = false;
 };
 
 }
