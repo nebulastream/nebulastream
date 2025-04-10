@@ -39,7 +39,7 @@ PipelineId getNextPipelineId() {
 }
 
 
-std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> Pipeline::releaseOperatorHandlers()
+std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> Pipeline::releaseOperatorHandlers()
 {
     return std::move(operatorHandlers);
 }

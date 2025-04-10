@@ -28,7 +28,7 @@ namespace NES
 class WindowProbePhysicalOperator : public PhysicalOperatorConcept
 {
 public:
-    explicit WindowProbePhysicalOperator(uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName);
+    explicit WindowProbePhysicalOperator(OperatorHandlerId operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName);
 
     /// The setup method is called for each pipeline during the query initialization procedure. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
@@ -45,7 +45,7 @@ public:
 
 protected:
     std::optional<PhysicalOperator> child;
-    uint64_t operatorHandlerIndex;
+    OperatorHandlerId operatorHandlerIndex;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
 };

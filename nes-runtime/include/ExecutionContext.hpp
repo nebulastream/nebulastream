@@ -165,7 +165,7 @@ struct ExecutionContext final
     void setLocalOperatorState(OperatorId op, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(OperatorId op);
 
-    [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
+    [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(OperatorHandlerId handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
     /// Use allocateBuffer if you want to allocate space that lives for multiple pipeline invocations, i.e., query lifetime.
     /// You must take care of the memory management yourself, i.e., when/how should the tuple buffer be returned to the buffer provider.

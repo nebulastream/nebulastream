@@ -99,7 +99,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
-    const uint64_t operatorHandlerIndex,
+    const OperatorHandlerId operatorHandlerIndex,
     std::shared_ptr<TimeFunction> timeFunction,
     std::vector<Functions::PhysicalFunction> keyFunctions,
     std::shared_ptr<WindowAggregation> windowAggregationOperator)

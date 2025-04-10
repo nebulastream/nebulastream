@@ -31,7 +31,7 @@ class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 {
 public:
     NLJProbePhysicalOperator(
-        const uint64_t operatorHandlerIndex,
+        const OperatorHandlerId operatorHandlerIndex,
         Functions::PhysicalFunction joinFunction,
         const std::string windowStartFieldName,
         const std::string windowEndFieldName,
@@ -48,6 +48,5 @@ private:
     std::optional<PhysicalOperator> child;
     std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider;
     std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider;
-    static constexpr bool PIPELINE_BREAKER = true;
 };
 }

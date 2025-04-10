@@ -32,7 +32,7 @@ namespace NES
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
-    std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> operatorHandlers,
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
     : options(std::move(options))
     , compiledPipelineFunction(nullptr)

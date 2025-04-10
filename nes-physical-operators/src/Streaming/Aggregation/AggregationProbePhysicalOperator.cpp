@@ -140,7 +140,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     }
 }
 
-AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(std::shared_ptr<WindowAggregation> windowAggregationOperator, const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
+AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(std::shared_ptr<WindowAggregation> windowAggregationOperator, const OperatorHandlerId operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
     : WindowAggregation(windowAggregationOperator), WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName)
 {
 }

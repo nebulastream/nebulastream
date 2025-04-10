@@ -34,7 +34,7 @@ class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator
 {
 public:
     StreamJoinProbePhysicalOperator(
-        uint64_t operatorHandlerIndex,
+        OperatorHandlerId operatorHandlerIndex,
         Functions::PhysicalFunction joinFunction,
         std::string windowStartFieldName,
         std::string windowEndFieldName,

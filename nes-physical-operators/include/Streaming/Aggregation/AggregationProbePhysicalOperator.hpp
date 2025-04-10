@@ -28,7 +28,7 @@ class AggregationProbePhysicalOperator final : public WindowAggregation, public 
 {
 public:
     AggregationProbePhysicalOperator(std::shared_ptr<WindowAggregation> windowAggregationOperator,
-                                     uint64_t operatorHandlerIndex,
+                                     OperatorHandlerId operatorHandlerIndex,
                                      std::string windowStartFieldName,
                                      std::string windowEndFieldName);
 

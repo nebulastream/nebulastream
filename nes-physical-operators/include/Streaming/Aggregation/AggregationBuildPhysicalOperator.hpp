@@ -30,7 +30,7 @@ class AggregationBuildPhysicalOperator final : public WindowAggregation,  public
 {
 public:
     AggregationBuildPhysicalOperator(
-        const uint64_t operatorHandlerIndex,
+        const OperatorHandlerId operatorHandlerIndex,
         std::shared_ptr<TimeFunction> timeFunction,
         std::vector<Functions::PhysicalFunction> keyFunctions,
         std::shared_ptr<WindowAggregation> windowAggregationOperator);
