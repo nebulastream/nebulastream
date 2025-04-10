@@ -12,26 +12,30 @@
     limitations under the License.
 */
 #pragma once
-#include <Functions/PhysicalFunction.hpp>
+#include <memory>
+#include <Watermark/TimeFunction.hpp>
 #include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {
 class TimeFunction;
+
 /// @brief Watermark assignment operator.
 /// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
-class IngestionTimeWatermarkAssignment : public PhysicalOperatorConcept
+class EventTimeWatermarkAssigner : public PhysicalOperatorConcept
 {
 public:
-    /// @brief Creates a IngestionTimeWatermarkAssignment operator without function
-    IngestionTimeWatermarkAssignment(std::shared_ptr<TimeFunction> timeFunction);
+    /// @brief Creates a EventTimeWatermarkAssigner operator with a watermarkExtractionFunction function.
+    /// @param TimeFunction the time function
+    EventTimeWatermarkAssigner(std::unique_ptr<TimeFunction> timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     std::optional<PhysicalOperator> getChild() const override { return child; }
     void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
-    std::shared_ptr<TimeFunction> timeFunction;
+    std::unique_ptr<TimeFunction> timeFunction;
     std::optional<PhysicalOperator> child;
     static constexpr bool PIPELINE_BREAKER = false;
 };

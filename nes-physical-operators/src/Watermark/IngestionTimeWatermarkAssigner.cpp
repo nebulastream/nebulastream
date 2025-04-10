@@ -15,7 +15,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
-#include <Watermark/IngestionTimeWatermarkAssignment.hpp>
+#include <Watermark/IngestionTimeWatermarkAssigner.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <OperatorState.hpp>
 #include <ExecutionContext.hpp>
@@ -23,10 +23,10 @@
 namespace NES
 {
 
-IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::shared_ptr<TimeFunction> timeFunction)
+IngestionTimeWatermarkAssigner::IngestionTimeWatermarkAssigner(std::shared_ptr<TimeFunction> timeFunction)
     : timeFunction(std::move(timeFunction)) {};
 
-void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void IngestionTimeWatermarkAssigner::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PhysicalOperatorConcept::open(executionCtx, recordBuffer);
     timeFunction->open(executionCtx, recordBuffer);
@@ -39,7 +39,7 @@ void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, Reco
     }
 }
 
-void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, Record& record) const
+void IngestionTimeWatermarkAssigner::execute(ExecutionContext& executionCtx, Record& record) const
 {
    PhysicalOperatorConcept::execute(executionCtx, record);
 }
