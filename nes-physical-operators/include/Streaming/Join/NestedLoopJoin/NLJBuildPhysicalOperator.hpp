@@ -89,5 +89,6 @@ private:
         const nautilus::val<NLJOperatorHandler*>& operatorHandlerRef,
         const ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& timestamp) const;
+
 };
 }
