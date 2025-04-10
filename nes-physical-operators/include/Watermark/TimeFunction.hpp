@@ -36,9 +36,8 @@ using namespace Nautilus;
 class TimeFunction
 {
 public:
-    virtual void open(ExecutionContext& ctx, RecordBuffer& buffer) = 0;
-    virtual nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) = 0;
-    virtual std::unique_ptr<TimeFunction> clone() = 0;
+    virtual void open(ExecutionContext& ctx, RecordBuffer& buffer) const = 0;
+    virtual nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const = 0;
     virtual ~TimeFunction() = default;
 };
 
@@ -47,9 +46,8 @@ class EventTimeFunction final : public TimeFunction
 {
 public:
     explicit EventTimeFunction(Functions::PhysicalFunction timestampFunction, Windowing::TimeUnit unit);
-    void open(ExecutionContext& ctx, RecordBuffer& buffer) override;
-    nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) override;
-    [[nodiscard]] std::unique_ptr<TimeFunction> clone() override;
+    void open(ExecutionContext& ctx, RecordBuffer& buffer) const override;
+    nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const override;
 
 private:
     Windowing::TimeUnit unit;
@@ -60,9 +58,8 @@ private:
 class IngestionTimeFunction final : public TimeFunction
 {
 public:
-    void open(ExecutionContext& ctx, RecordBuffer& buffer) override;
-    nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) override;
-    [[nodiscard]] std::unique_ptr<TimeFunction> clone() override;
+    void open(ExecutionContext& ctx, RecordBuffer& buffer) const override;
+    nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const override;
 };
 
 }

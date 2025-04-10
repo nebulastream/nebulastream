@@ -23,7 +23,7 @@
 namespace NES
 {
 
-void EventTimeFunction::open(ExecutionContext&, RecordBuffer&)
+void EventTimeFunction::open(ExecutionContext&, RecordBuffer&) const
 {
     /// nop
 }
@@ -33,11 +33,7 @@ EventTimeFunction::EventTimeFunction(Functions::PhysicalFunction timestampFuncti
 {
 }
 
-std::unique_ptr<TimeFunction> EventTimeFunction::clone() {
-    return std::make_unique<EventTimeFunction>(timestampFunction, unit);
-}
-
-nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record& record)
+nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record& record) const
 {
     const auto ts = this->timestampFunction.execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
@@ -46,18 +42,14 @@ nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record&
     return tsInMs;
 }
 
-void IngestionTimeFunction::open(ExecutionContext& ctx, RecordBuffer& buffer)
+void IngestionTimeFunction::open(ExecutionContext& ctx, RecordBuffer& buffer) const
 {
     ctx.currentTs = buffer.getCreatingTs();
 }
 
-nautilus::val<Timestamp> IngestionTimeFunction::getTs(ExecutionContext& ctx, Record&)
+nautilus::val<Timestamp> IngestionTimeFunction::getTs(ExecutionContext& ctx, Record&) const
 {
     return ctx.currentTs;
-}
-
-std::unique_ptr<TimeFunction> IngestionTimeFunction::clone() {
-    return std::make_unique<IngestionTimeFunction>();
 }
 
 }
