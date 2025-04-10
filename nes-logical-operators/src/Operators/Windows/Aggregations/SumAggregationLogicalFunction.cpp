@@ -81,11 +81,6 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     this->asField = newAsField.get<FieldAccessLogicalFunction>();
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::clone()
-{
-    return std::make_shared<SumAggregationLogicalFunction>(onField, asField);
-}
-
 NES::SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const
 {
     NES::SerializableAggregationFunction serializedAggregationFunction;

@@ -75,12 +75,6 @@ void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
     asField = asField.withStamp(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 
-
-std::shared_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::clone()
-{
-    return std::make_shared<MaxAggregationLogicalFunction>(onField, asField);
-}
-
 NES::SerializableAggregationFunction MaxAggregationLogicalFunction::serialize() const
 {
     NES::SerializableAggregationFunction serializedAggregationFunction;

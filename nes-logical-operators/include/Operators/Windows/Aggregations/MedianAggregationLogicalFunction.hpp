@@ -39,7 +39,6 @@ public:
 
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<WindowAggregationLogicalFunction> clone() override;
     virtual ~MedianAggregationLogicalFunction() = default;
 
     NES::SerializableAggregationFunction serialize() const override;
