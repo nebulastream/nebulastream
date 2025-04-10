@@ -36,6 +36,7 @@ public:
     std::shared_ptr<WindowAggregationLogicalFunction> clone() override;
     virtual ~AvgAggregationLogicalFunction() = default;
     NES::SerializableAggregationFunction serialize() const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
     static constexpr std::string_view NAME = "Avg";

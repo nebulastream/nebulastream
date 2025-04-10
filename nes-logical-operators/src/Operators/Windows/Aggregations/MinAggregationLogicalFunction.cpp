@@ -31,12 +31,10 @@ namespace NES
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field)
 {
-    aggregationType = Type::Min;
 }
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field, asField)
 {
-    aggregationType = Type::Min;
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction>
@@ -53,6 +51,11 @@ std::shared_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction:
 std::shared_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::clone()
 {
     return std::make_shared<MinAggregationLogicalFunction>(onField, asField);
+}
+
+std::string_view MinAggregationLogicalFunction::getName() const noexcept
+{
+    return NAME;
 }
 
 void MinAggregationLogicalFunction::inferStamp(const Schema& schema)

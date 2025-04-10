@@ -31,12 +31,10 @@ namespace NES
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), field)
 {
-    this->aggregationType = Type::Count;
 }
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), field, asField)
 {
-    this->aggregationType = Type::Count;
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction>
@@ -48,6 +46,11 @@ CountAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onFiel
 std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
 {
     return std::make_shared<CountAggregationLogicalFunction>(onField);
+}
+
+std::string_view CountAggregationLogicalFunction::getName() const noexcept
+{
+    return NAME;
 }
 
 void CountAggregationLogicalFunction::inferStamp(const Schema& schema)

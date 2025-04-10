@@ -33,13 +33,11 @@ namespace NES
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(field.getStamp(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), field)
 {
-    this->aggregationType = Type::Avg;
 }
 
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
     : WindowAggregationLogicalFunction(field.getStamp(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), field, asField)
 {
-    this->aggregationType = Type::Avg;
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction>
@@ -56,6 +54,11 @@ std::shared_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction:
 std::shared_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::clone()
 {
     return std::make_shared<AvgAggregationLogicalFunction>(onField, asField);
+}
+
+std::string_view AvgAggregationLogicalFunction::getName() const noexcept
+{
+    return NAME;
 }
 
 void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)

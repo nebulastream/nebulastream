@@ -32,12 +32,15 @@ namespace NES
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), std::move(field))
 {
-    this->aggregationType = Type::Sum;
 }
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), std::move(field), std::move(asField))
 {
-    this->aggregationType = Type::Sum;
+}
+
+std::string_view SumAggregationLogicalFunction::getName() const noexcept
+{
+    return NAME;
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction>

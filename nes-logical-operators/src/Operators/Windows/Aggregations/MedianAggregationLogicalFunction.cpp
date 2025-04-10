@@ -26,12 +26,10 @@ namespace NES
 MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(field.getStamp(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), field)
 {
-    this->aggregationType = Type::Median;
 }
 MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(field.getStamp(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), field, asField)
 {
-    this->aggregationType = Type::Median;
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
@@ -44,6 +42,10 @@ std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFuncti
     return std::make_shared<MedianAggregationLogicalFunction>(onField);
 }
 
+std::string_view MedianAggregationLogicalFunction::getName() const noexcept
+{
+    return NAME;
+}
 
 void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
 {

@@ -28,13 +28,11 @@ namespace NES
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field)
 {
-    aggregationType = Type::Max;
 }
 
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field, asField)
 {
-    aggregationType = Type::Max;
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
@@ -46,6 +44,11 @@ std::shared_ptr<WindowAggregationLogicalFunction>
 MaxAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
     return std::make_shared<MaxAggregationLogicalFunction>(onField, asField);
+}
+
+std::string_view MaxAggregationLogicalFunction::getName() const noexcept
+{
+    return NAME;
 }
 
 void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
