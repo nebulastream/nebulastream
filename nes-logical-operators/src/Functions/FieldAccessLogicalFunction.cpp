@@ -66,7 +66,6 @@ std::string FieldAccessLogicalFunction::toString() const
 
 LogicalFunction FieldAccessLogicalFunction::withInferredStamp(Schema schema) const
 {
-    std::cout << "FieldAccess input schema " << schema.toString() << "\n";
     const auto existingField = schema.getFieldByName(fieldName);
     INVARIANT(existingField, "field is not part of the schema");
 
@@ -85,7 +84,6 @@ LogicalFunction FieldAccessLogicalFunction::withStamp(std::shared_ptr<DataType> 
     PRECONDITION(newStamp != nullptr, "newStamp is null in FieldAccessLogicalFunction::withStamp");
     auto copy = *this;
     copy.stamp = newStamp;
-    std::cout << "FieldAccessLogicalFunction::withStamp: Updated stamp to " << newStamp->toString() << "\n";
     return copy;
 }
 
