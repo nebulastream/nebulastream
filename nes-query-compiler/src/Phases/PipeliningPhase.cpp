@@ -96,7 +96,7 @@ void buildPipelineRecursive(
         if (opWrapper->handler)
         {
             INVARIANT(opWrapper->handlerId, "No id for operator handler in physical operator wrapper");
-            currentPipeline->operatorHandlers.emplace(opWrapper->handlerId.value().getRawValue(), opWrapper->handler.value());
+            currentPipeline->operatorHandlers.emplace(opWrapper->handlerId.value(), opWrapper->handler.value());
         }
         for (const auto& child : opWrapper->children) {
             buildPipelineRecursive(child, opWrapper, currentPipeline, true);
