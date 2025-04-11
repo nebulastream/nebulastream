@@ -648,9 +648,9 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         }
         INVARIANT(not implicitFieldName.empty(), "");
         helper.functionBuilder.pop_back();
-        helper.mapBuilder.push_back(Attribute(implicitFieldName) = mapFunction);
+        helper.functionBuilder.push_back(Attribute(implicitFieldName) = mapFunction);
 
-        helper.implicitMapCountHelper++;
+        // helper.implicitMapCountHelper++;
     }
     helper.isFunctionCall = false;
     poppush(helper);
