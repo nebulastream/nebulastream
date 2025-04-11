@@ -137,6 +137,9 @@ void buildPipelineRecursive(
 
     /// Case 5: Fusible operator – add it to the current pipeline.
     currentPipeline->appendOperator(opWrapper->physicalOperator);
+    if (opWrapper->handler && opWrapper->handlerId) {
+        currentPipeline->operatorHandlers.emplace(opWrapper->handlerId.value(), opWrapper->handler.value());
+    }
     if (opWrapper->children.empty()) {
         /// End of branch: if the operator doesn't already close with a custom emit,
         /// add a default emit.
