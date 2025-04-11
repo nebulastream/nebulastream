@@ -117,6 +117,7 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema in
     }
     copy.windowAggregation = newFunctions;
 
+    copy.windowType->inferStamp(inputSchema);
     copy.inputSchema = inputSchema;
     // Construct output schema: clear first.
     copy.outputSchema.clear();
@@ -149,11 +150,14 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema in
     {
         // Infer the data type of each key field.
         auto keys = getKeys();
+        auto newKeys = std::vector<FieldAccessLogicalFunction>();
         for (auto& key : keys)
         {
             auto newKey = key.withInferredStamp(inputSchema).get<FieldAccessLogicalFunction>();
+            newKeys.push_back(newKey);
             copy.outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getStamp()));
         }
+        copy.onKey = newKeys;
     }
     for (const auto& agg : getWindowAggregation())
     {

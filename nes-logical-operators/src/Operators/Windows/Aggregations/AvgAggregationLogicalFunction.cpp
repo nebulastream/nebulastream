@@ -60,10 +60,10 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     auto newOnField = onField.withInferredStamp(schema);
-    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()) == nullptr, "aggregations on non numeric fields is not supported.");
+    INVARIANT(dynamic_cast<const Numeric*>(newOnField.getStamp().get()), "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = onField.get<FieldAccessLogicalFunction>().getFieldName();
+    const auto onFieldName = newOnField.get<FieldAccessLogicalFunction>().getFieldName();
     const auto asFieldName = asField.get<FieldAccessLogicalFunction>().getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
@@ -80,6 +80,7 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     auto newAsField = asField.withStamp(getFinalAggregateStamp());
     asField = newAsField.get<FieldAccessLogicalFunction>();
     onField = newOnField.get<FieldAccessLogicalFunction>();
+    inputStamp = onField.getStamp();
 }
 
 NES::SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
