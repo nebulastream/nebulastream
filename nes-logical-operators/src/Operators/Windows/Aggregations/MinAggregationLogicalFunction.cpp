@@ -55,8 +55,8 @@ std::string_view MinAggregationLogicalFunction::getName() const noexcept
 void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
-    auto newOnField = onField.withInferredStamp(schema);
-    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()) == nullptr, "aggregations on non numeric fields is not supported.");
+    onField = onField.withInferredStamp(schema);
+    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()), "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = onField.getFieldName();
@@ -73,10 +73,9 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
-    auto newAsField = asField.withStamp(getFinalAggregateStamp());
-
-    this->onField = newOnField.get<FieldAccessLogicalFunction>();
-    this->asField = newAsField.get<FieldAccessLogicalFunction>();
+    inputStamp = onField.getStamp();
+    finalAggregateStamp = onField.getStamp();
+    this->asField = asField.withStamp(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 
 NES::SerializableAggregationFunction MinAggregationLogicalFunction::serialize() const
