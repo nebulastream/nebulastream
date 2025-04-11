@@ -76,7 +76,7 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
 {
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, std::move(memProviderPagedVector), pipelineMemoryProvider.bufferProvider);
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
     const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema().getFieldNames();
     const auto numberOfEntries = invoke(
         +[](const Nautilus::Interface::PagedVector* pagedVector)
@@ -144,7 +144,7 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
     const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
     const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
     const Nautilus::VarVal two = nautilus::val<uint64_t>(2);
-    const auto medianValue = (medianValue1.castToType(*resultType.get()) + medianValue2.castToType(*resultType.get()) / two.castToType(*resultType.get()));
+    const auto medianValue = ((medianValue1.castToType(*resultType) + medianValue2.castToType(*resultType)) / two.castToType(*resultType));
 
     /// Adding the median to the result record
     Nautilus::Record resultRecord;
