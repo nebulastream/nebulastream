@@ -28,7 +28,7 @@ void inferInputOrigins(LogicalOperator& logicalOperator)
 {
     if (hasTrait<Optimizer::OriginIdAssignerTrait>(logicalOperator.getTraitSet()))
     {
-        return;
+        /// noop
     }
     else if (logicalOperator.tryGet<UnionLogicalOperator>())
     {
