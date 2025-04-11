@@ -18,6 +18,15 @@
 namespace NES
 {
 
+
+PhysicalOperatorConcept::PhysicalOperatorConcept() : id(getNextPhysicalOperatorId())
+{
+}
+PhysicalOperatorConcept::PhysicalOperatorConcept(OperatorId existingId) : id(existingId)
+{
+}
+
+
 void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx) const
 {
     if (getChild())
@@ -57,5 +66,98 @@ void PhysicalOperatorConcept::execute(NES::ExecutionContext& executionCtx, NES::
         getChild().value().execute(executionCtx, record);
     }
 }
+
+std::string PhysicalOperatorConcept::toString() const
+{
+    return "PhysicalOperatorConcept";
+}
+
+PhysicalOperator::PhysicalOperator(const PhysicalOperator& other) : self(other.self->clone())
+{
+}
+
+PhysicalOperator::PhysicalOperator(PhysicalOperator&&) noexcept = default;
+
+PhysicalOperator& PhysicalOperator::operator=(const PhysicalOperator& other)
+{
+    if (this != &other)
+    {
+        self = other.self->clone();
+    }
+    return *this;
+}
+
+std::optional<PhysicalOperator> PhysicalOperator::getChild() const
+{
+    return self->getChild();
+}
+
+void PhysicalOperator::setChild(PhysicalOperator child)
+{
+    self->setChild(child);
+}
+
+void PhysicalOperator::setup(ExecutionContext& executionCtx) const
+{
+    self->setup(executionCtx);
+}
+
+void PhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    self->open(executionCtx, recordBuffer);
+}
+
+void PhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    self->close(executionCtx, recordBuffer);
+}
+
+void PhysicalOperator::terminate(ExecutionContext& executionCtx) const
+{
+    self->terminate(executionCtx);
+}
+
+void PhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
+{
+    self->execute(executionCtx, record);
+}
+
+std::string PhysicalOperator::toString() const
+{
+    return self->toString();
+}
+
+[[nodiscard]] OperatorId PhysicalOperator::getId() const
+{
+    return self->id;
+}
+
+PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema)
+    : physicalOperator(physicalOperator), inputSchema(inputSchema), outputSchema(outputSchema) {};
+
+std::string PhysicalOperatorWrapper::toString() const
+{
+    std::ostringstream oss;
+    oss << "PhysicalOperatorWrapper(";
+    oss << "Operator: " << physicalOperator.toString() << ", ";
+    oss << "InputSchema: " << (inputSchema ? "present" : "none") << ", ";
+    oss << "OutputSchema: " << (outputSchema ? "present" : "none") << ", ";
+    oss << "isScan: " << std::boolalpha << isScan << ", ";
+    oss << "isEmit: " << std::boolalpha << isEmit;
+    if (!children.empty())
+    {
+        oss << ", Children: [";
+        for (size_t i = 0; i < children.size(); ++i)
+        {
+            oss << children[i]->toString();
+            if (i + 1 < children.size())
+                oss << ", ";
+        }
+        oss << "]";
+    }
+    oss << ")";
+    return oss.str();
+}
+
 
 }
