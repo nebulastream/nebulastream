@@ -51,7 +51,7 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField = onField.withInferredStamp(schema).get<FieldAccessLogicalFunction>();
-    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()) == nullptr, "aggregations on non numeric fields is not supported.");
+    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()), "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = onField.getFieldName();
@@ -68,6 +68,8 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
+    inputStamp = onField.getStamp();
+    finalAggregateStamp = DataTypeProvider::provideDataType(LogicalType::FLOAT64);
     asField = asField.withStamp(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 
