@@ -80,9 +80,9 @@ private:
     Optimizer::OriginIdAssignerTrait originIdTrait;
     std::string windowEndFieldName;
     uint64_t numberOfInputEdges = 0;
-    OriginId originId = INVALID_ORIGIN_ID;
 
     /// LogicalOperatorConcept member
+    Optimizer::OriginIdAssignerTrait originIdTrait;
     std::vector<LogicalOperator> children;
     std::vector<OriginId> inputOriginIds;
     Schema inputSchema, outputSchema;
