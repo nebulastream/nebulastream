@@ -13,17 +13,17 @@
 */
 
 #include <memory>
-#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <MapPhysicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
-#include <RewriteRuleRegistry.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
+#include <MapPhysicalOperator.hpp>
+#include <RewriteRuleRegistry.hpp>
 
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<MapLogicalOperator>(), "Expected a MapLogicalOperator");
     auto map = logicalOperator.get<MapLogicalOperator>();
@@ -31,12 +31,13 @@ RewriteRuleResult LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
     auto fieldName = map.getMapFunction().getField().getFieldName();
     auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
-    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
     return {wrapper, {wrapper}};
 }
 
-std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)
 {
-    return std::make_unique<NES::Optimizer::LowerToPhysicalMap>(argument.conf);
+    return std::make_unique<LowerToPhysicalMap>(argument.conf);
 }
 }

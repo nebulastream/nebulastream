@@ -15,19 +15,20 @@
 #pragma once
 
 #include <memory>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 
 namespace NES::Optimizer
 {
 
 struct LowerToPhysicalSink : AbstractRewriteRule
 {
-    LowerToPhysicalSink(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    std::vector<PhysicalOperatorWrapper> apply(LogicalOperator logicalOperator) override;
+    LowerToPhysicalSink(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 

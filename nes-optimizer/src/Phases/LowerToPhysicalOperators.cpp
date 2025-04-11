@@ -12,53 +12,83 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
-#include <Plans/QueryPlan.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalPlan.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
 
-std::shared_ptr<PhysicalOperatorWrapper> lowerOperatorRecursively(
-    const LogicalOperator& logicalOperator,
-    const RewriteRuleRegistryArguments& registryArgument)
+RewriteRuleResultSubgraph::SubGraphRoot
+lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
 {
+    /// Try to resolve rewrite rule for the current logical operator
     auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument);
-    if (!ruleOptional.has_value())
+
+    /// We expect that in this last phase of query optimiation only logical operator with physical lowering rules
+    /// are part of the plan. If not the case, this indicates a bug in our query optimizer.
+    INVARIANT(ruleOptional.has_value(), "Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+
+    /// We apply the rule and receive a subgraph
+    auto loweringResultSubgraph = ruleOptional.value()->apply(logicalOperator);
+    INVARIANT(
+        loweringResultSubgraph.leafs.size() == logicalOperator.getChildren().size(),
+        "Number of children after lowering must remain the same. {}, before:{}, after:{}",
+        logicalOperator,
+        logicalOperator.getChildren().size(),
+        loweringResultSubgraph.leafs.size());
+
+    /// if the lowering result is empty we bypass the operator
+    if (not loweringResultSubgraph.root)
     {
-        throw UnknownPhysicalOperator("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+        if (not logicalOperator.getChildren().empty())
+        {
+            INVARIANT(
+                logicalOperator.getChildren().size() == 1,
+                "Empty lowering results of operators with multiple keys are not supported for {}",
+                logicalOperator);
+            return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument);
+        }
+        return {};
     }
-    auto loweringResult = ruleOptional.value()->apply(logicalOperator);
 
-    auto logicalChildren = logicalOperator.getChildren();
-
-    /// Recursively lower logical children and attach to corresponding leaf operators
-    for (size_t i = 0; i < logicalChildren.size(); ++i)
+    /// We embed the subgraph into the resulting plan of physical operator wrappers
+    auto children = logicalOperator.getChildren();
+    INVARIANT(
+        children.size() == loweringResultSubgraph.leafs.size(),
+        "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
+        children.size(),
+        loweringResultSubgraph.leafs.size(),
+        logicalOperator);
+    for (size_t i = 0; i < children.size(); ++i)
     {
-        auto loweredChild = lowerOperatorRecursively(logicalChildren[i], registryArgument);
-        loweringResult.leafOperators[i]->children.push_back(loweredChild);
+        auto rootNodeOfLoweredChild = lowerOperatorRecursively(children[i], registryArgument);
+        loweringResultSubgraph.leafs[i]->children.push_back(rootNodeOfLoweredChild);
     }
-
-    return loweringResult.root;
+    return loweringResultSubgraph.root;
 }
 
-std::unique_ptr<PhysicalPlan> apply(QueryPlan queryPlan)
+PhysicalPlan apply(LogicalPlan queryPlan)
 {
-    NES::Configurations::QueryOptimizerConfiguration conf;
+    // TODO read the optimizer conf
+    NES::Configurations::QueryOptimizerConfiguration conf{};
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
 
-    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators;
-    for (const auto& logicalRoot : queryPlan.getRootOperators())
+    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
+    for (const auto& logicalRoot : queryPlan.rootOperators)
     {
-        rootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
+        newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
     }
 
-    INVARIANT(rootOperators.size() >= 1, "Plan must have at least one root operator");
-    return std::make_unique<PhysicalPlan>(queryPlan.getQueryId(), std::move(rootOperators));
+    INVARIANT(newRootOperators.size() >= 1, "Plan must have at least one root operator");
+    auto physicalPlan = PhysicalPlan(queryPlan.getQueryId(), std::move(newRootOperators));
+    std::cout << physicalPlan.toString() << "\n";
+    return physicalPlan;
 }
 }

@@ -24,17 +24,19 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalEventTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
     auto assigner = logicalOperator.get<EventTimeWatermarkAssignerLogicalOperator>();
     auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner.onField);
     auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner.unit));
-    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
     return {wrapper, {wrapper}};
 }
 
-std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterEventTimeWatermarkAssignerRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<Optimizer::AbstractRewriteRule>
+RewriteRuleGeneratedRegistrar::RegisterEventTimeWatermarkAssignerRewriteRule(RewriteRuleRegistryArguments argument)
 {
     return std::make_unique<NES::Optimizer::LowerToPhysicalEventTimeWatermarkAssigner>(argument.conf);
 }

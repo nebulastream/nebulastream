@@ -14,34 +14,16 @@
 
 #pragma once
 
-#include <cstdint>
-#include <memory>
-#include <tuple>
-#include <utility>
-#include <Traits/QueryForSubtree.hpp>
-#include <Traits/TraitSet.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Functions/FieldAccessPhysicalFunction.hpp>
-#include <Functions/FunctionProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <SliceStore/DefaultTimeBasedSliceStore.hpp>
-#include <Streaming/Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
-#include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Streaming/Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
-#include <Streaming/Join/StreamJoinUtil.hpp>
-#include <Util/Common.hpp>
-#include <WindowTypes/Measures/TimeCharacteristic.hpp>
-#include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 
 namespace NES::Optimizer
 {
-struct LowerToPhysicalNLJoin : AbstractLowerToPhysicalRewriteRule<QueryForSubtree, Operator>
+struct LowerToPhysicalNLJoin : AbstractRewriteRule
 {
-    LowerToPhysicalNLJoin(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    std::vector<PhysicalOperatorWithSchema> applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>*) override;
+    LowerToPhysicalNLJoin(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 

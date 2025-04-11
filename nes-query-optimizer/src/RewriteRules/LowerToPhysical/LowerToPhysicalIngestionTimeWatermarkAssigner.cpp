@@ -18,22 +18,27 @@
 #include <MapPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
-#include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
-#include <RewriteRuleRegistry.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalIngestionTimeWatermarkAssigner.hpp>
+#include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
+#include <Watermark/TimeFunction.hpp>
+#include <MapPhysicalOperator.hpp>
+#include <RewriteRuleRegistry.hpp>
 
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalIngestionTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<IngestionTimeWatermarkAssignerLogicalOperator>(), "Expected a IngestionTimeWatermarkAssigner");
     auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());
-    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
     return {wrapper, {wrapper}};
 }
 
-std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<Optimizer::AbstractRewriteRule>
+RewriteRuleGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerRewriteRule(RewriteRuleRegistryArguments argument)
 {
     return std::make_unique<NES::Optimizer::LowerToPhysicalIngestionTimeWatermarkAssigner>(argument.conf);
 }

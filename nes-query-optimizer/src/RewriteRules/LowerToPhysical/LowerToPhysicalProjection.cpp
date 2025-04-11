@@ -13,21 +13,21 @@
 */
 
 #include <memory>
-#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <RewriteRuleRegistry.hpp>
+#include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalProjection.hpp>
 #include <DefaultEmitPhysicalOperator.hpp>
 #include <DefaultScanPhysicalOperator.hpp>
 #include <EmitOperatorHandler.hpp>
-#include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalProjection.hpp>
+#include <RewriteRuleRegistry.hpp>
 
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
 {
     auto handlerId = getNextOperatorHandlerId();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
@@ -48,9 +48,9 @@ RewriteRuleResult LowerToPhysicalProjection::apply(LogicalOperator projectionLog
     emitWrapper->handler = std::make_shared<EmitOperatorHandler>();
     emitWrapper->handlerId = handlerId;
 
-    scanWrapper->children.emplace_back(emitWrapper);
+    emitWrapper->children.emplace_back(scanWrapper);
 
-    return {scanWrapper, {emitWrapper}};
+    return {emitWrapper, {scanWrapper}};
 }
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterProjectionRewriteRule(RewriteRuleRegistryArguments argument)

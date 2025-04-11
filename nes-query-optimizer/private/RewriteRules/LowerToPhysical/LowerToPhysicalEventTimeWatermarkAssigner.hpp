@@ -25,8 +25,8 @@ namespace NES::Optimizer
 
 struct LowerToPhysicalEventTimeWatermarkAssigner : AbstractRewriteRule
 {
-    LowerToPhysicalEventTimeWatermarkAssigner(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    RewriteRuleResult apply(LogicalOperator logicalOperator) override;
+    LowerToPhysicalEventTimeWatermarkAssigner(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 

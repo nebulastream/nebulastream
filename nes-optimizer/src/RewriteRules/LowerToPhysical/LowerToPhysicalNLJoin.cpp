@@ -13,25 +13,26 @@
 */
 
 #include <memory>
+#include <Abstract/PhysicalOperator.hpp>
+#include <Functions/FunctionProvider.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <Functions/FunctionProvider.hpp>
-#include <Operators/SelectionLogicalOperator.hpp>
 #include <SelectionPhysicalOperator.hpp>
-#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
     auto selection = logicalOperator.get<SelectionLogicalOperator>();
     auto function = selection.getPredicate();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto physicalOperator = SelectionPhysicalOperator(func);
-    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
     return {wrapper, {wrapper}};
 };
 

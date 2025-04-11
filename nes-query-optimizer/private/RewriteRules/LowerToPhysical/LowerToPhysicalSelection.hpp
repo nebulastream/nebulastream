@@ -16,21 +16,19 @@
 
 #include <memory>
 #include <utility>
-#include <Traits/QueryForSubtree.hpp>
-#include <Traits/TraitSet.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <SelectionPhysicalOperator.hpp>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 
 namespace NES::Optimizer
 {
 
-struct LowerToPhysicalSelection : AbstractLowerToPhysicalRewriteRule<QueryForSubtree, Operator>
+struct LowerToPhysicalSelection : AbstractRewriteRule
 {
-    LowerToPhysicalSelection(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    std::vector<PhysicalOperatorWithSchema> applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>*) override;
+    LowerToPhysicalSelection(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 

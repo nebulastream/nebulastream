@@ -15,17 +15,18 @@
 #pragma once
 
 #include <memory>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 
 namespace NES::Optimizer
 {
 
 struct LowerToPhysicalProjection : AbstractRewriteRule
 {
-    LowerToPhysicalProjection(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    RewriteRuleResult apply(LogicalOperator logicalOperator) override;
+    LowerToPhysicalProjection(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 

@@ -14,19 +14,17 @@
 
 #pragma once
 
-#include <memory>
-#include <Functions/FunctionProvider.hpp>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Operators/MapLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Optimizer
 {
 
 struct LowerToPhysicalIngestionTimeWatermarkAssigner : AbstractRewriteRule
 {
-    LowerToPhysicalIngestionTimeWatermarkAssigner(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    RewriteRuleResult apply(LogicalOperator logicalOperator) override;
+    LowerToPhysicalIngestionTimeWatermarkAssigner(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
+    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 
