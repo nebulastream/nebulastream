@@ -64,7 +64,7 @@ uint32_t WorkerContext::decreaseObjectRefCnt(void* object) {
 TupleBuffer WorkerContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 
 void WorkerContext::storeNetworkChannel(NES::OperatorId id, Network::NetworkChannelPtr&& channel, WorkerId receiver) {
-    // NES_ERROR("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
+    NES_ERROR("WorkerContext: storing channel for operator {}  for context {}", id, workerId);
     auto it = dataChannels.find(id);// note we assume it's always available
 
     if (it != dataChannels.end()) {
@@ -238,7 +238,7 @@ bool WorkerContext::releaseNetworkChannel(OperatorId id,
                                           uint64_t currentMessageSequenceNumber,
                                           bool shouldPropagateMarker,
                                           const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
-    NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
+    NES_ERROR("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& [channel, receiver] = it->second; channel) {
             channel->close(terminationType,
