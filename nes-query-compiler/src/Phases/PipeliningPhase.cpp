@@ -123,6 +123,9 @@ void buildPipelineRecursive(
 
     /// Case 4: Forced new pipeline (pipeline breaker) for fusible operators.
     if (forceNewPipeline) {
+        if (prevOpWrapper && not prevOpWrapper->isEmit) {
+            addDefaultEmit(currentPipeline, *opWrapper);
+        }
         auto newPipeline = std::make_unique<Pipeline>(opWrapper->physicalOperator);
         currentPipeline->successorPipelines.push_back(std::move(newPipeline));
         Pipeline* newPipelinePtr = currentPipeline->successorPipelines.back().get();
