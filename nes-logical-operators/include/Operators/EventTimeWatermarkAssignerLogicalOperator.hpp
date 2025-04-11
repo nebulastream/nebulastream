@@ -49,8 +49,8 @@ public:
 
     [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const override;
 
-    const LogicalFunction onField;
-    const Windowing::TimeUnit unit;
+    LogicalFunction onField;
+    Windowing::TimeUnit unit;
 private:
     /// Operator specific member
     static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
