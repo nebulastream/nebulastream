@@ -57,7 +57,7 @@ std::shared_ptr<DataType> Integer::join(const DataType& otherDataType) const
     throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType.toString());
 }
 
-std::string Integer::toString()
+std::string Integer::toString() const
 {
     return fmt::format("{}{}", isSigned ? "INT" : "UINT", std::to_string(bits));
 }

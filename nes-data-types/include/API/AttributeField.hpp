@@ -34,7 +34,7 @@ public:
 
     [[nodiscard]] std::shared_ptr<DataType> getDataType() const;
 
-    [[nodiscard]] const std::string& getName() const;
+    [[nodiscard]] std::string getName() const;
 
     void setName(std::string newName);
 
@@ -42,11 +42,6 @@ public:
     [[nodiscard]] bool isEqual(const AttributeField& attr) const;
 
     uint64_t hash() const;
-    /**
-     * @brief Make copy of this attribute
-     * @return shared pointer
-     */
-    [[nodiscard]] std::shared_ptr<AttributeField> deepCopy() const;
 
 private:
     std::string name;

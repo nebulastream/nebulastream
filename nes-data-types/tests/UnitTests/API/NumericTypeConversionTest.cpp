@@ -49,7 +49,7 @@ TEST_P(NumericTypeConversionTest, SimpleTest)
 {
     auto [left, right, result] = GetParam();
     auto join = [](const BasicType left, const BasicType right)
-    { return DataTypeProvider::provideBasicType(left)->join(DataTypeProvider::provideBasicType(right)); };
+    { return DataTypeProvider::provideBasicType(left)->join(*DataTypeProvider::provideBasicType(right)); };
 
     const auto leftRight = join(left, right);
     const auto rightLeft = join(right, left);
