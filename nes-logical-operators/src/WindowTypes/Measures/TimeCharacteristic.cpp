@@ -32,7 +32,7 @@ TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1)
 }
 
 TimeCharacteristic::TimeCharacteristic(Type type, AttributeField field, TimeUnit unit)
-    : type(type), field(std::move(field)), unit(std::move(unit))
+    : field(std::move(field)), type(type),  unit(std::move(unit))
 {
 }
 TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction field)
@@ -50,11 +50,6 @@ TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction fieldValu
 TimeCharacteristic TimeCharacteristic::createIngestionTime()
 {
     return TimeCharacteristic(Type::IngestionTime);
-}
-
-AttributeField TimeCharacteristic::getField() const
-{
-    return field;
 }
 
 TimeCharacteristic::Type TimeCharacteristic::getType() const

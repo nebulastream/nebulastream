@@ -80,7 +80,7 @@ std::shared_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOp
     switch (timeWindow->getTimeCharacteristic().getType())
     {
         case Windowing::TimeCharacteristic::Type::IngestionTime: {
-            if (timeWindow->getTimeCharacteristic().getField().getName() == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+            if (timeWindow->getTimeCharacteristic().field.getName() == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
             {
                 return std::make_shared<IngestionTimeFunction>();
             }
@@ -89,7 +89,7 @@ std::shared_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOp
         }
         case Windowing::TimeCharacteristic::Type::EventTime: {
             /// For event time fields, we look up the reference field name and create an expression to read the field.
-            auto timeCharacteristicField = timeWindow->getTimeCharacteristic().getField().getName();
+            auto timeCharacteristicField = timeWindow->getTimeCharacteristic().field.getName();
             auto timeStampField = Functions::FieldAccessPhysicalFunction(timeCharacteristicField);
             return std::make_shared<EventTimeFunction>(timeStampField, timeWindow->getTimeCharacteristic().getTimeUnit());
         }
