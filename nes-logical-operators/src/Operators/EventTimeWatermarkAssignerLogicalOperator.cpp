@@ -61,6 +61,7 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(Sc
     {
         newChildren.push_back(child.withInferredSchema(schema));
     }
+    copy.onField = onField.withInferredStamp(schema);
     copy.children = newChildren;
     copy.inputSchema = schema;
     copy.outputSchema = schema;
