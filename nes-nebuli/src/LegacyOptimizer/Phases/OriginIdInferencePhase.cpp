@@ -78,11 +78,10 @@ void OriginIdInferencePhase::apply(LogicalPlan& queryPlan)
     uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
     for (auto operatorWithOriginId : queryPlan.getOperatorsByTraits<Optimizer::OriginIdAssignerTrait>())
     {
-        auto id = OriginId(originIdCounter++);
 
         auto copy = operatorWithOriginId;
-        copy.setInputOriginIds({{id}});
-        copy.setOutputOriginIds({id});
+        copy.setInputOriginIds({{OriginId(originIdCounter++)}});
+        copy.setOutputOriginIds({OriginId(originIdCounter)});
 
         queryPlan.replaceOperator(operatorWithOriginId, copy);
     }
