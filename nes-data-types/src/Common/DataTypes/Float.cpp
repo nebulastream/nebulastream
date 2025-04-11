@@ -56,7 +56,7 @@ std::shared_ptr<DataType> Float::join(const DataType& otherDataType) const
     throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType.toString());
 }
 
-std::string Float::toString()
+std::string Float::toString() const
 {
     return fmt::format("FLOAT{}", bits);
 }

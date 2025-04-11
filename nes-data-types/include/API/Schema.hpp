@@ -151,6 +151,9 @@ public:
     auto begin() const { return std::begin(fields); }
     auto end() const { return std::end(fields); }
 
+    auto begin() { return std::begin(fields); }
+    auto end() { return std::end(fields); }
+
 private:
     std::vector<AttributeField> fields;
     MemoryLayoutType layoutType;
