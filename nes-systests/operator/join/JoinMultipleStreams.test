@@ -10,13 +10,13 @@ SourceCSV stream4_1 UINT64 id4_1 UINT64 value4_1 UINT64 timestamp TESTDATA/strea
 SourceCSV stream7 UINT64 id7 UINT64 value7 UINT64 timestamp TESTDATA/stream7.csv
 SourceCSV stream7_1 UINT64 id7_1 UINT64 value7_1 UINT64 timestamp TESTDATA/stream7.csv
 
-SINK sinkStreamStream2 UINT64 streamstream2$start UINT64 streamstream2$end UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp UINT64 stream2$id2 UINT64 stream2$value2 UINT64 stream2$timestamp
+SINK sinkStreamStream2 UINT64 streamstream2$start UINT64 streamstream2$end UINT64 stream$id_0 UINT64 stream$value UINT64 stream$timestamp UINT64 stream2$id2 UINT64 stream2$value2 UINT64 stream2$timestamp
 SINK sinkStreamStream2Stream4 UINT64 streamstream2stream4$start  UINT64 streamstream2stream4$end  UINT64 streamstream2$start  UINT64 streamstream2$end  UINT64 stream$id  UINT64 stream$value  UINT64 stream$timestamp  UINT64 stream2$id2  UINT64 stream2$value2  UINT64 stream2$timestamp  UINT64 stream4$id4  UINT64 stream4$value4  UINT64 stream4$timestamp
 SINK sinkStreamStream2Stream4Stream4_1 UINT64 streamstream2stream4stream4_1$start UINT64 streamstream2stream4stream4_1$end	 UINT64 streamstream2stream4$start	 UINT64 streamstream2stream4$end	 UINT64 streamstream2$start	 UINT64 streamstream2$end	 UINT64 stream$id	 UINT64 stream$value	 UINT64 stream$timestamp	 UINT64 stream2$id2	 UINT64 stream2$value2	 UINT64 stream2$timestamp	 UINT64 stream4$id4	 UINT64 stream4$value4	 UINT64 stream4$timestamp	 UINT64 stream4_1$id4_1	 UINT64 stream4_1$value4_1	 UINT64 stream4_1$timestamp
 SINK sinkStream7Stream7_1 UINT64 stream7stream7_1$start UINT64 stream7stream7_1$end UINT64 stream7$id7 UINT64 stream7$value7 UINT64 stream7$timestamp UINT64 stream7_1$id7_1 UINT64 stream7_1$value7_1 UINT64 stream7_1$timestamp
 
 # Query 1 - Join two streams
-SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec) INTO sinkStreamStream2;
+SELECT * FROM (SELECT id+0, value, timestamp FROM stream) INNER JOIN (SELECT * FROM stream2) ON id_0 = id2 WINDOW TUMBLING (timestamp, size 1 sec) INTO sinkStreamStream2;
 ----
 1000 2000 12 1 1001 12 5 1011
 1000 2000 4 1 1002 4 3 1102

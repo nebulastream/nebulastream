@@ -94,7 +94,6 @@ public:
     size_t timeUnit; ///anonymous token enum in AntlrSQLLexer.h
     size_t timeUnitAdvanceBy;
     std::optional<int> minimumCount;
-    int identCountHelper = 0;
     int implicitMapCountHelper = 0;
 
     [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getWhereClauses() const;

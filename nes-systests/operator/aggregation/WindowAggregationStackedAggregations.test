@@ -34,13 +34,14 @@ Source stream UINT64 id UINT64 value UINT64 timestamp
 1,21,21000
 
 SINK sinkStream UINT64 stream$start UINT64 stream$end UINT64 stream$id UINT64 stream$sumValue
+SINK sinkStreamAutoNamed UINT64 stream$start UINT64 stream$end UINT64 stream$id UINT64 stream$Sum_value
 SINK sinkStreamNonKeyed UINT64 stream$start UINT64 stream$end UINT64 stream$sumValue
 
 
 # Two window aggregations
-SELECT SUM(value) as sumValue FROM (
+SELECT SUM(value) FROM (
     SELECT SUM(value) as value FROM stream WHERE id < 15 GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec)
-) WHERE id < 10 GROUP BY id WINDOW TUMBLING(start, size 2 sec) INTO sinkStream;
+) WHERE id < 10 GROUP BY id WINDOW TUMBLING(start, size 2 sec) INTO sinkStreamAutoNamed;
 ----
 0 2000 1 1
 0 2000 4 1

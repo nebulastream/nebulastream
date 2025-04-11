@@ -16,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <regex>
+#include <sstream>
 #include <string>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
@@ -366,20 +367,20 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         {
             const std::shared_ptr<NodeFunction> attr = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
-            if (helper.identCountHelper == 1)
-            {
-                /// rename of a single attribute
-                auto functionItem = static_cast<FunctionItem>(attr);
-                functionItem = functionItem.as(context->getText());
-                helper.functionBuilder.push_back(functionItem);
-            }
-            else
-            {
-                /// renaming an function (mapBuilder) and adding a projection (functionBuilder) on the renamed function.
-                const auto renamedAttribute = Attribute(context->getText()) = attr;
-                helper.functionBuilder.push_back(renamedAttribute);
-                helper.mapBuilder.push_back(renamedAttribute);
-            }
+            // if (helper.identCountHelper == 1)
+            // {
+            //     /// rename of a single attribute
+            //     auto functionItem = static_cast<FunctionItem>(attr);
+            //     functionItem = functionItem.as(context->getText());
+            //     helper.functionBuilder.push_back(functionItem);
+            // }
+            // else
+            // {
+            /// renaming an function (mapBuilder) and adding a projection (functionBuilder) on the renamed function.
+            const auto renamedAttribute = Attribute(context->getText()) = attr;
+            helper.functionBuilder.push_back(renamedAttribute);
+            helper.mapBuilder.push_back(renamedAttribute);
+            // }
         }
     }
     else if (helper.isFunctionCall and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
@@ -620,7 +621,7 @@ void AntlrSQLQueryPlanCreator::exitThresholdBasedWindow(AntlrSQLParser::Threshol
 void AntlrSQLQueryPlanCreator::enterNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    helper.identCountHelper = 0;
+    // helper.identCountHelper = 0;
     poppush(helper);
     AntlrSQLBaseListener::enterNamedExpression(context);
 }
@@ -629,29 +630,95 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 {
     AntlrSQLHelper helper = helpers.top();
     /// handle implicit maps when no "AS" is supplied, but a rename is needed
-    if (!helper.isFunctionCall && !helper.functionBuilder.empty() && helper.isSelect && helper.identCountHelper > 1
-        && context->children.size() == 1)
+    if (helper.isSelect &&
+        // helper.identCountHelper > 1 &&
+        context->children.size() == 1)
     {
-        std::string implicitFieldName;
-        const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
-        /// there must be a field access function node in mapFunction.
-        for (size_t countNodeFieldAccess = 0; const auto& child : mapFunction->getChildren())
+        auto stringify = [](const std::shared_ptr<Node>& startPoint)
         {
-            if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
-            {
-                const auto fieldAccessNode = NES::Util::as<NodeFunctionFieldAccess>(child);
-                implicitFieldName = fmt::format("{}_{}", fieldAccessNode->getFieldName(), helper.implicitMapCountHelper);
-                ++countNodeFieldAccess;
-                INVARIANT(
-                    countNodeFieldAccess < 2, "The function of a named function must only have one child that is a field access function.");
-            }
-        }
-        INVARIANT(not implicitFieldName.empty(), "");
-        helper.functionBuilder.pop_back();
-        helper.functionBuilder.push_back(Attribute(implicitFieldName) = mapFunction);
+            std::stringstream ss;
+            std::stack<std::shared_ptr<Node>> stringifyStack{};
+            stringifyStack.push(startPoint);
 
-        // helper.implicitMapCountHelper++;
+            while (not stringifyStack.empty())
+            {
+                auto current = stringifyStack.top();
+                stringifyStack.pop();
+                if (auto fieldAccess = NES::Util::as_if<NodeFunctionFieldAccess>(current); fieldAccess.get() != nullptr)
+                {
+                    ss << "_" << fieldAccess->getFieldName();
+                }
+                else
+                {
+                    //You could add more logic include the name of function calls or other row-wise expression types
+                    for (auto& child : current->getChildren())
+                    {
+                        stringifyStack.push(child);
+                    }
+                }
+            }
+            return ss.str();
+        };
+        if (!helper.isFunctionCall && !helper.functionBuilder.empty())
+        {
+            const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
+            std::string implicitFieldName = stringify(mapFunction);
+            /// there must be a field access function node in mapFunction.
+            INVARIANT(not implicitFieldName.empty(), "Could not determine projection name for expression {}", context->getText());
+            helper.functionBuilder.pop_back();
+            const auto projWithAssignement = Attribute(implicitFieldName) = mapFunction;
+            helper.functionBuilder.push_back(projWithAssignement);
+            helper.mapBuilder.push_back(projWithAssignement);
+        }
+        else if (!helper.windowAggs.empty())
+        {
+            const std::shared_ptr<Windowing::WindowAggregationDescriptor> aggFunction = helper.windowAggs.back();
+
+            const std::string implicitFieldName = aggFunction->getTypeAsString() + stringify(aggFunction->on());
+
+            INVARIANT(not implicitFieldName.empty(), "Could not determine projection name for expression {}", context->getText());
+            // helper.functionBuilder.pop_back();
+            const auto windowAgg = helper.windowAggs.back();
+            helper.windowAggs.pop_back();
+            helper.windowAggs.push_back(windowAgg->as(NodeFunctionFieldAccess::create(implicitFieldName)));
+        }
     }
+    // if (!helper.isFunctionCall && !helper.functionBuilder.empty()
+    //     && helper.isSelect
+    //     // && helper.identCountHelper > 1
+    //     && context->children.size() == 1)
+    // {
+    //     std::string implicitFieldName;
+    //     const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
+    //     /// there must be a field access function node in mapFunction.
+    //     for (size_t countNodeFieldAccess = 0; const auto& child : mapFunction->getChildren())
+    //     {
+    //         if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
+    //         {
+    //             const auto fieldAccessNode = NES::Util::as<NodeFunctionFieldAccess>(child);
+    //             implicitFieldName = fmt::format("{}_{}", fieldAccessNode->getFieldName(), helper.implicitMapCountHelper);
+    //             ++countNodeFieldAccess;
+    //             INVARIANT(
+    //                 countNodeFieldAccess < 2, "The function of a named function must only have one child that is a field access function.");
+    //         }
+    //     }
+    //     INVARIANT(not implicitFieldName.empty(), "");
+    //     helper.functionBuilder.pop_back();
+    //     if (!helper.windowAggs.empty())
+    //     {
+    //         const auto windowAgg = helper.windowAggs.back();
+    //         helper.windowAggs.pop_back();
+    //         helper.windowAggs.push_back(windowAgg->as(NodeFunctionFieldAccess::create(implicitFieldName)));
+    //     }
+    //     else
+    //     {
+    //         const auto projWithAssignement = Attribute(implicitFieldName) = mapFunction;
+    //         helper.functionBuilder.push_back(projWithAssignement);
+    //         helper.mapBuilder.push_back(projWithAssignement);
+    //     }
+    //
+    //     // helper.implicitMapCountHelper++;
+    // }
     helper.isFunctionCall = false;
     poppush(helper);
 
@@ -951,7 +1018,7 @@ void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::Thr
 void AntlrSQLQueryPlanCreator::enterValueExpressionDefault(AntlrSQLParser::ValueExpressionDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    helper.identCountHelper++;
+    // helper.identCountHelper++;
     poppush(helper);
     AntlrSQLBaseListener::enterValueExpressionDefault(context);
 }
