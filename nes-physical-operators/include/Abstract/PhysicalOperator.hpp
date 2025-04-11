@@ -149,7 +149,14 @@ struct PhysicalOperator
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
 
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
-        std::string toString() const override { return "PhysicalOperator(" + std::string(typeid(T).name()) + ")"; }
+        std::string toString() const override
+        {
+            const auto name = typeid(T).name();
+            int status = 0;
+            std::unique_ptr<char, void (*)(void*)> demangled(abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free);
+            const auto nameDemangled = status == 0 ? demangled.get() : name;
+            return "PhysicalOperator(" + std::string(nameDemangled) + ")";
+        }
     };
 
     std::unique_ptr<Concept> self;
