@@ -160,7 +160,13 @@ struct PhysicalOperator {
         }
 
         std::string toString() const override {
-            return "PhysicalOperator(" + std::string(typeid(T).name()) + ")";
+            const auto name = typeid(T).name();
+            int status = 0;
+            std::unique_ptr<char, void(*)(void*)> demangled(
+                abi::__cxa_demangle(name, nullptr, nullptr, &status), std::free
+            );
+            const auto nameDemangled = status == 0 ? demangled.get() : name;
+            return "PhysicalOperator(" + std::string(nameDemangled) + ")";
         }
     };
 
