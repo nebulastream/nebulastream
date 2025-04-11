@@ -74,12 +74,14 @@ void buildPipelineRecursive(
     /// then it should open its own pipeline. No default scan is needed.
     if (opWrapper->isScan) {
         // Add emit first if there is one needed
-        if(prevOpWrapper)
+        if(not prevOpWrapper->isEmit)
         {
             addDefaultEmit(currentPipeline, *prevOpWrapper);
         }
-
         auto newPipeline = std::make_unique<Pipeline>(opWrapper->physicalOperator);
+        if (opWrapper->handler && opWrapper->handlerId) {
+            newPipeline->operatorHandlers.emplace(opWrapper->handlerId.value(), opWrapper->handler.value());
+        }
         currentPipeline->successorPipelines.push_back(std::move(newPipeline));
         Pipeline* newPipelinePtr = currentPipeline->successorPipelines.back().get();
         // Process children in a new pipeline (force new pipeline for each branch).
@@ -93,10 +95,8 @@ void buildPipelineRecursive(
     /// it should close the pipeline without adding a default emit.
     if (opWrapper->isEmit) {
         currentPipeline->appendOperator(opWrapper->physicalOperator);
-        if (opWrapper->handler)
-        {
-            INVARIANT(opWrapper->handlerId, "No id for operator handler in physical operator wrapper");
-            currentPipeline->operatorHandlers.emplace(opWrapper->handlerId.value().getRawValue(), opWrapper->handler.value());
+        if (opWrapper->handler && opWrapper->handlerId) {
+            currentPipeline->operatorHandlers.emplace(opWrapper->handlerId.value(), opWrapper->handler.value());
         }
         for (const auto& child : opWrapper->children) {
             buildPipelineRecursive(child, opWrapper, currentPipeline, true);
