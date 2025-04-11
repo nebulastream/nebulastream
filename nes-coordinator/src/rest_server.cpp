@@ -8,13 +8,14 @@
 #include "oatpp/network/tcp/server/ConnectionProvider.hpp"
 
 #include "controller/QueryController.hpp"
+#include "controller/SourceCatalogController.hpp"
 
-#include <SourceCatalogs/SourceCatalog.hpp>q
+#include <SourceCatalogs/SourceCatalog.hpp>
 #include <NebuLi.hpp>
 #include <ErrorHandling.hpp>
 #include <yaml-cpp/yaml.h>
 
-void run(int port) {
+void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog) {
 
     // // Create a JSON ObjectMapper manually
     auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared();
@@ -23,6 +24,8 @@ void run(int port) {
     auto router = oatpp::web::server::HttpRouter::createShared();
     auto queryController = std::make_shared<QueryController>(objectMapper);
     router->addController(queryController);
+    auto sourceCatalogController = std::make_shared<SourceCatalogController>(objectMapper, sourceCatalog);
+    router->addController(sourceCatalogController);
 
     /* Create HTTP connection handler with router */
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
@@ -73,7 +76,7 @@ int main(int argc, char* argv[]) {
     oatpp::base::Environment::init();
 
     /* Run App */
-    run(port);
+    run(port, sourceCatalog);
 
     /* Destroy oatpp Environment */
     oatpp::base::Environment::destroy();
