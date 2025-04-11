@@ -100,7 +100,7 @@ std::shared_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOp
 }
 
 std::vector<std::shared_ptr<AggregationFunction>>
-getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration& config)
+getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration&)
 {
     std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
@@ -162,8 +162,8 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
         } else if (name =="Median")
         {
                 auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
-                    logicalOperator.getInputSchemas()[0], config.pageSize.getValue());
-                auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(std::move(layout));
+                    logicalOperator.getInputSchemas()[0],  NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE);
+                auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(layout);
                 aggregationFunctions.emplace_back(
                     std::make_shared<MedianAggregationFunction>(
                         std::move(physicalInputType),
@@ -171,7 +171,6 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier,
                         std::move(memoryProvider)));
-                break;
         } else {
                 throw NotImplemented();
         }
@@ -206,7 +205,9 @@ RewriteRuleResult LowerToPhysicalWindowedAggregation::apply(LogicalOperator logi
         keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
     }
     const auto entrySize = sizeof(Interface::ChainedHashMapEntry) + keySize + valueSize;
-    const auto entriesPerPage =  NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE / entrySize;
+    const auto numberOfBuckets = NES::Configurations::DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES;
+    const auto pageSize = NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE;
+    const auto entriesPerPage =  pageSize / entrySize;
 
     const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(aggregation);
     const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, fieldValueNames);
@@ -222,6 +223,7 @@ RewriteRuleResult LowerToPhysicalWindowedAggregation::apply(LogicalOperator logi
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), logicalOperator.getInputOriginIds()[0].size());
     auto handler = std::make_shared<AggregationOperatorHandler>(logicalOperator.getInputOriginIds()[0], logicalOperator.getOutputOriginIds()[0], std::move(sliceAndWindowStore));
+    handler->setHashMapParams(keySize, valueSize, pageSize, numberOfBuckets);
 
     auto build = AggregationBuildPhysicalOperator(handlerId, timeFunction, keyFunctions, windowAggregation);
     auto probe = AggregationProbePhysicalOperator(windowAggregation, handlerId, aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName());
@@ -229,10 +231,12 @@ RewriteRuleResult LowerToPhysicalWindowedAggregation::apply(LogicalOperator logi
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(build, aggregation.getInputSchemas()[0], aggregation.getOutputSchema());
     buildWrapper->handlerId = handlerId;
     buildWrapper->handler = handler;
+    buildWrapper->isEmit = true;
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(probe, aggregation.getInputSchemas()[0], aggregation.getOutputSchema());
     probeWrapper->handlerId = handlerId;
-    buildWrapper->handler = handler;
+    probeWrapper->handler = handler;
+    probeWrapper->isScan = true;
 
     buildWrapper->children.push_back(probeWrapper);
 
