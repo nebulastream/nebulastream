@@ -170,7 +170,7 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema in
 
 Optimizer::TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
 {
-    return {};
+    return {originIdTrait};
 }
 
 LogicalOperator WindowedAggregationLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
