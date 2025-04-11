@@ -49,7 +49,8 @@ public:
         INVARIANT(entrySize > 0, "The entry size must be greater than 0");
         PRECONDITION(
             this->aggregationFunctions.size() == this->fieldValues.size(),
-            "The number of aggregation functions must match the number of field values");
+            "The number of aggregation functions (here: {}) must match the number of field values (here: {})",
+            this->aggregationFunctions.size(), this->fieldValues.size());
     }
 
     WindowAggregation(const std::shared_ptr<WindowAggregation>& other) noexcept
