@@ -48,10 +48,9 @@ inline OperatorId getNextPhysicalOperatorId()
 /// The concept carries an OperatorId that is stable across copies.
 struct PhysicalOperatorConcept
 {
+    explicit PhysicalOperatorConcept();
+    explicit PhysicalOperatorConcept(OperatorId existingId);
     virtual ~PhysicalOperatorConcept() = default;
-
-    explicit PhysicalOperatorConcept() : id(getNextPhysicalOperatorId()) { }
-    explicit PhysicalOperatorConcept(OperatorId existingId) : id(existingId) { }
 
     virtual std::optional<struct PhysicalOperator> getChild() const = 0;
     virtual void setChild(struct PhysicalOperator child) = 0;
@@ -71,20 +70,18 @@ struct PhysicalOperatorConcept
     /// @brief Called by the upstream operator (parent) to process one record.
     virtual void execute(ExecutionContext&, Record&) const;
 
-    virtual std::string toString() const { return "PhysicalOperatorConcept"; }
+    virtual std::string toString() const;
 
     OperatorId id = INVALID_OPERATOR_ID;
 };
 
 struct PhysicalOperator
 {
-public:
     template <typename T>
     PhysicalOperator(const T& op) : self(std::make_unique<Model<T>>(op))
     {
     }
-
-    PhysicalOperator(const PhysicalOperator& other) : self(other.self->clone()) { }
+    PhysicalOperator(const PhysicalOperator& other);
 
     template <typename T>
     [[nodiscard]] std::optional<T> tryGet() const
@@ -106,34 +103,20 @@ public:
         throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
 
-    PhysicalOperator(PhysicalOperator&&) noexcept = default;
+    PhysicalOperator(PhysicalOperator&&) noexcept;
+    PhysicalOperator& operator=(const PhysicalOperator& other);
 
-    PhysicalOperator& operator=(const PhysicalOperator& other)
-    {
-        if (this != &other)
-        {
-            self = other.self->clone();
-        }
-        return *this;
-    }
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+    void setChild(PhysicalOperator child);
 
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const { return self->getChild(); }
+    void setup(ExecutionContext& executionCtx) const;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void terminate(ExecutionContext& executionCtx) const;
+    void execute(ExecutionContext& executionCtx, Record& record) const;
 
-    void setChild(PhysicalOperator child) { self->setChild(child); }
-
-    void setup(ExecutionContext& executionCtx) const { self->setup(executionCtx); }
-
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const { self->open(executionCtx, recordBuffer); }
-
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const { self->close(executionCtx, recordBuffer); }
-
-    void terminate(ExecutionContext& executionCtx) const { self->terminate(executionCtx); }
-
-    void execute(ExecutionContext& executionCtx, Record& record) const { self->execute(executionCtx, record); }
-
-    std::string toString() const { return self->toString(); }
-
-    [[nodiscard]] OperatorId getId() const { return self->id; }
+    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] OperatorId getId() const;
 
     struct Concept : PhysicalOperatorConcept
     {
@@ -175,14 +158,12 @@ public:
 /// Wrapper for the physical operator to store input and output schema after query optimization.
 struct PhysicalOperatorWrapper
 {
-    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema)
-        : physicalOperator(physicalOperator), inputSchema(inputSchema), outputSchema(outputSchema) {};
+    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema);
 
     PhysicalOperator physicalOperator;
     std::optional<Schema> inputSchema, outputSchema;
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children{};
 
-    bool isPipelineBreaker = false;
     std::optional<std::shared_ptr<OperatorHandler>> handler;
     std::optional<OperatorHandlerId> handlerId;
 
@@ -190,28 +171,6 @@ struct PhysicalOperatorWrapper
     bool isEmit = false;
 
     /// Returns a string representation of the wrapper
-    std::string toString() const
-    {
-        std::ostringstream oss;
-        oss << "PhysicalOperatorWrapper(";
-        oss << "Operator: " << physicalOperator.toString() << ", ";
-        oss << "InputSchema: " << (inputSchema ? "present" : "none") << ", ";
-        oss << "OutputSchema: " << (outputSchema ? "present" : "none") << ", ";
-        oss << "isScan: " << std::boolalpha << isScan << ", ";
-        oss << "isEmit: " << std::boolalpha << isEmit;
-        if (!children.empty())
-        {
-            oss << ", Children: [";
-            for (size_t i = 0; i < children.size(); ++i)
-            {
-                oss << children[i]->toString();
-                if (i + 1 < children.size())
-                    oss << ", ";
-            }
-            oss << "]";
-        }
-        oss << ")";
-        return oss.str();
-    }
+    std::string toString() const;
 };
 }
