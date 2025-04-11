@@ -262,10 +262,43 @@ void shuffleQueries(std::vector<NES::Systest::Query> queries)
 
 void setupLogging()
 {
+    const std::filesystem::path logDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
+
+    std::error_code ec;
+    std::filesystem::create_directories(logDir, ec);
+    if (ec) {
+        std::cerr << "Error creating log directory during logger setup: " << ec.message() << "\n";
+        return;
+    }
+
     const auto now = std::chrono::system_clock::now();
     const auto pid = ::getpid();
-    const auto logFileName = fmt::format("/nes-systests/SystemTest_{:%H:%M:%S}_{}.log", now, pid);
-    NES::Logger::setupLogging(fmt::format("{}{}", PATH_TO_BINARY_DIR, logFileName), NES::LogLevel::LOG_DEBUG, false);
+    const auto logFileName = fmt::format("SystemTest_{:%H:%M:%S}_{}.log", now, pid);
+
+    const auto absoluteLogPath = logDir / logFileName;
+
+    NES::Logger::setupLogging(absoluteLogPath.string(), NES::LogLevel::LOG_DEBUG, false);
+
+    const auto symlinkPath = logDir / "latest.log";
+
+    if (std::filesystem::exists(symlinkPath) || std::filesystem::is_symlink(symlinkPath)) {
+        std::filesystem::remove(symlinkPath, ec);
+        if (ec) {
+            std::cerr << "Error removing existing symlink during logger setup:  " << ec.message() << "\n";
+        }
+    }
+
+    const auto relativeLogPath = std::filesystem::relative(absoluteLogPath, symlinkPath.parent_path(), ec);
+    if (ec) {
+        std::cerr << "Error calculating relative path during logger setup: " << ec.message() << "\n";
+        return;
+    }
+
+    try {
+        std::filesystem::create_symlink(relativeLogPath, symlinkPath);
+    } catch (const std::filesystem::filesystem_error &e) {
+        std::cerr << "Error creating symlink during logger setup: " << e.what() << '\n';
+    }
 
     if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
     {
