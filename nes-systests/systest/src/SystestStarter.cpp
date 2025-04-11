@@ -279,13 +279,53 @@ void shuffleQueries(std::vector<NES::Systest::Query> queries)
     std::shuffle(queries.begin(), queries.end(), g);
 }
 
+void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath)
+{
+    std::error_code errorCode;
+    const auto relativeLogPath = std::filesystem::relative(absoluteLogPath, symlinkPath.parent_path(), errorCode);
+    if (errorCode)
+    {
+        std::cerr << "Error calculating relative path during logger setup: " << errorCode.message() << "\n";
+        return;
+    }
+
+    if (std::filesystem::exists(symlinkPath) || std::filesystem::is_symlink(symlinkPath))
+    {
+        std::filesystem::remove(symlinkPath, errorCode);
+        if (errorCode)
+        {
+            std::cerr << "Error removing existing symlink during logger setup:  " << errorCode.message() << "\n";
+        }
+    }
+
+    try
+    {
+        std::filesystem::create_symlink(relativeLogPath, symlinkPath);
+    }
+    catch (const std::filesystem::filesystem_error& e)
+    {
+        std::cerr << "Error creating symlink during logger setup: " << e.what() << '\n';
+    }
+}
+
 void setupLogging()
 {
+    const std::filesystem::path logDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests";
+
+    std::error_code errorCode;
+    std::filesystem::create_directories(logDir, errorCode);
+    if (errorCode)
+    {
+        std::cerr << "Error creating log directory during logger setup: " << errorCode.message() << "\n";
+        return;
+    }
+
     const auto now = std::chrono::system_clock::now();
     const auto pid = ::getpid();
-    const auto logFileName = fmt::format("/nes-systests/SystemTest_{:%Y-%m-%d_%H-%M-%S}_{:d}.log", now, pid);
-    NES::Logger::setupLogging(fmt::format("{}{}", PATH_TO_BINARY_DIR, logFileName), NES::LogLevel::LOG_DEBUG, false);
+    const auto logFileName = fmt::format("SystemTest_{:%Y-%m-%d_%H-%M-%S}_{:d}.log", now, pid);
 
+    const auto absoluteLogPath = logDir / logFileName;
+    NES::Logger::setupLogging(absoluteLogPath.string(), NES::LogLevel::LOG_DEBUG, false);
     if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
     {
         /// Set the correct logging path when using docker
@@ -296,6 +336,9 @@ void setupLogging()
         /// Set the correct logging path without docker
         std::cout << "Find the log at: file://" << PATH_TO_BINARY_DIR + logFileName << std::endl;
     }
+
+    const auto symlinkPath = logDir / "latest.log";
+    createSymlink(absoluteLogPath, symlinkPath);
 }
 
 int main(int argc, const char** argv)
