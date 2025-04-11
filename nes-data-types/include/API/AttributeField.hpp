@@ -42,7 +42,6 @@ public:
     [[nodiscard]] bool isEqual(const AttributeField& attr) const;
 
     uint64_t hash() const;
-    [[nodiscard]] std::shared_ptr<AttributeField> clone() const;
 
 private:
     std::string name;
