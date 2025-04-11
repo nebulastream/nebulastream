@@ -33,7 +33,7 @@ public:
     /// @return std::shared_ptr<DataType> joined data type
     std::shared_ptr<DataType> join(const DataType& otherDataType) const override;
 
-    std::string toString() override;
+    std::string toString() const override;
 };
 
 }

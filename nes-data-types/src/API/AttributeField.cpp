@@ -27,7 +27,7 @@ AttributeField::AttributeField(std::string name, std::shared_ptr<DataType> dataT
 {
 }
 
-const std::string& AttributeField::getName() const
+std::string AttributeField::getName() const
 {
     return name;
 }

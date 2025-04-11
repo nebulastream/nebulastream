@@ -26,22 +26,20 @@ class DataType
 public:
     virtual ~DataType() = default;
 
-    /// @brief Calculates the joined data type between this data type and the other.
-    /// If they have no possible joined data type, the coined type is Undefined.
-    /// Floats, we can join with all numeric data types.
-    virtual std::shared_ptr<DataType> join(const DataType& otherDataType) const = 0;
 
-    template <class T>
-    static std::shared_ptr<T> as(const std::shared_ptr<DataType>& ptr)
+    template <class NewDataType>
+    static std::shared_ptr<NewDataType> as(const std::shared_ptr<DataType> ptr)
     {
-        return std::dynamic_pointer_cast<T>(ptr);
+        return std::dynamic_pointer_cast<NewDataType>(ptr);
     }
 
     virtual bool operator==(const DataType& other) const = 0;
 
     bool operator!=(const DataType& other) const { return !(*this == other); }
 
-    [[nodiscard]] virtual std::string toString() const = 0;
+    virtual std::shared_ptr<DataType> join(const DataType& otherDataType) const = 0;
+
+    virtual std::string toString() const = 0;
 };
 
 }
