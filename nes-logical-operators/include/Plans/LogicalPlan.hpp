@@ -45,12 +45,8 @@ public:
 
     /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
     void promoteOperatorToRoot(LogicalOperator newRoot);
-    /// Adds operator to roots vector
-    void addRootOperator(LogicalOperator newRootOperator);
 
     [[nodiscard]] std::string toString() const;
-
-    std::vector<LogicalOperator> getRootOperators() const;
 
     bool replaceOperator(const LogicalOperator& target, LogicalOperator replacement);
 

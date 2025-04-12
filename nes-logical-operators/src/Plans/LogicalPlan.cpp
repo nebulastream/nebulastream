@@ -68,23 +68,6 @@ LogicalPlan::LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOpera
 {
 }
 
-void LogicalPlan::addRootOperator(LogicalOperator newRootOperator)
-{
-    /// Check if a root with the id already present
-    auto found = std::find_if(
-        rootOperators.begin(),
-        rootOperators.end(),
-        [&](const LogicalOperator& root) { return newRootOperator.getId() == root.getId(); });
-    if (found == rootOperators.end())
-    {
-        rootOperators.push_back(std::move(newRootOperator));
-    }
-    else
-    {
-        NES_WARNING("Root operator with id {} already present in the plan. Will not add it to the roots.", newRootOperator.getId());
-    }
-}
-
 void LogicalPlan::promoteOperatorToRoot(LogicalOperator newRoot)
 {
     auto root = newRoot.withChildren(rootOperators);
@@ -196,16 +179,6 @@ std::string LogicalPlan::toString() const
     return ss.str();
 }
 
-std::vector<LogicalOperator> LogicalPlan::getRootOperators() const
-{
-    std::vector<LogicalOperator> rawOps;
-    rawOps.reserve(rootOperators.size());
-    for (const auto& op : rootOperators) {
-        rawOps.push_back(op);
-    }
-    return rawOps;
-}
-
 std::vector<LogicalOperator> LogicalPlan::getLeafOperators() const
 {
     /// Find all the leaf nodes in the query plan
@@ -262,8 +235,8 @@ void LogicalPlan::setQueryId(QueryId queryId)
 
 bool LogicalPlan::operator==(const LogicalPlan& otherPlan) const
 {
-    auto leftRootOperators = this->getRootOperators();
-    auto rightRootOperators = otherPlan.getRootOperators();
+    auto leftRootOperators = this->rootOperators;
+    auto rightRootOperators = otherPlan.rootOperators;
 
     if (leftRootOperators.size() != rightRootOperators.size())
     {
