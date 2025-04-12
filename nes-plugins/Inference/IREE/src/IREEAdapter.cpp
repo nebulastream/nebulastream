@@ -17,7 +17,6 @@
 #include "IREERuntimeWrapper.hpp"
 #include <fstream>
 #include <iree/runtime/api.h>
-#include <iree/compiler/loader.h>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -52,7 +51,6 @@ float IREEAdapter::getResultAt(int i)
 
 IREEAdapter::~IREEAdapter()
 {
-    ireeCompilerGlobalShutdown();
     free(inputData);
     free(outputData);
 }

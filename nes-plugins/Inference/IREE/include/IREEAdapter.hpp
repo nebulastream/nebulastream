@@ -16,10 +16,7 @@
 
 #include "IREECompilerWrapper.hpp"
 #include "IREERuntimeWrapper.hpp"
-#include <memory>
 #include <ostream>
-#include <iree/runtime/api.h>
-#include <iree/compiler/embedding_api.h>
 
 namespace NES::Runtime::Execution::Operators
 {
