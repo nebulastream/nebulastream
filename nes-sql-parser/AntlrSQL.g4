@@ -283,7 +283,7 @@ valueExpression
     | left=valueExpression op=HAT right=valueExpression                                #arithmeticBinary
     | left=valueExpression op=PIPE right=valueExpression                               #arithmeticBinary
     | left=valueExpression comparisonOperator right=valueExpression                          #comparison
-    | INFER_MODEL '(' constant ',' inferModelInputFields ',' inferModelOutputFields ')'       #inference
+    | INFER_MODEL '(' constant ',' inferModelInputFields ')'       #inference
     | primaryExpression                                                                      #valueExpressionDefault
     ;
 
@@ -312,7 +312,6 @@ primaryExpression
     ;
 
 inferModelInputFields: primaryExpression;
-inferModelOutputFields: primaryExpression;
 
 /*
 functionName

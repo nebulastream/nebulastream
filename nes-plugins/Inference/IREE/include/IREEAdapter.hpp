@@ -16,7 +16,9 @@
 
 #include "IREECompilerWrapper.hpp"
 #include "IREERuntimeWrapper.hpp"
+
 #include <ostream>
+#include <Model.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -29,7 +31,7 @@ public:
     IREEAdapter() = default;
     ~IREEAdapter();
 
-    void initializeModel(std::string modelPath);
+    void initializeModel(Nebuli::Inference::Model& model);
 
     template<class T>
     void addModelInput(int index, T value)
@@ -41,11 +43,9 @@ public:
     float getResultAt(int idx);
 
 private:
-    std::string modelPath;
     void* inputData{};
     size_t inputSize;
     float* outputData{};
-    IREECompilerWrapper compilerWrapper;
     std::string functionName;
     IREERuntimeWrapper runtimeWrapper;
 };

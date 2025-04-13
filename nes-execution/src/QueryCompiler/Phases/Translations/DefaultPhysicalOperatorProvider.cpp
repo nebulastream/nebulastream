@@ -26,10 +26,10 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/Inference/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/Inference/LogicalInferModelNameOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
@@ -227,8 +227,7 @@ void DefaultPhysicalOperatorProvider::lowerInferModelOperator(const std::shared_
         inferModelOperator->getInputSchema(),
         inferModelOperator->getOutputSchema(),
         inferModelOperator->getModel(),
-        inferModelOperator->getInputFields(),
-        inferModelOperator->getOutputFields());
+        inferModelOperator->getInputFields());
     physicalInferModelOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalInferModelOperator);
 }

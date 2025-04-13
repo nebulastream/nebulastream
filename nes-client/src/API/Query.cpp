@@ -304,11 +304,10 @@ Query& Query::map(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunctio
 }
 
 Query& Query::inferModel(std::string const& model,
-    std::vector<std::shared_ptr<NodeFunction>> const& inputFields,
-    std::vector<std::shared_ptr<NodeFunction>> const& outputFields)
+    std::vector<std::shared_ptr<NodeFunction>> const& inputFields)
 {
     NES_DEBUG("Query: add inferModel operator to query");
-    this->queryPlan = QueryPlanBuilder::addInferModel(model, inputFields, outputFields, this->queryPlan);
+    this->queryPlan = QueryPlanBuilder::addInferModel(model, inputFields, this->queryPlan);
     return *this;
 }
 

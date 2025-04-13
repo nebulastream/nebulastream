@@ -29,6 +29,9 @@ public:
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
 private:
     const uint32_t inferModelHandlerIndex;
     const std::vector<std::string> inputFieldNames;

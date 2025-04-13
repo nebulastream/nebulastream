@@ -31,6 +31,8 @@
     "argparse",
     "benchmark",
     "boost-asio",
+    "boost-system",
+    "boost-filesystem",
     "cpptrace",
     "fmt",
     "folly",
@@ -41,6 +43,7 @@
     "nlohmann-json",
     "nautilus",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "ireeruntime"
   ]
 }

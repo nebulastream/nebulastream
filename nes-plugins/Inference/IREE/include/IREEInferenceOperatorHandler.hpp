@@ -15,6 +15,7 @@
 #pragma once
 
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Model.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -22,18 +23,17 @@ class IREEAdapter;
 class IREEInferenceOperatorHandler : public OperatorHandler
 {
 public:
-    IREEInferenceOperatorHandler(const std::string& model);
+    IREEInferenceOperatorHandler(Nebuli::Inference::Model model);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
-    [[nodiscard]] const std::string& getModel() const;
+    [[nodiscard]] const Nebuli::Inference::Model& getModel() const;
     [[nodiscard]] const std::shared_ptr<IREEAdapter>& getIREEAdapter() const;
 
 private:
-    std::string model;
+    Nebuli::Inference::Model model;
     std::shared_ptr<IREEAdapter> ireeAdapter;
-
 };
 
 }

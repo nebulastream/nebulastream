@@ -104,7 +104,6 @@ public:
     std::vector<std::string> inferModelInputModel;
     std::vector<std::shared_ptr<NodeFunction>> inferModelInputs;
     std::vector<std::shared_ptr<NodeFunction>> inferModelAggInputs;
-    std::vector<std::shared_ptr<NodeFunction>> inferModelOutputs;
     std::vector<std::vector<std::shared_ptr<NodeFunction>>> inferModelInputFields;
     std::vector<std::vector<std::shared_ptr<NodeFunction>>> inferModelAggInputFields;
     std::vector<std::vector<std::shared_ptr<NodeFunction>>> inferModelOutputFields;

@@ -350,8 +350,6 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         /// add identifiers in select, window, where and having clauses to the function builder list
         /// if inference is in select, ignore the model input fields
         helper.functionBuilder.push_back(Attribute(context->getText()));
-        if (helper.isInferModelOutput)
-            helper.inferModelOutputs.push_back(Attribute(context->getText()));
     }
     else if (helper.isFrom and not helper.isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
@@ -474,7 +472,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         for (int i = 0; i < helper.inferModelInputModel.size(); ++i)
         {
             queryPlan = QueryPlanBuilder::addInferModel(helper.inferModelInputModel[i],
-                helper.inferModelInputFields[i], helper.inferModelOutputFields[i], queryPlan);
+                helper.inferModelInputFields[i], queryPlan);
         }
     }
 
@@ -512,7 +510,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         for (int i = 0; i < helper.inferModelInputModel.size(); ++i)
         {
             queryPlan = QueryPlanBuilder::addInferModel(helper.inferModelInputModel[i],
-                helper.inferModelAggInputFields[i], helper.inferModelOutputFields[i], queryPlan);
+                helper.inferModelAggInputFields[i], queryPlan);
         }
     }
 
@@ -792,24 +790,6 @@ void AntlrSQLQueryPlanCreator::exitInferModelInputFields(AntlrSQLParser::InferMo
     helper.isInferModelInput = false;
     poppush(helper);
     AntlrSQLBaseListener::exitInferModelInputFields(context);
-}
-
-void AntlrSQLQueryPlanCreator::enterInferModelOutputFields(AntlrSQLParser::InferModelOutputFieldsContext* context)
-{
-    AntlrSQLHelper helper = helpers.top();
-    helper.isInferModelOutput = true;
-    poppush(helper);
-    AntlrSQLBaseListener::enterInferModelOutputFields(context);
-}
-
-void AntlrSQLQueryPlanCreator::exitInferModelOutputFields(AntlrSQLParser::InferModelOutputFieldsContext* context)
-{
-    AntlrSQLHelper helper = helpers.top();
-    helper.inferModelOutputFields.push_back(helper.inferModelOutputs);
-    helper.inferModelOutputs.clear();
-    helper.isInferModelOutput = false;
-    poppush(helper);
-    AntlrSQLBaseListener::exitInferModelOutputFields(context);
 }
 
 void AntlrSQLQueryPlanCreator::enterJoinRelation(AntlrSQLParser::JoinRelationContext* context)

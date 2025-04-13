@@ -12,24 +12,34 @@
     limitations under the License.
 */
 
-#include "IREEAdapter.hpp"
 #include "IREEInferenceOperatorHandler.hpp"
 #include <Util/Logger/Logger.hpp>
+#include "IREEAdapter.hpp"
 
 namespace NES::Runtime::Execution::Operators
 {
 
-IREEInferenceOperatorHandler::IREEInferenceOperatorHandler(const std::string& model)
+IREEInferenceOperatorHandler::IREEInferenceOperatorHandler(Nebuli::Inference::Model model)
+    : model(std::move(model)), ireeAdapter(IREEAdapter::create())
 {
-    this->model = model;
-    ireeAdapter = IREEAdapter::create();
-    ireeAdapter->initializeModel(model);
 }
 
-void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) {}
-void IREEInferenceOperatorHandler::stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) {}
+void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId)
+{
+    ireeAdapter->initializeModel(model);
+}
+void IREEInferenceOperatorHandler::stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext)
+{
+}
 
-const std::string& IREEInferenceOperatorHandler::getModel() const { return model; }
-const std::shared_ptr<IREEAdapter>& IREEInferenceOperatorHandler::getIREEAdapter() const { return ireeAdapter; }
+const Nebuli::Inference::Model& IREEInferenceOperatorHandler::getModel() const
+{
+    return model;
+}
+
+const std::shared_ptr<IREEAdapter>& IREEInferenceOperatorHandler::getIREEAdapter() const
+{
+    return ireeAdapter;
+}
 
 }

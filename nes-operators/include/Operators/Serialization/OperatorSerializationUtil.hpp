@@ -16,7 +16,8 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/Inference/LogicalInferModelNameOperator.hpp>
+#include <Operators/LogicalOperators/Inference/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -88,6 +89,8 @@ public:
     deserializeWatermarkStrategyDescriptor(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails);
 
     static void serializeInputSchema(const std::shared_ptr<Operator>& operatorNode, SerializableOperator& serializedOperator);
+    static void serializeInferModelNameOperator(
+        const InferModel::LogicalInferModelNameOperator& inferModelOperator, SerializableOperator& serializedOperator);
 
     static void
     deserializeInputSchema(const std::shared_ptr<LogicalOperator>& operatorNode, const SerializableOperator& serializedOperator);

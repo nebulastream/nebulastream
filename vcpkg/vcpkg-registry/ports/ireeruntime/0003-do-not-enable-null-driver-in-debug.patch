@@ -1,0 +1,27 @@
+From 728741b78447f2c1ce95b63b4ece0fcb4bc067f8 Mon Sep 17 00:00:00 2001
+From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Sat, 12 Apr 2025 16:50:16 +0200
+Subject: [PATCH 3/3] do-not-enable-null-driver-in-debug
+
+---
+ CMakeLists.txt | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 48a62f5140..d20486b6a1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -269,10 +269,6 @@ endif()
+ # We don't want to ship release builds with it or count it when calculating
+ # binary sizes of minified builds.
+ set(IREE_HAL_DRIVER_NULL_DEFAULT OFF)
+-string(TOUPPER "${CMAKE_BUILD_TYPE}" _UPPERCASE_CMAKE_BUILD_TYPE)
+-if (IREE_DEV_MODE OR (_UPPERCASE_CMAKE_BUILD_TYPE STREQUAL "DEBUG"))
+-  set(IREE_HAL_DRIVER_NULL_DEFAULT ON)
+-endif()
+ 
+ # Vulkan support is enabled by default if the platform might support Vulkan.
+ # Apple platforms support Metal instead of Vulkan, though MoltenVK may work.
+-- 
+2.45.2
+

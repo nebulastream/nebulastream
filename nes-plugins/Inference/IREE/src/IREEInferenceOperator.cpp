@@ -13,6 +13,7 @@
 */
 
 #include "IREEInferenceOperator.hpp"
+#include <ranges>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -75,6 +76,22 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
 
     child->execute(ctx, record);
 }
+void IREEInferenceOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    ExecutableOperator::open(executionCtx, recordBuffer);
+    invoke(
+        +[](OperatorHandler* opHandler, PipelineExecutionContext* pec) { opHandler->start(*pec, 0); },
+        executionCtx.getGlobalOperatorHandler(inferModelHandlerIndex),
+        executionCtx.pipelineContext);
+}
+void IREEInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    invoke(
+        +[](OperatorHandler* opHandler, PipelineExecutionContext* pec) { opHandler->stop(QueryTerminationType::Graceful, *pec); },
+        executionCtx.getGlobalOperatorHandler(inferModelHandlerIndex),
+        executionCtx.pipelineContext);
+    ExecutableOperator::close(executionCtx, recordBuffer);
+}
 }
 namespace NES::Runtime::Execution::Operators::ExecutableOperatorGeneratedRegistrar
 {
@@ -103,17 +120,13 @@ ExecutableOperatorRegistryReturnType RegisterIREEExecutableOperator(ExecutableOp
         inputFields.push_back(nodeFunctionFieldAccess->getFieldName());
     }
 
-    std::vector<std::string> outputFields;
-    for (const auto& outputField : inferModelOperator->getOutputFields())
-    {
-        auto nodeFunctionFieldAccess = NES::Util::as<NodeFunctionFieldAccess>(outputField);
-        outputFields.push_back(nodeFunctionFieldAccess->getFieldName());
-    }
+    auto fieldNames = std::views::transform(inferModelOperator->getModel().getOutputs(), [](const auto& pair) { return pair.first; })
+        | std::ranges::to<std::vector>();
 
     auto handler = std::make_shared<IREEInferenceOperatorHandler>(model);
     arguments.operatorHandlers.push_back(handler);
 
-    auto ireeOperator = std::make_shared<IREEInferenceOperator>(arguments.operatorHandlers.size() - 1, inputFields, outputFields);
+    auto ireeOperator = std::make_shared<IREEInferenceOperator>(arguments.operatorHandlers.size() - 1, inputFields, fieldNames);
     return ireeOperator;
 }
 
