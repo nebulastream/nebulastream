@@ -18,6 +18,7 @@
 #include <Functions/NodeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <Model.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -32,29 +33,25 @@ public:
         OperatorId id,
         std::shared_ptr<Schema> inputSchema,
         std::shared_ptr<Schema> outputSchema,
-        std::string model,
-        std::vector<std::shared_ptr<NodeFunction>> inputFields,
-        std::vector<std::shared_ptr<NodeFunction>> outputFields);
+        Nebuli::Inference::Model model,
+        std::vector<std::shared_ptr<NodeFunction>> inputFields);
 
     static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
         const std::shared_ptr<Schema>& inputSchema,
         const std::shared_ptr<Schema>& outputSchema,
-        std::string model,
-        std::vector<std::shared_ptr<NodeFunction>> inputFields,
-        std::vector<std::shared_ptr<NodeFunction>> outputFields);
+        Nebuli::Inference::Model model,
+        std::vector<std::shared_ptr<NodeFunction>> inputFields);
 
     static std::shared_ptr<PhysicalOperator> create(
         const std::shared_ptr<Schema>& inputSchema,
         const std::shared_ptr<Schema>& outputSchema,
-        std::string model,
-        std::vector<std::shared_ptr<NodeFunction>> inputFields,
-        std::vector<std::shared_ptr<NodeFunction>> outputFields);
+        Nebuli::Inference::Model model,
+        std::vector<std::shared_ptr<NodeFunction>> inputFields);
 
     std::shared_ptr<Operator> copy() override;
-    const std::string& getModel() const;
+    const Nebuli::Inference::Model& getModel() const;
     const std::vector<std::shared_ptr<NodeFunction>>& getInputFields() const;
-    const std::vector<std::shared_ptr<NodeFunction>>& getOutputFields() const;
 
     std::optional<std::reference_wrapper<const std::string>> registryType() const override
     {
@@ -65,9 +62,8 @@ public:
 protected:
     std::string toString() const override;
 
-    const std::string model;
+    Nebuli::Inference::Model model;
     const std::vector<std::shared_ptr<NodeFunction>> inputFields;
-    const std::vector<std::shared_ptr<NodeFunction>> outputFields;
 };
 
 }

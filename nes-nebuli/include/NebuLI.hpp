@@ -56,12 +56,21 @@ struct PhysicalSource
     std::unordered_map<std::string, std::string> sourceConfig;
 };
 
+struct Model
+{
+    std::string name;
+    std::filesystem::path path;
+    std::vector<std::shared_ptr<NES::DataType>> inputs;
+    std::vector<SchemaField> outputs;
+};
+
 struct QueryConfig
 {
     std::string query;
     std::unordered_map<std::string, Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
+    std::vector<Model> models;
 };
 
 std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& file);

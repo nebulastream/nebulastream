@@ -29,7 +29,7 @@ target_include_directories(nes-nebuli-lib
 
 target_link_libraries(nes-nebuli-lib
         PUBLIC nes-operators
-        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp nes-client
+        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp nes-client nes-inference
 )
 
 add_executable(nes-nebuli src/NebuLIStarter.cpp)
@@ -40,10 +40,4 @@ target_include_directories(nes-nebuli
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
 )
 
-function(add_nes_test_nebuli)
-    add_nes_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-nebuli-lib)
-    target_include_directories(${TARGET_NAME}
-            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
-endfunction()
+

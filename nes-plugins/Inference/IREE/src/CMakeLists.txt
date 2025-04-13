@@ -10,8 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${PROJECT_SOURCE_DIR}/cmake/FetchIREE.cmake)
-
 add_plugin_as_library(IREE ExecutableOperator nes-execution-registry iree_inference_plugin_library
         IREEInferenceOperator.cpp
         IREEInferenceOperatorHandler.cpp
@@ -20,20 +18,12 @@ add_plugin_as_library(IREE ExecutableOperator nes-execution-registry iree_infere
         IREERuntimeWrapper.cpp
 )
 
-set(_IREE_COMPILER_API "${IREE_SOURCE_DIR}/compiler/bindings/c/iree/compiler")
-
+find_package(IREERuntime CONFIG REQUIRED)
 target_include_directories(iree_inference_plugin_library PRIVATE ../include)
 target_include_directories(iree_inference_plugin_library SYSTEM PRIVATE ${_IREE_COMPILER_API})
 
 target_link_libraries(iree_inference_plugin_library PRIVATE
-        iree::runtime
-        iree::base
-        iree::vm
-        iree::hal
-        iree::hal::drivers
-        iree::modules::hal
-        iree_compiler_API_Internal_CompilerDriver
-        iree_compiler_plugins_input_Torch_torch-mlir_CAPI
+        iree_runtime_runtime
         nes-execution
         nes-runtime
 )

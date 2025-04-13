@@ -13,35 +13,46 @@
 */
 
 #include "IREEAdapter.hpp"
+#include <fstream>
+#include <Util/Logger/Logger.hpp>
+#include <iree/runtime/api.h>
 #include "IREECompilerWrapper.hpp"
 #include "IREERuntimeWrapper.hpp"
-#include <fstream>
-#include <iree/runtime/api.h>
-#include <Util/Logger/Logger.hpp>
+
+#include <Model.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-std::shared_ptr<IREEAdapter> IREEAdapter::create() { return std::make_shared<IREEAdapter>(); }
-
-void IREEAdapter::initializeModel(std::string modelPath)
+std::shared_ptr<IREEAdapter> IREEAdapter::create()
 {
-    this->modelPath = modelPath;
-    this->compilerWrapper = IREECompilerWrapper();
-    const iree_const_byte_span_t compiledModel = compilerWrapper.compileModel(modelPath);
+    return std::make_shared<IREEAdapter>();
+}
 
+namespace
+{
+iree_const_byte_span_t asIREESpan(std::span<const std::byte> span)
+{
+    return iree_const_byte_span_t{.data = reinterpret_cast<const uint8_t*>(span.data()), .data_length = span.size()};
+}
+}
+
+void IREEAdapter::initializeModel(Nebuli::Inference::Model& model)
+{
     this->runtimeWrapper = IREERuntimeWrapper();
-    runtimeWrapper.setup(compiledModel);
-    runtimeWrapper.setInputShape(compilerWrapper.getInputShape());
-    runtimeWrapper.setNDim(compilerWrapper.getNDim());
+    runtimeWrapper.setup(asIREESpan(model.getByteCode()));
 
-    this->inputSize = compilerWrapper.getInputSize();
+    runtimeWrapper.setInputShape(model.getInputShape());
+    runtimeWrapper.setNDim(model.getNDim());
+    this->inputSize = model.inputSize();
+    this->functionName = model.getFunctionName();
     this->inputData = malloc(inputSize);
+    this->outputData = reinterpret_cast<float*>(malloc(inputSize));
 }
 
 void IREEAdapter::infer()
 {
-    this->outputData = runtimeWrapper.execute(compilerWrapper.getFunctionName(), inputData, inputSize, outputData);
+    this->outputData = runtimeWrapper.execute(functionName, inputData, inputSize, outputData);
 }
 
 float IREEAdapter::getResultAt(int i)

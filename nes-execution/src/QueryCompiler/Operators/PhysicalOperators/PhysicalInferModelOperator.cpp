@@ -27,11 +27,10 @@ PhysicalInferModelOperator::PhysicalInferModelOperator(
     OperatorId id,
     std::shared_ptr<Schema> inputSchema,
     std::shared_ptr<Schema> outputSchema,
-    std::string model,
-    std::vector<std::shared_ptr<NodeFunction>> inputFields,
-    std::vector<std::shared_ptr<NodeFunction>> outputFields)
+    Nebuli::Inference::Model model,
+    std::vector<std::shared_ptr<NodeFunction>> inputFields)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-    model(std::move(model)), inputFields(std::move(inputFields)), outputFields(std::move(outputFields))
+    model(std::move(model)), inputFields(std::move(inputFields))
 {
 }
 
@@ -39,23 +38,21 @@ std::shared_ptr<PhysicalOperator> PhysicalInferModelOperator::create(
     OperatorId id,
     const std::shared_ptr<Schema>& inputSchema,
     const std::shared_ptr<Schema>& outputSchema,
-    std::string model,
-    std::vector<std::shared_ptr<NodeFunction>> inputFields,
-    std::vector<std::shared_ptr<NodeFunction>> outputFields)
+    Nebuli::Inference::Model model,
+    std::vector<std::shared_ptr<NodeFunction>> inputFields)
 {
-    return std::make_shared<PhysicalInferModelOperator>(id, inputSchema, outputSchema, model, inputFields, outputFields);
+    return std::make_shared<PhysicalInferModelOperator>(id, inputSchema, outputSchema, model, inputFields);
 }
 
 std::shared_ptr<PhysicalOperator> PhysicalInferModelOperator::create(
     const std::shared_ptr<Schema>& inputSchema,
     const std::shared_ptr<Schema>& outputSchema,
-    std::string model,
-    std::vector<std::shared_ptr<NodeFunction>> inputFields,
-    std::vector<std::shared_ptr<NodeFunction>> outputFields)
+    Nebuli::Inference::Model model,
+    std::vector<std::shared_ptr<NodeFunction>> inputFields)
 {
     return create(
         getNextOperatorId(), std::move(inputSchema), std::move(outputSchema),
-        std::move(model), std::move(inputFields), std::move(outputFields));
+        std::move(model), std::move(inputFields));
 }
 
 std::string PhysicalInferModelOperator::toString() const {
@@ -64,13 +61,12 @@ std::string PhysicalInferModelOperator::toString() const {
 
 std::shared_ptr<Operator> PhysicalInferModelOperator::copy()
 {
-    auto result = create(id, inputSchema, outputSchema, model, inputFields, outputFields);
+    auto result = create(id, inputSchema, outputSchema, model, inputFields);
     result->addAllProperties(properties);
     return result;
 }
 
-const std::string& PhysicalInferModelOperator::getModel() const { return model; }
+const Nebuli::Inference::Model& PhysicalInferModelOperator::getModel() const { return model; }
 const std::vector<std::shared_ptr<NodeFunction>>& PhysicalInferModelOperator::getInputFields() const { return inputFields; }
-const std::vector<std::shared_ptr<NodeFunction>>& PhysicalInferModelOperator::getOutputFields() const { return outputFields; }
 
 }

@@ -20,7 +20,8 @@
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/Inference/LogicalInferModelNameOperator.hpp>
+#include <Operators/LogicalOperators/Inference/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -97,6 +98,11 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     {
         /// serialize map operator
         serializeMapOperator(*NES::Util::as<LogicalMapOperator>(operatorNode), serializedOperator);
+    }
+    else if (NES::Util::instanceOf<InferModel::LogicalInferModelNameOperator>(operatorNode))
+    {
+        /// serialize infer model
+        serializeInferModelNameOperator(*NES::Util::as<InferModel::LogicalInferModelNameOperator>(operatorNode), serializedOperator);
     }
     else if (NES::Util::instanceOf<InferModel::LogicalInferModelOperator>(operatorNode))
     {
@@ -229,13 +235,27 @@ std::shared_ptr<LogicalUnaryOperator> deserializeInferModelOperator(const Serial
         outputFields.push_back(outputField);
     }
 
-    const auto& content = inferModelDetails.mlfilecontent();
-    std::ofstream output(inferModelDetails.mlfilename(), std::ios::binary);
-    output << content;
-    output.close();
-
     return std::make_shared<InferModel::LogicalInferModelOperator>(
-        inferModelDetails.mlfilename(), inputFields, outputFields, getNextOperatorId());
+        getNextOperatorId(), Nebuli::Inference::deserializeModel(inferModelDetails.model()), inputFields);
+}
+
+std::shared_ptr<LogicalUnaryOperator> deserializeInferModelNameOperator(const SerializableOperator_InferModelName& inferModelName)
+{
+    std::vector<std::shared_ptr<NodeFunction>> inputFields;
+    std::vector<std::shared_ptr<NodeFunction>> outputFields;
+
+    for (const auto& serializedInputField : inferModelName.inputfields())
+    {
+        auto inputField = FunctionSerializationUtil::deserializeFunction(serializedInputField);
+        inputFields.push_back(inputField);
+    }
+    for (const auto& serializedOutputField : inferModelName.outputfields())
+    {
+        auto outputField = FunctionSerializationUtil::deserializeFunction(serializedOutputField);
+        outputFields.push_back(outputField);
+    }
+
+    return std::make_shared<InferModel::LogicalInferModelNameOperator>(getNextOperatorId(), inferModelName.modelname(), inputFields);
 }
 
 std::shared_ptr<Windowing::WatermarkStrategyDescriptor>
@@ -550,6 +570,14 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         auto serializedMapOperator = SerializableOperator_MapDetails();
         details.UnpackTo(&serializedMapOperator);
         operatorNode = deserializeMapOperator(serializedMapOperator);
+    }
+    else if (details.Is<SerializableOperator_InferModelName>())
+    {
+        /// de-serialize infer model operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to InferModelNameLogicalOperator");
+        auto serializedInferModelNameOperator = SerializableOperator_InferModelName();
+        details.UnpackTo(&serializedInferModelNameOperator);
+        operatorNode = deserializeInferModelNameOperator(serializedInferModelNameOperator);
     }
     else if (details.Is<SerializableOperator_InferModelDetails>())
     {
@@ -1170,6 +1198,23 @@ void OperatorSerializationUtil::serializeInputSchema(
     }
 }
 
+void OperatorSerializationUtil::serializeInferModelNameOperator(
+    const InferModel::LogicalInferModelNameOperator& inferModelOperator, SerializableOperator& serializedOperator)
+{
+    /// serialize infer model operator
+    NES_TRACE("OperatorSerializationUtil:: serialize to LogicalInferModelNameOperator");
+    auto inferModelName = SerializableOperator_InferModelName();
+
+    for (auto& exp : inferModelOperator.getInputFields())
+    {
+        auto* mutableInputFields = inferModelName.mutable_inputfields()->Add();
+        FunctionSerializationUtil::serializeFunction(exp, mutableInputFields);
+    }
+
+    inferModelName.set_modelname(inferModelOperator.getModelName());
+    serializedOperator.mutable_details()->PackFrom(inferModelName);
+}
+
 void OperatorSerializationUtil::serializeInferModelOperator(
     const InferModel::LogicalInferModelOperator& inferModelOperator, SerializableOperator& serializedOperator)
 {
@@ -1182,18 +1227,8 @@ void OperatorSerializationUtil::serializeInferModelOperator(
         auto* mutableInputFields = inferModelDetails.mutable_inputfields()->Add();
         FunctionSerializationUtil::serializeFunction(exp, mutableInputFields);
     }
-    for (auto& exp : inferModelOperator.getOutputFields())
-    {
-        auto* mutableOutputFields = inferModelDetails.mutable_outputfields()->Add();
-        FunctionSerializationUtil::serializeFunction(exp, mutableOutputFields);
-    }
 
-    inferModelDetails.set_mlfilename(inferModelOperator.getDeployedModelPath());
-    std::ifstream input(inferModelOperator.getModel(), std::ios::binary);
-
-    std::string bytes((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-    input.close();
-    inferModelDetails.set_mlfilecontent(bytes);
+    Nebuli::Inference::serializeModel(inferModelOperator.getModel(), *inferModelDetails.mutable_model());
 
     serializedOperator.mutable_details()->PackFrom(inferModelDetails);
 }

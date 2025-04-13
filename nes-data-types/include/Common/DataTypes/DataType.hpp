@@ -51,4 +51,9 @@ public:
     virtual std::string toString() = 0;
 };
 
+inline bool operator==(std::shared_ptr<DataType> lhs, std::shared_ptr<DataType> rhs)
+{
+    return *lhs == *rhs;
+}
+
 }

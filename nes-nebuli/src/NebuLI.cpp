@@ -33,6 +33,7 @@
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Optimizer/QueryRewrite/ModelInferenceCompilationRule.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
@@ -50,6 +51,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include "ModelCatalog.hpp"
 
 namespace YAML
 {
@@ -109,6 +111,21 @@ struct convert<NES::CLI::PhysicalSource>
         return true;
     }
 };
+
+template <>
+struct convert<NES::CLI::Model>
+{
+    static bool decode(const Node& node, NES::CLI::Model& rhs)
+    {
+        rhs.name = node["name"].as<std::string>();
+        rhs.inputs
+            = node["inputs"].as<std::vector<std::string>>() | std::views::transform(stringToFieldType) | std::ranges::to<std::vector>();
+        rhs.outputs = node["outputs"].as<std::vector<SchemaField>>();
+        rhs.path = node["path"].as<std::string>();
+        return true;
+    }
+};
+
 template <>
 struct convert<NES::CLI::QueryConfig>
 {
@@ -118,6 +135,7 @@ struct convert<NES::CLI::QueryConfig>
         rhs.sinks.emplace(sink.name, sink);
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
+        rhs.models = node["models"].as<std::vector<NES::CLI::Model>>();
         rhs.query = node["query"].as<std::string>();
         return true;
     }
@@ -250,14 +268,23 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
                 INITIAL<WorkerId>));
     }
 
+    auto modelCatalog = std::make_shared<Nebuli::Inference::ModelCatalog>();
+
+    for (auto model : config.models)
+    {
+        modelCatalog->registerModel(model);
+    }
+
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
     auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule(sourceCatalog);
     auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create();
+    auto modelCompilationRule = Optimizer::ModelInferenceCompilationRule(modelCatalog);
 
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
 
+    modelCompilationRule.apply(query);
     validateAndSetSinkDescriptors(*query, config);
     semanticQueryValidation->validate(query); /// performs the first type inference
 
