@@ -50,25 +50,22 @@ inline OperatorId getNextPhysicalOperatorId()
 /// The concept carries an OperatorId that is stable across copies.
 struct PhysicalOperatorConcept
 {
-    explicit PhysicalOperatorConcept();
-    explicit PhysicalOperatorConcept(OperatorId existingId);
     virtual ~PhysicalOperatorConcept() = default;
 
-    virtual std::optional<struct PhysicalOperator> getChild() const = 0;
+    explicit PhysicalOperatorConcept();
+    explicit PhysicalOperatorConcept(OperatorId existingId);
+
+    [[nodiscard]] virtual std::optional<struct PhysicalOperator> getChild() const = 0;
     virtual void setChild(struct PhysicalOperator child) = 0;
 
     /// @brief Setup initializes this operator for execution.
     virtual void setup(ExecutionContext& executionCtx) const;
-
     /// @brief Open is called for each record buffer and is used to initialize execution local state.
     virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-
     /// @brief Close is called for each record buffer and clears execution local state.
     virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-
     /// @brief Terminates the operator and clears all operator state.
     virtual void terminate(ExecutionContext& executionCtx) const;
-
     /// @brief Called by the upstream operator (parent) to process one record.
     virtual void execute(ExecutionContext&, Record&) const;
 
@@ -79,7 +76,7 @@ struct PhysicalOperatorConcept
 
 struct PhysicalOperator {
     template<typename T>
-    PhysicalOperator(const T& op) : self(std::make_unique<Model<T>>(op)) {}
+    PhysicalOperator(const T& op) : self(std::make_unique<Model<T>>(op, op.id)) {}
     PhysicalOperator(const PhysicalOperator& other);
 
     template<typename T>
@@ -129,7 +126,7 @@ struct PhysicalOperator {
             : Concept(existingId), data(std::move(d)) {}
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override {
-            return std::make_unique<Model<T>>(data, this->id);
+            return std::make_unique<Model>(data, this->id);
         }
 
         [[nodiscard]] std::optional<PhysicalOperator> getChild() const override {
@@ -184,6 +181,11 @@ struct PhysicalOperatorWrapper
 {
     PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema);
 
+    /// for compatibility with free functions requiring getChildren()
+    [[nodiscard]] std::vector<std::shared_ptr<PhysicalOperatorWrapper>> getChildren() const {return children;}
+    /// Returns a string representation of the wrapper
+    [[nodiscard]] std::string toString() const;
+
     PhysicalOperator physicalOperator;
     std::optional<Schema> inputSchema, outputSchema;
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children {};
@@ -193,9 +195,6 @@ struct PhysicalOperatorWrapper
 
     bool isScan = false;
     bool isEmit = false;
-
-    /// Returns a string representation of the wrapper
-    std::string toString() const;
 };
 }
 FMT_OSTREAM(NES::PhysicalOperator);
