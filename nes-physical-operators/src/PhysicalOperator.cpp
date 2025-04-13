@@ -117,24 +117,15 @@ std::string PhysicalOperator::toString() const {
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema)
     : physicalOperator(physicalOperator), inputSchema(inputSchema), outputSchema(outputSchema) {};
 
-std::string PhysicalOperatorWrapper::toString() const {
+std::string PhysicalOperatorWrapper::toString() const
+{
     std::ostringstream oss;
     oss << "PhysicalOperatorWrapper(";
-    oss << "Operator: " << physicalOperator.toString() << ", ";
+    oss << "Operator: " << physicalOperator.toString() << ", id: " << physicalOperator.getId() << ", ";
     oss << "InputSchema: " << (inputSchema ? "present" : "none") << ", ";
     oss << "OutputSchema: " << (outputSchema ? "present" : "none") << ", ";
     oss << "isScan: " << std::boolalpha << isScan << ", ";
     oss << "isEmit: " << std::boolalpha << isEmit;
-    if (!children.empty()) {
-        oss << ", Children: [";
-        for (size_t i = 0; i < children.size(); ++i)
-        {
-            oss << children[i]->toString();
-            if (i + 1 < children.size())
-                oss << ", ";
-        }
-        oss << "]";
-    }
     oss << ")";
     return oss.str();
 }
