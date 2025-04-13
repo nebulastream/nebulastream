@@ -27,6 +27,7 @@
 #include <ErrorHandling.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES
 {
@@ -173,6 +174,11 @@ struct PhysicalOperator {
     std::unique_ptr<Concept> self;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const PhysicalOperator& op)
+{
+    return os << op.toString();
+}
+
 /// Wrapper for the physical operator to store input and output schema after query optimization.
 struct PhysicalOperatorWrapper
 {
@@ -192,3 +198,4 @@ struct PhysicalOperatorWrapper
     std::string toString() const;
 };
 }
+FMT_OSTREAM(NES::PhysicalOperator);
