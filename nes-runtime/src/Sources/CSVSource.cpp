@@ -264,7 +264,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 }
                 auto byteOffset = sourceInfo->leftoverByteCount;
                 //todo: this was new
-                while (byteOffset < incomingTupleSize) {
+                while (byteOffset < bytesPerBuffer) {
                     NES_DEBUG("TCPSource::fillBuffer: reading from socket");
                     int bytesRead =
                         read(sourceInfo->sockfd, &sourceInfo->incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
