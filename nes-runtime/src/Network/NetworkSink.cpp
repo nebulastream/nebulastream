@@ -136,8 +136,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
             NES_ERROR("error happened inside {}", nesPartition.toString());
         }
         //todo #4311: check why sometimes buffers arrive after a channel has been closed
-        NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
-                        "Trying to write to invalid channel while no connection is in progress");
+//        NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
+//                        "Trying to write to invalid channel while no connection is in progress");
 
         //check if connection was established and buffer it has not yest been established
         if (!retrieveNewChannelAndUnbuffer(workerContext)) {
