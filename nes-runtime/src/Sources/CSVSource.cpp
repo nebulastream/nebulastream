@@ -205,7 +205,7 @@ std::pair<size_t, size_t> CSVSource::findWatermarkIndex(const std::vector<std::v
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
-    NES_ERROR("CSVSource::receiveData called on  {}", operatorId);
+    NES_DEBUG("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
