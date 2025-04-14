@@ -176,7 +176,7 @@ void FileSink::shutdown() {
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef context) {
 
     if (!timestampAndWriteToSocket) {
-        NES_ERROR("sink here 1")
+        // NES_ERROR("sink here 1")
         if (!isOpen) {
             NES_DEBUG("The output file could not be opened during setup of the file sink.");
             return false;
@@ -208,7 +208,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         outputFile.flush();
         return true;
     } else {
-        NES_ERROR("sink here 2")
+        // NES_ERROR("sink here 2")
         (void) context;
          auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
@@ -219,6 +219,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 //            return writeDataToFile(inputBuffer);
              return writeDataToTCP(vec, sinkInfo);
         }
+        NES_ERROR("replayed ?");
         numberOfReceivedBuffers++;
 
         if (!inputBuffer) {

@@ -208,9 +208,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
-        NES_ERROR("here 1");
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         if (getReplayData()) {
+            NES_ERROR("here replayed");
             if (sourceInfo->records.empty()) {
                 // not to wait acknowledgment on the first start of source
                 shouldGetLastAck = false;
