@@ -114,6 +114,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
     // get timestamp of not probed slices
     auto migrationTimestamp =
         std::min(watermarkProcessorBuild->getCurrentWatermark(), watermarkProcessorProbe->getCurrentWatermark());
+    NES_ERROR("serializing state from {} to {}", migrationTimestamp, UINT64_MAX);
 
     // add sizes to metadata
     auto metadata = bufferManager->getBufferBlocking();
