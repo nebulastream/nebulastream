@@ -208,6 +208,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
+        NES_ERROR("here 1");
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
         if (getReplayData()) {
             if (sourceInfo->records.empty()) {
@@ -391,6 +392,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         generatedTuples += tupleCount;
         generatedBuffers++;
     } else {
+        NES_ERROR("here 2");
         fillBuffer(buffer);
     }
     NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
