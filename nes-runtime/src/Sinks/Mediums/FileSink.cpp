@@ -219,7 +219,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 //            return writeDataToFile(inputBuffer);
              return writeDataToTCP(vec, sinkInfo);
         }
-        NES_ERROR("replayed ?");
+        // NES_ERROR("replayed ?");
         numberOfReceivedBuffers++;
 
         if (!inputBuffer) {
