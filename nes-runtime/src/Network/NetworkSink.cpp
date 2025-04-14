@@ -203,7 +203,7 @@ std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartitio
 
 void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
 
-    NES_DEBUG("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), decomposedQueryId);
+    NES_ERROR("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), decomposedQueryId);
     inherited0::reconfigure(task, workerContext);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     auto shouldPropagateMarker = true;
