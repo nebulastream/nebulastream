@@ -133,7 +133,7 @@ inlineTable
     ;
 
 tableAlias
-    : (AS? strictIdentifier identifierList?)?
+    : (AS? identifier identifierList?)?
     ;
 
 multipartIdentifier
@@ -145,17 +145,11 @@ namedExpression
     | expression
     ;
 
-identifier
-    : strictIdentifier
-    | {!SQL_standard_keyword_behavior}? strictNonReserved
-    ;
+identifier: strictIdentifier;
 
 strictIdentifier
-    : IDENTIFIER              #unquotedIdentifier
-    | quotedIdentifier        #quotedIdentifierAlternative
-    | {SQL_standard_keyword_behavior}? ansiNonReserved #unquotedIdentifier
-    | {!SQL_standard_keyword_behavior}? nonReserved    #unquotedIdentifier
-    ;
+    : IDENTIFIER #unquotedIdentifier
+    | quotedIdentifier #quotedIdentifierAlternative;
 
 quotedIdentifier
     : BACKQUOTED_IDENTIFIER
@@ -348,111 +342,6 @@ booleanValue
     : TRUE | FALSE
     ;
 
-/// can not be used as stream alias
-strictNonReserved
-    : FULL
-    | INNER
-    | JOIN
-    | LEFT
-    | NATURAL
-    | ON
-    | RIGHT
-    | UNION
-    | USING
-	| SOURCE
-	| CREATE
-	| SINK
-    ;
-
-ansiNonReserved
-///--ANSI-NON-RESERVED-START
-    : ASC
-    | AT
-    | BETWEEN
-    | BY
-    | CUBE
-    | DELETE
-    | DESC
-    | DIV
-    | DROP
-    | EXISTS
-    | FIRST
-    | GROUPING
-    | INSERT
-    | LAST
-    | LIKE
-    | LIMIT
-    | MERGE
-    | NULLS
-    | QUERY
-    | RLIKE
-    | ROLLUP
-    | SETS
-    | TRUE
-    | TYPE
-    | VALUES
-    | WINDOW
-	| SOURCE
-	| CREATE
-	| SINK
-///--ANSI-NON-RESERVED-END
-    ;
-
-nonReserved
-///--DEFAULT-NON-RESERVED-START
-    : ASC
-    | AT
-    | BETWEEN
-    | CUBE
-    | BY
-    | DELETE
-    | DESC
-    | DIV
-    | DROP
-    | EXISTS
-    | FIRST
-    | GROUPING
-    | INSERT
-    | LAST
-    | LIKE
-    | LIMIT
-    | MERGE
-    | NULLS
-    | QUERY
-    | RLIKE
-    | ROLLUP
-    | SETS
-    | TRUE
-    | TYPE
-    | VALUES
-    | WINDOW
-	| ALL
-	| AND
-	| ANY
-	| AS
-	| DISTINCT
-	| ESCAPE
-	| FALSE
-	| FROM
-	| GROUP
-	| HAVING
-	| IN
-	| INTO
-	| IS
-	| NOT
-	| NULLTOKEN
-	| OR
-	| ORDER
-	| SELECT
-	| SOME
-	| TABLE
-	| WHERE
-	| WITH
-	| SOURCE
-	| CREATE
-	| SINK
-///--DEFAULT-NON-RESERVED-END
-    ;
 
 ALL: 'ALL' | 'all';
 AND: 'AND' | 'and';
@@ -546,10 +435,43 @@ LOCALHOST: 'LOCALHOST' | 'localhost';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
+
+
+DB_OBJECT_TYPE : SOURCES | QUERIES;
+
+SOURCES: 'SOURCES' | 'sources';
+QUERIES: 'QUERIES' | 'queries';
+
+SHOW : 'SHOW';
+FORMAT : 'FORMAT';
+CREATE : 'CREATE';
+SOURCE : 'SOURCE';
+SINK : 'SINK';
+
+
+
+DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE | CUSTOM_TYPE;
+
+INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
+INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
+INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
+TINY_INT_TYPE: 'TINYINT';
+SMALL_INT_TYPE: 'SMALLINT';
+NORMAL_INT_TYPE: 'INT' | 'INTEGER';
+BIG_INT_TYPE: 'BIGINT';
+FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
+CHAR_TYPE: 'CHAR';
+VARSIZED_TYPE: 'VARSIZED';
+BOOLEAN_TYPE: 'BOOLEAN';
+CUSTOM_TYPE: IDENTIFIER;
+
+UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED';
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************
 /// End of the keywords list
 ///****************************
+
+
 
 BOOLEAN_VALUE: 'true' | 'false';
 EQ  : '=' | '==';
@@ -607,9 +529,21 @@ fragment LETTER
     : ('a'..'z'|'A'..'Z'|'_')
     ;
 
+SIMPLE_COMMENT
+    : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
+    ;
+
+BRACKETED_COMMENT
+    : '/*' {!isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
+    ;
+
 WS
     : [ \r\n\t]+ -> channel(HIDDEN)
     ;
+
+
+FOUR_OCTETS: OCTET '.' OCTET '.' OCTET '.' OCTET;
+OCTET: [0-2][0-9]?[0-9]?;
 
 /// Catch-all for anything we can't recognize.
 /// We use this to be able to ignore and recover all the text
@@ -618,33 +552,5 @@ UNRECOGNIZED
     : .
     ;
 
-DB_OBJECT_TYPE : SOURCES | QUERIES;
-
-SOURCES: 'SOURCES' | 'sources';
-QUERIES: 'QUERIES' | 'queries';
-
-
-DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE | CUSTOM_TYPE;
-
-INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
-INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
-INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
-TINY_INT_TYPE: 'TINYINT';
-SMALL_INT_TYPE: 'SMALLINT';
-NORMAL_INT_TYPE: 'INT' | 'INTEGER';
-BIG_INT_TYPE: 'BIGINT';
-FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
-CHAR_TYPE: 'CHAR';
-VARSIZED_TYPE: 'VARSIZED';
-BOOLEAN_TYPE: 'BOOLEAN';
-CUSTOM_TYPE: IDENTIFIER;
-
-UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED';
-
-
-
-SHOW : 'SHOW';
-FORMAT : 'FORMAT';
-CREATE : 'CREATE';
-SOURCE : 'SOURCE';
-SINK : 'SINK';
+//Make sure that you add lexer rules for keywords before the identifier rule,
+//otherwise it will take priority and your grammars will not work

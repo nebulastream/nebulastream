@@ -57,9 +57,9 @@ TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
     /// 'Query::from("window").map(Attribute("new_id").project(Attribute("new_id"))' is diffuclt/impossible to create using the SQL syntax.
     /// Given that a projection first should be more efficient, this seems to be ok for now.
     {
-        const std::string antlrQueryString = "SELECT (id * INT32(3)) AS new_id FROM window INTO File";
+        const std::string antlrQueryString = "SELECT (id * INT32(3)) AS new_id FROM stream INTO File";
         const auto internalLogicalQuery
-            = Query::from("window").map(Attribute("new_id") = Attribute("id") * 3).project(Attribute("new_id")).sink("File");
+            = Query::from("stream").map(Attribute("new_id") = Attribute("id") * 3).project(Attribute("new_id")).sink("File");
         EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
     }
     /// Todo #440: the grammar currently does not support a mixture of '*' and projections.
@@ -842,4 +842,10 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
               .selection(Attribute("average_id") > 24 && Attribute("max_id") >= 456)
               .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+TEST_F(AntlrSQLQueryParserTest, failProjectJoinKeyword)
+{
+    const auto inputQuery = "SELECT JOIN FROM stream"s;
+    EXPECT_ANY_THROW(AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(inputQuery));
 }
