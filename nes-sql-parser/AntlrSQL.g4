@@ -113,7 +113,7 @@ inlineTable
     ;
 
 tableAlias
-    : (AS? strictIdentifier identifierList?)?
+    : (AS? identifier identifierList?)?
     ;
 
 multipartIdentifierList
@@ -128,17 +128,11 @@ namedExpression
     : expression (AS? (name=errorCapturingIdentifier | identifierList))?
     ;
 
-identifier
-    : strictIdentifier
-    | {!SQL_standard_keyword_behavior}? strictNonReserved
-    ;
+identifier: strictIdentifier;
 
 strictIdentifier
-    : IDENTIFIER              #unquotedIdentifier
-    | quotedIdentifier        #quotedIdentifierAlternative
-    | {SQL_standard_keyword_behavior}? ansiNonReserved #unquotedIdentifier
-    | {!SQL_standard_keyword_behavior}? nonReserved    #unquotedIdentifier
-    ;
+    : IDENTIFIER #unquotedIdentifier
+    | quotedIdentifier #quotedIdentifierAlternative;
 
 quotedIdentifier
     : BACKQUOTED_IDENTIFIER
@@ -353,102 +347,6 @@ booleanValue
     : TRUE | FALSE
     ;
 
-/// can not be used as stream alias
-strictNonReserved
-    : FULL
-    | INNER
-    | JOIN
-    | LEFT
-    | NATURAL
-    | ON
-    | RIGHT
-    | UNION
-    | USING
-    ;
-
-ansiNonReserved
-///--ANSI-NON-RESERVED-START
-    : ASC
-    | AT
-    | BETWEEN
-    | BY
-    | CUBE
-    | DELETE
-    | DESC
-    | DIV
-    | DROP
-    | EXISTS
-    | FIRST
-    | GROUPING
-    | INSERT
-    | LAST
-    | LIKE
-    | LIMIT
-    | MERGE
-    | NULLS
-    | QUERY
-    | RLIKE
-    | ROLLUP
-    | SETS
-    | TRUE
-    | TYPE
-    | VALUES
-    | WINDOW
-///--ANSI-NON-RESERVED-END
-    ;
-
-nonReserved
-///--DEFAULT-NON-RESERVED-START
-    : ASC
-    | AT
-    | BETWEEN
-    | CUBE
-    | BY
-    | DELETE
-    | DESC
-    | DIV
-    | DROP
-    | EXISTS
-    | FIRST
-    | GROUPING
-    | INSERT
-    | LAST
-    | LIKE
-    | LIMIT
-    | MERGE
-    | NULLS
-    | QUERY
-    | RLIKE
-    | ROLLUP
-    | SETS
-    | TRUE
-    | TYPE
-    | VALUES
-    | WINDOW
-	| ALL
-	| AND
-	| ANY
-	| AS
-	| DISTINCT
-	| ESCAPE
-	| FALSE
-	| FROM
-	| GROUP
-	| HAVING
-	| IN
-	| INTO
-	| IS
-	| NOT
-	| NULLTOKEN
-	| OR
-	| ORDER
-	| SELECT
-	| SOME
-	| TABLE
-	| WHERE
-	| WITH
-///--DEFAULT-NON-RESERVED-END
-    ;
 
 ALL: 'ALL' | 'all';
 AND: 'AND' | 'and';
@@ -547,6 +445,8 @@ AT_LEAST_ONCE : 'AT_LEAST_ONCE';
 ///****************************
 /// End of the keywords list
 ///****************************
+
+
 
 BOOLEAN_VALUE: 'true' | 'false';
 EQ  : '=' | '==';
@@ -669,3 +569,6 @@ OCTET: [0-2][0-9]?[0-9]?;
 UNRECOGNIZED
     : .
     ;
+
+//Make sure that you add lexer rules for keywords before the identifier rule,
+//otherwise it will take priority and your grammars will not work
