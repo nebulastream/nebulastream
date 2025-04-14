@@ -214,7 +214,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         // NES_ERROR("got buffer {}.{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
         if (!getReplayData()) {
-            NES_ERROR("replay data not activated writing buffer");
+            NES_DEBUG("replay data not activated writing buffer");
             std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
 //            return writeDataToFile(inputBuffer);
              return writeDataToTCP(vec, sinkInfo);
