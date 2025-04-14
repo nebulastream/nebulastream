@@ -132,9 +132,9 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     //if async establishing of connection is in process, do not attempt to send data but buffer it instead
     //todo #4210: decrease amount of hashmap lookups
     if (!channel) {
-        if (!workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
-            NES_ERROR("error happened inside {}", nesPartition.toString());
-        }
+//        if (!workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId())) {
+//            NES_ERROR("error happened inside {}", nesPartition.toString());
+//        }
         //todo #4311: check why sometimes buffers arrive after a channel has been closed
 //        NES_ASSERT2_FMT(workerContext.isAsyncConnectionInProgress(getUniqueNetworkSinkDescriptorId()),
 //                        "Trying to write to invalid channel while no connection is in progress");
@@ -203,7 +203,7 @@ std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartitio
 
 void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::WorkerContext& workerContext) {
 
-    NES_ERROR("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), decomposedQueryId);
+    // NES_ERROR("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), decomposedQueryId);
     inherited0::reconfigure(task, workerContext);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
     auto shouldPropagateMarker = true;
