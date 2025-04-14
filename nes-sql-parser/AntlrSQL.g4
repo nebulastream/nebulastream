@@ -42,14 +42,17 @@ DISABLE_WARNING(-Wunused-parameter)
 
 singleStatement: statement ';'* EOF;
 
-statement: query | createSourceStatement | dropStatement;
+statement: query | createStatement | dropStatement | showStatement;
 
-createSourceStatement: CREATE SOURCE sourceName=IDENTIFIER sourceDefinition fromQuery?;
+createStatement: CREATE createDefinition;
+createDefinition: createSourceDefinition | createSinkDefinition;
+createSourceDefinition: SOURCE sourceName=identifier schemaDefinition fromQuery?;
+createSinkDefinition: SINK sinkName=identifier schemaDefinition;
 
-sourceDefinition: '(' columnDefinition (',' columnDefinition)* ')';
+schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
+columnDefinition: IDENTIFIER typeDefinition;
 
-columnDefinition: IDENTIFIER type=DATA_TYPE;
-
+typeDefinition: DATA_TYPE;
 
 fromQuery: AS query;
 
@@ -58,11 +61,7 @@ dropSubject: dropQuery | dropSource;
 dropQuery: QUERY id=IDENTIFIER;
 dropSource: SOURCE name=IDENTIFIER;
 
-
-showStatement: SHOW DB_OBJECT_TYPE (FORMAT (TEXT | JSON))?;
-
-
-
+showStatement: SHOW DB_OBJECT_TYPE (FORMAT format=('TEXT' | 'JSON'))?;
 
 
 query : queryTerm queryOrganization;
@@ -360,6 +359,9 @@ strictNonReserved
     | RIGHT
     | UNION
     | USING
+	| SOURCE
+	| CREATE
+	| SINK
     ;
 
 ansiNonReserved
@@ -390,6 +392,9 @@ ansiNonReserved
     | TYPE
     | VALUES
     | WINDOW
+	| SOURCE
+	| CREATE
+	| SINK
 ///--ANSI-NON-RESERVED-END
     ;
 
@@ -443,6 +448,9 @@ nonReserved
 	| TABLE
 	| WHERE
 	| WITH
+	| SOURCE
+	| CREATE
+	| SINK
 ///--DEFAULT-NON-RESERVED-END
     ;
 
@@ -616,37 +624,27 @@ SOURCES: 'SOURCES' | 'sources';
 QUERIES: 'QUERIES' | 'queries';
 
 
-//We can always drop the explicit matching on names here and use the registry in the Binder.
-//I'd like to have them in the parser anyway as keywords
-DATA_TYPE: INTEGER_SIGNED | INTEGER_UNSIGNED | FLOAT | BOOLEAN | VARSIZED | CHARACTER_VARYING | CHAR_ARRAY;
+DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE | CUSTOM_TYPE;
 
-INTEGER_UNSIGNED: UNSIGNED INTEGER_SIGNED;
-UNSIGNED: 'UNSIGNED';
-INTEGER_SIGNED: INT8 | INT16 | INT32 | INT64;
-INT8: 'TINYINT';
-INT16: 'SMALLINT';
-INT32: 'INT' | 'INTEGER';
-INT64: 'BIGINT';
+INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
+INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
+INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
+TINY_INT_TYPE: 'TINYINT';
+SMALL_INT_TYPE: 'SMALLINT';
+NORMAL_INT_TYPE: 'INT' | 'INTEGER';
+BIG_INT_TYPE: 'BIGINT';
+FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
+CHAR_TYPE: 'CHAR';
+VARSIZED_TYPE: 'VARSIZED';
+BOOLEAN_TYPE: 'BOOLEAN';
+CUSTOM_TYPE: IDENTIFIER;
 
-FLOAT: FLOAT32 | FLOAT64;
-FLOAT32: 'FLOAT32' | 'REAL';
-FLOAT64: 'FLOAT64' | 'DOUBLE PRECISION';
+UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED';
 
-BOOLEAN: 'BOOLEAN';
 
-VARSIZED: 'VARSIZED';
 
-//Standard dictates that these are array types that should be able to take a parameter (e.g. CHAR(10))
-// but if you omit the parameter, it should default to 1
-CHARACTER_VARYING: CHAR 'VARYING' LENGTH_SPECIFIER? | 'VARCHAR' LENGTH_SPECIFIER?;
-CHAR_ARRAY: CHAR LENGTH_SPECIFIER?;
-CHAR: 'CHAR' | 'CHARACTER';
-
-LENGTH_SPECIFIER: '(' INTEGER_VALUE ')';
-
-CREATE : 'CREATE';
-SOURCE : 'SOURCE';
 SHOW : 'SHOW';
 FORMAT : 'FORMAT';
-TEXT : 'TEXT';
-JSON : 'JSON';
+CREATE : 'CREATE';
+SOURCE : 'SOURCE';
+SINK : 'SINK';
