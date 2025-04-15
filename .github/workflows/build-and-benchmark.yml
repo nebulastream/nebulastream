@@ -22,6 +22,7 @@ jobs:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
       volumes:
         - ccache:/ccache
+        - test-file-cache:/test-file-cache
       env:
         CCACHE_DIR: /ccache
         MOLD_JOBS: 1
@@ -40,7 +41,7 @@ jobs:
           ref: ${{ inputs.ref }}
       - name: build systest
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache
           cmake --build build --target systest -j -- -k 0
       - name: run Benchmarks
         run: |
