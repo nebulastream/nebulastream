@@ -584,7 +584,7 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
 void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaData) {
     uint64_t newGlobalWaterMarkProbe =
         watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
-    NES_DEBUG("newGlobalWaterMarkProbe {} bufferMetaData {}", newGlobalWaterMarkProbe, bufferMetaData.toString());
+    NES_ERROR("newGlobalWaterMarkProbe {} bufferMetaData {} seqNumber {}", newGlobalWaterMarkProbe, bufferMetaData.toString(), bufferMetaData.seqNumber.toString());
 
     if (setForReuse) {
         return;
