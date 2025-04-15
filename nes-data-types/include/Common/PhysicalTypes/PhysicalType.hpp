@@ -13,21 +13,22 @@
 */
 
 #pragma once
-#include <Common/DataTypes/DataType.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 
+#include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
-
 
 /// The physical data type represents the physical representation of a NES data type.
 class PhysicalType
 {
 public:
-    explicit PhysicalType(std::shared_ptr<DataType> type) noexcept : type(std::move(type)) { }
+    explicit PhysicalType(std::shared_ptr<DataType> type) : type(std::move(type)) { }
 
     virtual ~PhysicalType() = default;
 
@@ -47,14 +48,14 @@ public:
     /// Returns the raw size of the type in bytes. This does NOT include a potential null indicator.
     [[nodiscard]] virtual uint64_t getRawSizeInBytes() const noexcept = 0;
 
-    virtual std::string convertRawToString(const void* rawData) const noexcept = 0;
+    virtual std::string convertRawToString(const void* rawData) const = 0;
 
     /// Converts the binary representation of this value to a string without filling
     /// up the difference between the length of the string and the end of the schema definition
     /// with unrelated characters.
-    virtual std::string convertRawToStringWithoutFill(const void* rawData) const noexcept = 0;
+    virtual std::string convertRawToStringWithoutFill(const void* rawData) const = 0;
 
-    [[nodiscard]] virtual std::string toString() const noexcept = 0;
+    [[nodiscard]] virtual std::string toString() const = 0;
 
     bool operator==(const PhysicalType& rhs) const { return *type == *rhs.type; }
 

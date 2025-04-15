@@ -52,8 +52,8 @@ public:
     [[nodiscard]] SliceStart getSliceStartTs(const Timestamp ts) const
     {
         const auto timestampRaw = ts.getRawValue();
-        auto prevSlideStart = timestampRaw - ((timestampRaw) % windowSlide);
-        auto prevWindowStart = timestampRaw < windowSize ? prevSlideStart : timestampRaw - ((timestampRaw - windowSize) % windowSlide);
+        const auto prevSlideStart = timestampRaw - ((timestampRaw) % windowSlide);
+        const auto prevWindowStart = timestampRaw < windowSize ? prevSlideStart : timestampRaw - ((timestampRaw - windowSize) % windowSlide);
         return SliceStart(std::max(prevSlideStart, prevWindowStart));
     }
 

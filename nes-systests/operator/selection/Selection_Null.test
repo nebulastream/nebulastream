@@ -2,9 +2,9 @@
 # description: Selection tests with null values
 # groups: [Selection]
 
-Source stream UINT64 timestamp_NULLABLE INT32 value1_NULLABLE VARSIZED value2_NULLABLE
+Source stream UINT64 ts INT32 value1_NULLABLE VARSIZED value2_NULLABLE
 1,,
-,,
+2,,
 3,1,one
 4,1,one
 5,1,one
@@ -14,8 +14,8 @@ Source stream UINT64 timestamp_NULLABLE INT32 value1_NULLABLE VARSIZED value2_NU
 9,-1,
 10,,
 
-SINK sink0 UINT64 stream$timestamp_NULLABLE INT32 stream$value1_NULLABLE VARSIZED stream$value2_NULLABLE
-SINK sink1 UINT64 stream$timestamp_NULLABLE INT32 stream$value1_NULLABLE
+SINK sink0 UINT64 stream$ts INT32 stream$value1_NULLABLE VARSIZED stream$value2_NULLABLE
+SINK sink1 UINT64 stream$ts INT32 stream$value1_NULLABLE
 
 # Filter equal on INT32 with null
 SELECT * FROM stream WHERE value1_NULLABLE == 1 INTO sink0
@@ -25,8 +25,14 @@ SELECT * FROM stream WHERE value1_NULLABLE == 1 INTO sink0
 5,1,one
 
 # Filter equal on VARSIZED with null
-SELECT timestamp_NULLABLE, value1_NULLABLE FROM stream WHERE value2_NULLABLE == "one" INTO sink1
+SELECT ts, value1_NULLABLE FROM stream WHERE value2_NULLABLE == "one" INTO sink1
 ----
 3,1
 4,1
 5,1
+
+# Filter < 1, keep all values
+SELECT * FROM stream WHERE value1_NULLABLE < 1 INTO sink0
+----
+8,0,zero
+9,-1,

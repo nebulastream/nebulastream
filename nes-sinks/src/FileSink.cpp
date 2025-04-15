@@ -18,19 +18,21 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
+
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
+
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/FileSink.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -64,7 +66,7 @@ std::ostream& FileSink::toString(std::ostream& str) const
 void FileSink::start(Runtime::Execution::PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up file sink: {}", *this);
-    auto stream = outputFileStream.wlock();
+    const auto stream = outputFileStream.wlock();
     /// Remove an existing file unless the isAppend mode is isAppend.
     if (!isAppend)
     {
@@ -107,7 +109,7 @@ void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Exe
         auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
         NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
         {
-            auto wlocked = outputFileStream.wlock();
+            const auto wlocked = outputFileStream.wlock();
             wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
             wlocked->flush();
         }
@@ -116,7 +118,7 @@ void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Exe
 void FileSink::stop(Runtime::Execution::PipelineExecutionContext&)
 {
     NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
-    auto stream = outputFileStream.wlock();
+    const auto stream = outputFileStream.wlock();
     stream->flush();
     stream->close();
 }

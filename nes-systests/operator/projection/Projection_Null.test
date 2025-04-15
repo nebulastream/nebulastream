@@ -1,0 +1,25 @@
+# name: projection/Projection_Null.test
+# description: Simple projection tests with null values
+# groups: [Projection]
+
+Source stream UINT64 id UINT64 value_NULLABLE UINT64 timestamp VARSIZED text_NULLABLE
+1,1,0,sometext
+2,1,1,anothertext
+3,1,2,
+4,2,10,
+5,,19,
+6,,20,yetanothertext
+7,,21,finish
+
+SINK sink UINT64 stream$value_NULLABLE VARSIZED stream$text_NULLABLE
+
+# 0: [value, text]
+SELECT value_NULLABLE, text_NULLABLE FROM stream INTO sink
+----
+1,sometext
+1,anothertext
+1,
+2,
+,
+,yetanothertext
+,finish
