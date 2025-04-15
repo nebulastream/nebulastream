@@ -28,6 +28,11 @@ elseif (SANITIZER_OPTION STREQUAL "undefined")
     MESSAGE(STATUS "Enabling UB Sanitizer")
     add_compile_options(-fsanitize=undefined)
     add_link_options(-fsanitize=undefined)
+
+    # TODO #799: Memory Alignment in NebulaStream
+    add_compile_options(-fno-sanitize=alignment)
+    add_link_options(-fno-sanitize=alignment)
+
 elseif (SANITIZER_OPTION STREQUAL "address")
     MESSAGE(STATUS "Enabling Address Sanitizer")
     add_compile_options(-fsanitize=address)
