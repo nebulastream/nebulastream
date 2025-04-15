@@ -8,6 +8,7 @@
 #include "oatpp/network/tcp/server/ConnectionProvider.hpp"
 
 #include "controller/QueryController.hpp"
+#include "controller/SinkCatalogController.hpp"
 #include "controller/SourceCatalogController.hpp"
 
 #include <SourceCatalogs/SourceCatalog.hpp>
@@ -15,7 +16,7 @@
 #include <ErrorHandling.hpp>
 #include <yaml-cpp/yaml.h>
 
-void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog, std::shared_ptr<std::map<size_t, std::string>> queryCatalog) {
+void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog, std::shared_ptr<std::map<size_t, std::string>> queryCatalog, std::shared_ptr<std::unordered_map<std::string, NES::CLI::Sink>> sinkCatalog) {
 
     // // Create a JSON ObjectMapper manually
     auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared();
@@ -26,6 +27,8 @@ void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceC
     router->addController(queryController);
     auto sourceCatalogController = std::make_shared<SourceCatalogController>(objectMapper, sourceCatalog);
     router->addController(sourceCatalogController);
+    auto sinkCatalogController = std::make_shared<SinkCatalogController>(objectMapper, sinkCatalog);
+    router->addController(sinkCatalogController);
 
     /* Create HTTP connection handler with router */
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
@@ -73,12 +76,15 @@ int main(int argc, char* argv[]) {
 
      auto queryCatalog = std::make_shared<std::map<size_t, std::string>>();
 
+     auto sinkCatalog = std::make_shared<std::unordered_map<std::string, NES::CLI::Sink>>();
+     addSinks(sinkCatalog, config);
+
 
     /* Init oatpp Environment */
     oatpp::base::Environment::init();
 
     /* Run App */
-    run(port, sourceCatalog, queryCatalog);
+    run(port, sourceCatalog, queryCatalog, sinkCatalog);
 
     /* Destroy oatpp Environment */
     oatpp::base::Environment::destroy();

@@ -199,6 +199,28 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     }
 }
 
+void validateAndSetSinkDescriptors2(const QueryPlan& query, const std::unordered_map<std::string, NES::CLI::Sink>& sinks)
+{
+    PRECONDITION(
+        query.getSinkOperators().size() == 1,
+        "NebulaStream currently only supports a single sink per query, but the query contains: {}",
+        query.getSinkOperators().size());
+    PRECONDITION(not sinks.empty(), "Expects at least one sink in the query config!");
+    if (const auto sink = sinks.find(query.getSinkOperators().at(0)->sinkName); sink != sinks.end())
+    {
+        auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
+        query.getSinkOperators().at(0)->sinkDescriptor
+            = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+    }
+    else
+    {
+        throw UnknownSinkType(
+            "Sinkname {} not specified in the configuration {}",
+            query.getSinkOperators().front()->sinkName,
+            fmt::join(std::views::keys(sinks), ","));
+    }
+}
+
 std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
@@ -322,5 +344,37 @@ void addSources(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCa
                 sourceCatalog->getLogicalSource(logicalSourceName),
                 INITIAL<WorkerId>));
     }
+}
+
+void addSinks(const std::shared_ptr<std::unordered_map<std::string, NES::CLI::Sink>>& sinkCatalog, const QueryConfig& config) {
+    for (const auto& [sinkName, sink] : config.sinks)
+    {
+        (*sinkCatalog)[sinkName] = sink;
+    }
+}
+
+std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan2(const std::string& query_string, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog, const std::unordered_map<std::string, NES::CLI::Sink>& sinks)
+{
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
+    auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
+    auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
+    auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
+    auto queryRewritePhase = Optimizer::QueryRewritePhase::create();
+
+    auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query_string);
+
+    validateAndSetSinkDescriptors2(*query, sinks);
+    semanticQueryValidation->validate(query); /// performs the first type inference
+
+    logicalSourceExpansionRule->apply(query);
+    typeInference->performTypeInferenceQuery(query);
+
+    originIdInferencePhase->execute(query);
+    queryRewritePhase->execute(query);
+    typeInference->performTypeInferenceQuery(query);
+
+    NES_INFO("QEP:\n {}", query->toString());
+    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
+    return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 }
