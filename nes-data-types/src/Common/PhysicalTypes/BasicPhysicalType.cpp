@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
+
 #include <Util/Strings.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -37,7 +39,7 @@ uint64_t BasicPhysicalType::getRawSizeInBytes() const noexcept
 {
     switch (nativeType)
     {
-        using enum NES::BasicPhysicalType::NativeType;
+        using enum NativeType;
         case INT_8:
             return sizeof(int8_t);
         case INT_16:
@@ -68,95 +70,95 @@ uint64_t BasicPhysicalType::getRawSizeInBytes() const noexcept
     return -1;
 }
 
-std::string BasicPhysicalType::convertRawToString(const void* data) const noexcept
+std::string BasicPhysicalType::convertRawToString(const void* rawField) const
 {
-    if (!data)
+    if (rawField == nullptr)
     {
-        return std::string();
+        return {};
     }
     switch (nativeType)
     {
-        using enum NES::BasicPhysicalType::NativeType;
+        using enum NativeType;
         case INT_8:
-            return std::to_string(*static_cast<const int8_t*>(data));
+            return std::to_string(*static_cast<const int8_t*>(rawField));
         case UINT_8:
-            return std::to_string(*static_cast<const uint8_t*>(data));
+            return std::to_string(*static_cast<const uint8_t*>(rawField));
         case INT_16:
-            return std::to_string(*static_cast<const int16_t*>(data));
+            return std::to_string(*static_cast<const int16_t*>(rawField));
         case UINT_16:
-            return std::to_string(*static_cast<const uint16_t*>(data));
+            return std::to_string(*static_cast<const uint16_t*>(rawField));
         case INT_32:
-            return std::to_string(*static_cast<const int32_t*>(data));
+            return std::to_string(*static_cast<const int32_t*>(rawField));
         case UINT_32:
-            return std::to_string(*static_cast<const uint32_t*>(data));
+            return std::to_string(*static_cast<const uint32_t*>(rawField));
         case INT_64:
-            return std::to_string(*static_cast<const int64_t*>(data));
+            return std::to_string(*static_cast<const int64_t*>(rawField));
         case UINT_64:
-            return std::to_string(*static_cast<const uint64_t*>(data));
+            return std::to_string(*static_cast<const uint64_t*>(rawField));
         case FLOAT:
-            return Util::formatFloat(*static_cast<const float*>(data));
+            return Util::formatFloat(*static_cast<const float*>(rawField));
         case DOUBLE:
-            return Util::formatFloat(*static_cast<const double*>(data));
+            return Util::formatFloat(*static_cast<const double*>(rawField));
         case BOOLEAN:
-            return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
+            return std::to_string(static_cast<int>(*static_cast<const bool*>(rawField)));
         case CHAR:
             if (getRawSizeInBytes() != 1)
             {
                 return "invalid char type";
             }
-            return std::string{*static_cast<const char*>(data)};
+            return std::string{*static_cast<const char*>(rawField)};
         default:
             return "invalid native type";
     }
 }
 
-std::string BasicPhysicalType::convertRawToStringWithoutFill(const void* data) const noexcept
+std::string BasicPhysicalType::convertRawToStringWithoutFill(const void* rawField) const
 {
-    if (!data)
+    if (rawField == nullptr)
     {
-        return std::string();
+        return {};
     }
     switch (nativeType)
     {
-        using enum NES::BasicPhysicalType::NativeType;
+        using enum NativeType;
         case INT_8:
-            return std::to_string(*static_cast<const int8_t*>(data));
+            return std::to_string(*static_cast<const int8_t*>(rawField));
         case UINT_8:
-            return std::to_string(*static_cast<const uint8_t*>(data));
+            return std::to_string(*static_cast<const uint8_t*>(rawField));
         case INT_16:
-            return std::to_string(*static_cast<const int16_t*>(data));
+            return std::to_string(*static_cast<const int16_t*>(rawField));
         case UINT_16:
-            return std::to_string(*static_cast<const uint16_t*>(data));
+            return std::to_string(*static_cast<const uint16_t*>(rawField));
         case INT_32:
-            return std::to_string(*static_cast<const int32_t*>(data));
+            return std::to_string(*static_cast<const int32_t*>(rawField));
         case UINT_32:
-            return std::to_string(*static_cast<const uint32_t*>(data));
+            return std::to_string(*static_cast<const uint32_t*>(rawField));
         case INT_64:
-            return std::to_string(*static_cast<const int64_t*>(data));
+            return std::to_string(*static_cast<const int64_t*>(rawField));
         case UINT_64:
-            return std::to_string(*static_cast<const uint64_t*>(data));
+            return std::to_string(*static_cast<const uint64_t*>(rawField));
         case FLOAT:
-            return std::to_string(*static_cast<const float*>(data));
+            return std::to_string(*static_cast<const float*>(rawField));
         case DOUBLE:
-            return std::to_string(*static_cast<const double*>(data));
+            return std::to_string(*static_cast<const double*>(rawField));
         case BOOLEAN:
-            return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
+            return std::to_string(static_cast<int>(*static_cast<const bool*>(rawField)));
         case CHAR:
             if (getRawSizeInBytes() != 1)
             {
                 return "invalid char type";
             }
-            return std::string{*static_cast<const char*>(data)};
+            return std::string{*static_cast<const char*>(rawField)};
         default:
             return "invalid native type";
     }
 }
 
-std::string BasicPhysicalType::toString() const noexcept
+std::string BasicPhysicalType::toString() const
 {
     switch (nativeType)
     {
-        using enum NES::BasicPhysicalType::NativeType;
+        using enum NativeType;
         case INT_8:
             return "INT8";
         case UINT_8:

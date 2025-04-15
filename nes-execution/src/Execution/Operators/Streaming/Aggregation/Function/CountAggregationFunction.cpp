@@ -49,8 +49,8 @@ void CountAggregationFunction::lift(
     const Nautilus::Record& record)
 {
     /// Reading the value from the record
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
-    if (inputType->type->nullable && not includeNullValues && value.isNull())
+    if (const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+        inputType->type->nullable && not includeNullValues && value.isNull())
     {
         /// If the value is null and we are not taking null values into account, we do not update the count.
         return;

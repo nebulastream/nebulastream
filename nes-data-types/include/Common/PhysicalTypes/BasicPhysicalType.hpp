@@ -18,6 +18,7 @@
 #include <string>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
 namespace NES
 {
 
@@ -57,19 +58,18 @@ public:
     static std::shared_ptr<PhysicalType> create(const std::shared_ptr<DataType>& type, NativeType nativeType);
 
     /// Converts the binary representation of this value to a string.
-    /// @param rawData a pointer to the raw value
-    std::string convertRawToString(const void* rawData) const noexcept override;
+    /// @param rawField a pointer to the raw value
+    std::string convertRawToString(const void* rawField) const override;
 
 
     /// Converts the binary representation of this value to a string.
-    /// @param rawData a pointer to the raw value
-    std::string convertRawToStringWithoutFill(const void* rawData) const noexcept override;
+    /// @param rawField a pointer to the raw value
+    std::string convertRawToStringWithoutFill(const void* rawField) const override;
 
-    [[nodiscard]] std::string toString() const noexcept override;
+    [[nodiscard]] std::string toString() const override;
 
     NativeType nativeType;
 
-protected:
     /// Returns the number of bytes occupied by this data type.
     [[nodiscard]] uint64_t getRawSizeInBytes() const noexcept override;
 };

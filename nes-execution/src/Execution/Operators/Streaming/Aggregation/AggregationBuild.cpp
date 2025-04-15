@@ -14,9 +14,13 @@
 
 #include <cstdint>
 #include <memory>
-#include <ranges>
 #include <utility>
 #include <vector>
+
+#include <function.hpp>
+#include <static.hpp>
+#include <val_ptr.hpp>
+
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
@@ -28,12 +32,9 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Time/Timestamp.hpp>
+#include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
-#include <function.hpp>
-#include <static.hpp>
-#include <val_ptr.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -50,7 +51,7 @@ getHashMapProxy(const AggregationOperatorHandler* operatorHandler, const Timesta
         "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support slicing");
 
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
-    const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
+    const auto aggregationSlice = NES::Util::as<AggregationSlice, Slice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
     return aggregationSlice->getHashMapPtr(workerThreadId);
 }
@@ -58,7 +59,7 @@ getHashMapProxy(const AggregationOperatorHandler* operatorHandler, const Timesta
 
 void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
 {
-    /// Getting the correspinding slice so that we can update the aggregation states
+    /// Getting the corresponding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(getHashMapProxy, ctx.getGlobalOperatorHandler(operatorHandlerIndex), timestamp, ctx.getWorkerThreadId());
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);

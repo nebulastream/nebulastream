@@ -1,0 +1,29 @@
+Index: nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp	(revision 364c89c184430e1ccd0d9422fc73b1cc54c33ca8)
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp	(date 1744036927808)
+@@ -38,9 +38,6 @@
+
+ 	auto loweringProvider = std::make_unique<MLIRLoweringProvider>(context);
+ 	auto mlirModule = loweringProvider->generateModuleFromIR(ir);
+-	if (*mlirModule == nullptr) {
+-		throw RuntimeException("verification of MLIR module failed!");
+-	};
+
+ 	// 2.a dump MLIR to console or a file
+ 	dumpHandler.dump("after_mlir_generation", "mlir", [&]() {
+@@ -51,6 +48,10 @@
+ 		return result;
+ 	});
+
++	if (*mlirModule == nullptr) {
++		throw RuntimeException("verification of MLIR module failed!");
++	};
++
+ 	// 2.b Take the MLIR module from the MLIRLoweringProvider and apply lowering
+ 	// and optimization passes.
+ 	if (mlir::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {})) {
