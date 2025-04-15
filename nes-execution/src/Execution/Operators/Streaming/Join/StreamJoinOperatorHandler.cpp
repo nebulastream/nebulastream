@@ -81,6 +81,7 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     uint64_t numberOfWindowInfoBuffers = metadataPtr[2];
     NES_DEBUG("Number of read window info buffers: {}", numberOfWindowInfoBuffers);
     currentSliceId = metadataPtr[3];
+    sequenceNumber = metadataPtr[4];
 
     // 2. read watermarks buffers
     auto recreatedWatermarkBuffers = readBuffers(fileStream, numberOfWatermarkBuffers);
@@ -134,6 +135,8 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
     metadataPtr[2] = windowInfoBuffers.size();
     NES_DEBUG("Number of serialized window info buffers: {}", windowInfoBuffers.size());
     metadataPtr[3] = currentSliceId;
+    NES_DEBUG("Current probe sequence number: {}", sequenceNumber);
+    metadataPtr[4] = sequenceNumber;
 
     std::vector<TupleBuffer> mergedBuffers = {metadata};
 
@@ -212,7 +215,6 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWatermarksToMigr
     // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
     // 1. Insert number of build origins to metadata buffer
     writeToBuffer(buildWatermarksBuffers.size());
-
     auto probeWatermarks = watermarkProcessorProbe->serializeWatermarks(bufferManager);
     NES_DEBUG("probe buffers size {}", probeWatermarks.size());
 
@@ -256,7 +258,7 @@ void StreamJoinOperatorHandler::restoreWatermarks(std::vector<Runtime::TupleBuff
         std::span<const Runtime::TupleBuffer>(buffers.data() + dataBuffersIdx + 1, numberOfBuildBuffers));
 
     // 3. Retrieve number of build origins
-    auto numberOfProbeBuffers = deserializeNextValue();
+     auto numberOfProbeBuffers = deserializeNextValue();
     watermarkProcessorProbe->restoreWatermarks(
         std::span<const Runtime::TupleBuffer>(buffers.data() + numberOfBuildBuffers + dataBuffersIdx + 1, numberOfProbeBuffers));
 }
@@ -625,6 +627,7 @@ uint64_t StreamJoinOperatorHandler::getNumberOfTuplesInSlice(uint64_t sliceIdent
 
 OriginId StreamJoinOperatorHandler::getOutputOriginId() const { return outputOriginId; }
 
+// TODO: migrate this sequenceNumber also??
 uint64_t StreamJoinOperatorHandler::getNextSequenceNumber() { return sequenceNumber++; }
 
 void StreamJoinOperatorHandler::setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads) {

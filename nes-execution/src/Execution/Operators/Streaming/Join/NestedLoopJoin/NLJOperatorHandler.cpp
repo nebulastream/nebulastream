@@ -27,9 +27,6 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
                                              StreamSlice& sliceRight,
                                              const WindowInfo& windowInfo,
                                              PipelineExecutionContext* pipelineCtx) {
-    if (windowInfo.windowStart == 2000) {
-
-    }
     if (sliceLeft.getNumberOfTuplesLeft() > 0 && sliceRight.getNumberOfTuplesRight() > 0) {
         dynamic_cast<NLJSlice&>(sliceLeft).combinePagedVectors();
         dynamic_cast<NLJSlice&>(sliceRight).combinePagedVectors();
