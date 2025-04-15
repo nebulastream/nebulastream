@@ -6,6 +6,7 @@ vcpkg_from_github(
 		PATCHES
 		0001_fixes_clang_tidy.patch
 		0002_llvm_v20.patch
+		0003-disable-ubsan-function-call-check.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
