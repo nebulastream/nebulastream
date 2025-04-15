@@ -15,14 +15,14 @@
 #include <ErrorHandling.hpp>
 #include <yaml-cpp/yaml.h>
 
-void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog) {
+void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog, std::shared_ptr<std::map<size_t, std::string>> queryCatalog) {
 
     // // Create a JSON ObjectMapper manually
     auto objectMapper = oatpp::parser::json::mapping::ObjectMapper::createShared();
 
     // Create and configure a Router
     auto router = oatpp::web::server::HttpRouter::createShared();
-    auto queryController = std::make_shared<QueryController>(objectMapper);
+    auto queryController = std::make_shared<QueryController>(objectMapper, queryCatalog);
     router->addController(queryController);
     auto sourceCatalogController = std::make_shared<SourceCatalogController>(objectMapper, sourceCatalog);
     router->addController(sourceCatalogController);
@@ -71,12 +71,14 @@ int main(int argc, char* argv[]) {
                   << std::endl;
      }
 
+     auto queryCatalog = std::make_shared<std::map<size_t, std::string>>();
+
 
     /* Init oatpp Environment */
     oatpp::base::Environment::init();
 
     /* Run App */
-    run(port, sourceCatalog);
+    run(port, sourceCatalog, queryCatalog);
 
     /* Destroy oatpp Environment */
     oatpp::base::Environment::destroy();
