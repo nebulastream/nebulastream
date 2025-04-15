@@ -1,0 +1,25 @@
+From 7869061f0f95081b451dca0fff8eac16d9c69cb6 Mon Sep 17 00:00:00 2001
+From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Tue, 15 Apr 2025 16:43:50 +0200
+Subject: [PATCH] disable ubsan function call check
+
+---
+ nautilus/include/nautilus/Executable.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/nautilus/include/nautilus/Executable.hpp b/nautilus/include/nautilus/Executable.hpp
+index d9b4de1..8092a1a 100644
+--- a/nautilus/include/nautilus/Executable.hpp
++++ b/nautilus/include/nautilus/Executable.hpp
+@@ -64,7 +64,7 @@ public:
+ 		 * @param arguments
+ 		 * @return returns the result of the function if any
+ 		 */
+-		R operator()(Args... arguments) {
++		__attribute__((no_sanitize("function"))) R operator()(Args... arguments) {
+ 			if (std::holds_alternative<FunctionType*>(function)) {
+ 				auto fptr = std::get<FunctionType*>(function);
+ 				if constexpr (!std::is_void_v<R>) {
+-- 
+2.45.2
+
