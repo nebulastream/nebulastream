@@ -26,7 +26,7 @@ class QueryOptimizer final
 public:
     explicit QueryOptimizer() = default;
     /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] std::unique_ptr<PhysicalPlan> optimize(LogicalPlan plan);
+    [[nodiscard]] PhysicalPlan optimize(LogicalPlan plan);
 };
 
 }
