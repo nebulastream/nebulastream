@@ -7,6 +7,7 @@
 #include "oatpp/network/Server.hpp"
 #include "oatpp/network/tcp/server/ConnectionProvider.hpp"
 
+#include "controller/ConnectivityController.hpp"
 #include "controller/QueryController.hpp"
 #include "controller/SinkCatalogController.hpp"
 #include "controller/SourceCatalogController.hpp"
@@ -23,6 +24,8 @@ void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceC
 
     // Create and configure a Router
     auto router = oatpp::web::server::HttpRouter::createShared();
+    auto connectivityController = std::make_shared<ConnectivityController>(objectMapper);
+    router->addController(connectivityController);
     auto queryController = std::make_shared<QueryController>(objectMapper, queryCatalog);
     router->addController(queryController);
     auto sourceCatalogController = std::make_shared<SourceCatalogController>(objectMapper, sourceCatalog);
