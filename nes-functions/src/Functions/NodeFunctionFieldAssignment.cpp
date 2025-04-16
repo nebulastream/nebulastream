@@ -89,9 +89,8 @@ void NodeFunctionFieldAssignment::inferStamp(const Schema& schema)
     auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
-        const auto stamp = getAssignment()->getStamp()->join(field->getStamp());
         field->updateFieldName(existingField.value()->getName());
-        field->setStamp(stamp);
+        field->setStamp(getAssignment()->getStamp());
     }
     else
     {

@@ -31,7 +31,7 @@ std::shared_ptr<DataType> VariableSizedDataType::join(std::shared_ptr<DataType> 
 {
     if (not Util::instanceOf<VariableSizedDataType>(otherDataType))
     {
-        throw DifferentFieldTypeExpected("Cannot join a VARSIZED datatype with a non-VARSIZED datatype.");
+        throw DifferentFieldTypeExpected("Cannot join a VARSIZED datatype with a non-VARSIZED datatype: '{}'", otherDataType->toString());
     }
     return DataTypeProvider::provideDataType(LogicalType::VARSIZED);
 }
