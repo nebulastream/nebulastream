@@ -71,9 +71,11 @@ Schema SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
-void SourceNameLogicalOperator::setSchema(const Schema& schema)
+LogicalOperator SourceNameLogicalOperator::withSchema(const Schema& schema) const
 {
-    this->schema = schema;
+    auto copy = *this;
+    copy.schema = schema;
+    return copy;
 }
 
 Optimizer::TraitSet SourceNameLogicalOperator::getTraitSet() const
