@@ -122,8 +122,8 @@ std::string PhysicalOperatorWrapper::toString() const
     std::ostringstream oss;
     oss << "PhysicalOperatorWrapper(";
     oss << "Operator: " << physicalOperator.toString() << ", id: " << physicalOperator.getId() << ", ";
-    oss << "InputSchema: " << (inputSchema ? "present" : "none") << ", ";
-    oss << "OutputSchema: " << (outputSchema ? "present" : "none") << ", ";
+    oss << "InputSchema: " << (inputSchema ? inputSchema.value().toString() : "none") << ", ";
+    oss << "OutputSchema: " << (outputSchema ? outputSchema.value().toString() : "none") << ", ";
     oss << "isScan: " << std::boolalpha << isScan << ", ";
     oss << "isEmit: " << std::boolalpha << isEmit;
     oss << ")";
