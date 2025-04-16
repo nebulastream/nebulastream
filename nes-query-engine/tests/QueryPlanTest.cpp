@@ -356,7 +356,9 @@ template <>
 {
     if (auto target = stops.target.lock())
     {
-        target->attemptUnregister();
+        while (!target->attemptUnregister())
+        {
+        };
     }
     return ::testing::AssertionSuccess();
 }
