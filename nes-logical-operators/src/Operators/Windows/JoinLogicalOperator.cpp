@@ -58,138 +58,106 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 
 std::string JoinLogicalOperator::toString() const
 {
-    return fmt::format("Join({}, windowType = {}, joinFunction = {})", id, getWindowType().toString(), getJoinFunction());
+    auto result = fmt::format("Join({}, windowType = {}, joinFunction = {})", id, getWindowType()->toString(), getJoinFunction());
+
+    if (!inputOriginIds.empty() || !outputOriginIds.empty())
+    {
+        result.append(", originIds = {");
+
+        if (inputOriginIds.size() == 2)
+        {
+            result.append("left: [");
+            bool first = true;
+            for (const auto& oid : inputOriginIds[1])
+            {
+                if (!first)
+                {
+                    result.append(", ");
+                }
+                result.append(oid.toString());
+                first = false;
+            }
+            result.append("], ");
+
+            result.append("right: [");
+            first = true;
+            for (const auto& oid : inputOriginIds[0])
+            {
+                if (!first)
+                {
+                    result.append(", ");
+                }
+                result.append(oid.toString());
+                first = false;
+            }
+            result.append("]");
+        }
+
+        if (!outputOriginIds.empty())
+        {
+            if (inputOriginIds.size() == 2)
+            {
+                result.append(", ");
+            }
+            result.append("output: [");
+            bool first = true;
+            for (const auto& oid : outputOriginIds)
+            {
+                if (!first)
+                {
+                    result.append(", ");
+                }
+                result.append(oid.toString());
+                first = false;
+            }
+            result.append("]");
+        }
+        result.append("}");
+    }
+
+    result.append(")");
+    return result;
 }
 
-
-LogicalOperator JoinLogicalOperator::withInferredSchema(Schema) const
+LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
+    PRECONDITION(inputSchemas.size() == 2, "Join should have two inputs");
+    const auto& leftInputSchema = inputSchemas[0];
+    const auto& rightInputSchema = inputSchemas[1];
+
     auto copy = *this;
+    copy.outputSchema.clear();
+    copy.leftInputSchema = leftInputSchema;
+    copy.rightInputSchema = rightInputSchema;
 
-    std::vector<Schema> distinctSchemas;
+    auto sourceNameLeft = leftInputSchema.getQualifierNameForSystemGeneratedFields();
+    auto sourceNameRight = rightInputSchema.getQualifierNameForSystemGeneratedFields();
+    auto newQualifierForSystemField = sourceNameLeft + sourceNameRight;
 
-    /// Identify different type of schemas from children operators
-    for (const auto& child : children)
+    copy.windowStartFieldName = newQualifierForSystemField + "$start";
+    copy.windowEndFieldName = newQualifierForSystemField + "$end";
+    copy.outputSchema.addField(copy.windowStartFieldName, BasicType::UINT64);
+    copy.outputSchema.addField(copy.windowEndFieldName, BasicType::UINT64);
+
+    for (auto field : leftInputSchema)
     {
-        auto childOutputSchema = child.getInputSchemas()[0];
-        auto found = std::find_if(
-            distinctSchemas.begin(),
-            distinctSchemas.end(),
-            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
-        if (found == distinctSchemas.end())
-        {
-            distinctSchemas.push_back(childOutputSchema);
-        }
+        copy.outputSchema.addField(field.getName(), field.getDataType());
+    }
+    for (auto field : rightInputSchema)
+    {
+        copy.outputSchema.addField(field.getName(), field.getDataType());
     }
 
-    ///validate that only two different type of schema were present
-    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
-
-    ///validate that only two different type of schema were present
-    if (distinctSchemas.size() != 2)
-    {
-        throw CannotInferSchema("Found {} distinct schemas but expected 2 distinct schemas", distinctSchemas.size());
-    }
-
-    ///reset left and right schema
-    copy.leftSourceSchema.clear();
-    copy.rightSourceSchema.clear();
-
-    std::vector<LogicalOperator> newChildren;
-    for (auto& child : children)
-    {
-        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
-    }
-    return copy.withChildren(newChildren);
-    /*
-    NES_DEBUG("JoinLogicalOperator: Iterate over all LogicalFunction to check if join field is in schema.");
-    /// Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<LogicalFunction*> visitedFunctions;
-    for (auto itr : BFSRange(&getJoinFunction()))
-    {
-        if (auto visitingOp = dynamic_cast<BinaryLogicalFunction*>(itr); visitingOp)
-        {
-            if (not visitedFunctions.contains(visitingOp))
-            {
-                visitedFunctions.insert(visitingOp);
-                if (!dynamic_cast<BinaryLogicalFunction*>(&visitingOp->getLeftChild()))
-                {
-                    ///Find the schema for left and right join key
-                    auto leftJoinKey = dynamic_cast<FieldAccessLogicalFunction*>(&dynamic_cast<BinaryLogicalFunction*>(itr)->getLeftChild());
-                    auto leftJoinKeyName = leftJoinKey->getFieldName();
-                    const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
-                    if (!foundLeftKey)
-                    {
-                        throw CannotInferSchema("unable to find left join key \"{}\" in schemas", leftJoinKeyName);
-                    }
-                    const auto rightJoinKey = dynamic_cast<FieldAccessLogicalFunction*>(&dynamic_cast<BinaryLogicalFunction*>(itr)->getRightChild());
-                    const auto rightJoinKeyName = rightJoinKey->getFieldName();
-                    const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
-                    if (!foundRightKey)
-                    {
-                        throw CannotInferSchema("unable to find right join key \"{}\" in schemas", rightJoinKeyName);
-                    }
-                    NES_DEBUG("JoinLogicalOperator: Inserting operator in collection of already visited node.");
-                    visitedFunctions.insert(visitingOp);
-                }
-            }
-        }
-    }
-    /// Clearing now the distinct schemas
-    distinctSchemas.clear();
-
-    /// Checking if left and right input schema are not empty and are not equal
-    if (leftInputSchema.getSchemaSizeInBytes() == 0)
-    {
-        throw CannotInferSchema("left schema is empty");
-    }
-    if (rightInputSchema.getSchemaSizeInBytes() == 0)
-    {
-        throw CannotInferSchema("right schema is empty");
-    }
-    if (rightInputSchema == leftInputSchema)
-    {
-        throw CannotInferSchema("found both left and right input schema to be same.");
-    }
-
-    ///Infer stamp of window definition
-    getWindowType().withInferredStamp(leftInputSchema);
-
-    ///Reset output schema and add fields from left and right input schema
-    outputSchema.clear();
-    const auto& sourceNameLeft = leftInputSchema.getQualifierNameForSystemGeneratedFields();
-    const auto& sourceNameRight = rightInputSchema.getQualifierNameForSystemGeneratedFields();
-    const auto& newQualifierForSystemField = sourceNameLeft + sourceNameRight;
-
-    windowStartFieldName = newQualifierForSystemField + "$start";
-    windowEndFieldName = newQualifierForSystemField + "$end";
-    outputSchema.addField(windowStartFieldName, BasicType::UINT64);
-    outputSchema.addField(windowEndFieldName, BasicType::UINT64);
-
-    /// create dynamic fields to store all fields from left and right sources
-    for (const auto& field : leftInputSchema)
-    {
-        outputSchema.addField(field.getName(), field.getDataType().clone());
-    }
-
-    for (const auto& field : rightInputSchema)
-    {
-        outputSchema.addField(field.getName(), field.getDataType().clone());
-    }
-
-    NES_DEBUG("LeftInput schema for join={}", leftInputSchema.toString());
-    NES_DEBUG("RightInput schema for join={}", rightInputSchema.toString());
-    NES_DEBUG("Output schema for join={}", outputSchema.toString());
-    setOutputSchema(outputSchema);
-    updateSchemas(leftInputSchema, rightInputSchema);
-    return true;
-    */
-    return true;
+    auto inputSchema = leftInputSchema;
+    auto combinedSchema = inputSchema.copyFields(rightInputSchema);
+    copy.joinFunction = joinFunction.withInferredStamp(combinedSchema);
+    copy.windowType->inferStamp(combinedSchema);
+    return copy;
 }
 
 Optimizer::TraitSet JoinLogicalOperator::getTraitSet() const
 {
-    return {};
+    return {originIdTrait};
 }
 
 LogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
@@ -201,7 +169,7 @@ LogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperator> c
 
 std::vector<Schema> JoinLogicalOperator::getInputSchemas() const
 {
-    return {leftSourceSchema, rightSourceSchema};
+    return {leftInputSchema, rightInputSchema};
 };
 
 Schema JoinLogicalOperator::getOutputSchema() const
@@ -241,12 +209,12 @@ std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
 
 Schema JoinLogicalOperator::getLeftSchema() const
 {
-    return leftSourceSchema;
+    return leftInputSchema;
 }
 
 Schema JoinLogicalOperator::getRightSchema() const
 {
-    return rightSourceSchema;
+    return rightInputSchema;
 }
 
 std::shared_ptr<Windowing::WindowType> JoinLogicalOperator::getWindowType() const
