@@ -57,7 +57,7 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
-    [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const override;
+    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
 
 private:

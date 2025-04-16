@@ -53,8 +53,11 @@ bool MapLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     return false;
 };
 
-LogicalOperator MapLogicalOperator::withInferredSchema(Schema inputSchema) const
+LogicalOperator MapLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
+    PRECONDITION(inputSchemas.size() == 1, "Map should have only one input");
+    const auto& inputSchema = inputSchemas[0];
+
     auto copy = *this;
     /// use the default input schema to calculate the out schema of this operator.
     copy.mapFunction = mapFunction.withInferredStamp(inputSchema).get<FieldAssignmentLogicalFunction>();
@@ -77,12 +80,7 @@ LogicalOperator MapLogicalOperator::withInferredSchema(Schema inputSchema) const
         copy.outputSchema.addField(fieldName, copy.mapFunction.getField().getStamp());
     }
 
-    std::vector<LogicalOperator> newChildren;
-    for (const auto& child : children)
-    {
-        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
-    }
-    return copy.withChildren(newChildren);
+    return copy;
 }
 
 Optimizer::TraitSet MapLogicalOperator::getTraitSet() const
