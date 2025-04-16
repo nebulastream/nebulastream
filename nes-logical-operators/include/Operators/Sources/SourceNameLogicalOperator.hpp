@@ -35,7 +35,7 @@ public:
     [[nodiscard]] std::string getLogicalSourceName() const;
 
     [[nodiscard]] Schema getSchema() const;
-    void setSchema(const Schema& schema);
+    [[nodiscard]] LogicalOperator withSchema(const Schema& schema) const;
 
 
     /// LogicalOperatorConcept member
