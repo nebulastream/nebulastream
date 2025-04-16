@@ -18,6 +18,7 @@
 #include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <ErrorHandling.hpp>
@@ -26,66 +27,59 @@
 namespace NES::LegacyOptimizer
 {
 
-LogicalOperator propagateOriginIds(const LogicalOperator& op, const std::vector<OriginId>& parentOriginIds)
+namespace
 {
-    if (hasTrait<Optimizer::OriginIdAssignerTrait>(op.getTraitSet()))
+LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
+{
+    std::vector<LogicalOperator> newChildren;
+    std::vector<std::vector<OriginId>> childOriginIds;
+    for (const auto& child : visitingOperator.getChildren())
     {
-        /// no op
-        return op;
+        auto newChild = propagateOriginIds(child);
+        newChildren.push_back(newChild);
+        childOriginIds.push_back(newChild.getOutputOriginIds());
     }
 
-    LogicalOperator updatedOp = op.withOriginIds({ parentOriginIds });
+    auto copy = visitingOperator;
 
-    auto children = op.getChildren();
-    std::vector<LogicalOperator> updatedChildren;
-    if (op.tryGet<UnionLogicalOperator>())
+    if (not copy.tryGet<SourceDescriptorLogicalOperator>())
     {
-        for (const auto& child : children)
-        {
-            LogicalOperator childUpdated = propagateOriginIds(child, updatedOp.getOutputOriginIds());
-            updatedChildren.push_back(childUpdated);
-        }
-        updatedOp = updatedOp.withChildren(updatedChildren);
+        copy = copy.withInputOriginIds(childOriginIds);
     }
-    else if (children.size() == 1)
+
+    if (not hasTrait<Optimizer::OriginIdAssignerTrait>(visitingOperator.getTraitSet()))
     {
-        const auto& outputOrigins = updatedOp.getOutputOriginIds();
-        LogicalOperator childUpdated = propagateOriginIds(children[0], outputOrigins);
-        updatedChildren.push_back(childUpdated);
-        updatedOp = updatedOp.withChildren(updatedChildren);
+        copy = copy.withOutputOriginIds(childOriginIds[0]);
     }
-    else if (children.size() == 2)
-    {
-        const auto& outputOrigins = updatedOp.getOutputOriginIds();
-        LogicalOperator leftUpdated  = propagateOriginIds(children[0], { outputOrigins[0] });
-        LogicalOperator rightUpdated = propagateOriginIds(children[1], { outputOrigins[1] });
-        updatedChildren.push_back(leftUpdated);
-        updatedChildren.push_back(rightUpdated);
-        updatedOp = updatedOp.withChildren(updatedChildren);
-    }
-    else
-    {
-        INVARIANT(false, "No support for LogicalOperators with more than 2 children or 0 children that is not a OriginIdAssigner");
-    }
-    return updatedOp;
+
+    return copy.withChildren(newChildren);
+}
 }
 
 void OriginIdInferencePhase::apply(LogicalPlan& queryPlan)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
-    for (const auto& assigner : queryPlan.getOperatorsByTraits<Optimizer::OriginIdAssignerTrait>())
+    for (auto& assigner : queryPlan.getOperatorsByTraits<Optimizer::OriginIdAssignerTrait>())
     {
-        auto copy = assigner.withOriginIds({{OriginId(originIdCounter++)}});
-        queryPlan.replaceOperator(assigner, copy);
+        if (assigner.tryGet<SourceDescriptorLogicalOperator>())
+        {
+            assigner = assigner.withInputOriginIds({{OriginId(++originIdCounter)}});
+            auto inferredAssigner = assigner.withOutputOriginIds({OriginId(originIdCounter)});
+            queryPlan.replaceOperator(assigner, inferredAssigner);
+        }
+        else
+        {
+            auto inferredAssigner = assigner.withOutputOriginIds({OriginId(++originIdCounter)});
+            queryPlan.replaceOperator(assigner, inferredAssigner);
+        }
     }
 
     /// propagate origin ids through the complete query plan
     std::vector<LogicalOperator> newSinks;
     for (auto& sinkOperator : queryPlan.rootOperators)
     {
-        LogicalOperator updatedSink = propagateOriginIds(sinkOperator, sinkOperator.getOutputOriginIds());
-        newSinks.push_back(updatedSink);
+        newSinks.push_back(propagateOriginIds(sinkOperator));
     }
     queryPlan.rootOperators = newSinks;
 }
