@@ -24,14 +24,12 @@
 namespace NES::LegacyOptimizer
 {
 
-void TypeInferencePhase::apply(LogicalPlan& queryPlan,  Catalogs::Source::SourceCatalog& sourceCatalog)
+void TypeInferencePhase::apply(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog)
 {
     auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
 
     PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
 
-    std::vector<LogicalOperator> newSources;
-    /// first we have to check if all source operators have a correct source descriptors
     for (auto& source : sourceOperators)
     {
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
@@ -39,7 +37,6 @@ void TypeInferencePhase::apply(LogicalPlan& queryPlan,  Catalogs::Source::Source
         auto schema = Schema();
         if (!sourceCatalog.containsLogicalSource(source.getLogicalSourceName()))
         {
-            NES_ERROR("Source name: {} not registered.", source.getLogicalSourceName());
             throw LogicalSourceNotFoundInQueryDescription("Logical source not registered. Source Name: {}", source.getLogicalSourceName());
         }
         auto originalSchema = sourceCatalog.getSchemaForLogicalSource(source.getLogicalSourceName());
@@ -54,25 +51,42 @@ void TypeInferencePhase::apply(LogicalPlan& queryPlan,  Catalogs::Source::Source
                 field.setName(qualifierName + field.getName());
             }
         }
-        source.setSchema(schema);
-        newSources.push_back(source);
+        queryPlan.replaceOperator(source, source.withSchema(schema));
     }
-    queryPlan.rootOperators = newSources;
+}
+
+LogicalOperator propagateSchema(const LogicalOperator& op)
+{
+    std::vector<LogicalOperator> children = op.getChildren();
+
+    // Base case: if no children (source operators)
+    if (children.empty())
+    {
+        return op;
+    }
+
+    std::vector<LogicalOperator> newChildren;
+    std::vector<Schema> childSchemas;
+    for (const auto& child : children)
+    {
+        LogicalOperator childWithSchema = propagateSchema(child);
+        childSchemas.push_back(childWithSchema.getOutputSchema());
+        newChildren.push_back(childWithSchema);
+    }
+
+    LogicalOperator updatedOperator = op.withChildren(newChildren);
+    return updatedOperator.withInferredSchema(childSchemas);
 }
 
 void TypeInferencePhase::apply(QueryPlan& queryPlan)
 {
-    auto sourceOperators = queryPlan.getOperatorByType<SourceDescriptorLogicalOperator>();
-    INVARIANT(not sourceOperators.empty(), "Found no source operators for query plan: {}", queryPlan.getQueryId());
-
-    /// now we have to infer the input and output schemas for the whole query.
-    /// to this end we call at each sink the infer method to propagate the schemata across the whole query.
-    std::vector<LogicalOperator> newSources;
-    for (auto& source : sourceOperators)
+    std::vector<LogicalOperator> newRoots;
+    for (const auto& sink : queryPlan.rootOperators)
     {
-        newSources.push_back(source.withInferredSchema(Schema()));
+        LogicalOperator inferredRoot = propagateSchema(sink);
+        newRoots.push_back(inferredRoot);
     }
-    queryPlan.rootOperators = newSources;
+    queryPlan.rootOperators = newRoots;
 }
 
 
