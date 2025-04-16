@@ -40,8 +40,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     std::vector<FieldAccessLogicalFunction> onKey,
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation,
     std::shared_ptr<Windowing::WindowType> windowType)
-    : WindowOperator()
-    , windowAggregation(std::move(windowAggregation))
+    : windowAggregation(std::move(windowAggregation))
     , windowType(std::move(windowType))
     , onKey(onKey)
 {
@@ -105,13 +104,15 @@ bool WindowedAggregationLogicalOperator::operator==(LogicalOperatorConcept const
     return false;
 }
 
-LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema inputSchema) const
+LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
+    PRECONDITION(inputSchemas.size() == 1, "WindowAggregation should have only one input");
+    const auto& inputSchema = inputSchemas[0];
 
     // Infer type of aggregation.
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> newFunctions;
-    for (const auto& agg :  getWindowAggregation())
+    for (const auto& agg : getWindowAggregation())
     {
         agg->inferStamp(inputSchema);
         newFunctions.push_back(agg);
@@ -120,26 +121,24 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema in
 
     copy.windowType->inferStamp(inputSchema);
     copy.inputSchema = inputSchema;
-    // Construct output schema: clear first.
     copy.outputSchema.clear();
 
-    // Distinguish processing for different window types (time-based or content-based).
     if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(&getWindowType()))
     {
         const auto& sourceName = inputSchema.getQualifierNameForSystemGeneratedFields();
         const auto& newQualifierForSystemField = sourceName;
 
         copy.windowStartFieldName = newQualifierForSystemField + "$start";
-        copy.windowEndFieldName   = newQualifierForSystemField + "$end";
+        copy.windowEndFieldName = newQualifierForSystemField + "$end";
         copy.outputSchema.addField(copy.windowStartFieldName, BasicType::UINT64);
         copy.outputSchema.addField(copy.windowEndFieldName, BasicType::UINT64);
     }
     else if (auto* contentBasedWindowType = dynamic_cast<Windowing::ContentBasedWindowType*>(&getWindowType()))
     {
-        if (contentBasedWindowType->getContentBasedSubWindowType() ==
-            Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
+        if (contentBasedWindowType->getContentBasedSubWindowType()
+            == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
         {
-            auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(std::unique_ptr<Windowing::ContentBasedWindowType>(contentBasedWindowType));
+            auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(*contentBasedWindowType);
         }
     }
     else
@@ -149,7 +148,6 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema in
 
     if (isKeyed())
     {
-        // Infer the data type of each key field.
         auto keys = getKeys();
         auto newKeys = std::vector<FieldAccessLogicalFunction>();
         for (auto& key : keys)
@@ -162,16 +160,8 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(Schema in
     }
     for (const auto& agg : getWindowAggregation())
     {
-        copy.outputSchema.addField(
-            AttributeField(agg->as().getFieldName(), agg->as().getStamp()));
+        copy.outputSchema.addField(AttributeField(agg->asField.get<FieldAccessLogicalFunction>().getFieldName(), agg->asField.getStamp()));
     }
-
-    std::vector<LogicalOperator> newChildren;
-    for (auto& child : children)
-    {
-        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
-    }
-    copy.children = newChildren;
     return copy;
 }
 

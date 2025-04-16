@@ -47,7 +47,7 @@ public:
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
-    [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const override;
+    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
     LogicalFunction onField;
     Windowing::TimeUnit unit;

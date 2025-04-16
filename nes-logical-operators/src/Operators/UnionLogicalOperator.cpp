@@ -49,8 +49,12 @@ std::string UnionLogicalOperator::toString() const
     return ss.str();
 }
 
-LogicalOperator UnionLogicalOperator::withInferredSchema(Schema) const
+LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
+    INVARIANT(inputSchemas.size() == 2, "Union should have two inputs");
+    const auto& leftInputSchema = inputSchemas[0];
+    const auto& rightInputSchema = inputSchemas[1];
+
     auto copy = *this;
     std::vector<Schema> distinctSchemas;
 
@@ -101,13 +105,6 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(Schema) const
     copy.outputSchema.clear();
     copy.outputSchema.copyFields(leftInputSchema);
     copy.outputSchema.setLayoutType(leftInputSchema.getLayoutType());
-
-    std::vector<LogicalOperator> newChildren;
-    for (auto& child : children)
-    {
-        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
-    }
-    copy.children = newChildren;
     return copy;
 }
 

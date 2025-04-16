@@ -93,8 +93,11 @@ std::string ProjectionLogicalOperator::toString() const
 }
 
 
-LogicalOperator ProjectionLogicalOperator::withInferredSchema(Schema inputSchema) const
+LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
+    PRECONDITION(inputSchemas.size() == 1, "Projection should have one input");
+    const auto& inputSchema = inputSchemas[0];
+
     auto copy = *this;
     copy.inputSchema = inputSchema;
     copy.outputSchema.clear();
@@ -124,13 +127,7 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(Schema inputSchema
         }
     }
     copy.functions = newFunctions;
-
-    std::vector<LogicalOperator> newChildren;
-    for (auto& child : children)
-    {
-        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
-    }
-    return copy.withChildren(newChildren);
+    return copy;
 }
 
 Optimizer::TraitSet ProjectionLogicalOperator::getTraitSet() const

@@ -44,17 +44,13 @@ bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(LogicalOperatorCo
     return false;
 }
 
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema(Schema schema) const
+LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
-    std::vector<LogicalOperator> newChildren;
-    for (auto& child : children)
-    {
-        newChildren.push_back(child.withInferredSchema(schema));
-    }
-    copy.children = newChildren;
-    copy.inputSchema = schema;
-    copy.outputSchema = schema;
+    PRECONDITION(inputSchemas.size() == 1, "Watermark assigner should have only one input");
+    const auto& inputSchema = inputSchemas[0];
+    copy.inputSchema = inputSchema;
+    copy.outputSchema = inputSchema;
     return copy;
 }
 
