@@ -255,8 +255,8 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
     WorkEmitter& emitter,
     std::shared_ptr<QueryLifetimeListener> listener)
 {
-    PRECONDITION(!plan->pipelines.empty(), "Cannot start an empty Query Plan");
-    PRECONDITION(!plan->sources.empty(), "Cannot start a Query Plan without sources");
+    PRECONDITION(!plan->pipelines.empty(), "Cannot start an empty query plan");
+    PRECONDITION(!plan->sources.empty(), "Cannot start a query plan without sources");
 
     auto [terminationCallbackOwner, terminationCallbackRef] = Callback::create("Termination");
     auto [pipelineSetupCallbackOwner, pipelineSetupCallbackRef] = Callback::create("Pipeline Setup");
