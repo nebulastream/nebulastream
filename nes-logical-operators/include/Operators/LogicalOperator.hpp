@@ -32,7 +32,7 @@ class SerializableOperator;
 /// only used in this header, thus the anonymous namespace
 namespace
 {
-inline OperatorId getNextOperatorId()
+inline OperatorId getNextLogicalOperatorId()
 {
     static std::atomic_uint64_t id = INITIAL_OPERATOR_ID.getRawValue();
     return OperatorId(id++);
@@ -160,7 +160,7 @@ private:
     {
         T data;
 
-        explicit Model(T d) : Concept(getNextOperatorId()), data(std::move(d)) { }
+        explicit Model(T d) : Concept(getNextLogicalOperatorId()), data(std::move(d)) { }
 
         Model(T d, OperatorId existingId) : Concept(existingId), data(std::move(d)) { }
 
