@@ -46,22 +46,26 @@ public:
             const SequenceShredder::SequenceNumberType upperBound, const std::optional<SequenceShredder::SequenceNumberType> fixedSeed)
             : sequenceShredder(SequenceShredder{1, INITIAL_NUM_BITMAPS}), currentSequenceNumber(1), completionLatch(NUM_THREADS)
         {
-            if (fixedSeed.has_value())
-            {
-                sequenceNumberGen = std::mt19937_64{fixedSeed.value()};
-            }
-            else
-            {
-                std::random_device rd;
-                std::mt19937_64 seedGen{rd()};
-                std::uniform_int_distribution<size_t> dis{0, SIZE_MAX};
-                const SequenceShredder::SequenceNumberType randomSeed = dis(seedGen);
-                sequenceNumberGen = std::mt19937_64{randomSeed};
-                NES_DEBUG("Initializing StreamingSequenceNumberGenerator with random seed: {}", randomSeed);
-            }
             for (size_t i = 0; i < NUM_THREADS; ++i)
             {
-                threads.at(i) = std::jthread([this, i, upperBound] { threadFunction(i, upperBound); });
+                std::mt19937_64 sequenceNumberGen;
+                std::bernoulli_distribution boolDistribution{0.5};
+                if (fixedSeed.has_value())
+                {
+                    sequenceNumberGen = std::mt19937_64{fixedSeed.value()};
+                }
+                else
+                {
+                    std::random_device rd;
+                    std::mt19937_64 seedGen{rd()};
+                    std::uniform_int_distribution<size_t> dis{0, SIZE_MAX};
+                    const SequenceShredder::SequenceNumberType randomSeed = dis(seedGen);
+                    sequenceNumberGen = std::mt19937_64{randomSeed};
+                    NES_DEBUG("Initializing StreamingSequenceNumberGenerator with random seed: {}", randomSeed);
+                }
+                threads.at(i) = std::jthread(
+                    [this, i, upperBound, sequenceNumberGen = std::move(sequenceNumberGen), boolDistribution = std::move(boolDistribution)]
+                    { threadFunction(i, upperBound, sequenceNumberGen, boolDistribution); });
             }
         }
         /// Check if at least one thread is still active
@@ -87,12 +91,9 @@ public:
         std::latch completionLatch;
         std::mutex sequenceShredderMutex;
 
-        /// Randomization for tuple delimiters
-        std::mt19937_64 sequenceNumberGen;
-        std::bernoulli_distribution boolDistribution{0.5};
-
     private:
-        void threadFunction(size_t threadIdx, const size_t upperBound)
+        void threadFunction(
+            size_t threadIdx, const size_t upperBound, std::mt19937_64 sequenceNumberGen, std::bernoulli_distribution boolDistribution)
         {
             threadLocalCheckSum.at(threadIdx) = 0;
 

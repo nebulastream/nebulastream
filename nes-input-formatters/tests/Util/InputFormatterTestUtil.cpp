@@ -83,7 +83,7 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
 }
 
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers)
+getEmitFunction(ThreadSafeVector<NES::Memory::TupleBuffer>& resultBuffers)
 {
     return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType)
     {
