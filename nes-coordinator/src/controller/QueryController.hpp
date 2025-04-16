@@ -36,6 +36,7 @@ public:
         auto body = response_json.dump(); // Convert json to string
         auto response = createResponse(Status::CODE_200, oatpp::String(body));
         response->putHeader("Content-Type", "application/json");
+        response->putHeader("Access-Control-Allow-Origin", "*"); // Current fix to use swagger
         return response;
     }
 
