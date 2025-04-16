@@ -66,103 +66,105 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(Sc
     copy.children = newChildren;
     copy.inputSchema = schema;
     copy.outputSchema = schema;
-    return copy;
-}
-
-
-Optimizer::TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() const
-{
-    return {};
-}
-
-LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
-{
-    auto copy = *this;
-    copy.children = children;
-    return copy;
-}
-
-std::vector<Schema> EventTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
-{
-    return {inputSchema};
-};
-
-Schema EventTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
-}
-
-std::vector<std::vector<OriginId>> EventTimeWatermarkAssignerLogicalOperator::getInputOriginIds() const
-{
-    return inputOriginIds;
-}
-
-std::vector<OriginId> EventTimeWatermarkAssignerLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-void EventTimeWatermarkAssignerLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
-{
-    outputOriginIds = ids;
-}
-
-void EventTimeWatermarkAssignerLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
-{
-    inputOriginIds = ids;
-}
-
-std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChildren() const
-{
-    return children;
-}
-
-// TODO
-SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() const
-{
-    SerializableOperator serializedOperator;
-
-    auto* opDesc = new SerializableOperator_LogicalOperator();
-    opDesc->set_operatortype(NAME);
-    serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
-
-    NES::FunctionList list;
-    auto* serializedFunction = list.add_functions();
-    serializedFunction->CopyFrom(onField.serialize());
-
-    NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
-    SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
-    (*opDesc->mutable_config())["functionList"] = variantDescriptor;
-
-    auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
-
-
-    auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
-    unaryOpDesc->set_allocated_inputschema(inputSchema);
-
-    for (const auto& originId : this->getInputOriginIds()[0])
+    LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
     {
-        unaryOpDesc->add_originids(originId.getRawValue());
+        auto copy = *this;
+        copy.outputOriginIds = ids;
+        return copy;
     }
 
-    opDesc->set_allocated_unaryoperator(unaryOpDesc);
 
-    auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->outputSchema, outputSchema);
-    serializedOperator.set_allocated_outputschema(outputSchema);
-    serializedOperator.set_allocated_operator_(opDesc);
+    Optimizer::TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() const
+    {
+        return {};
+    }
 
-    return serializedOperator;
-}
+    LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+    {
+        auto copy = *this;
+        copy.children = children;
+        return copy;
+    }
 
-LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments)
-{
+    std::vector<Schema> EventTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
+    {
+        return {inputSchema};
+    };
+
+    Schema EventTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
+    {
+        return outputSchema;
+    }
+
+    std::vector<std::vector<OriginId>> EventTimeWatermarkAssignerLogicalOperator::getInputOriginIds() const
+    {
+        return {inputOriginIds};
+    }
+
+    std::vector<OriginId> EventTimeWatermarkAssignerLogicalOperator::getOutputOriginIds() const
+    {
+        return outputOriginIds;
+    }
+
+    LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
+    {
+        PRECONDITION(ids.size() == 1, "Assigner should have one input");
+        auto copy = *this;
+        copy.inputOriginIds = ids[0];
+        return copy;
+    }
+
+
+    std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChildren() const
+    {
+        return children;
+    }
+
     // TODO
-    ///return EventTimeWatermarkAssignerLogicalOperator();
-    throw UnsupportedOperation();
-}
+    SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() const
+    {
+        SerializableOperator serializedOperator;
 
+        auto* opDesc = new SerializableOperator_LogicalOperator();
+        opDesc->set_operatortype(NAME);
+        serializedOperator.set_operatorid(this->id.getRawValue());
+        serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
+
+        NES::FunctionList list;
+        auto* serializedFunction = list.add_functions();
+        serializedFunction->CopyFrom(onField.serialize());
+
+        NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
+        SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
+        (*opDesc->mutable_config())["functionList"] = variantDescriptor;
+
+        auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
+
+
+        auto* inputSchema = new SerializableSchema();
+        SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
+        unaryOpDesc->set_allocated_inputschema(inputSchema);
+
+        for (const auto& originId : this->getInputOriginIds()[0])
+        {
+            unaryOpDesc->add_originids(originId.getRawValue());
+        }
+
+        opDesc->set_allocated_unaryoperator(unaryOpDesc);
+
+        auto* outputSchema = new SerializableSchema();
+        SchemaSerializationUtil::serializeSchema(this->outputSchema, outputSchema);
+        serializedOperator.set_allocated_outputschema(outputSchema);
+        serializedOperator.set_allocated_operator_(opDesc);
+
+        return serializedOperator;
+    }
+
+    LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(
+        LogicalOperatorRegistryArguments)
+    {
+        // TODO
+        ///return EventTimeWatermarkAssignerLogicalOperator();
+        throw UnsupportedOperation();
+    }
 }

@@ -84,11 +84,12 @@ std::vector<OriginId> NullLogicalOperator::getOutputOriginIds() const
     PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
 }
 
-void NullLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>>)
+LogicalOperator NullLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>>) const
 {
     PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
 }
-void NullLogicalOperator::setOutputOriginIds(std::vector<OriginId>)
+
+LogicalOperator NullLogicalOperator::withOutputOriginIds(std::vector<OriginId>) const
 {
     PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
 }
@@ -177,18 +178,18 @@ std::vector<OriginId> LogicalOperator::getOutputOriginIds() const
     return self->getOutputOriginIds();
 }
 
-void LogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator LogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    return self->setInputOriginIds(ids);
+    return self->withInputOriginIds(ids);
 }
 
-void LogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator LogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    return self->setOutputOriginIds(ids);
+    return self->withOutputOriginIds(ids);
 }
 
 LogicalOperator LogicalOperator::withInferredSchema(Schema inputSchema) const
 {
-    return self->withInferredSchema(inputSchema);
+    return self->withInferredSchema(std::move(inputSchema));
 }
 }

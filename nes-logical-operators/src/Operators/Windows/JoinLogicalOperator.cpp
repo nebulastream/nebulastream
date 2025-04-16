@@ -219,14 +219,19 @@ std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-void JoinLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator JoinLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(ids.size() == 2, "Join should have only two inputs");
+    auto copy = *this;
+    copy.inputOriginIds = ids;
+    return copy;
 }
 
-void JoinLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator JoinLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    inputOriginIds = ids;
+    auto copy = *this;
+    copy.outputOriginIds = ids;
+    return copy;
 }
 
 std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
