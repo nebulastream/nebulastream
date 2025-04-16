@@ -81,7 +81,7 @@ Schema IngestionTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
 
 std::vector<std::vector<OriginId>> IngestionTimeWatermarkAssignerLogicalOperator::getInputOriginIds() const
 {
-    return inputOriginIds;
+    return {inputOriginIds};
 }
 
 std::vector<OriginId> IngestionTimeWatermarkAssignerLogicalOperator::getOutputOriginIds() const
@@ -89,14 +89,19 @@ std::vector<OriginId> IngestionTimeWatermarkAssignerLogicalOperator::getOutputOr
     return outputOriginIds;
 }
 
-void IngestionTimeWatermarkAssignerLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(ids.size() == 1, "Watermark assigner should have only one input");
+    auto copy = *this;
+    copy.inputOriginIds = ids[0];
+    return copy;
 }
 
-void IngestionTimeWatermarkAssignerLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    inputOriginIds = ids;
+    auto copy = *this;
+    copy.outputOriginIds = ids;
+    return copy;
 }
 
 std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getChildren() const

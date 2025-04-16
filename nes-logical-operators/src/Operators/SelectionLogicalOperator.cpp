@@ -103,7 +103,7 @@ Schema SelectionLogicalOperator::getOutputSchema() const
 
 std::vector<std::vector<OriginId>> SelectionLogicalOperator::getInputOriginIds() const
 {
-    return inputOriginIds;
+    return {inputOriginIds};
 }
 
 std::vector<OriginId> SelectionLogicalOperator::getOutputOriginIds() const
@@ -111,14 +111,19 @@ std::vector<OriginId> SelectionLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-void SelectionLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator SelectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(ids.size() == 1, "Selection should have only one input");
+    auto copy = *this;
+    copy.inputOriginIds = ids[0];
+    return copy;
 }
 
-void SelectionLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator SelectionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    inputOriginIds = ids;
+    auto copy = *this;
+    copy.outputOriginIds = ids;
+    return copy;
 }
 
 std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const

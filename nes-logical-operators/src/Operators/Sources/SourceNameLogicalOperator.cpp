@@ -108,14 +108,14 @@ std::vector<OriginId> SourceNameLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-void SourceNameLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator SourceNameLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>>) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(false, "OriginId inference should happen on SourceDescriptorLogicalOperator");
 }
 
-void SourceNameLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator SourceNameLogicalOperator::withOutputOriginIds(std::vector<OriginId>) const
 {
-    inputOriginIds = ids;
+    PRECONDITION(false, "OriginId inference should happen on SourceDescriptorLogicalOperator");
 }
 
 std::vector<LogicalOperator> SourceNameLogicalOperator::getChildren() const

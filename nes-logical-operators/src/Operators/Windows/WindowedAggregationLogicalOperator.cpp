@@ -204,14 +204,20 @@ std::vector<OriginId> WindowedAggregationLogicalOperator::getOutputOriginIds() c
     return outputOriginIds;
 }
 
-void WindowedAggregationLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator WindowedAggregationLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(ids.size() == 1, "Windowed aggregation should have only one input");
+    auto copy = *this;
+    copy.inputOriginIds = ids[0];
+    return copy;
 }
 
-void WindowedAggregationLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator WindowedAggregationLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    inputOriginIds = ids[0];
+    PRECONDITION(ids.size() == 1, "Windowed aggregation should have only one output OriginId");
+    auto copy = *this;
+    copy.outputOriginIds = ids;
+    return copy;
 }
 
 std::vector<LogicalOperator> WindowedAggregationLogicalOperator::getChildren() const
@@ -247,16 +253,6 @@ void WindowedAggregationLogicalOperator::setWindowType(std::unique_ptr<Windowing
 std::vector<FieldAccessLogicalFunction> WindowedAggregationLogicalOperator::getKeys() const
 {
     return onKey;
-}
-
-OriginId WindowedAggregationLogicalOperator::getOriginId() const
-{
-    return originId;
-}
-
-void WindowedAggregationLogicalOperator::setInputOriginIds(const std::vector<OriginId>& inputIds)
-{
-    inputOriginIds = inputIds;
 }
 
 [[nodiscard]] std::string WindowedAggregationLogicalOperator::getWindowStartFieldName() const
