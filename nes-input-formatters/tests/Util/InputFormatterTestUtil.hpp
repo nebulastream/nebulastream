@@ -85,11 +85,61 @@ struct TestConfig
     using TupleSchema = TupleSchemaTemplate;
 };
 
+
+template <typename T>
+class ThreadSafeVector
+{
+    std::mutex mtx;
+    std::condition_variable_any condition;
+    std::vector<T> vector;
+
+public:
+    void reserve(size_t reservationSize)
+    {
+        std::scoped_lock lock(mtx);
+        vector.reserve(reservationSize);
+    }
+
+    void modifyBuffer(std::function<void(std::vector<T>&)> fn)
+    {
+        std::scoped_lock lock(mtx);
+        fn(vector);
+        condition.notify_one();
+    }
+
+    template <typename U = T>
+    void emplace_back(U&& item)
+    {
+        {
+            std::scoped_lock lock(mtx);
+            vector.emplace_back(std::forward<U>(item));
+        }
+        condition.notify_one();
+    }
+
+    size_t size()
+    {
+        std::scoped_lock lock(mtx);
+        return vector.size();
+    }
+
+    void waitForSize(size_t size)
+    {
+        std::unique_lock lock(mtx);
+        if (vector.size() >= size)
+        {
+            return;
+        }
+
+        condition.wait(lock, [this, size]() { return vector.size() >= size; });
+    }
+};
+
 std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataTypes);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers);
+getEmitFunction(ThreadSafeVector<NES::Memory::TupleBuffer>& resultBuffers);
 
 Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 

@@ -100,7 +100,7 @@ public:
         const size_t numberOfRequiredSourceBuffers = numberOfExpectedRawBuffers + 1;
 
         /// Create vector for result buffers and create emit function to collect buffers from source
-        std::vector<NES::Memory::TupleBuffer> rawBuffers;
+        InputFormatterTestUtil::ThreadSafeVector<NES::Memory::TupleBuffer> rawBuffers;
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
@@ -109,9 +109,9 @@ public:
         const auto fileSource
             = InputFormatterTestUtil::createFileSource(testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
-        InputFormatterTestUtil::waitForSource(rawBuffers, numberOfExpectedRawBuffers);
+        rawBuffers.waitForSize(numberOfExpectedRawBuffers);
         ASSERT_EQ(rawBuffers.size(), numberOfExpectedRawBuffers);
-        ASSERT_EQ(fileSource->tryStop(std::chrono::milliseconds(0)), Sources::SourceReturnType::TryStopResult::SUCCESS);
+        ASSERT_EQ(fileSource->tryStop(std::chrono::milliseconds(1000)), Sources::SourceReturnType::TryStopResult::SUCCESS);
 
         /// We assume that we don't need more than two times the number of buffers to represent the formatted data than we need to represent the raw data
         const auto numberOfRequiredFormattedBuffers = rawBuffers.size() * 2;
@@ -123,16 +123,20 @@ public:
 
             std::vector<Runtime::Execution::TestablePipelineTask> pipelineTasks;
             pipelineTasks.reserve(numberOfExpectedRawBuffers);
-            for (size_t bufferIdx = 0; auto& rawBuffer : rawBuffers)
-            {
-                const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
-                const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
-                rawBuffer.setSequenceNumber(currentSequenceNumber);
-                auto pipelineTask
-                    = Runtime::Execution::TestablePipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
-                pipelineTasks.emplace_back(std::move(pipelineTask));
-                ++bufferIdx;
-            }
+            rawBuffers.modifyBuffer(
+                [&](auto& rawBuffers)
+                {
+                    for (size_t bufferIdx = 0; auto& rawBuffer : rawBuffers)
+                    {
+                        const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
+                        const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
+                        rawBuffer.setSequenceNumber(currentSequenceNumber);
+                        auto pipelineTask = Runtime::Execution::TestablePipelineTask(
+                            WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
+                        pipelineTasks.emplace_back(std::move(pipelineTask));
+                        ++bufferIdx;
+                    }
+                });
             auto taskQueue = std::make_unique<Runtime::Execution::MultiThreadedTestTaskQueue>(
                 testConfig.numberOfThreads, pipelineTasks, testBufferManager, resultBuffers);
             taskQueue->startProcessing();
@@ -176,8 +180,6 @@ public:
             }
 
             out.close();
-            /// Destroy task queue first, to assure that it does not hold references to buffers anymore
-            ASSERT_TRUE(taskQueue.release());
             ASSERT_TRUE(InputFormatterTestUtil::compareFiles(testFilePath, resultFilePath));
             resultBuffers->clear();
             resultBufferVec.clear();

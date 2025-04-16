@@ -175,7 +175,7 @@ void dataSourceThread(
 
     try
     {
-        result.set_value(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, dataEmit));
+        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, dataEmit));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{});
@@ -184,7 +184,7 @@ void dataSourceThread(
     catch (const std::exception& e)
     {
         auto ingestionException = RunningRoutineFailure(e.what());
-        result.set_exception(std::make_exception_ptr(ingestionException));
+        result.set_exception_at_thread_exit(std::make_exception_ptr(ingestionException));
         emit(originId, SourceReturnType::Error{std::move(ingestionException)});
     }
 }
@@ -216,19 +216,22 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
 void SourceThread::stop()
 {
     PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
+
     NES_DEBUG("SourceThread  {} : stop source", originId);
     thread.request_stop();
+    {
+        auto deletedOnScopeExit = std::move(thread);
+    }
+    NES_DEBUG("SourceThread  {} : stopped", originId);
 
     try
     {
         this->terminationFuture.get();
-        auto deletedOnScopeExit = std::move(thread);
     }
     catch (const Exception& exception)
     {
         NES_ERROR("Source encountered an error: {}", exception.what());
     }
-    NES_DEBUG("SourceThread  {} : stopped", originId);
 }
 
 SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
