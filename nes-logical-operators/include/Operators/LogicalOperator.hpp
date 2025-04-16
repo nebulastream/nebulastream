@@ -61,10 +61,10 @@ struct LogicalOperatorConcept
 
     [[nodiscard]] virtual std::vector<std::vector<OriginId>> getInputOriginIds() const = 0;
     [[nodiscard]] virtual std::vector<OriginId> getOutputOriginIds() const = 0;
-    virtual void setInputOriginIds(std::vector<std::vector<OriginId>>) = 0;
-    virtual void setOutputOriginIds(std::vector<OriginId>) = 0;
 
     [[nodiscard]] virtual struct LogicalOperator withInferredSchema(Schema inputSchema) const = 0;
+    [[nodiscard]] virtual LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>>) const = 0;
+    [[nodiscard]] virtual LogicalOperator withOutputOriginIds(std::vector<OriginId>) const = 0;
 
     OperatorId id = INVALID_OPERATOR_ID;
 };
@@ -84,9 +84,9 @@ public:
     [[nodiscard]] Schema getOutputSchema() const override;
     [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
     [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    void setInputOriginIds(std::vector<std::vector<OriginId>>) override;
-    void setOutputOriginIds(std::vector<OriginId>) override;
     [[nodiscard]] LogicalOperator withInferredSchema(Schema) const override;
+    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>>) const override;
+    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId>) const override;
 };
 
 /// Id is preserved during copy
@@ -136,10 +136,10 @@ struct LogicalOperator {
     [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const;
     [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const;
 
-    void setInputOriginIds(std::vector<std::vector<OriginId>> ids);
-    void setOutputOriginIds(std::vector<OriginId> ids);
 
     [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const;
+    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const;
+    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const;
 
 private:
     struct Concept : LogicalOperatorConcept {
@@ -202,14 +202,14 @@ private:
             return data.getOutputSchema();
         }
 
-        [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override
+        [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override
         {
-            return data.getInputOriginIds();
+            return data.withInputOriginIds(ids);
         }
 
-        [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override
+        [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override
         {
-            return data.getOutputOriginIds();
+            return data.withOutputOriginIds(ids);
         }
 
         void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override

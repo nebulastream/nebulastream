@@ -143,14 +143,19 @@ std::vector<OriginId> UnionLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-void UnionLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator UnionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(ids.size() == 2, "Union should have two inputs");
+    auto copy = *this;
+    copy.inputOriginIds = ids;
+    return copy;
 }
 
-void UnionLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator UnionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    inputOriginIds = ids;
+    auto copy = *this;
+    copy.outputOriginIds = ids;
+    return copy;
 }
 
 std::vector<LogicalOperator> UnionLogicalOperator::getChildren() const

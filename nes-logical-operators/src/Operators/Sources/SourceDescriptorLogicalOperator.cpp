@@ -105,14 +105,20 @@ std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() cons
     return outputOriginIds;
 }
 
-void SourceDescriptorLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator SourceDescriptorLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(ids.size() == 1, "Source should have one input");
+    PRECONDITION(ids[0].size() == 1, "Source should have one originId");
+    auto copy = *this;
+    copy.inputOriginIds = ids[0];
+    return copy;
 }
 
-void SourceDescriptorLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator SourceDescriptorLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    inputOriginIds = ids;
+    auto copy = *this;
+    copy.outputOriginIds = ids;
+    return copy;
 }
 
 std::vector<LogicalOperator> SourceDescriptorLogicalOperator::getChildren() const

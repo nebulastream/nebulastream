@@ -43,8 +43,8 @@ public:
 
     [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
     [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override;
-    void setOutputOriginIds(std::vector<OriginId> ids) override;
+    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
+    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
@@ -70,7 +70,6 @@ private:
         static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
             = Configurations::DescriptorConfig::createConfigParameterContainerMap();
     };
-
 };
 
 

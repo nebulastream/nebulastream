@@ -157,7 +157,7 @@ Schema ProjectionLogicalOperator::getOutputSchema() const
 
 std::vector<std::vector<OriginId>> ProjectionLogicalOperator::getInputOriginIds() const
 {
-    return inputOriginIds;
+    return {inputOriginIds};
 }
 
 std::vector<OriginId> ProjectionLogicalOperator::getOutputOriginIds() const
@@ -165,14 +165,19 @@ std::vector<OriginId> ProjectionLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-void ProjectionLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator ProjectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(ids.size() == 1, "Selection should have only one input");
+    auto copy = *this;
+    copy.inputOriginIds = ids[0];
+    return copy;
 }
 
-void ProjectionLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator ProjectionLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    inputOriginIds = ids;
+    auto copy = *this;
+    copy.outputOriginIds = ids;
+    return copy;
 }
 
 std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const

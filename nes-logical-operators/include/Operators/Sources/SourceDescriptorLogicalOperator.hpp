@@ -51,8 +51,8 @@ public:
 
     [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
     [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override;
-    void setOutputOriginIds(std::vector<OriginId> ids) override;
+    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
+    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
@@ -69,7 +69,6 @@ private:
     /// LogicalOperatorConcept member
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
-    std::vector<std::vector<OriginId>> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
 };
 

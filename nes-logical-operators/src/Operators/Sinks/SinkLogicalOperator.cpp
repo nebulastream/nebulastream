@@ -78,7 +78,7 @@ Schema SinkLogicalOperator::getOutputSchema() const
 
 std::vector<std::vector<OriginId>> SinkLogicalOperator::getInputOriginIds() const
 {
-    return inputOriginIds;
+    return {inputOriginIds};
 }
 
 std::vector<OriginId> SinkLogicalOperator::getOutputOriginIds() const
@@ -86,14 +86,19 @@ std::vector<OriginId> SinkLogicalOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-void SinkLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator SinkLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(ids.size() == 1, "Sink should have one input");
+    auto copy = *this;
+    copy.inputOriginIds = ids[0];
+    return copy;
 }
 
-void SinkLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
+LogicalOperator SinkLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    inputOriginIds = ids;
+    auto copy = *this;
+    copy.outputOriginIds = ids;
+    return copy;
 }
 
 std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const

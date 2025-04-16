@@ -65,6 +65,10 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(Sc
     copy.children = newChildren;
     copy.inputSchema = schema;
     copy.outputSchema = schema;
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
+{
+    auto copy = *this;
+    copy.outputOriginIds = ids;
     return copy;
 }
 
@@ -93,7 +97,7 @@ Schema EventTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
 
 std::vector<std::vector<OriginId>> EventTimeWatermarkAssignerLogicalOperator::getInputOriginIds() const
 {
-    return inputOriginIds;
+    return {inputOriginIds};
 }
 
 std::vector<OriginId> EventTimeWatermarkAssignerLogicalOperator::getOutputOriginIds() const
@@ -101,15 +105,14 @@ std::vector<OriginId> EventTimeWatermarkAssignerLogicalOperator::getOutputOrigin
     return outputOriginIds;
 }
 
-void EventTimeWatermarkAssignerLogicalOperator::setOutputOriginIds(std::vector<OriginId> ids)
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    outputOriginIds = ids;
+    PRECONDITION(ids.size() == 1, "Assigner should have one input");
+    auto copy = *this;
+    copy.inputOriginIds = ids[0];
+    return copy;
 }
 
-void EventTimeWatermarkAssignerLogicalOperator::setInputOriginIds(std::vector<std::vector<OriginId>> ids)
-{
-    inputOriginIds = ids;
-}
 
 std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChildren() const
 {
