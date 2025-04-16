@@ -60,23 +60,19 @@ std::string SelectionLogicalOperator::toString() const
     return ss.str();
 }
 
-LogicalOperator SelectionLogicalOperator::withInferredSchema(Schema inputSchema) const
+LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
+    INVARIANT(inputSchemas.size() == 1, "Selection should have one input");
+    const auto& inputSchema = inputSchemas[0];
     copy.predicate = predicate.withInferredStamp(inputSchema);
     if (*copy.predicate.getStamp().get() != Boolean())
     {
-        throw CannotInferSchema("the filter expression is not a valid predicate");
+        throw CannotInferSchema("the selection expression is not a valid predicate");
     }
     copy.inputSchema = inputSchema;
     copy.outputSchema = inputSchema;
-
-    std::vector<LogicalOperator> newChildren;
-    for (const auto& child : children)
-    {
-        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
-    }
-    return copy.withChildren(newChildren);
+    return copy;
 }
 
 Optimizer::TraitSet SelectionLogicalOperator::getTraitSet() const

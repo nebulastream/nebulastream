@@ -33,19 +33,9 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-LogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(Schema) const
+LogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(std::vector<Schema>) const
 {
-    auto copy = *this;
-    copy.inputSchema = sourceDescriptor->schema;
-    copy.outputSchema = sourceDescriptor->schema;
-
-    std::vector<LogicalOperator> newChildren;
-    for (auto& child : children)
-    {
-        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
-    }
-    copy.children = newChildren;
-    return copy;
+    PRECONDITION(false, "Schema is already given by SourceDescriptor. No call ot InferSchema needed");
 }
 
 bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const

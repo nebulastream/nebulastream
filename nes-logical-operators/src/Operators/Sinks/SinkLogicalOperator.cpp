@@ -46,9 +46,11 @@ std::string_view SinkLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-LogicalOperator SinkLogicalOperator::withInferredSchema(Schema inputSchema) const
+LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
+    INVARIANT(inputSchemas.size() == 1, "Sink should have only one input");
+    const auto& inputSchema = inputSchemas[0];
     copy.sinkDescriptor->schema = inputSchema;
     copy.inputSchema = inputSchema;
     copy.outputSchema = inputSchema;

@@ -43,12 +43,9 @@ bool SourceNameLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
     return false;
 }
 
-LogicalOperator SourceNameLogicalOperator::withInferredSchema(Schema) const
+LogicalOperator SourceNameLogicalOperator::withInferredSchema(std::vector<Schema>) const
 {
-    auto copy = *this;
-    copy.inputSchema = schema;
-    copy.outputSchema = schema;
-    return copy;
+    PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
 }
 
 std::string SourceNameLogicalOperator::toString() const
