@@ -42,7 +42,7 @@ public:
     ENDPOINT("POST", "/queries", querySubmit, BODY_STRING(String, request)) {
         nlohmann::json data = nlohmann::json::parse(request->c_str());
         auto id = queryCatalog->size();
-        (*queryCatalog)[id] = data["code"].dump();
+        (*queryCatalog)[id] = data["code"].get<std::string>();
         return createResponse(Status::CODE_200, "received");
     }
 
