@@ -13,7 +13,7 @@
 #include "controller/SourceCatalogController.hpp"
 
 #include <SourceCatalogs/SourceCatalog.hpp>
-#include <NebuLi.hpp>
+#include <NebuLI.hpp>
 #include <ErrorHandling.hpp>
 #include <yaml-cpp/yaml.h>
 

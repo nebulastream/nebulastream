@@ -5,7 +5,7 @@
 #include "oatpp/core/macro/codegen.hpp"
 #include "oatpp/core/macro/component.hpp"
 
-#include <NebuLi.hpp>
+#include <NebuLI.hpp>
 
 #include OATPP_CODEGEN_BEGIN(ApiController) ///< Begin Codegen
 
