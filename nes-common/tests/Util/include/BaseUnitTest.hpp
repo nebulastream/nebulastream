@@ -22,6 +22,20 @@
 namespace NES::Testing
 {
 
+
+/// Defines the SKIP_IF_TSAN macro, which skips the current test if the test was built with tsan.
+/// This is usually necessary if the test uses gtests EXPECT_DEATH_DEBUG
+#if defined(__has_feature) && __has_feature(thread_sanitizer)
+    #define SKIP_IF_TSAN() \
+        do \
+        { \
+            GTEST_SKIP() << "Test is disabled when running with TSAN"; \
+        } while (0)
+#else
+    #define SKIP_IF_TSAN()
+#endif
+
+
 /// Test with EXPECT_DEATH_DEBUG and ASSERT_DEATH_DEBUG for testing correct behaviour when asserts are disabled
 #if defined(NDEBUG)
     /// In Release: Death-Tests as No-Op
