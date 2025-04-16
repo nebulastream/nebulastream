@@ -21,14 +21,35 @@
 
 namespace NES
 {
+/// Stores the physical (executable) plan. This plan holds the output of the query optimizer and the input to the
+/// query compiler. It holds the roots of the plan as PhysicalOperatorWrapper containing the actual PhysicalOperator
+/// and additional information needed during query compilation.
 struct PhysicalPlan final
 {
-    PhysicalPlan(QueryId id, std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators) : queryId(id), rootOperators(std::move(rootOperators)) {}
+    PhysicalPlan(QueryId id, std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators);
     [[nodiscard]] std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const PhysicalPlan& t);
 
+    /// Indicates the node direction
+    enum class PlanDirection
+    {
+        SourceToSink, /// Execution: from data sources to sinks
+        SinkToSource /// Optimization: from sinks to source
+    };
+
     const QueryId queryId;
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators;
+    const PlanDirection direction;
+
+private:
+    /// Private constructor that allows a different direction; used by flip()
+    PhysicalPlan(QueryId id, std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators, PlanDirection dir);
+
+    friend PhysicalPlan flip(PhysicalPlan plan);
 };
+
+/// free function to flip a PhysicalPlan from SinkToSource to SourceToSink direction
+PhysicalPlan flip(PhysicalPlan plan);
+
 }
 FMT_OSTREAM(NES::PhysicalPlan);
