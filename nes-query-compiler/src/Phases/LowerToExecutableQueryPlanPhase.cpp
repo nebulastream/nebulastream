@@ -169,21 +169,11 @@ std::unique_ptr<CompiledQueryPlan> apply(const std::shared_ptr<PipelinedQueryPla
         processSource(pipeline, pipelineQueryPlan, loweringContext);
     }
 
-    auto tempPipelineMap = std::move(loweringContext.pipelineToExecutableMap);
-    std::vector<decltype(tempPipelineMap.begin()->second)> pipelines;
-    pipelines.reserve(tempPipelineMap.size());
-    for (auto& entry : tempPipelineMap)
-    {
-        pipelines.push_back(std::move(entry.second));
-    }
-
-    auto tempSinks = std::move(loweringContext.sinks);
-    std::vector<Sink> sinks;
-    sinks.reserve(tempSinks.size());
-    for (auto& descriptorAndPredecessors : tempSinks)
-    {
-        sinks.push_back(Sink(descriptorAndPredecessors.first, std::move(descriptorAndPredecessors.second)));
-    }
+    auto pipelines = std::move(loweringContext.pipelineToExecutableMap) | std::views::values | std::ranges::to<std::vector>();
+    auto sinks = std::move(loweringContext.sinks)
+        | std::views::transform([](auto descriptorAndPredecessors)
+                                { return Sink(descriptorAndPredecessors.first, std::move(descriptorAndPredecessors.second)); })
+        | std::ranges::to<std::vector>();
 
     return CompiledQueryPlan::create(
         pipelineQueryPlan->queryId, std::move(pipelines), std::move(sinks), std::move(loweringContext.sources));
