@@ -14,7 +14,7 @@
 #pragma once
 
 #include <CompiledQueryPlan.hpp>
-#include "PhysicalPlan.hpp"
+#include <PhysicalPlan.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -22,7 +22,7 @@ namespace NES::QueryCompilation
 /// Represents a query compilation request.
 struct QueryCompilationRequest
 {
-    std::unique_ptr<PhysicalPlan> queryPlan;
+    PhysicalPlan queryPlan;
 
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;
