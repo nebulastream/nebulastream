@@ -28,7 +28,8 @@
 namespace NES
 {
 
-LogicalOperatorConcept::LogicalOperatorConcept() : id(getNextOperatorId()) {}
+LogicalOperatorConcept::LogicalOperatorConcept() : id(getNextLogicalOperatorId()) {
+}
 LogicalOperatorConcept::LogicalOperatorConcept(OperatorId existingId) : id(existingId) {}
 
 std::string NullLogicalOperator::toString() const  {
