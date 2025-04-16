@@ -15,20 +15,20 @@
 #include <algorithm>
 #include <cctype>
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <iostream>
 #include <vector>
+#include <unistd.h>
 #include <Configurations/Util.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <argparse/argparse.hpp>
-#include <fmt/chrono.h>
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 #include <fmt/ranges.h>
-#include <folly/MPMCQueue.h>
-#include <google/protobuf/text_format.h>
 #include <nlohmann/json.hpp>
 
 #include <ErrorHandling.hpp>
@@ -276,7 +276,7 @@ void shuffleQueries(std::vector<NES::Systest::Query> queries)
 {
     std::random_device rd;
     std::mt19937 g(rd());
-    std::shuffle(queries.begin(), queries.end(), g);
+    std::ranges::shuffle(queries, g);
 }
 
 void createSymlink(const std::filesystem::path& absoluteLogPath, const std::filesystem::path& symlinkPath)
@@ -329,12 +329,12 @@ void setupLogging()
     if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
     {
         /// Set the correct logging path when using docker
-        std::cout << "Find the log at: file://" << std::filesystem::path(hostLoggingPath).string() + logFileName << std::endl;
+        fmt::println(std::cout, "Find the log at: file://{}/nes-systests/{}", std::filesystem::path(hostLoggingPath).string(), logFileName);
     }
     else
     {
         /// Set the correct logging path without docker
-        std::cout << "Find the log at: file://" << PATH_TO_BINARY_DIR + logFileName << std::endl;
+        fmt::println(std::cout, "Find the log at: file://{}/nes-systests/{}", PATH_TO_BINARY_DIR, logFileName);
     }
 
     const auto symlinkPath = logDir / "latest.log";
