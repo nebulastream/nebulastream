@@ -37,6 +37,14 @@ std::string SinkLogicalOperator::toString() const
     std::stringstream ss;
     ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
     ss << sinkDescriptor;
+    if (!inputOriginIds.empty())
+    {
+        ss << ", input originId:" << inputOriginIds[0];
+    }
+    else
+    {
+        ss << ", input originId: none";
+    }
     ss << ")";
     return ss.str();
 }
