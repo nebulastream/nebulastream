@@ -104,11 +104,12 @@ private:
     /// Operator specific member
     static constexpr std::string_view NAME = "Join";
     LogicalFunction joinFunction;
-    Schema leftSourceSchema, rightSourceSchema, outputSchema;
+    Schema leftInputSchema, rightInputSchema, outputSchema;
     std::shared_ptr<Windowing::WindowType> windowType;
     uint64_t numberOfInputEdgesLeft, numberOfInputEdgesRight;
     std::string windowStartFieldName, windowEndFieldName;
     JoinType joinType;
+    Optimizer::OriginIdAssignerTrait originIdTrait;
 
     /// LogicalOperatorConcept member
     std::vector<LogicalOperator> children;
