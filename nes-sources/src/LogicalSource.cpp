@@ -11,32 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
 #include <memory>
 #include <string>
-#include <Sources/SourceDescriptor.hpp>
+#include <utility>
+#include <DataTypes/Schema.hpp>
+#include <Sources/LogicalSource.hpp>
 
 namespace NES
 {
 
-/// Container for storing all configurations for physical source
-class PhysicalSource
+
+LogicalSource::LogicalSource(std::string logicalSourceName, const std::shared_ptr<Schema>& schema) : logicalSourceName(std::move(logicalSourceName)), schema(schema)
 {
-public:
-    static std::shared_ptr<PhysicalSource> create(Sources::SourceDescriptor&& sourceDescriptor);
+}
 
-    const std::string& getLogicalSourceName() const;
+std::shared_ptr<const Schema> LogicalSource::getSchema() const
+{
+    return schema;
+}
 
-    std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(Schema schema);
-
-    std::string toString();
-
-private:
-    explicit PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor&& sourceDescriptor);
-
-    std::string logicalSourceName;
-    Sources::SourceDescriptor sourceDescriptor;
-};
+std::string LogicalSource::getLogicalSourceName() const
+{
+    return logicalSourceName;
+}
 
 }

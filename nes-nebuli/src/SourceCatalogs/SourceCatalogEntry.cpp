@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
@@ -20,41 +22,41 @@
 namespace NES::Catalogs::Source
 {
 
-SourceCatalogEntry::SourceCatalogEntry(
-    std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId)
-    : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), topologyNodeId(topologyNodeId)
-{
-}
-
-std::shared_ptr<SourceCatalogEntry> SourceCatalogEntry::create(
-    std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId)
-{
-    return std::make_shared<SourceCatalogEntry>(SourceCatalogEntry(std::move(physicalSource), std::move(logicalSource), topologyNodeId));
-}
-
-const std::shared_ptr<PhysicalSource>& SourceCatalogEntry::getPhysicalSource() const
-{
-    return physicalSource;
-}
-
-const std::shared_ptr<LogicalSource>& SourceCatalogEntry::getLogicalSource() const
-{
-    return logicalSource;
-}
-
-WorkerId SourceCatalogEntry::getTopologyNodeId() const
-{
-    return topologyNodeId;
-}
-
-std::string SourceCatalogEntry::toString() const
-{
-    std::stringstream ss;
-    ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource << " on node=" << topologyNodeId;
-    return ss.str();
-}
-std::string SourceCatalogEntry::getPhysicalSourceName() const
-{
-    return physicalSourceName;
-}
+// SourceCatalogEntry::SourceCatalogEntry(
+//     std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId)
+//     : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), topologyNodeId(topologyNodeId)
+// {
+// }
+//
+// std::shared_ptr<SourceCatalogEntry> SourceCatalogEntry::create(
+//     std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId)
+// {
+//     return std::make_shared<SourceCatalogEntry>(SourceCatalogEntry(std::move(physicalSource), std::move(logicalSource), topologyNodeId));
+// }
+//
+// std::shared_ptr<PhysicalSource> SourceCatalogEntry::getPhysicalSource() const
+// {
+//     return physicalSource;
+// }
+//
+// std::shared_ptr<LogicalSource> SourceCatalogEntry::getLogicalSource() const
+// {
+//     return logicalSource;
+// }
+//
+// WorkerId SourceCatalogEntry::getTopologyNodeId() const
+// {
+//     return topologyNodeId;
+// }
+//
+// std::string SourceCatalogEntry::toString() const
+// {
+//     std::stringstream ss;
+//     ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource << " on node=" << topologyNodeId;
+//     return ss.str();
+// }
+// uint64_t SourceCatalogEntry::getPhysicalSourceID() const
+// {
+//     return physicalSourceID;
+// }
 }

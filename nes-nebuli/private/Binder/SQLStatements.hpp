@@ -13,14 +13,15 @@
 */
 #pragma once
 
-#include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+
+#include <NebuLI.hpp>
 
 namespace NES
 {
 
-enum class QueryControlStatement
+enum class SQLStatements
 {
     STOP,
     STATUS,
@@ -31,9 +32,40 @@ enum class QueryControlStatement
 
 struct QueryParseResult
 {
-    QueryControlStatement type;
+    SQLStatements type;
     std::shared_ptr<NES::QueryPlan> queryPlan;
     std::optional<QueryId> queryId;
 };
 
+
+struct StartQueryStatement
+{
+    std::shared_ptr<QueryPlan> queryPlan;
+};
+
+struct DropQueryStatement
+{
+    QueryId queryID;
+};
+
+struct ShowQueryStatusStatement
+{
+    QueryId queryID;
+};
+
+struct CreateSourceStatement
+{
+    std::string sourceName{};
+    std::vector<std::pair<std::string, std::shared_ptr<DataType>>> columns;
+    //to enable CREATE SOURCE AS add
+    //std::optional<QueryPlan> sourceQuery;
+};
+
+struct DropSourceStatement
+{
+    std::variant<std::shared_ptr<CLI::LogicalSource>, std::shared_ptr<CLI::PhysicalSource>> source;
+};
+
+
+using Statement = std::variant<CreateSourceStatement, DropSourceStatement, StartQueryStatement, DropQueryStatement>;
 }

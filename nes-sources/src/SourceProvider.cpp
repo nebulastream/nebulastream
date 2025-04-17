@@ -38,12 +38,12 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
-    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
+    if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))
     {
         return std::make_unique<SourceHandle>(
             std::move(originId), std::move(bufferPool), numberOfLocalBuffersInSource, std::move(source.value()));
     }
-    throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
+    throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }
 
 }

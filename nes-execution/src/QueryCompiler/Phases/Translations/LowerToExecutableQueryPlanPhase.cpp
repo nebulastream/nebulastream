@@ -102,10 +102,10 @@ Runtime::Execution::Source processSource(
 
     std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
     auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
-        sourceOperator->getSourceDescriptorRef().parserConfig.parserType,
-        sourceOperator->getSourceDescriptorRef().schema,
-        sourceOperator->getSourceDescriptorRef().parserConfig.tupleDelimiter,
-        sourceOperator->getSourceDescriptorRef().parserConfig.fieldDelimiter);
+        sourceOperator->getSourceDescriptor().getParserConfig().parserType,
+        *sourceOperator->getSourceDescriptor().getSchema(),
+        sourceOperator->getSourceDescriptor().getParserConfig().tupleDelimiter,
+        sourceOperator->getSourceDescriptor().getParserConfig().fieldDelimiter);
     auto inputFormatterTask
         = std::make_unique<InputFormatters::InputFormatterTask>(sourceOperator->getOriginId(), std::move(inputFormatter));
 

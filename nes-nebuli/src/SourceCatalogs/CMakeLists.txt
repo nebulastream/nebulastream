@@ -13,6 +13,6 @@
 add_source_files(nes-catalogs
         SourceCatalog.cpp
         SourceCatalogEntry.cpp
-        LogicalSource.cpp
-        PhysicalSource.cpp
+        ../../../nes-sources/src/LogicalSource.cpp
+        ../../../nes-sources/src/PhysicalSource.cpp
 )

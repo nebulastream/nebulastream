@@ -19,7 +19,7 @@
 #include <tuple>
 #include <Binder/SQLStatementBinder.hpp>
 #include <sys/stat.h>
-#include <Common/DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>

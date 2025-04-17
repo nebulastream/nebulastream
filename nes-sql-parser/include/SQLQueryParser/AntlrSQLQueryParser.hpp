@@ -17,10 +17,8 @@
 #include <memory>
 #include <string_view>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/QueryControlStatement.hpp>
 
 namespace NES::AntlrSQLQueryParser
 {
-
-QueryParseResult createLogicalQueryPlanFromSQLString(std::string_view queryString);
+std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view queryString);
 }

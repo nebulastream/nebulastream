@@ -14,44 +14,23 @@
 
 
 #pragma once
+#include <Binder/SQLStatements.hpp>
+
 #include <functional>
 #include <variant>
 #include <AntlrSQLParser.h>
 #include <Plans/Query/QueryPlan.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
-#include <folly/stub/logging.h>
 
 
 namespace NES::Binder
 {
 
-
-struct CreateSourceStatement
-{
-    std::string sourceName{};
-    std::vector<std::pair<std::string, std::shared_ptr<DataType>>> columns;
-    //to enable CREATE SOURCE AS add
-    //std::optional<QueryPlan> sourceQuery;
-};
-
-struct DropSourceStatement
-{
-    std::variant<std::shared_ptr<LogicalSource>, std::shared_ptr<PhysicalSource>> source;
-};
-
-struct DropQueryStatement
-{
-    QueryId id;
-    explicit DropQueryStatement(const QueryId id) : id(id) { }
-};
-
-using Statement = std::variant<CreateSourceStatement, DropSourceStatement, DropQueryStatement, std::shared_ptr<QueryPlan>>;
-
-
 class SQLStatementBinder
 {
     std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
-    std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)> queryBinder;
+    std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser*)> queryBinder;
     Statement bind(AntlrSQLParser::StatementContext* statementAST);
 
 public:

@@ -1,0 +1,72 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <cstdint>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <DataTypes/Schema.hpp>
+
+namespace NES
+{
+class OperatorSerializationUtil;
+namespace Catalogs::Source
+{
+class SourceCatalog;
+}
+/**
+ * @brief The LogicalSource wraps the source name and the schema.
+ */
+class LogicalSource
+{
+    friend Catalogs::Source::SourceCatalog;
+    friend OperatorSerializationUtil;
+    explicit LogicalSource(std::string logicalSourceName, const std::shared_ptr<Schema>& schema);
+
+public:
+    /**
+     * @brief Gets the logical source name
+     */
+    [[nodiscard]] std::string getLogicalSourceName() const;
+
+    /**
+     * @brief Gets the schema
+     */
+    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+
+    friend bool operator==(const LogicalSource& lhs, const LogicalSource& rhs)
+    {
+        return lhs.logicalSourceName == rhs.logicalSourceName && *lhs.schema == *rhs.schema;
+    }
+    friend bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs) { return !(lhs == rhs); }
+
+private:
+    std::string logicalSourceName;
+    std::shared_ptr<Schema> schema;
+};
+
+
+}
+
+template <>
+struct std::hash<NES::LogicalSource>
+{
+    uint64_t operator()(const NES::LogicalSource& logicalSource) const noexcept
+    {
+        return std::hash<std::string>()(logicalSource.getLogicalSourceName());
+    }
+};

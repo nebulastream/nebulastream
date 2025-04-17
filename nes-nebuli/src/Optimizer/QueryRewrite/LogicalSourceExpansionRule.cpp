@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <any>
 #include <memory>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
@@ -23,12 +25,12 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
-#include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
+
 #include <ErrorHandling.hpp>
+#include "Operators/Operator.hpp"
 
 namespace NES::Optimizer
 {
@@ -87,10 +89,15 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
         auto logicalSourceName = sourceOperator->getLogicalSourceName();
 
-        const std::vector<std::shared_ptr<Catalogs::Source::SourceCatalogEntry>> sourceCatalogEntries
-            = sourceCatalog->getPhysicalSources(logicalSourceName);
-        NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());
-        if (sourceCatalogEntries.empty())
+        const auto physicalSourcesOpt = sourceCatalog->getPhysicalSources(logicalSourceName);
+        if (not physicalSourcesOpt.has_value())
+        {
+            throw UnknownSource("{}", sourceOperator->getLogicalSourceName());
+        }
+
+        const auto physicalSources = *physicalSourcesOpt;
+        NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", physicalSources.size());
+        if (physicalSources.empty())
         {
             auto ex = PhysicalSourceNotFoundInQueryDescription();
             ex.what() += "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source " + logicalSourceName;
@@ -115,18 +122,18 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
             }
         }
         NES_TRACE(
-            "LogicalSourceExpansionRule: Create {} duplicated logical sub-graph and add to original graph", sourceCatalogEntries.size());
+            "LogicalSourceExpansionRule: Create {} duplicated logical sub-graph and add to original graph", physicalSources.size());
 
         /// Create one duplicate operator for each physical source
-        for (const auto& sourceCatalogEntry : sourceCatalogEntries)
+        for (const auto& physicalSourceDescriptor : physicalSources)
         {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
             auto duplicateSourceOperator = NES::Util::as<SourceNameLogicalOperator>(sourceOperator->duplicate());
             NES_DEBUG(
-                "Catalog schema for current source: {}", sourceCatalog->getSchemaForLogicalSource(sourceOperator->getLogicalSourceName()));
+                "Catalog schema for current source: {}", *physicalSourceDescriptor.getSchema());
             /// Add to the source operator the id of the physical node where we have to pin the operator
             /// NOTE: This is required at the time of placement to know where the source operator is pinned
-            duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());
+            duplicateSourceOperator->addProperty(PINNED_WORKER_ID, physicalSourceDescriptor.getWorkerID());
             duplicateSourceOperator->setSchema(sourceOperator->getSchema());
 
             /// Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
@@ -143,9 +150,9 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
                 {
                     /// Fetch the blocking upstream operators of this operator
                     const std::any& value = operatorNode->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
-                    auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
                     /// Iterate over all blocking parent ids and connect the duplicated operator
-                    for (auto blockingParentId : listOfConnectedBlockingParents)
+                    for (auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
+                         auto blockingParentId : listOfConnectedBlockingParents)
                     {
                         auto blockingOperator = blockingOperators[blockingParentId];
                         if (!blockingOperator)
@@ -182,9 +189,8 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
                     visitedOperators.insert(operatorNode->getId());
                 }
             }
-            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(duplicateSourceOperator->getSchema());
             auto operatorSourceLogicalDescriptor
-                = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), duplicateSourceOperator->getId());
+                = std::make_shared<SourceDescriptorLogicalOperator>(std::move(physicalSourceDescriptor), duplicateSourceOperator->getId());
             duplicateSourceOperator->replace(operatorSourceLogicalDescriptor, duplicateSourceOperator);
         }
     }
@@ -222,8 +228,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const std::sha
 void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const std::shared_ptr<Node>& operatorNode, OperatorId downStreamOperatorId)
 {
     /// extract the list of connected blocking parents and add the current parent to the list
-    std::any value = NES::Util::as_if<Operator>(operatorNode)->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
-    if (value.has_value())
+    if (const std::any value = NES::Util::as_if<Operator>(operatorNode)->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS); value.has_value())
     { /// update the existing list
         auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
         listOfConnectedBlockingParents.emplace_back(downStreamOperatorId);

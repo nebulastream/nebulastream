@@ -36,10 +36,8 @@
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Plans/QueryControlStatement.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -200,7 +198,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     }
 }
 
-std::variant<std::shared_ptr<DecomposedQueryPlan>, QueryParseResult> createFullySpecifiedQueryPlan(const QueryConfig& config)
+std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
@@ -266,7 +264,7 @@ std::variant<std::shared_ptr<DecomposedQueryPlan>, QueryParseResult> createFully
     return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
-std::variant<std::shared_ptr<DecomposedQueryPlan>, QueryParseResult> loadFromYAMLFile(const std::filesystem::path& filePath)
+std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -285,7 +283,7 @@ SchemaField::SchemaField(std::string name, NES::DataType type) : name(std::move(
 {
 }
 
-std::variant<std::shared_ptr<DecomposedQueryPlan>, QueryParseResult> loadFrom(std::istream& inputStream)
+std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
 {
     try
     {
