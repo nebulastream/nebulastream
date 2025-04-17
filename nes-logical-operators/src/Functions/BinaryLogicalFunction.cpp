@@ -15,40 +15,46 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-BinaryLogicalFunction::BinaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
+
+constexpr size_t LEFT_CHILD_INDEX = 0;
+constexpr size_t RIGHT_CHILD_INDEX = 1;
+
+LogicalFunction::LogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
     : LogicalFunction(std::move(stamp), std::move(name))
 {
 }
 
-BinaryLogicalFunction::BinaryLogicalFunction(BinaryLogicalFunction* other) : LogicalFunction(other)
+LogicalFunction::LogicalFunction(LogicalFunction* other) : LogicalFunction(other)
 {
-    addChildWithEqual(getLeft()->deepCopy());
-    addChildWithEqual(getRight()->deepCopy());
+    children[LEFT_CHILD_INDEX] = other->getLeftChild()->clone();
+    children[RIGHT_CHILD_INDEX] = other->getRightChild()->clone();
 }
 
-void BinaryLogicalFunction::setChildren(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right)
+void LogicalFunction::setLeftChild(std::shared_ptr<LogicalFunction> left)
 {
-    addChildWithEqual(left);
-    addChildWithEqual(right);
+    children[LEFT_CHILD_INDEX] = left;
 }
 
-std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getLeft() const
+void LogicalFunction::setRightChild(std::shared_ptr<LogicalFunction> right)
 {
-    INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: {}", std::to_string(children.size()));
-    return Util::as<LogicalFunction>(children[0]);
+    children[RIGHT_CHILD_INDEX] = right;
 }
 
-std::shared_ptr<LogicalFunction> BinaryLogicalFunction::getRight() const
+std::shared_ptr<LogicalFunction> LogicalFunction::getLeftChild() const
 {
-    INVARIANT(children.size() == 2, "A binary function always should have two children, but it had: {}", std::to_string(children.size()));
-    return Util::as<LogicalFunction>(children[1]);
+    return children[LEFT_CHILD_INDEX];
+}
+
+std::shared_ptr<LogicalFunction> LogicalFunction::getRightChild() const
+{
+    return children[RIGHT_CHILD_INDEX];
 }
 
 }

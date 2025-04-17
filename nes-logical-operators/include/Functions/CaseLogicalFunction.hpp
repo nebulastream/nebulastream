@@ -35,7 +35,7 @@ public:
 
     /// @brief gets the node representing the default child.
     std::shared_ptr<LogicalFunction> getDefaultExp() const;
-    void inferStamp(std::shared_ptr<Schema> schema) override;
+    void inferStamp(const Schema& schema) override;
 
     [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const final;
 

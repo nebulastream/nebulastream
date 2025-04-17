@@ -14,39 +14,27 @@
 
 #pragma once
 
-#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <memory>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/UnaryLogicalFunction.hpp>
 
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
-/// @brief A RenameLogicalFunction allows us to rename an attribute value via .as in the query
-class RenameLogicalFunction : public LogicalFunction
+
+class FloorLogicalFunction final : public UnaryLogicalFunction
 {
 public:
-    static std::shared_ptr<LogicalFunction> create(std::shared_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName);
-
+    explicit FloorLogicalFunction(std::shared_ptr<DataType> stamp);
+    ~FloorLogicalFunction() noexcept override = default;
+    [[nodiscard]] static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
     [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
-
-
-    std::string getNewFieldName() const;
-
-    void inferStamp(const Schema& schema) override;
-
-
-    std::shared_ptr<FieldAccessLogicalFunction> getOriginalField() const;
-
     std::shared_ptr<LogicalFunction> clone() const override;
-
 protected:
-    explicit RenameLogicalFunction(const std::shared_ptr<RenameLogicalFunction> other);
-
     [[nodiscard]] std::string toString() const override;
 
 private:
-    RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName);
-
-    std::shared_ptr<FieldAccessLogicalFunction> originalField;
-    std::string newFieldName;
+    explicit FloorLogicalFunction(FloorLogicalFunction* other);
 };
 
 }

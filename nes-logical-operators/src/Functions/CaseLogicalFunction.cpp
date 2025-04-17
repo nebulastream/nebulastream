@@ -17,8 +17,7 @@
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/CaseLogicalFunction.hpp>
-#include <Functions/WhenBinaryLogicalFunction.hpp>
-#include <Nodes/Node.hpp>
+#include <Functions/WhenLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -27,7 +26,7 @@
 
 namespace NES
 {
-CaseLogicalFunction::NodeFunctionCase(std::shared_ptr<DataType> stamp) : NodeFunction(std::move(stamp), "Case")
+CaseLogicalFunction::CaseLogicalFunction(std::shared_ptr<DataType> stamp) : LogicalFunction(std::move(stamp), "Case")
 {
 }
 
@@ -64,7 +63,7 @@ void CaseLogicalFunction::inferStamp(const Schema& schema)
         elem->inferStamp(schema);
         ///all elements in whenChildren must be Whens
         INVARIANT(
-            NES::Util::instanceOf<WhenBinaryLogicalFunction>(elem),
+            NES::Util::instanceOf<WhenLogicalFunction>(elem),
             "Error during stamp inference. All functions in when function vector must be when functions, but {} is not a when function.",
             *elem);
         ///all elements must have same stamp as defaultExp value

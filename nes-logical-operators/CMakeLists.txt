@@ -15,8 +15,7 @@ add_subdirectory(src)
 get_source(nes-logical-operators NES_LOGICAL_OPERATORS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-logical-operators ${NES_LOGICAL_OPERATORS_SOURCE_FILES}
-        src/Functions/ArithmeticalFunctions/SubBinaryLogicalFunction.cpp)
+add_library(nes-logical-operators ${NES_LOGICAL_OPERATORS_SOURCE_FILES})
 target_link_libraries(nes-logical-operators PUBLIC nes-sources nes-sinks)
 target_include_directories(nes-logical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

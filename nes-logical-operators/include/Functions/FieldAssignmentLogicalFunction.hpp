@@ -14,39 +14,32 @@
 
 #pragma once
 
+#include <Functions/BinaryLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {
-/// @brief A RenameLogicalFunction allows us to rename an attribute value via .as in the query
-class RenameLogicalFunction : public LogicalFunction
+
+/// @brief A FieldAssignmentLogicalFunction represents the assignment of a function result to a specific field.
+class FieldAssignmentLogicalFunction : public BinaryLogicalFunction
 {
 public:
-    static std::shared_ptr<LogicalFunction> create(std::shared_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName);
+    explicit FieldAssignmentLogicalFunction(std::shared_ptr<DataType> stamp);
+
+    static std::shared_ptr<FieldAssignmentLogicalFunction> create(
+        std::shared_ptr<FieldAccessLogicalFunction> fieldAccess, std::shared_ptr<LogicalFunction> LogicalFunction);
 
     [[nodiscard]] bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
-
-    std::string getNewFieldName() const;
-
+    [[nodiscard]] std::shared_ptr<FieldAccessLogicalFunction> getField() const;
+    [[nodiscard]] std::shared_ptr<LogicalFunction> getAssignment() const;
     void inferStamp(const Schema& schema) override;
-
-
-    std::shared_ptr<FieldAccessLogicalFunction> getOriginalField() const;
 
     std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
-    explicit RenameLogicalFunction(const std::shared_ptr<RenameLogicalFunction> other);
+    explicit FieldAssignmentLogicalFunction(FieldAssignmentLogicalFunction* other);
 
     [[nodiscard]] std::string toString() const override;
-
-private:
-    RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName);
-
-    std::shared_ptr<FieldAccessLogicalFunction> originalField;
-    std::string newFieldName;
 };
-
 }
