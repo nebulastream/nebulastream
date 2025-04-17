@@ -34,25 +34,7 @@ template <class T, bool boundaryChecks = true>
 class ColumnLayoutField
 {
 public:
-    /**
-     * Factory to create a ColumnLayoutField for a specific memory layout and a specific tuple buffer.
-     * @param fieldIndex the field which is accessed.
-     * @param layout the memory layout
-     * @tparam buffer the tuple buffer
-     * @tparam T type of field
-     * @return field handler
-     */
-    static inline ColumnLayoutField<T, boundaryChecks>
-    create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer);
-
-    /**
-     * Creates a ColumnLayoutField for a specific memory layout and a specific tuple buffer.
-     * @param fieldIndex
-     * @param layout the memory layout
-     * @tparam buffer the tuple buffer
-     * @tparam T type of field
-     * @return field handler via a fieldName and a layoutBuffer
-     */
+    static inline ColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, const ColumnLayout& layout, Memory::TupleBuffer& buffer);
     static inline ColumnLayoutField<T, boundaryChecks>
     create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer);
 
@@ -64,11 +46,6 @@ public:
     inline T& operator[](size_t recordIndex);
 
 private:
-    /**
-     * @brief Constructor for ColumnLayoutField
-     * @param basePointer
-     * @param layout
-     */
     ColumnLayoutField(T* basePointer, std::shared_ptr<ColumnLayout> layout) : basePointer(basePointer), layout(std::move(layout)) {};
 
     T* basePointer;
