@@ -50,7 +50,7 @@ struct Pipeline
         Compiler
     };
 
-    ProviderType providerType;
+    ProviderType providerType = ProviderType::Interpreter;
     PhysicalOperator rootOperator;
     const PipelineId pipelineId;
 
