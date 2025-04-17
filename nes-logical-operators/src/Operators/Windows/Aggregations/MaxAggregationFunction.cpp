@@ -14,93 +14,74 @@
 
 #include <memory>
 #include <utility>
+#include <API/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include "Common/DataTypes/DataType.hpp"
-#include "Common/DataTypes/Numeric.hpp"
-#include "API/Schema.hpp"
-#include "Functions/FieldAccessLogicalFunction.hpp"
-
-#include "Functions/LogicalFunction.hpp"
-#include "SerializableFunction.pb.h"
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <SerializableFunction.pb.h>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 
 namespace NES
 {
 
-MaxAggregationFunction::MaxAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)
+MaxAggregationFunction::MaxAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
+    : WindowAggregationFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field))
 {
     this->aggregationType = Type::Max;
 }
 
-MaxAggregationFunction::MaxAggregationFunction(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
-    : WindowAggregationFunction(field, asField)
+MaxAggregationFunction::MaxAggregationFunction(std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
+    : WindowAggregationFunction(
+          field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Max;
 }
 
-std::shared_ptr<WindowAggregationFunction>
-MaxAggregationFunction::create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
+std::unique_ptr<WindowAggregationFunction> MaxAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
 {
-    return std::make_shared<MaxAggregationFunction>(std::move(onField), std::move(asField));
+    return std::make_unique<MaxAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
 }
 
-std::shared_ptr<WindowAggregationFunction> MaxAggregationFunction::on(const std::shared_ptr<LogicalFunction>& onField)
+std::unique_ptr<WindowAggregationFunction>
+MaxAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
 {
-    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(onField))
-    {
-        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
-    }
-    const auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(onField);
-    return std::make_shared<MaxAggregationFunction>(MaxAggregationFunction(fieldAccess));
+    return std::make_unique<MaxAggregationFunction>(std::move(onField), std::move(asField));
 }
 
 void MaxAggregationFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
+    if (dynamic_cast<Numeric*>(&onField->getStamp()) == nullptr)
     {
         NES_FATAL_ERROR("MaxAggregationFunction: aggregations on non numeric fields is not supported.");
     }
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = NES::Util::as<FieldAccessLogicalFunction>(onField)->getFieldName();
-    const auto asFieldName = NES::Util::as<FieldAccessLogicalFunction>(asField)->getFieldName();
+    const auto onFieldName = dynamic_cast<FieldAccessLogicalFunction*>(onField.get())->getFieldName();
+    const auto asFieldName = dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        NES::Util::as<FieldAccessLogicalFunction>(asField)->setFieldName(attributeNameResolver + asFieldName);
+        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        NES::Util::as<FieldAccessLogicalFunction>(asField)->setFieldName(attributeNameResolver + fieldName);
+        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + fieldName);
     }
-    asField->setStamp(getFinalAggregateStamp());
+    asField->setStamp(getFinalAggregateStamp().clone());
 }
 
-std::shared_ptr<WindowAggregationFunction> MaxAggregationFunction::clone()
+std::unique_ptr<WindowAggregationFunction> MaxAggregationFunction::clone()
 {
-    return std::make_shared<MaxAggregationFunction>(MaxAggregationFunction(this->onField->clone(), this->asField->clone()));
-}
-
-std::shared_ptr<DataType> MaxAggregationFunction::getInputStamp()
-{
-    return onField->getStamp();
-}
-
-std::shared_ptr<DataType> MaxAggregationFunction::getPartialAggregateStamp()
-{
-    return onField->getStamp();
-}
-
-std::shared_ptr<DataType> MaxAggregationFunction::getFinalAggregateStamp()
-{
-    return onField->getStamp();
+    return std::make_unique<MaxAggregationFunction>(onField->clone(), asField->clone());
 }
 
 NES::SerializableAggregationFunction MaxAggregationFunction::serialize() const
