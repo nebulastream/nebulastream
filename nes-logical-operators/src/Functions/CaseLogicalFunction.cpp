@@ -17,8 +17,7 @@
 #include <API/Schema.hpp>
 #include <Functions/CaseLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Functions/WhenBinaryLogicalFunction.hpp>
-#include <Nodes/Node.hpp>
+#include <Functions/WhenLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -27,26 +26,21 @@
 
 namespace NES
 {
-CaseLogicalFunction::NodeFunctionCase(std::shared_ptr<DataType> stamp) : NodeFunction(std::move(stamp), "Case")
-{
-}
-
-CaseLogicalFunction::CaseLogicalFunction(CaseLogicalFunction* other) : LogicalFunction(other)
+CaseLogicalFunction::CaseLogicalFunction(const CaseLogicalFunction& other) : LogicalFunction(other)
 {
     auto otherWhenChildren = getWhenChildren();
     for (auto& whenItr : otherWhenChildren)
     {
-        addChildWithEqual(whenItr->deepCopy());
+        children.push_back(whenItr->clone());
     }
-    addChildWithEqual(getDefaultExp()->deepCopy());
+    children.push_back(getDefaultExp()->clone());
 }
 
-std::shared_ptr<LogicalFunction> CaseLogicalFunction::create(
+CaseLogicalFunction::CaseLogicalFunction(
     const std::vector<std::shared_ptr<LogicalFunction>>& whenExps, const std::shared_ptr<LogicalFunction>& defaultExp)
+    : LogicalFunction(defaultExp->getStamp(), "Case")
 {
-    auto caseNode = std::make_shared<CaseLogicalFunction>(defaultExp->getStamp());
-    caseNode->setChildren(whenExps, defaultExp);
-    return caseNode;
+    this->setChildren(whenExps, defaultExp);
 }
 
 void CaseLogicalFunction::inferStamp(const Schema& schema)
@@ -64,7 +58,7 @@ void CaseLogicalFunction::inferStamp(const Schema& schema)
         elem->inferStamp(schema);
         ///all elements in whenChildren must be Whens
         INVARIANT(
-            NES::Util::instanceOf<WhenBinaryLogicalFunction>(elem),
+            NES::Util::instanceOf<WhenLogicalFunction>(elem),
             "Error during stamp inference. All functions in when function vector must be when functions, but {} is not a when function.",
             *elem);
         ///all elements must have same stamp as defaultExp value
@@ -86,9 +80,9 @@ void CaseLogicalFunction::setChildren(
 {
     for (auto elem : whenExps)
     {
-        addChildWithEqual(elem);
+        children.push_back(elem);
     }
-    addChildWithEqual(defaultExp);
+    children.push_back(defaultExp);
 }
 
 std::vector<std::shared_ptr<LogicalFunction>> CaseLogicalFunction::getWhenChildren() const
@@ -114,7 +108,7 @@ std::shared_ptr<LogicalFunction> CaseLogicalFunction::getDefaultExp() const
     return Util::as<LogicalFunction>(*(children.end() - 1));
 }
 
-bool CaseLogicalFunction::equal(const std::shared_ptr<Operator>& rhs) const
+bool CaseLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<CaseLogicalFunction>(rhs))
     {
@@ -125,7 +119,7 @@ bool CaseLogicalFunction::equal(const std::shared_ptr<Operator>& rhs) const
         }
         for (std::size_t i = 0; i < children.size(); i++)
         {
-            if (!children.at(i)->equal(otherCaseNode->children.at(i)))
+            if (children.at(i) != otherCaseNode->children.at(i))
             {
                 return false;
             }
@@ -149,14 +143,14 @@ std::string CaseLogicalFunction::toString() const
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> CaseLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> CaseLogicalFunction::clone() const
 {
     std::vector<std::shared_ptr<LogicalFunction>> copyOfWhenFunctions;
     for (auto whenFunction : getWhenChildren())
     {
-        copyOfWhenFunctions.push_back(NES::Util::as<LogicalFunction>(whenFunction)->deepCopy());
+        copyOfWhenFunctions.push_back(NES::Util::as<LogicalFunction>(whenFunction)->clone());
     }
-    return CaseLogicalFunction::create(copyOfWhenFunctions, getDefaultExp()->deepCopy());
+    return std::make_shared<CaseLogicalFunction>(copyOfWhenFunctions, getDefaultExp()->clone());
 }
 
 bool CaseLogicalFunction::validateBeforeLowering() const

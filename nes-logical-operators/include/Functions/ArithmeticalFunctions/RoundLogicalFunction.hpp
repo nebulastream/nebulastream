@@ -12,30 +12,27 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <Functions/LogicalFunction.hpp>
+#pragma once
+
 #include <Functions/UnaryLogicalFunction.hpp>
 
 namespace NES
 {
-UnaryLogicalFunction::UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
-    : LogicalFunction(std::move(stamp), std::move(name))
-{
-}
 
-UnaryLogicalFunction::UnaryLogicalFunction(const UnaryLogicalFunction& other) : LogicalFunction(other)
+class RoundLogicalFunction final : public UnaryLogicalFunction
 {
-}
+public:
+    explicit RoundLogicalFunction(std::shared_ptr<DataType> stamp);
+    ~RoundLogicalFunction() noexcept override = default;
+    [[nodiscard]] static std::shared_ptr<LogicalFunction> create(const std::shared_ptr<LogicalFunction>& child);
+    [[nodiscard]] bool equal(const std::shared_ptr<LogicalFunction>& rhs) const override;
 
-void UnaryLogicalFunction::setChild(const std::shared_ptr<LogicalFunction>& child)
-{
-    children[0] = child;
-}
 
-std::shared_ptr<LogicalFunction> UnaryLogicalFunction::getChild() const
-{
-    return children[0];
-}
+protected:
+    [[nodiscard]] std::string toString() const override;
+
+private:
+    explicit RoundLogicalFunction(RoundLogicalFunction* other);
+};
+
 }

@@ -51,7 +51,7 @@ void LogicalFunction::inferStamp(const Schema& schema)
     }
 }
 
-LogicalFunction::LogicalFunction(const LogicalFunction* other) : stamp(other->stamp)
+LogicalFunction::LogicalFunction(const LogicalFunction& other) : stamp(other.stamp)
 {
 }
 

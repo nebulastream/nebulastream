@@ -34,14 +34,14 @@ public:
     virtual ~LogicalFunction() = default;
 };
 
-class UnaryLogicalFunction : public LogicalFunction
+class LogicalFunction : public LogicalFunction
 {
 public:
     [[nodiscard]] std::shared_ptr<DataType> inferStamp(const std::vector<std::shared_ptr<DataType>>& inputStamps) const final;
     [[nodiscard]] virtual std::shared_ptr<DataType> inferUnary(const std::shared_ptr<DataType>& input) const = 0;
 };
 
-class BinaryLogicalFunction : public LogicalFunction
+class LogicalFunction : public LogicalFunction
 {
 public:
     [[nodiscard]] std::shared_ptr<DataType> inferStamp(const std::vector<std::shared_ptr<DataType>>& inputStamps) const final;
@@ -49,12 +49,4 @@ public:
     inferBinary(const std::shared_ptr<DataType>& left, const std::shared_ptr<DataType>& right) const = 0;
 };
 
-class LogicalFunctionRegistry : public BaseRegistry<LogicalFunctionRegistry, std::string, LogicalFunction>
-{
-};
-
 }
-
-#define INCLUDED_FROM_LOGICAL_FUNCTION_REGISTRY
-#include <Functions/Functions/GeneratedLogicalFunctionRegistrar.hpp>
-#undef INCLUDED_FROM_LOGICAL_FUNCTION_REGISTRY

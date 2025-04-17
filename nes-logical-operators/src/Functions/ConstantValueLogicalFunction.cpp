@@ -13,31 +13,61 @@
 */
 
 #include <memory>
-#include <string>
+#include <span>
 #include <utility>
 #include <Abstract/LogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <fmt/format.h>
+#include <LogicalFunctionRegistry.hpp>
+#include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string&& value)
-    : LogicalFunction(type, "ConstantValue"), constantValue(std::move(value))
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(std::shared_ptr<DataType> stamp, std::string value)
+    : constantValue(std::move(value)), stamp(stamp)
 {
 }
 
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction* other)
-    : LogicalFunction(other->getStamp(), "ConstantValue"), constantValue(other->constantValue)
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other)
+    : constantValue(other.constantValue), stamp(other.stamp)
 {
 }
 
-bool ConstantValueLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
+std::shared_ptr<DataType> ConstantValueLogicalFunction::getStamp() const
 {
-    if (Util::instanceOf<ConstantValueLogicalFunction>(rhs))
+    return stamp;
+};
+
+LogicalFunction ConstantValueLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return copy;
+};
+
+std::vector<LogicalFunction> ConstantValueLogicalFunction::getChildren() const
+{
+    return {};
+};
+
+LogicalFunction ConstantValueLogicalFunction::withChildren(std::vector<LogicalFunction>) const
+{
+    return *this;
+};
+
+std::string ConstantValueLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
+bool ConstantValueLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+{
+    if (auto other = dynamic_cast<const ConstantValueLogicalFunction*>(&rhs))
     {
-        auto otherConstantValueNode = Util::as<ConstantValueLogicalFunction>(rhs);
-        return otherConstantValueNode->stamp == stamp && constantValue == otherConstantValueNode->constantValue;
+        return constantValue == other->constantValue;
     }
     return false;
 }
@@ -47,30 +77,37 @@ std::string ConstantValueLogicalFunction::toString() const
     return fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
 }
 
-std::shared_ptr<LogicalFunction> ConstantValueLogicalFunction::create(const std::shared_ptr<DataType>& type, std::string value)
-{
-    return std::make_shared<ConstantValueLogicalFunction>(ConstantValueLogicalFunction(type, std::move(value)));
-}
-
 std::string ConstantValueLogicalFunction::getConstantValue() const
 {
     return constantValue;
 }
 
-void ConstantValueLogicalFunction::inferStamp(std::shared_ptr<Schema>)
+LogicalFunction ConstantValueLogicalFunction::withInferredStamp(Schema) const
 {
     /// the stamp of constant value functions is defined by the constant value type.
     /// thus ut is already assigned correctly when the function node is created.
+    return *this;
 }
 
-std::shared_ptr<LogicalFunction> ConstantValueLogicalFunction::deepCopy()
+SerializableFunction ConstantValueLogicalFunction::serialize() const
 {
-    return std::make_shared<ConstantValueLogicalFunction>(*this);
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+
+    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = getConstantValue();
+    SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
+    (*serializedFunction.mutable_config())["constantValueAsString"] = variantDescriptor;
+
+    return serializedFunction;
 }
 
-bool ConstantValueLogicalFunction::validateBeforeLowering() const
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    return children.empty();
+    auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);
+    return ConstantValueLogicalFunction(std::move(arguments.stamp), constantValueAsString);
 }
 
 }

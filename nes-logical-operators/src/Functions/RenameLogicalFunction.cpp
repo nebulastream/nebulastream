@@ -18,7 +18,7 @@
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/RenameLogicalFunction.hpp>
-#include <Nodes/Node.hpp>
+
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -29,21 +29,16 @@ namespace NES
 RenameLogicalFunction::RenameLogicalFunction(const std::shared_ptr<FieldAccessLogicalFunction>& originalField, std::string newFieldName)
     : LogicalFunction(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
 
-RenameLogicalFunction::RenameLogicalFunction(const std::shared_ptr<RenameLogicalFunction> other)
-    : RenameLogicalFunction(other->getOriginalField(), other->getNewFieldName()) {};
+RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
+    : RenameLogicalFunction(other.getOriginalField(), other.getNewFieldName()) {};
 
-std::shared_ptr<LogicalFunction>
-RenameLogicalFunction::create(std::shared_ptr<FieldAccessLogicalFunction> originalField, std::string newFieldName)
-{
-    return std::make_shared<RenameLogicalFunction>(RenameLogicalFunction(originalField, std::move(newFieldName)));
-}
 
 bool RenameLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
 {
     if (NES::Util::instanceOf<RenameLogicalFunction>(rhs))
     {
         auto otherFieldRead = NES::Util::as<RenameLogicalFunction>(rhs);
-        return otherFieldRead->getOriginalField()->equal(getOriginalField()) && this->newFieldName == otherFieldRead->getNewFieldName();
+        return otherFieldRead->getOriginalField() == getOriginalField() and this->newFieldName == otherFieldRead->getNewFieldName();
     }
     return false;
 }
@@ -96,9 +91,9 @@ void RenameLogicalFunction::inferStamp(const Schema& schema)
     stamp = fieldAttribute.value()->getDataType();
 }
 
-std::shared_ptr<LogicalFunction> RenameLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> RenameLogicalFunction::clone() const
 {
-    return RenameLogicalFunction::create(Util::as<FieldAccessLogicalFunction>(originalField->deepCopy()), newFieldName);
+    return std::make_shared<RenameLogicalFunction>(Util::as<FieldAccessLogicalFunction>(originalField->clone()), newFieldName);
 }
 
 bool RenameLogicalFunction::validateBeforeLowering() const

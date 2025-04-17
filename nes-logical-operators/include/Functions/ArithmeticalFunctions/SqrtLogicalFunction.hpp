@@ -12,30 +12,30 @@
     limitations under the License.
 */
 
+#pragma once
+
 #include <memory>
-#include <string>
-#include <utility>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/UnaryLogicalFunction.hpp>
 
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
-UnaryLogicalFunction::UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
-    : LogicalFunction(std::move(stamp), std::move(name))
-{
-}
 
-UnaryLogicalFunction::UnaryLogicalFunction(const UnaryLogicalFunction& other) : LogicalFunction(other)
+class SqrtLogicalFunction final : public UnaryLogicalFunction
 {
-}
+public:
+    explicit SqrtLogicalFunction(std::shared_ptr<DataType> stamp);
+    ~SqrtLogicalFunction() noexcept override = default;
+    [[nodiscard]] static std::shared_ptr<LogicalFunction> create(const std::shared_ptr<LogicalFunction>& child);
+    [[nodiscard]] bool equal(const std::shared_ptr<LogicalFunction>& rhs) const override;
 
-void UnaryLogicalFunction::setChild(const std::shared_ptr<LogicalFunction>& child)
-{
-    children[0] = child;
-}
+    std::shared_ptr<LogicalFunction> clone() const override;
 
-std::shared_ptr<LogicalFunction> UnaryLogicalFunction::getChild() const
-{
-    return children[0];
-}
+protected:
+    explicit SqrtLogicalFunction(SqrtLogicalFunction* other);
+
+    [[nodiscard]] std::string toString() const override;
+};
+
 }
