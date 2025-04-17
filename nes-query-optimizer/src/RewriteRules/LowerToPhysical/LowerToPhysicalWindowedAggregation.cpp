@@ -132,7 +132,7 @@ std::vector<std::shared_ptr<AggregationFunction>> getAggregationFunctions(
             }
             case WindowAggregationLogicalFunction::Type::Count: {
                 /// We assume that a count is a u64
-                auto countType = physicalTypeFactory.getPhysicalType(*DataTypeProvider::provideDataType(LogicalType::UINT64));
+                auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
                 aggregationFunctions.emplace_back(std::make_shared<CountAggregationFunction>(
                     std::move(countType),
                     std::move(physicalFinalType),
