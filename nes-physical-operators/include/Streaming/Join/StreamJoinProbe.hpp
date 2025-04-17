@@ -17,10 +17,11 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <Execution/Functions/Function.hpp>
+#include <Execution/Functions/PhysicalFunction.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
@@ -32,12 +33,12 @@ namespace NES
 /// This class is the second phase of the stream join. The actual implementation (nested-loops, probing hash tables)
 /// is not part of this class. This class takes care of the close() functionality as this universal.
 /// Furthermore, it provides a method of creating the joined tuple
-class StreamJoinProbe : public WindowOperatorProbe
+class StreamJoinProbePhysicalOperator : public WindowOperatorProbe
 {
 public:
-    StreamJoinProbe(
+    StreamJoinProbePhysicalOperator(
         uint64_t operatorHandlerIndex,
-        const std::shared_ptr<Functions::Function>& joinFunction,
+        const std::shared_ptr<Functions::PhysicalFunction>& joinFunction,
         WindowMetaData windowMetaData,
         JoinSchema joinSchema);
 
@@ -58,7 +59,7 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
-    std::shared_ptr<Functions::Function> joinFunction;
+    std::shared_ptr<Functions::PhysicalFunction> joinFunction;
     JoinSchema joinSchema;
 };
 }

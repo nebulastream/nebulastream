@@ -13,23 +13,25 @@
 */
 #pragma once
 #include <memory>
-#include <Functions/Function.hpp>
-#include <PhysicalOperator.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <AbstractPhysicalOperator.hpp>
 
 namespace NES
 {
 
 /// @brief Map operator that evaluates a map function on a input records.
 /// Map functions read record fields, apply transformations, and can set/update fields.
-class Map : public ExecutableOperator
+class MapPhysicalOperator : public AbstractPhysicalOperator
 {
 public:
     Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::Function> mapFunction);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
+    std::string toString() const { return typeid(this).name(); }
+
 private:
     Record::RecordFieldIdentifier fieldToWriteTo;
-    std::unique_ptr<Functions::Function> mapFunction;
+    std::unique_ptr<Functions::PhysicalFunction> mapFunction;
 };
 
 }

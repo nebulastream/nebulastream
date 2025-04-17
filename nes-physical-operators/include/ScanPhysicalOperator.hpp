@@ -19,23 +19,26 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <AbstractPhysicalOperator.hpp>
 
 namespace NES
 {
 
-class Scan : public Operator
 /// @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
 /// Furthermore, it supports projection push down to eliminate unneeded reads
+class ScanPhysicalOperator : public AbstractPhysicalOperator
 {
 public:
     /// @brief Constructor for the scan operator that receives a memory layout and a projection vector.
     /// @param memoryLayout memory layout that describes the tuple buffer.
     /// @param projections projection vector
-    Scan(
+    ScanPhysicalOperator(
         std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         std::vector<Nautilus::Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const override;
+
+    std::string toString() const { return typeid(this).name(); }
 
 private:
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
