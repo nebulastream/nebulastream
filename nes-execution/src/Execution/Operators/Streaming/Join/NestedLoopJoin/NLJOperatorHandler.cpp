@@ -49,7 +49,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
 
         // The tupleBuffer is emitted to the Query manager, where a new task is created for it
         pipelineCtx->dispatchBuffer(tupleBuffer);
-        NES_ERROR("Emitted leftSliceId {} [{}, {}] rightSliceId {} [{}, {}] with watermarkTs {} sequenceNumber {} originId {} for "
+        NES_DEBUG("Emitted leftSliceId {} [{}, {}] rightSliceId {} [{}, {}] with watermarkTs {} sequenceNumber {} originId {} for "
                  "no. left tuples "
                  "{} and no. right tuples {}",
                  bufferMemory->leftSliceIdentifier,
