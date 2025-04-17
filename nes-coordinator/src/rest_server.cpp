@@ -110,6 +110,7 @@ int main(int argc, char* argv[]) {
      addSinks(sinkCatalog, config);
 
      // Register signal handler
+     // sigaction() should be used in production
      signal(SIGINT, handleSignal);    // Ctrl+C
      signal(SIGTERM, handleSignal);   // kill (default), system shutdown
 
