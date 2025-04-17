@@ -70,14 +70,14 @@ Windowing::TimeUnit Days()
     return Windowing::TimeUnit::Days();
 }
 
-Windowing::TimeCharacteristic EventTime(std::unique_ptr<FieldAccessLogicalFunction> onField)
+Windowing::TimeCharacteristic EventTime(FieldAccessLogicalFunction onField)
 {
-    return Windowing::TimeCharacteristic::createEventTime(std::move(onField));
+    return Windowing::TimeCharacteristic::createEventTime(onField);
 }
 
-Windowing::TimeCharacteristic EventTime(std::unique_ptr<FieldAccessLogicalFunction> onField, const Windowing::TimeUnit& unit)
+Windowing::TimeCharacteristic EventTime(FieldAccessLogicalFunction onField, const Windowing::TimeUnit& unit)
 {
-    return Windowing::TimeCharacteristic::createEventTime(std::move(onField), unit);
+    return Windowing::TimeCharacteristic::createEventTime(onField, unit);
 }
 
 Windowing::TimeCharacteristic IngestionTime()
