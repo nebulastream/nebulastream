@@ -21,19 +21,17 @@
 
 namespace NES
 {
-
-/// @brief Representation of a query plan, which consists of a set of Pipelines.
-struct PipelinedQueryPlan : std::enable_shared_from_this<PipelinedQueryPlan>
+/// Representation of a query plan of pipelines
+struct PipelinedQueryPlan
 {
-    PipelinedQueryPlan(QueryId queryId = INVALID_QUERY_ID);
-
+    PipelinedQueryPlan(QueryId id);
     [[nodiscard]] std::string toString() const;
-
-    const QueryId queryId;
-
+    friend std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t);
     [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines() const;
     [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSinkPipelines() const;
 
+    const QueryId queryId;
     std::vector<std::shared_ptr<Pipeline>> pipelines;
 };
 }
+FMT_OSTREAM(NES::PipelinedQueryPlan);
