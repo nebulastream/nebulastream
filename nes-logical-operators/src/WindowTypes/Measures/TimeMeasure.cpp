@@ -48,9 +48,4 @@ bool TimeMeasure::operator==(const TimeMeasure& other) const
     return milliSeconds == other.milliSeconds;
 }
 
-bool TimeMeasure::equals(const TimeMeasure& other) const
-{
-    return this->milliSeconds == other.milliSeconds;
-}
-
 }

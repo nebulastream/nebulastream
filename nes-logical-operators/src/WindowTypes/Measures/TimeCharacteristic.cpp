@@ -15,9 +15,8 @@
 #include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Measures/TimeCharacteristic.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -30,6 +29,7 @@ namespace NES::Windowing
 TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1))
 {
 }
+
 TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit)
     : type(type), field(std::move(field)), unit(std::move(unit))
 {
@@ -102,12 +102,7 @@ std::string TimeCharacteristic::getTypeAsString() const
     }
 }
 
-void TimeCharacteristic::setField(std::shared_ptr<AttributeField> field)
-{
-    this->field = std::move(field);
-}
-
-bool TimeCharacteristic::equals(const TimeCharacteristic& other) const
+bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
 {
     const bool equalField = (this->field == nullptr && other.field == nullptr)
         || (this->field != nullptr && other.field != nullptr && this->field->isEqual(other.field));

@@ -395,7 +395,7 @@ bool QueryPlan::compare(const std::shared_ptr<QueryPlan>& otherPlan) const
         }
 
         /// comparison of both operators
-        if (!leftOperator->equal(rightOperator))
+        if (leftOperator == rightOperator)
         {
             return false;
         }
