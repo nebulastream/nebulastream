@@ -14,6 +14,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <tuple>
+
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
@@ -21,11 +23,12 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtil.hpp>
+#include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
-
+/// NOLINTBEGIN(readability-magic-numbers)
 namespace NES
 {
 
@@ -58,7 +61,7 @@ TEST_F(SpecificSequenceTest, oneTupleWithoutTupleDelimiters)
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
         = {/* buffer 1 */ {SequenceNumber(1), "123456789,123456"},
-           /* buffer 2 */ {SequenceNumber(2), "789"}}});
+           /* buffer 2 */ {SequenceNumber(2), "789\n"}}});
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
@@ -75,7 +78,7 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOutOfOrder)
         .testSchema = {INT32, INT32},
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
         .rawBytesPerThread
-        = {/* buffer 1 */ {SequenceNumber(2), "789"},
+        = {/* buffer 1 */ {SequenceNumber(2), "789\n"},
            /* buffer 2 */ {SequenceNumber(1), "123456789,123456"}}});
 }
 
@@ -130,11 +133,10 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
         .expectedResults = {WorkerThreadResults<TestTuple>{
             {{TestTuple{1}, TestTuple{2}, TestTuple{3}, TestTuple{4}},
              {TestTuple{5}, TestTuple{6}, TestTuple{7}, TestTuple{8}},
-             {TestTuple{1234}, TestTuple{5678}, TestTuple{1001}},
-             {TestTuple{1}}}}},
+             {TestTuple{1234}, TestTuple{5678}, TestTuple{1001}}}}},
         .rawBytesPerThread
         = {/* buffer 1 */ {SequenceNumber(1), "1\n2\n3\n4\n5\n6\n7\n8\n"},
-           /* buffer 2 */ {SequenceNumber(2), "1234\n5678\n1001\n1"}}});
+           /* buffer 2 */ {SequenceNumber(2), "1234\n5678\n1001\n"}}});
 }
 
 /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
@@ -172,10 +174,11 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
         = {WorkerThreadResults<TestTuple>{{{TestTuple(123, 123, 123, 123)}}},
            WorkerThreadResults<TestTuple>{{{TestTuple(123, 123, 123, 456789)}}}},
         .rawBytesPerThread
-        = {{SequenceNumber(4), ",456789"},
+        = {{SequenceNumber(4), ",456789\n"},
            {SequenceNumber(1), "123,123,"},
            {SequenceNumber(2), "123,123\n123,123"}, /// only full buffer
            {SequenceNumber(3), ",123"}}});
 }
 
 }
+/// NOLINTEND(readability-magic-numbers)
