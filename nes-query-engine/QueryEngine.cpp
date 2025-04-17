@@ -149,7 +149,7 @@ struct DefaultPEC final : PipelineExecutionContext
     PipelineId getPipelineId() const override { return pipelineId; }
     std::vector<std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
     {
-        PRECONDITION(operatorHandlers, "Operator Handlers were not set");
+        PRECONDITION(operatorHandlers, "OperatorHandlers were not set");
         return *operatorHandlers;
     }
     void setOperatorHandlers(std::vector<std::shared_ptr<OperatorHandler>>& handlers) override
