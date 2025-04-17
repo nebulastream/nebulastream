@@ -51,11 +51,11 @@ bool JoinLogicalOperator::operator==(const Operator& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const JoinLogicalOperator*>(&rhs))
     {
-        return joinDefinition->getWindowType()->equal(rhsOperator->joinDefinition->getWindowType())
-            && joinDefinition->getJoinFunction()->equal(rhsOperator->joinDefinition->getJoinFunction())
-            && (*joinDefinition->getOutputSchema() == *rhsOperator->joinDefinition->getOutputSchema())
-            && (*joinDefinition->getLeftSourceType() == *rhsOperator->joinDefinition->getRightSourceType())
-            && (*joinDefinition->getLeftSourceType() == *rhsOperator->joinDefinition->getLeftSourceType());
+        return (joinDefinition.getWindowType() == rhsOperator->joinDefinition.getWindowType())
+            && (joinDefinition.getJoinFunction() == rhsOperator->joinDefinition.getJoinFunction())
+            && (*joinDefinition.getOutputSchema() == *rhsOperator->joinDefinition.getOutputSchema())
+            && (*joinDefinition.getLeftSourceType() == *rhsOperator->joinDefinition.getRightSourceType())
+            && (*joinDefinition.getLeftSourceType() == *rhsOperator->joinDefinition.getLeftSourceType());
     }
     return false;
 }
