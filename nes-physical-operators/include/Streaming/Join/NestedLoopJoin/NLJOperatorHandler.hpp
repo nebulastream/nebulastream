@@ -21,13 +21,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Operators/SliceStore/Slice.hpp>
-#include <Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
-#include <Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceStore/Slice.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Execution.hpp>
 #include <folly/Synchronized.h>
 

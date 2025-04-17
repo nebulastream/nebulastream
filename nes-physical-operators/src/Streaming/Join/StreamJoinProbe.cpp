@@ -27,12 +27,11 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
-#include <Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/Streaming/Join/StreamJoinProbe.hpp>
-#include <Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
