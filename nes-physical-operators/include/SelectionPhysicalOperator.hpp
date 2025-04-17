@@ -11,20 +11,24 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#pragma once
 
-#include <Nautilus/Interface/Record.hpp>
-#include <Selection.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <AbstractPhysicalOperator.hpp>
 
 namespace NES
 {
 
-void Selection::execute(ExecutionContext& ctx, Record& record) const
+/// @brief Selection operator that evaluates an boolean function on each record.
+class SelectionPhysicalOperator : public AbstractPhysicalOperator
 {
-    /// evaluate function and call child operator if function is valid
-    if (function->execute(record, ctx.pipelineMemoryProvider.arena))
-    {
-        child->execute(ctx, record);
-    }
-}
+public:
+    SelectionPhysicalOperator(std::unique_ptr<Functions::PhysicalFunction> function) : function(std::move(function)) {};
+    void execute(ExecutionContext& ctx, Record& record) const override;
 
+    std::string toString() const { return typeid(this).name(); }
+
+private:
+    const std::unique_ptr<Functions::PhysicalFunction> function;
+};
 }

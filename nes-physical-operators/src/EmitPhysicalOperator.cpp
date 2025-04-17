@@ -24,9 +24,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/val.hpp>
-#include <Emit.hpp>
 #include <EmitOperatorHandler.hpp>
-#include <ExecutionContext.hpp>
+#include <EmitPhysicalOperator.hpp>
 #include <OperatorState.hpp>
 #include <function.hpp>
 
@@ -91,7 +90,7 @@ public:
     nautilus::val<int8_t*> bufferMemoryArea;
 };
 
-void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
+void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// initialize state variable and create new buffer
     const auto resultBufferRef = ctx.allocateBuffer();
@@ -100,7 +99,7 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
     ctx.setLocalOperatorState(this, std::move(emitState));
 }
 
-void Emit::execute(ExecutionContext& ctx, Record& record) const
+void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
     /// emit buffer if it reached the maximal capacity
@@ -113,22 +112,21 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
         emitState->outputIndex = 0_u64;
     }
 
-    /* We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
-     * emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
-     * to the brim, i.e., have no more space left.
-     */
+    /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
+    /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
+    /// to the brim, i.e., have no more space left.
     memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record);
     emitState->outputIndex = emitState->outputIndex + 1;
 }
 
-void Emit::close(ExecutionContext& ctx, RecordBuffer&) const
+void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(this));
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerIndex));
 }
 
-void Emit::emitRecordBuffer(
+void EmitPhysicalOperator::emitRecordBuffer(
     ExecutionContext& ctx,
     RecordBuffer& recordBuffer,
     const nautilus::val<uint64_t>& numRecords,
@@ -149,7 +147,8 @@ void Emit::emitRecordBuffer(
     }
 }
 
-Emit::Emit(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+EmitPhysicalOperator::EmitPhysicalOperator(
+    size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : operatorHandlerIndex(operatorHandlerIndex)
     , maxRecordsPerBuffer(memoryProvider->getMemoryLayout()->getCapacity())
     , memoryProvider(std::move(memoryProvider))

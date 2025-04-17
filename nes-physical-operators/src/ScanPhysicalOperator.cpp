@@ -21,20 +21,19 @@
 #include <Plans/ExecutableOperator.hpp>
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
-#include <PhysicalOperator.hpp>
-#include <Scan.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 namespace NES
 {
 
-Scan::Scan(
+ScanPhysicalOperator::ScanPhysicalOperator(
     std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
     std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {
 }
 
-void Scan::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();

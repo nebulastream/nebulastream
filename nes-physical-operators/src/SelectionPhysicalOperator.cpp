@@ -12,23 +12,19 @@
     limitations under the License.
 */
 
-#pragma once
+#include <Nautilus/Interface/Record.hpp>
+#include <SelectionPhysicalOperator.hpp>
 
-#include <memory>
-#include <Functions/Function.hpp>
-#include "Nautilus/DataTypes/VarVal.hpp"
-
-namespace NES::Functions
+namespace NES
 {
 
-class ExecutableFunctionGreaterEquals final : public Function
+void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-public:
-    ExecutableFunctionGreaterEquals(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    /// evaluate function and call child operator if function is valid
+    if (function->execute(record, ctx.pipelineMemoryProvider.arena))
+    {
+        child->execute(ctx, record);
+    }
+}
 
-private:
-    const std::unique_ptr<Function> leftExecutableFunction;
-    const std::unique_ptr<Function> rightExecutableFunction;
-};
 }
