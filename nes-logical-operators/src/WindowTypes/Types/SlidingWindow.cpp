@@ -58,8 +58,8 @@ bool SlidingWindow::operator==(const WindowType& otherWindowType)
 {
     if (auto otherSlidingWindow = dynamic_cast<const SlidingWindow*>(&otherWindowType))
     {
-        return this->size.equals(otherSlidingWindow->size) && this->slide.equals(otherSlidingWindow->slide)
-            && *this->timeCharacteristic == *otherSlidingWindow->timeCharacteristic;
+        return (this->size == otherSlidingWindow->size) && (this->slide == otherSlidingWindow->slide)
+            && (this->timeCharacteristic == (otherSlidingWindow->timeCharacteristic));
     }
     return false;
 }

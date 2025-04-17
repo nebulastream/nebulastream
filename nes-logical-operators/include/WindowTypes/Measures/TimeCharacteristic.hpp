@@ -49,10 +49,7 @@ public:
     /// @return The TimeCharacteristic type.
     [[nodiscard]] Type getType() const;
 
-    /// @brief Compares for equality
-    /// @param other: Object that we want to compare this to
-    /// @return Boolean
-    [[nodiscard]] bool equals(const TimeCharacteristic& other) const;
+    [[nodiscard]] bool operator==(const TimeCharacteristic& other) const;
 
     [[nodiscard]] std::shared_ptr<AttributeField> getField() const;
 

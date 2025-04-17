@@ -15,9 +15,8 @@
 #include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Measures/TimeCharacteristic.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -30,6 +29,7 @@ namespace NES::Windowing
 TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1))
 {
 }
+
 TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit)
     : field(std::move(field)), type(type), unit(std::move(unit))
 {
@@ -91,7 +91,15 @@ std::string TimeCharacteristic::getTypeAsString() const
     }
 }
 
-std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic)
+bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
+{
+    const bool equalField = (this->field == nullptr && other.field == nullptr)
+        || (this->field != nullptr && other.field != nullptr && this->field->isEqual(other.field));
+
+    return this->type == other.type && equalField && this->unit.equals(other.unit);
+}
+
+uint64_t TimeCharacteristic::hash() const
 {
     std::string fieldString = (timeCharacteristic.field != nullptr) ? timeCharacteristic.field->toString() : "NONE";
     return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), fieldString);

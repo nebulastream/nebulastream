@@ -59,7 +59,7 @@ bool TumblingWindow::equal(std::shared_ptr<WindowType> otherWindowType)
 {
     if (auto otherTumblingWindow = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType))
     {
-        return this->size.equals(otherTumblingWindow->size) and (*this->timeCharacteristic == *otherTumblingWindow->timeCharacteristic);
+        return (this->size == otherTumblingWindow->size) && (*this->timeCharacteristic == (*otherTumblingWindow->timeCharacteristic));
     }
     return false;
 }
