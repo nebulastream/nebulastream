@@ -24,30 +24,21 @@
 namespace NES
 {
 
-class AvgAggregationFunction : public WindowAggregationFunction
+class AvgAggregationFunction final : public WindowAggregationFunction
 {
 public:
-    static constexpr std::string_view NAME = "Avg";
-
-    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
-
-    static std::shared_ptr<WindowAggregationFunction>
-    create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
+    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationFunction>
+    create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
+    AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
+    explicit AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
 
     void inferStamp(const Schema& schema) override;
-
-    std::shared_ptr<WindowAggregationFunction> clone() override;
-
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
-
+    std::unique_ptr<WindowAggregationFunction> clone() override;
     virtual ~AvgAggregationFunction() = default;
-
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit AvgAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
-    AvgAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
+    static constexpr std::string_view NAME = "Avg";
 };
 }

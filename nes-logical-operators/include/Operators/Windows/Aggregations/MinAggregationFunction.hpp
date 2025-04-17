@@ -27,25 +27,19 @@ namespace NES
 class MinAggregationFunction : public WindowAggregationFunction
 {
 public:
-    static constexpr std::string_view NAME = "Min";
+    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationFunction>
+    create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
 
-    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
-
-    static std::shared_ptr<WindowAggregationFunction>
-    create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
-
-    void inferStamp(const Schema& schema) override;
-    std::shared_ptr<WindowAggregationFunction> clone() override;
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
-
+    MinAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
+    explicit MinAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
     virtual ~MinAggregationFunction() = default;
 
+    void inferStamp(const Schema& schema) override;
+    std::unique_ptr<WindowAggregationFunction> clone() override;
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit MinAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
-    MinAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
+    static constexpr std::string_view NAME = "Min";
 };
 }
