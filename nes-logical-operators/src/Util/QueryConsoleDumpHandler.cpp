@@ -27,11 +27,6 @@ QueryConsoleDumpHandler::QueryConsoleDumpHandler(std::ostream& out) : out(out)
 {
 }
 
-std::shared_ptr<QueryConsoleDumpHandler> QueryConsoleDumpHandler::create(std::ostream& out)
-{
-    return std::make_shared<QueryConsoleDumpHandler>(out);
-}
-
 void QueryConsoleDumpHandler::dumpHelper(const LogicalOperator& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
     out << std::string(indent * depth, ' ') << operationNode << '\n';

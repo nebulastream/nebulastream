@@ -101,10 +101,10 @@ void QueryPlan::promoteOperatorToRoot(LogicalOperator newRoot)
 std::string QueryPlan::toString() const
 {
     std::stringstream ss;
-    auto dumpHandler = QueryConsoleDumpHandler::create(ss);
+    auto dumpHandler = QueryConsoleDumpHandler(ss);
     for (auto& rootOperator : rootOperators)
     {
-        dumpHandler->dump(rootOperator);
+        dumpHandler.dump(rootOperator);
     }
     return ss.str();
 }
