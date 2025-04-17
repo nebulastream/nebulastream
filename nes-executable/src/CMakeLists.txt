@@ -10,11 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(src)
-get_source(nes-executable NES_EXECUTABLE_SOURCE_FILES)
-add_library(nes-executable ${NES_EXECUTABLE_SOURCE_FILES}
-        src/Pipeline.cpp)
-target_include_directories(nes-executable PUBLIC include PRIVATE .)
-target_link_libraries(nes-executable PUBLIC nes-common nes-runtime)
-
-add_tests_if_enabled(tests)
+add_source_files(nes-executable
+        PipelinedQueryPlan.cpp
+        ExecutableQueryPlan.cpp
+        Pipeline.cpp
+)
