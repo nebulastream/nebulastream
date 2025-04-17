@@ -153,52 +153,32 @@ private:
 
         explicit Model(T d) : Concept(getNextLogicalOperatorId()), data(std::move(d)) { }
 
-        Model(T d, OperatorId existingId)
-            : Concept(existingId), data(std::move(d)) {}
+        Model(T d, OperatorId existingId) : Concept(existingId), data(std::move(d)) { }
 
-        [[nodiscard]] std::unique_ptr<Concept> clone() const override {
-            return std::make_unique<Model>(data, this->id);
-        }
+        [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(data, this->id); }
 
-        [[nodiscard]] std::string toString() const override
-        {
-            return data.toString();
-        }
+        [[nodiscard]] std::string toString() const override { return data.toString(); }
 
-        [[nodiscard]] std::vector<LogicalOperator> getChildren() const override
-        {
-            return data.getChildren();
-        }
+        [[nodiscard]] std::vector<LogicalOperator> getChildren() const override { return data.getChildren(); }
 
         [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override
         {
             return data.withChildren(children);
         }
 
-        [[nodiscard]] std::string_view getName() const noexcept override
-        {
-            return data.getName();
-        }
+        [[nodiscard]] std::string_view getName() const noexcept override { return data.getName(); }
 
-        [[nodiscard]] SerializableOperator serialize() const override
-        {
-            return data.serialize();
-        }
+        [[nodiscard]] SerializableOperator serialize() const override { return data.serialize(); }
 
-        [[nodiscard]] Optimizer::TraitSet getTraitSet() const override
-        {
-            return data.getTraitSet();
-        }
+        [[nodiscard]] Optimizer::TraitSet getTraitSet() const override { return data.getTraitSet(); }
 
-        [[nodiscard]] std::vector<Schema> getInputSchemas() const override
-        {
-            return data.getInputSchemas();
-        }
+        [[nodiscard]] std::vector<Schema> getInputSchemas() const override { return data.getInputSchemas(); }
 
-        [[nodiscard]] Schema getOutputSchema() const override
-        {
-            return data.getOutputSchema();
-        }
+        [[nodiscard]] Schema getOutputSchema() const override { return data.getOutputSchema(); }
+
+        [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override { return data.getInputOriginIds(); }
+
+        [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override { return data.getOutputOriginIds(); }
 
         [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override
         {
@@ -215,18 +195,10 @@ private:
             return data.withInferredSchema(inputSchemas);
         }
 
-        void setOutputOriginIds(std::vector<OriginId> ids) override
+        [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override
         {
-            return data.setOutputOriginIds(ids);
-        }
-
-        [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const override
-        {
-            return data.withInferredSchema(inputSchema);
-        }
-
-        [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override {
-            if (const auto* p = dynamic_cast<const Concept*>(&rhs)) {
+            if (const auto* p = dynamic_cast<const Concept*>(&rhs))
+            {
                 return equals(*p);
             }
             return false;
