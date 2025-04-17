@@ -101,9 +101,11 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffersOrMor
         return testing::AssertionSuccess();
     }
 
-    return testing::AssertionFailure() << "The expected number of tuple buffers were not received after "
-                                       << std::chrono::duration_cast<std::chrono::milliseconds>(DEFAULT_LONG_AWAIT_TIMEOUT).count()
-                                       << "ms. " << "Expected: " << numberOfExpectedBuffers << " Received: " << buffers->size();
+    return testing::AssertionFailure() << fmt::format(
+               "The expected number of TupleBuffers were not received after {}. Expected: {}, but Received {}",
+               std::chrono::duration_cast<std::chrono::milliseconds>(DEFAULT_LONG_AWAIT_TIMEOUT),
+               numberOfExpectedBuffers,
+               buffers->size());
 }
 
 void TestSinkController::insertBuffer(Memory::TupleBuffer&& buffer)
