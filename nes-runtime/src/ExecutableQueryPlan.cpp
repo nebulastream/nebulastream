@@ -60,8 +60,8 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
 }
 
 
-std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
-    Execution::CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider)
+std::unique_ptr<ExecutableQueryPlan>
+ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
