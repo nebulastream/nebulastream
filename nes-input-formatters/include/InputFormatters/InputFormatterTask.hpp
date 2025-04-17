@@ -75,7 +75,7 @@ public:
 
     void start(Runtime::Execution::PipelineExecutionContext&) override { /* noop */ }
 
-    /// Attempts to flush out a final (spanning) tuple that ends in the last byte of the last seen raw buffer.
+    /// Logs the final state of the SequenceShredder.
     void stop(Runtime::Execution::PipelineExecutionContext&) override;
 
     /// (concurrently) executes an InputFormatterTask.
@@ -128,7 +128,6 @@ private:
     /// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
     /// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
     /// Lastly, formats the full spanning tuple.
-    template <bool IsFlush = false>
     void processSpanningTuple(
         const SpanningTuple& spanningTuple,
         const std::vector<StagedBuffer>& buffersToFormat,

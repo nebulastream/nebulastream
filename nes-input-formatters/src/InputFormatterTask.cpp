@@ -172,6 +172,7 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
 
     /// 1. process leading spanning tuple if required
     auto formattedBuffer = bufferProvider->getBufferBlocking();
+    formattedBuffer.setLastChunk(false);
     if (/* hasLeadingSpanningTuple */ indexOfSequenceNumberInStagedBuffers != 0)
     {
         processSpanningTuple(
@@ -195,6 +196,7 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
             formattedBuffer.setOriginId(rawBufferData.buffer.getOriginId());
             pec.emitBuffer(formattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
             formattedBuffer = bufferProvider->getBufferBlocking();
+            formattedBuffer.setLastChunk(false);
         }
 
         processSpanningTuple(
@@ -206,6 +208,7 @@ void InputFormatterTask::processRawBufferWithTupleDelimiter(
     /// If a raw buffer contains exactly one delimiter, but does not complete a spanning tuple, the formatted buffer does not contain a tuple
     if (formattedBuffer.getNumberOfTuples() != 0)
     {
+        formattedBuffer.setLastChunk(true);
         formattedBuffer.setSequenceNumber(rawBufferData.buffer.getSequenceNumber());
         formattedBuffer.setChunkNumber(NES::ChunkNumber(runningChunkNumber++));
         formattedBuffer.setOriginId(rawBufferData.buffer.getOriginId());
@@ -232,6 +235,7 @@ void InputFormatterTask::processRawBufferWithoutTupleDelimiter(
     }
     /// If there is a spanning tuple, get a new buffer for formatted data and process the spanning tuples
     auto formattedBuffer = bufferProvider->getBufferBlocking();
+    formattedBuffer.setLastChunk(true);
     processSpanningTuple({.spanStart = 0, .spanEnd = stagedBuffers.size() - 1}, stagedBuffers, *bufferProvider, formattedBuffer);
 
     formattedBuffer.setSequenceNumber(rawBufferData.buffer.getSequenceNumber());
@@ -273,7 +277,6 @@ void InputFormatterTask::processTuple(
     }
 }
 
-template <bool IsFlush>
 void InputFormatterTask::processSpanningTuple(
     const SpanningTuple& spanningTuple,
     const std::vector<StagedBuffer>& buffersToFormat,
@@ -291,9 +294,9 @@ void InputFormatterTask::processSpanningTuple(
         offsetOfFirstByteInFirstBuffer);
     PRECONDITION(buffersToFormat.size() > 1, "Need at least two buffers to create a spanning tuple.");
     PRECONDITION( ///NOLINT(readability-simplify-boolean-expr)
-        IsFlush or buffersToFormat.at(1).buffer.getSequenceNumber().getRawValue() == NES::SequenceNumber::INITIAL
+        buffersToFormat.at(1).buffer.getSequenceNumber().getRawValue() == NES::SequenceNumber::INITIAL
             or firstBuffer.buffer.getBuffer() != nullptr,
-        "Non-flush and non-initial buffer cannot have 'null' data.");
+        "Non-initial buffer cannot have 'null' data.");
     const auto sizeOfLeadingSpanningTuple = firstBuffer.sizeOfBufferInBytes - (offsetOfFirstByteInFirstBuffer);
     const std::string_view firstSpanningTuple = std::string_view(
         firstBuffer.buffer.getBuffer<const char>() ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -312,11 +315,11 @@ void InputFormatterTask::processSpanningTuple(
     /// 3. Process the last buffer
     const auto& lastBuffer = buffersToFormat[spanningTuple.spanEnd];
     PRECONDITION(
-        IsFlush or (lastBuffer.offsetOfFirstTupleDelimiter < (lastBuffer.sizeOfBufferInBytes)),
-        "Non-flush buffer had tuple delimiter at {} with size {}.",
+        (lastBuffer.offsetOfFirstTupleDelimiter < (lastBuffer.sizeOfBufferInBytes)),
+        "Buffer had tuple delimiter at {} with size {}.",
         lastBuffer.offsetOfFirstTupleDelimiter,
         lastBuffer.sizeOfBufferInBytes);
-    PRECONDITION(IsFlush or lastBuffer.buffer.getBuffer() != nullptr, "Non-flush buffer cannot have 'null' data.");
+    PRECONDITION(lastBuffer.buffer.getBuffer() != nullptr, "Buffer cannot have 'null' data.");
     const std::string_view lastSpanningTuple
         = std::string_view(lastBuffer.buffer.getBuffer<const char>(), lastBuffer.offsetOfFirstTupleDelimiter);
     spanningTupleString.append(lastSpanningTuple);
@@ -333,31 +336,9 @@ void InputFormatterTask::processSpanningTuple(
     }
 }
 
-void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
+void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext&)
 {
-    const auto [resultBuffers, sequenceNumberToUseForFlushedTuple] = sequenceShredder->flushFinalSpanningTuple();
-    const auto flushedBuffers = resultBuffers.stagedBuffers;
-    /// The sequence shredder injects a dummy buffer, which it always returns. Thus, a single returned buffer means no final spanning tuple.
-    if (flushedBuffers.size() == 1)
-    {
-        return;
-    }
-    /// Get the final buffer (size - 1 is dummy buffer that just contains tuple delimiter)
-    /// Allocate buffer to write formatted tuples into.
-    auto formattedBuffer = pipelineExecutionContext.getBufferManager()->getBufferBlocking();
-
-    processSpanningTuple<true>(
-        {.spanStart = 0, .spanEnd = flushedBuffers.size() - 1},
-        flushedBuffers,
-        *pipelineExecutionContext.getBufferManager(),
-        formattedBuffer);
-    /// Emit formatted buffer with single flushed tuple
-    if (formattedBuffer.getNumberOfTuples() != 0)
-    {
-        formattedBuffer.setSequenceNumber(NES::SequenceNumber(sequenceNumberToUseForFlushedTuple));
-        pipelineExecutionContext.emitBuffer(
-            formattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-    }
+    sequenceShredder->validateState();
 }
 
 void InputFormatterTask::processRawBuffer(
@@ -389,13 +370,13 @@ void InputFormatterTask::processRawBuffer(
             /// The current raw buffer produces more than one formatted buffer.
             /// Each formatted buffer has the sequence number of the raw buffer and a chunk number that uniquely identifies it.
             /// Only the last formatted buffer sets the 'isLastChunk' member to true.
-            formattedBuffer.setLastChunk(false);
             formattedBuffer.setSequenceNumber(rawBufferData.buffer.getSequenceNumber());
             formattedBuffer.setChunkNumber(ChunkNumber(runningChunkNumber++));
             formattedBuffer.setOriginId(rawBufferData.buffer.getOriginId());
             pec.emitBuffer(formattedBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
             /// The 'isLastChunk' member of a new buffer is true pre default. If we don't require another buffer, the flag stays true.
             formattedBuffer = bufferProvider->getBufferBlocking();
+            formattedBuffer.setLastChunk(false);
         }
 
         /// Fill current buffer until either full, or we exhausted tuples in raw buffer

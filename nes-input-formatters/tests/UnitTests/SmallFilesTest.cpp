@@ -42,28 +42,21 @@ class SmallFilesTest : public Testing::BaseUnitTest
     struct TestFile
     {
         std::string fileName;
-        bool endsWithNewline;
         std::vector<InputFormatterTestUtil::TestDataTypes> schemaFieldTypes;
     };
 
     using enum InputFormatterTestUtil::TestDataTypes;
     std::unordered_map<std::string, TestFile> testFileMap{
-        {"TwoIntegerColumns",
-         TestFile{.fileName = "TwoIntegerColumns_20_Lines.csv", .endsWithNewline = true, .schemaFieldTypes = {INT32, INT32}}},
+        {"TwoIntegerColumns", TestFile{.fileName = "TwoIntegerColumns_20_Lines.csv", .schemaFieldTypes = {INT32, INT32}}},
         {"Bimbo_1_1000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
          TestFile{
              .fileName = "Bimbo_1_1000_Lines.csv",
-             .endsWithNewline = true,
              .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
         {"Food_1", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
-         TestFile{
-             .fileName = "Food_1_1000_Lines.csv",
-             .endsWithNewline = true,
-             .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
+         TestFile{.fileName = "Food_1_1000_Lines.csv", .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
         {"Spacecraft_Telemetry", /// generated
          TestFile{
              .fileName = "Spacecraft_Telemetry_1000_Lines.csv",
-             .endsWithNewline = true,
              .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
 
 public:
@@ -164,16 +157,8 @@ public:
                     = actualResultTestBuffer.toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
                 out << currentBufferAsString;
             }
-            if (currentTestFile.endsWithNewline)
-            {
-                out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
-                           .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
-            }
-            else
-            {
-                out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
-                           .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_WITHOUT_NEWLINE);
-            }
+            out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
+                       .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
 
             out.close();
             /// Destroy task queue first, to assure that it does not hold references to buffers anymore
