@@ -23,7 +23,7 @@ const std::string AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
-std::vector<std::unique_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getWhereClauses()
+std::vector<NES::LogicalFunction>& AntlrSQLHelper::getWhereClauses()
 {
     return whereClauses;
 }
