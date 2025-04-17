@@ -29,75 +29,58 @@
 namespace NES
 {
 
-SumAggregationFunction::SumAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)
+SumAggregationFunction::SumAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
+    : WindowAggregationFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field))
 {
     this->aggregationType = Type::Sum;
 }
-SumAggregationFunction::SumAggregationFunction(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
-    : WindowAggregationFunction(field, asField)
+SumAggregationFunction::SumAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field, std::unique_ptr<FieldAccessLogicalFunction> asField)
+    : WindowAggregationFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Sum;
 }
 
-std::shared_ptr<WindowAggregationFunction>
-SumAggregationFunction::create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField)
+std::unique_ptr<WindowAggregationFunction>
+SumAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
 {
-    return std::make_shared<SumAggregationFunction>(SumAggregationFunction(std::move(onField), std::move(asField)));
+    return std::make_unique<SumAggregationFunction>(std::move(onField), std::move(asField));
 }
 
-std::shared_ptr<WindowAggregationFunction> SumAggregationFunction::on(const std::shared_ptr<LogicalFunction>& onField)
+std::unique_ptr<WindowAggregationFunction> SumAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
 {
-    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(onField))
-    {
-        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *onField);
-    }
-    const auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(onField);
-    return std::make_shared<SumAggregationFunction>(SumAggregationFunction(fieldAccess));
+    return std::make_unique<SumAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
 }
 
 void SumAggregationFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
+    if (!dynamic_cast<Numeric*>(&onField->getStamp()))
     {
         NES_FATAL_ERROR("SumAggregationFunction: aggregations on non numeric fields is not supported.");
     }
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = NES::Util::as<FieldAccessLogicalFunction>(onField)->getFieldName();
-    const auto asFieldName = NES::Util::as<FieldAccessLogicalFunction>(asField)->getFieldName();
+    const auto onFieldName = dynamic_cast<FieldAccessLogicalFunction*>(onField.get())->getFieldName();
+    const auto asFieldName = dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        NES::Util::as<FieldAccessLogicalFunction>(asField)->setFieldName(attributeNameResolver + asFieldName);
+        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        NES::Util::as<FieldAccessLogicalFunction>(asField)->setFieldName(attributeNameResolver + fieldName);
+        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + fieldName);
     }
-    asField->setStamp(getFinalAggregateStamp());
+    asField->setStamp(getFinalAggregateStamp().clone());
 }
 
-std::shared_ptr<WindowAggregationFunction> SumAggregationFunction::clone()
+std::unique_ptr<WindowAggregationFunction> SumAggregationFunction::clone()
 {
-    return std::make_shared<SumAggregationFunction>(SumAggregationFunction(this->onField->clone(), this->asField->clone()));
-}
-
-std::shared_ptr<DataType> SumAggregationFunction::getInputStamp()
-{
-    return onField->getStamp();
-}
-std::shared_ptr<DataType> SumAggregationFunction::getPartialAggregateStamp()
-{
-    return onField->getStamp();
-}
-std::shared_ptr<DataType> SumAggregationFunction::getFinalAggregateStamp()
-{
-    return onField->getStamp();
+    return std::make_unique<SumAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(onField->clone()), Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(asField->clone()));
 }
 
 NES::SerializableAggregationFunction SumAggregationFunction::serialize() const
