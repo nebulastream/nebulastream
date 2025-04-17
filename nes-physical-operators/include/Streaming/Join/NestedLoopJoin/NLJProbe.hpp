@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/Operator.hpp>
@@ -33,7 +33,7 @@ class NLJProbe final : public StreamJoinProbePhysicalOperator
 public:
     NLJProbe(
         uint64_t operatorHandlerIndex,
-        const std::shared_ptr<Functions::Function>& joinFunction,
+        const std::shared_ptr<Functions::PhysicalFunction>& joinFunction,
         const WindowMetaData& windowMetaData,
         const JoinSchema& joinSchema,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,

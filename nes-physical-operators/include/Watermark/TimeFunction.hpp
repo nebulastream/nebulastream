@@ -14,7 +14,7 @@
 #pragma once
 
 #include <API/TimeUnit.hpp>
-#include <Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Time/Timestamp.hpp>
@@ -44,13 +44,13 @@ public:
 class EventTimeFunction final : public TimeFunction
 {
 public:
-    explicit EventTimeFunction(std::unique_ptr<Functions::Function> timestampFunction, Windowing::TimeUnit unit);
+    explicit EventTimeFunction(std::unique_ptr<Functions::PhysicalFunction> timestampFunction, Windowing::TimeUnit unit);
     void open(ExecutionContext& ctx, RecordBuffer& buffer) override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) override;
 
 private:
     Windowing::TimeUnit unit;
-    std::unique_ptr<Functions::Function> timestampFunction;
+    std::unique_ptr<Functions::PhysicalFunction> timestampFunction;
 };
 
 /// @brief Time function for ingestion time windows
