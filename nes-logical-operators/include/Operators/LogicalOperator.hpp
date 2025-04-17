@@ -189,16 +189,6 @@ private:
 
         [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override { return data.getOutputOriginIds(); }
 
-        [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override { return data.getOutputOriginIds(); }
-
-        void setInputOriginIds(std::vector<std::vector<OriginId>> ids) override { return data.setInputOriginIds(ids); }
-
-        void setOutputOriginIds(std::vector<OriginId> ids) override { return data.setOutputOriginIds(ids); }
-
-        [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override { return data.setInputOriginIds(ids); }
-
-        void setOutputOriginIds(std::vector<OriginId> ids) override { return data.setOutputOriginIds(ids); }
-
         [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override
         {
             return data.withInputOriginIds(ids);
