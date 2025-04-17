@@ -28,7 +28,6 @@ class QueryConsoleDumpHandler
 {
 public:
     virtual ~QueryConsoleDumpHandler() = default;
-    static std::shared_ptr<QueryConsoleDumpHandler> create(std::ostream& out);
     explicit QueryConsoleDumpHandler(std::ostream& out);
 
     void dump(const LogicalOperator& node);
