@@ -13,36 +13,31 @@
 */
 #include <memory>
 #include <utility>
-#include <vector>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
-#include <Functions/Function.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Functions/ArithmeticalFunctions/AddPhysicalFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
 
 namespace NES::Functions
 {
 
-VarVal ExecutableFunctionMul::execute(const Record& record, ArenaRef& arena) const
+VarVal AddPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftExecutableFunction->execute(record, arena);
     const auto rightValue = rightExecutableFunction->execute(record, arena);
-    return leftValue * rightValue;
+    return leftValue + rightValue;
 }
 
-ExecutableFunctionMul::ExecutableFunctionMul(
-    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+AddPhysicalFunction::AddPhysicalFunction(
+    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
     : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
 ExecutableFunctionRegistryReturnType
-ExecutableFunctionGeneratedRegistrar::RegisterMulExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+ExecutableFunctionGeneratedRegistrar::RegisterAddExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Mul function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionMul>(
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Add function must have exactly two sub-functions");
+    return std::make_unique<AddPhysicalFunction>(
         std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 

@@ -11,20 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
-#include <Execution/Operators/ExecutionContext.hpp>
+
+#include <memory>
+#include <Functions/PhysicalFunction.hpp>
+#include <ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Functions
 {
-using namespace Nautilus;
-class Function
+
+/// Performs leftExecutableFunctionSub % rightExecutableFunctionSub
+class LessEqualsPhysicalFunction final : public PhysicalFunction
 {
 public:
-    Function() = default;
-    [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
-    virtual ~Function() = default;
-};
+    LessEqualsPhysicalFunction(std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction);
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
+private:
+    const std::unique_ptr<PhysicalFunction> leftExecutableFunction;
+    const std::unique_ptr<PhysicalFunction> rightExecutableFunction;
+};
 }

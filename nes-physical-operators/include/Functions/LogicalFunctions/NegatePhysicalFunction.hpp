@@ -14,25 +14,22 @@
 
 #pragma once
 
-#include <memory>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Functions
 {
 
-/// Performs leftExecutableFunctionSub % rightExecutableFunctionSub
-class ExecutableFunctionMod final : public Function
+/// Negates the result of the childFunction
+class NegatePhysicalFunction final : public PhysicalFunction
 {
 public:
-    ExecutableFunctionMod(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+    explicit NegatePhysicalFunction(PhysicalFunction childFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
-    std::unique_ptr<Function> leftExecutableFunctionSub;
-    std::unique_ptr<Function> rightExecutableFunctionSub;
+    const PhysicalFunction childFunction;
 };
-
 }

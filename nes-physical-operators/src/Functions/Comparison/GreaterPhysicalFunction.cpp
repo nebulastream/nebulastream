@@ -15,36 +15,33 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Functions/LogicalFunctions/ExecutableFunctionAnd.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <ErrorHandling.hpp>
+#include <Functions/Comparison/GreaterPhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <ExecutableFunctionRegistry.hpp>
+#include <ErrorHandling.hpp>
 
 
 namespace NES::Functions
 {
 
-VarVal ExecutableFunctionAnd::execute(const Record& record, ArenaRef& arena) const
+VarVal GreaterPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftExecutableFunction->execute(record, arena);
     const auto rightValue = rightExecutableFunction->execute(record, arena);
-    return leftValue && rightValue;
+    return leftValue > rightValue;
 }
 
-ExecutableFunctionAnd::ExecutableFunctionAnd(
-    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+GreaterPhysicalFunction::GreaterPhysicalFunction(
+    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
     : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
-ExecutableFunctionRegistryReturnType
-ExecutableFunctionGeneratedRegistrar::RegisterAndExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterGreaterExecutableFunction(
+    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionAnd>(
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Greater function must have exactly two sub-functions");
+    return std::make_unique<GreaterPhysicalFunction>(
         std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 

@@ -11,34 +11,39 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <memory>
 #include <utility>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
+#include <vector>
+#include <Functions/LogicalFunctions/AndPhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <ExecutionContext.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
 
 namespace NES::Functions
 {
 
-VarVal ExecutableFunctionDiv::execute(const Record& record, ArenaRef& arena) const
+VarVal AndPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftExecutableFunction->execute(record, arena);
     const auto rightValue = rightExecutableFunction->execute(record, arena);
-    return leftValue / rightValue;
+    return leftValue && rightValue;
 }
 
-ExecutableFunctionDiv::ExecutableFunctionDiv(
-    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+AndPhysicalFunction::AndPhysicalFunction(
+    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
     : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
-
 ExecutableFunctionRegistryReturnType
-ExecutableFunctionGeneratedRegistrar::RegisterDivExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+ExecutableFunctionGeneratedRegistrar::RegisterAndExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Div function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionDiv>(
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
+    return std::make_unique<AndPhysicalFunction>(
         std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 

@@ -14,9 +14,9 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionMod.hpp>
+#include <Functions/ArithmeticalFunctions/MulPhysicalFunction.hpp>
 #include <Functions/Function.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
@@ -25,25 +25,24 @@
 namespace NES::Functions
 {
 
-VarVal ExecutableFunctionMod::execute(const Record& record, ArenaRef& arena) const
+VarVal MulPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunctionSub->execute(record, arena);
-    const auto rightValue = rightExecutableFunctionSub->execute(record, arena);
-    return leftValue % rightValue;
+    const auto leftValue = leftExecutableFunction->execute(record, arena);
+    const auto rightValue = rightExecutableFunction->execute(record, arena);
+    return leftValue * rightValue;
 }
 
-ExecutableFunctionMod::ExecutableFunctionMod(
-    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
-    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
+MulPhysicalFunction::MulPhysicalFunction(
+    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
+    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
-
 
 ExecutableFunctionRegistryReturnType
-ExecutableFunctionGeneratedRegistrar::RegisterModExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+ExecutableFunctionGeneratedRegistrar::RegisterMulExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionMod>(
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Mul function must have exactly two sub-functions");
+    return std::make_unique<MulPhysicalFunction>(
         std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 

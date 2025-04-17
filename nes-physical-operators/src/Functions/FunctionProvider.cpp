@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Functions/FunctionProvider.hpp>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -38,15 +39,24 @@ namespace NES::QueryCompilation
 {
 using namespace Runtime::Execution::Functions;
 
+<<<<<<<< HEAD:nes-execution/src/QueryCompiler/Phases/Translations/FunctionProvider.cpp
 std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction)
+========
+std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(const std::shared_ptr<LogicalFunction>& logicalFunction)
+>>>>>>>> 90577b636a (refactor(PhysicalOperators): rename ExecutableFunction to PhysicalFunction):nes-physical-operators/src/Functions/FunctionProvider.cpp
 {
     /// 1. Check if the function is valid.
     auto ret = nodeFunction->validateBeforeLowering();
     INVARIANT(ret, "Function not valid: {}", *nodeFunction);
 
     /// 2. Recursively lower the children of the function node.
+<<<<<<<< HEAD:nes-execution/src/QueryCompiler/Phases/Translations/FunctionProvider.cpp
     std::vector<std::unique_ptr<Function>> childFunction;
     for (const auto& child : nodeFunction->getChildren())
+========
+    std::vector<std::unique_ptr<PhysicalFunction>> childFunction;
+    for (const auto& child : logicalFunction->getChildren())
+>>>>>>>> 90577b636a (refactor(PhysicalOperators): rename ExecutableFunction to PhysicalFunction):nes-physical-operators/src/Functions/FunctionProvider.cpp
     {
         childFunction.emplace_back(lowerFunction(NES::Util::as<NodeFunction>(child)));
     }
@@ -55,7 +65,7 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<
     /// due to them not simply getting a childFunction as a parameter.
     if (const auto fieldAccessNode = NES::Util::as_if<NodeFunctionFieldAccess>(nodeFunction); fieldAccessNode != nullptr)
     {
-        return std::make_unique<ExecutableFunctionReadField>(fieldAccessNode->getFieldName());
+        return std::make_unique<ReadFieldPhysicalFunction>(fieldAccessNode->getFieldName());
     }
     if (const auto constantValueNode = NES::Util::as_if<NodeFunctionConstantValue>(nodeFunction); constantValueNode != nullptr)
     {
@@ -73,7 +83,11 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<
     return std::move(function.value());
 }
 
+<<<<<<<< HEAD:nes-execution/src/QueryCompiler/Phases/Translations/FunctionProvider.cpp
 std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
+========
+std::unique_ptr<PhysicalFunction> FunctionProvider::lowerConstantFunction(const std::shared_ptr<ConstantValueLogicalFunction>& constantFunction)
+>>>>>>>> 90577b636a (refactor(PhysicalOperators): rename ExecutableFunction to PhysicalFunction):nes-physical-operators/src/Functions/FunctionProvider.cpp
 {
     const auto stringValue = constantFunction->getConstantValue();
     const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());

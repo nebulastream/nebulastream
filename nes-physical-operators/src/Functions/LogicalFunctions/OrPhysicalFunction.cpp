@@ -14,38 +14,36 @@
 
 #include <memory>
 #include <utility>
-#include <Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
-#include <Util/Execution.hpp>
-#include <Util/Logger/LogLevel.hpp>
-#include <nautilus/val.hpp>
-#include <nautilus/val_enum.hpp>
+#include <vector>
+#include <Functions/LogicalFunctions/OrPhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <ExecutionContext.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
-#include <function.hpp>
-
 
 namespace NES::Functions
 {
 
-VarVal ExecutableFunctionEquals::execute(const Record& record, ArenaRef& arena) const
+VarVal OrPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftExecutableFunction->execute(record, arena);
     const auto rightValue = rightExecutableFunction->execute(record, arena);
-    const auto result = leftValue == rightValue;
-    return result;
+    return leftValue || rightValue;
 }
 
-ExecutableFunctionEquals::ExecutableFunctionEquals(
-    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+OrPhysicalFunction::OrPhysicalFunction(
+    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
     : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
-ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterEqualsExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+ExecutableFunctionRegistryReturnType
+ExecutableFunctionGeneratedRegistrar::RegisterOrExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionEquals>(
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Or function must have exactly two sub-functions");
+    return std::make_unique<OrPhysicalFunction>(
         std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 

@@ -11,20 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Functions/ExecutableFunctionReadField.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+
+#pragma once
+
+#include <memory>
+#include <Functions/PhysicalFunction.hpp>
 
 namespace NES::Functions
 {
 
-ExecutableFunctionReadField::ExecutableFunctionReadField(Record::RecordFieldIdentifier field) : field(field)
+class EqualsPhysicalFunction final : public PhysicalFunction
 {
-}
+public:
+    EqualsPhysicalFunction(std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction);
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
-VarVal ExecutableFunctionReadField::execute(const Record& record, ArenaRef&) const
-{
-    return record.read(field);
-}
-
+private:
+    const std::unique_ptr<PhysicalFunction> leftExecutableFunction;
+    const std::unique_ptr<PhysicalFunction> rightExecutableFunction;
+};
 }

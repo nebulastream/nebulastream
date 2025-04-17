@@ -15,22 +15,24 @@
 #pragma once
 
 #include <memory>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Functions
 {
 
-class ExecutableFunctionOr final : public Function
+/// Performs leftExecutableFunction * rightExecutableFunction
+class MulPhysicalFunction final : public PhysicalFunction
 {
 public:
-    ExecutableFunctionOr(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
+    MulPhysicalFunction(std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
-    const std::unique_ptr<Function> leftExecutableFunction;
-    const std::unique_ptr<Function> rightExecutableFunction;
+    const std::unique_ptr<PhysicalFunction> leftExecutableFunction;
+    const std::unique_ptr<PhysicalFunction> rightExecutableFunction;
 };
+
 }

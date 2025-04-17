@@ -15,35 +15,37 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <Execution/Functions/Comparison/ExecutableFunctionGreaterEquals.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Functions/Function.hpp>
-#include <Functions/LogicalFunctions/ExecutableFunctionOr.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
 
+
 namespace NES::Functions
 {
 
-VarVal ExecutableFunctionOr::execute(const Record& record, ArenaRef& arena) const
+VarVal GreaterEqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftExecutableFunction->execute(record, arena);
     const auto rightValue = rightExecutableFunction->execute(record, arena);
-    return leftValue || rightValue;
+    return leftValue >= rightValue;
 }
 
-ExecutableFunctionOr::ExecutableFunctionOr(
-    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+GreaterEqualsPhysicalFunction::GreaterEqualsPhysicalFunction(
+    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
     : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
-ExecutableFunctionRegistryReturnType
-ExecutableFunctionGeneratedRegistrar::RegisterOrExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterGreaterEqualsExecutableFunction(
+    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Or function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionOr>(
+    PRECONDITION(
+        executableFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two sub-functions");
+    return std::make_unique<GreaterEqualsPhysicalFunction>(
         std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 

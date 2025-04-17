@@ -11,27 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
-
+#include <Functions/ReadFieldPhysicalFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Functions
 {
 
-/**
- * @brief This function reads a specific field from the input record and returns its value.
- */
-class ExecutableFunctionReadField : public Function
+ReadFieldPhysicalFunction::ReadFieldPhysicalFunction(Record::RecordFieldIdentifier field) : field(field)
 {
-public:
-    explicit ExecutableFunctionReadField(Record::RecordFieldIdentifier field);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+}
 
-private:
-    const Record::RecordFieldIdentifier field;
-};
+VarVal ReadFieldPhysicalFunction::execute(const Record& record, ArenaRef&) const
+{
+    return record.read(field);
+}
 
 }

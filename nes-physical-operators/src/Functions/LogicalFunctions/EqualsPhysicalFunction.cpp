@@ -11,37 +11,40 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <memory>
 #include <utility>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
-#include <Functions/Function.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Functions/LogicalFunctions/EqualsPhysicalFunction.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <nautilus/val.hpp>
+#include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
+#include <function.hpp>
+
 
 namespace NES::Functions
 {
 
-VarVal ExecutableFunctionSub::execute(const Record& record, ArenaRef& arena) const
+VarVal EqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftExecutableFunction->execute(record, arena);
     const auto rightValue = rightExecutableFunction->execute(record, arena);
-    return leftValue - rightValue;
+    const auto result = leftValue == rightValue;
+    return result;
 }
 
-ExecutableFunctionSub::ExecutableFunctionSub(
-    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+EqualsPhysicalFunction::EqualsPhysicalFunction(
+    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
     : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
-ExecutableFunctionRegistryReturnType
-ExecutableFunctionGeneratedRegistrar::RegisterSubExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterEqualsExecutableFunction(
+    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Sub function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionSub>(
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
+    return std::make_unique<EqualsPhysicalFunction>(
         std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 
