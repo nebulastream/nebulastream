@@ -126,7 +126,8 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     std::vector<std::string> invalidLogicalSourceNames;
     for (auto sourceOperator : sourceOperators)
     {
-        if (sourceCatalog->getPhysicalSources(sourceOperator->getLogicalSourceName()).empty())
+        if (auto physicalSourcesOpt = sourceCatalog->getPhysicalSources(sourceOperator->getLogicalSourceName());
+            not physicalSourcesOpt.has_value() || physicalSourcesOpt->empty())
         {
             invalidLogicalSourceNames.emplace_back(sourceOperator->getLogicalSourceName());
         }
@@ -189,8 +190,9 @@ void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<Quer
         NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp);
         if (commonStamp.isUndefined())
         {
-            throw QueryInvalid("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as "
-                               "input to infer model.");
+            throw QueryInvalid(
+                "SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as "
+                "input to infer model.");
         }
     }
 }

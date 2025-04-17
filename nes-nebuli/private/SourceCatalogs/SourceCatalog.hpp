@@ -20,9 +20,11 @@
 #include <mutex>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
@@ -41,7 +43,8 @@ public:
     /// @param logicalSourceName logical source name
     /// @param schema of logical source as object
     /// @return bool indicating if insert was successful
-    bool addLogicalSource(const std::string& logicalSourceName, Schema schema);
+    std::optional<LogicalSource> addLogicalSource(const std::string& logicalSourceName, const Schema& schema);
+
 
     /// @brief method to delete a logical source
     /// @caution this method only remove the entry from the catalog not from the topology
@@ -49,87 +52,49 @@ public:
     /// @return bool indicating the success of the removal
     bool removeLogicalSource(const std::string& logicalSourceName);
 
-    /// @brief method to add a physical source
-    /// @caution combination of node and name has to be unique
-    /// @param logicalSourceName logical source name
-    /// @param sourceCatalogEntry the source catalog entry to store
-    /// @return bool indicating success of insert source
-    bool addPhysicalSource(const std::string& logicalSourceName, const std::shared_ptr<SourceCatalogEntry>& sourceCatalogEntry);
+    Sources::SourceDescriptor createPhysicalSource(
+        Configurations::DescriptorConfig::Config&& descriptorConfig,
+        const LogicalSource& logicalSource,
+        WorkerId workerId,
+        std::string sourceType,
+        const Sources::ParserConfig& parserConfig);
 
-    /// @brief method to remove a physical source
-    /// @param logicalSourceName name of the logical source
-    /// @param physicalSourceName name of the physical source
-    /// @param topologyNodeId id of the topology node
-    /// @return bool indicating success of remove source
-    bool removePhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName, WorkerId topologyNodeId);
+    ///returns true if there is a source descriptor with that id registered and it was removed
+    bool removePhysicalSource(const Sources::SourceDescriptor& physicalSource);
+    // bool associate(const LogicalSource& logicalSource, const PhysicalSource& physicalSource);
+    //
+    //
+    // bool dissociate(const LogicalSource& logicalSource, const PhysicalSource& physicalSource);
 
-    /// @brief method to remove all physical sources of a single worker
-    /// @param topologyNodeId worker node identifier
-    /// @return number of sucessfully removed physical sources
-    size_t removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId);
+    [[nodiscard]] std::optional<LogicalSource> getLogicalSource(const std::string& logicalSourceName) const;
 
-    /// @brief method to get the schema from the given logical source
-    /// @param logicalSourceName name of the logical source name
-    /// @return the pointer to the schema
-    Schema getSchemaForLogicalSource(const std::string& logicalSourceName);
-
-    /// @brief method to return the logical source for an existing logical source
-    /// @param logicalSourceName name of the logical source
-    /// @return smart pointer to the logical source else nullptr
-    /// @note the source will also contain the schema
-    std::shared_ptr<LogicalSource> getLogicalSource(const std::string& logicalSourceName);
-
-    /// @brief method to return the source for an existing logical source or throw exception
-    /// @param logicalSourceName name of logical source
-    /// @return smart pointer to a physical source else nullptr
-    /// @note the source will also contain the schema
-    /// @throws UnknownSourceType
-    std::shared_ptr<LogicalSource> getLogicalSourceOrThrowException(const std::string& logicalSourceName);
-
+    [[nodiscard]] bool containsLogicalSource(const LogicalSource& logicalSource) const;
     /// @brief Check if logical source with this name exists
     /// @param logicalSourceName name of the logical source
     /// @return bool indicating if source exists
-    bool containsLogicalSource(const std::string& logicalSourceName);
+    [[nodiscard]] bool containsLogicalSource(const std::string& logicalSourceName) const;
 
-    /// @brief return all topology node ids that host physical sources that contribute to this logical source
-    /// @param logicalSourceName name of logical source
-    /// @return list of topology nodes ids
-    std::vector<WorkerId> getSourceNodesForLogicalSource(const std::string& logicalSourceName);
+    [[nodiscard]] Sources::SourceDescriptor getPhysicalSource(uint64_t physicalSourceID) const;
 
-    /// @brief Return a list of logical source names registered at catalog
-    /// @return map containing source name as key and schema object as value
-    std::map<std::string, Schema> getAllLogicalSource();
 
-    /// @brief Get all logical sources with their schema as string
-    /// @return map of logical source name to schema as string
-    std::map<std::string, std::string> getAllLogicalSourceAsString();
-
-    /// @brief method to return the physical source and the associated schemas
-    /// @return string containing the content of the catalog
-    std::string getPhysicalSourceAndSchemaAsString();
-
+    [[nodiscard]] std::set<Sources::SourceDescriptor> getPhysicalSources(const LogicalSource& logicalSource) const;
     /// @brief get all physical sources for a logical source
     /// @param logicalSourceName name of the logical source
     /// @return vector containing source catalog entries
-    std::vector<std::shared_ptr<SourceCatalogEntry>> getPhysicalSources(const std::string& logicalSourceName);
+    [[nodiscard]] std::optional<std::set<Sources::SourceDescriptor>> getPhysicalSources(const std::string& logicalSourceName) const;
 
-    /// @brief method to update a logical source schema
-    /// @param logicalSourceName logical source name
-    /// @param schema of logical source as object
-    /// @return bool indicating if update was successful
-    bool updateLogicalSource(const std::string& logicalSourceName, Schema schema);
+    [[nodiscard]] std::unordered_set<LogicalSource> getAllLogicalSources() const;
+    [[nodiscard]] std::unordered_map<LogicalSource, std::set<Sources::SourceDescriptor>> getAllSources() const;
+
 
 private:
-    /// @brief test if logical source with this name exists
-    /// @param logicalSourceName name of the logical source to test
-    /// @return bool indicating if source exists
-    bool testIfLogicalSourceExistsInLogicalToPhysicalMapping(const std::string& logicalSourceName);
-
     std::recursive_mutex catalogMutex;
     /// map logical source to schema
-    std::map<std::string, Schema> logicalSourceNameToSchemaMapping;
+    std::unordered_map<std::string, LogicalSource> namesToLogicalSourceMapping{};
+    std::map<uint64_t, Sources::SourceDescriptor> idsToPhysicalSources{};
     /// map logical source to physical source
-    std::map<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>> logicalToPhysicalSourceMapping;
+    std::unordered_map<LogicalSource, std::set<Sources::SourceDescriptor>> logicalToPhysicalSourceMapping{};
+    // std::unordered_map<PhysicalSource, std::unordered_set<LogicalSource>> physicalToLogicalSourceMappings{};
 };
 }
 }

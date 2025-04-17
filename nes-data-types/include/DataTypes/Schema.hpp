@@ -68,6 +68,10 @@ public:
     explicit Schema(MemoryLayoutType memoryLayoutType);
     ~Schema() = default;
 
+    Schema(const Schema& other) = default;
+    Schema(Schema&& other) noexcept = default;
+    Schema& operator=(const Schema& other) = default;
+    Schema& operator=(Schema&& other) noexcept = default;
     bool operator==(const Schema& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 

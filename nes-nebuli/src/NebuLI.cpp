@@ -38,7 +38,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Sources/SourceDescriptor.hpp>

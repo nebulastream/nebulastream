@@ -51,10 +51,5 @@ target_include_directories(nes-nebuli
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
 )
 
-function(add_nes_test_nebuli)
-    add_nes_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-nebuli-lib)
-    target_include_directories(${TARGET_NAME}
-            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
-endfunction()
+
+add_tests_if_enabled(tests)

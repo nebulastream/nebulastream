@@ -20,7 +20,7 @@
 namespace NES::DataTypeProvider
 {
 
-std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type);
+std::optional<DataType> tryProvideDataType(const std::string& type);
 
 /// @return a shared pointer to a logical data type
 /// @param type name of the logical data type

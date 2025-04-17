@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
 #include <utility>
 #include <DataTypes/Schema.hpp>
@@ -20,16 +21,19 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OperatorId id)
+    const Sources::SourceDescriptor& sourceDescriptor, const OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OperatorId id, const OriginId originId)
+    Sources::SourceDescriptor sourceDescriptor, const OperatorId id, const OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
@@ -44,7 +48,7 @@ bool SourceDescriptorLogicalOperator::equal(const std::shared_ptr<Node>& rhs) co
     if (Util::instanceOf<SourceDescriptorLogicalOperator>(rhs))
     {
         const auto sourceOperator = Util::as<SourceDescriptorLogicalOperator>(rhs);
-        return sourceOperator->getSourceDescriptorRef() == *sourceDescriptor;
+        return sourceOperator->getSourceDescriptor() == sourceDescriptor;
     }
     return false;
 }
@@ -57,20 +61,15 @@ std::string SourceDescriptorLogicalOperator::toString() const
     return ss.str();
 }
 
-const Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const
-{
-    return *sourceDescriptor;
-}
-
-std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getSourceDescriptor() const
+Sources::SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 {
     return sourceDescriptor;
 }
 
 bool SourceDescriptorLogicalOperator::inferSchema()
 {
-    inputSchema = sourceDescriptor->schema;
-    outputSchema = sourceDescriptor->schema;
+    inputSchema = *sourceDescriptor.getSchema();
+    outputSchema = *sourceDescriptor.getSchema();
     return true;
 }
 

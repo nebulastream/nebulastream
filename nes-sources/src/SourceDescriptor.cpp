@@ -12,48 +12,46 @@
     limitations under the License.
 */
 
-#include <ostream>
-#include <sstream>
+#include <cstdint>
+#include <string>
+#include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/format.h>
 namespace NES::Sources
 {
-
 SourceDescriptor::SourceDescriptor(
-    Schema schema,
-    std::string logicalSourceName,
-    std::string sourceType,
-    ParserConfig parserConfig,
-    Configurations::DescriptorConfig::Config&& config)
+    Configurations::DescriptorConfig::Config&& config,
+    const uint64_t physicalSourceID,
+    const WorkerId workerID,
+    const LogicalSource& logicalSource,
+    const std::string& sourceType,
+    const ParserConfig& parserConfig)
     : Descriptor(std::move(config))
-    , schema(std::move(schema))
-    , logicalSourceName(std::move(logicalSourceName))
-    , sourceType(std::move(sourceType))
-    , parserConfig(std::move(parserConfig))
+    , physicalSourceID(physicalSourceID)
+    , logicalSource(logicalSource)
+    , workerID(workerID)
+    , sourceType(sourceType)
+    , parserConfig(parserConfig)
 {
 }
 
-std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
-{
-    const auto schemaString = fmt::format("{}", sourceDescriptor.schema);
-    const auto parserConfigString = fmt::format(
-        "type: {}, tupleDelimiter: {}, stringDelimiter: {}",
-        sourceDescriptor.parserConfig.parserType,
-        sourceDescriptor.parserConfig.tupleDelimiter,
-        sourceDescriptor.parserConfig.fieldDelimiter);
-    return out << fmt::format(
-               "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
-               sourceDescriptor.logicalSourceName,
-               sourceDescriptor.sourceType,
-               schemaString,
-               parserConfigString,
-               sourceDescriptor.toStringConfig());
-}
 
 bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {
-    return lhs.schema == rhs.schema && lhs.sourceType == rhs.sourceType && lhs.config == rhs.config;
+    return lhs.logicalSource == rhs.logicalSource && lhs.sourceType == rhs.sourceType;
 }
-
+}
+fmt::context::iterator
+fmt::formatter<NES::Sources::SourceDescriptor>::format(const NES::Sources::SourceDescriptor& sourceDescriptor, format_context& ctx) const
+{
+    return format_to(
+        ctx.out(),
+        "SourceDescriptor(sourceType: {}, schema: {}, parserConfig: {{type: {}, tupleDelimiter: {}, stringDelimiter: {} }})",
+        sourceDescriptor.getSourceType(),
+        *sourceDescriptor.getSchema(),
+        sourceDescriptor.getParserConfig().parserType,
+        sourceDescriptor.getParserConfig().tupleDelimiter,
+        sourceDescriptor.getParserConfig().fieldDelimiter);
 }
