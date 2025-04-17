@@ -1,4 +1,8 @@
+#include <atomic>
+#include <csignal>
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 #include "oatpp/parser/json/mapping/ObjectMapper.hpp"
 
@@ -16,6 +20,16 @@
 #include <NebuLI.hpp>
 #include <ErrorHandling.hpp>
 #include <yaml-cpp/yaml.h>
+
+
+
+std::atomic<bool> shouldStop = false;
+
+void handleSignal(int signum) {
+    std::cout << "\nReceived signal: " << signum << " — requesting shutdown..." << std::endl;
+    shouldStop = true;
+}
+
 
 void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceCatalog, std::shared_ptr<std::map<size_t, std::string>> queryCatalog, std::shared_ptr<std::unordered_map<std::string, NES::CLI::Sink>> sinkCatalog) {
 
@@ -46,7 +60,20 @@ void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceC
     /* Print info about server port */
     OATPP_LOGI("MyApp", "Server running on port %s", connectionProvider->getProperty("port").getData());
 
-    server.run();
+    // Run the server in a separate thread for signal handling without exposing the server as global variable
+    std::thread serverThread([&server]() {
+        std::cout << "Server running. Press Ctrl+C to stop.\n" << std::flush;
+        server.run();
+    });
+
+    // Wait for signal to stop
+    while (!shouldStop) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    // Stop server gracefully
+    server.stop();
+    serverThread.join();
 }
 
 
@@ -82,6 +109,9 @@ int main(int argc, char* argv[]) {
      auto sinkCatalog = std::make_shared<std::unordered_map<std::string, NES::CLI::Sink>>();
      addSinks(sinkCatalog, config);
 
+     // Register signal handler
+     signal(SIGINT, handleSignal);    // Ctrl+C
+     signal(SIGTERM, handleSignal);   // kill (default), system shutdown
 
     /* Init oatpp Environment */
     oatpp::base::Environment::init();
