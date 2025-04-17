@@ -40,7 +40,7 @@ struct ExecutableQueryPlan
     QueryId queryId;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<SourceWithSuccessor> sources;
-    friend std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiatedQueryPlan);
+    friend std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& executableQueryPlan);
 };
 }
 
