@@ -88,9 +88,11 @@ Optimizer::TraitSet SelectionLogicalOperator::getTraitSet() const
     return {};
 }
 
-void SelectionLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator SelectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> SelectionLogicalOperator::getInputSchemas() const

@@ -79,9 +79,11 @@ Optimizer::TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
     return {originIdTrait};
 }
 
-void SourceDescriptorLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator SourceDescriptorLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> SourceDescriptorLogicalOperator::getInputSchemas() const

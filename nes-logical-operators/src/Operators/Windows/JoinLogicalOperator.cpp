@@ -188,9 +188,11 @@ Optimizer::TraitSet JoinLogicalOperator::getTraitSet() const
     return {};
 }
 
-void JoinLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> JoinLogicalOperator::getInputSchemas() const

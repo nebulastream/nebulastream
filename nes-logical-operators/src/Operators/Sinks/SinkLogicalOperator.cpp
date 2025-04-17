@@ -58,9 +58,11 @@ Optimizer::TraitSet SinkLogicalOperator::getTraitSet() const
     return {};
 }
 
-void SinkLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator SinkLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> SinkLogicalOperator::getInputSchemas() const

@@ -136,9 +136,11 @@ Optimizer::TraitSet ProjectionLogicalOperator::getTraitSet() const
     return {};
 }
 
-void ProjectionLogicalOperator::setChildren(std::vector<LogicalOperator> children)
+LogicalOperator ProjectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    this->children = children;
+    auto copy = *this;
+    copy.children = children;
+    return copy;
 }
 
 std::vector<Schema> ProjectionLogicalOperator::getInputSchemas() const

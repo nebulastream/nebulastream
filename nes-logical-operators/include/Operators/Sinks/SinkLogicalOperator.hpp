@@ -46,7 +46,7 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
 
     [[nodiscard]] Optimizer::TraitSet getTraitSet() const override;
 
-    void setChildren(std::vector<LogicalOperator> children) override;
+    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
 
     [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
