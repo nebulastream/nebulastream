@@ -28,7 +28,7 @@ namespace NES
 {
 
 /// Performs the second phase of the join. The tuples are joined via two nested loops. The left stream is the outer loop, and the right stream is the inner loop.
-class NLJProbe final : public StreamJoinProbe
+class NLJProbe final : public StreamJoinProbePhysicalOperator
 {
 public:
     NLJProbe(

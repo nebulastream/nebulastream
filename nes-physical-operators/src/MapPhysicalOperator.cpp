@@ -13,7 +13,7 @@
 */
 
 #include <Nautilus/Interface/Record.hpp>
-#include <Map.hpp>
+#include <MapPhysicalOperator.hpp>
 
 namespace NES
 {
@@ -22,7 +22,7 @@ Map::Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions
 {
 }
 
-void Map::execute(ExecutionContext& ctx, Record& record) const
+void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// execute map function
     const auto value = mapFunction->execute(record, ctx.pipelineMemoryProvider.arena);
