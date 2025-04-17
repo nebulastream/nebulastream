@@ -19,15 +19,15 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/SliceStore/Slice.hpp>
-#include <Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <SliceStore/Slice.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
-#include <Watermark/MultiOriginWatermarkProcessor.hpp>
 
 namespace NES
 {

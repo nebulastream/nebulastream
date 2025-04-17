@@ -10,15 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Set Sources and Headers
-add_subdirectory(src)
-get_source(nes-operators NES_OPERATORS_SOURCE_FILES)
+add_source_files(nes-physical-operators
+        Map.cpp
+        Selection.cpp
+        PhysicalOperator.cpp
+        Emit.cpp
+        Scan.cpp)
 
-# Add Library
-add_library(nes-operators ${NES_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-operators PUBLIC nes-sources nes-sinks nes-window-types)
-target_include_directories(nes-operators PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-
-add_tests_if_enabled(tests)
+add_subdirectory(Watermark)
+add_subdirectory(Functions)

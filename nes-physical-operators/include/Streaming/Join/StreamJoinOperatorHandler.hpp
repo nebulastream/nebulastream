@@ -22,9 +22,9 @@
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Operators/SliceStore/Slice.hpp>
-#include <Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Operators/WindowBasedOperatorHandler.hpp>
+#include <SliceStore/Slice.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Execution.hpp>
 
