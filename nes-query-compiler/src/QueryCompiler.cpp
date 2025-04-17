@@ -31,7 +31,7 @@ QueryCompiler::QueryCompiler(const std::shared_ptr<QueryCompilerConfiguration> o
 }
 
 /// This phase should be as dumb as possible and not further decisions should be made here.
-std::unique_ptr<ExecutableQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
+std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
     try
     {

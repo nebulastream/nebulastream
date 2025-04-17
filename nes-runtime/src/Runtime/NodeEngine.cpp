@@ -86,9 +86,9 @@ NodeEngine::NodeEngine(
 {
 }
 
-QueryId NodeEngine::registerExecutableQueryPlan(std::unique_ptr<CompiledQueryPlan> queryExecutionPlan)
+QueryId NodeEngine::registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
-    auto queryId = queryTracker->registerQuery(std::move(queryExecutionPlan));
+    auto queryId = queryTracker->registerQuery(std::move(compiledQueryPlan));
     queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
     return queryId;
 }
