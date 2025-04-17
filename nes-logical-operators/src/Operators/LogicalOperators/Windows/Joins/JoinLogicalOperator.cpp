@@ -26,7 +26,7 @@
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -35,22 +35,30 @@
 
 namespace NES
 {
-LogicalJoinOperator::LogicalJoinOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, const OperatorId id)
-    : LogicalJoinOperator(std::move(joinDefinition), id, INVALID_ORIGIN_ID)
-{
-}
-LogicalJoinOperator::LogicalJoinOperator(
-    std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, const OperatorId id, const OriginId originId)
-    : Operator(id), LogicalBinaryOperator(id), OriginIdAssignmentOperator(id, originId), joinDefinition(std::move(joinDefinition))
+
+JoinLogicalOperator::JoinLogicalOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, const OperatorId id, const OriginId originId)
+    : Operator(id), BinaryLogicalOperator(id), OriginIdAssignmentOperator(id, originId), joinDefinition(std::move(joinDefinition))
 {
 }
 
-bool LogicalJoinOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool JoinLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<LogicalJoinOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const JoinLogicalOperator*>(&rhs)->getId() == id;
 }
 
-std::string LogicalJoinOperator::toString() const
+bool JoinLogicalOperator::operator==(Operator const& rhs) const
+{
+    if (const auto rhsOperator = dynamic_cast<const JoinLogicalOperator*>(&rhs)) {
+        return joinDefinition->getWindowType()->equal(rhsOperator->joinDefinition->getWindowType())
+            && joinDefinition->getJoinFunction()->equal(rhsOperator->joinDefinition->getJoinFunction())
+            && (*joinDefinition->getOutputSchema() == *rhsOperator->joinDefinition->getOutputSchema())
+            && (*joinDefinition->getLeftSourceType() == *rhsOperator->joinDefinition->getRightSourceType())
+            && (*joinDefinition->getLeftSourceType() == *rhsOperator->joinDefinition->getLeftSourceType());
+    }
+    return false;
+}
+
+std::string JoinLogicalOperator::toString() const
 {
     return fmt::format(
         "Join({}, windowType = {}, joinFunction = {})",
@@ -59,14 +67,14 @@ std::string LogicalJoinOperator::toString() const
         *joinDefinition->getJoinFunction());
 }
 
-std::shared_ptr<Join::LogicalJoinDescriptor> LogicalJoinOperator::getJoinDefinition() const
+std::shared_ptr<Join::LogicalJoinDescriptor> JoinLogicalOperator::getJoinDefinition() const
 {
     return joinDefinition;
 }
 
-bool LogicalJoinOperator::inferSchema()
+bool JoinLogicalOperator::inferSchema()
 {
-    if (!LogicalBinaryOperator::inferSchema())
+    if (!BinaryLogicalOperator::inferSchema())
     {
         return false;
     }
@@ -101,7 +109,7 @@ bool LogicalJoinOperator::inferSchema()
         return false;
     };
 
-    NES_DEBUG("LogicalJoinOperator: Iterate over all LogicalFunction to check if join field is in schema.");
+    NES_DEBUG("JoinLogicalOperator: Iterate over all LogicalFunction to check if join field is in schema.");
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<std::shared_ptr<BinaryLogicalFunction>> visitedFunctions;
     for (auto itr : BFSRange(joinDefinition->getJoinFunction()))
@@ -129,7 +137,7 @@ bool LogicalJoinOperator::inferSchema()
                     {
                         throw CannotInferSchema("unable to find right join key \"{}\" in schemas", rightJoinKeyName);
                     }
-                    NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
+                    NES_DEBUG("JoinLogicalOperator: Inserting operator in collection of already visited node.");
                     visitedFunctions.insert(visitingOp);
                 }
             }
@@ -186,9 +194,9 @@ bool LogicalJoinOperator::inferSchema()
     return true;
 }
 
-std::shared_ptr<Operator> LogicalJoinOperator::clone() const
+std::shared_ptr<Operator> JoinLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<LogicalJoinOperator>(joinDefinition, id);
+    auto copy = std::make_shared<JoinLogicalOperator>(joinDefinition, id);
     copy->setLeftInputOriginIds(leftInputOriginIds);
     copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
@@ -206,32 +214,18 @@ std::shared_ptr<Operator> LogicalJoinOperator::clone() const
     return copy;
 }
 
-bool LogicalJoinOperator::equal(std::shared_ptr<Operator> const& rhs) const
-{
-    if (NES::Util::instanceOf<LogicalJoinOperator>(rhs))
-    {
-        const auto rhsJoin = NES::Util::as<LogicalJoinOperator>(rhs);
-        return joinDefinition->getWindowType()->equal(rhsJoin->joinDefinition->getWindowType())
-            && joinDefinition->getJoinFunction()->equal(rhsJoin->joinDefinition->getJoinFunction())
-            && (*joinDefinition->getOutputSchema() == *rhsJoin->joinDefinition->getOutputSchema())
-            && (*joinDefinition->getLeftSourceType() == *rhsJoin->joinDefinition->getRightSourceType())
-            && (*joinDefinition->getLeftSourceType() == *rhsJoin->joinDefinition->getLeftSourceType());
-    }
-    return false;
-}
-
-std::vector<OriginId> LogicalJoinOperator::getOutputOriginIds() const
+std::vector<OriginId> JoinLogicalOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 
-void LogicalJoinOperator::setOriginId(const OriginId originId)
+void JoinLogicalOperator::setOriginId(const OriginId originId)
 {
     OriginIdAssignmentOperator::setOriginId(originId);
     joinDefinition->setOriginId(originId);
 }
 
-const std::shared_ptr<LogicalFunction> LogicalJoinOperator::getJoinFunction() const
+const std::shared_ptr<LogicalFunction> JoinLogicalOperator::getJoinFunction() const
 {
     return joinDefinition->getJoinFunction();
 }

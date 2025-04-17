@@ -16,23 +16,24 @@
 
 #include <memory>
 #include <Functions/LogicalFunction.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 
 
 namespace NES
 {
 
 /// The projection operator only narrows down the fields of an input schema to a smaller subset. The map operator handles renaming and adding new fields.
-class LogicalProjectionOperator : public LogicalUnaryOperator
+class ProjectionLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    explicit LogicalProjectionOperator(std::vector<std::shared_ptr<LogicalFunction>> functions, OperatorId id);
-    ~LogicalProjectionOperator() override = default;
+    explicit ProjectionLogicalOperator(std::vector<std::shared_ptr<LogicalFunction>> functions, OperatorId id);
+    ~ProjectionLogicalOperator() override = default;
 
     const std::vector<std::shared_ptr<LogicalFunction>>& getFunctions() const;
 
-    [[nodiscard]] bool equal(const std::shared_ptr<Operator>& rhs) const override;
-    [[nodiscard]] bool isIdentical(const std::shared_ptr<Operator>& rhs) const override;
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
+
 
     bool inferSchema() override;
     std::shared_ptr<Operator> clone() const override;

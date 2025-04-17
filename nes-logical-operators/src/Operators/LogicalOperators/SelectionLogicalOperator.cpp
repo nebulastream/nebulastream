@@ -21,53 +21,51 @@
 #include <Iterators/DFSIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-LogicalSelectionOperator::LogicalSelectionOperator(std::shared_ptr<LogicalFunction> const& predicate, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), predicate(std::move(predicate))
+SelectionLogicalOperator::SelectionLogicalOperator(std::shared_ptr<LogicalFunction> const& predicate, OperatorId id)
+    : Operator(id), UnaryLogicalOperator(id), predicate(std::move(predicate))
 {
 }
 
-std::shared_ptr<LogicalFunction> LogicalSelectionOperator::getPredicate() const
+std::shared_ptr<LogicalFunction> SelectionLogicalOperator::getPredicate() const
 {
     return predicate;
 }
 
-void LogicalSelectionOperator::setPredicate(std::shared_ptr<LogicalFunction> newPredicate)
+void SelectionLogicalOperator::setPredicate(std::shared_ptr<LogicalFunction> newPredicate)
 {
     predicate = std::move(newPredicate);
 }
 
-bool LogicalSelectionOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool SelectionLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<LogicalSelectionOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const SelectionLogicalOperator*>(&rhs)->getId() == id;
 }
 
-bool LogicalSelectionOperator::equal(std::shared_ptr<Operator> const& rhs) const
+bool SelectionLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (NES::Util::instanceOf<LogicalSelectionOperator>(rhs))
-    {
-        const auto filterOperator = NES::Util::as<LogicalSelectionOperator>(rhs);
-        return predicate->equal(filterOperator->predicate);
+    if (const auto rhsOperator = dynamic_cast<const SelectionLogicalOperator*>(&rhs)) {
+        return predicate == rhsOperator->predicate;
     }
     return false;
 };
 
-std::string LogicalSelectionOperator::toString() const
+std::string SelectionLogicalOperator::toString() const
 {
     std::stringstream ss;
     ss << "FILTER(opId: " << id << ": predicate: " << *predicate << ")";
     return ss.str();
 }
 
-bool LogicalSelectionOperator::inferSchema()
+bool SelectionLogicalOperator::inferSchema()
 {
-    if (!LogicalUnaryOperator::inferSchema())
+    if (!UnaryLogicalOperator::inferSchema())
     {
         return false;
     }
@@ -79,9 +77,9 @@ bool LogicalSelectionOperator::inferSchema()
     return true;
 }
 
-std::shared_ptr<Operator> LogicalSelectionOperator::clone() const
+std::shared_ptr<Operator> SelectionLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<LogicalSelectionOperator>(predicate->clone(), id);
+    auto copy = std::make_shared<SelectionLogicalOperator>(predicate->clone(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -92,16 +90,16 @@ std::shared_ptr<Operator> LogicalSelectionOperator::clone() const
     return copy;
 }
 
-float LogicalSelectionOperator::getSelectivity() const
+float SelectionLogicalOperator::getSelectivity() const
 {
     return selectivity;
 }
-void LogicalSelectionOperator::setSelectivity(float newSelectivity)
+void SelectionLogicalOperator::setSelectivity(float newSelectivity)
 {
     selectivity = newSelectivity;
 }
 
-std::vector<std::string> LogicalSelectionOperator::getFieldNamesUsedByFilterPredicate() const
+std::vector<std::string> SelectionLogicalOperator::getFieldNamesUsedByFilterPredicate() const
 {
     ///vector to save the names of all the fields that are used in this predicate
     std::vector<std::string> fieldsInPredicate;

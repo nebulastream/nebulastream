@@ -15,12 +15,12 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Functions/LogicalFunctions/AndBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/OrBinaryLogicalFunction.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::Optimizer
 {
@@ -36,20 +36,19 @@ std::shared_ptr<QueryPlan> FilterSplitUpRule::apply(std::shared_ptr<QueryPlan> q
 {
     NES_INFO("Applying FilterSplitUpRule to query {}", queryPlan->toString());
     const auto rootOperators = queryPlan->getRootOperators();
-    std::set<std::shared_ptr<LogicalSelectionOperator>> filterOperatorsSet;
+    std::set<std::shared_ptr<SelectionLogicalOperator>> filterOperatorsSet;
     for (const std::shared_ptr<Operator>& rootOperator : rootOperators)
     {
-        auto filters = rootOperator->getNodesByType<LogicalSelectionOperator>();
+        auto filters = rootOperator->getOperatorsByType<SelectionLogicalOperator>();
         filterOperatorsSet.insert(filters.begin(), filters.end());
     }
-    std::vector<std::shared_ptr<LogicalSelectionOperator>> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
+    std::vector<std::shared_ptr<SelectionLogicalOperator>> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
     NES_DEBUG("FilterSplitUpRule: Sort all filter nodes in increasing order of the operator id")
     std::sort(
         filterOperators.begin(),
         filterOperators.end(),
-        [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
-        { return lhs->getId() < rhs->getId(); });
-    auto originalQueryPlan = queryPlan->copy();
+        [](const std::shared_ptr<SelectionLogicalOperator>& lhs, const std::shared_ptr<SelectionLogicalOperator>& rhs) { return lhs->getId() < rhs->getId(); });
+    auto originalQueryPlan = queryPlan->clone();
     try
     {
         NES_DEBUG("FilterSplitUpRule: Iterate over all the filter operators to split them");
@@ -67,21 +66,21 @@ std::shared_ptr<QueryPlan> FilterSplitUpRule::apply(std::shared_ptr<QueryPlan> q
     }
 }
 
-void FilterSplitUpRule::splitUpFilters(const std::shared_ptr<LogicalSelectionOperator>& filterOperator)
+void FilterSplitUpRule::splitUpFilters(std::shared_ptr<SelectionLogicalOperator> filterOperator)
 {
     /// if our query plan contains a parentOperaters->filter(function1 && function2)->childOperator.
     /// We can rewrite this plan to parentOperaters->filter(function1)->filter(function2)->childOperator.
-    if (Util::instanceOf<NodeFunctionAnd>(filterOperator->getPredicate()))
+    if (Util::instanceOf<AndBinaryLogicalFunction>(filterOperator->getPredicate()))
     {
         /// create filter that contains function1 of the andFunction
-        auto child1 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
+        auto child1 = Util::as<SelectionLogicalOperator>(filterOperator->clone());
         child1->setId(getNextOperatorId());
-        child1->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[0]));
+        child1->setPredicate(Util::as<LogicalFunction>(filterOperator->getPredicate()->children[0]));
 
         /// create filter that contains function2 of the andFunction
-        auto child2 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
+        auto child2 = Util::as<SelectionLogicalOperator>(filterOperator->clone());
         child2->setId(getNextOperatorId());
-        child2->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[1]));
+        child2->setPredicate(Util::as<LogicalFunction>(filterOperator->getPredicate()->children[1]));
 
         /// insert new filter with function1 of the andFunction
         if (!filterOperator->insertBetweenThisAndChildNodes(child1))
@@ -107,27 +106,26 @@ void FilterSplitUpRule::splitUpFilters(const std::shared_ptr<LogicalSelectionOpe
         splitUpFilters(child2);
     }
     /// it might be possible to reformulate negated functions
-    else if (Util::instanceOf<NodeFunctionNegate>(filterOperator->getPredicate()))
+    else if (Util::instanceOf<NegateUnaryLogicalFunction>(filterOperator->getPredicate()))
     {
         /// In the case that the predicate is of the form !( function1 || function2 ) it can be reformulated to ( !function1 && !function2 ).
         /// The reformulated predicate can be used to apply the split up filter rule again.
-        if (Util::instanceOf<NodeFunctionOr>(filterOperator->getPredicate()->getChildren()[0]))
+        if (Util::instanceOf<OrBinaryLogicalFunction>(filterOperator->getPredicate()->children[0]))
         {
-            auto orFunction = filterOperator->getPredicate()->getChildren()[0];
-            auto negatedChild1 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[0]));
-            auto negatedChild2 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[1]));
+            auto orFunction = filterOperator->getPredicate()->children[0];
+            auto negatedChild1 = NegateUnaryLogicalFunction::create(Util::as<LogicalFunction>(orFunction->children[0]));
+            auto negatedChild2 = NegateUnaryLogicalFunction::create(Util::as<LogicalFunction>(orFunction->children[1]));
 
-            auto equivalentAndFunction = NodeFunctionAnd::create(negatedChild1, negatedChild2);
+            auto equivalentAndFunction = AndBinaryLogicalFunction::create(negatedChild1, negatedChild2);
             filterOperator->setPredicate(equivalentAndFunction); /// changing predicate to equivalent AndFunction
             splitUpFilters(filterOperator); /// splitting up the filter
         }
         /// Reformulates predicates in the form (!!function) to (function)
-        else if (Util::instanceOf<NodeFunctionNegate>(filterOperator->getPredicate()->getChildren()[0]))
+        else if (Util::instanceOf<NegateUnaryLogicalFunction>(filterOperator->getPredicate()->children[0]))
         {
-            /// getPredicate() is the first FunctionNegate; first getChildren()[0] is the second FunctionNegate;
-            /// second getChildren()[0] is the nodeFunction that was negated twice. copy() only copies children of this nodeFunction. (probably not mandatory but no reference to the negations needs to be kept)
-            filterOperator->setPredicate(
-                Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0])->deepCopy());
+            /// getPredicate() is the first FunctionNegate; first children[0] is the second FunctionNegate;
+            /// second children[0] is the LogicalFunction that was negated twice. copy() only copies children of this LogicalFunction. (probably not mandatory but no reference to the negations needs to be kept)
+            filterOperator->setPredicate(Util::as<LogicalFunction>(filterOperator->getPredicate()->children[0]->children[0])->clone());
             splitUpFilters(filterOperator);
         }
     }

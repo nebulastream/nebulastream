@@ -16,16 +16,16 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LimitLogicalOperator.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/JoinLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <SerializableOperator.pb.h>
 
@@ -46,22 +46,22 @@ public:
 
     static void serializeSourceOperator(SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
 
-    static std::shared_ptr<LogicalUnaryOperator>
+    static std::shared_ptr<UnaryLogicalOperator>
     deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
 
     static void serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator);
 
-    static std::shared_ptr<LogicalUnaryOperator> deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
+    static std::shared_ptr<UnaryLogicalOperator> deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
 
-    static void serializeSelectionOperator(const LogicalSelectionOperator& selectionOperator, SerializableOperator& serializedOperator);
+    static void serializeSelectionOperator(const SelectionLogicalOperator& selectionOperator, SerializableOperator& serializedOperator);
 
-    static void serializeProjectionOperator(const LogicalProjectionOperator& projectionOperator, SerializableOperator& serializedOperator);
+    static void serializeProjectionOperator(const ProjectionLogicalOperator& projectionOperator, SerializableOperator& serializedOperator);
 
-    static void serializeMapOperator(const LogicalMapOperator& mapOperator, SerializableOperator& serializedOperator);
+    static void serializeMapOperator(const MapLogicalOperator& mapOperator, SerializableOperator& serializedOperator);
 
     static void serializeWindowOperator(const WindowOperator& windowOperator, SerializableOperator& serializedOperator);
 
-    static void serializeJoinOperator(const LogicalJoinOperator& joinOperator, SerializableOperator& serializedOperator);
+    static void serializeJoinOperator(const JoinLogicalOperator& joinOperator, SerializableOperator& serializedOperator);
 
     static void serializeSourceDescriptor(
         const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
@@ -75,7 +75,7 @@ public:
     static std::unique_ptr<Sinks::SinkDescriptor>
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
 
-    static void serializeLimitOperator(const LogicalLimitOperator& limitLogicalOperator, SerializableOperator& serializedOperator);
+    static void serializeLimitOperator(const LimitLogicalOperator& limitLogicalOperator, SerializableOperator& serializedOperator);
 
     static void serializeWatermarkAssignerOperator(
         const WatermarkAssignerLogicalOperator& watermarkAssignerOperator, SerializableOperator& serializedOperator);
@@ -92,6 +92,6 @@ public:
     static void deserializeInputSchema(std::shared_ptr<LogicalOperator> operatorNode, const SerializableOperator& serializedOperator);
 
     static void
-    serializeInferModelOperator(const InferModel::LogicalInferModelOperator& inferModel, SerializableOperator& serializedOperator);
+    serializeInferModelOperator(const InferModel::InferModelLogicalOperator& inferModel, SerializableOperator& serializedOperator);
 };
 }

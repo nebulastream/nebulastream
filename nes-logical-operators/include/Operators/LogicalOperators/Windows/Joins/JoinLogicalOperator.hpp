@@ -19,26 +19,26 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 
 namespace NES
 {
 
-class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignmentOperator
+class JoinLogicalOperator : public BinaryLogicalOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit LogicalJoinOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
-    ~LogicalJoinOperator() override = default;
+    explicit JoinLogicalOperator(std::shared_ptr<Join::LogicalJoinDescriptor> joinDefinition, OperatorId id, OriginId originId = INVALID_ORIGIN_ID);
+    ~JoinLogicalOperator() override = default;
 
     std::shared_ptr<Join::LogicalJoinDescriptor> getJoinDefinition() const;
 
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     std::shared_ptr<Operator> clone() const override;
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
 
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;

@@ -21,7 +21,7 @@
 #include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
@@ -32,8 +32,8 @@
 namespace NES
 {
 
-LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr<LogicalFunction>> functions, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
+ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<std::shared_ptr<LogicalFunction>> functions, OperatorId id)
+    : Operator(id), UnaryLogicalOperator(id), functions(std::move(functions))
 {
     const auto functionTypeNotSupported = [](const std::shared_ptr<LogicalFunction>& function) -> bool
     {
@@ -52,22 +52,20 @@ LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr
         "The Projection operator only supports FieldAccessLogicalFunction and FieldAssignmentBinaryLogicalFunction functions.");
 }
 
-const std::vector<std::shared_ptr<LogicalFunction>>& LogicalProjectionOperator::getFunctions() const
+const std::vector<std::shared_ptr<LogicalFunction>>& ProjectionLogicalOperator::getFunctions() const
 {
     return functions;
 }
 
-bool LogicalProjectionOperator::isIdentical(const std::shared_ptr<Operator>& rhs) const
+bool ProjectionLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<LogicalProjectionOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const ProjectionLogicalOperator*>(&rhs)->getId() == id;
 }
 
-bool LogicalProjectionOperator::equal(const std::shared_ptr<Operator>& rhs) const
+bool ProjectionLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
-    {
-        const auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
-        return (*outputSchema == *projection->outputSchema);
+    if (const auto rhsOperator = dynamic_cast<const ProjectionLogicalOperator*>(&rhs)) {
+        return (*outputSchema == *rhsOperator->outputSchema);
     }
     return false;
 };
@@ -82,7 +80,7 @@ std::string getFieldName(const LogicalFunction& function)
     return dynamic_cast<FieldAssignmentBinaryLogicalFunction const*>(&function)->getField()->getFieldName();
 }
 
-std::string LogicalProjectionOperator::toString() const
+std::string ProjectionLogicalOperator::toString() const
 {
     PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
     if (not outputSchema->getFieldNames().empty())
@@ -95,9 +93,9 @@ std::string LogicalProjectionOperator::toString() const
         fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(*function); }), ", "));
 }
 
-bool LogicalProjectionOperator::inferSchema()
+bool ProjectionLogicalOperator::inferSchema()
 {
-    if (!LogicalUnaryOperator::inferSchema())
+    if (!UnaryLogicalOperator::inferSchema())
     {
         return false;
     }
@@ -121,7 +119,7 @@ bool LogicalProjectionOperator::inferSchema()
         else
         {
             throw CannotInferSchema(fmt::format(
-                "LogicalProjectionOperator: Function has to be an FieldAccessLogicalFunction, a "
+                "ProjectionLogicalOperator: Function has to be an FieldAccessLogicalFunction, a "
                 "RenameLogicalFunction, or a FieldAssignmentBinaryLogicalFunction, but it was a {}",
                 *function));
         }
@@ -129,11 +127,11 @@ bool LogicalProjectionOperator::inferSchema()
     return true;
 }
 
-std::shared_ptr<Operator> LogicalProjectionOperator::clone() const
+std::shared_ptr<Operator> ProjectionLogicalOperator::clone() const
 {
     auto copyOfProjectionFunctions
         = functions | std::views::transform([](const auto& fn) { return fn->deepCopy(); }) | ranges::to<std::vector>();
-    auto copy = std::make_shared<LogicalProjectionOperator>(copyOfProjectionFunctions, id);
+    auto copy = std::make_shared<ProjectionLogicalOperator>(copyOfProjectionFunctions, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

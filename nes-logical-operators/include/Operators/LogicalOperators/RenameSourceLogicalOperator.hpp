@@ -14,40 +14,39 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 
 namespace NES
 {
 
-class LogicalLimitOperator : public LogicalUnaryOperator
+class RenameSourceLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    explicit LogicalLimitOperator(uint64_t limit, OperatorId id);
-    ~LogicalLimitOperator() override = default;
+    explicit RenameSourceLogicalOperator(const std::string& newSourceName, OperatorId id);
+    ~RenameSourceLogicalOperator() override = default;
 
-    uint64_t getLimit() const;
-
-    /// @brief check if two operators have the same limit predicate.
+    /// @brief check if two operators have the same output schema
     /// @param rhs the operator to compare
     /// @return bool true if they are the same otherwise false
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
-    /// @brief Infers the input and output schema of this operator depending on its child.
+    /// @brief infers the input and out schema of this operator depending on its child.
     /// @param typeInferencePhaseContext needed for stamp inferring
     /// @return true if schema was correctly inferred
     bool inferSchema() override;
     std::shared_ptr<Operator> clone() const override;
 
-protected:
-    std::string toString() const override;
+    std::string getNewSourceName() const;
 
+protected:
+    [[nodiscard]] std::string toString() const override;
 private:
-    uint64_t limit;
+    const std::string newSourceName;
 };
 
 }

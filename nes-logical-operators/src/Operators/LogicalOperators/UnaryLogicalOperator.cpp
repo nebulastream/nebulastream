@@ -13,7 +13,7 @@
 */
 #include <memory>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -21,11 +21,11 @@
 namespace NES
 {
 
-LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id) : Operator(id), LogicalOperator(id)
+UnaryLogicalOperator::UnaryLogicalOperator(OperatorId id) : Operator(id), LogicalOperator(id)
 {
 }
 
-bool LogicalUnaryOperator::inferSchema()
+bool UnaryLogicalOperator::inferSchema()
 {
     /// We assume that all children operators have the same output schema otherwise this plan is not valid
     for (const auto& child : children)
@@ -65,7 +65,7 @@ bool LogicalUnaryOperator::inferSchema()
     return true;
 }
 
-void LogicalUnaryOperator::inferInputOrigins()
+void UnaryLogicalOperator::inferInputOrigins()
 {
     /// in the default case we collect all input origins from the children/upstream operators
     std::vector<OriginId> inputOriginIds;

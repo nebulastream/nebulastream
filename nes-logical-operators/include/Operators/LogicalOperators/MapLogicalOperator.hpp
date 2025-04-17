@@ -18,30 +18,28 @@
 #include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 namespace NES
 {
 
 /// @brief Map operator, which contains a field assignment function that manipulates a field of the record.
-class LogicalMapOperator : public LogicalUnaryOperator
+class MapLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    LogicalMapOperator(std::shared_ptr<FieldAssignmentBinaryLogicalFunction> const& mapFunction, OperatorId id);
+    MapLogicalOperator(std::shared_ptr<FieldAssignmentBinaryLogicalFunction> const& mapFunction, OperatorId id);
 
     [[nodiscard]] std::shared_ptr<FieldAssignmentBinaryLogicalFunction> getMapFunction() const;
 
-    /**
-     * @brief Infers the schema of the map operator. We support two cases:
-     * 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
-     * 2. the assignment statement creates a new field with an inferred data type.
-     * @throws throws exception if inference was not possible.
-     * @param typeInferencePhaseContext needed for stamp inferring
-     * @return true if inference was possible
-     */
+    /// @brief Infers the schema of the map operator. We support two cases:
+    /// 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
+    /// 2. the assignment statement creates a new field with an inferred data type.
+    /// @throws throws exception if inference was not possible.
+    /// @param typeInferencePhaseContext needed for stamp inferring
+    /// @return true if inference was possible
     [[nodiscard]] bool inferSchema() override;
 
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     std::shared_ptr<Operator> clone() const override;
 
 protected:

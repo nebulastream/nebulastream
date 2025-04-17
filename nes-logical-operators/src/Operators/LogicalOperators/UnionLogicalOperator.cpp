@@ -15,8 +15,8 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -25,16 +25,24 @@
 namespace NES
 {
 
-LogicalUnionOperator::LogicalUnionOperator(OperatorId id) : Operator(id), LogicalBinaryOperator(id)
+UnionLogicalOperator::UnionLogicalOperator(OperatorId id) : Operator(id), BinaryLogicalOperator(id)
 {
 }
 
-bool LogicalUnionOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool UnionLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<LogicalUnionOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const UnionLogicalOperator*>(&rhs)->getId() == id;
 }
 
-std::string LogicalUnionOperator::toString() const
+bool UnionLogicalOperator::operator==(Operator const& rhs) const
+{
+    if (const auto rhsOperator = dynamic_cast<const UnionLogicalOperator*>(&rhs)) {
+        return (*leftInputSchema == *rhsOperator->getLeftInputSchema()) && (*outputSchema == *rhsOperator->getOutputSchema());
+    }
+    return false;
+}
+
+std::string UnionLogicalOperator::toString() const
 {
     std::stringstream ss;
     if (properties.contains("PINNED_WORKER_ID"))
@@ -48,9 +56,9 @@ std::string LogicalUnionOperator::toString() const
     return ss.str();
 }
 
-bool LogicalUnionOperator::inferSchema()
+bool UnionLogicalOperator::inferSchema()
 {
-    if (!LogicalBinaryOperator::inferSchema())
+    if (!BinaryLogicalOperator::inferSchema())
     {
         return false;
     }
@@ -88,9 +96,9 @@ bool LogicalUnionOperator::inferSchema()
     return true;
 }
 
-std::shared_ptr<Operator> LogicalUnionOperator::clone() const
+std::shared_ptr<Operator> UnionLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<LogicalUnionOperator>(id);
+    auto copy = std::make_shared<UnionLogicalOperator>(id);
     copy->setLeftInputOriginIds(leftInputOriginIds);
     copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
@@ -103,17 +111,7 @@ std::shared_ptr<Operator> LogicalUnionOperator::clone() const
     return copy;
 }
 
-bool LogicalUnionOperator::equal(std::shared_ptr<Operator> const& rhs) const
-{
-    if (NES::Util::instanceOf<LogicalUnionOperator>(rhs))
-    {
-        const auto rhsUnion = NES::Util::as<LogicalUnionOperator>(rhs);
-        return (*leftInputSchema == *rhsUnion->getLeftInputSchema()) && (*outputSchema == *rhsUnion->getOutputSchema());
-    }
-    return false;
-}
-
-void LogicalUnionOperator::inferInputOrigins()
+void UnionLogicalOperator::inferInputOrigins()
 {
     /// in the default case we collect all input origins from the children/upstream operators
     std::vector<OriginId> combinedInputOriginIds;

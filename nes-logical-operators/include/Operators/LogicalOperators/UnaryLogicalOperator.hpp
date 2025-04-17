@@ -19,10 +19,10 @@ namespace NES
 {
 
 /// @brief Logical unary operator. It hat at most one input data source.
-class LogicalUnaryOperator : public LogicalOperator
+class UnaryLogicalOperator : public LogicalOperator
 {
 public:
-    explicit LogicalUnaryOperator(OperatorId id);
+    explicit UnaryLogicalOperator(OperatorId id);
 
     /// @brief infers the input and out schema of this operator depending on its child.
     /// @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.

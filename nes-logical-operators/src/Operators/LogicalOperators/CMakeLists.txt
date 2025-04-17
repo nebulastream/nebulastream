@@ -12,15 +12,15 @@
 
 add_source_files(nes-logical-operators
         LogicalOperator.cpp
-        LogicalSelectionOperator.cpp
-        LogicalProjectionOperator.cpp
-        LogicalMapOperator.cpp
-        LogicalInferModelOperator.cpp
-        LogicalUnionOperator.cpp
-        RenameSourceOperator.cpp
-        LogicalBinaryOperator.cpp
-        LogicalUnaryOperator.cpp
-        LogicalLimitOperator.cpp
+        SelectionLogicalOperator.cpp
+        ProjectionLogicalOperator.cpp
+        MapLogicalOperator.cpp
+        InferModelLogicalOperator.cpp
+        UnionLogicalOperator.cpp
+        RenameSourceLogicalOperator.cpp
+        BinaryLogicalOperator.cpp
+        UnaryLogicalOperator.cpp
+        LimitLogicalOperator.cpp
 )
 
 add_subdirectory(Sinks)

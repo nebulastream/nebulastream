@@ -15,15 +15,15 @@
 #pragma once
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 
 namespace NES::InferModel
 {
 
-class LogicalInferModelOperator : public LogicalUnaryOperator
+class InferModelLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    LogicalInferModelOperator(
+    InferModelLogicalOperator(
         std::string model,
         std::vector<std::shared_ptr<LogicalFunction>> inputFields,
         std::vector<std::shared_ptr<LogicalFunction>> outputFields,
@@ -34,12 +34,12 @@ public:
     /// @brief compares this operator node with another
     /// @param rhs the other operator node
     /// @return true if both are equal or false if both are not equal
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
 
     /// @brief checks if the operator node is equal and also has the same id, so it is the identical node
     /// @param rhs the other operator node
     /// @return true if identical, false otherwise
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
     bool inferSchema() override;
 

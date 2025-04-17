@@ -19,7 +19,7 @@
 #include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
@@ -28,35 +28,34 @@
 namespace NES
 {
 
-LogicalMapOperator::LogicalMapOperator(const std::shared_ptr<FieldAssignmentBinaryLogicalFunction>& mapFunction, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), mapFunction(mapFunction)
+MapLogicalOperator::MapLogicalOperator(const std::shared_ptr<FieldAssignmentBinaryLogicalFunction>& mapFunction, OperatorId id)
+    : Operator(id), UnaryLogicalOperator(id), mapFunction(mapFunction)
 {
 }
 
-std::shared_ptr<FieldAssignmentBinaryLogicalFunction> LogicalMapOperator::getMapFunction() const
+std::shared_ptr<FieldAssignmentBinaryLogicalFunction> MapLogicalOperator::getMapFunction() const
 {
     return mapFunction;
 }
 
-bool LogicalMapOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool MapLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<LogicalMapOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const MapLogicalOperator*>(&rhs)->getId() == id;
 }
 
-bool LogicalMapOperator::equal(std::shared_ptr<Operator> const& rhs) const
+bool MapLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (NES::Util::instanceOf<LogicalMapOperator>(rhs))
+    if (auto rhsOperator = dynamic_cast<const MapLogicalOperator*>(&rhs))
     {
-        const auto mapOperator = NES::Util::as<LogicalMapOperator>(rhs);
-        return mapFunction->equal(mapOperator->mapFunction);
+        return this->mapFunction == rhsOperator->mapFunction;
     }
     return false;
 };
 
-bool LogicalMapOperator::inferSchema()
+bool MapLogicalOperator::inferSchema()
 {
     /// infer the default input and output schema
-    if (!LogicalUnaryOperator::inferSchema())
+    if (!UnaryLogicalOperator::inferSchema())
     {
         return false;
     }
@@ -82,16 +81,16 @@ bool LogicalMapOperator::inferSchema()
     return true;
 }
 
-std::string LogicalMapOperator::toString() const
+std::string MapLogicalOperator::toString() const
 {
     std::stringstream ss;
     ss << "MAP(opId: " << id << ": predicate: " << *mapFunction << ")";
     return ss.str();
 }
 
-std::shared_ptr<Operator> LogicalMapOperator::clone() const
+std::shared_ptr<Operator> MapLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<LogicalMapOperator>(Util::as<FieldAssignmentBinaryLogicalFunction>(mapFunction->clone()), id);
+    auto copy = std::make_shared<MapLogicalOperator>(Util::as<FieldAssignmentBinaryLogicalFunction>(mapFunction->clone()), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

@@ -15,7 +15,7 @@
 #include <memory>
 #include <utility>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
+#include <Operators/LogicalOperators/LimitLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -23,49 +23,47 @@
 namespace NES
 {
 
-LogicalLimitOperator::LogicalLimitOperator(uint64_t limit, OperatorId id) : Operator(id), LogicalUnaryOperator(id), limit(limit)
+LimitLogicalOperator::LimitLogicalOperator(uint64_t limit, OperatorId id) : Operator(id), UnaryLogicalOperator(id), limit(limit)
 {
 }
 
-uint64_t LogicalLimitOperator::getLimit() const
+uint64_t LimitLogicalOperator::getLimit() const
 {
     return limit;
 }
 
-bool LogicalLimitOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool LimitLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<LogicalLimitOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const LimitLogicalOperator*>(&rhs)->getId() == id;
 }
 
-bool LogicalLimitOperator::equal(std::shared_ptr<Operator> const& rhs) const
+bool LimitLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (NES::Util::instanceOf<LogicalLimitOperator>(rhs))
-    {
-        const auto limitOperator = NES::Util::as<LogicalLimitOperator>(rhs);
-        return limit == limitOperator->limit;
+    if (const auto rhsOperator = dynamic_cast<const LimitLogicalOperator*>(&rhs)) {
+        return limit == rhsOperator->limit;
     }
     return false;
 };
 
-std::string LogicalLimitOperator::toString() const
+std::string LimitLogicalOperator::toString() const
 {
     std::stringstream ss;
     ss << "LIMIT" << id << ")";
     return ss.str();
 }
 
-bool LogicalLimitOperator::inferSchema()
+bool LimitLogicalOperator::inferSchema()
 {
-    if (!LogicalUnaryOperator::inferSchema())
+    if (!UnaryLogicalOperator::inferSchema())
     {
         return false;
     }
     return true;
 }
 
-std::shared_ptr<Operator> LogicalLimitOperator::clone() const
+std::shared_ptr<Operator> LimitLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<LogicalLimitOperator>(limit, id);
+    auto copy = std::make_shared<LimitLogicalOperator>(limit, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

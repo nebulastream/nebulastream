@@ -15,7 +15,7 @@
 #include <memory>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -25,11 +25,11 @@
 namespace NES
 {
 
-LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id) : Operator(id), LogicalOperator(id)
+BinaryLogicalOperator::BinaryLogicalOperator(OperatorId id) : Operator(id), LogicalOperator(id)
 {
 }
 
-bool LogicalBinaryOperator::inferSchema()
+bool BinaryLogicalOperator::inferSchema()
 {
     PRECONDITION(children.size() == 2, "BinaryOperator: this node should have exactly two child operators");
     distinctSchemas.clear();
@@ -63,7 +63,7 @@ bool LogicalBinaryOperator::inferSchema()
     return true;
 }
 
-std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getOperatorsBySchema(const std::shared_ptr<Schema>& schema) const
+std::vector<std::shared_ptr<Operator>> BinaryLogicalOperator::getOperatorsBySchema(const std::shared_ptr<Schema>& schema) const
 {
     std::vector<std::shared_ptr<Operator>> operators;
     for (const auto& child : children)
@@ -77,17 +77,17 @@ std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getOperatorsBySche
     return operators;
 }
 
-std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getLeftOperators() const
+std::vector<std::shared_ptr<Operator>> BinaryLogicalOperator::getLeftOperators() const
 {
     return getOperatorsBySchema(getLeftInputSchema());
 }
 
-std::vector<std::shared_ptr<Operator>> LogicalBinaryOperator::getRightOperators() const
+std::vector<std::shared_ptr<Operator>> BinaryLogicalOperator::getRightOperators() const
 {
     return getOperatorsBySchema(getRightInputSchema());
 }
 
-void LogicalBinaryOperator::inferInputOrigins()
+void BinaryLogicalOperator::inferInputOrigins()
 {
     /// in the default case we collect all input origins from the children/upstream operators
     std::vector<OriginId> leftInputOriginIds;

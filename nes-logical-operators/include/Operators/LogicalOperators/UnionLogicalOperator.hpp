@@ -16,23 +16,23 @@
 
 #include <memory>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
 
 namespace NES
 {
 
-class LogicalUnionOperator : public LogicalBinaryOperator
+class UnionLogicalOperator : public BinaryLogicalOperator
 {
 public:
-    explicit LogicalUnionOperator(OperatorId id);
-    ~LogicalUnionOperator() override = default;
+    explicit UnionLogicalOperator(OperatorId id);
+    ~UnionLogicalOperator() override = default;
 
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     void inferInputOrigins() override;
     std::shared_ptr<Operator> clone() const override;
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
 
 protected:
     std::string toString() const override;

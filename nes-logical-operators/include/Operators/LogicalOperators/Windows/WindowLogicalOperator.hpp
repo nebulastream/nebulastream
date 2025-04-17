@@ -24,20 +24,15 @@
 namespace NES
 {
 
-class LogicalWindowOperator : public WindowOperator
+class WindowLogicalOperator : public WindowOperator
 {
 public:
-    LogicalWindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> const& windowDefinition, OperatorId id);
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    WindowLogicalOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> const& windowDefinition, OperatorId id);
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     std::shared_ptr<Operator> clone() const override;
     bool inferSchema() override;
 
-
-    /**
-     * @brief returns the names of every key used in the aggregation
-     * @return a vector containing the key names used in the aggregation
-     */
     std::vector<std::string> getGroupByKeyNames() const;
 
 protected:

@@ -30,7 +30,7 @@ namespace NES
 
 WatermarkAssignerLogicalOperator::WatermarkAssignerLogicalOperator(
     std::shared_ptr<Windowing::WatermarkStrategyDescriptor> const& watermarkStrategyDescriptor, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), watermarkStrategyDescriptor(watermarkStrategyDescriptor)
+    : Operator(id), UnaryLogicalOperator(id), watermarkStrategyDescriptor(watermarkStrategyDescriptor)
 {
 }
 
@@ -46,17 +46,15 @@ std::string WatermarkAssignerLogicalOperator::toString() const
     return ss.str();
 }
 
-bool WatermarkAssignerLogicalOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool WatermarkAssignerLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<WatermarkAssignerLogicalOperator>(rhs)->getId() == id;
+    return (*this == rhs) && dynamic_cast<const WatermarkAssignerLogicalOperator*>(&rhs)->getId() == id;
 }
 
-bool WatermarkAssignerLogicalOperator::equal(std::shared_ptr<Operator> const& rhs) const
+bool WatermarkAssignerLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (NES::Util::instanceOf<WatermarkAssignerLogicalOperator>(rhs))
-    {
-        const auto watermarkAssignerOperator = NES::Util::as<WatermarkAssignerLogicalOperator>(rhs);
-        return watermarkStrategyDescriptor->equal(watermarkAssignerOperator->getWatermarkStrategyDescriptor());
+    if (const auto rhsOperator = dynamic_cast<const WatermarkAssignerLogicalOperator*>(&rhs)) {
+        return getWatermarkStrategyDescriptor() == rhsOperator->getWatermarkStrategyDescriptor();
     }
     return false;
 }
@@ -76,7 +74,7 @@ std::shared_ptr<Operator> WatermarkAssignerLogicalOperator::clone() const
 
 bool WatermarkAssignerLogicalOperator::inferSchema()
 {
-    if (!LogicalUnaryOperator::inferSchema())
+    if (!UnaryLogicalOperator::inferSchema())
     {
         return false;
     }

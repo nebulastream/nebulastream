@@ -22,7 +22,7 @@
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
@@ -32,13 +32,13 @@
 namespace NES
 {
 
-LogicalWindowOperator::LogicalWindowOperator(
+WindowLogicalOperator::WindowLogicalOperator(
     const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition, const OperatorId id)
     : Operator(id), WindowOperator(windowDefinition, id)
 {
 }
 
-std::string LogicalWindowOperator::toString() const
+std::string WindowLogicalOperator::toString() const
 {
     std::stringstream ss;
     auto windowType = windowDefinition->getWindowType();
@@ -52,24 +52,22 @@ std::string LogicalWindowOperator::toString() const
     return ss.str();
 }
 
-bool LogicalWindowOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool WindowLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && (NES::Util::as<LogicalWindowOperator>(rhs)->getId() == id);
+    return *this == rhs && (dynamic_cast<const WindowLogicalOperator*>(&rhs)->getId() == id);
 }
 
-bool LogicalWindowOperator::equal(std::shared_ptr<Operator> const& rhs) const
+bool WindowLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (NES::Util::instanceOf<LogicalWindowOperator>(rhs))
-    {
-        const auto rhsWindow = NES::Util::as<LogicalWindowOperator>(rhs);
-        return windowDefinition->equal(rhsWindow->windowDefinition);
+    if (const auto rhsOperator = dynamic_cast<const WindowLogicalOperator*>(&rhs)) {
+        return windowDefinition == rhsOperator->windowDefinition;
     }
     return false;
 }
 
-std::shared_ptr<Operator> LogicalWindowOperator::clone() const
+std::shared_ptr<Operator> WindowLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<LogicalWindowOperator>(windowDefinition, id);
+    auto copy = std::make_shared<WindowLogicalOperator>(windowDefinition, id);
     copy->setOriginId(originId);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -81,14 +79,14 @@ std::shared_ptr<Operator> LogicalWindowOperator::clone() const
     return copy;
 }
 
-bool LogicalWindowOperator::inferSchema()
+bool WindowLogicalOperator::inferSchema()
 {
     if (!WindowOperator::inferSchema())
     {
         return false;
     }
     /// infer the default input and output schema
-    NES_DEBUG("LogicalWindowOperator: TypeInferencePhase: infer types for window operator with input schema {}", inputSchema->toString());
+    NES_DEBUG("WindowLogicalOperator: TypeInferencePhase: infer types for window operator with input schema {}", inputSchema->toString());
 
     /// infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
@@ -158,7 +156,7 @@ bool LogicalWindowOperator::inferSchema()
     return true;
 }
 
-std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() const
+std::vector<std::string> WindowLogicalOperator::getGroupByKeyNames() const
 {
     std::vector<std::string> groupByKeyNames = {};
     const auto windowDefinition = this->getWindowDefinition();

@@ -20,10 +20,10 @@
 namespace NES
 {
 /// @brief Logical Binary operator, defines two output schemas
-class LogicalBinaryOperator : public LogicalOperator
+class BinaryLogicalOperator : public LogicalOperator
 {
 public:
-    explicit LogicalBinaryOperator(OperatorId id);
+    explicit BinaryLogicalOperator(OperatorId id);
 
     bool inferSchema() override;
     void inferInputOrigins() override;

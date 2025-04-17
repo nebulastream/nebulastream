@@ -24,7 +24,7 @@
 #include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,30 +33,30 @@
 namespace NES::InferModel
 {
 
-LogicalInferModelOperator::LogicalInferModelOperator(
+InferModelLogicalOperator::InferModelLogicalOperator(
     std::string model,
     std::vector<std::shared_ptr<LogicalFunction>> inputFields,
     std::vector<std::shared_ptr<LogicalFunction>> outputFields,
     OperatorId id)
     : Operator(id)
-    , LogicalUnaryOperator(id)
+    , UnaryLogicalOperator(id)
     , model(std::move(model))
     , inputFields(std::move(inputFields))
     , outputFields(std::move(outputFields))
 {
-    NES_DEBUG("LogicalInferModelOperator: reading from model {}", this->model);
+    NES_DEBUG("InferModelLogicalOperator: reading from model {}", this->model);
 }
 
-std::string LogicalInferModelOperator::toString() const
+std::string InferModelLogicalOperator::toString() const
 {
     std::stringstream ss;
     ss << "INFER_MODEL(" << id << ")";
     return ss.str();
 }
 
-std::shared_ptr<Operator> LogicalInferModelOperator::clone() const
+std::shared_ptr<Operator> InferModelLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<LogicalInferModelOperator>(model, inputFields, outputFields, id);
+    auto copy = std::make_shared<InferModelLogicalOperator>(model, inputFields, outputFields, id);
     copy->setInputSchema(getInputSchema());
     copy->setOutputSchema(getOutputSchema());
     for (const auto& [key, value] : properties)
@@ -65,22 +65,20 @@ std::shared_ptr<Operator> LogicalInferModelOperator::clone() const
     }
     return copy;
 }
-bool LogicalInferModelOperator::equal(std::shared_ptr<Operator> const& rhs) const
+bool InferModelLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (NES::Util::instanceOf<LogicalInferModelOperator>(rhs))
-    {
-        const auto inferModelOperator = NES::Util::as<LogicalInferModelOperator>(rhs);
-        return this->getDeployedModelPath() == inferModelOperator->getDeployedModelPath();
+    if (auto rhsOperator = dynamic_cast<const InferModelLogicalOperator*>(&rhs)) {
+        return getDeployedModelPath() == rhsOperator->getDeployedModelPath();
     }
     return false;
 }
 
-bool LogicalInferModelOperator::isIdentical(std::shared_ptr<Operator> const& rhs) const
+bool InferModelLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<LogicalInferModelOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const InferModelLogicalOperator*>(&rhs)->getId() == id;
 }
 
-void LogicalInferModelOperator::updateToFullyQualifiedFieldName(std::shared_ptr<FieldAccessLogicalFunction> field) const
+void InferModelLogicalOperator::updateToFullyQualifiedFieldName(std::shared_ptr<FieldAccessLogicalFunction> field) const
 {
     const auto schema = getInputSchema();
     const auto fieldName = field->getFieldName();
@@ -104,9 +102,9 @@ void LogicalInferModelOperator::updateToFullyQualifiedFieldName(std::shared_ptr<
     }
 }
 
-bool LogicalInferModelOperator::inferSchema()
+bool InferModelLogicalOperator::inferSchema()
 {
-    if (!LogicalUnaryOperator::inferSchema())
+    if (!UnaryLogicalOperator::inferSchema())
     {
         return false;
     }
@@ -146,12 +144,12 @@ bool LogicalInferModelOperator::inferSchema()
     return true;
 }
 
-const std::string& LogicalInferModelOperator::getModel() const
+const std::string& InferModelLogicalOperator::getModel() const
 {
     return model;
 }
 
-const std::string LogicalInferModelOperator::getDeployedModelPath() const
+const std::string InferModelLogicalOperator::getDeployedModelPath() const
 {
     const auto idx = model.find_last_of('/');
     auto path = model;
@@ -166,12 +164,12 @@ const std::string LogicalInferModelOperator::getDeployedModelPath() const
     return path;
 }
 
-const std::vector<std::shared_ptr<LogicalFunction>>& LogicalInferModelOperator::getInputFields() const
+const std::vector<std::shared_ptr<LogicalFunction>>& InferModelLogicalOperator::getInputFields() const
 {
     return inputFields;
 }
 
-const std::vector<std::shared_ptr<LogicalFunction>>& LogicalInferModelOperator::getOutputFields() const
+const std::vector<std::shared_ptr<LogicalFunction>>& InferModelLogicalOperator::getOutputFields() const
 {
     return outputFields;
 }

@@ -17,17 +17,17 @@
 #include <memory>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 
 namespace NES
 {
 
 /// @brief Selection operator, which contains an function as a predicate.
-class LogicalSelectionOperator : public LogicalUnaryOperator
+class SelectionLogicalOperator : public UnaryLogicalOperator
 {
 public:
-    explicit LogicalSelectionOperator(std::shared_ptr<LogicalFunction> const&, OperatorId id);
-    ~LogicalSelectionOperator() override = default;
+    explicit SelectionLogicalOperator(std::shared_ptr<LogicalFunction> const&, OperatorId id);
+    ~SelectionLogicalOperator() override = default;
 
     /// @brief get the filter predicate.
     /// @return PredicatePtr
@@ -42,8 +42,8 @@ public:
     /// @brief check if two operators have the same filter predicate.
     /// @param rhs the operator to compare
     /// @return bool true if they are the same otherwise false
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
     /// @brief infers the input and output schema of this operator depending on its child.
     /// @throws Exception the predicate function has to return a boolean.

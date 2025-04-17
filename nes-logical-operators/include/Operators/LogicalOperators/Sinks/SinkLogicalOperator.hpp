@@ -16,21 +16,21 @@
 
 #include <memory>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 
 namespace NES
 {
 
-class SinkLogicalOperator : public LogicalUnaryOperator
+class SinkLogicalOperator : public UnaryLogicalOperator
 {
 public:
     /// During deserialization, we don't need to know/use the name of the sink anymore.
-    SinkLogicalOperator(OperatorId id) : Operator(id), LogicalUnaryOperator(id) {};
+    SinkLogicalOperator(OperatorId id) : Operator(id), UnaryLogicalOperator(id) {};
 
     /// During query parsing, we require the name of the sink and need to assign it an id.
     SinkLogicalOperator(std::string sinkName, const OperatorId id)
-        : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName)) {};
+        : Operator(id), UnaryLogicalOperator(id), sinkName(std::move(sinkName)) {};
 
     [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
     [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;

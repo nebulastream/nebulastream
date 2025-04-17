@@ -14,14 +14,14 @@
 
 #pragma once
 
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
 namespace NES
 {
 
 /// @brief Watermark assignment operator, creates a watermark timestamp per input buffer.
-class WatermarkAssignerLogicalOperator : public LogicalUnaryOperator
+class WatermarkAssignerLogicalOperator : public UnaryLogicalOperator
 {
 public:
     WatermarkAssignerLogicalOperator(
@@ -31,9 +31,9 @@ public:
     /// @return std::shared_ptr<Windowing::WatermarkStrategyDescriptor>
     std::shared_ptr<Windowing::WatermarkStrategyDescriptor> getWatermarkStrategyDescriptor() const;
 
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool operator==(Operator const& rhs) const override;
 
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
+    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
     std::shared_ptr<Operator> clone() const override;
     bool inferSchema() override;

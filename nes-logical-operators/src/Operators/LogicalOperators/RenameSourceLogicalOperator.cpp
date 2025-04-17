@@ -17,7 +17,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -25,36 +25,34 @@
 namespace NES
 {
 
-RenameSourceOperator::RenameSourceOperator(const std::string& newSourceName, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), newSourceName(newSourceName)
+RenameSourceLogicalOperator::RenameSourceLogicalOperator(const std::string& newSourceName, OperatorId id)
+    : Operator(id), UnaryLogicalOperator(id), newSourceName(newSourceName)
 {
 }
 
-bool RenameSourceOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool RenameSourceLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<RenameSourceOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const RenameSourceLogicalOperator*>(&rhs)->getId() == id;
 }
 
-bool RenameSourceOperator::equal(const std::shared_ptr<Node>& rhs) const
+bool RenameSourceLogicalOperator::operator==(Operator const& rhs) const
 {
-    if (NES::Util::instanceOf<RenameSourceOperator>(rhs))
-    {
-        const auto otherRename = NES::Util::as<RenameSourceOperator>(rhs);
-        return newSourceName == otherRename->newSourceName;
+    if (const auto rhsOperator = dynamic_cast<const RenameSourceLogicalOperator*>(&rhs)) {
+        return newSourceName == rhsOperator->newSourceName;
     }
     return false;
 };
 
-std::string RenameSourceOperator::toString() const
+std::string RenameSourceLogicalOperator::toString() const
 {
     std::stringstream ss;
     ss << "RENAME_STREAM(" << id << ", newSourceName=" << newSourceName << ")";
     return ss.str();
 }
 
-bool RenameSourceOperator::inferSchema()
+bool RenameSourceLogicalOperator::inferSchema()
 {
-    if (!LogicalUnaryOperator::inferSchema())
+    if (!UnaryLogicalOperator::inferSchema())
     {
         return false;
     }
@@ -70,14 +68,14 @@ bool RenameSourceOperator::inferSchema()
     return true;
 }
 
-std::string RenameSourceOperator::getNewSourceName() const
+std::string RenameSourceLogicalOperator::getNewSourceName() const
 {
     return newSourceName;
 }
 
-std::shared_ptr<Operator> RenameSourceOperator::clone() const
+std::shared_ptr<Operator> RenameSourceLogicalOperator::clone() const
 {
-    auto copy = std::make_shared<RenameSourceOperator>(newSourceName, id);
+    auto copy = std::make_shared<RenameSourceLogicalOperator>(newSourceName, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
