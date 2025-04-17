@@ -17,50 +17,17 @@
 #include <memory>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-namespace NES::QueryCompilation
+
+namespace NES
 {
 /// @brief Represents a query compilation request.
 /// The request encapsulates the decomposed query plan and addition properties.
-class QueryCompilationRequest
+struct QueryCompilationRequest
 {
-public:
-    static std::shared_ptr<QueryCompilationRequest> create(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan, size_t bufferSize);
-
-    /// @brief Enable debugging for this query.
-    void enableDebugging();
-
-    bool isDebugEnabled() const;
-    /// @brief Checks if debugging is enabled
-    /// @return bool
-
-    /// @brief Checks if optimizations for this query
-    void enableOptimizations();
-
-    /// @brief Checks if optimization flags is enabled
-    /// @return bool
-    bool isOptimizeEnabled() const;
-
-
-    /// @brief Enable debugging for this query.
-    void enableDump();
-
-    bool isDumpEnabled() const;
-    /// @brief Checks if dumping to nesviz is enabled
-    /// @return bool
-
-    std::shared_ptr<DecomposedQueryPlan> getDecomposedQueryPlan();
-    /// @brief Gets the Decomposed query plan of this request
-    /// @return std::shared_ptr<DecomposedQueryPlan>
-
-    [[nodiscard]] size_t getBufferSize() const;
-    void setBufferSize(size_t bufferSize);
-
-private:
-    explicit QueryCompilationRequest(std::shared_ptr<DecomposedQueryPlan> queryPlan, size_t bufferSize);
     std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan;
-    bool debug;
-    bool optimize;
-    bool dumpQueryPlans;
     size_t bufferSize; /// TODO #403: Use QueryCompiler Configuration instead
+    bool debug = false;
+    bool optimize = false;
+    bool dumpQueryPlans = false;
 };
 }
