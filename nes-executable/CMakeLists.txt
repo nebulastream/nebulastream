@@ -12,8 +12,7 @@
 
 add_subdirectory(src)
 get_source(nes-executable NES_EXECUTABLE_SOURCE_FILES)
-add_library(nes-executable ${NES_EXECUTABLE_SOURCE_FILES}
-        src/Pipeline.cpp)
+add_library(nes-executable ${NES_EXECUTABLE_SOURCE_FILES})
 target_include_directories(nes-executable PUBLIC include PRIVATE .)
 target_link_libraries(nes-executable PUBLIC nes-common nes-runtime)
 
