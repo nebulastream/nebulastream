@@ -20,8 +20,8 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/Operator.hpp>
-#include <Operators/Streaming/Join/StreamJoinProbe.hpp>
-#include <Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Streaming/Join/StreamJoinProbePhysicalOperator.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Execution.hpp>
 
 namespace NES

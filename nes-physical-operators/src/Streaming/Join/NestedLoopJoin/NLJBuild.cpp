@@ -34,6 +34,8 @@
 #include <Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceStore/Slice.hpp>
+#include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 #include <Watermark/TimeFunction.hpp>

@@ -10,13 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-physical-operators
-        MapPhysicalOperator.cpp
-        SelectionPhysicalOperator.cpp
-        PhysicalOperator.cpp
-        EmitPhysicalOperator.cpp
-        EmitOperatorHandler.cpp
-        ScanPhysicalOperator.cpp)
+# Set Sources and Headers
+add_subdirectory(src)
+get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
 
-add_subdirectory(Watermark)
-add_subdirectory(Functions)
+# Add Library
+add_library(nes-physical-operators ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
+target_link_libraries(nes-physical-operators PUBLIC nes-sources nes-sinks nes-nautilus) # TODO check if we need all this
+target_include_directories(nes-physical-operators PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
