@@ -129,17 +129,17 @@ LogicalFunction createLogicalBinaryFunction(
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::AND:
-            return std::make_unique<AndLogicalFunction>(std::move(leftFunction), std::move(rightFunction));
+            return AndLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         case AntlrSQLLexer::OR:
-            return std::make_unique<OrLogicalFunction>(std::move(leftFunction), std::move(rightFunction));
+            return OrLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
                 "Unknown binary function in SQL query for op {} with type: {} and left {} and right {}",
                 lexer.getVocabulary().getSymbolicName(tokenType),
                 tokenType,
-                *leftFunction,
-                *rightFunction);
+                leftFunction,
+                rightFunction);
     }
 }
 
@@ -187,7 +187,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
 
         auto opTokenType = context->op->getType();
         auto function = createLogicalBinaryFunction(std::move(leftFunction), std::move(rightFunction), opTokenType);
-        helper.joinKeyRelationHelper.push_back(function->clone());
+        helper.joinKeyRelationHelper.push_back(function);
         helper.joinFunction = std::move(function);
     }
     else
