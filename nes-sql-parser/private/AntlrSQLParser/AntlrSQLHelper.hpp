@@ -75,7 +75,7 @@ public:
     std::vector<std::unique_ptr<FieldAssignmentLogicalFunction>> mapBuilder;
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> groupByFields;
     std::vector<std::string> joinSources;
-    LogicalFunction joinFunction;
+    std::optional<LogicalFunction> joinFunction;
     std::vector<LogicalFunction> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
     Join::LogicalJoinDescriptor::JoinType joinType;
