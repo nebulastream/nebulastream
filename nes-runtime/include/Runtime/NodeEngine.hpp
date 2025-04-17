@@ -46,7 +46,7 @@ public:
         std::unique_ptr<QueryEngine> queryEngine,
         int numberOfBuffersInSourceLocalBufferPool);
 
-    [[nodiscard]] QueryId registerExecutableQueryPlan(std::unique_ptr<CompiledQueryPlan> queryExecutionPlan);
+    [[nodiscard]] QueryId registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
     void unregisterQuery(QueryId queryId);
     void startQuery(QueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has

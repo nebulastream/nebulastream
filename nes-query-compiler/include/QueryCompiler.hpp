@@ -18,7 +18,7 @@
 #include <Plans/PhysicalQueryPlan.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <ExecutableQueryPlan.hpp>
+#include <CompiledQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -41,7 +41,7 @@ public:
     /// TODO: get rid of the options, they should be set during query optimization
     QueryCompiler(const std::shared_ptr<QueryCompilerConfiguration> options, const std::shared_ptr<NodeEngine> nodeEngine);
 
-    std::unique_ptr<ExecutableQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
+    std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
 
 private:
     std::shared_ptr<NodeEngine> nodeEngine;
