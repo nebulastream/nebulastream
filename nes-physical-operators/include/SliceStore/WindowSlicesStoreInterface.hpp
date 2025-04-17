@@ -21,7 +21,7 @@
 #include <optional>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/SliceStore/Slice.hpp>
+#include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 

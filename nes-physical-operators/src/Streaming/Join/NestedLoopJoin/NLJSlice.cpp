@@ -19,9 +19,9 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Operators/SliceStore/Slice.hpp>
-#include <Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <SliceStore/Slice.hpp>
+#include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 
 namespace NES
 {

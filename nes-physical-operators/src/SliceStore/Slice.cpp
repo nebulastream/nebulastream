@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/SliceStore/Slice.hpp>
+#include <SliceStore/Slice.hpp>
 
 namespace NES
 {

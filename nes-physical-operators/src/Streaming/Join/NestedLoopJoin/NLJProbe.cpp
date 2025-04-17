@@ -14,7 +14,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>

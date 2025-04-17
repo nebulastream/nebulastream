@@ -14,7 +14,7 @@
 
 #include <cstdint>
 #include <utility>
-#include <Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -28,7 +28,7 @@ void EventTimeFunction::open(ExecutionContext&, RecordBuffer&)
     /// nop
 }
 
-EventTimeFunction::EventTimeFunction(std::unique_ptr<Functions::Function> timestampFunction, Windowing::TimeUnit unit)
+EventTimeFunction::EventTimeFunction(std::unique_ptr<Functions::PhysicalFunction> timestampFunction, Windowing::TimeUnit unit)
     : unit(unit), timestampFunction(std::move(timestampFunction))
 {
 }

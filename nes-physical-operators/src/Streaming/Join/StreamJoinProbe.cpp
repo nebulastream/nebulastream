@@ -17,7 +17,7 @@
 #include <vector>
 
 #include <utility>
-#include <Execution/Functions/Function.hpp>
+#include <Execution/Functions/PhysicalFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>

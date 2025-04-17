@@ -15,30 +15,35 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <Execution/Functions/ExecutableFunctionConcat.hpp>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <Functions/ConcatPhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 #include <val.hpp>
 
 namespace NES::Functions
 {
 
-ExecutableFunctionConcat::ExecutableFunctionConcat(
-    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
-    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
+ConcatPhysicalFunction::ConcatPhysicalFunction(
+    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 
-VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) const
+std::unique_ptr<PhysicalFunction> ConcatPhysicalFunction::clone() const
 {
-    const auto leftValue = leftExecutableFunction->execute(record, arena).cast<VariableSizedData>();
-    const auto rightValue = rightExecutableFunction->execute(record, arena).cast<VariableSizedData>();
+    return std::make_unique<ConcatPhysicalFunction>(leftPhysicalFunction->clone(), rightPhysicalFunction->clone());
+}
+
+VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+{
+    const auto leftValue = leftPhysicalFunction->execute(record, arena).cast<VariableSizedData>();
+    const auto rightValue = rightPhysicalFunction->execute(record, arena).cast<VariableSizedData>();
 
     const auto newSize = leftValue.getSize() + rightValue.getSize();
     const auto newVarSizeDataArea = arena.allocateMemory(newSize + nautilus::val<uint64_t>(sizeof(uint32_t)));
@@ -51,11 +56,11 @@ VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) 
     return newVarSizeData;
 }
 
-ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterConcatExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(
+    NES::Functions::PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionConcat>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
+    return std::make_unique<ConcatPhysicalFunction>(
+        std::move(physicalFunctionRegistryArguments.childFunctions[0]), std::move(physicalFunctionRegistryArguments.childFunctions[1]));
 }
 }
