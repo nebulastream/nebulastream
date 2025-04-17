@@ -17,13 +17,10 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Common.hpp>

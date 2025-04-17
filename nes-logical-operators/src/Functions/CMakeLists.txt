@@ -13,14 +13,16 @@
 add_source_files(nes-logical-operators
         FunctionSerializationUtil.cpp
         LogicalFunction.cpp
-        BinaryLogicalFunction.cpp
+        LogicalFunction.cpp
         CaseLogicalFunction.cpp
         ConstantValueLogicalFunction.cpp
         FieldAccessLogicalFunction.cpp
-        FieldAssignmentBinaryLogicalFunction.cpp
+        FieldAssignmentLogicalFunction.cpp
         RenameLogicalFunction.cpp
+        LogicalFunction.cpp
+        WhenLogicalFunction.cpp
         UnaryLogicalFunction.cpp
-        WhenBinaryLogicalFunction.cpp
+        BinaryLogicalFunction.cpp
 )
 add_subdirectory(LogicalFunctions)
 add_subdirectory(ArithmeticalFunctions)

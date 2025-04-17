@@ -32,7 +32,7 @@ public:
     std::string getFieldName() const;
     void updateFieldName(std::string fieldName);
 
-    void inferStamp(std::shared_ptr<Schema> schema) override;
+    void inferStamp(const Schema& schema) override;
 
 protected:
     explicit FieldAccessLogicalFunction(FieldAccessLogicalFunction* other);

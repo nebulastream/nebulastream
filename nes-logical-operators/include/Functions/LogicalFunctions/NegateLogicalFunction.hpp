@@ -12,30 +12,28 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <Functions/LogicalFunction.hpp>
+#pragma once
+
 #include <Functions/UnaryLogicalFunction.hpp>
 
 namespace NES
 {
-UnaryLogicalFunction::UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std::string name)
-    : LogicalFunction(std::move(stamp), std::move(name))
-{
-}
 
-UnaryLogicalFunction::UnaryLogicalFunction(const UnaryLogicalFunction& other) : LogicalFunction(other)
+class NegateLogicalFunction final : public UnaryLogicalFunction
 {
-}
+public:
+    NegateLogicalFunction();
+    ~NegateLogicalFunction() override = default;
 
-void UnaryLogicalFunction::setChild(const std::shared_ptr<LogicalFunction>& child)
-{
-    children[0] = child;
-}
+    static std::shared_ptr<LogicalFunction> create(const std::shared_ptr<LogicalFunction>& child);
 
-std::shared_ptr<LogicalFunction> UnaryLogicalFunction::getChild() const
-{
-    return children[0];
-}
+    [[nodiscard]] bool equal(const std::shared_ptr<LogicalFunction>& rhs) const override;
+
+    void inferStamp(const Schema& schema) override;
+
+
+protected:
+    explicit NegateLogicalFunction(NegateLogicalFunction* other);
+    [[nodiscard]] std::string toString() const override;
+};
 }
