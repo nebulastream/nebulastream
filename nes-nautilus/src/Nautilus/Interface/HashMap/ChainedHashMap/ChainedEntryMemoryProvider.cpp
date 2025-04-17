@@ -48,9 +48,10 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto field = schema.getFieldByName(fieldName);
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        const auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue->getDataType());
-        fieldsKey.emplace_back(MemoryProvider::FieldOffsets{fieldValue->getName(), physicalType, offset});
-        offset += physicalType->size();
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue.getDataType());
+        const auto fieldSize = physicalType->size();
+        fieldsKey.emplace_back(MemoryProvider::FieldOffsets{fieldValue.getName(), std::move(physicalType), offset});
+        offset += fieldSize;
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -58,9 +59,10 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto field = schema.getFieldByName(fieldName);
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
-        const auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue->getDataType());
-        fieldsValue.emplace_back(MemoryProvider::FieldOffsets{fieldValue->getName(), physicalType, offset});
-        offset += physicalType->size();
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue.getDataType());
+        const auto fieldSize = physicalType->size();
+        fieldsValue.emplace_back(MemoryProvider::FieldOffsets{fieldValue.getName(), std::move(physicalType), offset});
+        offset += fieldSize;
     }
     return {fieldsKey, fieldsValue};
 }
@@ -75,7 +77,7 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             const auto& entryRefCopy = entryRef;
             auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
             const auto memoryAddress = castedEntryAddress + fieldOffset;
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type);
+            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, *type);
             return varVal;
         }
     }
