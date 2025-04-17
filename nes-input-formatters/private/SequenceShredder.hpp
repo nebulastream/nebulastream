@@ -139,13 +139,15 @@ struct SpanningTuple
     bool isEndValid = false;
 };
 
+struct CriticalSequenceNumberEntry;
+
 class SequenceShredder
 {
 public:
     using BitmapType = uint64_t;
     using SequenceNumberType = SequenceNumber::Underlying;
     static constexpr size_t SIZE_OF_BITMAP_IN_BITS = sizeof(BitmapType) * 8; /// 8 bits in one byte
-    static constexpr size_t INITIAL_NUM_BITMAPS = 64;
+    static constexpr size_t INITIAL_NUM_BITMAPS = 8;
     using BitmapVectorType = std::vector<BitmapType>;
 
     struct SpanningTupleBuffers
@@ -169,6 +171,7 @@ private:
 public:
     explicit SequenceShredder(size_t sizeOfTupleDelimiter);
     explicit SequenceShredder(size_t sizeOfTupleDelimiter, size_t initialNumBitmaps);
+    ~SequenceShredder();
 
     /// Return
     [[nodiscard]] size_t getTail() const { return this->tail; }
@@ -177,11 +180,9 @@ public:
     /// Example: 4 bitmaps, tail is 4, then the allowed range for sequence numbers is 256-511: [256,319][320,383][384,447][448,511]
     [[nodiscard]] bool isInRange(SequenceNumberType sequenceNumber);
 
-    /// Since EoF/EoS is not a symbol that allows the parser to tell that the final tuple just ended, we require a function
-    /// that inserts an artificial tuple delimiter that completes the last tuple in the final buffer and flushes it.
-    /// The artificial tuple is a buffer with a sequence number (SN) that is exactly one larger than the largest seen SN.
-    /// We configure the buffer to 'contain' a tuple delimiter as its first and only content.
-    [[nodiscard]] std::pair<SpanningTupleBuffers, SequenceNumberType> flushFinalSpanningTuple();
+    /// Logs the sequence number range of the SequenceShredder. Additionally, iterates over all bitmaps and detects whether the
+    /// SequenceShredder is in a valid state for sequence number (each bit represents a sequence number). Logs all invalid sequence numbers.
+    void validateState() noexcept;
 
     /// Thread-safely checks if the buffer represented by the sequence number completes spanning tuples.
     /// Returns a sequence of tuple buffers that represent either 0, 1 or 2 SpanningTuples.
@@ -205,7 +206,6 @@ private:
     /// If it reaches 0, we move the buffer out of the stagedBuffers, taking ownership away again
     std::vector<int8_t> stagedBufferUses;
     bool isFirstTuple = true;
-    bool isLastTuple = false;
 
     struct BitmapSnapshot
     {
@@ -279,6 +279,8 @@ private:
         SequenceNumberType numberOfBitmapsModuloSnapshot,
         StagedBuffer stagedBufferOfSequenceNumber);
 };
+
 }
 
 FMT_OSTREAM(NES::InputFormatters::SequenceShredder);
+FMT_OSTREAM(NES::InputFormatters::CriticalSequenceNumberEntry);
