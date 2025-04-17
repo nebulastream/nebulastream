@@ -61,7 +61,7 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
 
 
 std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
-    Execution::CompiledQueryPlan& compiledQueryPlan,
+    CompiledQueryPlan& compiledQueryPlan,
     const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider,
     int numberOfBuffersInSourceLocalBufferPool)
 {

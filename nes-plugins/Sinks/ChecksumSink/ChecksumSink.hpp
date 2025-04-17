@@ -45,9 +45,9 @@ public:
     explicit ChecksumSink(const SinkDescriptor& sinkDescriptor);
 
     /// Opens file and writes schema to file, if the file is empty.
-    void start(Runtime::Execution::PipelineExecutionContext&) override;
-    void stop(Runtime::Execution::PipelineExecutionContext&) override;
-    void execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&) override;
+    void start(PipelineExecutionContext&) override;
+    void stop(PipelineExecutionContext&) override;
+    void execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
     static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 protected:
