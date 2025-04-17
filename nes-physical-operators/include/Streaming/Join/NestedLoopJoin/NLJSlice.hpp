@@ -20,8 +20,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Operators/SliceStore/Slice.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <SliceStore/Slice.hpp>
 
 namespace NES
 {

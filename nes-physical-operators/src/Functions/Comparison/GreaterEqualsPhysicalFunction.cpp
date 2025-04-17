@@ -15,13 +15,13 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Functions/Comparison/ExecutableFunctionGreaterEquals.hpp>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <Functions/Comparison/GreaterEqualsPhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 
 namespace NES::Functions
@@ -29,24 +29,24 @@ namespace NES::Functions
 
 VarVal GreaterEqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record, arena);
-    const auto rightValue = rightExecutableFunction->execute(record, arena);
+    const auto leftValue = leftPhysicalFunction->execute(record, arena);
+    const auto rightValue = rightPhysicalFunction->execute(record, arena);
     return leftValue >= rightValue;
 }
 
 GreaterEqualsPhysicalFunction::GreaterEqualsPhysicalFunction(
-    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
-    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
+    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 
-ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterGreaterEqualsExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterGreaterEqualsPhysicalFunction(
+    PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
     PRECONDITION(
-        executableFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two sub-functions");
+        PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two sub-functions");
     return std::make_unique<GreaterEqualsPhysicalFunction>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+        std::move(PhysicalFunctionRegistryArguments.childFunctions[0]), std::move(PhysicalFunctionRegistryArguments.childFunctions[1]));
 }
 
 }

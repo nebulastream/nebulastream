@@ -15,31 +15,31 @@
 #include <utility>
 #include <Functions/ArithmeticalFunctions/DivPhysicalFunction.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES::Functions
 {
 
 VarVal DivPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record, arena);
-    const auto rightValue = rightExecutableFunction->execute(record, arena);
+    const auto leftValue = leftPhysicalFunction->execute(record, arena);
+    const auto rightValue = rightPhysicalFunction->execute(record, arena);
     return leftValue / rightValue;
 }
 
 DivPhysicalFunction::DivPhysicalFunction(
-    std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction)
-    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
+    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 
 
-ExecutableFunctionRegistryReturnType
-ExecutableFunctionGeneratedRegistrar::RegisterDivExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterDivPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Div function must have exactly two sub-functions");
+    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Div function must have exactly two sub-functions");
     return std::make_unique<DivPhysicalFunction>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+        std::move(PhysicalFunctionRegistryArguments.childFunctions[0]), std::move(PhysicalFunctionRegistryArguments.childFunctions[1]));
 }
 
 }
