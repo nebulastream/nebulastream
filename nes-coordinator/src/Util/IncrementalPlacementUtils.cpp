@@ -153,7 +153,9 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
     std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>> pairs;
     NES_ERROR("iterate over plans 2");
     for (const auto& subPlan : downstreamSubPlans) {
+        NES_ERROR("iterate subplan");
         for (const auto& sourceOperator : subPlan->getSourceOperators()) {
+            NES_ERROR("iterate operators");
             auto downNetworkSourceDescriptor =
                 std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());
             if (downNetworkSourceDescriptor && downNetworkSourceDescriptor->getNodeLocation().getNodeId() == upstreamWorkerId) {
