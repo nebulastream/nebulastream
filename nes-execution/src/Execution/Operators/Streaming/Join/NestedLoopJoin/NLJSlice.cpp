@@ -67,25 +67,29 @@ std::string NLJSlice::toString() {
     basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd
                        << " leftNumberOfTuples: " << getNumberOfTuplesLeft()
                        << " rightNumberOfTuples: " << getNumberOfTuplesRight() << ")";
-    for (auto& pagedVec : leftPagedVectors) {
-        auto pages = pagedVec.get()->getPages();
+    for (auto pagedIndex = 0; pagedIndex < leftPagedVectors.size(); ++pagedIndex) {
+        auto pages = leftPagedVectors[pagedIndex].get()->getPages();
+        auto pageIdx = 0;
         for (auto& page : pages) {
+            NES_ERROR("page {}, tuples {}", pageIdx, page.getNumberOfTuples());
             if (page.getNumberOfTuples() > 0) {
                 auto* records = page.getBuffer<Record>();
                 for (uint64_t i = 0; i < page.getNumberOfTuples(); ++i) {
-                    NES_ERROR("contains record id {}, join id {} value {}", records[i].id, records[i].joinId, records[i].value);
+                    NES_ERROR("page {}.{} contains record id {}, join id {} value {}", pagedIndex, pageIdx, records[i].id, records[i].joinId, records[i].value);
                 }
             }
         }
     }
 
-    for (auto& pagedVec : rightPagedVectors) {
-        auto pages = pagedVec.get()->getPages();
+    for (auto pagedIndex = 0; pagedIndex < rightPagedVectors.size(); ++pagedIndex) {
+        auto pages = rightPagedVectors[pagedIndex].get()->getPages();
+        auto pageIdx = 0;
         for (auto& page : pages) {
             if (page.getNumberOfTuples() > 0) {
+                NES_ERROR("page {}, tuples {}", pageIdx, page.getNumberOfTuples());
                 auto* records = page.getBuffer<Record>();
                 for (uint64_t i = 0; i < page.getNumberOfTuples(); ++i) {
-                    NES_ERROR("contains record id {}, join id {} value {}", records[i].id, records[i].joinId, records[i].value);
+                    NES_ERROR("page {}.{} contains record id {}, join id {} value {}", pagedIndex, pageIdx, records[i].id, records[i].joinId, records[i].value);
                 }
             }
         }

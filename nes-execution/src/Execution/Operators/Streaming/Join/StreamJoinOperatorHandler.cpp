@@ -598,7 +598,9 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
                 for (auto& sliceRight : slicesAndStateForWindow.slices) {
                     NES_ERROR("emit slices LEFT: start {}, end {}, id {}, numLeft {}, numRight {}, RIGHT: start {}, end {}, id {}, numLeft {}, numRight {}", sliceLeft.get()->getSliceStart(), sliceLeft.get()->getSliceEnd(), sliceLeft.get()->getSliceId(), sliceLeft.get()->getNumberOfTuplesLeft(), sliceLeft.get()->getNumberOfTuplesRight(),
                               sliceRight.get()->getSliceStart(), sliceRight.get()->getSliceEnd(), sliceRight.get()->getSliceId(), sliceRight.get()->getNumberOfTuplesLeft(), sliceRight.get()->getNumberOfTuplesRight());
+                    NES_ERROR("SLICE LEFT");
                     sliceLeft->toString();
+                    NES_ERROR("SLICE RIGHT");
                     sliceRight->toString();
                     emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, pipelineCtx);
                 }
