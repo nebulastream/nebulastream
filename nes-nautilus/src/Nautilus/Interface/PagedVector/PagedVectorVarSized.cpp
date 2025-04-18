@@ -58,6 +58,7 @@ PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager
         appendPage();
     } else {
         numberOfEntriesOnCurrPage = this->pages.back().getNumberOfTuples();
+        this->pages.back().setNumberOfTuples(0);
     }
 
     for (size_t index = 0; index < this->pages.size(); index++) {

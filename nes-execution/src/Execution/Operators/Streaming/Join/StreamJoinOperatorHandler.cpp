@@ -321,8 +321,8 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
         writeToMetadata(sliceBuffers.size());
         countLeft += slice.get()->getNumberOfTuplesLeft();
         countRight += slice.get()->getNumberOfTuplesRight();
-        NES_ERROR("SERIALIZE SLICE");
-        slice->toString();
+//        NES_ERROR("SERIALIZE SLICE");
+//        slice->toString();
     }
 
     for (auto slice: *slicesLocked) {
@@ -486,8 +486,8 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
         const auto spanStart = buffers.data() + numberOfMetadataBuffers + buffIdx;
         auto recreatedSlice = deserializeSlice(std::span<Runtime::TupleBuffer>(spanStart, numberOfBuffers));
         NES_ERROR("slice start {}, slice end {}, slice id {}, numberOfTuplesLeft {}, numberOfTuplesRight {}", recreatedSlice.get()->getSliceStart(), recreatedSlice.get()->getSliceEnd(), recreatedSlice.get()->getSliceId(), recreatedSlice.get()->getNumberOfTuplesLeft(), recreatedSlice.get()->getNumberOfTuplesRight());
-        NES_ERROR("SERIALIZE SLICE");
-        recreatedSlice->toString();
+//        NES_ERROR("DESERIALIZE SLICE");
+//        recreatedSlice->toString();
         countLeft += recreatedSlice.get()->getNumberOfTuplesLeft();
         countRight += recreatedSlice.get()->getNumberOfTuplesRight();
         // insert recreated slice
@@ -602,10 +602,8 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
                 for (auto& sliceRight : slicesAndStateForWindow.slices) {
                     NES_ERROR("emit slices LEFT: start {}, end {}, id {}, numLeft {}, numRight {}, RIGHT: start {}, end {}, id {}, numLeft {}, numRight {}", sliceLeft.get()->getSliceStart(), sliceLeft.get()->getSliceEnd(), sliceLeft.get()->getSliceId(), sliceLeft.get()->getNumberOfTuplesLeft(), sliceLeft.get()->getNumberOfTuplesRight(),
                               sliceRight.get()->getSliceStart(), sliceRight.get()->getSliceEnd(), sliceRight.get()->getSliceId(), sliceRight.get()->getNumberOfTuplesLeft(), sliceRight.get()->getNumberOfTuplesRight());
-//                    NES_ERROR("SLICE LEFT");
-//                    sliceLeft->toString();
-//                    NES_ERROR("SLICE RIGHT");
-//                    sliceRight->toString();
+                    NES_ERROR("SLICE");
+                    sliceLeft->toString();
                     emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, pipelineCtx);
                 }
             }
