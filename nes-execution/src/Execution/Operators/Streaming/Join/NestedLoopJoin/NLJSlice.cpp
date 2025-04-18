@@ -85,13 +85,11 @@ std::string NLJSlice::toString() {
         auto pageIdx = 0;
         auto maxCapacity = rightPagedVectors[pagedIndex]->getCapacityPerPage();
         for (auto& page : pages) {
-            if (page.getNumberOfTuples() > 0) {
                 NES_ERROR("page {}, tuples {} capacity {}", pageIdx, page.getNumberOfTuples(), maxCapacity);
                 auto* records = page.getBuffer<Record>();
                 for (uint64_t i = 0; i < maxCapacity; ++i) {
                     NES_ERROR("page {}.{} contains record id {}, join id {} value {}", pagedIndex, pageIdx, records[i].id, records[i].joinId, records[i].value);
                 }
-            }
         }
     }
     return basicOstringstream.str();
