@@ -161,7 +161,9 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
             NES_ERROR("enter if");
             if (downNetworkSourceDescriptor && downNetworkSourceDescriptor->getNodeLocation().getNodeId() == upstreamWorkerId) {
                 NES_ERROR("emplace pair");
-                pairs.emplace_back(upstreamSinkMap.at(downNetworkSourceDescriptor->getNesPartition()), sourceOperator);
+                if (upstreamSinkMap.contains(downNetworkSourceDescriptor->getNesPartition())) {
+                    pairs.emplace_back(upstreamSinkMap.at(downNetworkSourceDescriptor->getNesPartition()), sourceOperator);
+                }
             }
             NES_ERROR("finished if");
         }
