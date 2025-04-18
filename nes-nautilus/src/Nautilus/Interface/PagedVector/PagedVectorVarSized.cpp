@@ -63,7 +63,7 @@ PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager
     for (size_t index = 0; index < this->pages.size(); index++) {
         totalNumberOfEntries += this->pages[index].getNumberOfTuples();
     }
-
+    NES_ERROR("After recreation {}, total {}", numberOfEntriesOnCurrPage, totalNumberOfEntries);
     NES_ASSERT2_FMT(entrySize > 0, "EntrySize for a pagedVector has to be larger than 0!");
     NES_ASSERT2_FMT(capacityPerPage > 0, "At least one tuple has to fit on a page!");
 }
