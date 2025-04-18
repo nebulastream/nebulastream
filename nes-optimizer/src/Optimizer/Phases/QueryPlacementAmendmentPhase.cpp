@@ -285,7 +285,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
     }
 
     auto placementTime = getTimestamp() - startPlacementAmendmentTime;
-    NES_ERROR("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
+    // NES_ERROR("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
     return {computedDeploymentRemovalContexts, computedDeploymentAdditionContexts, reconfigurationMarkerUnitComparator, deploymentTime, placementTime};
 }
 

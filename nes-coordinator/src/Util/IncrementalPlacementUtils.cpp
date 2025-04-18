@@ -32,14 +32,11 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
                                          Optimizer::ExecutionNodeWLock lockedUpstreamNode,
                                          Optimizer::ExecutionNodeWLock lockedDownstreamNode,
                                          const TopologyPtr& topology) {
-    NES_ERROR("Phase 1");
     auto sharedQueryPlanId = sharedQueryPlan->getId();
     auto queryPlanForSharedQuery = sharedQueryPlan->getQueryPlan();
     //find the pairs of source and sink operators that were using the removed link
-    NES_ERROR("Phase 2");
     auto upstreamDownstreamOperatorPairs =
         findNetworkOperatorsForLink(sharedQueryPlanId, lockedUpstreamNode, lockedDownstreamNode);
-    NES_ERROR("Phase 3");
     for (auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         //replace the system generated operators with their non system up- or downstream operators
         auto upstreamLogicalOperatorId =
@@ -54,9 +51,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     std::set<OperatorId> upstreamPinned;
     std::set<OperatorId> downstreamPinned;
     std::set<OperatorId> toRemove;
-    NES_ERROR("Phase 4");
     for (const auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
-        NES_ERROR("upstreamOperator {}, downstreamOperator {}", upstreamOperator.get()->getId(), downstreamOperator.get()->getId());
         const auto upstreamSharedQueryOperater = queryPlanForSharedQuery->getOperatorWithOperatorId(upstreamOperator->getId());
         const auto upstreamWorkerId =
             std::any_cast<WorkerId>(upstreamSharedQueryOperater->getProperty(Optimizer::PINNED_WORKER_ID));
@@ -72,7 +67,6 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
 
         //find all toplogy nodes that are reachable from the pinned upstream operator node
         std::set<WorkerId> reachable;
-        NES_ERROR("findAllDownstreamNodes");
         topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
 
         //check if the old downstream was found, then only forward operators need to be inserted between the old up and downstream
@@ -92,7 +86,6 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
             for (const auto& parent : startOperatorInSharedQueryPlan->getParents()) {
                 queryPlanBFSQueue.push(parent->as<LogicalOperator>());
             }
-            NES_ERROR("entered while loop");
             while (!queryPlanBFSQueue.empty()) {
                 const auto currentOperator = queryPlanBFSQueue.front();
                 queryPlanBFSQueue.pop();
@@ -121,10 +114,8 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
                     }
                 }
             }
-            NES_ERROR("left while loop");
         }
     }
-    NES_ERROR("FInished");
     return {upstreamPinned, downstreamPinned};
 }
 
@@ -132,11 +123,9 @@ std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>>
 findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
                             Optimizer::ExecutionNodeWLock lockedUpstreamNode,
                             Optimizer::ExecutionNodeWLock lockedDownstreamNode) {
-    NES_ERROR("get all upstream plans 1");
     const auto& upstreamSubPlans = lockedUpstreamNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
     std::unordered_map<Network::NesPartition, LogicalOperatorPtr> upstreamSinkMap;
     auto downstreamWorkerId = lockedDownstreamNode->operator*()->getId();
-    NES_ERROR("iterate over plans 1");
     for (const auto& subPlan : upstreamSubPlans) {
         for (const auto& sinkOperator : subPlan->getSinkOperators()) {
             auto upstreamNetworkSinkDescriptor =
@@ -147,28 +136,20 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
             }
         }
     }
-    NES_ERROR("get all upstream plans 2");
     const auto& downstreamSubPlans = lockedDownstreamNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
     auto upstreamWorkerId = lockedUpstreamNode->operator*()->getId();
     std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>> pairs;
-    NES_ERROR("iterate over plans 2");
     for (const auto& subPlan : downstreamSubPlans) {
-        NES_ERROR("iterate subplan");
         for (const auto& sourceOperator : subPlan->getSourceOperators()) {
-            NES_ERROR("iterate operators");
             auto downNetworkSourceDescriptor =
                 std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());
-            NES_ERROR("enter if");
             if (downNetworkSourceDescriptor && downNetworkSourceDescriptor->getNodeLocation().getNodeId() == upstreamWorkerId) {
-                NES_ERROR("emplace pair");
                 if (upstreamSinkMap.contains(downNetworkSourceDescriptor->getNesPartition())) {
                     pairs.emplace_back(upstreamSinkMap.at(downNetworkSourceDescriptor->getNesPartition()), sourceOperator);
                 }
             }
-            NES_ERROR("finished if");
         }
     }
-    NES_ERROR("finish");
     return pairs;
 }
 }// namespace NES::Experimental
