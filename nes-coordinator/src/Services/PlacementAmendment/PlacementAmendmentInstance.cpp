@@ -152,13 +152,14 @@ void PlacementAmendmentInstance::execute() {
                                                                                 sharedQueryId,
                                                                                 decomposedQueryId,
                                                                                 decomposedQueryPlanVersion,
-                                                                                QueryState::STOPPED);
+                                                                                QueryState::MIGRATING);
+                        } else {
+                            globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
+                                                                                sharedQueryId,
+                                                                                decomposedQueryId,
+                                                                                decomposedQueryPlanVersion,
+                                                                                QueryState::RUNNING);
                         }
-                        globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
-                                                                            sharedQueryId,
-                                                                            decomposedQueryId,
-                                                                            decomposedQueryPlanVersion,
-                                                                            QueryState::RUNNING);
                         break;
                     }
                     case QueryState::MARKED_FOR_MIGRATION: {
@@ -178,7 +179,7 @@ void PlacementAmendmentInstance::execute() {
                                                                             sharedQueryId,
                                                                             decomposedQueryId,
                                                                             decomposedQueryPlanVersion,
-                                                                            QueryState::STOPPED);
+                                                                            QueryState::MIGRATING);
                         break;
                     }
                     default:
