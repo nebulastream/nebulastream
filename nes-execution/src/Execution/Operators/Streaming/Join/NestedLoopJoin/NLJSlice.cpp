@@ -67,7 +67,7 @@ std::string NLJSlice::toString() {
     basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd
                        << " leftNumberOfTuples: " << getNumberOfTuplesLeft()
                        << " rightNumberOfTuples: " << getNumberOfTuplesRight() << ")";
-    for (auto pagedIndex = 0; pagedIndex < leftPagedVectors.size(); ++pagedIndex) {
+    for (size_t pagedIndex = 0; pagedIndex < leftPagedVectors.size(); ++pagedIndex) {
         auto pages = leftPagedVectors[pagedIndex].get()->getPages();
         auto pageIdx = 0;
         for (auto& page : pages) {
@@ -81,7 +81,7 @@ std::string NLJSlice::toString() {
         }
     }
 
-    for (auto pagedIndex = 0; pagedIndex < rightPagedVectors.size(); ++pagedIndex) {
+    for (size_t pagedIndex = 0; pagedIndex < rightPagedVectors.size(); ++pagedIndex) {
         auto pages = rightPagedVectors[pagedIndex].get()->getPages();
         auto pageIdx = 0;
         for (auto& page : pages) {
