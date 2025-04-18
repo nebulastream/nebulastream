@@ -32,6 +32,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
                                          Optimizer::ExecutionNodeWLock lockedUpstreamNode,
                                          Optimizer::ExecutionNodeWLock lockedDownstreamNode,
                                          const TopologyPtr& topology) {
+    NES_ERROR("Phase 1");
     auto sharedQueryPlanId = sharedQueryPlan->getId();
     auto queryPlanForSharedQuery = sharedQueryPlan->getQueryPlan();
     //find the pairs of source and sink operators that were using the removed link
@@ -51,7 +52,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     std::set<OperatorId> upstreamPinned;
     std::set<OperatorId> downstreamPinned;
     std::set<OperatorId> toRemove;
-
+    NES_ERROR("Phase 2");
     for (const auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         const auto upstreamSharedQueryOperater = queryPlanForSharedQuery->getOperatorWithOperatorId(upstreamOperator->getId());
         const auto upstreamWorkerId =
@@ -68,6 +69,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
 
         //find all toplogy nodes that are reachable from the pinned upstream operator node
         std::set<WorkerId> reachable;
+        NES_ERROR("findAllDownstreamNodes");
         topology->findAllDownstreamNodes(upstreamWorkerId, reachable, {downstreamWorkerId});
 
         //check if the old downstream was found, then only forward operators need to be inserted between the old up and downstream
@@ -87,7 +89,7 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
             for (const auto& parent : startOperatorInSharedQueryPlan->getParents()) {
                 queryPlanBFSQueue.push(parent->as<LogicalOperator>());
             }
-
+            NES_ERROR("entered while loop");
             while (!queryPlanBFSQueue.empty()) {
                 const auto currentOperator = queryPlanBFSQueue.front();
                 queryPlanBFSQueue.pop();
@@ -116,9 +118,10 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
                     }
                 }
             }
+            NES_ERROR("left while loop");
         }
     }
-
+    NES_ERROR("FInished");
     return {upstreamPinned, downstreamPinned};
 }
 
