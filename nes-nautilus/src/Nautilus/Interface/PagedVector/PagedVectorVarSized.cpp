@@ -244,12 +244,12 @@ uint64_t PagedVectorVarSized::getNumberOfPages() { return pages.size(); }
 uint64_t PagedVectorVarSized::getNumberOfVarSizedPages() { return varSizedDataPages.size(); }
 
 uint64_t PagedVectorVarSized::getNumberOfEntries() const {
-    NES_ERROR("totalNumberOfEntries {}", totalNumberOfEntries);
+//    NES_ERROR("totalNumberOfEntries {}", totalNumberOfEntries);
     return totalNumberOfEntries;
 }
 
 uint64_t PagedVectorVarSized::getNumberOfEntriesOnCurrentPage() const {
-    NES_ERROR("numberOfEntriesOnCurrPage {}", numberOfEntriesOnCurrPage);
+//    NES_ERROR("numberOfEntriesOnCurrPage {}", numberOfEntriesOnCurrPage);
     return numberOfEntriesOnCurrPage;
 }
 
