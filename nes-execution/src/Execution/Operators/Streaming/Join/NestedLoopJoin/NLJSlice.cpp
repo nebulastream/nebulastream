@@ -69,14 +69,13 @@ std::string NLJSlice::toString() {
                        << " rightNumberOfTuples: " << getNumberOfTuplesRight() << ")";
     for (size_t pagedIndex = 0; pagedIndex < leftPagedVectors.size(); ++pagedIndex) {
         auto pages = leftPagedVectors[pagedIndex].get()->getPages();
+        auto maxCapacity = leftPagedVectors[pagedIndex]->getCapacityPerPage();
         auto pageIdx = 0;
         for (auto& page : pages) {
-            NES_ERROR("page {}, tuples {}", pageIdx, page.getNumberOfTuples());
-            if (page.getNumberOfTuples() > 0) {
-                auto* records = page.getBuffer<Record>();
-                for (uint64_t i = 0; i < page.getNumberOfTuples(); ++i) {
-                    NES_ERROR("page {}.{} contains record id {}, join id {} value {}", pagedIndex, pageIdx, records[i].id, records[i].joinId, records[i].value);
-                }
+            NES_ERROR("page {}, tuples {} capacity {}", pageIdx, page.getNumberOfTuples(), maxCapacity);
+            auto* records = page.getBuffer<Record>();
+            for (uint64_t i = 0; i < maxCapacity; ++i) {
+                NES_ERROR("page {}.{} contains record id {}, join id {} value {}", pagedIndex, pageIdx, records[i].id, records[i].joinId, records[i].value);
             }
         }
     }
@@ -84,11 +83,12 @@ std::string NLJSlice::toString() {
     for (size_t pagedIndex = 0; pagedIndex < rightPagedVectors.size(); ++pagedIndex) {
         auto pages = rightPagedVectors[pagedIndex].get()->getPages();
         auto pageIdx = 0;
+        auto maxCapacity = rightPagedVectors[pagedIndex]->getCapacityPerPage();
         for (auto& page : pages) {
             if (page.getNumberOfTuples() > 0) {
-                NES_ERROR("page {}, tuples {}", pageIdx, page.getNumberOfTuples());
+                NES_ERROR("page {}, tuples {} capacity {}", pageIdx, page.getNumberOfTuples(), maxCapacity);
                 auto* records = page.getBuffer<Record>();
-                for (uint64_t i = 0; i < page.getNumberOfTuples(); ++i) {
+                for (uint64_t i = 0; i < maxCapacity; ++i) {
                     NES_ERROR("page {}.{} contains record id {}, join id {} value {}", pagedIndex, pageIdx, records[i].id, records[i].joinId, records[i].value);
                 }
             }
