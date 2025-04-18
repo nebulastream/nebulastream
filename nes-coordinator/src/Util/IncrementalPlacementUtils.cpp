@@ -158,9 +158,12 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
             NES_ERROR("iterate operators");
             auto downNetworkSourceDescriptor =
                 std::dynamic_pointer_cast<Network::NetworkSourceDescriptor>(sourceOperator->getSourceDescriptor());
+            NES_ERROR("enter if");
             if (downNetworkSourceDescriptor && downNetworkSourceDescriptor->getNodeLocation().getNodeId() == upstreamWorkerId) {
+                NES_ERROR("emplace pair");
                 pairs.emplace_back(upstreamSinkMap.at(downNetworkSourceDescriptor->getNesPartition()), sourceOperator);
             }
+            NES_ERROR("finished if");
         }
     }
     NES_ERROR("finish");
