@@ -83,7 +83,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
         enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
         statisticProbeHandler = storageHandle->getStatisticProbeHandler(requestId);
-
+        NES_ERROR("Handle topology events");
         // Apply all topology events
         for (const auto& event : events) {
             if (event->instanceOf<ISQPRemoveNodeEvent>()) {
@@ -128,7 +128,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 event->response.set_value(std::make_shared<ISQPAddNodeResponse>(workerId, true));
             }
         }
-
+        NES_ERROR("Identify operators");
         // Identify affected operator placements
         for (const auto& event : events) {
             if (event->instanceOf<ISQPRemoveNodeEvent>()) {
@@ -154,6 +154,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         std::vector<std::future<Optimizer::Perf>> completedAmendments;
         auto deploymentPhase = DeploymentPhase::create(queryCatalog, reconnectCounter, !enableIncrementalPlacement);
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
+            NES_ERROR("call amendment for {}", sharedQueryPlan.get()->getId());
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                           globalExecutionPlan,
                                                                                           topology,
