@@ -169,6 +169,9 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
         buffersToTransfer.insert(buffersToTransfer.end(), pagedVec->getPages().begin(), pagedVec->getPages().end());
         // set number of tuples on page for the last page
         buffersToTransfer.back().setNumberOfTuples(pagedVec->getNumberOfEntriesOnCurrentPage());
+        for (auto& page : pagedVec->getPages()) {
+            NES_ERROR("number of entries on the page: {}", page.getNumberOfTuples());
+        }
     }
 
     for (auto& pagedVec : rightPagedVectors) {
