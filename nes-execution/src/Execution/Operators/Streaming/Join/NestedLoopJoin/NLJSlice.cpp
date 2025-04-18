@@ -169,10 +169,10 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
         buffersToTransfer.insert(buffersToTransfer.end(), pagedVec->getPages().begin(), pagedVec->getPages().end());
         // set number of tuples on page for the last page
         buffersToTransfer.back().setNumberOfTuples(pagedVec->getNumberOfEntriesOnCurrentPage());
-        for (auto& page : pagedVec->getPages()) {
-            NES_ERROR("SERIALIZE number of entries on the page : {}", page.getNumberOfTuples());
-        }
-        NES_ERROR("SERIALIZE total number of entries {}", pagedVec->getNumberOfEntries());
+//        for (auto& page : pagedVec->getPages()) {
+//            NES_ERROR("SERIALIZE number of entries on the page : {}", page.getNumberOfTuples());
+//        }
+        // NES_ERROR("SERIALIZE total number of entries {}", pagedVec->getNumberOfEntries());
     }
 
     for (auto& pagedVec : rightPagedVectors) {
@@ -182,9 +182,9 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
         buffersToTransfer.insert(buffersToTransfer.end(), pagedVec->getPages().begin(), pagedVec->getPages().end());
         // set number of tuples on page for the last page
         buffersToTransfer.back().setNumberOfTuples(pagedVec->getNumberOfEntriesOnCurrentPage());
-        for (auto& page : pagedVec->getPages()) {
-            NES_ERROR("SERIALIZE number of entries on the page: {}", page.getNumberOfTuples());
-        }
+//        for (auto& page : pagedVec->getPages()) {
+//            NES_ERROR("SERIALIZE number of entries on the page: {}", page.getNumberOfTuples());
+//        }
     }
 
     // set number of metadata buffers to the first metadata buffer
@@ -239,7 +239,7 @@ StreamSlicePtr NLJSlice::deserialize(BufferManagerPtr& bufferManager,
         buffIdx += numberOfPages;
     }
 
-    NES_ERROR("DESERIALIZE total number of entries {}", newSlice->leftPagedVectors.back().get()->getNumberOfEntries());
+    // NES_ERROR("DESERIALIZE total number of entries {}", newSlice->leftPagedVectors.back().get()->getNumberOfEntries());
 
     // recreate right paged vectors
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
