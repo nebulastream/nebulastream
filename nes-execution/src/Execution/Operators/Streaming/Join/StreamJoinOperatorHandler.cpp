@@ -312,7 +312,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     auto countLeft = 0;
     auto countRight = 0;
     for (const auto& slice : filteredSlices) {
-        NES_ERROR("slice start {}, slice end {}, numberOfTuplesLeft {}, numberOfTuplesRight {}", slice.get()->getSliceStart(), slice.get()->getSliceEnd(), slice.get()->getNumberOfTuplesLeft(), slice.get()->getNumberOfTuplesRight());
+        NES_ERROR("slice start {}, slice end {}, slice id {}, numberOfTuplesLeft {}, numberOfTuplesRight {}", slice.get()->getSliceStart(), slice.get()->getSliceEnd(), slice.get()->getSliceId(), slice.get()->getNumberOfTuplesLeft(), slice.get()->getNumberOfTuplesRight());
         // get buffers with records and store
         auto sliceBuffers = slice->serialize(bufferManager);
         buffersToTransfer.insert(buffersToTransfer.end(), sliceBuffers.begin(), sliceBuffers.end());
@@ -321,6 +321,10 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
         writeToMetadata(sliceBuffers.size());
         countLeft += slice.get()->getNumberOfTuplesLeft();
         countRight += slice.get()->getNumberOfTuplesRight();
+    }
+
+    for (auto slice: *slicesLocked) {
+        NES_ERROR("OH slice start {}, slice end {}", slice.get()->getSliceStart(), slice.get()->getSliceEnd());
     }
 
     NES_ERROR("serialize tuples left {}, right {}", countLeft, countRight);
@@ -479,6 +483,7 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
 
         const auto spanStart = buffers.data() + numberOfMetadataBuffers + buffIdx;
         auto recreatedSlice = deserializeSlice(std::span<Runtime::TupleBuffer>(spanStart, numberOfBuffers));
+        NES_ERROR("slice start {}, slice end {}, slice id {}, numberOfTuplesLeft {}, numberOfTuplesRight {}", recreatedSlice.get()->getSliceStart(), recreatedSlice.get()->getSliceEnd(), recreatedSlice.get()->getSliceId(), recreatedSlice.get()->getNumberOfTuplesLeft(), recreatedSlice.get()->getNumberOfTuplesRight());
         countLeft += recreatedSlice.get()->getNumberOfTuplesLeft();
         countRight += recreatedSlice.get()->getNumberOfTuplesRight();
         // insert recreated slice
@@ -491,6 +496,10 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
         buffIdx += numberOfBuffers;
     }
     NES_ERROR("recreate tuples left {}, right {}", countLeft, countRight);
+    NES_ERROR("num of slices {}", slicesLocked->size());
+    for (auto slice: *slicesLocked) {
+        NES_ERROR("OH slice start {}, slice end {}", slice.get()->getSliceStart(), slice.get()->getSliceEnd());
+    }
 }
 
 void StreamJoinOperatorHandler::restoreStateFromFile(std::ifstream& stream) {
