@@ -324,7 +324,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     }
 
     for (auto slice: *slicesLocked) {
-        NES_ERROR("OH slice start {}, slice end {}", slice.get()->getSliceStart(), slice.get()->getSliceEnd());
+        NES_ERROR("OH slice start {}, slice end {}, id {}, numLeft {}, numRight {}", slice.get()->getSliceStart(), slice.get()->getSliceEnd(), slice.get()->getSliceId(),slice.get()->getNumberOfTuplesLeft(), slice.get()->getNumberOfTuplesRight());
     }
 
     NES_ERROR("serialize tuples left {}, right {}", countLeft, countRight);
@@ -498,7 +498,7 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
     NES_ERROR("recreate tuples left {}, right {}", countLeft, countRight);
     NES_ERROR("num of slices {}", slicesLocked->size());
     for (auto slice: *slicesLocked) {
-        NES_ERROR("OH slice start {}, slice end {}", slice.get()->getSliceStart(), slice.get()->getSliceEnd());
+        NES_ERROR("OH slice start {}, slice end {}, id {}, numLeft {}, numRight {}", slice.get()->getSliceStart(), slice.get()->getSliceEnd(), slice.get()->getSliceId(),slice.get()->getNumberOfTuplesLeft(), slice.get()->getNumberOfTuplesRight());
     }
 }
 
@@ -596,6 +596,8 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
             // For bucketing, this should be only done once
             for (auto& sliceLeft : slicesAndStateForWindow.slices) {
                 for (auto& sliceRight : slicesAndStateForWindow.slices) {
+                    NES_ERROR("emit slices LEFT: start {}, end {}, id {}, numLeft {}, numRight {}, RIGHT: start {}, end {}, id {}, numLeft {}, numRight {}", sliceLeft.get()->getSliceStart(), sliceLeft.get()->getSliceEnd(), sliceLeft.get()->getSliceId(), sliceLeft.get()->getNumberOfTuplesLeft(), sliceLeft.get()->getNumberOfTuplesRight(),
+                              sliceRight.get()->getSliceStart(), sliceRight.get()->getSliceEnd(), sliceRight.get()->getSliceId(), sliceRight.get()->getNumberOfTuplesLeft(), sliceRight.get()->getNumberOfTuplesRight());
                     emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, pipelineCtx);
                 }
             }
