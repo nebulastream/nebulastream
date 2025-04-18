@@ -142,10 +142,18 @@ void PlacementAmendmentInstance::execute() {
                 auto decomposedQueryId = deploymentContext->getDecomposedQueryId();
                 auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
                 auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+                auto isPlanForMigration = deploymentContext->isForMigration();
                 switch (decomposedQueryPlanState) {
                     case QueryState::MARKED_FOR_REDEPLOYMENT:
                     case QueryState::MARKED_FOR_DEPLOYMENT: {
-                        // TODO URGENT: d.ferents Identify migration plans
+                        if (isPlanForMigration) {
+                            NES_ERROR("Plan {}.{} is for migration", decomposedQueryId, decomposedQueryPlanVersion);
+                            globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
+                                                                                sharedQueryId,
+                                                                                decomposedQueryId,
+                                                                                decomposedQueryPlanVersion,
+                                                                                QueryState::STOPPED);
+                        }
                         globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
                                                                             sharedQueryId,
                                                                             decomposedQueryId,
@@ -170,7 +178,7 @@ void PlacementAmendmentInstance::execute() {
                                                                             sharedQueryId,
                                                                             decomposedQueryId,
                                                                             decomposedQueryPlanVersion,
-                                                                            QueryState::MIGRATING);
+                                                                            QueryState::STOPPED);
                         break;
                     }
                     default:

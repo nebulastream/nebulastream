@@ -327,6 +327,7 @@ void QueryPlacementAmendmentPhase::handleMigrationPlacement(
         // save new contexts
         for (auto& [decomposedQueryPlanId, deploymentContext] : placementResults.deploymentContexts) {
             deploymentContext->setForMigration(true);
+            // deploymentContext->getDecomposedQueryPlan()->setPlanForMigration(true);
             deploymentContexts[decomposedQueryPlanId] = deploymentContext;
         }
 
