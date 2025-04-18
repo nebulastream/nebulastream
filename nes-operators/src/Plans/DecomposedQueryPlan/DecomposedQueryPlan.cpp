@@ -299,4 +299,12 @@ void DecomposedQueryPlan::setOldVersion(DecomposedQueryPlanVersion oldVersion) {
 std::optional<DecomposedQueryPlanVersion> DecomposedQueryPlan::getOldVersion() const { return oldVersion; }
 
 WorkerId DecomposedQueryPlan::getWorkerId() const { return workerId; }
+
+bool DecomposedQueryPlan::isPlanForMigration() {
+    return isMigrationPlan;
+}
+
+void DecomposedQueryPlan::setPlanForMigration(bool isMigration) {
+    isMigrationPlan = isMigration;
+}
 }// namespace NES

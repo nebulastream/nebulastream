@@ -237,6 +237,9 @@ class DecomposedQueryPlan {
      */
     std::optional<DecomposedQueryPlanVersion> getOldVersion() const;
 
+    void setPlanForMigration(bool isMigration);
+    bool isPlanForMigration();
+
     /**
      * @brief Get all the operators of a specific type
      * @return returns a vector of operators
@@ -272,6 +275,7 @@ class DecomposedQueryPlan {
     WorkerId workerId;
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
     std::vector<OperatorPtr> rootOperators;
+    bool isMigrationPlan = false;
 };
 }// namespace NES
 
