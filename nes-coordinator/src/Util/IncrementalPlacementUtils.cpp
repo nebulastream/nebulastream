@@ -36,8 +36,10 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     auto sharedQueryPlanId = sharedQueryPlan->getId();
     auto queryPlanForSharedQuery = sharedQueryPlan->getQueryPlan();
     //find the pairs of source and sink operators that were using the removed link
+    NES_ERROR("Phase 2");
     auto upstreamDownstreamOperatorPairs =
         findNetworkOperatorsForLink(sharedQueryPlanId, lockedUpstreamNode, lockedDownstreamNode);
+    NES_ERROR("Phase 3");
     for (auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
         //replace the system generated operators with their non system up- or downstream operators
         auto upstreamLogicalOperatorId =
@@ -52,8 +54,9 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
     std::set<OperatorId> upstreamPinned;
     std::set<OperatorId> downstreamPinned;
     std::set<OperatorId> toRemove;
-    NES_ERROR("Phase 2");
+    NES_ERROR("Phase 4");
     for (const auto& [upstreamOperator, downstreamOperator] : upstreamDownstreamOperatorPairs) {
+        NES_ERROR("upstreamOperator {}, downstreamOperator {}", upstreamOperator.get()->getId(), downstreamOperator.get()->getId());
         const auto upstreamSharedQueryOperater = queryPlanForSharedQuery->getOperatorWithOperatorId(upstreamOperator->getId());
         const auto upstreamWorkerId =
             std::any_cast<WorkerId>(upstreamSharedQueryOperater->getProperty(Optimizer::PINNED_WORKER_ID));
