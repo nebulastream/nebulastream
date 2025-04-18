@@ -211,6 +211,7 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
     auto downstreamNodeId = removeLinkEvent->getParentNodeId();
     auto upstreamNodeId = removeLinkEvent->getChildNodeId();
 
+    NES_ERROR("handleRemoveLinkRequest");
     // Step1. Identify the impacted SQPs
     auto downstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(downstreamNodeId);
     auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
@@ -241,7 +242,7 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
         NES_INFO("Found no shared query plan that was using the removed link");
         return;
     }
-
+    NES_ERROR("Iterate over queries");
     //Iterate over each shared query plan id and identify the operators that need to be replaced
     for (auto impactedSharedQueryId : impactedSharedQueryIds) {
         // Step2. Mark operators for re-placements
@@ -276,6 +277,7 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
             };
         }
         //perform re-operator placement on the query plan
+        NES_ERROR("Perform ReOperatorPlacement");
         sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
     }
 }

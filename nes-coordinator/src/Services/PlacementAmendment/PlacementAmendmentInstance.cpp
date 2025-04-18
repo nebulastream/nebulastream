@@ -145,6 +145,7 @@ void PlacementAmendmentInstance::execute() {
                 switch (decomposedQueryPlanState) {
                     case QueryState::MARKED_FOR_REDEPLOYMENT:
                     case QueryState::MARKED_FOR_DEPLOYMENT: {
+                        // TODO URGENT: d.ferents Identify migration plans
                         globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
                                                                             sharedQueryId,
                                                                             decomposedQueryId,
