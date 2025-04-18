@@ -132,9 +132,11 @@ std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>>
 findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
                             Optimizer::ExecutionNodeWLock lockedUpstreamNode,
                             Optimizer::ExecutionNodeWLock lockedDownstreamNode) {
+    NES_ERROR("get all upstream plans 1");
     const auto& upstreamSubPlans = lockedUpstreamNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
     std::unordered_map<Network::NesPartition, LogicalOperatorPtr> upstreamSinkMap;
     auto downstreamWorkerId = lockedDownstreamNode->operator*()->getId();
+    NES_ERROR("iterate over plans 1");
     for (const auto& subPlan : upstreamSubPlans) {
         for (const auto& sinkOperator : subPlan->getSinkOperators()) {
             auto upstreamNetworkSinkDescriptor =
@@ -145,10 +147,11 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
             }
         }
     }
-
+    NES_ERROR("get all upstream plans 2");
     const auto& downstreamSubPlans = lockedDownstreamNode->operator*()->getAllDecomposedQueryPlans(sharedQueryPlanId);
     auto upstreamWorkerId = lockedUpstreamNode->operator*()->getId();
     std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>> pairs;
+    NES_ERROR("iterate over plans 2");
     for (const auto& subPlan : downstreamSubPlans) {
         for (const auto& sourceOperator : subPlan->getSourceOperators()) {
             auto downNetworkSourceDescriptor =
@@ -158,6 +161,7 @@ findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
             }
         }
     }
+    NES_ERROR("finish");
     return pairs;
 }
 }// namespace NES::Experimental
