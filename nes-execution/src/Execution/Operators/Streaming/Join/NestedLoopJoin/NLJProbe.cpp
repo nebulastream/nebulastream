@@ -173,7 +173,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
             Record joinedRecord;
             createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-            NES_ERROR("created joined record for {} - {} and {}: {}", windowStart->getValue(), windowEnd->getValue(), leftNumberOfEntries->getValue(), rightNumberOfEntries->getValue());
+            // NES_ERROR("created joined record for {} - {} and {}: {}", windowStart->getValue(), windowEnd->getValue(), leftNumberOfEntries->getValue(), rightNumberOfEntries->getValue());
             if (joinExpression->execute(joinedRecord).as<Boolean>()) {
                 child->execute(ctx, joinedRecord);
             }
