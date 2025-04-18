@@ -23,6 +23,15 @@
 #include <span>
 #include <vector>
 
+struct Record {
+    uint64_t id;
+    uint64_t joinId;
+    uint64_t value;
+    uint64_t ingestionTimestamp;
+    uint64_t processingTimestamp;
+    uint64_t outputTimestamp;
+};
+
 namespace NES::Runtime::Execution {
 
 using StreamSlicePtr = std::shared_ptr<StreamSlice>;
