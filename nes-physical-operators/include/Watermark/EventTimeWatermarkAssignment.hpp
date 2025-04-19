@@ -31,9 +31,12 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
     std::unique_ptr<TimeFunction> timeFunction;
+    std::optional<PhysicalOperator> child;
 };
 
 }

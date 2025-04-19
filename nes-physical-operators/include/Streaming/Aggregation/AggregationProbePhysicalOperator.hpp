@@ -33,6 +33,11 @@ public:
         std::string windowStartFieldName,
         std::string windowEndFieldName);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
+
+private:
+    std::optional<PhysicalOperator> child;
 };
 
 }
