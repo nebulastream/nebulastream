@@ -373,7 +373,7 @@ TEST_F(SchemaTest, copyTest)
     ASSERT_EQ(testSchema->getFieldCount(), testSchemaCopy->getFieldCount());
 
     /// Comparing fields
-    for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy->getFieldCount(); ++fieldCnt)
+    for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy.getFieldCount(); ++fieldCnt)
     {
         const auto& curField = testSchemaCopy->getFieldByIndex(fieldCnt);
         EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
