@@ -141,12 +141,10 @@ public:
 
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
 
-        [[nodiscard]] bool equals(const Concept& other) const override { data.terminate(executionCtx); }
-
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
-    };
 
-    std::string toString() const override { return "PhysicalOperator(" + std::string(typeid(T).name()) + ")"; }
+        std::string toString() const override { return "PhysicalOperator(" + std::string(typeid(T).name()) + ")"; }
+    };
 
     std::unique_ptr<Concept> self;
 };
@@ -162,5 +160,3 @@ struct PhysicalOperatorWrapper
     std::vector<std::unique_ptr<PhysicalOperatorWrapper>> children;
 };
 }
-
-FMT_OSTREAM(NES::PhysicalOperator);
