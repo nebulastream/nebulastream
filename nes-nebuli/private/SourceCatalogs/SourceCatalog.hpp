@@ -31,7 +31,7 @@ namespace NES
 namespace Catalogs::Source
 {
 /// @brief the source catalog handles the mapping of logical to physical sources
-class SourceCatalog
+class SourceCatalog final
 {
 public:
     SourceCatalog() = default;
@@ -41,7 +41,7 @@ public:
     /// @param logicalSourceName logical source name
     /// @param schema of logical source as object
     /// @return bool indicating if insert was successful
-    bool addLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema);
+    bool addLogicalSource(const std::string& logicalSourceName, Schema schema);
 
     /// @brief method to delete a logical source
     /// @caution this method only remove the entry from the catalog not from the topology
@@ -71,7 +71,7 @@ public:
     /// @brief method to get the schema from the given logical source
     /// @param logicalSourceName name of the logical source name
     /// @return the pointer to the schema
-    std::shared_ptr<Schema> getSchemaForLogicalSource(const std::string& logicalSourceName);
+    Schema getSchemaForLogicalSource(const std::string& logicalSourceName);
 
     /// @brief method to return the logical source for an existing logical source
     /// @param logicalSourceName name of the logical source
@@ -98,7 +98,7 @@ public:
 
     /// @brief Return a list of logical source names registered at catalog
     /// @return map containing source name as key and schema object as value
-    std::map<std::string, std::shared_ptr<Schema>> getAllLogicalSource();
+    std::map<std::string, Schema> getAllLogicalSource();
 
     /// @brief Get all logical sources with their schema as string
     /// @return map of logical source name to schema as string
@@ -127,7 +127,7 @@ private:
 
     std::recursive_mutex catalogMutex;
     /// map logical source to schema
-    std::map<std::string, std::shared_ptr<Schema>> logicalSourceNameToSchemaMapping;
+    std::map<std::string, Schema> logicalSourceNameToSchemaMapping;
     /// map logical source to physical source
     std::map<std::string, std::vector<std::shared_ptr<SourceCatalogEntry>>> logicalToPhysicalSourceMapping;
 };
