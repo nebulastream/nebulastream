@@ -751,7 +751,7 @@ void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* con
 
     if (joinType.empty() || tokenType == AntlrSQLLexer::INNER)
     {
-        helper.joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;
+        helper.joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
     }
     else
     {

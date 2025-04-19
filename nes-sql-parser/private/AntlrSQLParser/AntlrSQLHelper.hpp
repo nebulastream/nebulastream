@@ -163,7 +163,7 @@ public:
     std::optional<LogicalFunction> joinFunction;
     std::vector<LogicalFunction> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
-    Join::LogicalJoinDescriptor::JoinType joinType;
+    JoinLogicalOperator::JoinType joinType;
 
     /// Utility variables to keep state between enter/exit parser function calls.
     size_t opBoolean; ///anonymous token enum in AntlrSQLLexer.h
