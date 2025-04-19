@@ -42,6 +42,6 @@ public:
 
     /// Cast the current window type as a threshold window type
     /// @return a shared pointer of ThresholdWindow
-    static std::shared_ptr<ThresholdWindow> asThresholdWindow(const std::shared_ptr<ContentBasedWindowType>& contentBasedWindowType);
+    static std::unique_ptr<ThresholdWindow> asThresholdWindow(const ContentBasedWindowType& contentBasedWindowType);
 };
 }
