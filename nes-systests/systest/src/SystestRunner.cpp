@@ -262,7 +262,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                         finishedProducing = true;
                         return;
                     }
-                    const auto queryId = worker.registerQuery(query.queryPlan);
+                    const auto queryId = worker.registerQuery(*query.queryPlan);
                     if (queryId == INVALID_QUERY_ID)
                     {
                         throw QueryInvalid("Received an invalid query id from the worker");
