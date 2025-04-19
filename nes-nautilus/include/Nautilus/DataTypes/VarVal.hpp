@@ -111,7 +111,7 @@ class VarVal
 {
 public:
     /// Construct a VarVal object from memory
-    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const std::shared_ptr<PhysicalType>& type);
+    static VarVal readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalType& type);
 
     /// Construct a VarVal object for example via VarVal(32)
     template <typename T>
@@ -173,7 +173,7 @@ public:
     }
 
     /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
-    [[nodiscard]] VarVal castToType(const std::shared_ptr<PhysicalType>& type) const;
+    [[nodiscard]] VarVal castToType(const PhysicalType& type) const;
 
     template <typename T>
     VarVal customVisit(T t) const

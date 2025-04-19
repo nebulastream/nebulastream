@@ -90,63 +90,52 @@ VarVal::operator bool() const
         value);
 }
 
-VarVal VarVal::castToType(const std::shared_ptr<PhysicalType>& type) const
+VarVal VarVal::castToType(const PhysicalType& type) const
 {
-    if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(type))
+    // Try to see if 'type' is a BasicPhysicalType
+    if (auto basicType = dynamic_cast<const BasicPhysicalType*>(&type))
     {
         switch (basicType->nativeType)
         {
-            case BasicPhysicalType::NativeType::BOOLEAN: {
+            case BasicPhysicalType::NativeType::BOOLEAN:
                 return {cast<nautilus::val<bool>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_8: {
+            case BasicPhysicalType::NativeType::INT_8:
                 return {cast<nautilus::val<int8_t>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_16: {
+            case BasicPhysicalType::NativeType::INT_16:
                 return {cast<nautilus::val<int16_t>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_32: {
+            case BasicPhysicalType::NativeType::INT_32:
                 return {cast<nautilus::val<int32_t>>()};
-            };
-            case BasicPhysicalType::NativeType::INT_64: {
+            case BasicPhysicalType::NativeType::INT_64:
                 return {cast<nautilus::val<int64_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_8: {
+            case BasicPhysicalType::NativeType::UINT_8:
                 return {cast<nautilus::val<uint8_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_16: {
+            case BasicPhysicalType::NativeType::UINT_16:
                 return {cast<nautilus::val<uint16_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_32: {
+            case BasicPhysicalType::NativeType::UINT_32:
                 return {cast<nautilus::val<uint32_t>>()};
-            };
-            case BasicPhysicalType::NativeType::UINT_64: {
+            case BasicPhysicalType::NativeType::UINT_64:
                 return {cast<nautilus::val<uint64_t>>()};
-            };
-            case BasicPhysicalType::NativeType::FLOAT: {
+            case BasicPhysicalType::NativeType::FLOAT:
                 return {cast<nautilus::val<float>>()};
-            };
-            case BasicPhysicalType::NativeType::DOUBLE: {
+            case BasicPhysicalType::NativeType::DOUBLE:
                 return {cast<nautilus::val<double>>()};
-            };
-            default: {
-                throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", type->toString()));
-            };
+            default:
+                throw UnsupportedOperation("Physical Type: {} is currently not supported", basicType->toString());
         }
     }
-    else if (const auto variableSizedData = std::dynamic_pointer_cast<VariableSizedDataType>(type))
+    else if (auto variableType = dynamic_cast<const VariableSizedDataType*>(&type))
     {
-        return cast<VariableSizedData>();
+        return {cast<VariableSizedData>()};
     }
     else
     {
-        throw UnsupportedOperation(fmt::format("Type: {} is not a basic type", type->toString()));
+        throw UnsupportedOperation("Type: {} is not a basic or variable‑sized type", type.toString());
     }
 }
 
-VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const std::shared_ptr<PhysicalType>& type)
+VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalType& type)
 {
-    if (const auto basicType = std::static_pointer_cast<BasicPhysicalType>(type))
+    if (const auto basicType = dynamic_cast<const BasicPhysicalType*>(&type))
     {
         switch (basicType->nativeType)
         {
@@ -184,13 +173,13 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
                 return {Util::readValueFromMemRef<double>(memRef)};
             };
             default: {
-                throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", type->toString()));
+                throw UnsupportedOperation("Physical Type: {} is currently not supported", type.toString());
             };
         }
     }
     else
     {
-        throw UnsupportedOperation(fmt::format("Type: {} is not a basic type", type->toString()));
+        throw UnsupportedOperation("Type: {} is not a basic type", type.toString());
     }
 }
 
