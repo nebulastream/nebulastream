@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <Operators/OriginIdAssignmentOperator.hpp>
-#include "Operators/UnaryLogicalOperator.hpp"
-#include "Sources/SourceDescriptor.hpp"
+#include <Operators/UnaryLogicalOperator.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Traits/OriginIdTrait.hpp>
 
 namespace NES
 {
@@ -26,16 +26,13 @@ namespace NES
 /// The logical source is then used as key to a multimap, with all descriptors that name the logical source as values.
 /// In the LogicalSourceExpansionRule, we take the keys from SourceNameLogicalOperator operators, get all corresponding (physical) source
 /// descriptors from the catalog, construct SourceDescriptorLogicalOperators from the descriptors and attach them to the query plan.
-class SourceDescriptorLogicalOperator : public UnaryLogicalOperator, public OriginIdAssignmentOperator
+class SourceDescriptorLogicalOperator final : public UnaryLogicalOperator
 {
 public:
-    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
-    explicit SourceDescriptorLogicalOperator(
-        std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OriginId originId);
+    explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor);
     [[nodiscard]] std::string_view getName() const noexcept override;
 
-    const Sources::SourceDescriptor& getSourceDescriptorRef() const;
-    std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
+    [[nodiscard]] Sources::SourceDescriptor getSourceDescriptor() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -43,17 +40,19 @@ public:
     [[nodiscard]] bool operator==(Operator const& rhs) const override;
     [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
 
-    std::shared_ptr<Operator> clone() const override;
-    void inferInputOrigins() override;
-    std::vector<OriginId> getOutputOriginIds() const override;
+    Optimizer::OriginIdTrait originIdTrait;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
     protected:
     [[nodiscard]] std::string toString() const override;
 
+protected:
+    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
+
 private:
-    const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    static constexpr std::string_view NAME = "SourceDescriptor";
+    const Sources::SourceDescriptor sourceDescriptor;
 };
 
 }
