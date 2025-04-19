@@ -57,9 +57,6 @@ public:
     const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
-    void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
-    void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
-
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
 
