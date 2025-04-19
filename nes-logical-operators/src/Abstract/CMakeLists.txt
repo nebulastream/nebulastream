@@ -10,11 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Google Testing Framework ----------------------------------------------------
-include(ExternalProject)
-
-### Query Plan Builder Tests ###
-add_nes_unit_test(logical-plan-tests "UnitTests/LogicalPlanTest.cpp")
-target_link_libraries(logical-plan-tests nes-logical-operators nes-test-util)
-
-set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
+add_source_files(nes-logical-operators
+    LogicalFunction.cpp
+)
