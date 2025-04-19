@@ -29,8 +29,8 @@ struct QueryCompilationRequest
     bool dumpQueryPlans = false;
 };
 
-/// The query compiler behaves as a pure function: QueryPlan -> ExecutableQueryPlan
-/// This guarantees that identical QueryPlan instances produce identical ExecutableQueryPlan results.
+/// The query compiler behaves as a pure function: QueryPlan -> CompiledQueryPlan
+/// This guarantees that identical QueryPlan instances produce identical CompiledQueryPlan results.
 class QueryCompiler
 {
 public:
