@@ -33,6 +33,11 @@ EventTimeFunction::EventTimeFunction(Functions::PhysicalFunction timestampFuncti
 {
 }
 
+std::unique_ptr<TimeFunction> EventTimeFunction::clone()
+{
+    return std::make_unique<EventTimeFunction>(timestampFunction, unit);
+}
+
 nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record& record)
 {
     const auto ts = this->timestampFunction.execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
