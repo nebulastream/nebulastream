@@ -37,12 +37,13 @@ public:
         std::vector<Nautilus::Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const override;
-    std::unique_ptr<Operator> clone() const override;
-    std::string toString() const override {return typeid(this).name(); }
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
     std::shared_ptr<TupleBufferMemoryProvider> memoryProvider;
     std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
+    std::optional<PhysicalOperator> child;
 };
 
 }

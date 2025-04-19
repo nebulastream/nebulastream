@@ -40,8 +40,11 @@ public:
 
     /// Terminates the operator by deleting all slices and windows
     void terminate(ExecutionContext& executionCtx) const override;
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 protected:
+    std::optional<PhysicalOperator> child;
     uint64_t operatorHandlerIndex;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
