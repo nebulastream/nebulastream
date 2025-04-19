@@ -205,16 +205,6 @@ bool WindowedAggregationLogicalOperator::isKeyed() const
     return !onKey.empty();
 }
 
-uint64_t WindowedAggregationLogicalOperator::getNumberOfInputEdges() const
-{
-    return numberOfInputEdges;
-}
-
-void WindowedAggregationLogicalOperator::setNumberOfInputEdges(uint64_t num)
-{
-    numberOfInputEdges = num;
-}
-
 const std::vector<std::unique_ptr<WindowAggregationFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
 {
     return windowAggregation;
