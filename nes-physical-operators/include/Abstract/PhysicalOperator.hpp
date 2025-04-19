@@ -197,5 +197,3 @@ struct PhysicalOperatorWrapper
 
 };
 }
-
-FMT_OSTREAM(NES::PhysicalOperator);
