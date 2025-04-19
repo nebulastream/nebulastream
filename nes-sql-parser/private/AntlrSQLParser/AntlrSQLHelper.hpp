@@ -28,16 +28,6 @@
 namespace NES::Parsers
 {
 
-
-/// This class represents the results from parsing the ANTLR AST tree
-/// Attributes of this class represent the different clauses and a merge into a query after parsing the AST
-enum class AntlrSQLWindowType : uint8_t
-{
-    NO_WINDOW,
-    WINDOW_SLIDING,
-    WINDOW_TUMBLING,
-    WINDOW_THRESHOLD,
-};
 class AntlrSQLHelper
 {
     std::vector<std::shared_ptr<LogicalFunction>> projectionFields;
