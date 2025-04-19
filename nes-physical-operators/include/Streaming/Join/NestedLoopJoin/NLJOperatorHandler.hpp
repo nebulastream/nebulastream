@@ -28,7 +28,6 @@
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Util/Execution.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES

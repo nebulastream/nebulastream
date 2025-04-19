@@ -21,7 +21,6 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Streaming/Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
-#include <Util/Execution.hpp>
 
 namespace NES
 {

@@ -27,7 +27,6 @@
 #include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>

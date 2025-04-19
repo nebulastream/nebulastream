@@ -27,7 +27,6 @@
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Util/Execution.hpp>
 
 namespace NES
 {

@@ -27,7 +27,6 @@
 #include <Streaming/Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
