@@ -25,6 +25,7 @@
 
 namespace NES
 {
+using namespace Interface::MemoryProvider;
 
 /// Performs the second phase of the join. The tuples are joined via two nested loops. The left stream is the outer loop, and the right stream is the inner loop.
 class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
@@ -32,17 +33,21 @@ class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 public:
     NLJProbePhysicalOperator(
         const uint64_t operatorHandlerIndex,
-        const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
+        Functions::PhysicalFunction joinFunction,
         const std::string windowStartFieldName,
         const std::string windowEndFieldName,
         const JoinSchema& joinSchema,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
+        std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
+        std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-protected:
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider;
-    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider;
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
+
+private:
+    std::optional<PhysicalOperator> child;
+    std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider;
+    std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider;
 };
 }

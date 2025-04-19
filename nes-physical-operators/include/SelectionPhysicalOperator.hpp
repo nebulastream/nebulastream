@@ -32,5 +32,6 @@ public:
 private:
     const Functions::PhysicalFunction function;
     static constexpr bool PIPELINE_BREAKER = false;
+    std::optional<PhysicalOperator> child;
 };
 }
