@@ -24,19 +24,19 @@
 
 namespace NES
 {
-class QueryEngineConfiguration final : public Configurations::BaseConfiguration
+class QueryEngineConfiguration final : public NES::Configurations::BaseConfiguration
 {
     /// validators to prevent nonsensical values for the number of threads and task queue size
-    static std::shared_ptr<Configurations::ConfigurationValidation> numberOfThreadsValidator();
-    static std::shared_ptr<Configurations::ConfigurationValidation> taskQueueSizeValidator();
+    static std::shared_ptr<NES::Configurations::ConfigurationValidation> numberOfThreadsValidator();
+    static std::shared_ptr<NES::Configurations::ConfigurationValidation> taskQueueSizeValidator();
 
 public:
     QueryEngineConfiguration() = default;
     QueryEngineConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { }
 
-    Configurations::UIntOption numberOfWorkerThreads
+    NES::Configurations::UIntOption numberOfWorkerThreads
         = {"numberOfWorkerThreads", "4", "Number of worker threads used within the QueryEngine", {numberOfThreadsValidator()}};
-    Configurations::UIntOption taskQueueSize
+    NES::Configurations::UIntOption taskQueueSize
         = {"taskQueueSize", "1000", "Size of the bounded task queue used within the QueryEngine", {taskQueueSizeValidator()}};
 
 protected:
