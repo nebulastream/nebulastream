@@ -47,7 +47,7 @@ public:
     /// @brief Apply the rule to the Query plan
     /// @param std::shared_ptr<QueryPlan> : The original query plan
     /// @return The updated query plan
-    std::shared_ptr<QueryPlan> execute(std::shared_ptr<QueryPlan> queryPlan);
+    QueryPlan execute(QueryPlan queryPlan);
 
     /// @brief Apply the rule to the Query plan
     /// @param decomposedQueryPlan: The original query plan

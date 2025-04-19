@@ -156,7 +156,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
@@ -202,7 +202,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
         query.getSinkOperators().at(0)->sinkDescriptor
-            = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+            = std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
     }
     else
     {
@@ -221,11 +221,11 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalSourceName, schemaFields] : config.logical)
     {
-        auto schema = Schema::create();
+        auto schema = Schema();
         NES_INFO("Adding logical source: {}", logicalSourceName);
         for (const auto& [name, type] : schemaFields)
         {
-            schema = schema->addField(name, type);
+            schema = schema.addField(name, type);
         }
         sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }
@@ -245,9 +245,26 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
 
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
 
-    NES_INFO("QEP:\n {}", query->toString());
-    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->outputSchema->toString());
-    return std::make_unique<QueryPlan>(INITIAL<QueryId>, query->getRootOperators());
+    auto logicalSourceExpansionRule = LegacyOptimizer::LogicalSourceExpansionRule::create(sourceCatalog);
+    auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
+    auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase::create();
+
+    validateAndSetSinkDescriptors(*query, config);
+    query = logicalSourceExpansionRule->apply(*query);
+    query = typeInference->performTypeInferenceQuery(*query);
+    query = originIdInferencePhase->execute(*query);
+    query = typeInference->performTypeInferenceQuery(*query);
+
+    NES_INFO("QEP:\n {}", query.toString());
+    auto rawOperators = query.getRootOperators();
+    std::vector<std::unique_ptr<Operator>> uniqueOperators;
+    uniqueOperators.reserve(rawOperators.size());
+    for (auto op : rawOperators)
+    {
+        uniqueOperators.push_back(std::unique_ptr<Operator>(op));
+    }
+
+    return std::make_unique<QueryPlan>(INITIAL<QueryId>, std::move(uniqueOperators));
 }
 
 std::unique_ptr<QueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
