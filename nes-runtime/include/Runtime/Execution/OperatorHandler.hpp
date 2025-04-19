@@ -13,13 +13,22 @@
 */
 
 #pragma once
+#include <atomic>
 #include <cstdint>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {
 /// Forward declaration of PipelineExecutionContext, which directly includes OperatorHandler
 class PipelineExecutionContext;
+
+inline OperatorHandlerId getNextOperatorHandlerId()
+{
+    static std::atomic_uint64_t id = INITIAL_OPERATOR_HANDLER_ID.getRawValue();
+    return OperatorHandlerId(id++);
+}
+
 /**
  * @brief Interface to handle specific operator state.
  */
