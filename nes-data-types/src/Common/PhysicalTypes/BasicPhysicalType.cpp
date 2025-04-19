@@ -33,6 +33,11 @@ std::shared_ptr<PhysicalType> BasicPhysicalType::create(const std::shared_ptr<Da
     return std::make_shared<BasicPhysicalType>(type, nativeType);
 }
 
+std::unique_ptr<PhysicalType> BasicPhysicalType::create(const DataType& type, NativeType nativeType)
+{
+    return std::make_unique<BasicPhysicalType>(type.clone(), nativeType);
+}
+
 uint64_t BasicPhysicalType::size() const
 {
     switch (nativeType)
@@ -185,6 +190,15 @@ std::string BasicPhysicalType::toString() const noexcept
             return "UNDEFINED";
     }
     return "";
+}
+
+std::unique_ptr<PhysicalType> BasicPhysicalType::clone() const {
+    return std::make_unique<BasicPhysicalType>(*this);
+}
+
+BasicPhysicalType::BasicPhysicalType(const BasicPhysicalType& other)
+    : PhysicalType(other.type->clone()), nativeType(other.nativeType)
+{
 }
 
 }
