@@ -19,9 +19,7 @@
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 
-namespace NES
-{
-namespace Optimizer
+namespace NES::LegacyOptimizer
 {
 
 /// The type inference phase receives and query plan and infers all input and output schemata for all operators.
@@ -48,5 +46,4 @@ private:
 
     explicit TypeInferencePhase(std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog);
 };
-}
 }
