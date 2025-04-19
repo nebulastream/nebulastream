@@ -15,17 +15,17 @@
 #include <memory>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <QueryOptimizer.hpp>
 
 namespace NES::Optimizer
 {
-/// Takes the query plan as a logical plan and returns a fully physical plan
-std::unique_ptr<PhysicalPlan> QueryOptimizer::optimize(LogicalPlan plan)
+PhysicalPlan QueryOptimizer::optimize(LogicalPlan plan)
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
-    /// For now, we just 'purely' lower to physical operators here.
-    return LowerToPhysicalOperators::apply(plan);
+    /// For now, we just lower to physical operators in a pure function.
+    auto physicalPlan = LowerToPhysicalOperators::apply(plan);
+    auto flippedPlan = flip(physicalPlan);
+    return flippedPlan;
 }
 
 }
