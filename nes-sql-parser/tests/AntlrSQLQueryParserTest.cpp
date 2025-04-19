@@ -47,7 +47,7 @@ bool parseAndCompareQueryPlans(const std::string& antlrQueryString, const Query&
 {
     const std::shared_ptr<QueryPlan> antlrQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
     NES_DEBUG("\n{} vs. \n{}", antlrQueryParsed->toString(), internalLogicalQuery.getQueryPlan()->toString());
-    return antlrQueryParsed->compare(internalLogicalQuery.getQueryPlan());
+    return (*antlrQueryParsed) == internalLogicalQuery.getQueryPlan();
 }
 
 TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
