@@ -78,9 +78,9 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                 .schema = [&source]()
                 {
                     std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
+                    for (auto& [type, name] : source.fields)
                     {
-                        schema.emplace_back(name, type);
+                        schema.emplace_back(name, type->clone());
                     }
                     return schema;
                 }()});
@@ -103,7 +103,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     std::vector<CLI::SchemaField> schema;
                     for (const auto& [type, name] : source.fields)
                     {
-                        schema.emplace_back(name, type);
+                        schema.emplace_back(name, type->clone());
                     }
                     return schema;
                 }()});
