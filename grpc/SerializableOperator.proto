@@ -75,16 +75,14 @@ message SinkLogicalOperator {
 
 message UnaryLogicalOperator {
   SerializableSchema inputSchema = 1;
-  SerializableSchema outputSchema = 2;
-  repeated uint64 originIds = 3;
+  repeated uint64 originIds = 2;
 }
 
 message BinaryLogicalOperator {
   SerializableSchema leftInputSchema = 1;
   SerializableSchema rightInputSchema = 2;
-  SerializableSchema outputSchema = 3;
-  repeated uint64 leftOriginIds = 4;
-  repeated uint64 rightOriginIds = 5;
+  repeated uint64 leftOriginIds = 3;
+  repeated uint64 rightOriginIds = 4;
 }
 
 message LogicalOperator {
@@ -94,8 +92,8 @@ message LogicalOperator {
   }
     string operatorType = 3;
     map<string, SerializableVariantDescriptor> config = 4;
-
 }
+
   oneof value {
     SourceDescriptorLogicalOperator source = 1;
     SinkLogicalOperator sink = 2;
@@ -103,4 +101,5 @@ message LogicalOperator {
   }
   uint64 operatorid = 4;
   repeated uint64 childrenIds = 5;
+    SerializableSchema outputSchema = 6;
 }
