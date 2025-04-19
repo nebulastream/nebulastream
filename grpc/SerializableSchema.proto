@@ -13,8 +13,13 @@
 */
 
 syntax = "proto3";
-import "SerializableFunction.proto";
+import "SerializableDataType.proto";
 package NES;
+
+message SerializableField{
+  string name = 1;
+  SerializableDataType type = 2;
+}
 
 /**
 The serializable wrapper for a schema object
