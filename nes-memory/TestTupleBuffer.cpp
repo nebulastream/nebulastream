@@ -37,7 +37,7 @@ namespace NES::Memory::MemoryLayouts
 {
 
 DynamicField::DynamicField(const uint8_t* address, std::unique_ptr<PhysicalType> physicalType)
-    : address(address), physicalType(std::move(std::move(physicalType)))
+    : address(address), physicalType(std::move(physicalType))
 {
 }
 
@@ -47,7 +47,7 @@ DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
     const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
     const auto& physicalType = memoryLayout->getPhysicalType(fieldIndex);
-    return DynamicField{basePointer, physicalType};
+    return DynamicField{basePointer, physicalType.clone()};
 }
 
 DynamicField DynamicTuple::operator[](std::string fieldName) const
@@ -154,7 +154,7 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
     }
     for (const auto& field : this->memoryLayout->getSchema())
     {
-        if (!other.memoryLayout->getSchema()->getFieldByName(field.getName()))
+        if (!other.memoryLayout->getSchema().getFieldByName(field.getName()))
         {
             NES_ERROR("Field with name {} is not contained in both tuples!", field.getName());
             return false;
@@ -205,9 +205,9 @@ bool DynamicField::operator!=(const DynamicField& rhs) const
     return not(*this == rhs);
 }
 
-PhysicalType& DynamicField::getPhysicalType() const
+std::shared_ptr<PhysicalType> DynamicField::getPhysicalType() const
 {
-    return *physicalType;
+    return physicalType;
 }
 
 const uint8_t* DynamicField::getAddressPointer() const
@@ -255,8 +255,7 @@ Memory::TupleBuffer TestTupleBuffer::getBuffer()
 }
 std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer)
 {
-    auto buf = buffer;
-    const auto str = buf.toString(buffer.memoryLayout->getSchema());
+    const auto str = buffer.toString(buffer.memoryLayout->getSchema());
     os << str;
     return os;
 }
@@ -270,7 +269,7 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(const Schema& schema, const bool showHeader)
+std::string TestTupleBuffer::toString(const Schema& schema, const bool showHeader) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
@@ -356,9 +355,9 @@ DynamicTuple TestTupleBuffer::TupleIterator::operator*() const
     return buffer[currentIndex];
 }
 
-std::shared_ptr<MemoryLayout> TestTupleBuffer::getMemoryLayout() const
+const MemoryLayout& TestTupleBuffer::getMemoryLayout() const
 {
-    return memoryLayout;
+    return *memoryLayout;
 }
 
 TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema)

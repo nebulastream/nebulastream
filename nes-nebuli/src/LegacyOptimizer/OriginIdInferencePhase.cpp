@@ -15,7 +15,7 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
