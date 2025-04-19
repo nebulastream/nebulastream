@@ -27,7 +27,7 @@ namespace NES
 class SumAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    SumAggregationLogicalFunction(const LogicalFunction& onField, const LogicalFunction& asField);
     explicit SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
     virtual ~SumAggregationLogicalFunction() = default;
 

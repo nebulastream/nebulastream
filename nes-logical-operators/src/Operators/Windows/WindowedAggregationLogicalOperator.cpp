@@ -36,13 +36,13 @@ namespace NES
 {
 
 WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
-    std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
-    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation,
-    std::unique_ptr<Windowing::WindowType> windowType)
+    std::vector<FieldAccessLogicalFunction> onKey,
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation,
+    std::shared_ptr<Windowing::WindowType> windowType)
     : WindowOperator()
     , windowAggregation(std::move(windowAggregation))
     , windowType(std::move(windowType))
-    , onKey(std::move(onKey))
+    , onKey(onKey)
 {
 }
 
@@ -200,12 +200,12 @@ bool WindowedAggregationLogicalOperator::isKeyed() const
     return !onKey.empty();
 }
 
-const std::vector<std::unique_ptr<WindowAggregationLogicalFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
+const std::vector<std::shared_ptr<WindowAggregationLogicalFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
 {
     return windowAggregation;
 }
 
-void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> wa)
+void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> wa)
 {
     windowAggregation = std::move(wa);
 }
@@ -220,14 +220,9 @@ void WindowedAggregationLogicalOperator::setWindowType(std::unique_ptr<Windowing
     windowType = std::move(wt);
 }
 
-const std::vector<std::unique_ptr<FieldAccessLogicalFunction>>& WindowedAggregationLogicalOperator::getKeys() const
+const std::vector<FieldAccessLogicalFunction>& WindowedAggregationLogicalOperator::getKeys() const
 {
     return onKey;
-}
-
-void WindowedAggregationLogicalOperator::setOnKey(std::vector<std::unique_ptr<FieldAccessLogicalFunction>> keys)
-{
-    onKey = std::move(keys);
 }
 
 OriginId WindowedAggregationLogicalOperator::getOriginId() const

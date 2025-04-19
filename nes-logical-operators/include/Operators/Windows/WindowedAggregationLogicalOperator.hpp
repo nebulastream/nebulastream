@@ -27,9 +27,9 @@ namespace NES
 class WindowedAggregationLogicalOperator final : public WindowOperator
 {
 public:
-    WindowedAggregationLogicalOperator(std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
-                          std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation,
-                          std::unique_ptr<Windowing::WindowType> windowType);
+    WindowedAggregationLogicalOperator(std::vector<FieldAccessLogicalFunction> onKey,
+                          std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation,
+                          std::shared_ptr<Windowing::WindowType> windowType);
     virtual ~WindowedAggregationLogicalOperator() = default;
 
     std::string_view getName() const noexcept override;
@@ -41,14 +41,13 @@ public:
 
     bool isKeyed() const;
 
-    [[nodiscard]] const std::vector<std::unique_ptr<WindowAggregationLogicalFunction>>& getWindowAggregation() const;
-    void setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation);
+    [[nodiscard]] const std::vector<std::shared_ptr<WindowAggregationLogicalFunction>>& getWindowAggregation() const;
+    void setWindowAggregation(std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation);
 
     [[nodiscard]] Windowing::WindowType& getWindowType() const;
     void setWindowType(std::unique_ptr<Windowing::WindowType> windowType);
 
-    [[nodiscard]] const std::vector<std::unique_ptr<FieldAccessLogicalFunction>>& getKeys() const;
-    void setOnKey(std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys);
+    [[nodiscard]] const std::vector<FieldAccessLogicalFunction>& getKeys() const;
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
@@ -61,15 +60,15 @@ public:
     std::vector<std::vector<OriginId>> getInputOriginIds() const override;
     std::vector<OriginId> getOutputOriginIds() const override { return {}; }
 
-    std::vector<Operator> getChildren() const override {return {};};
-    void setChildren(std::vector<struct Operator>) override {}
+    std::vector<LogicalOperator> getChildren() const override {return {};};
+    void setChildren(std::vector<LogicalOperator>) override {}
     Optimizer::TraitSet getTraitSet() const override {return {};}
 
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
-    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation;
-    std::unique_ptr<Windowing::WindowType> windowType;
-    std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey;
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
+    std::shared_ptr<Windowing::WindowType> windowType;
+    std::vector<FieldAccessLogicalFunction> onKey;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
     uint64_t numberOfInputEdges = 0;
