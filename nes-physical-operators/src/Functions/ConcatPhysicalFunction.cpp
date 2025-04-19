@@ -29,16 +29,21 @@
 namespace NES::Functions
 {
 
-ExecutableFunctionConcat::ExecutableFunctionConcat(
-    std::unique_ptr<PhysicalFunction> leftFunction, std::unique_ptr<PhysicalFunction> rightFunction)
-    : leftFunction(std::move(leftFunction)), rightFunction(std::move(rightFunction))
+ConcatPhysicalFunction::ConcatPhysicalFunction(
+    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 
-VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) const
+std::unique_ptr<PhysicalFunction> ConcatPhysicalFunction::clone() const
 {
-    const auto leftValue = leftFunction->execute(record, arena).cast<VariableSizedData>();
-    const auto rightValue = rightFunction->execute(record, arena).cast<VariableSizedData>();
+    return std::make_unique<ConcatPhysicalFunction>(leftPhysicalFunction->clone(), rightPhysicalFunction->clone());
+}
+
+VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+{
+    const auto leftValue = leftPhysicalFunction->execute(record, arena).cast<VariableSizedData>();
+    const auto rightValue = rightPhysicalFunction->execute(record, arena).cast<VariableSizedData>();
 
     const auto newSize = leftValue.getSize() + rightValue.getSize();
     const auto newVarSizeDataArea = arena.allocateMemory(newSize + nautilus::val<uint64_t>(sizeof(uint32_t)));
@@ -51,10 +56,10 @@ VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) 
     return newVarSizeData;
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(NES::Functions::PhysicalFunctionRegistryArguments executableFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(NES::Functions::PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionConcat>(
-        std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
+    return std::make_unique<ConcatPhysicalFunction>(
+        std::move(physicalFunctionRegistryArguments.childFunctions[0]), std::move(physicalFunctionRegistryArguments.childFunctions[1]));
 }
 }
