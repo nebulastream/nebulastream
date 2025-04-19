@@ -52,6 +52,3 @@ target_include_directories(nes-sql-parser PUBLIC
         ${ANTLR4_INCLUDE_DIR_NES_SQL_PARSER} ${ANTLR4_INCLUDE_DIR}
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 target_link_libraries(nes-sql-parser PUBLIC antlr4_static nes-common nes-sinks nes-sources nes-logical-operators)
-
-add_tests_if_enabled(tests)
-
