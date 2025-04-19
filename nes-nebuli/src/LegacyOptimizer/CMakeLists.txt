@@ -10,5 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(SourceCatalogs)
-add_subdirectory(LegacyOptimizer)
+add_source_files(nes-legacy-optimizer
+        LogicalSourceExpansionRule.cpp
+        OriginIdInferencePhase.cpp
+        TypeInferencePhase.cpp
+)

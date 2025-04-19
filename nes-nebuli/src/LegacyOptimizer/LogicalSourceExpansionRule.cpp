@@ -14,7 +14,7 @@
 
 #include <string>
 #include <utility>
-#include <LegacyOptimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
