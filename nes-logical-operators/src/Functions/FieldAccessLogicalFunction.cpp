@@ -21,34 +21,23 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
+
 namespace NES
 {
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
     : LogicalFunction(DataTypeProvider::provideDataType(LogicalType::UNDEFINED)), fieldName(std::move(fieldName)) {};
 
-FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName)
+FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::unique_ptr<DataType> stamp, std::string fieldName)
     : LogicalFunction(std::move(stamp)), fieldName(std::move(fieldName)) {};
 
-FieldAccessLogicalFunction::FieldAccessLogicalFunction(FieldAccessLogicalFunction* other)
-    : LogicalFunction(other), fieldName(other->getFieldName()) {};
-
-std::shared_ptr<LogicalFunction> FieldAccessLogicalFunction::create(std::shared_ptr<DataType> stamp, std::string fieldName)
+bool FieldAccessLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    return std::make_shared<FieldAccessLogicalFunction>(FieldAccessLogicalFunction(std::move(stamp), std::move(fieldName)));
-}
-
-std::shared_ptr<LogicalFunction> FieldAccessLogicalFunction::create(std::string fieldName)
-{
-    return create(DataTypeProvider::provideDataType(LogicalType::UNDEFINED), std::move(fieldName));
-}
-
-bool FieldAccessLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
-{
-    if (NES::Util::instanceOf<FieldAccessLogicalFunction>(rhs))
+    auto other = dynamic_cast<const FieldAccessLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherFieldRead = NES::Util::as<FieldAccessLogicalFunction>(rhs);
-        bool fieldNamesMatch = otherFieldRead->fieldName == fieldName;
-        const bool stampsMatch = *otherFieldRead->stamp == *stamp;
+        bool fieldNamesMatch = other->fieldName == fieldName;
+        const bool stampsMatch = *other->stamp == *stamp;
         return fieldNamesMatch and stampsMatch;
     }
     return false;
@@ -76,19 +65,19 @@ void FieldAccessLogicalFunction::inferStamp(const Schema& schema)
     /// check if the access field is defined in the schema.
     if (const auto existingField = schema.getFieldByName(fieldName))
     {
-        fieldName = existingField.value()->getName();
-        stamp = existingField.value()->getDataType();
+        fieldName = existingField.value().getName();
+        stamp = existingField.value().getDataType().clone();
         return;
     }
     throw QueryInvalid("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema.toString());
 }
 
-std::shared_ptr<LogicalFunction> FieldAccessLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> FieldAccessLogicalFunction::clone() const
 {
-    return std::make_shared<FieldAccessLogicalFunction>(stamp, fieldName);
+    return std::make_unique<FieldAccessLogicalFunction>(stamp->clone(), fieldName);
 }
 
-std::span<const std::shared_ptr<LogicalFunction>> FieldAccessLogicalFunction::getChildren() const
+std::span<const std::unique_ptr<LogicalFunction>> FieldAccessLogicalFunction::getChildren() const
 {
     return {};
 }
@@ -107,6 +96,13 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
         this->getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
+}
+
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    auto fieldName = get<std::string>(arguments.config["FieldName"]);
+    return std::make_unique<FieldAccessLogicalFunction>(std::move(arguments.stamp), fieldName);
 }
 
 }
