@@ -20,8 +20,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/OperatorState.hpp>
+#include <nautilus/val_concepts.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -31,6 +31,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <OperatorState.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -38,6 +39,9 @@
 #include <PipelineExecutionContext.hpp>
 #include <function.hpp>
 #include <val.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {
