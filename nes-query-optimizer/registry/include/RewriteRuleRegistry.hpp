@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Util/Registry.hpp>
 
@@ -24,6 +25,7 @@ namespace NES::Optimizer
 using RewriteRuleRegistryReturnType = NES::Optimizer::AbstractRewriteRule;
 struct RewriteRuleRegistryArguments
 {
+    NES::Configurations::QueryOptimizerConfiguration conf;
 };
 
 class RewriteRuleRegistry

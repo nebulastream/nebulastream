@@ -68,7 +68,7 @@ std::string queryPlanToString(const std::shared_ptr<QueryPlan>& queryPlan)
 std::shared_ptr<QueryPlan> AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
     /// Todo #421: support multiple sinks
-    return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
+    return QueryPlanBuilder::addSink(sinkNames.front(), queryPlans.top());
 }
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)

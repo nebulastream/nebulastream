@@ -33,7 +33,7 @@ std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view 
         AntlrSQLLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);
         AntlrSQLParser parser(&tokens);
-        /// Enable that antlr throws exeptions on parsing errors
+        /// Enable that antlr throws exceptions on parsing errors
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
         AntlrSQLParser::QueryContext* tree = parser.query();
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;

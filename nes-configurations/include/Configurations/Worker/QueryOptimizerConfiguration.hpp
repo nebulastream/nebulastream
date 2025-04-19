@@ -27,8 +27,24 @@
 namespace NES::Configurations
 {
 
-static constexpr auto DEFAULT_BUFFER_SIZE_BYTES = 4096;
-static constexpr auto DEFAULT_PAGE_SIZE = 10240;
+static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
+static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
+static constexpr auto DEFAULT_BUFFER_SIZE = 1024;
+enum class StreamJoinStrategy : uint8_t
+{
+    NESTED_LOOP_JOIN
+};
+enum class DumpMode : uint8_t
+{
+    /// Disables all dumping
+    NONE,
+    /// Dumps intermediate representations to console, std:out
+    CONSOLE,
+    /// Dumps intermediate representations to file
+    FILE,
+    /// Dumps intermediate representations to console and file
+    FILE_AND_CONSOLE
+};
 
 class QueryOptimizerConfiguration : public BaseConfiguration
 {
@@ -36,41 +52,40 @@ public:
     QueryOptimizerConfiguration() = default;
     QueryOptimizerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
 
-    /// Sets the dump mode for the query compiler. This setting is only for the nautilus compiler
-    EnumOption<QueryCompilation::DumpMode> queryCompilerDumpMode
-        = {QUERY_COMPILER_DUMP_MODE,
-           QueryCompilation::DumpMode::NONE,
-           "If and where to dump query compilation details [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
-
-    StringOption queryCompilerDumpPath = {QUERY_COMPILER_DUMP_PATH, "", "Path to dump query compilation details."};
-
-    EnumOption<CompilationStrategy> compilationStrategy
-        = {QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG,
-           CompilationStrategy::OPTIMIZE,
-           "Optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE|PROXY_INLINING]."};
-
-    EnumOption<QueryCompilation::NautilusBackend> nautilusBackend
-        = {QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG,
-           QueryCompilation::NautilusBackend::COMPILER,
+    NES::Configurations::EnumOption<DumpMode> dumpMode
+        = {"dumpMode", DumpMode::NONE, "If and where to dump query compilation details [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]."};
+    NES::Configurations::StringOption dumpPath = {"dumpPath", "", "Path to dump query compilation details."};
+    NES::Configurations::EnumOption<Nautilus::Configurations::NautilusBackend> nautilusBackend
+        = {"nautilusBackend",
+           Nautilus::Configurations::NautilusBackend::COMPILER,
            "Nautilus backend for the nautilus query compiler "
            "[COMPILER|INTERPRETER]."};
-
-    UIntOption pageSize
-        = {WINDOW_OPERATOR_PAGE_SIZE_CONFIG,
-           std::to_string(NES::Configurations::DEFAULT_PAGE_SIZE),
-           "Page size of any paged data structure",
-           {std::make_shared<NumberValidation>()}};
-
-    UIntOption bufferSize
-        = {BUFFERS_SIZE_IN_BYTES_CONFIG,
-           std::to_string(NES::Configurations::DEFAULT_BUFFER_SIZE_BYTES),
-           "Buffer size in bytes",
-           {std::make_shared<NumberValidation>()}};
+    NES::Configurations::UIntOption numberOfPartitions
+        = {"numberOfPartitions",
+           std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
+           "Partitions in a hash table",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption pageSize
+        = {"pageSize",
+           std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
+           "Page size of any other paged data structure",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption bufferSize
+        = {"bufferSize",
+           std::to_string(DEFAULT_BUFFER_SIZE),
+           "Buffer size e.g. during scan",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
+        = {"joinStrategy",
+           StreamJoinStrategy::NESTED_LOOP_JOIN,
+           "WindowingStrategy"
+           "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
+    NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
 
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&queryCompilerDumpMode, &queryCompilerDumpPath, &compilationStrategy, &nautilusBackend, &pageSize, &bufferSize};
+        return {&nautilusBackend, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath};
     }
 };
 
