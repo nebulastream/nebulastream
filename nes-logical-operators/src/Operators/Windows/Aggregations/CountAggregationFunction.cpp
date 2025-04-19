@@ -14,16 +14,16 @@
 
 #include <memory>
 #include <utility>
+#include <API/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableFunction.pb.h>
-#include "Common/DataTypes/DataType.hpp"
-#include "Common/DataTypes/DataTypeFactory.hpp"
-#include "API/Schema.hpp"
-#include "Functions/FieldAccessLogicalFunction.hpp"
-#include "Functions/LogicalFunction.hpp"
-#include "Util/Common.hpp"
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
