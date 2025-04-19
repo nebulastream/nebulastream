@@ -27,7 +27,6 @@ struct PhysicalFunctionConcept
 };
 
 struct PhysicalFunction {
-public:
     template<typename T>
     PhysicalFunction(const T& op) : self(std::make_unique<Model<T>>(op)) {}
 
@@ -61,10 +60,6 @@ public:
         return *this;
     }
 
-    bool operator==(const PhysicalFunction &other) const {
-        return self->equals(*other.self);
-    }
-
     VarVal execute(const Record& record, ArenaRef& arena) const
     {
         return self->execute(record, arena);
@@ -73,7 +68,6 @@ public:
 private:
     struct Concept : PhysicalFunctionConcept {
         [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
-        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
     };
 
     template<typename T>
@@ -82,19 +76,12 @@ private:
         explicit Model(T d) : data(std::move(d)) {}
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override {
-            return std::unique_ptr<Concept>(new Model<T>(data));
+            return std::unique_ptr<Concept>(new Model(data));
         }
 
         VarVal execute(const Record& record, ArenaRef& arena) const override
         {
             return data.execute(record, arena);
-        }
-
-        [[nodiscard]] bool equals(const Concept& other) const override {
-            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
-                return data.operator==(p->data);
-            }
-            return false;
         }
     };
 
