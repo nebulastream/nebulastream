@@ -15,16 +15,15 @@
 #include <memory>
 #include <Operators/Windows/Aggregations/MedianAggregationFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include "Common/DataTypes/DataType.hpp"
-#include "Common/DataTypes/DataTypeProvider.hpp"
-#include "Common/DataTypes/Numeric.hpp"
-#include "API/Schema.hpp"
-#include "Functions/FieldAccessLogicalFunction.hpp"
-
-#include "Functions/LogicalFunction.hpp"
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Common/DataTypes/Numeric.hpp>
+#include <API/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
-#include "Util/Common.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
