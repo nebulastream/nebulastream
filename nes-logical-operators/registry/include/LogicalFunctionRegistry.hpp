@@ -28,6 +28,7 @@ using LogicalFunctionRegistryReturnType = LogicalFunction;
 struct LogicalFunctionRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;
+    std::vector<LogicalFunction> children;
     std::shared_ptr<DataType> stamp;
 };
 
