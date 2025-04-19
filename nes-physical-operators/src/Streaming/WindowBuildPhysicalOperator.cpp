@@ -15,16 +15,15 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Streaming/WindowBasedOperatorHandler.hpp>
+#include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
+#include <Watermark/TimeFunction.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutionContext.hpp>
 #include <function.hpp>
 
 namespace NES

@@ -15,9 +15,9 @@
 #pragma once
 
 #include <cstdint>
-#include <Execution/Operators/Operator.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <AbstractPhysicalOperator.hpp>
 
 
 namespace NES
