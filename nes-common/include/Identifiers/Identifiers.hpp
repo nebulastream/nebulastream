@@ -28,6 +28,7 @@ namespace NES
 using OperatorId = NESStrongType<uint64_t, struct OperatorId_, 0, 1>;
 using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
 using QueryId = NESStrongType<uint64_t, struct QueryId_, 0, 1>;
+using OperatorHandlerId = NESStrongType<uint64_t, struct OperatorHandlerId_, 0, 1>;
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 
 /// Local Identifiers: These Identifiers are unique in a local scope. E.g. the PipelineId is unique in regard to a single query plan.
@@ -38,6 +39,9 @@ using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, SequenceNumber:
 
 static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
 static constexpr QueryId INITIAL_QUERY_ID = INITIAL<QueryId>;
+
+static constexpr OperatorHandlerId INVALID_OPERATOR_HANDLER_ID = INVALID<OperatorHandlerId>;
+static constexpr OperatorHandlerId INITIAL_OPERATOR_HANDLER_ID = INITIAL<OperatorHandlerId>;
 
 static constexpr OperatorId INVALID_OPERATOR_ID = INVALID<OperatorId>;
 static constexpr OperatorId INITIAL_OPERATOR_ID = INITIAL<OperatorId>;
