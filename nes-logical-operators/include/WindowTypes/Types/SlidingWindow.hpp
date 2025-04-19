@@ -25,17 +25,17 @@ namespace NES::Windowing
 class SlidingWindow : public TimeBasedWindowType
 {
 public:
-    static std::shared_ptr<WindowType> of(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    static std::shared_ptr<WindowType> of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
 
     TimeMeasure getSize() override;
     TimeMeasure getSlide() override;
 
     std::string toString() const override;
 
-    bool equal(std::shared_ptr<WindowType> otherWindowType) override;
+    bool operator==(const WindowType& otherWindowType) override;
 
 private:
-    SlidingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
 };
