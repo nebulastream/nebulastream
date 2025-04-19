@@ -12,18 +12,19 @@
     limitations under the License.
 */
 
-#include <utility>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/QuerySignatureContext.hpp>
-#include <ErrorHandling.hpp>
-#include <magic_enum.hpp>
+#include <memory>
+#include <Plans/QueryPlan.hpp>
+#include <QueryOptimizer.hpp>
+#include <Phases/LowerToPhysicalOperators.hpp>
 
 namespace NES::Optimizer
 {
-std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalSelectionRewriteRule()
+/// Takes the query plan as a logical plan and returns a fully physical plan
+std::unique_ptr<QueryPlan> QueryOptimizer::optimize(std::unique_ptr<QueryPlan> plan)
 {
-    return std::make_unique<LowerToPhysicalSelection>();
+    /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
+    /// For now, we just 'purely' lower to physical operators here.
+    return LowerToPhysicalOperators::apply(std::move(plan));
 }
+
 }

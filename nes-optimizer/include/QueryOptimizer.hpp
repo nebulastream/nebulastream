@@ -14,27 +14,18 @@
 
 #pragma once
 
-#include <TraitSets/Trait.hpp>
-#include <TraitSets/TraitSet.hpp>
+#include <memory>
+#include <Plans/QueryPlan.hpp>
 
 namespace NES::Optimizer
 {
-class AbstractRewriteRule
+
+class QueryOptimizer final
 {
 public:
-    virtual VirtualTraitSet* apply(VirtualTraitSet*);
-    virtual ~AbstractRewriteRule();
-};
-
-template <Trait... T>
-class TypedAbstractRewriteRule : AbstractRewriteRule
-{
-    VirtualTraitSet* apply(VirtualTraitSet * inputTS) override
-    {
-        applyTyped(DynamicTraitSet<T...>{inputTS});
-    };
-
-    virtual DynamicTraitSet<T...>* applyTyped(DynamicTraitSet<T...>*) = 0;
+    explicit QueryOptimizer() = default;
+    /// Takes the query plan as a logical plan and returns a fully physical plan
+    [[nodiscard]] std::unique_ptr<QueryPlan> optimize(std::unique_ptr<QueryPlan> plan);
 };
 
 }
