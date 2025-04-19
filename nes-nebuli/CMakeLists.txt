@@ -14,10 +14,10 @@ add_subdirectory(src)
 
 get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
-get_source(nes-operators OPERATORS_SOURCE_FILES)
+get_source(nes-legacy-optimizer LEGACYOPTIMIZER_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 
-add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${LEGACYOPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
 
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
