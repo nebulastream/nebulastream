@@ -28,7 +28,6 @@
 #include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
-#include <Util/Execution.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES
