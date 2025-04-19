@@ -121,6 +121,12 @@ bool instanceOf(const In& obj)
     return dynamic_cast<Out*>(&obj);
 }
 
+template <typename Derived, typename Base>
+bool instanceOf(const std::unique_ptr<Base>& ptr)
+{
+    return dynamic_cast<const Derived*>(ptr.get()) != nullptr;
+}
+
 /// cast the given object to the specified type.
 template <typename Out, typename In>
 std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
@@ -144,6 +150,17 @@ template <typename Out, typename In>
 std::shared_ptr<Out> as_if(const std::shared_ptr<In>& obj)
 {
     return std::dynamic_pointer_cast<Out>(obj);
+}
+
+template <typename T, typename S>
+std::unique_ptr<T> dynamic_pointer_cast(std::unique_ptr<S>&& ptr) noexcept
+{
+    if (auto* converted = dynamic_cast<T*>(ptr.get()))
+    {
+        ptr.release();
+        return std::unique_ptr<T>(converted);
+    }
+    return nullptr;
 }
 
 }
