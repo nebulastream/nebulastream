@@ -26,7 +26,7 @@ namespace NES::Sinks
 
 struct SinkDescriptor : Configurations::Descriptor
 {
-    explicit SinkDescriptor(std::string sinkType, Configurations::DescriptorConfig::Config&& config, bool addTimestamp);
+    explicit SinkDescriptor(std::string sinkType, NES::Configurations::DescriptorConfig::Config&& config, bool addTimestamp);
     ~SinkDescriptor() = default;
 
     /// Iterates over all config pairs to create a DescriptorConfig::Config containing only strings.

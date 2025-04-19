@@ -60,7 +60,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
 
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryOptimizer.nautilusBackend = Nautilus::Configurations::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -103,7 +103,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::INTERPRETER;
+    configuration.workerConfiguration.queryOptimizer.nautilusBackend = Nautilus::Configurations::NautilusBackend::INTERPRETER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
