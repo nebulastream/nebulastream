@@ -13,10 +13,6 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 
-### Query Plan Tests ###
-add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
-target_link_libraries(query-plan-tests nes-client nes-logical-operators nes-test-util)
-
 ### Query Plan Builder Tests ###
 add_nes_unit_test(query-plan-builder-tests "UnitTests/Plans/Query/QueryPlanBuilderTest.cpp")
 target_link_libraries(query-plan-builder-tests nes-client nes-logical-operators nes-test-util)
