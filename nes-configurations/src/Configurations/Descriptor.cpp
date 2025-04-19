@@ -25,7 +25,7 @@ Descriptor::Descriptor(DescriptorConfig::Config&& config) : config(std::move(con
 {
 }
 
-SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::DescriptorConfig::ConfigType& var)
+SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurations::DescriptorConfig::ConfigType& var)
 {
     SerializableVariantDescriptor protoVar;
     std::visit(
@@ -64,6 +64,38 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::
         },
         var);
     return protoVar;
+}
+
+Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& proto_var)
+{
+    switch (proto_var.value_case())
+    {
+        case SerializableVariantDescriptor::kIntValue:
+            return proto_var.int_value();
+        case SerializableVariantDescriptor::kUintValue:
+            return proto_var.uint_value();
+        case SerializableVariantDescriptor::kBoolValue:
+            return proto_var.bool_value();
+        case SerializableVariantDescriptor::kCharValue:
+            return static_cast<char>(proto_var.char_value()); /// Convert (fixed32) ascii number to char.
+        case SerializableVariantDescriptor::kFloatValue:
+            return proto_var.float_value();
+        case SerializableVariantDescriptor::kDoubleValue:
+            return proto_var.double_value();
+        case SerializableVariantDescriptor::kStringValue:
+            return proto_var.string_value();
+        case SerializableVariantDescriptor::kEnumValue:
+            return Configurations::EnumWrapper(proto_var.enum_value().value());
+        default:
+            std::string protoVarAsJson;
+            /// Log proto variable as json, in exception, if possible.
+            if (const auto conversionResult = google::protobuf::json::MessageToJsonString(proto_var, &protoVarAsJson);
+                conversionResult.ok())
+            {
+                throw CannotSerialize(fmt::format("Unknown variant type: {}", protoVarAsJson));
+            }
+            throw CannotSerialize("Unknown variant type.");
+    }
 }
 
 /// Define a ConfigPrinter to generate print functions for all options of the std::variant 'ConfigType'.
