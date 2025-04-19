@@ -30,30 +30,21 @@ class AttributeField
 {
 public:
     AttributeField() = default;
+    AttributeField(std::string name, std::shared_ptr<DataType> dataType);
 
-    /**
-     * @brief Factory method to create a new field
-     * @param name name of the field
-     * @param dataType data type
-     * @return std::shared_ptr<AttributeField>
-     */
-    static std::shared_ptr<AttributeField> create(const std::string& name, const std::shared_ptr<DataType>& dataType);
-
-    [[nodiscard]] std::shared_ptr<DataType> getDataType() const;
+    [[nodiscard]] DataType& getDataType() const;
 
     [[nodiscard]] const std::string& getName() const;
 
     void setName(std::string newName);
 
     [[nodiscard]] std::string toString() const;
-    [[nodiscard]] bool isEqual(const std::shared_ptr<AttributeField>& attr) const;
+    [[nodiscard]] bool isEqual(const AttributeField& attr) const;
 
     uint64_t hash() const;
     [[nodiscard]] std::shared_ptr<AttributeField> clone() const;
 
 private:
-    AttributeField(std::string name, std::shared_ptr<DataType> dataType);
-
     std::string name;
     std::shared_ptr<DataType> dataType;
 };
