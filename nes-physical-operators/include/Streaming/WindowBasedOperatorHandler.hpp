@@ -21,12 +21,9 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/QueryTerminationType.hpp>
-#include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Streaming/Join/StreamJoinUtil.hpp>
-#include <Util/Execution.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 
 namespace NES
 {

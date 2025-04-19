@@ -29,7 +29,6 @@
 #include <Streaming/Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>

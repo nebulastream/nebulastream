@@ -27,7 +27,6 @@
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
 
 namespace NES
 {
