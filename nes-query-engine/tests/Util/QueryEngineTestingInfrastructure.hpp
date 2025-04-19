@@ -62,6 +62,7 @@
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 #include <TestSource.hpp>
+#include <Plans/LogicalPlanBuilder.hpp>
 
 namespace NES::Testing
 {
