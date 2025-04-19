@@ -44,14 +44,10 @@ const std::string& PhysicalSource::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescriptor(std::shared_ptr<Schema> schema)
+std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescriptor(Schema schema)
 {
     auto copyOfConfig = sourceDescriptor.config;
     return std::make_unique<Sources::SourceDescriptor>(
-        std::move(schema),
-        sourceDescriptor.logicalSourceName,
-        sourceDescriptor.sourceType,
-        sourceDescriptor.parserConfig,
-        std::move(copyOfConfig));
+        schema, sourceDescriptor.logicalSourceName, sourceDescriptor.sourceType, sourceDescriptor.parserConfig, std::move(copyOfConfig));
 }
 }
