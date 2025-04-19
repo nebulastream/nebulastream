@@ -15,7 +15,7 @@
 #pragma once
 
 #include <cstdint>
-#include <Execution/Operators/Operator.hpp>
+#include <AbstractPhysicalOperator.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 

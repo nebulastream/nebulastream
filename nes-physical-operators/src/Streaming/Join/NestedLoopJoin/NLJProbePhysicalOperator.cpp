@@ -20,10 +20,9 @@
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Operators/ExecutableOperator.hpp>
-#include <Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
-#include <Operators/Streaming/Join/StreamJoinProbe.hpp>
+#include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Streaming/Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
+#include <Streaming/Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -38,6 +37,7 @@
 #include <function.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
+#include <ExecutionContext.hpp>
 
 namespace NES
 {

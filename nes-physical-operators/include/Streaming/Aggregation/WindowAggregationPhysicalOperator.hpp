@@ -18,7 +18,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
+#include <Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <ErrorHandling.hpp>

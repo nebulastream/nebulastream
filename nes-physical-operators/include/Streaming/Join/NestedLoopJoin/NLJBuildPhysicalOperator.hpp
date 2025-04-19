@@ -31,6 +31,7 @@
 #include <Watermark/TimeFunction.hpp>
 #include <OperatorState.hpp>
 #include <val_ptr.hpp>
+#include "Streaming/Join/StreamJoinUtil.hpp"
 
 namespace NES
 {
