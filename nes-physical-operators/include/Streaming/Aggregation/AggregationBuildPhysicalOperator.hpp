@@ -18,10 +18,10 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Streaming/Aggregation/WindowAggregationPhysicalOperator.hpp>
+#include <Streaming/WindowBuildPhysicalOperator.hpp>
+#include <Watermark/TimeFunction.hpp>
 
 namespace NES
 {

@@ -19,7 +19,6 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Operators/Operator.hpp>
 #include <Streaming/Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Execution.hpp>

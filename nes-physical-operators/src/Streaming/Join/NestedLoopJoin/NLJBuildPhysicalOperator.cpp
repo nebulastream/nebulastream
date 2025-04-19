@@ -15,27 +15,17 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/SliceStore/Slice.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
-#include <Operators/SliceStore/Slice.hpp>
-#include <Operators/Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
-#include <Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
-#include <Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <SliceStore/Slice.hpp>
+#include <Streaming/Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
+#include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Streaming/Join/StreamJoinBuildPhysicalOperator.hpp>
+#include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -43,7 +33,6 @@
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
-#include <val_ptr.hpp>
 
 namespace NES
 {

@@ -15,11 +15,11 @@
 #pragma once
 
 #include <cstdint>
-#include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
+#include <string>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Streaming/Aggregation/WindowAggregationPhysicalOperator.hpp>
+#include <Streaming/WindowProbePhysicalOperator.hpp>
 
 namespace NES
 {
