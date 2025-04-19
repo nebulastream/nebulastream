@@ -14,7 +14,7 @@ add_subdirectory(src)
 
 get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
-get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
+get_source(nes-optimizer-legacy OPTIMIZER_SOURCE_FILES)
 get_source(nes-operators OPERATORS_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 
