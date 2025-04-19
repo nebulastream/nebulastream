@@ -264,7 +264,7 @@ bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numRec
 
 NES::Configurations::DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), name());
+    return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), name());
 }
 
 void TCPSource::close()
