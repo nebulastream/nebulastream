@@ -20,8 +20,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/OperatorState.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -35,6 +33,7 @@
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <function.hpp>
 #include <val.hpp>

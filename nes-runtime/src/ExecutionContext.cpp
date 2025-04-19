@@ -115,8 +115,6 @@ void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std:
 OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const uint64_t index)
 {
     auto handlers = pipelineCtx->getOperatorHandlers();
-    auto size = handlers.size();
-    PRECONDITION(index < size, "operator handler at index {} is not registered", index);
     return handlers[index].get();
 }
 
