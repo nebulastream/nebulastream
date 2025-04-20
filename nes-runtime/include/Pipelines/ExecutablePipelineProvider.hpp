@@ -17,7 +17,7 @@
 #include <vector>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/options.hpp>
-#include "PipelinedQueryPlan.hpp"
+#include <PipelinedQueryPlan.hpp>
 
 namespace NES
 {
