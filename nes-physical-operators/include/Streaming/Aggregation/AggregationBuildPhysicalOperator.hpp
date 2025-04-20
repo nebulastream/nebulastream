@@ -30,13 +30,14 @@ class AggregationBuildPhysicalOperator final : public WindowAggregationPhysicalO
 {
 public:
     AggregationBuildPhysicalOperator(
-        uint64_t operatorHandlerIndex,
-        std::unique_ptr<TimeFunction> timeFunction,
-        Functions::PhysicalFunction keyFunctions,
-        std::unique_ptr<WindowAggregation> windowAggregationOperator);
+        const uint64_t operatorHandlerIndex,
+        std::shared_ptr<TimeFunction> timeFunction,
+        std::vector<Functions::PhysicalFunction> keyFunctions,
+        std::shared_ptr<WindowAggregation> windowAggregationOperator);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-    std::string toString() const override {return typeid(this).name(); }
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
     std::optional<PhysicalOperator> child;

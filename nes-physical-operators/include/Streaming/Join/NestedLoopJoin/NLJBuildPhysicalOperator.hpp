@@ -67,10 +67,10 @@ public:
     };
 
     NLJBuildPhysicalOperator(
+        std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
         uint64_t operatorHandlerIndex,
         JoinBuildSideType joinBuildSide,
-        std::unique_ptr<TimeFunction> timeFunction,
-        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
+        std::unique_ptr<TimeFunction> timeFunction);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;

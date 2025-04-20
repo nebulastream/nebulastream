@@ -23,7 +23,7 @@
 namespace NES
 {
 
-IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)
+IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(std::shared_ptr<TimeFunction> timeFunction)
     : timeFunction(std::move(timeFunction)) {};
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

@@ -42,7 +42,6 @@ public:
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& isLastChunk) const;
 
-    std::string toString() const override {return typeid(this).name(); }
     std::optional<PhysicalOperator> getChild() const override { return child; }
     void setChild(struct PhysicalOperator child) override { this->child = child; }
 
