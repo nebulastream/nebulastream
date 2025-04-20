@@ -22,16 +22,9 @@
 namespace NES::Windowing
 {
 
-/**
- * @brief
- * The CountAggregationDescriptor aggregation calculates the CountAggregationDescriptor over the window.
- */
 class CountAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
-    /**
-    * Factory method to creates a CountAggregationDescriptor aggregation on a particular field.
-    */
     static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& keyFunction);
 
     static std::shared_ptr<WindowAggregationDescriptor>
@@ -40,11 +33,7 @@ public:
     std::shared_ptr<DataType> getInputStamp() override;
     std::shared_ptr<DataType> getPartialAggregateStamp() override;
     std::shared_ptr<DataType> getFinalAggregateStamp() override;
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
+
     void inferStamp(const Schema& schema) override;
 
     std::shared_ptr<WindowAggregationDescriptor> copy() override;

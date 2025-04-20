@@ -33,26 +33,14 @@ public:
     DefaultPhysicalTypeFactory();
     ~DefaultPhysicalTypeFactory() override = default;
 
-    /**
-     * @brief Translates a nes data type into a corresponding physical type.
-     * @param dataType
-     * @return std::shared_ptr<PhysicalType>
-     */
+    /// @brief Translates a nes data type into a corresponding physical type.
     [[nodiscard]] std::shared_ptr<PhysicalType> getPhysicalType(std::shared_ptr<DataType> dataType) const override;
 
 private:
-    /**
-    * @brief Translates an integer data type into a corresponding physical type.
-    * @param integerType
-    * @return std::shared_ptr<PhysicalType>
-    */
+    /// @brief Translates an integer data type into a corresponding physical type.
     static std::shared_ptr<PhysicalType> getPhysicalType(const std::shared_ptr<Integer>& integerType);
 
-    /**
-    * @brief Translates a float data type into a corresponding physical type.
-    * @param floatType
-    * @return std::shared_ptr<PhysicalType>
-    */
+    /// @brief Translates a float data type into a corresponding physical type.
     static std::shared_ptr<PhysicalType> getPhysicalType(const std::shared_ptr<Float>& floatType);
 };
 

@@ -39,7 +39,7 @@ bool Integer::operator==(const NES::DataType& other) const
     return false;
 }
 
-std::shared_ptr<DataType> Integer::join(const std::shared_ptr<DataType> otherDataType)
+std::shared_ptr<DataType> Integer::join(const std::shared_ptr<DataType> otherDataType) const
 {
     if (NES::Util::instanceOf<Undefined>(otherDataType))
     {

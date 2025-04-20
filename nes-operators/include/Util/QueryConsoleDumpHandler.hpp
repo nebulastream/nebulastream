@@ -23,9 +23,8 @@
 namespace NES
 {
 
-/**
- * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
- */
+/// @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
+
 class QueryConsoleDumpHandler
 {
 public:
