@@ -161,13 +161,13 @@ public:
     void setNumberOfTuples(uint64_t numberOfTuples) const noexcept;
 
     /// @brief get the watermark as a timestamp
-    [[nodiscard]] Runtime::Timestamp getWatermark() const noexcept;
+    [[nodiscard]] Timestamp getWatermark() const noexcept;
 
     /// @brief set the watermark from a timestamp
-    void setWatermark(Runtime::Timestamp value) noexcept;
+    void setWatermark(Timestamp value) noexcept;
 
     /// @brief get the creation timestamp in milliseconds
-    [[nodiscard]] Runtime::Timestamp getCreationTimestampInMS() const noexcept;
+    [[nodiscard]] Timestamp getCreationTimestampInMS() const noexcept;
 
     /// @brief set the sequence number
     void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
@@ -190,7 +190,7 @@ public:
     [[nodiscard]] bool isLastChunk() const noexcept;
 
     /// @brief set the creation timestamp in milliseconds
-    void setCreationTimestampInMS(Runtime::Timestamp value) noexcept;
+    void setCreationTimestampInMS(Timestamp value) noexcept;
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] OriginId getOriginId() const noexcept;

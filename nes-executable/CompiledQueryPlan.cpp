@@ -23,7 +23,7 @@
 #include <CompiledQueryPlan.hpp>
 #include <ExecutablePipelineStage.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 std::shared_ptr<ExecutablePipeline> ExecutablePipeline::create(
     PipelineId id, std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors)

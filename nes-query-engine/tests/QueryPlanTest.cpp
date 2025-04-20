@@ -48,7 +48,7 @@ namespace stdv = std::ranges::views;
 
 namespace NES::Testing
 {
-using namespace NES::Runtime;
+using namespace NES;
 class QueryPlanTest : public BaseUnitTest
 {
 public:
@@ -67,7 +67,7 @@ class UniquePtrStageMatcher
 public:
     using is_gtest_matcher = void;
 
-    explicit UniquePtrStageMatcher(Execution::ExecutablePipelineStage* stage) : stage(stage) { }
+    explicit UniquePtrStageMatcher(ExecutablePipelineStage* stage) : stage(stage) { }
 
     bool MatchAndExplain(const std::unique_ptr<RunningQueryPlanNode>& foo, std::ostream* /* listener */) const
     {
@@ -79,7 +79,7 @@ public:
     void DescribeNegationTo(std::ostream* os) const { *os << "RunningQueryPlanNode does not equal " << stage; }
 
 private:
-    Execution::ExecutablePipelineStage* stage;
+    ExecutablePipelineStage* stage;
 };
 
 class StageMatcher
@@ -87,7 +87,7 @@ class StageMatcher
 public:
     using is_gtest_matcher = void;
 
-    explicit StageMatcher(Execution::ExecutablePipelineStage* stage) : stage(stage) { }
+    explicit StageMatcher(ExecutablePipelineStage* stage) : stage(stage) { }
 
     bool MatchAndExplain(const std::shared_ptr<RunningQueryPlanNode>& foo, std::ostream* /* listener */) const
     {
@@ -104,7 +104,7 @@ public:
     void DescribeNegationTo(std::ostream* os) const { *os << "RunningQueryPlanNode does not equal " << stage; }
 
 private:
-    Execution::ExecutablePipelineStage* stage;
+    ExecutablePipelineStage* stage;
 };
 
 
@@ -136,15 +136,15 @@ private:
 template <typename R, typename T>
 concept RangeOf = std::ranges::range<R> && std::same_as<std::ranges::range_value_t<R>, T>;
 
-struct TestPipelineExecutionContext : Execution::PipelineExecutionContext
+struct TestPipelineExecutionContext : PipelineExecutionContext
 {
     MOCK_METHOD(WorkerThreadId, getId, (), (const, override));
     MOCK_METHOD(Memory::TupleBuffer, allocateTupleBuffer, (), (override));
     MOCK_METHOD(uint64_t, getNumberOfWorkerThreads, (), (const, override));
     MOCK_METHOD(std::shared_ptr<Memory::AbstractBufferProvider>, getBufferManager, (), (const, override));
     MOCK_METHOD(PipelineId, getPipelineId, (), (const, override));
-    MOCK_METHOD(std::vector<std::shared_ptr<Execution::OperatorHandler>>&, getOperatorHandlers, (), (override));
-    MOCK_METHOD(void, setOperatorHandlers, (std::vector<std::shared_ptr<Execution::OperatorHandler>>&), (override));
+    MOCK_METHOD(std::vector<std::shared_ptr<OperatorHandler>>&, getOperatorHandlers, (), (override));
+    MOCK_METHOD(void, setOperatorHandlers, (std::vector<std::shared_ptr<OperatorHandler>>&), (override));
     MOCK_METHOD(bool, emitBuffer, (const Memory::TupleBuffer&, ContinuationPolicy), (override));
 };
 
@@ -248,11 +248,11 @@ private:
     }
 };
 
-using Terminations = EmittedTask<TerminatePipelineArgs, Execution::ExecutablePipelineStage*>;
+using Terminations = EmittedTask<TerminatePipelineArgs, ExecutablePipelineStage*>;
 
 template <>
 template <typename... TArgs>
-std::unique_ptr<Terminations> Terminations::setup(RangeOf<Execution::ExecutablePipelineStage*> auto stages, TArgs&&... args)
+std::unique_ptr<Terminations> Terminations::setup(RangeOf<ExecutablePipelineStage*> auto stages, TArgs&&... args)
 {
     auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
     auto terminations = std::make_unique<Terminations>();
@@ -291,10 +291,10 @@ struct SetupPipelineArgs
     BaseTask::onFailure onFailure;
 };
 
-using Setups = EmittedTask<SetupPipelineArgs, Execution::ExecutablePipelineStage*>;
+using Setups = EmittedTask<SetupPipelineArgs, ExecutablePipelineStage*>;
 template <>
 template <typename... TArgs>
-std::unique_ptr<Setups> Setups::setup(RangeOf<Execution::ExecutablePipelineStage*> auto stages, TArgs&&... args)
+std::unique_ptr<Setups> Setups::setup(RangeOf<ExecutablePipelineStage*> auto stages, TArgs&&... args)
 {
     auto setups = std::make_unique<Setups>();
     auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
@@ -412,8 +412,8 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
 
     /// Verify that a setup and stop tasks have been emitted
     TestWorkEmitter emitter;
-    auto terminations = Terminations::setup(std::vector<Execution::ExecutablePipelineStage*>{stage1.get(), stage2.get()}, emitter);
-    auto setups = Setups::setup(std::vector<Execution::ExecutablePipelineStage*>{stage1.get(), stage2.get()}, emitter);
+    auto terminations = Terminations::setup(std::vector<ExecutablePipelineStage*>{stage1.get(), stage2.get()}, emitter);
+    auto setups = Setups::setup(std::vector<ExecutablePipelineStage*>{stage1.get(), stage2.get()}, emitter);
 
     /// Build chain of two pipelines. Verify that on construction of a RunningQueryPlan node a setup task has been submitted
     auto sink

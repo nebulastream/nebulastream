@@ -45,10 +45,9 @@ public:
     PrintSink& operator=(const PrintSink&) = delete;
     PrintSink(PrintSink&&) = delete;
     PrintSink& operator=(PrintSink&&) = delete;
-    void start(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
-    void
-    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
-    void stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    void start(PipelineExecutionContext& pipelineExecutionContext) override;
+    void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+    void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
     static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 

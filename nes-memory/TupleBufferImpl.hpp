@@ -92,8 +92,8 @@ public:
     bool release();
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
     void setNumberOfTuples(uint64_t);
-    [[nodiscard]] Runtime::Timestamp getWatermark() const noexcept;
-    void setWatermark(Runtime::Timestamp watermark);
+    [[nodiscard]] Timestamp getWatermark() const noexcept;
+    void setWatermark(Timestamp watermark);
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
     void setSequenceNumber(SequenceNumber sequenceNumber);
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
@@ -102,8 +102,8 @@ public:
     void setLastChunk(bool lastChunk);
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId originId);
-    void setCreationTimestamp(Runtime::Timestamp timestamp);
-    [[nodiscard]] Runtime::Timestamp getCreationTimestamp() const noexcept;
+    void setCreationTimestamp(Timestamp timestamp);
+    [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
     [[nodiscard]] uint32_t storeChildBuffer(BufferControlBlock* control);
     [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
     [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept { return children.size(); }
@@ -114,11 +114,11 @@ public:
 private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;
-    Runtime::Timestamp watermark = Runtime::Timestamp(Runtime::Timestamp::INITIAL_VALUE);
+    Timestamp watermark = Timestamp(Timestamp::INITIAL_VALUE);
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
     bool lastChunk = true;
-    Runtime::Timestamp creationTimestamp = Runtime::Timestamp(Runtime::Timestamp::INITIAL_VALUE);
+    Timestamp creationTimestamp = Timestamp(Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
     std::vector<MemorySegment*> children;
 

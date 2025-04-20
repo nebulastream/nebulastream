@@ -52,7 +52,7 @@
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 
@@ -129,9 +129,9 @@ namespace detail
 using Queue = folly::MPMCQueue<Task>;
 }
 
-struct DefaultPEC final : Execution::PipelineExecutionContext
+struct DefaultPEC final : PipelineExecutionContext
 {
-    std::vector<std::shared_ptr<Execution::OperatorHandler>>* operatorHandlers = nullptr;
+    std::vector<std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     std::function<bool(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler;
     std::shared_ptr<Memory::AbstractBufferProvider> bm;
     size_t numberOfThreads;
@@ -154,12 +154,12 @@ struct DefaultPEC final : Execution::PipelineExecutionContext
     bool emitBuffer(const Memory::TupleBuffer& buffer, ContinuationPolicy policy) override { return handler(buffer, policy); }
     std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bm; }
     PipelineId getPipelineId() const override { return pipelineId; }
-    std::vector<std::shared_ptr<Execution::OperatorHandler>>& getOperatorHandlers() override
+    std::vector<std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
     {
         PRECONDITION(operatorHandlers, "Operator Handlers were not set");
         return *operatorHandlers;
     }
-    void setOperatorHandlers(std::vector<std::shared_ptr<Execution::OperatorHandler>>& handlers) override
+    void setOperatorHandlers(std::vector<std::shared_ptr<OperatorHandler>>& handlers) override
     {
         operatorHandlers = std::addressof(handlers);
     }
@@ -772,7 +772,7 @@ void QueryCatalog::start(
                         return Terminated{Terminated::Failed};
                     },
                     [](Starting&& starting) { return Running{std::move(starting.plan)}; });
-                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Running, timestamp);
+                listener->logQueryStatusChange(queryId, QueryStatus::Running, timestamp);
             }
         }
         void onFailure(Exception exception) override
@@ -833,7 +833,7 @@ void QueryCatalog::start(
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Stopped};
                     });
-                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Stopped, timestamp);
+                listener->logQueryStatusChange(queryId, QueryStatus::Stopped, timestamp);
             }
         }
 

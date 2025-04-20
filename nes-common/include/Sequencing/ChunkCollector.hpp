@@ -46,7 +46,7 @@ class ChunkCollector
 
 public:
     /// Collect a chunk and return a sequenceNumber and the associated watermark if all chunks have been collected.
-    std::optional<std::pair<SequenceNumber, Runtime::Timestamp>> collect(SequenceData data, Runtime::Timestamp watermark);
+    std::optional<std::pair<SequenceNumber, Timestamp>> collect(SequenceData data, Timestamp watermark);
 
 private:
     template <typename T, typename MergeFunction, T InitialValue>
@@ -101,10 +101,7 @@ private:
         size_t start;
         std::atomic<size_t> missing = NodeSize;
         std::array<
-            Padded<Chunk<
-                Runtime::Timestamp::Underlying,
-                std::greater<Runtime::Timestamp::Underlying>,
-                std::numeric_limits<Runtime::Timestamp::Underlying>::min()>>,
+            Padded<Chunk<Timestamp::Underlying, std::greater<Timestamp::Underlying>, std::numeric_limits<Timestamp::Underlying>::min()>>,
             NodeSize>
             data{};
     };
@@ -126,8 +123,7 @@ private:
 /// counter. We assume that once a sequence number is completed, it will never reappear. Thus, we can delete the node from the linked
 /// list when a thread decrements the last node counter.
 template <size_t NodeSize, size_t Alignment>
-std::optional<std::pair<SequenceNumber, Runtime::Timestamp>>
-ChunkCollector<NodeSize, Alignment>::collect(SequenceData data, Runtime::Timestamp watermark)
+std::optional<std::pair<SequenceNumber, Timestamp>> ChunkCollector<NodeSize, Alignment>::collect(SequenceData data, Timestamp watermark)
 {
     PRECONDITION(data.sequenceNumber != SequenceNumber::INVALID, "SequenceNumber is invalid");
     PRECONDITION(data.chunkNumber != ChunkNumber::INVALID, "ChunkNumber is invalid");
@@ -155,7 +151,7 @@ ChunkCollector<NodeSize, Alignment>::collect(SequenceData data, Runtime::Timesta
             auto wlocked = nodes.wlock();
             std::erase_if(*wlocked, [&](auto& n) { return n.start == node.start; });
         }
-        return {{SequenceNumber(data.sequenceNumber), Runtime::Timestamp(*finalWatermark)}};
+        return {{SequenceNumber(data.sequenceNumber), Timestamp(*finalWatermark)}};
     }
     return {};
 }

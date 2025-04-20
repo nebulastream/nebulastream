@@ -300,7 +300,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                 if (runningQuery)
                 {
                     const auto queryStatus = worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus;
-                    if (queryStatus == Runtime::Execution::QueryStatus::Stopped or queryStatus == Runtime::Execution::QueryStatus::Failed)
+                    if (queryStatus == QueryStatus::Stopped or queryStatus == Runtime::Execution::QueryStatus::Failed)
                     {
                         worker.unregisterQuery(QueryId(runningQuery->queryId));
                         runningQuery->queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();

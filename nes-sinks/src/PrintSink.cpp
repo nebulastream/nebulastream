@@ -47,15 +47,15 @@ PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
     }
 }
-void PrintSink::start(Runtime::Execution::PipelineExecutionContext&)
+void PrintSink::start(PipelineExecutionContext&)
 {
 }
 
-void PrintSink::stop(Runtime::Execution::PipelineExecutionContext&)
+void PrintSink::stop(PipelineExecutionContext&)
 {
 }
 
-void PrintSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
+void PrintSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
 

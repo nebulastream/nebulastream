@@ -21,7 +21,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 class PipelineExecutionContext
 {
