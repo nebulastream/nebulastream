@@ -19,5 +19,4 @@ add_source_files(nes-optimizer-legacy
         LogicalSourceExpansionRule.cpp
         PredicateReorderingRule.cpp
         ProjectBeforeUnionOperatorRule.cpp
-        RenameSourceToProjectOperatorRule.cpp
 )
