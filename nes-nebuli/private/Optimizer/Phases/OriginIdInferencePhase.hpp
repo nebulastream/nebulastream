@@ -14,14 +14,9 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
-#include <Operators/Operator.hpp>
-
 namespace NES
 {
-class QueryPlan;
-class OriginIdAssignmentOperator;
+class LogicalPlan;
 namespace LegacyOptimizer
 {
 
@@ -40,20 +35,7 @@ namespace LegacyOptimizer
 class OriginIdInferencePhase
 {
 public:
-    static std::shared_ptr<OriginIdInferencePhase> create();
-    virtual ~OriginIdInferencePhase() = default;
-
-    /// @brief Apply the rule to the Query plan
-    /// @param std::shared_ptr<QueryPlan> : The original query plan
-    /// @return The updated query plan
-    QueryPlan execute(QueryPlan queryPlan);
-
-private:
-    explicit OriginIdInferencePhase();
-
-    void performInference(
-        const std::vector<OriginIdAssignmentOperator*>& originIdAssignmentOperator,
-        const std::vector<Operator*>& rootOperators);
+    static void apply(LogicalPlan& queryPlan);
 };
 }
 }

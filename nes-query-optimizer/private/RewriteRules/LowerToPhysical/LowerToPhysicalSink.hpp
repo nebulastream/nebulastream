@@ -19,7 +19,6 @@
 #include <Functions/FunctionProvider.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Plans/QueryPlan.hpp>
 
 namespace NES::Optimizer
 {

@@ -17,9 +17,9 @@
 #include <vector>
 #include <Plans/QueryPlan.hpp>
 #include <ErrorHandling.hpp>
-#include <RewriteRuleRegistry.hpp>
-#include <Operators/LogicalOperator.hpp>
 #include <PhysicalPlan.hpp>
+#include <RewriteRuleRegistry.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {

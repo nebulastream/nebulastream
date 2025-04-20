@@ -21,6 +21,8 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
 
 namespace NES
 {

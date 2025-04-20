@@ -14,45 +14,20 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cstddef>
 #include <memory>
-#include <numeric>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Functions/FieldAccessPhysicalFunction.hpp>
-#include <Functions/FunctionProvider.hpp>
-#include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <Streaming/Aggregation/AggregationBuildPhysicalOperator.hpp>
-#include <Streaming/Aggregation/AggregationProbePhysicalOperator.hpp>
-#include <Streaming/Aggregation/Function/AvgAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/CountAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/MaxAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/MedianAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/MinAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/SumAggregationFunction.hpp>
-#include <Streaming/Aggregation/WindowAggregation.hpp>
-#include <Traits/QueryForSubtree.hpp>
-#include <Traits/TraitSet.hpp>
-#include <WindowTypes/Measures/TimeCharacteristic.hpp>
-#include <WindowTypes/Types/TimeBasedWindowType.hpp>
-#include <MapPhysicalOperator.hpp>
-#include <magic_enum.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Functions/FunctionProvider.hpp>
+#include <SourcePhysicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Optimizer
 {
 
-struct LowerToPhysicalWindowedAggregation : AbstractLowerToPhysicalRewriteRule<QueryForSubtree, Operator>
+struct LowerToPhysicalWindowedAggregation : AbstractRewriteRule
 {
     LowerToPhysicalWindowedAggregation(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {}
-    std::vector<PhysicalOperatorWithSchema> applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>*) override;
+    RewriteRuleResult apply(LogicalOperator logicalOperator) override;
     const NES::Configurations::QueryOptimizerConfiguration& conf;
 };
 

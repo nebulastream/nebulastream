@@ -32,7 +32,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <folly/MPMCQueue.h>
-#include <Plans/QueryPlan.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SystestGrpc.hpp>
@@ -41,6 +40,7 @@
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Systest
 {

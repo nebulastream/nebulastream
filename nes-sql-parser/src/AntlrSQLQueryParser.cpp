@@ -21,11 +21,16 @@
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <AntlrSQLParser.h>
+#include <CommonTokenStream.h>
+#include <Exceptions.h>
+#include <BailErrorStrategy.h>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::AntlrSQLQueryParser
 {
 
-std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view queryString)
+LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
 {
     try
     {
@@ -39,7 +44,7 @@ std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view 
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
         auto queryPlan = queryPlanCreator.getQueryPlan();
-        NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan->toString());
+        NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan.toString());
         return queryPlan;
     }
     catch (antlr4::RuntimeException antlrException)

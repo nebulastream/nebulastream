@@ -16,13 +16,13 @@
 #include <atomic>
 #include <chrono>
 #include <optional>
-#include <Plans/QueryPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorker.hpp>
 #include <StatisticPrinter.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {

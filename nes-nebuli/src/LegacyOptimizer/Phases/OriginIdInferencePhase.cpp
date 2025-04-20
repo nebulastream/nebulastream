@@ -17,9 +17,9 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/OriginIdTrait.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::LegacyOptimizer
 {
@@ -68,7 +68,7 @@ void inferInputOrigins(LogicalOperator& logicalOperator)
     }
 }
 
-void OriginIdInferencePhase::apply(QueryPlan& queryPlan)
+void OriginIdInferencePhase::apply(LogicalPlan& queryPlan)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
