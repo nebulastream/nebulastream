@@ -20,7 +20,6 @@ add_source_files(nes-logical-operators
         RenameSourceLogicalOperator.cpp
         BinaryLogicalOperator.cpp
         UnaryLogicalOperator.cpp
-        LimitLogicalOperator.cpp
 )
 
 add_subdirectory(Sinks)

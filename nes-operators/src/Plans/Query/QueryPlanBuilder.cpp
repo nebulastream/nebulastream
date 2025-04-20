@@ -23,7 +23,6 @@
 #include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
 #include <Functions/RenameLogicalFunction.hpp>
-#include <Operators/LogicalOperators/LimitLogicalOperator.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
@@ -87,14 +86,6 @@ QueryPlanBuilder::addSelection(const std::shared_ptr<LogicalFunction>& selection
         throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
     }
     const std::shared_ptr<Operator> op = std::make_shared<SelectionLogicalOperator>(selectionFunction, getNextOperatorId());
-    queryPlan->appendOperatorAsNewRoot(op);
-    return queryPlan;
-}
-
-std::shared_ptr<QueryPlan> QueryPlanBuilder::addLimit(const uint64_t limit, std::shared_ptr<QueryPlan> queryPlan)
-{
-    NES_TRACE("QueryPlanBuilder: add limit operator to query plan");
-    const std::shared_ptr<Operator> op = std::make_shared<LimitLogicalOperator>(limit, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

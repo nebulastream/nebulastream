@@ -19,8 +19,6 @@
 #include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
 #include <Functions/FunctionSerializationUtil.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LimitLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
@@ -111,11 +109,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     {
         /// serialize streaming join operator
         serializeJoinOperator(*NES::Util::as<JoinLogicalOperator>(operatorNode), serializedOperator);
-    }
-    else if (NES::Util::instanceOf<LimitLogicalOperator>(operatorNode))
-    {
-        /// serialize limit operator
-        serializeLimitOperator(*NES::Util::as<LimitLogicalOperator>(operatorNode), serializedOperator);
     }
     else if (NES::Util::instanceOf<WatermarkAssignerLogicalOperator>(operatorNode))
     {
@@ -276,10 +269,6 @@ deserializeWatermarkAssignerOperator(const SerializableOperator_WatermarkStrateg
 {
     const auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(watermarkStrategyDetails);
     return std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, getNextOperatorId());
-}
-std::shared_ptr<UnaryLogicalOperator> deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails)
-{
-    return std::make_shared<LimitLogicalOperator>(limitDetails.limit(), getNextOperatorId());
 }
 
 std::shared_ptr<UnaryLogicalOperator> deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails)
@@ -583,14 +572,6 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         auto serializedWatermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
         details.UnpackTo(&serializedWatermarkStrategyDetails);
         operatorNode = deserializeWatermarkAssignerOperator(serializedWatermarkStrategyDetails);
-    }
-    else if (details.Is<SerializableOperator_LimitDetails>())
-    {
-        /// de-serialize limit operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to limit operator");
-        auto serializedLimitDetails = SerializableOperator_LimitDetails();
-        details.UnpackTo(&serializedLimitDetails);
-        operatorNode = deserializeLimitOperator(serializedLimitDetails);
     }
     else if (details.Is<SerializableOperator_RenameDetails>())
     {
@@ -1065,15 +1046,6 @@ std::unique_ptr<Sinks::SinkDescriptor> OperatorSerializationUtil::deserializeSin
         = std::make_unique<Sinks::SinkDescriptor>(std::move(sinkType), std::move(sinkDescriptorConfig), std::move(addTimestamp));
     sinkDescriptor->schema = std::move(schema);
     return sinkDescriptor;
-}
-
-void OperatorSerializationUtil::serializeLimitOperator(const LimitLogicalOperator& limitOperator, SerializableOperator& serializedOperator)
-{
-    NES_TRACE("OperatorSerializationUtil:: serialize limit operator ");
-
-    auto limitDetails = SerializableOperator_LimitDetails();
-    limitDetails.set_limit(limitOperator.getLimit());
-    serializedOperator.mutable_details()->PackFrom(limitDetails);
 }
 
 void OperatorSerializationUtil::serializeWatermarkAssignerOperator(
