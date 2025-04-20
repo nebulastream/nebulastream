@@ -59,7 +59,6 @@ private:
     LogicalFunction onField;
     Windowing::TimeUnit unit;
 
-    Optimizer::TraitSet traitSet;
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
 };

@@ -68,10 +68,10 @@ SerializableOperator SinkLogicalOperator::serialize() const
     const auto serializedSinkDescriptor
         = new SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor();
     SchemaSerializationUtil::serializeSchema(std::move(this->outputSchema), serializedSinkDescriptor->mutable_sinkschema());
-    serializedSinkDescriptor->set_sinktype(sinkDescriptor.sinkType);
-    serializedSinkDescriptor->set_addtimestamp(sinkDescriptor.addTimestamp);
+    serializedSinkDescriptor->set_sinktype(sinkDescriptor->sinkType);
+    serializedSinkDescriptor->set_addtimestamp(sinkDescriptor->addTimestamp);
     /// Iterate over SinkDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : sinkDescriptor.config)
+    for (const auto& [key, value] : sinkDescriptor->config)
     {
         auto* kv = serializedSinkDescriptor->mutable_config();
         kv->emplace(key, descriptorConfigTypeToProto(value));

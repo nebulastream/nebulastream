@@ -27,7 +27,7 @@ namespace NES
 {
 
 JoinLogicalOperator::JoinLogicalOperator(LogicalFunction joinFunction,
-                                         std::unique_ptr<Windowing::WindowType> windowType,
+                                         std::shared_ptr<Windowing::WindowType> windowType,
                                          uint64_t numberOfInputEdgesLeft,
                                          uint64_t numberOfInputEdgesRight,
                                          JoinType joinType)

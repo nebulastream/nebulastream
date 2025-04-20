@@ -31,10 +31,11 @@ namespace NES
 class SourceDescriptorLogicalOperator final : public LogicalOperatorConcept
 {
 public:
-    explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor);
+    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
     [[nodiscard]] std::string_view getName() const noexcept override;
 
-    [[nodiscard]] Sources::SourceDescriptor getSourceDescriptor() const;
+    [[nodiscard]] std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
+    [[nodiscard]] Sources::SourceDescriptor& getSourceDescriptorRef() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     //bool inferSchema();
@@ -48,7 +49,7 @@ public:
     protected:
     [[nodiscard]] std::string toString() const override;
 
-    virtual std::vector<Operator> getChildren() const override
+    virtual std::vector<LogicalOperator> getChildren() const override
     {
         return children;
     }
@@ -75,7 +76,7 @@ private:
     Schema outputSchema;
 
     static constexpr std::string_view NAME = "SourceDescriptor";
-    const Sources::SourceDescriptor sourceDescriptor;
+    const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
 };
 
 }

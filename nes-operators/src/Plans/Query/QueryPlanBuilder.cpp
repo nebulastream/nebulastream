@@ -85,9 +85,9 @@ QueryPlanBuilder::addMap(LogicalFunction mapFunction, QueryPlan queryPlan)
 
 QueryPlan QueryPlanBuilder::addWindowAggregation(
     QueryPlan queryPlan,
-    std::unique_ptr<Windowing::WindowType> windowType,
-    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggs,
-    std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys)
+    std::shared_ptr<Windowing::WindowType> windowType,
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs,
+    std::vector<FieldAccessLogicalFunction> onKeys)
 {
     PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");
 

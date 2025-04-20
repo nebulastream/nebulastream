@@ -39,10 +39,9 @@ LogicalFunction deserializeUnaryFunction(const SerializableFunction& serializedF
         functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
     }
 
-    if (auto function = UnaryLogicalFunctionRegistry::instance().create(functionType, UnaryLogicalFunctionRegistryArguments(functionDescriptorConfig)))
+    if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
     {
-        function.value()->setChild(std::move(child));
-        return std::move(function.value());
+        return function.value().withChildren({child});
     }
     throw CannotDeserialize("Binary Logical Function: {}", serializedFunction.DebugString());
 }
@@ -61,12 +60,9 @@ LogicalFunction deserializeBinaryFunction(const SerializableFunction& serialized
         functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
     }
 
-    if (auto function
-        = BinaryLogicalFunctionRegistry::instance().create(functionType, BinaryLogicalFunctionRegistryArguments(functionDescriptorConfig)))
+    if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
     {
-        function.value()->setLeftChild(std::move(leftChild));
-        function.value()->setRightChild(std::move(rightChild));
-        return std::move(function.value());
+        return function.value().withChildren({leftChild, rightChild});
     }
     throw CannotDeserialize("Binary Logical Function: {}", serializedFunction.DebugString());
 }

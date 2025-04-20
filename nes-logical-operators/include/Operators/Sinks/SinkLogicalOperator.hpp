@@ -35,7 +35,7 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     virtual void inferInputOrigins(){};
 
     std::string sinkName;
-    Sinks::SinkDescriptor sinkDescriptor;
+    std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 

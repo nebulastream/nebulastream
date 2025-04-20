@@ -24,7 +24,7 @@
 namespace NES
 {
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    Sources::SourceDescriptor sourceDescriptor) : sourceDescriptor(std::move(sourceDescriptor))
+    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor) : sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 
@@ -48,9 +48,14 @@ std::string SourceDescriptorLogicalOperator::toString() const
     return ss.str();
 }
 
-Sources::SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
+std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getSourceDescriptor() const
 {
     return sourceDescriptor;
+}
+
+Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const
+{
+    return *sourceDescriptor;
 }
 
 [[nodiscard]] SerializableOperator SourceDescriptorLogicalOperator::serialize() const
@@ -62,19 +67,19 @@ Sources::SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor()
     const auto serializedSourceDescriptor
         = new SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor();
 
-    SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, serializedSourceDescriptor->mutable_sourceschema());
-    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.logicalSourceName);
-    serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
+    SchemaSerializationUtil::serializeSchema(sourceDescriptor->schema, serializedSourceDescriptor->mutable_sourceschema());
+    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor->logicalSourceName);
+    serializedSourceDescriptor->set_sourcetype(sourceDescriptor->sourceType);
 
     /// Serialize parser config.
     auto* const serializedParserConfig = ParserConfig().New();
-    serializedParserConfig->set_type(sourceDescriptor.parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(sourceDescriptor.parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(sourceDescriptor.parserConfig.fieldDelimiter);
+    serializedParserConfig->set_type(sourceDescriptor->parserConfig.parserType);
+    serializedParserConfig->set_tupledelimiter(sourceDescriptor->parserConfig.tupleDelimiter);
+    serializedParserConfig->set_fielddelimiter(sourceDescriptor->parserConfig.fieldDelimiter);
     serializedSourceDescriptor->set_allocated_parserconfig(serializedParserConfig);
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : sourceDescriptor.config)
+    for (const auto& [key, value] : sourceDescriptor->config)
     {
         auto* kv = serializedSourceDescriptor->mutable_config();
         kv->emplace(key, descriptorConfigTypeToProto(value));

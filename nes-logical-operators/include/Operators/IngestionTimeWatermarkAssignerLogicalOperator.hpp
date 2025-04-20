@@ -57,7 +57,6 @@ public:
     Schema getOutputSchema() const override { return outputSchema; };
 
 protected:
-    Optimizer::TraitSet traitSet;
     std::vector<LogicalOperator> children;
     Schema inputSchema;
     Schema outputSchema;
