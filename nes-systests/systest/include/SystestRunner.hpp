@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -34,7 +35,7 @@ struct RunningQuery;
 
 struct LoadedQueryPlan
 {
-    std::shared_ptr<DecomposedQueryPlan> queryPlan;
+    std::shared_ptr<QueryPlan> queryPlan;
     std::string queryName;
     SystestParser::Schema sinkSchema;
 };

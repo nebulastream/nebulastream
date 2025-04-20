@@ -113,7 +113,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
     const std::string queryInputFile = fmt::format("{}.bin", queryName);
     IntegrationTestUtil::removeFile(testSpecificResultFileName);
 
-    SerializableDecomposedQueryPlan queryPlan;
+    SerializableQueryPlan queryPlan;
     if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile))
     {
         GTEST_SKIP();

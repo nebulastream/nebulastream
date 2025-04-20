@@ -199,7 +199,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     }
 }
 
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
+std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
@@ -249,10 +249,10 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
-    return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
+    return std::make_unique<QueryPlan>(INITIAL<QueryId>, query->getRootOperators());
 }
 
-std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
+std::unique_ptr<QueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -271,7 +271,7 @@ SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) 
 {
 }
 
-std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
+std::unique_ptr<QueryPlan> loadFrom(std::istream& inputStream)
 {
     try
     {

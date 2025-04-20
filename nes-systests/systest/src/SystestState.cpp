@@ -59,7 +59,7 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
 {
     auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
     uint64_t queryIdInFile = 0;
-    for (const auto& [decomposedPlan, queryDefinition, sinkSchema] : loadedPlans)
+    for (const auto& [queryPlan, queryDefinition, sinkSchema] : loadedPlans)
     {
         if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
         {
@@ -67,13 +67,13 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
                      | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
             {
                 testfile.queries.emplace_back(
-                    testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
+                    testfile.name(), queryDefinition, testfile.file, queryPlan, queryIdInFile, workingDir, sinkSchema);
             }
         }
         else
         {
             testfile.queries.emplace_back(
-                testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
+                testfile.name(), queryDefinition, testfile.file, queryPlan, queryIdInFile, workingDir, sinkSchema);
         }
         ++queryIdInFile;
     }

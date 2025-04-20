@@ -20,8 +20,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <Plans/QueryPlan.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::CLI
 {
@@ -64,7 +64,7 @@ struct QueryConfig
     std::vector<PhysicalSource> physical;
 };
 
-std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& file);
-std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream);
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
+std::unique_ptr<QueryPlan> loadFromYAMLFile(const std::filesystem::path& file);
+std::unique_ptr<QueryPlan> loadFrom(std::istream& inputStream);
+std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
 }

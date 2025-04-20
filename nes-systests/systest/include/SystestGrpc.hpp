@@ -14,7 +14,8 @@
 
 #pragma once
 
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/QueryPlan.hpp>
+#include <grpc++/create_channel.h>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 /// TODO #460: We should use on GRPC client class for nebuli and systests
@@ -24,7 +25,7 @@ public:
     explicit GRPCClient(std::shared_ptr<grpc::Channel> channel);
     std::unique_ptr<WorkerRPCService::Stub> stub;
 
-    size_t registerQuery(const NES::DecomposedQueryPlan& queryPlan) const;
+    size_t registerQuery(const NES::QueryPlan& queryPlan) const;
     void start(size_t queryId) const;
     QuerySummaryReply status(size_t queryId) const;
     void unregister(size_t queryId) const;
