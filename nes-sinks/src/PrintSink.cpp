@@ -32,6 +32,8 @@
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
+#include <SinkRegistry.hpp>
+#include <SinkValidationRegistry.hpp>
 
 namespace NES::Sinks
 {

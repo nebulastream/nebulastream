@@ -15,12 +15,11 @@
 
 #include <memory>
 #include <vector>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Plans/PipelineQueryPlan.hpp>
 #include <ExecutablePipelineStage.hpp>
-#include <options.hpp>
+#include <nautilus/Engine.hpp>
 
 namespace NES
 {

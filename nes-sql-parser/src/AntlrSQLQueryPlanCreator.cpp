@@ -28,18 +28,17 @@
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/AndBinaryLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/GreaterBinaryLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/GreaterEqualsBinaryLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/LessBinaryLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/LessEqualsBinaryLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
-#include <Functions/LogicalFunctions/OrBinaryLogicalFunction.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/AndLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/GreaterLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/LessEqualsLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/LessLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
+#include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
@@ -51,9 +50,10 @@
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Integer.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalJoinDescriptor.hpp>
 
 namespace NES::Parsers
 {

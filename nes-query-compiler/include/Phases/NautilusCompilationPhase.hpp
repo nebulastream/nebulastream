@@ -13,7 +13,6 @@
 */
 #pragma once
 #include <functional>
-#include <Plans/OperatorPipeline.hpp>
 #include <Plans/PipelineQueryPlan.hpp>
 #include <QueryCompilerConfiguration.hpp>
 

@@ -23,7 +23,6 @@
 #include <utility>
 #include <vector>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
 
