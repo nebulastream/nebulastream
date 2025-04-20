@@ -17,15 +17,14 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
-#include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
+#include <ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 namespace NES::Functions
 {
-
-ExecutableFunctionConstantValueVariableSize::ExecutableFunctionConstantValueVariableSize(const int8_t* value, const size_t size)
+ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size)
     : sizeIncludingLength(size + sizeof(uint32_t)), data(std::make_unique<int8_t[]>(sizeIncludingLength))
 {
     /// We are copying the data into the function's memory. This is necessary as the data might be destroyed after the function is created.
@@ -36,7 +35,13 @@ ExecutableFunctionConstantValueVariableSize::ExecutableFunctionConstantValueVari
     std::memcpy(data.get() + sizeof(uint32_t), value, sizeIncludingLength - sizeof(uint32_t));
 }
 
-VarVal ExecutableFunctionConstantValueVariableSize::execute(const Record&, ArenaRef&) const
+ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const ConstantValueVariableSizePhysicalFunction& other)
+: sizeIncludingLength(other.sizeIncludingLength) {
+    data = std::make_unique<int8_t[]>(sizeIncludingLength);
+    std::memcpy(data.get(), other.data.get(), sizeIncludingLength);
+}
+
+VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const
 {
     VariableSizedData result(data.get());
     return result;
