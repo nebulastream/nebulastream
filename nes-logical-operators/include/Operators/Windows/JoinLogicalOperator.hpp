@@ -21,7 +21,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
-#include <Traits/OriginIdTrait.hpp>
+#include <Traits/OriginIdAssignerTrait.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES

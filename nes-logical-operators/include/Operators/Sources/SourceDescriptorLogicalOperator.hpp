@@ -17,7 +17,8 @@
 #include <string>
 #include <string_view>
 #include <Operators/LogicalOperator.hpp>
-#include <Traits/OriginIdTrait.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Traits/OriginIdAssignerTrait.hpp>
 
 namespace NES
 {
@@ -65,7 +66,6 @@ private:
     Optimizer::OriginIdAssignerTrait originIdTrait;
 
     /// LogicalOperatorConcept member
-    Optimizer::OriginIdTrait originIdTrait;
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
     std::vector<std::vector<OriginId>> inputOriginIds;
