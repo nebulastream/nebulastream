@@ -21,7 +21,7 @@
 
 namespace NES
 {
-struct Operator;
+struct LogicalOperator;
 }
 
 namespace NES::Optimizer
@@ -54,16 +54,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] std::string toString() const { return self->toString(); }
-
-    [[nodiscard]] std::vector<Operator> getChildren() const { return self->getChildren(); }
-
-    void setChildren(std::vector<Operator> children) { return self->setChildren(children); }
-
-    OperatorId getId() const { return self->id; }
-
 private:
-    struct Concept : OperatorConcept
+    struct Concept : TraitConcept
     {
         [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
         [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
@@ -79,10 +71,6 @@ private:
 
         [[nodiscard]] std::string toString() const override { return data.toString(); }
 
-        [[nodiscard]] std::vector<Operator> getChildren() const override { return data.getChildren(); }
-
-        void setChildren(std::vector<Operator> children) { data.setChildren(children); }
-
         [[nodiscard]] bool equals(const Concept& other) const override
         {
             if (auto p = dynamic_cast<const Model*>(&other))
@@ -95,7 +83,6 @@ private:
 
     std::unique_ptr<Concept> self;
 };
-
 
 using TraitSet = std::set<std::unique_ptr<Trait>>;
 

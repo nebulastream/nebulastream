@@ -22,7 +22,6 @@
 #include <DefaultScanPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <Pipeline.hpp>
-#include <PipelinedQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {
