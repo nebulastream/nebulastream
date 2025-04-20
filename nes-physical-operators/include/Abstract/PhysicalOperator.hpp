@@ -17,7 +17,6 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Plans/Operator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
