@@ -21,8 +21,8 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
+#include <Traits/OriginIdAssignerTrait.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
-#include <Traits/OriginIdTrait.hpp>
 
 namespace NES
 {
@@ -32,6 +32,7 @@ class WindowOperator : public LogicalOperatorConcept
 public:
     WindowOperator(OriginId originId);
     WindowOperator();
+
     std::string_view getName() const noexcept override;
 
     [[nodiscard]] bool isKeyed() const;
@@ -49,8 +50,6 @@ public:
 
     [[nodiscard]] OriginId getOriginId() const;
 
-    Optimizer::OriginIdTrait originIds;
-
 protected:
     static constexpr std::string_view NAME = "Window";
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
@@ -58,6 +57,7 @@ protected:
     std::vector<FieldAccessLogicalFunction> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
+    Optimizer::OriginIdAssignerTrait originIds;
 };
 
 }
