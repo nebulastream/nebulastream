@@ -14,7 +14,7 @@
 
 #include <Execution/Operators/SliceStore/Slice.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 
 Slice::Slice(const SliceStart sliceStart, const SliceEnd sliceEnd) : sliceStart(sliceStart), sliceEnd(sliceEnd)

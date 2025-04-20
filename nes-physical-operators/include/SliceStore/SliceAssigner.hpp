@@ -20,7 +20,7 @@
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 /// @brief The SliceAssigner assigner determines the start and end time stamp of a slice for

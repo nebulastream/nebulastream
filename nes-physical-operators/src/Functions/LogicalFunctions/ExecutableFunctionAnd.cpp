@@ -15,9 +15,9 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <Execution/Functions/Function.hpp>
+#include <Execution/Functions/LogicalFunctions/ExecutableFunctionAnd.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Functions/Comparison/ExecutableFunctionLess.hpp>
-#include <Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
@@ -27,24 +27,24 @@
 namespace NES::Functions
 {
 
-VarVal ExecutableFunctionLess::execute(const Record& record, ArenaRef& arena) const
+VarVal ExecutableFunctionAnd::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftExecutableFunction->execute(record, arena);
     const auto rightValue = rightExecutableFunction->execute(record, arena);
-    return leftValue < rightValue;
+    return leftValue && rightValue;
 }
 
-ExecutableFunctionLess::ExecutableFunctionLess(
+ExecutableFunctionAnd::ExecutableFunctionAnd(
     std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
     : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
-ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterLessExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+ExecutableFunctionRegistryReturnType
+ExecutableFunctionGeneratedRegistrar::RegisterAndExecutableFunction(ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
 {
-    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "Less function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionLess>(
+    PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionAnd>(
         std::move(executableFunctionRegistryArguments.childFunctions[0]), std::move(executableFunctionRegistryArguments.childFunctions[1]));
 }
 

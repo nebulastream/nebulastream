@@ -11,26 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
-
-#include <memory>
-#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
-namespace NES::Runtime::Execution::Functions
+namespace NES::Functions
 {
-
-class ExecutableFunctionAnd final : public Function
+using namespace Nautilus;
+class Function
 {
 public:
-    ExecutableFunctionAnd(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
-
-private:
-    const std::unique_ptr<Function> leftExecutableFunction;
-    const std::unique_ptr<Function> rightExecutableFunction;
+    Function() = default;
+    [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
+    virtual ~Function() = default;
 };
+
 }

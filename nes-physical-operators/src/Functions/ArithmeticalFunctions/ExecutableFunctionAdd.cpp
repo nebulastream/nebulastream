@@ -21,7 +21,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
 
-namespace NES::Runtime::Execution::Functions
+namespace NES::Functions
 {
 
 VarVal ExecutableFunctionAdd::execute(const Record& record, ArenaRef& arena) const

@@ -20,19 +20,17 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
-namespace NES::Runtime::Execution::Functions
+namespace NES::Functions
 {
 
-/// Performs leftExecutableFunction + rightExecutableFunction
-class ExecutableFunctionAdd final : public Function
+class ExecutableFunctionAnd final : public Function
 {
 public:
-    ExecutableFunctionAdd(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
+    ExecutableFunctionAnd(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
     const std::unique_ptr<Function> leftExecutableFunction;
     const std::unique_ptr<Function> rightExecutableFunction;
 };
-
 }
