@@ -32,8 +32,8 @@ class WindowAggregation : public PhysicalOperatorConcept
 {
 public:
     WindowAggregation(
-        std::vector<std::unique_ptr<AggregationFunction>> aggregationFunctions,
-        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
+        std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions,
+        std::shared_ptr<Nautilus::Interface::HashFunction> hashFunction,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues,
         const uint64_t entriesPerPage,
@@ -52,8 +52,8 @@ public:
             "The number of aggregation functions must match the number of field values");
     }
 
-    WindowAggregation(const std::unique_ptr<WindowAggregation>& other) noexcept
-        : aggregationFunctions(copyAggregationFunctions(other->aggregationFunctions))
+    WindowAggregation(const std::shared_ptr<WindowAggregation>& other) noexcept
+        : aggregationFunctions(other->aggregationFunctions)
         , hashFunction(other->hashFunction->clone())
         , fieldKeys(other->fieldKeys)
         , fieldValues(other->fieldValues)
@@ -63,21 +63,9 @@ public:
     }
 
 protected:
-    static std::vector<std::unique_ptr<AggregationFunction>>
-    copyAggregationFunctions(const std::vector<std::unique_ptr<AggregationFunction>>& source)
-    {
-        std::vector<std::unique_ptr<AggregationFunction>> copied;
-        copied.reserve(source.size());
-        for (const auto& func : source)
-        {
-            copied.push_back(func->clone());
-        }
-        return copied;
-    }
-
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
-    std::vector<std::unique_ptr<AggregationFunction>> aggregationFunctions;
-    std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
+    std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
+    std::shared_ptr<Nautilus::Interface::HashFunction> hashFunction;
     std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys;
     std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues;
     uint64_t entriesPerPage;

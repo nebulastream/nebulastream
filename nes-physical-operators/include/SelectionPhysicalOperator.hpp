@@ -27,7 +27,9 @@ class SelectionPhysicalOperator final : public PhysicalOperatorConcept
 public:
     explicit SelectionPhysicalOperator(Functions::PhysicalFunction function) : function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
-    [[nodiscard]] std::string toString() const override { return typeid(this).name(); }
+
+    std::optional<PhysicalOperator> getChild() const override { return child; }
+    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 private:
     const Functions::PhysicalFunction function;
