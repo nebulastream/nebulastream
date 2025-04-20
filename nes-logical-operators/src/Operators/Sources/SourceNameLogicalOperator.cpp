@@ -42,11 +42,13 @@ bool SourceNameLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
     }
     return false;
 }
-bool SourceNameLogicalOperator::inferSchema()
+
+LogicalOperator SourceNameLogicalOperator::withInferredSchema(Schema) const
 {
-    inputSchema = schema;
-    outputSchema = schema;
-    return true;
+    auto copy = *this;
+    copy.inputSchema = schema;
+    copy.outputSchema = schema;
+    return copy;
 }
 
 std::string SourceNameLogicalOperator::toString() const

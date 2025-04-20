@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <Configurations/Descriptor.hpp>
@@ -19,7 +20,6 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -41,48 +41,49 @@ std::string_view MapLogicalOperator::getName() const noexcept
 
 const FieldAssignmentLogicalFunction& MapLogicalOperator::getMapFunction() const
 {
-    return mapFunction.get<FieldAssignmentLogicalFunction>();
+    return mapFunction;
 }
 
 bool MapLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    auto other = dynamic_cast<const MapLogicalOperator*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const MapLogicalOperator*>(&rhs))
     {
         return this->mapFunction == other->mapFunction;
     }
     return false;
 };
 
-/*
-bool MapLogicalOperator::inferSchema()
+LogicalOperator MapLogicalOperator::withInferredSchema(Schema inputSchema) const
 {
-    /// infer the default input and output schema
-    if (!UnaryLogicalOperator::inferSchema())
-    {
-        return false;
-    }
-
+    auto copy = *this;
     /// use the default input schema to calculate the out schema of this operator.
-    mapFunction->inferStamp(getInputSchema());
+    copy.mapFunction = mapFunction.withInferredStamp(inputSchema).get<FieldAssignmentLogicalFunction>();
 
-    if (std::string fieldName = mapFunction->getField().getFieldName(); outputSchema.getFieldByName(fieldName))
+    copy.inputSchema = inputSchema;
+    copy.outputSchema = inputSchema;
+
+    if (std::string fieldName = copy.mapFunction.getField().getFieldName(); copy.outputSchema.getFieldByName(fieldName))
     {
         /// The assigned field is part of the current schema.
         /// Thus we check if it has the correct type.
-        NES_TRACE("MAP Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
-        outputSchema.replaceField(fieldName, mapFunction->getField().getStamp().clone());
+        NES_TRACE("The field {} is already in the schema, so we updated its type.", fieldName);
+        copy.outputSchema.replaceField(fieldName, copy.mapFunction.getField().getStamp());
     }
     else
     {
         /// The assigned field is not part of the current schema.
         /// Thus we extend the schema by the new attribute.
-        NES_TRACE("MAP Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
-        outputSchema.addField(fieldName, mapFunction->getField().getStamp().clone());
+        NES_TRACE("The field {} is not part of the schema, so we added it.", fieldName);
+        copy.outputSchema.addField(fieldName, copy.mapFunction.getField().getStamp());
     }
-    return true;
+
+    std::vector<LogicalOperator> newChildren;
+    for (const auto& child : children)
+    {
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
+    }
+    return copy.withChildren(newChildren);
 }
- */
 
 Optimizer::TraitSet MapLogicalOperator::getTraitSet() const
 {
@@ -134,7 +135,7 @@ std::vector<LogicalOperator> MapLogicalOperator::getChildren() const
 std::string MapLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "MAP(opId: " << id << ": predicate: " << mapFunction << ")";
+    ss << "MAP(opId: " << id << ": predicate: " << mapFunction.toString() << ")";
     return ss.str();
 }
 

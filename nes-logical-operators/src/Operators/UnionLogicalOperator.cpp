@@ -50,25 +50,39 @@ std::string UnionLogicalOperator::toString() const
     return ss.str();
 }
 
-/*
-bool UnionLogicalOperator::inferSchema()
+LogicalOperator UnionLogicalOperator::withInferredSchema(Schema) const
 {
-    if (!BinaryLogicalOperator::inferSchema())
+    auto copy = *this;
+    std::vector<Schema> distinctSchemas;
+
+    /// Identify different type of schemas from children operators
+    for (const auto& child : children)
     {
-        return false;
+        auto childOutputSchema = child.getInputSchemas()[0];
+        auto found = std::find_if(
+            distinctSchemas.begin(),
+            distinctSchemas.end(),
+            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
+        if (found == distinctSchemas.end())
+        {
+            distinctSchemas.push_back(childOutputSchema);
+        }
     }
 
-    leftInputSchema.clear();
-    rightInputSchema.clear();
+    ///validate that only two different type of schema were present
+    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
+
+    copy.leftInputSchema.clear();
+    copy.rightInputSchema.clear();
     if (distinctSchemas.size() == 1)
     {
-        leftInputSchema.copyFields(distinctSchemas[0]);
-        rightInputSchema.copyFields(distinctSchemas[0]);
+        copy.leftInputSchema.copyFields(distinctSchemas[0]);
+        copy.rightInputSchema.copyFields(distinctSchemas[0]);
     }
     else
     {
-        leftInputSchema.copyFields(distinctSchemas[0]);
-        rightInputSchema.copyFields(distinctSchemas[1]);
+        copy.leftInputSchema.copyFields(distinctSchemas[0]);
+        copy.rightInputSchema.copyFields(distinctSchemas[1]);
     }
 
     if (!(leftInputSchema == rightInputSchema))
@@ -85,27 +99,18 @@ bool UnionLogicalOperator::inferSchema()
     }
 
     ///Copy the schema of left input
-    outputSchema.clear();
-    outputSchema.copyFields(leftInputSchema);
-    outputSchema.setLayoutType(leftInputSchema.getLayoutType());
-    return true;
-}
+    copy.outputSchema.clear();
+    copy.outputSchema.copyFields(leftInputSchema);
+    copy.outputSchema.setLayoutType(leftInputSchema.getLayoutType());
 
-
-void UnionLogicalOperator::inferInputOrigins()
-{
-    /// in the default case we collect all input origins from the children/upstream operators
-    std::vector<OriginId> combinedInputOriginIds;
-    for (auto& child : this->children)
+    std::vector<LogicalOperator> newChildren;
+    for (auto& child : children)
     {
-        auto childOperator = dynamic_cast<LogicalOperator*>(child.get());
-        childOperator->inferInputOrigins();
-        auto childInputOriginIds = childOperator->getOutputOriginIds();
-        combinedInputOriginIds.insert(combinedInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
     }
-    this->leftInputOriginIds = combinedInputOriginIds;
+    copy.children = newChildren;
+    return copy;
 }
-*/
 
 Optimizer::TraitSet UnionLogicalOperator::getTraitSet() const
 {

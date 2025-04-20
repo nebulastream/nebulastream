@@ -61,13 +61,29 @@ std::string JoinLogicalOperator::toString() const
     return fmt::format("Join({}, windowType = {}, joinFunction = {})", id, getWindowType().toString(), getJoinFunction());
 }
 
-/*
-bool JoinLogicalOperator::inferSchema()
+
+LogicalOperator JoinLogicalOperator::withInferredSchema(Schema) const
 {
-    if (!BinaryLogicalOperator::inferSchema())
+    auto copy = *this;
+
+    std::vector<Schema> distinctSchemas;
+
+    /// Identify different type of schemas from children operators
+    for (const auto& child : children)
     {
-        return false;
+        auto childOutputSchema = child.getInputSchemas()[0];
+        auto found = std::find_if(
+            distinctSchemas.begin(),
+            distinctSchemas.end(),
+            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
+        if (found == distinctSchemas.end())
+        {
+            distinctSchemas.push_back(childOutputSchema);
+        }
     }
+
+    ///validate that only two different type of schema were present
+    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
 
     ///validate that only two different type of schema were present
     if (distinctSchemas.size() != 2)
@@ -76,29 +92,16 @@ bool JoinLogicalOperator::inferSchema()
     }
 
     ///reset left and right schema
-    leftInputSchema.clear();
-    rightInputSchema.clear();
+    copy.leftSourceSchema.clear();
+    copy.rightSourceSchema.clear();
 
-    /// Finds the join schema that contains the joinKey and copies the fields to the input schema, if found
-    auto findSchemaInDistinctSchemas = [&](FieldAccessLogicalFunction& joinKey, Schema& inputSchema)
+    std::vector<LogicalOperator> newChildren;
+    for (auto& child : children)
     {
-        for (const auto& distinctSchema : distinctSchemas)
-        {
-            const auto& joinKeyName = joinKey.getFieldName();
-            if (auto attributeField = distinctSchema.getFieldByName(joinKeyName); attributeField.has_value())
-            {
-                /// If we have not copied the fields from the schema, copy them for the first time
-                if (inputSchema.getSchemaSizeInBytes() == 0)
-                {
-                    inputSchema.copyFields(distinctSchema);
-                }
-                joinKey = joinKey.withInferredStamp(inputSchema).get<FieldAccessLogicalFunction>();
-                return true;
-            }
-        }
-        return false;
-    };
-
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
+    }
+    return copy.withChildren(newChildren);
+    /*
     NES_DEBUG("JoinLogicalOperator: Iterate over all LogicalFunction to check if join field is in schema.");
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<LogicalFunction*> visitedFunctions;
@@ -180,8 +183,9 @@ bool JoinLogicalOperator::inferSchema()
     setOutputSchema(outputSchema);
     updateSchemas(leftInputSchema, rightInputSchema);
     return true;
+    */
+    return true;
 }
- */
 
 Optimizer::TraitSet JoinLogicalOperator::getTraitSet() const
 {
