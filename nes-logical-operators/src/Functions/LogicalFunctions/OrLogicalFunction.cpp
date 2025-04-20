@@ -24,21 +24,14 @@
 namespace NES
 {
 
-OrLogicalFunction::OrLogicalFunction() : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "Or")
+OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : BinaryLogicalFunction(other)
 {
 }
 
-OrLogicalFunction::OrLogicalFunction(OrLogicalFunction* other) : BinaryLogicalFunction(other)
+OrLogicalFunction::OrLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(std::move(stamp), "Or")
 {
-}
-
-std::shared_ptr<LogicalFunction>
-OrLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
-{
-    auto orNode = std::make_shared<OrLogicalFunction>();
-    orNode->setLeftChild(left);
-    orNode->setRightChild(right);
-    return orNode;
+    this->setLeftChild(left);
+    this->setRightChild(right);
 }
 
 bool OrLogicalFunction::equal(const std::shared_ptr<LogicalFunction>& rhs) const
@@ -72,7 +65,7 @@ void OrLogicalFunction::inferStamp(const Schema& schema)
 
 std::shared_ptr<LogicalFunction> OrLogicalFunction::clone() const
 {
-    return OrLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_shared<OrLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 bool OrLogicalFunction::validateBeforeLowering() const

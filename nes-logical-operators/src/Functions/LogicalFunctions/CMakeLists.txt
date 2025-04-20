@@ -10,14 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-logical-operators
-        AndBinaryLogicalFunction.cpp
-        EqualsBinaryLogicalFunction.cpp
-        GreaterBinaryLogicalFunction.cpp
-        GreaterEqualsBinaryLogicalFunction.cpp
-        LessBinaryLogicalFunction.cpp
-        LessEqualsBinaryLogicalFunction.cpp
-        NegateUnaryLogicalFunction.cpp
-        OrBinaryLogicalFunction.cpp
-)
-
+add_plugin(And LogicalFunction nes-logical-operators AndLogicalFunction.cpp)
+add_plugin(Equals LogicalFunction nes-logical-operators EqualsLogicalFunction.cpp)
+add_plugin(Greater LogicalFunction nes-logical-operators GreaterLogicalFunction.cpp)
+add_plugin(GreaterEquals LogicalFunction nes-logical-operators GreaterEqualsLogicalFunction.cpp)
+add_plugin(Less LogicalFunction nes-logical-operators LessLogicalFunction.cpp)
+add_plugin(LessEquals LogicalFunction nes-logical-operators LessEqualsLogicalFunction.cpp)
+add_plugin(Negate LogicalFunction nes-logical-operators NegateLogicalFunction.cpp)
+add_plugin(Or LogicalFunction nes-logical-operators OrLogicalFunction.cpp)

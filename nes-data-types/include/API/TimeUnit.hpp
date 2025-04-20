@@ -24,11 +24,14 @@ class TimeUnit
 {
 public:
     explicit TimeUnit(uint64_t offset);
+    ~TimeUnit() = default;
+    TimeUnit(const TimeUnit& timeUnit);
 
     /// @brief gets the multiplier to convert this to milliseconds
     [[nodiscard]] uint64_t getMillisecondsConversionMultiplier() const;
 
     [[nodiscard]] std::string toString() const;
+    [[nodiscard]] bool operator==(const TimeUnit& other) const;
 
     static TimeUnit Milliseconds();
     static TimeUnit Seconds();

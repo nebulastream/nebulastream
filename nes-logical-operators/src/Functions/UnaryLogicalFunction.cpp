@@ -12,13 +12,11 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <string>
+#include <memory>
 #include <utility>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/UnaryLogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -27,7 +25,17 @@ UnaryLogicalFunction::UnaryLogicalFunction(std::shared_ptr<DataType> stamp, std:
 {
 }
 
-UnaryLogicalFunction::UnaryLogicalFunction(UnaryLogicalFunction* other) : LogicalFunction(other)
+UnaryLogicalFunction::UnaryLogicalFunction(const UnaryLogicalFunction& other) : LogicalFunction(other)
 {
+}
+
+void UnaryLogicalFunction::setChild(const std::shared_ptr<LogicalFunction>& child)
+{
+    children[0] = child;
+}
+
+std::shared_ptr<LogicalFunction> UnaryLogicalFunction::getChild() const
+{
+    return children[0];
 }
 }

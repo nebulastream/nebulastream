@@ -15,16 +15,16 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 namespace NES
 {
+FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
+    : LogicalFunction(DataTypeFactory::createUndefined(), "FieldAccess"), fieldName(std::move(fieldName)) {};
+
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName)
     : LogicalFunction(std::move(stamp), "FieldAccess"), fieldName(std::move(fieldName)) {};
 
@@ -58,7 +58,7 @@ std::string FieldAccessLogicalFunction::getFieldName() const
     return fieldName;
 }
 
-void FieldAccessLogicalFunction::updateFieldName(std::string fieldName)
+LogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName) const
 {
     auto copy = *this;
     copy.fieldName = fieldName;
@@ -84,7 +84,7 @@ void FieldAccessLogicalFunction::inferStamp(const Schema& schema)
 
 std::shared_ptr<LogicalFunction> FieldAccessLogicalFunction::clone() const
 {
-    return std::make_shared<FieldAccessLogicalFunction>(*this);
+    return std::make_shared<FieldAccessLogicalFunction>(stamp, fieldName);
 }
 
 }

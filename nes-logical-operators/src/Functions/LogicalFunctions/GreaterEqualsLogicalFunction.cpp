@@ -12,32 +12,25 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
 #include <string>
 #include <Functions/LogicalFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {
 
-GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction() noexcept : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "GreaterEquals")
-{
-}
-
-GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(GreaterEqualsLogicalFunction* other)
+GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const GreaterEqualsLogicalFunction& other)
     : BinaryLogicalFunction(other)
 {
 }
 
-std::shared_ptr<LogicalFunction>
-GreaterEqualsLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "GreaterEquals")
 {
-    auto greaterThen = std::make_shared<GreaterEqualsLogicalFunction>();
-    greaterThen->setLeftChild(left);
-    greaterThen->setRightChild(right);
-    return greaterThen;
+    this->setLeftChild(left);
+    this->setRightChild(right);
 }
 
 bool GreaterEqualsLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -59,6 +52,6 @@ std::string GreaterEqualsLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> GreaterEqualsLogicalFunction::clone() const
 {
-    return GreaterEqualsLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_shared<GreaterEqualsLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 }

@@ -18,10 +18,9 @@
 #include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Types/ContentBasedWindowType.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Types/WindowType.hpp>
+#include <WindowTypes/Types/ContentBasedWindowType.hpp>
+#include <WindowTypes/Types/ThresholdWindow.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 
@@ -52,7 +51,7 @@ bool ThresholdWindow::equal(std::shared_ptr<WindowType> otherWindowType)
 {
     if (auto otherThresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType))
     {
-        return this->minimumCount == otherThresholdWindow->minimumCount && this->predicate->equal(otherThresholdWindow->predicate);
+        return this->minimumCount == otherThresholdWindow->minimumCount && this->predicate == otherThresholdWindow->predicate;
     }
     return false;
 }

@@ -20,6 +20,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <ErrorHandling.hpp>
 
 
@@ -34,12 +35,12 @@ TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField
     : type(type), field(std::move(field)), unit(std::move(unit))
 {
 }
-std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& field)
+std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<LogicalFunction>& field)
 {
     return createEventTime(field, TimeUnit(1));
 }
 
-std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(std::shared_ptr<LogicalFunction> fieldValue, const TimeUnit& unit)
+std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<LogicalFunction>& fieldValue, const TimeUnit& unit)
 {
     if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(fieldValue))
     {
@@ -107,7 +108,7 @@ bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
     const bool equalField = (this->field == nullptr && other.field == nullptr)
         || (this->field != nullptr && other.field != nullptr && this->field->isEqual(other.field));
 
-    return this->type == other.type && equalField && this->unit.equals(other.unit);
+    return this->type == other.type && equalField && (this->unit == other.unit);
 }
 
 uint64_t TimeCharacteristic::hash() const

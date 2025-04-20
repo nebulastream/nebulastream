@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string>
 #include <cstdint>
 #include <API/TimeUnit.hpp>
 #include <fmt/format.h>
@@ -20,6 +21,7 @@ namespace NES::Windowing
 {
 
 TimeUnit::TimeUnit(const uint64_t offset) : multiplier(offset) {};
+TimeUnit::TimeUnit(const TimeUnit& timeUnit) : multiplier(timeUnit.multiplier) {};
 
 uint64_t TimeUnit::getMillisecondsConversionMultiplier() const
 {
@@ -31,7 +33,7 @@ std::string TimeUnit::toString() const
     return fmt::format("TimeUnit: multiplier= {}", std::to_string(multiplier));
 }
 
-bool TimeUnit::equals(const TimeUnit& other) const
+bool TimeUnit::operator==(const TimeUnit& other) const
 {
     return this->multiplier == other.multiplier;
 }

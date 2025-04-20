@@ -10,6 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-functions
-        UtilityFunction.cpp
+add_source_files(nes-runtime
+        CompiledExecutablePipelineStage.cpp
 )
+
+add_plugin(Compilation ExecutablePipelineProvider nes-runtime CompilationPipelineProvider.cpp)
+add_plugin(Interpreter ExecutablePipelineProvider nes-runtime InterpretationPipelineProvider.cpp)

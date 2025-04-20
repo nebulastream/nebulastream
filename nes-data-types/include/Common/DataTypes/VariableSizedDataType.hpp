@@ -29,9 +29,9 @@ public:
 
     bool operator==(const DataType& other) const override;
 
-    std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;
+    std::shared_ptr<DataType> join(const std::shared_ptr<DataType> otherDataType) const override;
 
-    std::string toString() override;
+    std::string toString() const override;
 };
 
 }

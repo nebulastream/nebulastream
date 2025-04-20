@@ -20,21 +20,14 @@
 namespace NES
 {
 
-LessEqualsLogicalFunction::LessEqualsLogicalFunction() : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "LessEquals")
+LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunction& other) : BinaryLogicalFunction(other)
 {
 }
 
-LessEqualsLogicalFunction::LessEqualsLogicalFunction(LessEqualsLogicalFunction* other) : BinaryLogicalFunction(other)
+LessEqualsLogicalFunction::LessEqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "LessEquals")
 {
-}
-
-std::shared_ptr<LogicalFunction>
-LessEqualsLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
-{
-    auto lessThen = std::make_shared<LessEqualsLogicalFunction>();
-    lessThen->setLeftChild(left);
-    lessThen->setRightChild(right);
-    return lessThen;
+    this->setLeftChild(left);
+    this->setRightChild(right);
 }
 
 bool LessEqualsLogicalFunction::equal(std::shared_ptr<LogicalFunction> const& rhs) const
@@ -56,7 +49,7 @@ std::string LessEqualsLogicalFunction::toString() const
 
 std::shared_ptr<LogicalFunction> LessEqualsLogicalFunction::clone() const
 {
-    return LessEqualsLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_shared<LessEqualsLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
 }

@@ -42,7 +42,7 @@ public:
     /// @brief Infer stamp of time based window type
     /// @param schema : the schema of the window
     /// @return true if success else false
-    bool inferStamp(const std::shared_ptr<Schema>& schema) override;
+    bool inferStamp(const Schema& schema) override;
 
 protected:
     TimeCharacteristic timeCharacteristic;
