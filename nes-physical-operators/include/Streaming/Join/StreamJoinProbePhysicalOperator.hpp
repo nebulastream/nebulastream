@@ -36,7 +36,7 @@ class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator
 public:
     StreamJoinProbePhysicalOperator(
         uint64_t operatorHandlerIndex,
-        const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
+        Functions::PhysicalFunction joinFunction,
         std::string windowStartFieldName,
         std::string windowEndFieldName,
         JoinSchema joinSchema);
@@ -58,7 +58,7 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
-    std::shared_ptr<Functions::PhysicalFunction> joinFunction;
+    Functions::PhysicalFunction joinFunction;
     JoinSchema joinSchema;
 };
 }

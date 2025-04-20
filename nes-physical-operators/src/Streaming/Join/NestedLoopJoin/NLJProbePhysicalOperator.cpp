@@ -79,7 +79,7 @@ SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask
 
 NLJProbePhysicalOperator::NLJProbePhysicalOperator(
     const uint64_t operatorHandlerIndex,
-    std::unique_ptr<Functions::PhysicalFunction> joinFunction,
+    Functions::PhysicalFunction joinFunction,
     const std::string windowStartFieldName,
     const std::string windowEndFieldName,
     const JoinSchema& joinSchema,
@@ -140,7 +140,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         for (auto rightIt = rightPagedVector.begin(rightKeyFields); rightIt != rightPagedVector.end(rightKeyFields); ++rightIt)
         {
             auto joinedKeyFields = createJoinedRecord(*leftIt, *rightIt, windowStart, windowEnd, leftKeyFields, rightKeyFields);
-            if (joinFunction->execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
+            if (joinFunction.execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
             {
                 auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
                 auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);
