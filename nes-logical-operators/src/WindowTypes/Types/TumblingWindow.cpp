@@ -27,11 +27,6 @@ TumblingWindow::TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasur
 {
 }
 
-std::unique_ptr<WindowType> TumblingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size)
-{
-    return std::make_unique<TumblingWindow>(std::move(timeCharacteristic), std::move(size));
-}
-
 TimeMeasure TumblingWindow::getSize()
 {
     return size;

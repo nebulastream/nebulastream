@@ -37,21 +37,6 @@ ThresholdWindow::ThresholdWindow(LogicalFunction predicate, uint64_t minCount)
 {
 }
 
-std::unique_ptr<WindowType> ThresholdWindow::of(LogicalFunction predicate)
-{
-    return std::make_unique<ThresholdWindow>(std::move(predicate));
-}
-
-std::unique_ptr<WindowType> ThresholdWindow::clone() const
-{
-    return std::make_unique<ThresholdWindow>(predicate, minimumCount);
-}
-
-std::unique_ptr<WindowType> ThresholdWindow::of(LogicalFunction predicate, uint64_t minimumCount)
-{
-    return std::make_unique<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount));
-}
-
 bool ThresholdWindow::operator==(const WindowType& otherWindowType)
 {
     if (auto other = dynamic_cast<const ThresholdWindow*>(&otherWindowType))
