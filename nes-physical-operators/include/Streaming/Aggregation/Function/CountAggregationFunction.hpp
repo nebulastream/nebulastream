@@ -24,7 +24,7 @@
 #include <val_concepts.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Aggregation
+namespace NES
 {
 
 class CountAggregationFunction : public AggregationFunction

@@ -21,7 +21,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 class AggregationProbe final : public WindowAggregationOperator, public WindowOperatorProbe
