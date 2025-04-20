@@ -16,7 +16,6 @@
 #include <memory>
 #include <vector>
 #include <Pipelines/ExecutablePipelineProvider.hpp>
-#include <Pipelines/PhysicalOperatorPipeline.hpp>
 #include <options.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
