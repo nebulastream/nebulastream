@@ -68,6 +68,7 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     std::string toString() const override;
 
 private:
+    static constexpr std::string_view NAME = "Sink";
     std::vector<LogicalOperator> children;
     Schema inputSchema, outputSchema;
     std::vector<OriginId> inputOriginIds;

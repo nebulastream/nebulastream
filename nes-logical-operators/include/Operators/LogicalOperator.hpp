@@ -48,6 +48,7 @@ struct LogicalOperatorConcept
 
     [[nodiscard]] virtual bool operator==(struct LogicalOperatorConcept const& rhs) const = 0;
 
+    /// Used to during planning and optimization for rule resolution
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
     [[nodiscard]] virtual SerializableOperator serialize() const = 0;
     [[nodiscard]] virtual Optimizer::TraitSet getTraitSet() const = 0;

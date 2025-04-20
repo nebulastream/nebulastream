@@ -27,7 +27,7 @@ public:
     RenameLogicalFunction(const FieldAccessLogicalFunction& originalField, std::string newFieldName);
     RenameLogicalFunction(const RenameLogicalFunction& other);
 
-    void inferStamp(const Schema& schema);
+    bool inferStamp(Schema schema) override;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
@@ -50,12 +50,13 @@ public:
     const DataType& getStamp() const override { return *stamp; };
     void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
     std::vector<LogicalFunction> getChildren()  const override { return {child}; };
+    void setChildren(std::vector<LogicalFunction> children)  override { child = children[0].get<FieldAccessLogicalFunction>(); };
     std::string getType() const override { return std::string(NAME); }
     [[nodiscard]] std::string toString() const override;
 
 private:
-    LogicalFunction child;
     std::shared_ptr<DataType> stamp;
+    FieldAccessLogicalFunction child;
     std::string newFieldName;
 };
 }

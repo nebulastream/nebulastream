@@ -85,7 +85,7 @@ private:
     Schema inputSchema;
     Schema outputSchema;
 
-    static constexpr std::string_view NAME = "SourceDescriptor";
+    static constexpr std::string_view NAME = "Source";
     const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
     std::vector<std::vector<OriginId>> inputOriginIds;
     std::vector<OriginId> outputOriginIds;

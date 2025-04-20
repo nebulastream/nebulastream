@@ -25,7 +25,6 @@ namespace NES
 class IngestionTimeWatermarkAssignerLogicalOperator final : public LogicalOperatorConcept
 {
 public:
-    static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
     IngestionTimeWatermarkAssignerLogicalOperator();
     std::string_view getName() const noexcept override;
 
@@ -65,6 +64,7 @@ public:
         outputOriginIds = ids;
     }
 protected:
+    static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";
     std::vector<LogicalOperator> children;
     Schema inputSchema;
     Schema outputSchema;
