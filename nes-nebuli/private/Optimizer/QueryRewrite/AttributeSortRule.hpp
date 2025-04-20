@@ -27,26 +27,24 @@ class ConstantValueLogicalFunction;
 namespace NES::Optimizer
 {
 
-/**
- * @brief This rule is only used for evaluating efficiency of query merging using string based signature computation. This rule
- * will alphabetically sort the attributes provided in the Filter, Map, and Project operators. It will however, won't change the
- * LHS and RHS of a relational or assignment operator.
- *
- * Example:
- *
- * For map:
- * 1. map("b" = "c"+"a") => map("b" = "a"+"c")
- * 2. map("b" = "c"+"b"+"a") => map("b" = "a"+"b"+"c")
- * 3. map("b" = (((("c"+"b")+"a")+"d")+"e")) => map("b" = "a"+"a"+"b"+"c")
- * 4. map("b" = "d"+"c"+"b"*"a") => map("b" = "a"*"b"+"c"+"d")
- * 5. map("b" = "d"+"b"+"c"*"a") => map("b" = "a"*"c"+"b"+"d")
- * 6. map("b" = "c"+10+"a"+100) => map("b" = 10+100+"a"+"c")
- *
- *
- * For Filter:
- * 1. filter("c" * "b" > "d" + "a") => filter("a" + "d" < "b" * "c")
- * 2. filter("c" * "b" > "d" + "a" and "a" < "b") => filter("a" < "b" and "b" * "c" > "a" + "d")
- */
+class AttributeSortRule;
+
+/// @brief This rule is only used for evaluating efficiency of query merging using string based signature computation. This rule
+/// will alphabetically sort the attributes provided in the Filter, Map, and Project operators. It will however, won't change the
+/// LHS and RHS of a relational or assignment operator.
+///
+/// Example:
+/// For map:
+/// 1. map("b" = "c"+"a") => map("b" = "a"+"c")
+/// 2. map("b" = "c"+"b"+"a") => map("b" = "a"+"b"+"c")
+/// 3. map("b" = (((("c"+"b")+"a")+"d")+"e")) => map("b" = "a"+"a"+"b"+"c")
+/// 4. map("b" = "d"+"c"+"b"*"a") => map("b" = "a"*"b"+"c"+"d")
+/// 5. map("b" = "d"+"b"+"c"*"a") => map("b" = "a"*"c"+"b"+"d")
+/// 6. map("b" = "c"+10+"a"+100) => map("b" = 10+100+"a"+"c")
+///
+/// For Filter:
+/// 1. filter("c" * "b" > "d" + "a") => filter("a" + "d" < "b" * "c")
+/// 2. filter("c" * "b" > "d" + "a" and "a" < "b") => filter("a" < "b" and "b" * "c" > "a" + "d")
 class AttributeSortRule : public BaseRewriteRule
 {
 public:

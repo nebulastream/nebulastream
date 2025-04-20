@@ -52,7 +52,7 @@ public:
     /// @throws CannotAccessBuffer if the tuple index or the field index is out of bounds.
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
 
-    std::shared_ptr<MemoryLayout> deepCopy() const override;
+    std::unique_ptr<MemoryLayout> clone() const override;
 
 private:
     std::vector<uint64_t> fieldOffSets;

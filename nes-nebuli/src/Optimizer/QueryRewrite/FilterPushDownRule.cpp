@@ -68,7 +68,7 @@ std::shared_ptr<QueryPlan> FilterPushDownRule::apply(std::shared_ptr<QueryPlan> 
         filterOperators.end(),
         [](const std::shared_ptr<SelectionLogicalOperator>& lhs, const std::shared_ptr<SelectionLogicalOperator>& rhs)
         { return lhs->getId() < rhs->getId(); });
-    auto originalQueryPlan = queryPlan->copy();
+    auto originalQueryPlan = queryPlan->clone();
     try
     {
         NES_DEBUG("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");

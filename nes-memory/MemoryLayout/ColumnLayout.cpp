@@ -72,7 +72,7 @@ uint64_t ColumnLayout::getColumnOffset(const uint64_t fieldIndex) const
     return columnOffsets[fieldIndex];
 }
 
-std::shared_ptr<MemoryLayout> ColumnLayout::deepCopy() const
+std::unique_ptr<MemoryLayout> ColumnLayout::clone() const
 {
     return std::make_shared<ColumnLayout>(*this);
 }

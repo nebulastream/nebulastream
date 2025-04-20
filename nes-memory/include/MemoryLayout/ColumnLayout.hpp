@@ -47,7 +47,7 @@ public:
     /// @return offset in the tuple buffer.
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
 
-    std::shared_ptr<MemoryLayout> deepCopy() const override;
+    [[nodiscard]] std::unique_ptr<MemoryLayout> clone() const override;
 
     uint64_t getColumnOffset(uint64_t fieldIndex) const;
 

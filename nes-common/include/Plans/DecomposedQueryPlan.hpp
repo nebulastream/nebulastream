@@ -76,7 +76,7 @@ public:
 
     [[nodiscard]] WorkerId getWorkerId() const;
 
-    [[nodiscard]] std::shared_ptr<DecomposedQueryPlan> copy() const;
+    [[nodiscard]] std::shared_ptr<DecomposedQueryPlan> clone() const;
     [[nodiscard]] std::string toString() const;
 
     template <class T>
