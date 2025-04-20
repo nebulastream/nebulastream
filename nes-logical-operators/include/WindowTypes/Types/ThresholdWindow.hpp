@@ -29,20 +29,8 @@ public:
     explicit ThresholdWindow(LogicalFunction predicate);
     ThresholdWindow(LogicalFunction predicate, uint64_t minCount);
 
-    /// @brief Constructor for ThresholdWindow
-    /// @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
-    /// @return std::shared_ptr<WindowType>
-    static std::unique_ptr<WindowType> of(LogicalFunction predicate);
-
-    /// @brief Constructor for ThresholdWindow
-    /// @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
-    /// @param minimumCount specifies the minimum amount of tuples to occur within the window
-    /// @return std::shared_ptr<WindowType>
-    static std::unique_ptr<WindowType> of(LogicalFunction predicate, uint64_t minimumCount);
-
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool operator==(const WindowType& otherWindowType) override;
-    [[nodiscard]] std::unique_ptr<WindowType> clone() const override;
 
     /// @brief return the content-based Subwindow Type, i.e., THRESHOLDWINDOW
     /// @return enum content-based Subwindow Type
