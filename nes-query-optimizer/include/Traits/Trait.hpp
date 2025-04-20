@@ -29,7 +29,7 @@ namespace NES::Optimizer
 struct TraitConcept
 {
     virtual ~TraitConcept() = default;
-    virtual const std::type_info& getType() const = 0;
+    [[nodiscard]] virtual const std::type_info& getType() const = 0;
     virtual bool operator==(const TraitConcept& other) const = 0;
 };
 
@@ -44,6 +44,26 @@ public:
     Trait(const Trait& other) : self(other.self->clone()) { }
 
     Trait(Trait&&) noexcept = default;
+
+    template <typename T>
+    const T* tryGet() const
+    {
+        if (auto p = dynamic_cast<const Model<T>*>(self.get()))
+        {
+            return &(p->data);
+        }
+        return nullptr;
+    }
+
+    template <typename T>
+    const T* get() const
+    {
+        if (auto p = dynamic_cast<const Model<T>*>(self.get()))
+        {
+            return &(p->data);
+        }
+        return nullptr;
+    }
 
     Trait& operator=(const Trait& other)
     {
@@ -71,7 +91,14 @@ private:
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::unique_ptr<Concept>(new Model<T>(data)); }
 
-        [[nodiscard]] std::string toString() const override { return data.toString(); }
+        bool operator==(const TraitConcept& other) const override
+        {
+            if (auto p = dynamic_cast<const Model*>(&other))
+            {
+                return data == p->data;
+            }
+            return false;
+        }
 
         [[nodiscard]] bool equals(const Concept& other) const override
         {
@@ -88,15 +115,15 @@ private:
     std::unique_ptr<Concept> self;
 };
 
-using TraitSet = std::set<std::unique_ptr<Trait>>;
+using TraitSet = std::vector<Trait>;
 }
 
 template <typename T>
 bool hasTrait(const NES::Optimizer::TraitSet& traitSet)
 {
-    for (const auto& traitPtr : traitSet)
+    for (const auto& trait : traitSet)
     {
-        if (traitPtr && traitPtr->getType() == typeid(T))
+        if (trait.tryGet<T>())
         {
             return true;
         }
