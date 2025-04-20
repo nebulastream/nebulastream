@@ -20,9 +20,6 @@ namespace NES::QueryCompilation
 #include <Functions/Function.hpp>
 #include <PhysicalOperator.hpp>
 {
-/**
- * @brief Pipelining phase to transform a query plan into a plan of pipelines.
- */
 class PipeliningPhase
 {
 public:

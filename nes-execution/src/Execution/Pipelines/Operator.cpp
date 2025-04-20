@@ -26,9 +26,6 @@
 
 namespace NES
 {
-/**
- * @brief We initialize the input and output schemas with empty schemas.
- */
 Operator::Operator(const OperatorId id) : id(id)
 {
 }

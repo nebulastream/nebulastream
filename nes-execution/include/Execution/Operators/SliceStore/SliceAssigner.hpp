@@ -23,11 +23,9 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-/**
- * @brief The SliceAssigner assigner determines the start and end time stamp of a slice for
- * a specific window definition, that consists of a window size and a window slide.
- * @note Tumbling windows are in general modeled at this point as sliding windows with the size is equals to the slide.
- */
+/// @brief The SliceAssigner assigner determines the start and end time stamp of a slice for
+/// a specific window definition, that consists of a window size and a window slide.
+/// @note Tumbling windows are in general modeled at this point as sliding windows with the size is equals to the slide.
 class SliceAssigner
 {
 public:
@@ -44,11 +42,9 @@ public:
 
     ~SliceAssigner() = default;
 
-    /**
-     * @brief Calculates the start of a slice for a specific timestamp ts.
-     * @param ts the timestamp for which we calculate the start of the particular slice.
-     * @return uint64_t slice start
-     */
+    /// @brief Calculates the start of a slice for a specific timestamp ts.
+    /// @param ts the timestamp for which we calculate the start of the particular slice.
+    /// @return uint64_t slice start
     [[nodiscard]] SliceStart getSliceStartTs(const Timestamp ts) const
     {
         const auto timestampRaw = ts.getRawValue();
@@ -57,11 +53,9 @@ public:
         return SliceStart(std::max(prevSlideStart, prevWindowStart));
     }
 
-    /**
-     * @brief Calculates the end of a slice for a specific timestamp ts.
-     * @param ts the timestamp for which we calculate the end of the particular slice.
-     * @return uint64_t slice end
-     */
+    /// @brief Calculates the end of a slice for a specific timestamp ts.
+    /// @param ts the timestamp for which we calculate the end of the particular slice.
+    /// @return uint64_t slice end
     [[nodiscard]] SliceEnd getSliceEndTs(const Timestamp ts) const
     {
         const auto timestampRaw = ts.getRawValue();
