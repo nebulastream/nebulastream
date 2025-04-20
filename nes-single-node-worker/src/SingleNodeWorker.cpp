@@ -13,13 +13,10 @@
 */
 
 #include <memory>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
-#include <Runtime/NodeEngine.hpp>
+#include <Plans/DecomposedQueryPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryCompiler.hpp>
 #include <SingleNodeWorker.hpp>
 #include <StatisticPrinter.hpp>
 
@@ -44,7 +41,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan)
+QueryId SingleNodeWorker::registerQuery(std::shared_ptr<DecomposedQueryPlan> plan)
 {
     try
     {
@@ -53,7 +50,7 @@ QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPla
 
         listener->onEvent(SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
 
-        auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
+        auto request = std::make_unique<QueryCompilationRequest>(logicalQueryPlan, bufferSize);
 
         return nodeEngine->registerExecutableQueryPlan(compiler->compileQuery(request));
     }
