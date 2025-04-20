@@ -114,7 +114,7 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
         {
             case WindowAggregationLogicalFunction::Type::Avg: {
                 /// We assume that the count is a u64
-                auto countType = physicalTypeFactory.getPhysicalType(*DataTypeProvider::provideDataType(LogicalType::UINT64));
+                auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
                 aggregationFunctions.emplace_back(
                     std::make_shared<AvgAggregationFunction>(
                         std::move(physicalInputType),
