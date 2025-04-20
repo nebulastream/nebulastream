@@ -47,4 +47,5 @@ VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRe
     VariableSizedData result(data.get());
     return result;
 }
+
 }

@@ -26,14 +26,13 @@ namespace NES::Functions
 
 VarVal SubPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftPhysicalFunction->execute(record, arena);
-    const auto rightValue = rightPhysicalFunction->execute(record, arena);
+    const auto leftValue = leftPhysicalFunction.execute(record, arena);
+    const auto rightValue = rightPhysicalFunction.execute(record, arena);
     return leftValue - rightValue;
 }
 
-SubPhysicalFunction::SubPhysicalFunction(
-    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
-    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
+SubPhysicalFunction::SubPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
+    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
 {
 }
 
@@ -41,8 +40,7 @@ PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterSubPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
     PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Sub function must have exactly two sub-functions");
-    return std::make_unique<SubPhysicalFunction>(
-        std::move(PhysicalFunctionRegistryArguments.childFunctions[0]), std::move(PhysicalFunctionRegistryArguments.childFunctions[1]));
+    return SubPhysicalFunction(PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

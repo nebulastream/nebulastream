@@ -79,15 +79,15 @@ SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask
 
 NLJProbePhysicalOperator::NLJProbePhysicalOperator(
     const uint64_t operatorHandlerIndex,
-    const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
+    std::unique_ptr<Functions::PhysicalFunction> joinFunction,
     const std::string windowStartFieldName,
     const std::string windowEndFieldName,
     const JoinSchema& joinSchema,
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
-    : StreamJoinProbePhysicalOperator(operatorHandlerIndex, joinFunction, windowStartFieldName, windowEndFieldName, joinSchema)
-    , leftMemoryProvider(leftMemoryProvider)
-    , rightMemoryProvider(rightMemoryProvider)
+    std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
+    std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider)
+    : StreamJoinProbePhysicalOperator(operatorHandlerIndex, std::move(joinFunction), windowStartFieldName, windowEndFieldName, joinSchema)
+    , leftMemoryProvider(std::move(leftMemoryProvider))
+    , rightMemoryProvider(std::move(rightMemoryProvider))
 {
 }
 
@@ -99,7 +99,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
-    AbstractPhysicalOperator::open(executionCtx, recordBuffer);
+    PhysicalOperator::open(executionCtx, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
     const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());
@@ -124,14 +124,14 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         = invoke(getNLJPagedVectorProxy, sliceRefRight, workerThreadIdForPages, nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right));
 
     const Interface::PagedVectorRef leftPagedVector(
-        leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+        leftPagedVectorRef, leftMemoryProvider->clone(), executionCtx.pipelineMemoryProvider.bufferProvider);
     const Interface::PagedVectorRef rightPagedVector(
-        rightPagedVectorRef, rightMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+        rightPagedVectorRef, rightMemoryProvider->clone(), executionCtx.pipelineMemoryProvider.bufferProvider);
 
-    const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
-    const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
+    const auto leftKeyFields = leftMemoryProvider->getMemoryLayout().getKeyFieldNames();
+    const auto rightKeyFields = rightMemoryProvider->getMemoryLayout().getKeyFieldNames();
+    const auto leftFields = leftMemoryProvider->getMemoryLayout().getSchema().getFieldNames();
+    const auto rightFields = rightMemoryProvider->getMemoryLayout().getSchema().getFieldNames();
 
     nautilus::val<uint64_t> leftItemPos = 0UL;
     for (auto leftIt = leftPagedVector.begin(leftKeyFields); leftIt != leftPagedVector.end(leftKeyFields); ++leftIt)
@@ -145,7 +145,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
                 auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
                 auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);
                 auto joinedRecord = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd);
-                child->execute(executionCtx, joinedRecord);
+                PhysicalOperatorConcept::execute(executionCtx, joinedRecord);
             }
 
             ++rightItemPos;

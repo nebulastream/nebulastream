@@ -29,7 +29,7 @@ VarVal NegatePhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     return !value;
 }
 
-NegatePhysicalFunction::NegatePhysicalFunction(std::unique_ptr<PhysicalFunction> childFunction) : childFunction(std::move(childFunction))
+NegatePhysicalFunction::NegatePhysicalFunction(PhysicalFunction childFunction) : childFunction(childFunction)
 {
 }
 
@@ -37,7 +37,7 @@ PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterNegatePhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
 {
     PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one sub-function");
-    return std::make_unique<NegatePhysicalFunction>(std::move(PhysicalFunctionRegistryArguments.childFunctions[0]));
+    return NegatePhysicalFunction(PhysicalFunctionRegistryArguments.childFunctions[0]);
 }
 
 }
