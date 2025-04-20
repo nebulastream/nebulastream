@@ -15,8 +15,7 @@
 
 #include <cstddef>
 #include <memory>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Runtime/NodeEngine.hpp>
+#include <Plans/QueryPlan.hpp>
 
 namespace NES
 {
@@ -24,7 +23,7 @@ namespace NES
 /// The request encapsulates the decomposed query plan and addition properties.
 struct QueryCompilationRequest
 {
-    std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan;
+    std::shared_ptr<QueryPlan> queryPlan;
     size_t bufferSize; /// TODO #403: Use QueryCompiler Configuration instead
     bool debug = false;
     bool optimize = false;

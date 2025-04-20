@@ -230,7 +230,7 @@ void writeFieldValueToTupleBuffer(
     }
 }
 
-std::shared_ptr<Schema> loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
+std::shared_ptr<Schema> loadSinkSchema(SerializableQueryPlan& queryPlan)
 {
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);
@@ -240,12 +240,12 @@ std::shared_ptr<Schema> loadSinkSchema(SerializableDecomposedQueryPlan& queryPla
     return SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
 }
 
-QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPCServer& uut)
+QueryId registerQueryPlan(const SerializableQueryPlan& queryPlan, GRPCServer& uut)
 {
     grpc::ServerContext context;
     RegisterQueryRequest request;
     RegisterQueryReply reply;
-    *request.mutable_decomposedqueryplan() = queryPlan;
+    *request.mutable_queryplan() = queryPlan;
     EXPECT_TRUE(uut.RegisterQuery(&context, &request, &reply).ok());
     return QueryId(reply.queryid());
 }
@@ -384,7 +384,7 @@ void removeFile(const std::string_view filepath)
 }
 
 bool loadFile(
-    SerializableDecomposedQueryPlan& queryPlan,
+    SerializableQueryPlan& queryPlan,
     const std::string_view queryFileName,
     const std::string_view dataFileName,
     const std::string_view querySpecificDataFileName)
@@ -404,7 +404,7 @@ bool loadFile(
     return true;
 }
 
-bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName)
+bool loadFile(SerializableQueryPlan& queryPlan, const std::string_view queryFileName)
 {
     std::ifstream f(std::filesystem::path(SERIALIZED_QUERIES_DIR) / (queryFileName));
     if (!f)
@@ -420,7 +420,7 @@ bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view
     return true;
 }
 
-void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& filePathNew)
+void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::string& filePathNew)
 {
     EXPECT_EQ(decomposedQueryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = decomposedQueryPlan.mutable_rootoperatorids()->at(0);
@@ -452,7 +452,7 @@ void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, c
     }
 }
 
-void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName)
+void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, std::string newInputFileName)
 {
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
@@ -489,7 +489,7 @@ void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQu
     }
 }
 
-void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
+void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
 {
     int queryPlanTCPSourceCounter = 0;
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())

@@ -28,11 +28,11 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
-#include <SerializableDecomposedQueryPlan.pb.h>
+#include <SerializableQueryPlan.pb.h>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestRunner.hpp>
@@ -75,7 +75,7 @@ struct Query
         TestName name,
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
-        std::shared_ptr<DecomposedQueryPlan> queryPlan,
+        std::shared_ptr<QueryPlan> queryPlan,
         const uint64_t queryIdInFile,
         std::filesystem::path workingDir,
         SystestParser::Schema sinkSchema)
@@ -94,7 +94,7 @@ struct Query
     TestName name;
     std::string queryDefinition;
     std::filesystem::path sqlLogicTestFile;
-    std::shared_ptr<DecomposedQueryPlan> queryPlan;
+    std::shared_ptr<QueryPlan> queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
     SystestParser::Schema expectedSinkSchema;

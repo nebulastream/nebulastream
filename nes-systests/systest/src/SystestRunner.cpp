@@ -29,16 +29,12 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/ostream.h>
 #include <folly/MPMCQueue.h>
-#include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
-
-#include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SystestGrpc.hpp>
@@ -217,7 +213,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
 
             config.query = query;
             auto plan = createFullySpecifiedQueryPlan(config);
-            plans.emplace_back(plan, query, sinkNamesToSchema[sinkName]);
+            plans.emplace_back(std::move(plan), query, sinkNamesToSchema[sinkName]);
         });
     try
     {
