@@ -15,7 +15,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 
-namespace NES::QueryCompilation
+namespace NES
 {
 class PipelineQueryPlan
 
