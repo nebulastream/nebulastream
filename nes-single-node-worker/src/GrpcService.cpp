@@ -15,11 +15,11 @@
 #include <exception>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/QueryPlan.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>

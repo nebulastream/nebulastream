@@ -21,9 +21,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <nlohmann/json_fwd.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
 

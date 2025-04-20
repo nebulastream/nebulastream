@@ -21,10 +21,10 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Serialization/OperatorSerializationUtil.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Serialization/OperatorSerializationUtil.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/FileSink.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>

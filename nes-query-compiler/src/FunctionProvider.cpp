@@ -17,6 +17,7 @@
 #include <vector>
 #include <Abstract/LogicalFunction.hpp>
 #include <Functions/ConstantValuePhysicalFunction.hpp>
+#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
@@ -26,6 +27,7 @@
 #include <PhysicalFunctionRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::QueryCompilation
 {
