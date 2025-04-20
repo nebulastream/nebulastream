@@ -17,7 +17,6 @@ add_source_files(nes-logical-operators
         MapLogicalOperator.cpp
         InferModelLogicalOperator.cpp
         UnionLogicalOperator.cpp
-        RenameSourceLogicalOperator.cpp
         BinaryLogicalOperator.cpp
         UnaryLogicalOperator.cpp
 )

@@ -27,7 +27,6 @@
 #include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -66,14 +65,6 @@ QueryPlanBuilder::addProjection(const std::vector<std::shared_ptr<LogicalFunctio
 {
     NES_TRACE("QueryPlanBuilder: add projection operator to query plan");
     const std::shared_ptr<Operator> op = std::make_shared<ProjectionLogicalOperator>(functions, getNextOperatorId());
-    queryPlan->appendOperatorAsNewRoot(op);
-    return queryPlan;
-}
-
-std::shared_ptr<QueryPlan> QueryPlanBuilder::addRename(const std::string& newSourceName, std::shared_ptr<QueryPlan> queryPlan)
-{
-    NES_TRACE("QueryPlanBuilder: add rename operator to query plan");
-    auto op = std::make_shared<RenameSourceLogicalOperator>(newSourceName, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

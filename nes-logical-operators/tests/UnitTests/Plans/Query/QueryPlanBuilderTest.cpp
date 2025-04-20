@@ -21,7 +21,6 @@
 #include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -52,10 +51,6 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     ///test createQueryPlan
     auto queryPlan = QueryPlanBuilder::createQueryPlan("test_stream");
     EXPECT_EQ(queryPlan->getSourceConsumed(), "test_stream");
-    ///test addRename
-    queryPlan = QueryPlanBuilder::addRename("testStream", queryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<RenameSourceLogicalOperator>().size() == 1);
-    EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceLogicalOperator>()[0]->getNewSourceName(), "testStream");
     ///test addSelection
     auto filterFunction = std::shared_ptr<LogicalFunction>(
         EqualsBinaryLogicalFunction::create(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction()));
