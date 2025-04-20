@@ -162,8 +162,8 @@ struct ExecutionContext final
 {
     explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena);
 
-    void setLocalOperatorState(const PhysicalOperatorConcept op, std::unique_ptr<OperatorState> state);
-    OperatorState* getLocalState(const PhysicalOperatorConcept op);
+    void setLocalOperatorState(const PhysicalOperatorConcept* op, std::unique_ptr<OperatorState> state);
+    OperatorState* getLocalState(const PhysicalOperatorConcept* op);
 
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
