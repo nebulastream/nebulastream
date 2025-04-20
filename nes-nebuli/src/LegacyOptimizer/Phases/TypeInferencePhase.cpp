@@ -23,26 +23,25 @@
 namespace NES::LegacyOptimizer
 {
 
-void apply(std::vector<SourceNameLogicalOperator>& sourceOperators, Catalogs::Source::SourceCatalog& sourceCatalog)
+void TypeInferencePhase::apply(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog)
 {
+    auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
+
     PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
 
-    /// first we have to check if all source operators have a correct source descriptors
     for (auto& source : sourceOperators)
     {
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
-        auto logicalSourceName = source.getName();
-        Schema schema = Schema();
-        if (!sourceCatalog.containsLogicalSource(std::string(logicalSourceName)))
+        auto schema = Schema();
+        if (!sourceCatalog.containsLogicalSource(source.getLogicalSourceName()))
         {
-            NES_ERROR("Source name: {} not registered.", logicalSourceName);
-            throw LogicalSourceNotFoundInQueryDescription(fmt::format("Logical source not registered. Source Name: {}", logicalSourceName));
+            throw LogicalSourceNotFoundInQueryDescription("Logical source not registered. Source Name: {}", source.getLogicalSourceName());
         }
-        auto originalSchema = sourceCatalog.getSchemaForLogicalSource(std::string(logicalSourceName));
+        auto originalSchema = sourceCatalog.getSchemaForLogicalSource(source.getLogicalSourceName());
         schema = schema.copyFields(originalSchema);
         schema.setLayoutType(originalSchema.getLayoutType());
-        auto qualifierName = std::string(logicalSourceName) + Schema::ATTRIBUTE_NAME_SEPARATOR;
+        auto qualifierName = source.getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
         for (auto& field : schema)
         {
@@ -51,25 +50,42 @@ void apply(std::vector<SourceNameLogicalOperator>& sourceOperators, Catalogs::So
                 field.setName(qualifierName + field.getName());
             }
         }
-        source.setSchema(schema);
-        NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema.toString());
+        queryPlan.replaceOperator(source, source.withSchema(schema));
     }
+}
+
+LogicalOperator propagateSchema(const LogicalOperator& op)
+{
+    std::vector<LogicalOperator> children = op.getChildren();
+
+    // Base case: if no children (source operators)
+    if (children.empty())
+    {
+        return op;
+    }
+
+    std::vector<LogicalOperator> newChildren;
+    std::vector<Schema> childSchemas;
+    for (const auto& child : children)
+    {
+        LogicalOperator childWithSchema = propagateSchema(child);
+        childSchemas.push_back(childWithSchema.getOutputSchema());
+        newChildren.push_back(childWithSchema);
+    }
+
+    LogicalOperator updatedOperator = op.withChildren(newChildren);
+    return updatedOperator.withInferredSchema(childSchemas);
 }
 
 void TypeInferencePhase::apply(QueryPlan& queryPlan)
 {
-    auto sourceOperators = queryPlan.getOperatorByType<SourceDescriptorLogicalOperator>();
-    INVARIANT(not sourceOperators.empty(), "Found no source operators for query plan: {}", queryPlan.getQueryId());
-
-    /// now we have to infer the input and output schemas for the whole query.
-    /// to this end we call at each sink the infer method to propagate the schemata across the whole query.
-    for (auto& source : sourceOperators)
+    std::vector<LogicalOperator> newRoots;
+    for (const auto& sink : queryPlan.rootOperators)
     {
-        if (!source.inferSchema())
-        {
-            throw TypeInferenceException("TypeInferencePhase failed for query with id: {}", queryPlan.getQueryId());
-        }
+        LogicalOperator inferredRoot = propagateSchema(sink);
+        newRoots.push_back(inferredRoot);
     }
+    queryPlan.rootOperators = newRoots;
 }
 
 
