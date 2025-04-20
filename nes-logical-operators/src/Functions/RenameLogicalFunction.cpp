@@ -96,9 +96,9 @@ void RenameLogicalFunction::inferStamp(const Schema& schema)
     stamp = fieldAttribute.value()->getDataType();
 }
 
-std::shared_ptr<LogicalFunction> RenameLogicalFunction::deepCopy()
+std::shared_ptr<LogicalFunction> RenameLogicalFunction::clone() const
 {
-    return RenameLogicalFunction::create(Util::as<FieldAccessLogicalFunction>(originalField->deepCopy()), newFieldName);
+    return RenameLogicalFunction::create(Util::as<FieldAccessLogicalFunction>(originalField->clone()), newFieldName);
 }
 
 bool RenameLogicalFunction::validateBeforeLowering() const

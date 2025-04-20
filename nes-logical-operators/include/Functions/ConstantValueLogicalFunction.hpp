@@ -36,6 +36,7 @@ public:
 
     bool equal(std::shared_ptr<LogicalFunction> const& rhs) const override;
 
+    std::shared_ptr<LogicalFunction> clone() const override;
 
 protected:
     explicit ConstantValueLogicalFunction(const ConstantValueLogicalFunction* other);

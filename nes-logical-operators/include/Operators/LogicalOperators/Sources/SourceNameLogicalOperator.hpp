@@ -33,9 +33,9 @@ public:
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
 
-    [[nodiscard]] bool equal(std::shared_ptr<Operator> const& rhs) const override;
-    [[nodiscard]] bool isIdentical(std::shared_ptr<Operator> const& rhs) const override;
-
+    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
+    [[nodiscard]] bool isIdentical(const std::shared_ptr<Node>& rhs) const override;
+    void inferStringSignature() override;
     std::shared_ptr<Operator> clone() const override;
     void inferInputOrigins() override;
 

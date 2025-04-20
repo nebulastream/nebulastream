@@ -52,7 +52,7 @@ Schema::Schema(const std::shared_ptr<Schema>& schema, const MemoryLayoutType lay
     copyFields(schema);
 }
 
-std::shared_ptr<Schema> Schema::copy() const
+std::shared_ptr<Schema> Schema::clone() const
 {
     return std::make_shared<Schema>(*this);
 }
@@ -74,18 +74,18 @@ std::shared_ptr<Schema> Schema::copyFields(const std::shared_ptr<Schema>& otherS
 {
     for (const std::shared_ptr<AttributeField>& attribute : otherSchema->fields)
     {
-        fields.push_back(attribute->deepCopy());
+        fields.push_back(attribute->clone());
     }
-    return copy();
+    return clone();
 }
 
 std::shared_ptr<Schema> Schema::addField(const std::shared_ptr<AttributeField>& attribute)
 {
     if (attribute)
     {
-        fields.push_back(attribute->deepCopy());
+        fields.push_back(attribute->clone());
     }
-    return copy();
+    return clone();
 }
 
 ///TODO #473: investigate if we can remove this method

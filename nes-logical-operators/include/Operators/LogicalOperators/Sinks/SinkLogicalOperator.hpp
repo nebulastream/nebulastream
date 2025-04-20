@@ -39,7 +39,7 @@ public:
     const Sinks::SinkDescriptor& getSinkDescriptorRef() const;
     std::shared_ptr<Sinks::SinkDescriptor> getSinkDescriptor() const;
 
-    std::shared_ptr<Operator> copy() override;
+    std::shared_ptr<Operator> clone() const override;
     void inferStringSignature() override;
 
     std::string sinkName;

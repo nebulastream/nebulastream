@@ -41,13 +41,11 @@ public:
     */
     void multilineDump(const std::shared_ptr<Node>& node);
 
-    /**
-     * @brief Dump a query plan with a specific context and scope.
-     * @param context the context
-     * @param scope the scope
-     * @param plan the query plan
-     */
-    void dump(const std::string& context, const std::string& scope, const std::shared_ptr<QueryPlan>& plan);
+    /// @brief Dump a query plan with a specific context and scope.
+    /// @param context the context
+    /// @param scope the scope
+    /// @param plan the query plan
+    void dump(std::string context, std::string scope, std::shared_ptr<QueryPlan> plan);
 
 private:
     std::ostream& out;

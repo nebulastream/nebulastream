@@ -49,11 +49,7 @@ public:
     [[nodiscard]] bool isEqual(const std::shared_ptr<AttributeField>& attr) const;
 
     uint64_t hash() const;
-    /**
-     * @brief Make copy of this attribute
-     * @return shared pointer
-     */
-    [[nodiscard]] std::shared_ptr<AttributeField> deepCopy() const;
+    [[nodiscard]] std::shared_ptr<AttributeField> clone() const;
 
 private:
     AttributeField(std::string name, std::shared_ptr<DataType> dataType);

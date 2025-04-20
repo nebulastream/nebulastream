@@ -73,7 +73,7 @@ uint64_t AttributeField::hash() const
     return hashValue;
 }
 
-std::shared_ptr<AttributeField> AttributeField::deepCopy() const
+std::shared_ptr<AttributeField> AttributeField::clone() const
 {
     return create(name, dataType);
 }

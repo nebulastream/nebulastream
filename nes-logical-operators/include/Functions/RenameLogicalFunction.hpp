@@ -35,6 +35,8 @@ public:
 
     std::shared_ptr<FieldAccessLogicalFunction> getOriginalField() const;
 
+    std::shared_ptr<LogicalFunction> clone() const override;
+
 protected:
     explicit RenameLogicalFunction(const std::shared_ptr<RenameLogicalFunction> other);
 
