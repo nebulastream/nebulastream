@@ -13,22 +13,24 @@
 */
 #pragma once
 
+#include <memory>
+#include <Abstract/PhysicalOperator.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <AbstractPhysicalOperator.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES
 {
 
 /// @brief Selection operator that evaluates an boolean function on each record.
-class SelectionPhysicalOperator : public AbstractPhysicalOperator
+class SelectionPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    SelectionPhysicalOperator(std::unique_ptr<Functions::PhysicalFunction> function) : function(std::move(function)) {};
+    explicit SelectionPhysicalOperator(Functions::PhysicalFunction function) : function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
-
-    std::string toString() const { return typeid(this).name(); }
+    [[nodiscard]] std::string toString() const override { return typeid(this).name(); }
 
 private:
-    const std::unique_ptr<Functions::PhysicalFunction> function;
+    const Functions::PhysicalFunction function;
+    static constexpr bool PIPELINE_BREAKER = false;
 };
 }

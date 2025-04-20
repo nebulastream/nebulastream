@@ -23,7 +23,7 @@
 #include <Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Streaming/Aggregation/AggregationProbePhysicalOperator.hpp>
 #include <Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Streaming/Aggregation/WindowAggregationPhysicalOperator.hpp>
+#include <Streaming/Aggregation/WindowAggregation.hpp>
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -51,7 +51,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
-    AbstractPhysicalOperator::open(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::open(executionCtx, recordBuffer);
 
     /// Getting necessary values from the record buffer
     const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer());
@@ -136,17 +136,18 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         outputRecord.reassignFields(recordKey);
         outputRecord.write(windowStartFieldName, windowStart.convertToValue());
         outputRecord.write(windowEndFieldName, windowEnd.convertToValue());
-        child->execute(executionCtx, outputRecord);
+        PhysicalOperatorConcept::execute(executionCtx, outputRecord);
     }
 }
 
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(
-    std::shared_ptr<WindowAggregationPhysicalOperator> windowAggregationOperator,
+    std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
+    std::shared_ptr<WindowAggregation> windowAggregationOperator,
     const uint64_t operatorHandlerIndex,
     std::string windowStartFieldName,
     std::string windowEndFieldName)
-    : WindowAggregationPhysicalOperator(windowAggregationOperator)
-    , WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName)
+    : WindowAggregation(windowAggregationOperator)
+    , WindowProbePhysicalOperator(std::move(memoryProvider), operatorHandlerIndex, windowStartFieldName, windowEndFieldName)
 {
 }
 

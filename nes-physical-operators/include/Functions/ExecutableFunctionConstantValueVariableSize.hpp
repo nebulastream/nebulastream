@@ -17,19 +17,19 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <ExecutionContext.hpp>
 
 namespace NES::Functions
 {
 
 /// A function that represents a constant value of variable size, e.g., a string.
-class ExecutableFunctionConstantValueVariableSize final : public Function
+class ConstantValueVariableSizePhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
-    explicit ExecutableFunctionConstantValueVariableSize(const int8_t* value, size_t size);
+    explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 

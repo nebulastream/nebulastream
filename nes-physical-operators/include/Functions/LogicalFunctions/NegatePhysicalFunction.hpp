@@ -23,7 +23,7 @@ namespace NES::Functions
 {
 
 /// Negates the result of the childFunction
-class NegatePhysicalFunction final : public PhysicalFunction
+class NegatePhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
     explicit NegatePhysicalFunction(PhysicalFunction childFunction);

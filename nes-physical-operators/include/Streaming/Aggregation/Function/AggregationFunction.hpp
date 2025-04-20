@@ -41,9 +41,9 @@ class AggregationFunction
 {
 public:
     AggregationFunction(
-        std::shared_ptr<PhysicalType> inputType,
-        std::shared_ptr<PhysicalType> resultType,
-        std::unique_ptr<Functions::PhysicalFunction> inputFunction,
+        std::unique_ptr<PhysicalType> inputType,
+        std::unique_ptr<PhysicalType> resultType,
+        Functions::PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /// Adds the incoming record to the existing aggregation state
@@ -71,9 +71,9 @@ public:
     virtual ~AggregationFunction();
 
 protected:
-    const std::shared_ptr<PhysicalType> inputType;
-    const std::shared_ptr<PhysicalType> resultType;
-    const std::unique_ptr<Functions::PhysicalFunction> inputFunction;
+    const std::unique_ptr<PhysicalType> inputType;
+    const std::unique_ptr<PhysicalType> resultType;
+    const Functions::PhysicalFunction inputFunction;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 };
 
