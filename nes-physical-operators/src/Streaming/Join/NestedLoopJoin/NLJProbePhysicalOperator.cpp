@@ -99,7 +99,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
-    PhysicalOperator::open(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::open(executionCtx, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
     const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());

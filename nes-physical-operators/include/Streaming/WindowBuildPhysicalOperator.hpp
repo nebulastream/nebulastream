@@ -28,10 +28,7 @@ namespace NES
 class WindowBuildPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
-    explicit WindowBuildPhysicalOperator(
-        std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider,
-        uint64_t operatorHandlerIndex,
-        std::unique_ptr<TimeFunction> timeFunction);
+    explicit WindowBuildPhysicalOperator(uint64_t operatorHandlerIndex, std::shared_ptr<TimeFunction> timeFunction);
 
     /// This setup function can be called in a multithreaded environment. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
@@ -52,7 +49,7 @@ public:
 protected:
     std::optional<PhysicalOperator> child;
     const uint64_t operatorHandlerIndex;
-    const std::unique_ptr<TimeFunction> timeFunction;
+    const std::shared_ptr<TimeFunction> timeFunction;
 };
 
 }

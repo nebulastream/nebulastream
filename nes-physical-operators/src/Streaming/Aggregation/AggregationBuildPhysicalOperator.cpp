@@ -103,9 +103,9 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     const uint64_t operatorHandlerIndex,
-    std::unique_ptr<TimeFunction> timeFunction,
+    std::shared_ptr<TimeFunction> timeFunction,
     std::vector<Functions::PhysicalFunction> keyFunctions,
-    std::unique_ptr<WindowAggregation> windowAggregationOperator)
+    std::shared_ptr<WindowAggregation> windowAggregationOperator)
     : WindowAggregation(std::move(windowAggregationOperator))
     , WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
     , keyFunctions(std::move(keyFunctions))
