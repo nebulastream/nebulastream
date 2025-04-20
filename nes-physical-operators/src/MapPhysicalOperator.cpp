@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Nautilus/Interface/Record.hpp>
 #include <MapPhysicalOperator.hpp>
 
 namespace NES
 {
-Map::Map(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::Function> mapFunction)
+MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::PhysicalFunction> mapFunction)
     : fieldToWriteTo(std::move(fieldToWriteTo)), mapFunction(std::move(mapFunction))
 {
 }
