@@ -30,11 +30,11 @@ namespace NES
 
 StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
     const uint64_t operatorHandlerIndex,
-    const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
+    Functions::PhysicalFunction joinFunction,
     std::string windowStartFieldName,
     std::string windowEndFieldName,
     JoinSchema joinSchema)
-    : WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName), joinFunction(joinFunction), joinSchema(std::move(joinSchema))
+    : WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName), joinFunction(std::move(joinFunction)), joinSchema(std::move(joinSchema))
 {
 }
 
@@ -74,6 +74,6 @@ Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     const nautilus::val<Timestamp>& windowEnd) const
 {
     return createJoinedRecord(
-        leftRecord, rightRecord, windowStart, windowEnd, joinSchema.leftSchema->getFieldNames(), joinSchema.rightSchema->getFieldNames());
+        leftRecord, rightRecord, windowStart, windowEnd, joinSchema.leftSchema.getFieldNames(), joinSchema.rightSchema.getFieldNames());
 }
 }

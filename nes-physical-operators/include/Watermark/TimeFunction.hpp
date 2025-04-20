@@ -44,13 +44,13 @@ public:
 class EventTimeFunction final : public TimeFunction
 {
 public:
-    explicit EventTimeFunction(std::unique_ptr<Functions::PhysicalFunction> timestampFunction, Windowing::TimeUnit unit);
+    explicit EventTimeFunction(Functions::PhysicalFunction timestampFunction, Windowing::TimeUnit unit);
     void open(ExecutionContext& ctx, RecordBuffer& buffer) override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) override;
 
 private:
     Windowing::TimeUnit unit;
-    std::unique_ptr<Functions::PhysicalFunction> timestampFunction;
+    Functions::PhysicalFunction timestampFunction;
 };
 
 /// @brief Time function for ingestion time windows
