@@ -32,7 +32,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto handlerId = getNextOperatorHandlerId();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
-    auto bufferSize = conf.bufferSize.getValue();
+    auto bufferSize = NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE;
 
     auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(inputSchema, bufferSize);
     auto scanMemoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(scanLayout);
