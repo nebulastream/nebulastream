@@ -26,7 +26,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange)
@@ -63,7 +63,7 @@ bool QueryLog::logQueryFailure(QueryId queryId, Exception exception, std::chrono
     return false;
 }
 
-bool QueryLog::logQueryStatusChange(QueryId queryId, Execution::QueryStatus status, std::chrono::system_clock::time_point timestamp)
+bool QueryLog::logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point timestamp)
 {
     QueryStatusChange statusChange(std::move(status), timestamp);
 
@@ -97,7 +97,7 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
         std::vector<QueryRunSummary> runs;
         for (const auto& statusChange : queryLog->second)
         {
-            if (statusChange.state == Execution::QueryStatus::Failed)
+            if (statusChange.state == QueryStatus::Failed)
             {
                 if (runs.empty() || runs.back().stop)
                 {
@@ -106,7 +106,7 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
                 runs.back().stop = statusChange.timestamp;
                 runs.back().error = statusChange.exception;
             }
-            else if (statusChange.state == Execution::QueryStatus::Stopped)
+            else if (statusChange.state == QueryStatus::Stopped)
             {
                 if (runs.empty() || runs.back().stop)
                 {
@@ -114,7 +114,7 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
                 }
                 runs.back().stop = statusChange.timestamp;
             }
-            else if (statusChange.state == Execution::QueryStatus::Started)
+            else if (statusChange.state == QueryStatus::Started)
             {
                 if (runs.empty() || runs.back().start)
                 {
@@ -122,7 +122,7 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
                 }
                 runs.back().start = statusChange.timestamp;
             }
-            else if (statusChange.state == Execution::QueryStatus::Running)
+            else if (statusChange.state == QueryStatus::Running)
             {
                 if (runs.empty() || runs.back().running)
                 {
@@ -132,19 +132,19 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
             }
         }
 
-        QuerySummary summary = {queryId, Execution::QueryStatus::Registered, std::move(runs)};
+        QuerySummary summary = {queryId, QueryStatus::Registered, std::move(runs)};
 
         if (summary.runs.empty())
         {
-            summary.currentStatus = Execution::QueryStatus::Registered;
+            summary.currentStatus = QueryStatus::Registered;
         }
         else if (!summary.runs.back().stop)
         {
-            summary.currentStatus = Execution::QueryStatus::Running;
+            summary.currentStatus = QueryStatus::Running;
         }
         else
         {
-            summary.currentStatus = Execution::QueryStatus::Stopped;
+            summary.currentStatus = QueryStatus::Stopped;
         }
 
         return summary;

@@ -18,7 +18,7 @@
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 StopPipelineTask::~StopPipelineTask() = default;
 

@@ -42,7 +42,7 @@ public:
     EnumOption<LogLevel> logLevel
         = {"logLevel", LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
-    Runtime::QueryEngineConfiguration queryEngineConfiguration = {"queryEngine", "Query Engine Configuration"};
+    QueryEngineConfiguration queryEngineConfiguration = {"queryEngine", "Query Engine Configuration"};
 
     /// The number of buffers in the global buffer manager. Controls how much memory is consumed by the system.
     UIntOption numberOfBuffersInGlobalBufferManager

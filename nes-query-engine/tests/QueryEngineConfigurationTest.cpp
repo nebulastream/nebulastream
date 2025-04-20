@@ -35,14 +35,14 @@ public:
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsDefault)
 {
-    const Runtime::QueryEngineConfiguration defaultConfig;
+    const QueryEngineConfiguration defaultConfig;
     EXPECT_EQ(defaultConfig.taskQueueSize.getValue(), 10000);
     EXPECT_EQ(defaultConfig.numberOfWorkerThreads.getValue(), 4);
 }
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsValidInput)
 {
-    Runtime::QueryEngineConfiguration defaultConfig;
+    QueryEngineConfiguration defaultConfig;
     defaultConfig.overwriteConfigWithCommandLineInput(
         {{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "2"}, {"admissionQueueSize", "123"}});
 
@@ -53,25 +53,25 @@ TEST_F(QueryEngineConfigurationTest, testConfigurationsValidInput)
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsBadInputNonString)
 {
-    Runtime::QueryEngineConfiguration defaultConfig;
+    QueryEngineConfiguration defaultConfig;
     EXPECT_ANY_THROW(defaultConfig.overwriteConfigWithCommandLineInput({{"taskQueueSize", "XX"}, {"numberOfWorkerThreads", "2"}}));
 
-    Runtime::QueryEngineConfiguration defaultConfig1;
+    QueryEngineConfiguration defaultConfig1;
     EXPECT_ANY_THROW(defaultConfig1.overwriteConfigWithCommandLineInput({{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "XX"}}));
 
-    Runtime::QueryEngineConfiguration defaultConfig2;
+    QueryEngineConfiguration defaultConfig2;
     EXPECT_ANY_THROW(defaultConfig2.overwriteConfigWithCommandLineInput({{"taskQueueSize", "XX"}, {"numberOfWorkerThreads", "XX"}}));
 
-    Runtime::QueryEngineConfiguration defaultConfig3;
+    QueryEngineConfiguration defaultConfig3;
     EXPECT_ANY_THROW(defaultConfig2.overwriteConfigWithCommandLineInput({{"taskQueueSize", "1.0"}, {"numberOfWorkerThreads", "1.5"}}));
 }
 
 TEST_F(QueryEngineConfigurationTest, testConfigurationsBadInputBadNumberOfThreads)
 {
-    Runtime::QueryEngineConfiguration defaultConfig;
+    QueryEngineConfiguration defaultConfig;
     EXPECT_ANY_THROW(defaultConfig.overwriteConfigWithCommandLineInput({{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "0"}}));
 
-    const Runtime::QueryEngineConfiguration defaultConfig1;
+    const QueryEngineConfiguration defaultConfig1;
     EXPECT_ANY_THROW(defaultConfig.overwriteConfigWithCommandLineInput({{"taskQueueSize", "200"}, {"numberOfWorkerThreads", "20000"}}));
 }
 

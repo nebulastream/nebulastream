@@ -20,7 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 
-namespace NES::QueryCompilation
+namespace NES
 {
 class PipelineQueryPlan
 

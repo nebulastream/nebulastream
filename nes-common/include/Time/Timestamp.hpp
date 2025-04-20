@@ -18,7 +18,7 @@
 #include <ostream>
 #include <Util/Logger/Formatter.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 class Timestamp
@@ -51,4 +51,4 @@ private:
 
 }
 
-FMT_OSTREAM(NES::Runtime::Timestamp);
+FMT_OSTREAM(NES::Timestamp);

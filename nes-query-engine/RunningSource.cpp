@@ -28,7 +28,7 @@
 #include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 namespace

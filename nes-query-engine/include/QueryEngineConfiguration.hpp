@@ -22,7 +22,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 class QueryEngineConfiguration final : public Configurations::BaseConfiguration
 {

@@ -79,11 +79,11 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
     EXPECT_FALSE(reply.runs().at(0).has_error());
 
     auto log = IntegrationTestUtil::queryLog(queryId, uut);
-    const std::vector<QueryStatus> expected = {Registered, Running, Stopped, Running, Stopped};
+    const std::vector<::QueryStatus> expected = {Registered, Running, Stopped, Running, Stopped};
 
     for (size_t i = 0; i < log.size(); ++i)
     {
-        EXPECT_EQ(log[i].first, static_cast<Runtime::Execution::QueryStatus>(expected[i]));
+        EXPECT_EQ(log[i].first, static_cast<QueryStatus>(expected[i]));
     }
 }
 
