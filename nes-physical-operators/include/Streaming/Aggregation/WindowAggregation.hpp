@@ -23,13 +23,12 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <ErrorHandling.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES
 {
 
 /// Stores members that are needed for both phases of the aggregation, build and probe
-class WindowAggregation : Operator
+class WindowAggregation : public PhysicalOperatorConcept
 {
 public:
     WindowAggregation(

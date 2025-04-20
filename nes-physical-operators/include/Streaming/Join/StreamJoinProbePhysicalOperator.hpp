@@ -20,7 +20,6 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Operators/Operator.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>

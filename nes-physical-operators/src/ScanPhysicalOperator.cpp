@@ -21,7 +21,6 @@
 #include <Util/StdInt.hpp>
 #include <DefaultScanPhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES
 {
