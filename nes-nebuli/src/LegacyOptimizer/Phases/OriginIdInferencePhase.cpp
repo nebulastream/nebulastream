@@ -18,15 +18,19 @@
 #include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
-#include <Traits/OriginIdTrait.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Traits/OriginIdAssignerTrait.hpp>
 
 namespace NES::LegacyOptimizer
 {
 
 void inferInputOrigins(LogicalOperator& logicalOperator)
 {
-    if (logicalOperator.tryGet<UnionLogicalOperator>())
+    if (hasTrait<Optimizer::OriginIdAssignerTrait>(logicalOperator.getTraitSet()))
+    {
+        return;
+    }
+    else if (logicalOperator.tryGet<UnionLogicalOperator>())
     {
         auto unionOp = logicalOperator.get<UnionLogicalOperator>();
         std::vector<OriginId> combinedInputOriginIds;
@@ -72,9 +76,15 @@ void OriginIdInferencePhase::apply(LogicalPlan& queryPlan)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     uint64_t originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
-    for (auto operatorWithOriginId : queryPlan.getOperatorsWithTraits<Optimizer::OriginIdTrait>())
+    for (auto operatorWithOriginId : queryPlan.getOperatorsWithTraits<Optimizer::OriginIdAssignerTrait>())
     {
-        operatorWithOriginId.setInputOriginIds({{OriginId(originIdCounter++)}});
+        auto id = OriginId(originIdCounter++);
+
+        auto copy = operatorWithOriginId;
+        copy.setInputOriginIds({{id}});
+        copy.setOutputOriginIds({id});
+
+        queryPlan.replaceOperator(operatorWithOriginId, copy);
     }
 
     /// propagate origin ids through the complete query plan
