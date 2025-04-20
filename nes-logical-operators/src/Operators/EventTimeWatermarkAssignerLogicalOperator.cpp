@@ -52,16 +52,19 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(LogicalOperatorConcep
     return false;
 }
 
-/*
-bool EventTimeWatermarkAssignerLogicalOperator::inferSchema()
+
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(Schema) const
 {
-    if (!UnaryLogicalOperator::inferSchema())
+    auto copy = *this;
+    std::vector<LogicalOperator> newChildren;
+    for (auto& child : children)
     {
-        return false;
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
     }
-    return true;
+    copy.children = newChildren;
+    return copy;
 }
-*/
+
 
 Optimizer::TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() const
 {

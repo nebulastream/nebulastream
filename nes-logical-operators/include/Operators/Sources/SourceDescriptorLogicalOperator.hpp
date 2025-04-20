@@ -37,9 +37,6 @@ public:
     [[nodiscard]] std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
     [[nodiscard]] Sources::SourceDescriptor& getSourceDescriptorRef() const;
 
-    /// Returns the result schema of a source operator, which is defined by the source descriptor.
-    //bool inferSchema();
-
     /// LogicalOperatorConcept member
     [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
@@ -59,6 +56,9 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+
+    [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const override;
+
 
 private:
     /// Operator specific member

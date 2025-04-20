@@ -106,8 +106,8 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredStamp(Schema schema)
     auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
-        const auto stamp = getAssignment().getStamp().join(getField().getStamp());
-        copy.fieldAccess = fieldAccess.withFieldName(existingField.value().getName()).get<FieldAccessLogicalFunction>();
+        const auto stamp = copy.logicalFunction.getStamp()->join(*copy.fieldAccess.getStamp());
+        copy.fieldAccess = fieldAccess.withFieldName(existingField.value().getName()).withStamp(stamp).get<FieldAccessLogicalFunction>();
     }
     else
     {
@@ -115,30 +115,30 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredStamp(Schema schema)
         ///Check if field name is already fully qualified
         if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
         {
-            return copy.fieldAccess.withFieldName(fieldName);
+            copy.fieldAccess = copy.fieldAccess.withFieldName(fieldName).get<FieldAccessLogicalFunction>();
         }
         else
         {
-            return copy.fieldAccess.withFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
+            copy.fieldAccess = copy.fieldAccess.withFieldName(schema.getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName).get<FieldAccessLogicalFunction>();
         }
     }
 
-    if (dynamic_cast<const Undefined*>(&getField().getStamp()) != nullptr)
+    if (!copy.fieldAccess.getStamp() || dynamic_cast<const Undefined*>(copy.fieldAccess.getStamp().get()) != nullptr)
     {
-        /// if the field has no stamp set it to the one of the assignment
-        return copy.fieldAccess.withStamp(getAssignment().getStamp().clone());
+        copy.fieldAccess = copy.fieldAccess.withStamp(copy.getAssignment().getStamp()).get<FieldAccessLogicalFunction>();
     }
     else
     {
         /// the field already has a type, check if it is compatible with the assignment
-        if (getField().getStamp() != getAssignment().getStamp())
+        if (copy.logicalFunction.getStamp() != copy.fieldAccess.getStamp())
         {
             NES_WARNING(
                 "Field {} stamp is incompatible with assignment stamp. Overwriting field stamp with assignment stamp.",
                 getField().getFieldName())
-            auto newFieldAccess = fieldAccess.withStamp(getAssignment().getStamp().clone());
+            copy.fieldAccess = copy.fieldAccess.withStamp(copy.getAssignment().getStamp()).get<FieldAccessLogicalFunction>();
         }
     }
+    copy.stamp = copy.getAssignment().getStamp();
     return copy;
 }
 

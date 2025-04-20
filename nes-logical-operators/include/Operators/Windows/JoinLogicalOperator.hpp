@@ -44,7 +44,6 @@ public:
                                  JoinType joinType);
 
     /// Operator specific member
-    bool inferSchema();
     [[nodiscard]] LogicalFunction getJoinFunction() const;
     [[nodiscard]] Schema getLeftSchema() const;
     [[nodiscard]] Schema getRightSchema() const;
@@ -72,6 +71,8 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
+
+    [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const override;
 
 
     /// Serialization

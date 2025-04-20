@@ -59,28 +59,23 @@ std::string SelectionLogicalOperator::toString() const
     return ss.str();
 }
 
-bool SelectionLogicalOperator::inferSchema(Schema inputSchema)
+LogicalOperator SelectionLogicalOperator::withInferredSchema(Schema inputSchema) const
 {
-    predicate = predicate.withInferredStamp(inputSchema);
-    if (*predicate.getStamp().get() != Boolean())
+    auto copy = *this;
+    copy.predicate = predicate.withInferredStamp(inputSchema);
+    if (*copy.predicate.getStamp().get() != Boolean())
     {
         throw CannotInferSchema("the filter expression is not a valid predicate");
     }
-    this->inputSchema = inputSchema;
-    this->outputSchema = inputSchema;
+    copy.inputSchema = inputSchema;
+    copy.outputSchema = inputSchema;
 
-    /// Infer schema of all child operators
     std::vector<LogicalOperator> newChildren;
-    for (auto& child : children)
+    for (const auto& child : children)
     {
-        if (!child.inferSchema(outputSchema))
-        {
-            throw CannotInferSchema("failed inferring the schema of the child operator");
-        }
-        newChildren.push_back(child);
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
     }
-    this->children = newChildren;
-    return true;
+    return copy.withChildren(newChildren);
 }
 
 Optimizer::TraitSet SelectionLogicalOperator::getTraitSet() const

@@ -33,20 +33,19 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-bool SourceDescriptorLogicalOperator::inferSchema(Schema)
+LogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(Schema) const
 {
-    inputSchema = sourceDescriptor->schema;
-    outputSchema = sourceDescriptor->schema;
+    auto copy = *this;
+    copy.inputSchema = sourceDescriptor->schema;
+    copy.outputSchema = sourceDescriptor->schema;
 
-    /// We assume that all children operators have the same output schema otherwise this plan is not valid
+    std::vector<LogicalOperator> newChildren;
     for (auto& child : children)
     {
-        if (!child.inferSchema(outputSchema))
-        {
-            throw CannotInferSchema("This operator ({}) should have at least one child operator", this->toString());
-        }
+        newChildren.push_back(child.withInferredSchema(copy.outputSchema));
     }
-    return true;
+    copy.children = newChildren;
+    return copy;
 }
 
 bool SourceDescriptorLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const

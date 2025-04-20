@@ -32,15 +32,6 @@ public:
     /// Operator specific member
     [[nodiscard]] const FieldAssignmentLogicalFunction& getMapFunction() const;
 
-    /// @brief Infers the schema of the map operator. We support two cases:
-    /// 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
-    /// 2. the assignment statement creates a new field with an inferred data type.
-    /// @throws throws exception if inference was not possible.
-    /// @param typeInferencePhaseContext needed for stamp inferring
-    /// @return true if inference was possible
-    //[[nodiscard]] bool inferSchema();
-
-
     /// LogicalOperatorConcept member
     [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
@@ -61,6 +52,8 @@ public:
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
+    [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const override;
+
 
     /// Serialization
     static NES::Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -78,7 +71,7 @@ public:
 private:
     /// Operator specific member
     static constexpr std::string_view NAME = "Map";
-    LogicalFunction mapFunction;
+    FieldAssignmentLogicalFunction mapFunction;
 
     /// LogicalOperatorConcept member
     std::vector<LogicalOperator> children;
