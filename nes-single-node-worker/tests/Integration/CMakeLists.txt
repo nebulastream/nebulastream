@@ -41,7 +41,6 @@ target_link_libraries(
         single-node-integration-tests-csv
         nes-grpc
         nes-runtime
-        nes-execution
         nes-single-node-worker-test-util
 )
 serialize_query_with_nebuli(single-node-integration-tests-csv "qTwoCSVSourcesWithFilter")
@@ -53,7 +52,6 @@ target_link_libraries(
         single-node-integration-tests-tcp
         nes-grpc
         nes-runtime
-        nes-execution
         Boost::asio
         nes-single-node-worker-test-util
 )
@@ -68,7 +66,6 @@ target_link_libraries(
         single-node-integration-tests-mixed-sources
         nes-grpc
         nes-runtime
-        nes-execution
         Boost::asio
         nes-single-node-worker-test-util
 )
@@ -80,7 +77,6 @@ target_link_libraries(
         single-node-integration-tests-query-status
         nes-grpc
         nes-runtime
-        nes-execution
         Boost::asio
         nes-single-node-worker-test-util
 )
