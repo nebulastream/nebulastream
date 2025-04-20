@@ -568,11 +568,11 @@ void AntlrSQLQueryPlanCreator::exitTumblingWindow(AntlrSQLParser::TumblingWindow
     /// We use the ingestion time if the query does not have a timestamp fieldname specified
     if (helper.timestamp.empty())
     {
-        helper.windowType = Windowing::TumblingWindow::of(API::IngestionTime(), timeMeasure);
+        helper.windowType = std::make_shared<Windowing::TumblingWindow>(API::IngestionTime(), timeMeasure);
     }
     else
     {
-        helper.windowType = Windowing::TumblingWindow::of(
+        helper.windowType = std::make_shared<Windowing::TumblingWindow>(
             Windowing::TimeCharacteristic::createEventTime(
                 FieldAccessLogicalFunction(helper.timestamp)),
             timeMeasure);
@@ -605,12 +605,12 @@ void AntlrSQLQueryPlanCreator::exitThresholdBasedWindow(AntlrSQLParser::Threshol
     AntlrSQLHelper helper = helpers.top();
     if (helper.minimumCount.has_value())
     {
-        helper.windowType = Windowing::ThresholdWindow::of(std::move(helper.functionBuilder.back()),
+        helper.windowType = std::make_shared<Windowing::ThresholdWindow>(std::move(helper.functionBuilder.back()),
                                                            helper.minimumCount.value());
     }
     else
     {
-        helper.windowType = Windowing::ThresholdWindow::of(std::move(helper.functionBuilder.back()));
+        helper.windowType = std::make_shared<Windowing::ThresholdWindow>(std::move(helper.functionBuilder.back()));
     }
     //helper.isTimeBasedWindow = false;
     poppush(helper);
