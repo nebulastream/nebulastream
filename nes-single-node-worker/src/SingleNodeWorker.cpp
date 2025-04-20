@@ -49,7 +49,7 @@ QueryId SingleNodeWorker::registerQuery(LogicalPlan plan)
 {
     try
     {
-        auto queryPlan = optimizer->optimize(plan.clone());
+        auto queryPlan = optimizer->optimize(plan);
 
         listener->onEvent(SubmitQuerySystemEvent{queryPlan->getQueryId(), plan.toString()});
 
