@@ -26,6 +26,8 @@
 #include <PhysicalFunctionRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::QueryCompilation
 {

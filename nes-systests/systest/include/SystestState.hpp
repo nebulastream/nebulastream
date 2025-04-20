@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <SerializableQueryPlan.pb.h>

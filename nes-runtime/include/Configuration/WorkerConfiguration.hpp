@@ -19,10 +19,11 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/ScalarOption.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Configurations/WrapOption.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 
 namespace NES::Configurations
