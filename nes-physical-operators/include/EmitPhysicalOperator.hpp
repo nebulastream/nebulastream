@@ -21,18 +21,18 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <nautilus/val.hpp>
-#include <PhysicalOperator.hpp>
 #include <val.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {
 
 /// @brief Basic emit operator that receives records from an upstream operator and
 /// writes them to a tuple buffer according to a memory layout.
-class EmitPhysicalOperator : public PhysicalOperator
+class DefaultEmitPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit EmitPhysicalOperator(size_t operatorHandlerIndex, std::unique_ptr<TupleBufferMemoryProvider> memoryProvider);
+    explicit DefaultEmitPhysicalOperator(size_t operatorHandlerIndex, std::shared_ptr<TupleBufferMemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
@@ -42,12 +42,13 @@ public:
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& isLastChunk) const;
 
+    std::unique_ptr<Operator> clone() const override;
     std::string toString() const override {return typeid(this).name(); }
 
 private:
     [[nodiscard]] uint64_t getMaxRecordsPerBuffer() const;
 
-    std::unique_ptr<TupleBufferMemoryProvider> memoryProvider;
+    std::shared_ptr<TupleBufferMemoryProvider> memoryProvider;
     size_t operatorHandlerIndex;
 };
 

@@ -20,10 +20,10 @@
 #include <Streaming/WindowBasedOperatorHandler.hpp>
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
-#include <AbstractPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -63,15 +63,15 @@ void setupProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* p
 }
 
 
-WindowProbePhysicalOperator::WindowProbePhysicalOperator(const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
-    : operatorHandlerIndex(operatorHandlerIndex), windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName)
+WindowProbePhysicalOperator::WindowProbePhysicalOperator(std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider, const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
+    : PhysicalOperator(std::move(memoryProvider)), operatorHandlerIndex(operatorHandlerIndex), windowStartFieldName(windowStartFieldName), windowEndFieldName(windowEndFieldName)
 {
 }
 
 void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx) const
 {
     /// Giving child operators the change to setup
-    AbstractPhysicalOperator::setup(executionCtx);
+    PhysicalOperatorConcept::setup(executionCtx);
     nautilus::invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerIndex), executionCtx.pipelineContext);
 }
 
@@ -89,7 +89,7 @@ void WindowProbePhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 
     /// Now close for all children
-    AbstractPhysicalOperator::close(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
 
 void WindowProbePhysicalOperator::terminate(ExecutionContext& executionCtx) const
@@ -99,6 +99,6 @@ void WindowProbePhysicalOperator::terminate(ExecutionContext& executionCtx) cons
     invoke(deleteAllSlicesAndWindowsProxy, operatorHandlerMemRef);
 
     /// Now terminate for all children
-    AbstractPhysicalOperator::terminate(executionCtx);
+    PhysicalOperatorConcept::terminate(executionCtx);
 }
 }

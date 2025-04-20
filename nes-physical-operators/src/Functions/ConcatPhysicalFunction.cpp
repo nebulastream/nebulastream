@@ -30,20 +30,15 @@ namespace NES::Functions
 {
 
 ConcatPhysicalFunction::ConcatPhysicalFunction(
-    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
-    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
+    PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
+    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
 {
-}
-
-std::unique_ptr<PhysicalFunction> ConcatPhysicalFunction::clone() const
-{
-    return std::make_unique<ConcatPhysicalFunction>(leftPhysicalFunction->clone(), rightPhysicalFunction->clone());
 }
 
 VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftPhysicalFunction->execute(record, arena).cast<VariableSizedData>();
-    const auto rightValue = rightPhysicalFunction->execute(record, arena).cast<VariableSizedData>();
+    const auto leftValue = leftPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
+    const auto rightValue = rightPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
 
     const auto newSize = leftValue.getSize() + rightValue.getSize();
     const auto newVarSizeDataArea = arena.allocateMemory(newSize + nautilus::val<uint64_t>(sizeof(uint32_t)));
@@ -59,7 +54,6 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
 PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(NES::Functions::PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
-    return std::make_unique<ConcatPhysicalFunction>(
-        std::move(physicalFunctionRegistryArguments.childFunctions[0]), std::move(physicalFunctionRegistryArguments.childFunctions[1]));
+    return ConcatPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 }

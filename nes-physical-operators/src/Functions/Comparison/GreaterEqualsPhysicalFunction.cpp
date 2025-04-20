@@ -29,14 +29,14 @@ namespace NES::Functions
 
 VarVal GreaterEqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftPhysicalFunction->execute(record, arena);
-    const auto rightValue = rightPhysicalFunction->execute(record, arena);
+    const auto leftValue = leftPhysicalFunction.execute(record, arena);
+    const auto rightValue = rightPhysicalFunction.execute(record, arena);
     return leftValue >= rightValue;
 }
 
 GreaterEqualsPhysicalFunction::GreaterEqualsPhysicalFunction(
-    std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction)
-    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
+    PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
+    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
 {
 }
 
@@ -45,8 +45,7 @@ PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterG
 {
     PRECONDITION(
         PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two sub-functions");
-    return std::make_unique<GreaterEqualsPhysicalFunction>(
-        std::move(PhysicalFunctionRegistryArguments.childFunctions[0]), std::move(PhysicalFunctionRegistryArguments.childFunctions[1]));
+    return GreaterEqualsPhysicalFunction(PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

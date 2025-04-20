@@ -13,8 +13,8 @@
 */
 #pragma once
 #include <memory>
-#include <AbstractPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -22,7 +22,7 @@ class TimeFunction;
 
 /// @brief Watermark assignment operator.
 /// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
-class EventTimeWatermarkAssignment : public PhysicalOperator
+class EventTimeWatermarkAssignment : public PhysicalOperatorConcept
 {
 public:
     /// @brief Creates a EventTimeWatermarkAssignment operator with a watermarkExtractionFunction function.

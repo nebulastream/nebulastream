@@ -21,14 +21,14 @@
 namespace NES::Functions
 {
 
-class AndPhysicalFunction final : public PhysicalFunction
+class AndPhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
-    AndPhysicalFunction(std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction);
+    AndPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
-    const std::unique_ptr<PhysicalFunction> leftPhysicalFunction;
-    const std::unique_ptr<PhysicalFunction> rightPhysicalFunction;
+    const PhysicalFunction leftPhysicalFunction;
+    const PhysicalFunction rightPhysicalFunction;
 };
 }

@@ -29,9 +29,9 @@ using namespace Nautilus::Interface::MemoryProvider;
 struct ExecutionContext;
 
 /// Each operator can implement setup, open, close, execute, and terminate.
-struct PhysicalOperator : public virtual OperatorConcept
+struct PhysicalOperatorConcept : public OperatorConcept
 {
-    PhysicalOperator(bool isPipelineBreaker = false) : isPipelineBreaker(isPipelineBreaker) {}
+    PhysicalOperatorConcept(bool isPipelineBreaker = false) : isPipelineBreaker(isPipelineBreaker) {}
 
     /// @brief Setup initializes this operator for execution.
     /// Operators can implement this class to initialize some state that exists over the whole lifetime of this operator.
@@ -51,27 +51,13 @@ struct PhysicalOperator : public virtual OperatorConcept
     /// @param record the record that should be processed.
     virtual void execute(ExecutionContext&, Record&) const;
 
-    void setChild(std::unique_ptr<PhysicalOperator> op) {
-        children.clear();
-        children.push_back(std::move(op));
-    }
     const bool isPipelineBreaker;
-
-private:
-
-    /// raw pointer is only exposed in PhysicalOperator
-    [[nodiscard]] const PhysicalOperator* child() const {
-        INVARIANT(children.size() == 1, "Must have exactly one child but got {}", children.size());
-        return dynamic_cast<PhysicalOperator*>(children.front().get());
-    }
-    /// Hide the base class 'children' from subclasses of PhysicalOperator
-    /// We expect PhysicalOperators to have exactly one child used with the member function child().
-    using Operator::children;
 };
 
 /// Wrapper for the physical operator to store input and output schema after query optimization
 struct PhysicalOperatorWithSchema
 {
+    Operator physicalOperator;
     Schema inputSchema;
     Schema outputSchema;
     std::unique_ptr<PhysicalOperatorWithSchema> child;

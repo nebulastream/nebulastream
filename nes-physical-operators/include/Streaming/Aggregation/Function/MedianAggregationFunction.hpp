@@ -31,11 +31,11 @@ class MedianAggregationFunction : public AggregationFunction
 {
 public:
     MedianAggregationFunction(
-        std::shared_ptr<PhysicalType> inputType,
-        std::shared_ptr<PhysicalType> resultType,
-        std::unique_ptr<Functions::PhysicalFunction> inputFunction,
+        std::unique_ptr<PhysicalType> inputType,
+        std::unique_ptr<PhysicalType> resultType,
+        Functions::PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);
+        std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -50,7 +50,7 @@ public:
     ~MedianAggregationFunction() override = default;
 
 private:
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector;
+    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector;
 };
 
 }

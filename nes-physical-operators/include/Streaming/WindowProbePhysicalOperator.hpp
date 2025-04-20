@@ -15,9 +15,9 @@
 #pragma once
 
 #include <cstdint>
-#include <AbstractPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/Windows/WindowOperator.hpp>
 
 
 namespace NES
@@ -25,10 +25,10 @@ namespace NES
 
 /// Is the general probe operator for window operators. It is responsible for garbage collecting slices and windows.
 /// It is part of the second phase (probe) that processes the build up state of the first phase (build).
-class WindowProbePhysicalOperator : public AbstractPhysicalOperator
+class WindowProbePhysicalOperator : public PhysicalOperatorConcept
 {
 public:
-    explicit WindowProbePhysicalOperator(uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName);
+    explicit WindowProbePhysicalOperator(std::vector<std::unique_ptr<TupleBufferMemoryProvider>> memoryProvider, uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName);
 
     /// The setup method is called for each pipeline during the query initialization procedure. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.

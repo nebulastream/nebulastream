@@ -26,7 +26,7 @@
 #include <Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Streaming/Aggregation/AggregationSlice.hpp>
 #include <Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Streaming/Aggregation/WindowAggregationPhysicalOperator.hpp>
+#include <Streaming/Aggregation/WindowAggregation.hpp>
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
@@ -66,7 +66,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Calling the key functions to add/update the keys to the record
     for (const auto& [field, function] : std::views::zip(fieldKeys, keyFunctions))
     {
-        const auto value = function->execute(record, ctx.pipelineMemoryProvider.arena);
+        const auto value = function.execute(record, ctx.pipelineMemoryProvider.arena);
         record.write(field.fieldIdentifier, value);
     }
 
@@ -101,9 +101,9 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     const uint64_t operatorHandlerIndex,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions,
-    std::shared_ptr<WindowAggregationPhysicalOperator> windowAggregationOperator)
-    : WindowAggregationPhysicalOperator(windowAggregationOperator)
+    std::vector<Functions::PhysicalFunction> keyFunctions,
+    std::unique_ptr<WindowAggregation> windowAggregationOperator)
+    : WindowAggregation(std::move(windowAggregationOperator))
     , WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
     , keyFunctions(std::move(keyFunctions))
 {

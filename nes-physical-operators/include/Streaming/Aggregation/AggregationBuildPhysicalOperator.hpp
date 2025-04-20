@@ -32,12 +32,15 @@ public:
     AggregationBuildPhysicalOperator(
         uint64_t operatorHandlerIndex,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions,
-        std::shared_ptr<WindowAggregationPhysicalOperator> windowAggregationOperator);
+        Functions::PhysicalFunction keyFunctions,
+        std::unique_ptr<WindowAggregation> windowAggregationOperator);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
+    std::string toString() const override {return typeid(this).name(); }
+
 private:
-    const std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions;
+    const std::vector<Functions::PhysicalFunction> keyFunctions;
+    static constexpr bool PIPELINE_BREAKER = false;
 };
 
 }

@@ -18,22 +18,21 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
-#include <Plans/ExecutableOperator.hpp>
 #include <Util/StdInt.hpp>
-#include <ScanPhysicalOperator.hpp>
+#include <DefaultScanPhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
+#include <Plans/Operator.hpp>
 
 namespace NES
 {
 
-ScanPhysicalOperator::ScanPhysicalOperator(
-    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+DefaultScanPhysicalOperator::DefaultScanPhysicalOperator(std::shared_ptr<TupleBufferMemoryProvider> memoryProvider,
     std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {
 }
 
-void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void DefaultScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -43,13 +42,13 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     /// call open on all child operators
-    child->open(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::open(executionCtx, recordBuffer);
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = memoryProvider->readRecord(projections, recordBuffer, i);
-        child->execute(executionCtx, record);
+        PhysicalOperatorConcept::execute(executionCtx, record);
     }
 }
 

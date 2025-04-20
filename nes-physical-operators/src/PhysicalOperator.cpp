@@ -12,46 +12,50 @@
     limitations under the License.
 */
 
-#include <AbstractPhysicalOperator.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-void AbstractPhysicalOperator::setup(ExecutionContext& executionCtx) const
+void PhysicalOperatorConcept::setup(ExecutionContext& executionCtx) const
 {
-    if (child)
+    if (getChildren().size() == 1)
     {
-        child->setup(executionCtx);
+        child()->setup(executionCtx);
     }
 }
 
-void AbstractPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void PhysicalOperatorConcept::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
-    if (child)
+    if (child())
     {
-        child->open(executionCtx, rb);
+        child()->open(executionCtx, rb);
     }
 }
 
-void AbstractPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
+void PhysicalOperatorConcept::close(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
-    if (child)
+    if (child())
     {
-        child->close(executionCtx, rb);
+        child()->close(executionCtx, rb);
     }
 }
 
-void AbstractPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+void PhysicalOperatorConcept::terminate(ExecutionContext& executionCtx) const
 {
-    if (child)
+    if (child())
     {
-        child->terminate(executionCtx);
+        child()->terminate(executionCtx);
     }
 }
 
-AbstractPhysicalOperator::~AbstractPhysicalOperator()
+void PhysicalOperatorConcept::execute(NES::ExecutionContext& executionCtx, NES::Nautilus::Record& record) const
 {
+    if (child())
+    {
+        child()->execute(executionCtx, record);
+    }
 }
 
 }

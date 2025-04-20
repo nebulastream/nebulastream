@@ -13,12 +13,13 @@
 */
 
 #include <memory>
+#include <utility>
 #include <Nautilus/Interface/Record.hpp>
 #include <MapPhysicalOperator.hpp>
 
 namespace NES
 {
-MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, std::unique_ptr<Functions::PhysicalFunction> mapFunction)
+MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, Functions::PhysicalFunction mapFunction)
     : fieldToWriteTo(std::move(fieldToWriteTo)), mapFunction(std::move(mapFunction))
 {
 }
@@ -26,11 +27,11 @@ MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWr
 void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// execute map function
-    const auto value = mapFunction->execute(record, ctx.pipelineMemoryProvider.arena);
+    const auto value = mapFunction.execute(record, ctx.pipelineMemoryProvider.arena);
     /// write the result to the record
     record.write(fieldToWriteTo, value);
     /// call next operator
-    child->execute(ctx, record);
+    PhysicalOperatorConcept::execute(ctx, record);
 }
 
 }

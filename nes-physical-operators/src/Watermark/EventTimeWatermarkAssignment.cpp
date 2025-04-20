@@ -14,10 +14,6 @@
 
 #include <memory>
 #include <utility>
-#include <ExecutionContext.hpp>
-#include <OperatorState.hpp>
-#include <Watermark/EventTimeWatermarkAssignment.hpp>
-#include <Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
@@ -25,8 +21,9 @@
 #include <Util/Common.hpp>
 #include <Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <AbstractPhysicalOperator.hpp>
+#include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
+#include <Abstract/PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -42,7 +39,7 @@ EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<TimeF
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    Operator::open(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
 }
@@ -56,7 +53,7 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
         state->currentWatermark = tsField;
     }
     /// call next operator
-    child->execute(ctx, record);
+   PhysicalOperatorConcept::execute(ctx, record);
 }
 
 void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -66,7 +63,7 @@ void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordB
         "Expects the local state to be of type WatermarkState");
     const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
     executionCtx.watermarkTs = state->currentWatermark;
-    Operator::close(executionCtx, recordBuffer);
+    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
 
 }

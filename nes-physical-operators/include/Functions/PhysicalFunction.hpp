@@ -19,12 +19,84 @@
 namespace NES::Functions
 {
 using namespace Nautilus;
-class PhysicalFunction
+
+struct PhysicalFunctionConcept
 {
-public:
-    PhysicalFunction() = default;
+    virtual ~PhysicalFunctionConcept() = default;
     [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
-    virtual ~PhysicalFunction() = default;
 };
 
+struct PhysicalFunction {
+    template<typename T>
+    PhysicalFunction(const T& op) : self(std::make_unique<Model<T>>(op)) {}
+
+    PhysicalFunction(const PhysicalFunction& other)
+        : self(other.self->clone()) {}
+
+    template<typename T>
+    [[nodiscard]] const T get() const {
+        if (auto p = dynamic_cast<const Model<T>*>(self.get()))
+        {
+            return p->data;
+        }
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+    }
+
+    template<typename T>
+    [[nodiscard]] std::optional<T> tryGet() const {
+        if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
+            return p->data;
+        }
+        return std::nullopt;
+    }
+
+    PhysicalFunction(PhysicalFunction&&) noexcept = default;
+
+    PhysicalFunction& operator=(const PhysicalFunction& other) {
+        if (this != &other)
+        {
+            self = other.self->clone();
+        }
+        return *this;
+    }
+
+    bool operator==(const PhysicalFunction &other) const {
+        return self->equals(*other.self);
+    }
+
+    VarVal execute(const Record& record, ArenaRef& arena) const
+    {
+        return self->execute(record, arena);
+    }
+
+private:
+    struct Concept : PhysicalFunctionConcept {
+        [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
+        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
+    };
+
+    template<typename T>
+    struct Model : Concept {
+        T data;
+        explicit Model(T d) : data(std::move(d)) {}
+
+        [[nodiscard]] std::unique_ptr<Concept> clone() const override {
+            return std::unique_ptr<Concept>(new Model(data));
+        }
+
+        VarVal execute(const Record& record, ArenaRef& arena) const override
+        {
+            return data.execute(record, arena);
+        }
+
+        [[nodiscard]] bool equals(const Concept& other) const override {
+            if (auto p = dynamic_cast<const Model*>(&other)) {
+                return data.operator==(p->data);
+            }
+            return false;
+        }
+    };
+
+    std::unique_ptr<Concept> self;
+};
 }
