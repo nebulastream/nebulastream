@@ -23,7 +23,7 @@
 #include <val_concepts.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Aggregation
+namespace NES
 {
 
 /// Base class for any aggregation state. This class is used to store the intermediate state of an aggregation.

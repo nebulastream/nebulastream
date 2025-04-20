@@ -26,7 +26,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Execution.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 /// This struct models the information for an aggregation window trigger

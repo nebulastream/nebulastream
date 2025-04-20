@@ -35,7 +35,7 @@
 #include <static.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 Interface::HashMap*

@@ -22,7 +22,7 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 
 AggregationSlice::AggregationSlice(
