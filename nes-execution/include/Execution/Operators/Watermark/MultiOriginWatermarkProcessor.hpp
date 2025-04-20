@@ -25,33 +25,24 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-/**
- * @brief A multi origin version of the lock free watermark processor.
- */
+/// @brief A multi origin version of the lock free watermark processor.
 class MultiOriginWatermarkProcessor
 {
 public:
     explicit MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins);
 
-    /**
-     * @brief Creates a new watermark processor, for a specific number of origins.
-     * @param origins
-     */
+    /// @brief Creates a new watermark processor, for a specific number of origins.
+    /// @param origins
     static std::shared_ptr<MultiOriginWatermarkProcessor> create(const std::vector<OriginId>& origins);
 
-    /**
-     * @brief Updates the watermark timestamp and origin and emits the current watermark.
-     * @param ts watermark timestamp
-     * @param sequenceData of the watermark ts
-     * @param origin of the watermark ts
-     * @return currentWatermarkTs
-     */
+    /// @brief Updates the watermark timestamp and origin and emits the current watermark.
+    /// @param ts watermark timestamp
+    /// @param sequenceData of the watermark ts
+    // @param origin of the watermark ts
+    /// @return currentWatermarkTs
     [[nodiscard]] Timestamp updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const;
 
-    /**
-     * @brief Returns the current watermark across all origins
-     * @return uint64_t
-     */
+    /// @brief Returns the current watermark across all origins
     [[nodiscard]] Timestamp getCurrentWatermark() const;
 
     std::string getCurrentStatus();

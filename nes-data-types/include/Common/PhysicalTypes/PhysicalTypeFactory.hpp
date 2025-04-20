@@ -29,7 +29,7 @@ public:
     PhysicalTypeFactory() = default;
     virtual ~PhysicalTypeFactory() = default;
 
-    [[nodiscard]] virtual std::unique_ptr<PhysicalType> getPhysicalType(std::shared_ptr<DataType> dataType) const = 0;
+    [[nodiscard]] virtual std::shared_ptr<PhysicalType> getPhysicalType(std::shared_ptr<DataType> dataType) const = 0;
     /// @brief Translates a nes data type into a corresponding physical type.
 };
 

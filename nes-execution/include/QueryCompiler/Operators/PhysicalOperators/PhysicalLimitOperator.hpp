@@ -23,9 +23,6 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-/**
- * @brief Physical limit operator.
- */
 class PhysicalLimitOperator : public PhysicalUnaryOperator
 {
 public:
@@ -35,6 +32,7 @@ public:
     static std::shared_ptr<PhysicalOperator>
     create(const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, uint64_t limit);
     std::shared_ptr<Operator> clone() override;
+
     uint64_t getLimit();
 
 protected:

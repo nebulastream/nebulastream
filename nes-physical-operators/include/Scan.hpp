@@ -23,18 +23,14 @@
 namespace NES
 {
 
-/**
- * @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
- * Furthermore, it supports projection pushdown to eliminate unneeded reads.
- */
 class Scan : public Operator
+/// @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
+/// Furthermore, it supports projection push down to eliminate unneeded reads
 {
 public:
-    /**
-     * @brief Constructor for the scan operator that receives a memory layout and a projection vector.
-     * @param memoryProvider memory layout that describes the tuple buffer.
-     * @param projections projection vector
-     */
+    /// @brief Constructor for the scan operator that receives a memory layout and a projection vector.
+    /// @param memoryLayout memory layout that describes the tuple buffer.
+    /// @param projections projection vector
     Scan(
         std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         std::vector<Nautilus::Record::RecordFieldIdentifier> projections);

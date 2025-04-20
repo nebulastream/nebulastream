@@ -16,10 +16,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-/**
- * @brief Base class of all operator state.
- * Actual operators should inherit from this.
- */
+/// Base class of all operator state. Actual operators should inherit from this.
 class OperatorState
 {
 public:
