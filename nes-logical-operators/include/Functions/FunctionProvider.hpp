@@ -13,28 +13,26 @@
 */
 
 #pragma once
+
 #include <memory>
-#include <Execution/Functions/Function.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
 
 namespace NES
 {
-
 namespace QueryCompilation
 {
 class FunctionProvider
 {
 public:
     /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
-    ///NodeFunction a NodeFunctionConstantValue, NodeFunctionFieldAccess or FieldAssignment
-    static std::unique_ptr<Runtime::Execution::Functions::Function> lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction);
-
+    /// NodeFunction a NodeFunctionConstantValue, FieldAccessLogicalFunction or FieldAssignment
+    static std::unique_ptr<Functions::PhysicalFunction> lowerFunction(const std::shared_ptr<LogicalFunction>& nodeFunction);
 
 private:
-    static std::unique_ptr<Runtime::Execution::Functions::Function>
-    lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& nodeFunction);
+    static std::unique_ptr<Functions::PhysicalFunction>
+    lowerConstantFunction(const std::shared_ptr<ConstantValueLogicalFunction>& nodeFunction);
 };
 
-}
 }
