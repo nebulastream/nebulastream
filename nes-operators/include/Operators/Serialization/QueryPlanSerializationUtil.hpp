@@ -21,7 +21,6 @@
 
 namespace NES
 {
-
 class QueryPlanSerializationUtil
 {
 public:

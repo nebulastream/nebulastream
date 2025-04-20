@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
-        DecomposedQueryPlanSerializationUtil.cpp
         OperatorSerializationUtil.cpp
         QueryPlanSerializationUtil.cpp
         SchemaSerializationUtil.cpp
