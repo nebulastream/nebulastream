@@ -71,7 +71,7 @@ namespace NES::IntegrationTestUtil
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
         for (const auto& field : schema)
         {
-            retVector.push_back(defaultPhysicalTypeFactory.getPhysicalType(field.getDataType())->clone());
+            retVector.push_back(defaultPhysicalTypeFactory.getPhysicalType(field.getDataType()));
         }
 
         return retVector;
