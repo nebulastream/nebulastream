@@ -28,14 +28,14 @@ void EventTimeFunction::open(ExecutionContext&, RecordBuffer&)
     /// nop
 }
 
-EventTimeFunction::EventTimeFunction(std::unique_ptr<Functions::PhysicalFunction> timestampFunction, Windowing::TimeUnit unit)
-    : unit(unit), timestampFunction(std::move(timestampFunction))
+EventTimeFunction::EventTimeFunction(Functions::PhysicalFunction timestampFunction, Windowing::TimeUnit unit)
+    : unit(unit), timestampFunction(timestampFunction)
 {
 }
 
 nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record& record)
 {
-    const auto ts = this->timestampFunction->execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
+    const auto ts = this->timestampFunction.execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
     const auto tsInMs = nautilus::val<Timestamp>(ts * timeMultiplier);
     ctx.currentTs = tsInMs;
