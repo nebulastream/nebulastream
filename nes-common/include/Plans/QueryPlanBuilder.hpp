@@ -60,9 +60,9 @@ public:
 
     static QueryPlan addWindowAggregation(
         QueryPlan queryPlan,
-        std::unique_ptr<Windowing::WindowType> windowType,
-        std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggs,
-        std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys);
+        std::shared_ptr<Windowing::WindowType> windowType,
+        std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs,
+        std::vector<FieldAccessLogicalFunction> onKeys);
 
     /// @brief UnionOperator to combine two query plans
     /// @param leftQueryPlan the left query plan to combine by the union
@@ -80,7 +80,7 @@ public:
         QueryPlan leftQueryPlan,
         QueryPlan rightQueryPlan,
         LogicalFunction joinFunction,
-        std::unique_ptr<Windowing::WindowType> windowType,
+        std::shared_ptr<Windowing::WindowType> windowType,
         JoinLogicalOperator::JoinType joinType);
 
     static QueryPlan addSink(std::string sinkName, QueryPlan queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
