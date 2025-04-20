@@ -46,12 +46,13 @@ std::string_view SinkLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-bool SinkLogicalOperator::inferSchema(Schema inputSchema)
+LogicalOperator SinkLogicalOperator::withInferredSchema(Schema inputSchema) const
 {
-    sinkDescriptor->schema = inputSchema;
-    this->inputSchema = inputSchema;
-    this->outputSchema = inputSchema;
-    return true;
+    auto copy = *this;
+    copy.sinkDescriptor->schema = inputSchema;
+    copy.inputSchema = inputSchema;
+    copy.outputSchema = inputSchema;
+    return copy;
 }
 
 Optimizer::TraitSet SinkLogicalOperator::getTraitSet() const
