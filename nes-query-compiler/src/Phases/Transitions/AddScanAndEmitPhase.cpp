@@ -12,18 +12,13 @@
     limitations under the License.
 */
 
+
 #include <memory>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
-#include <Util/Common.hpp>
+#include <Plans/DecomposedQueryPlan.hpp>
+#include <Plans/OperatorPipeline.hpp>
+#include <Plans/PipelineQueryPlan.hpp>
+#include <Phases/Translations/AddScanAndEmitPhase.hpp>
+#include <ScanPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 
 
@@ -37,7 +32,7 @@ std::shared_ptr<AddScanAndEmitPhase> AddScanAndEmitPhase::create()
 
 std::shared_ptr<PipelineQueryPlan> AddScanAndEmitPhase::apply(std::shared_ptr<PipelineQueryPlan> pipelineQueryPlan)
 {
-    for (const auto& pipeline : pipelineQueryPlan->getPipelines())
+    for (const auto& pipeline : pipelineQueryPlan->pipelines)
     {
         if (pipeline->isOperatorPipeline())
         {
@@ -49,20 +44,20 @@ std::shared_ptr<PipelineQueryPlan> AddScanAndEmitPhase::apply(std::shared_ptr<Pi
 
 std::shared_ptr<OperatorPipeline> AddScanAndEmitPhase::process(std::shared_ptr<OperatorPipeline> pipeline)
 {
-    const auto decomposedQueryPlan = pipeline->getDecomposedQueryPlan();
-    const auto pipelineRootOperators = decomposedQueryPlan->getRootOperators();
+    const auto queryPlan = pipeline->getQueryPlan();
+    const auto pipelineRootOperators = queryPlan->getRootOperators();
     PRECONDITION(!pipelineRootOperators.empty(), "A pipeline should have at least one root operator");
 
     /// insert buffer scan operator to the pipeline root if necessary
     const auto& rootOperator = pipelineRootOperators[0];
-    if (!NES::Util::instanceOf<PhysicalOperators::AbstractScanOperator>(rootOperator))
+    if (!NES::Util::instanceOf<ScanPhysicalOperator>(rootOperator))
     {
         PRECONDITION(
-            NES::Util::instanceOf<PhysicalOperators::PhysicalUnaryOperator>(rootOperator),
+            NES::Util::instanceOf<UnaryPhysicalOperator>(rootOperator),
             "Pipeline root should be a unary operator but was: {}",
             *rootOperator);
-        const auto unaryRoot = NES::Util::as<PhysicalOperators::PhysicalUnaryOperator>(rootOperator);
-        const auto newScan = PhysicalOperators::PhysicalScanOperator::create(unaryRoot->getInputSchema());
+        const auto unaryRoot = NES::Util::as<UnaryPhysicalOperator>(rootOperator);
+        const auto newScan = ScanPhysicalOperator::create(unaryRoot->getInputSchema());
         pipeline->prependOperator(newScan);
     }
 
@@ -71,9 +66,9 @@ std::shared_ptr<OperatorPipeline> AddScanAndEmitPhase::process(std::shared_ptr<O
     for (const auto& leaf : pipelineLeafOperators)
     {
         auto leafOperator = NES::Util::as<Operator>(leaf);
-        if (!NES::Util::instanceOf<PhysicalOperators::AbstractEmitOperator>(leafOperator))
+        if (!NES::Util::instanceOf<EmitPhysicalOperator>(leafOperator))
         {
-            auto emitOperator = PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getOutputSchema());
+            auto emitOperator = EmitPhysicalOperator(leafOperator->getOutputSchema());
             leafOperator->addChild(emitOperator);
         }
     }

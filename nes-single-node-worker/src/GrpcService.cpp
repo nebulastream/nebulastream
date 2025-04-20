@@ -14,13 +14,14 @@
 
 #include <string>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 namespace NES
@@ -38,10 +39,10 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
 
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
 {
-    auto fullySpecifiedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&request->decomposedqueryplan());
+    auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(&request->queryplan());
     try
     {
-        auto queryId = delegate.registerQuery(fullySpecifiedQueryPlan);
+        auto queryId = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
         response->set_queryid(queryId.getRawValue());
         return grpc::Status::OK;
     }

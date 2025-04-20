@@ -13,9 +13,11 @@
 */
 
 #include <memory>
-#include <Plans/DecomposedQueryPlan.hpp>
+#include <atomic>
+#include <chrono>
+#include <optional>
+#include <Plans/QueryPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
-#include <QueryCompilationRequest.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <SingleNodeWorker.hpp>
@@ -42,12 +44,12 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(std::shared_ptr<DecomposedQueryPlan> plan)
+QueryId SingleNodeWorker::registerQuery(std::unique_ptr<QueryPlan> plan)
 {
     try
     {
-        auto logicalQueryPlan
-            = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
+        auto queryPlan
+            = std::make_unique<QueryPlan>(QueryId(queryIdCounter++), plan->getRootOperators());
 
         listener->onEvent(SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
 
