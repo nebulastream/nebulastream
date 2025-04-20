@@ -17,7 +17,6 @@
 #include <Functions/FunctionProvider.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>

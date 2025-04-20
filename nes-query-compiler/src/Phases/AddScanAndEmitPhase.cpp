@@ -22,7 +22,6 @@
 #include <PipelinedQueryPlan.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Pipeline.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES::QueryCompilation
 {

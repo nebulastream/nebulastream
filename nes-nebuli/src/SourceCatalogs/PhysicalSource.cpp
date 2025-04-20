@@ -15,7 +15,6 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES
 {
