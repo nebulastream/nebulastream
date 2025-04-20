@@ -112,7 +112,7 @@ UnionLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::str
     return NES::Configurations::DescriptorConfig::validateAndFormat<UnionLogicalOperator::ConfigParameters>(std::move(config), NAME);
 }
 
-Operator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments)
+LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
     /// nothing to da as this operator has no members
     return UnionLogicalOperator();

@@ -19,7 +19,6 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/OriginIdTrait.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES
 {
@@ -59,7 +58,7 @@ public:
         return {};
     }
 
-    void setChildren(std::vector<Operator> children) override
+    void setChildren(std::vector<LogicalOperator> children) override
     {
         this->children = children;
     }
@@ -71,7 +70,7 @@ public:
     Schema getOutputSchema() const override { return outputSchema; };
 
 private:
-    std::vector<Operator> children;
+    std::vector<LogicalOperator> children;
     Schema inputSchema;
     Schema outputSchema;
 

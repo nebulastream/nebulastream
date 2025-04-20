@@ -37,13 +37,13 @@ class OperatorSerializationUtil
 {
 public:
     /// Serializes an operator node and all its children to a SerializableOperator object.
-    static SerializableOperator serializeOperator(Operator operatorNode);
+    static SerializableOperator serializeOperator(LogicalOperator operatorNode);
 
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
-    static Operator deserializeOperator(SerializableOperator serializedOperator);
+    static LogicalOperator deserializeOperator(SerializableOperator serializedOperator);
 
-    static Operator deserializeLogicalOperator(const SerializableOperator_LogicalOperator& serializedOperator);
+    static LogicalOperator deserializeLogicalOperator(const SerializableOperator_LogicalOperator& serializedOperator);
 
     static void serializeSourceOperator(const SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
     static void serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator);
@@ -51,9 +51,9 @@ public:
         const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
     static void serializeSinkDescriptor(const Schema& schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails);
 
-    static Operator deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
-    static Operator deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
     static Sources::SourceDescriptor
+    static LogicalOperator deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
+    static LogicalOperator deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
     deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
     static Sinks::SinkDescriptor
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);

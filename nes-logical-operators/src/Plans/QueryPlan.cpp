@@ -24,7 +24,6 @@
 #include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
-#include <Plans/Operator.hpp>
 
 
 namespace NES
@@ -49,33 +48,33 @@ QueryPlan& QueryPlan::operator=(QueryPlan&& other) {
     return *this;
 }
 
-std::unique_ptr<QueryPlan> QueryPlan::create(Operator rootOperator)
+std::unique_ptr<QueryPlan> QueryPlan::create(LogicalOperator rootOperator)
 {
     return std::make_unique<QueryPlan>(std::move(rootOperator));
 }
 
-std::unique_ptr<QueryPlan> QueryPlan::create(QueryId queryId, std::vector<Operator> rootOperators)
+std::unique_ptr<QueryPlan> QueryPlan::create(QueryId queryId, std::vector<LogicalOperator> rootOperators)
 {
     return std::make_unique<QueryPlan>(std::move(queryId), std::move(rootOperators));
 }
 
-QueryPlan::QueryPlan(Operator rootOperator) : queryId(INVALID_QUERY_ID)
+QueryPlan::QueryPlan(LogicalOperator rootOperator) : queryId(INVALID_QUERY_ID)
 {
     rootOperators.push_back(std::move(rootOperator));
 }
 
-QueryPlan::QueryPlan(QueryId queryId, std::vector<Operator> rootOperators)
+QueryPlan::QueryPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators)
     : rootOperators(std::move(rootOperators)), queryId(queryId)
 {
 }
 
-void QueryPlan::addRootOperator(Operator newRootOperator)
+void QueryPlan::addRootOperator(LogicalOperator newRootOperator)
 {
     /// Check if a root with the id already present
     auto found = std::find_if(
         rootOperators.begin(),
         rootOperators.end(),
-        [&](const Operator& root) { return newRootOperator.getId() == root.getId(); });
+        [&](const LogicalOperator& root) { return newRootOperator.getId() == root.getId(); });
     if (found == rootOperators.end())
     {
         rootOperators.push_back(std::move(newRootOperator));
@@ -86,7 +85,7 @@ void QueryPlan::addRootOperator(Operator newRootOperator)
     }
 }
 
-void QueryPlan::promoteOperatorToRoot(Operator newRoot)
+void QueryPlan::promoteOperatorToRoot(LogicalOperator newRoot)
 {
     for (auto& oldRoot : rootOperators)
     {
@@ -108,9 +107,9 @@ std::string QueryPlan::toString() const
     return ss.str();
 }
 
-std::vector<Operator> QueryPlan::getRootOperators() const
+std::vector<LogicalOperator> QueryPlan::getRootOperators() const
 {
-    std::vector<Operator> rawOps;
+    std::vector<LogicalOperator> rawOps;
     rawOps.reserve(rootOperators.size());
     for (const auto& op : rootOperators) {
         rawOps.push_back(op);
@@ -118,17 +117,17 @@ std::vector<Operator> QueryPlan::getRootOperators() const
     return rawOps;
 }
 
-std::vector<Operator> QueryPlan::getLeafOperators() const
+std::vector<LogicalOperator> QueryPlan::getLeafOperators() const
 {
     /// Find all the leaf nodes in the query plan
     NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
-    std::vector<Operator> leafOperators;
+    std::vector<LogicalOperator> leafOperators;
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::set<OperatorId> visitedOpIds;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
-        for (auto itr :  BFSRange<Operator>(rootOperator))
+        for (auto itr :  BFSRange<LogicalOperator>(rootOperator))
         {
             if (visitedOpIds.contains(itr.getId()))
             {
@@ -147,14 +146,14 @@ std::vector<Operator> QueryPlan::getLeafOperators() const
     return leafOperators;
 }
 
-std::unordered_set<Operator> QueryPlan::getAllOperators() const
+std::unordered_set<LogicalOperator> QueryPlan::getAllOperators() const
 {
     /// Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<Operator> visitedOperators;
+    std::unordered_set<LogicalOperator> visitedOperators;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
-        for (auto itr :  BFSRange<Operator>(rootOperator))
+        for (auto itr :  BFSRange<LogicalOperator>(rootOperator))
         {
             if (visitedOperators.contains(itr))
             {
@@ -189,7 +188,7 @@ bool QueryPlan::operator==(const QueryPlan& otherPlan) const
     }
 
     /// add all root-operators to stack
-    std::stack<std::pair<Operator, Operator>> stack;
+    std::stack<std::pair<LogicalOperator, LogicalOperator>> stack;
     for (size_t i = 0; i < leftRootOperators.size(); ++i)
     {
         stack.emplace(

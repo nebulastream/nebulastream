@@ -33,7 +33,6 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -221,7 +220,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::checkAndAddWatermarkAssignment(
 */
 
 QueryPlan QueryPlanBuilder::addBinaryOperatorAndUpdateSource(
-    Operator operatorNode, QueryPlan leftQueryPlan, QueryPlan rightQueryPlan)
+    LogicalOperator operatorNode, QueryPlan leftQueryPlan, QueryPlan rightQueryPlan)
 {
     leftQueryPlan.addRootOperator(rightQueryPlan.getRootOperators()[0]);
     leftQueryPlan.promoteOperatorToRoot(std::move(operatorNode));

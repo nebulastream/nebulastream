@@ -60,8 +60,8 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
 
 QueryPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
 {
-    std::vector<Operator> rootOperators;
-    std::map<uint64_t, Operator> operatorIdToOperatorMap;
+    std::vector<LogicalOperator> rootOperators;
+    std::map<uint64_t, LogicalOperator> operatorIdToOperatorMap;
 
     ///Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap())

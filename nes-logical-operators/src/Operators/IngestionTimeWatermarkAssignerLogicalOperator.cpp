@@ -17,7 +17,6 @@
 #include <sstream>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Plans/Operator.hpp>
 #include <SerializableOperator.pb.h>
 #include <LogicalOperatorRegistry.hpp>
 

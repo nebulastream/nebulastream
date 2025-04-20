@@ -23,7 +23,7 @@
 namespace NES
 {
 
-using LogicalOperatorRegistryReturnType = Operator;
+using LogicalOperatorRegistryReturnType = LogicalOperator;
 struct LogicalOperatorRegistryArguments
 {
     NES::Configurations::DescriptorConfig::Config config;

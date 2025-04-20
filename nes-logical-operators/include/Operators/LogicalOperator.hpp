@@ -20,7 +20,6 @@
 #include <vector>
 #include <memory>
 #include <API/Schema.hpp>
-#include <Plans/Operator.hpp>
 #include <Traits/Trait.hpp>
 #include <Identifiers/Identifiers.hpp>
 

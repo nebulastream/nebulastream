@@ -56,12 +56,12 @@ public:
 protected:
     std::string toString() const override;
 
-    std::vector<Operator> getChildren() const override
+    std::vector<LogicalOperator> getChildren() const override
     {
         return children;
     }
 
-    void setChildren(std::vector<Operator> children) override
+    void setChildren(std::vector<LogicalOperator> children) override
     {
         this->children = children;
     }
@@ -77,7 +77,7 @@ protected:
     std::vector<OriginId> getOutputOriginIds() const override { return {}; }
 
 private:
-    std::vector<Operator> children;
+    std::vector<LogicalOperator> children;
     static constexpr std::string_view NAME = "Selection";
     LogicalFunction predicate;
     Schema inputSchema, outputSchema;

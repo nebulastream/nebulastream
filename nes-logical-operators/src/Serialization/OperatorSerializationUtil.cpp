@@ -21,12 +21,11 @@
 #include <SerializableOperator.pb.h>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES
 {
 
-SerializableOperator OperatorSerializationUtil::serializeOperator(Operator operatorNode)
+SerializableOperator OperatorSerializationUtil::serializeOperator(LogicalOperator operatorNode)
 {
     auto serializedOperator = SerializableOperator();
 
@@ -43,7 +42,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(Operator opera
     return serializedOperator;
 }
 
-Operator OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator)
+LogicalOperator OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator)
 {
     if (serializedOperator.has_source())
     {
@@ -78,7 +77,7 @@ void OperatorSerializationUtil::serializeSourceOperator(
     serializedOperator.set_allocated_source(sourceDetails);
 }
 
-Operator
+LogicalOperator
 OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails)
 {
     const auto& serializedSourceDescriptor = sourceDetails.sourcedescriptor();
@@ -99,7 +98,7 @@ void OperatorSerializationUtil::serializeSinkOperator(
     serializedOperator.set_allocated_sink(sinkDetails);
 }
 
-Operator OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
+LogicalOperator OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
     const auto& serializedSinkDescriptor = sinkDetails.sinkdescriptor();
     auto sinkOperator = SinkLogicalOperator();
@@ -133,7 +132,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     sourceDetails.set_allocated_sourcedescriptor(serializedSourceDescriptor);
 }
 
-Operator OperatorSerializationUtil::deserializeLogicalOperator(
+LogicalOperator OperatorSerializationUtil::deserializeLogicalOperator(
     const SerializableOperator_LogicalOperator& operatorDescriptor)
 {
     auto operatorType = operatorDescriptor.operatortype();

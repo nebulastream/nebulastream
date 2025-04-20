@@ -16,7 +16,6 @@
 #include <memory>
 #include <utility>
 #include <ErrorHandling.hpp>
-#include <Plans/Operator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 

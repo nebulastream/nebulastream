@@ -35,12 +35,12 @@ public:
     [[nodiscard]] SerializableOperator serialize() const override;
     [[nodiscard]] std::string toString() const override;
 
-    std::vector<Operator> getChildren() const override
+    std::vector<LogicalOperator> getChildren() const override
     {
         return children;
     }
 
-    void setChildren(std::vector<Operator> children) override
+    void setChildren(std::vector<LogicalOperator> children) override
     {
         this->children = children;
     }
@@ -57,8 +57,8 @@ public:
     Schema getOutputSchema() const override { return outputSchema; };
 
 protected:
-    std::vector<Operator> children;
     Optimizer::TraitSet traitSet;
+    std::vector<LogicalOperator> children;
     Schema inputSchema;
     Schema outputSchema;
 };
