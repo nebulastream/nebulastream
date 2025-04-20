@@ -29,8 +29,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/QueryPlan.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/ostream.h>
