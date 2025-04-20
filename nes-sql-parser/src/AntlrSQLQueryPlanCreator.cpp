@@ -459,10 +459,6 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         queryPlan = QueryPlanBuilder::createQueryPlan(helper.getSource());
     }
-    if (!helper.newSourceName.empty() && helper.newSourceName != helper.getSource())
-    {
-        queryPlan = QueryPlanBuilder::addRename(helper.newSourceName, queryPlan);
-    }
 
     for (auto whereExpr = helper.getWhereClauses().rbegin(); whereExpr != helper.getWhereClauses().rend(); ++whereExpr)
     {
