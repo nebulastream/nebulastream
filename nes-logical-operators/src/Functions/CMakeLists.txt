@@ -10,6 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-query-manager-test-utils-lib QueryEngineTestingInfrastructure.cpp)
-target_include_directories(nes-query-manager-test-utils-lib PUBLIC . ${CMAKE_SOURCE_DIR}/nes-query-engine/)
-target_link_libraries(nes-query-manager-test-utils-lib PUBLIC nes-common nes-query-engine PRIVATE nes-logical-operators nes-memory-test-utils nes-sources-test-utils)
+add_source_files(nes-logical-operators
+        FunctionSerializationUtil.cpp
+        LogicalFunction.cpp
+        BinaryLogicalFunction.cpp
+        CaseLogicalFunction.cpp
+        ConstantValueLogicalFunction.cpp
+        FieldAccessLogicalFunction.cpp
+        FieldAssignmentBinaryLogicalFunction.cpp
+        RenameLogicalFunction.cpp
+        UnaryLogicalFunction.cpp
+        WhenBinaryLogicalFunction.cpp
+)
+add_subdirectory(LogicalFunctions)
+add_subdirectory(ArithmeticalFunctions)

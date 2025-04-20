@@ -19,21 +19,19 @@ include_directories(tests/include)
 
 # Set Sources and Headers
 add_subdirectory(src)
-
-get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
+get_source(nes-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
-# link libraries
-target_link_libraries(nes-execution PUBLIC nes-nautilus)
-target_include_directories(nes-execution PUBLIC
+add_library(nes-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
+target_link_libraries(nes-optimizer PUBLIC nes-nautilus nes-logical-operators nes-physical-operators)
+target_include_directories(nes-optimizer PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-execution REUSE_FROM nes-common)
+    target_precompile_headers(nes-optimizer REUSE_FROM nes-common)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
-    target_compile_options(nes-execution PUBLIC "-fPIC")
+    target_compile_options(nes-optimizer PUBLIC "-fPIC")
 endif ()
 
 add_tests_if_enabled(tests)
