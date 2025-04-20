@@ -15,41 +15,50 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/QueryPlan.hpp>
-#include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+#include <PhysicalPlan.hpp>
 #include <RewriteRuleRegistry.hpp>
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
 
-std::unique_ptr<QueryPlan> apply(QueryPlan queryPlan)
+std::shared_ptr<PhysicalOperatorWrapper>
+lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
 {
-    PRECONDITION(queryPlan.getRootOperators().size() == 1, "For now, we only support query plans with a single sink.");
-
-    for (const auto& operatorNode : BFSRange<LogicalOperator>(queryPlan.getRootOperators()[0]))
+    auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument);
+    if (!ruleOptional.has_value())
     {
-        if (operatorNode.tryGet<SinkLogicalOperator>() or operatorNode.tryGet<SourceDescriptorLogicalOperator>()
-            or operatorNode.tryGet<SourceNameLogicalOperator>())
-        {
-            continue;
-        }
-        //if (auto rule = RewriteRuleRegistry::instance().create(std::string(logicalOperator->getName()), RewriteRuleRegistryArguments{});
-                rule.has_value())
-                //{
-                /// TODO here we apply the rule
-                /// The problem is that we would expect that we take the TraitSet as the input
-                //}
-                //else
-                //{
-                //    throw UnknownLogicalOperator("{} not part of RewriteRuleRegistry", logicalOperator->getName());
-                //}
+        throw UnknownPhysicalOperator("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
     }
-    return std::make_unique<QueryPlan>(queryPlan.getQueryId(), queryPlan.getRootOperators());
+    auto loweringResult = ruleOptional.value()->apply(logicalOperator);
+
+    auto logicalChildren = logicalOperator.getChildren();
+    INVARIANT(
+        logicalChildren.size() != loweringResult.leafOperators.size(), "Mismatch: Logical children count and physical leaf operators");
+
+    /// Recursively lower logical children and attach to corresponding leaf operators
+    for (size_t i = 0; i < logicalChildren.size(); ++i)
+    {
+        auto loweredChild = lowerOperatorRecursively(logicalChildren[i], registryArgument);
+        loweringResult.leafOperators[i]->children.push_back(loweredChild);
+    }
+
+    return loweringResult.root;
+}
+
+std::unique_ptr<PhysicalPlan> apply(QueryPlan queryPlan)
+{
+    NES::Configurations::QueryOptimizerConfiguration conf;
+    const auto registryArgument = RewriteRuleRegistryArguments{conf};
+
+    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators;
+    for (const auto& logicalRoot : queryPlan.getRootOperators())
+    {
+        rootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
+    }
+
+    return std::make_unique<PhysicalPlan>(queryPlan.getQueryId(), std::move(rootOperators));
 }
 }

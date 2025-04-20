@@ -14,32 +14,29 @@
 
 #include <memory>
 #include <utility>
+#include <Abstract/PhysicalOperator.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Plans/Operator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
-#include <Traits/QueryForSubtree.hpp>
-#include <Traits/TraitSet.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SelectionPhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {
 
-std::vector<std::shared_ptr<PhysicalOperator>>
-LowerToPhysicalSelection::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+RewriteRuleResult LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
 {
-    auto op = traitSet->get<Operator>();
-    const auto ops = dynamic_cast<SelectionLogicalOperator*>(op);
-    auto function = ops->getPredicate();
+    PRECONDITION(logicalOperator.tryGet<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
+    auto selection = *logicalOperator.get<SelectionLogicalOperator>();
+    auto function = selection.getPredicate();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
-    auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(layout);
-    auto phyOp = std::make_shared<SelectionPhysicalOperator>(
-        std::vector<std::shared_ptr<TupleBufferMemoryProvider>>{std::move(memoryProvider)}, std::move(func));
-    return {phyOp};
+    auto physicalOperator = SelectionPhysicalOperator(func);
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    return {wrapper, {wrapper}};
 };
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSelectionRewriteRule(RewriteRuleRegistryArguments argument)
