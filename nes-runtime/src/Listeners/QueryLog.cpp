@@ -25,7 +25,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange)
@@ -62,7 +62,7 @@ bool QueryLog::logQueryFailure(QueryId queryId, Exception exception, std::chrono
     return false;
 }
 
-bool QueryLog::logQueryStatusChange(QueryId queryId, Execution::QueryStatus status, std::chrono::system_clock::time_point timestamp)
+bool QueryLog::logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point timestamp)
 {
     QueryStatusChange statusChange(std::move(status), timestamp);
 
@@ -94,22 +94,22 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
         /// Failures are counting towards the number of stops. If a query has equally (or more) Stopped than Running events, the QueryLog
         /// assumes it to be in the Stopped state.
 
-        QuerySummary summary = {queryId, Execution::QueryStatus::Registered, 0, {}};
+        QuerySummary summary = {queryId, QueryStatus::Registered, 0, {}};
         size_t numberOfRunningEvents = 0;
         size_t numberOfStoppedEvents = 0;
 
         for (const auto& statusChange : queryLog->second)
         {
-            if (statusChange.state == Execution::QueryStatus::Failed)
+            if (statusChange.state == QueryStatus::Failed)
             {
                 ++numberOfStoppedEvents;
                 summary.exceptions.push_back(statusChange.exception.value());
             }
-            if (statusChange.state == Execution::QueryStatus::Stopped)
+            if (statusChange.state == QueryStatus::Stopped)
             {
                 ++numberOfStoppedEvents;
             }
-            else if (statusChange.state == Execution::QueryStatus::Running)
+            else if (statusChange.state == QueryStatus::Running)
             {
                 ++numberOfRunningEvents;
             }
@@ -117,15 +117,15 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
 
         if (numberOfStoppedEvents == 0 && numberOfRunningEvents == 0)
         {
-            summary.currentStatus = Execution::QueryStatus::Registered;
+            summary.currentStatus = QueryStatus::Registered;
         }
         else if (numberOfStoppedEvents >= numberOfRunningEvents)
         {
-            summary.currentStatus = Execution::QueryStatus::Stopped;
+            summary.currentStatus = QueryStatus::Stopped;
         }
         else
         {
-            summary.currentStatus = Execution::QueryStatus::Running;
+            summary.currentStatus = QueryStatus::Running;
         }
 
         summary.numberOfRestarts = std::max<size_t>(numberOfRunningEvents, 1) - 1;

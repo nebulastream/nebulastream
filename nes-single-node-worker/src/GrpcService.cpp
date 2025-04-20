@@ -79,7 +79,7 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
-    auto terminationType = static_cast<Runtime::QueryTerminationType>(request->terminationtype());
+    auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
     try
     {
         delegate.stopQuery(queryId, terminationType);
@@ -99,7 +99,7 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
         auto summary = delegate.getQuerySummary(queryId);
         if (summary.has_value())
         {
-            reply->set_status(QueryStatus(summary->currentStatus));
+            reply->set_status(::QueryStatus(summary->currentStatus));
             reply->set_numberofrestarts(summary->numberOfRestarts);
             for (const auto& exception : summary->exceptions)
             {
@@ -131,7 +131,7 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
             for (const auto& entry : *log)
             {
                 QueryLogEntry logEntry;
-                logEntry.set_status((QueryStatus)entry.state);
+                logEntry.set_status((::QueryStatus)entry.state);
                 logEntry.set_unixtimeinms(
                     std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
                 if (entry.exception.has_value())

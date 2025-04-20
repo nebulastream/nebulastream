@@ -20,7 +20,7 @@
 #include <ErrorHandling.hpp>
 #include <Task.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 struct RunningQueryPlanNode;
 class RunningSource;

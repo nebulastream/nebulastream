@@ -23,7 +23,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <CompiledQueryPlan.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 /// The ExecutableQueryPlan represents a query with completely instantiated query processing components (Sources, Pipelines, Sinks).
@@ -31,20 +31,18 @@ namespace NES::Runtime
 struct ExecutableQueryPlan
 {
     using SourceWithSuccessor
-        = std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::weak_ptr<Execution::ExecutablePipeline>>>;
+        = std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::weak_ptr<ExecutablePipeline>>>;
     static std::unique_ptr<ExecutableQueryPlan>
-    instantiate(Execution::CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider);
+    instantiate(CompiledQueryPlan& compiledQueryPlan, const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider);
 
     ExecutableQueryPlan(
-        QueryId queryId,
-        std::vector<std::shared_ptr<Execution::ExecutablePipeline>> pipelines,
-        std::vector<SourceWithSuccessor> instantiatedSources);
+        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources);
 
     QueryId queryId;
-    std::vector<std::shared_ptr<Execution::ExecutablePipeline>> pipelines;
+    std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
     std::vector<SourceWithSuccessor> sources;
     friend std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiatedQueryPlan);
 };
 }
 
-FMT_OSTREAM(NES::Runtime::ExecutableQueryPlan);
+FMT_OSTREAM(NES::ExecutableQueryPlan);

@@ -31,7 +31,7 @@ struct FlattenVariant<std::variant<Ts1...>, std::variant<Ts2...>>
     using type = std::variant<Ts1..., Ts2...>;
 };
 
-namespace NES::Runtime
+namespace NES
 {
 struct PrintingStatisticListener final : QueryEngineStatisticListener, SystemEventListener
 {

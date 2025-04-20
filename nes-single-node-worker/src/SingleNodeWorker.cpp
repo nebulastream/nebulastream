@@ -33,9 +33,9 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
     : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
           configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , listener(std::make_shared<Runtime::PrintingStatisticListener>(
+    , listener(std::make_shared<PrintingStatisticListener>(
           fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", std::chrono::system_clock::now(), ::getpid())))
-    , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
+    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
 }
@@ -51,7 +51,7 @@ QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPla
         auto logicalQueryPlan
             = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
 
-        listener->onEvent(Runtime::SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
+        listener->onEvent(SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
 
         auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
 
@@ -69,7 +69,7 @@ void SingleNodeWorker::startQuery(QueryId queryId)
     nodeEngine->startQuery(queryId);
 }
 
-void SingleNodeWorker::stopQuery(QueryId queryId, Runtime::QueryTerminationType type)
+void SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type)
 {
     nodeEngine->stopQuery(queryId, type);
 }
@@ -79,12 +79,12 @@ void SingleNodeWorker::unregisterQuery(QueryId queryId)
     nodeEngine->unregisterQuery(queryId);
 }
 
-std::optional<Runtime::QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
+std::optional<QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getQuerySummary(queryId);
 }
 
-std::optional<Runtime::QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
+std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getLogForQuery(queryId);
 }

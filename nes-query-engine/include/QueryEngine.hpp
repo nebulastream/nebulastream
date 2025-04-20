@@ -21,7 +21,7 @@
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 /// Forward declaration so that only the QueryEngine can be included
 class QueryCatalog;

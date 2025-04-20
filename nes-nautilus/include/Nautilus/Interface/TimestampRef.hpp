@@ -27,7 +27,7 @@ namespace nautilus
 namespace tracing
 {
 template <typename T>
-requires(std::is_base_of_v<NES::Runtime::Timestamp, T>)
+requires(std::is_base_of_v<NES::Timestamp, T>)
 struct TypeResolver<T>
 {
     [[nodiscard]] static constexpr Type to_type() { return TypeResolver<typename T::Underlying>::to_type(); }
@@ -38,14 +38,14 @@ struct TypeResolver<T>
 namespace details
 {
 template <typename LHS>
-requires(std::is_base_of_v<NES::Runtime::Timestamp, LHS>)
+requires(std::is_base_of_v<NES::Timestamp, LHS>)
 struct RawValueResolver<LHS>
 {
     static LHS getRawValue(const val<LHS>& val) { return LHS(details::RawValueResolver<typename LHS::Underlying>::getRawValue(val.value)); }
 };
 
 template <typename T>
-requires(std::is_base_of_v<val<NES::Runtime::Timestamp>, std::remove_cvref_t<T>>)
+requires(std::is_base_of_v<val<NES::Timestamp>, std::remove_cvref_t<T>>)
 struct StateResolver<T>
 {
     template <typename U = T>
@@ -58,19 +58,19 @@ struct StateResolver<T>
 }
 
 template <>
-class val<NES::Runtime::Timestamp>
+class val<NES::Timestamp>
 {
 public:
     using Underlying = uint64_t;
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    val<NES::Runtime::Timestamp>(const Underlying timestamp) : value(timestamp) { }
+    val<NES::Timestamp>(const Underlying timestamp) : value(timestamp) { }
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    val<NES::Runtime::Timestamp>(const val<Underlying>& timestamp) : value(timestamp) { }
+    val<NES::Timestamp>(const val<Underlying>& timestamp) : value(timestamp) { }
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    val<NES::Runtime::Timestamp>(const NES::Runtime::Timestamp timestamp) : value(timestamp.getRawValue()) { }
-    explicit val<NES::Runtime::Timestamp>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
-    val<NES::Runtime::Timestamp>(const val<NES::Runtime::Timestamp>& other) = default;
-    val<NES::Runtime::Timestamp>& operator=(const val<NES::Runtime::Timestamp>& other) = default;
+    val<NES::Timestamp>(const NES::Timestamp timestamp) : value(timestamp.getRawValue()) { }
+    explicit val<NES::Timestamp>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
+    val<NES::Timestamp>(const val<NES::Timestamp>& other) = default;
+    val<NES::Timestamp>& operator=(const val<NES::Timestamp>& other) = default;
 
     [[nodiscard]] friend bool operator<(const val& lhs, const val& rhs) noexcept { return lhs.value < rhs.value; }
     [[nodiscard]] friend bool operator<=(const val& lhs, const val& rhs) noexcept { return lhs.value <= rhs.value; }

@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <Runtime/QueryTerminationType.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 /// Forward declaration of PipelineExecutionContext, which directly includes OperatorHandler
 class PipelineExecutionContext;
@@ -32,7 +32,7 @@ public:
 
     virtual void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) = 0;
 
-    virtual void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
+    virtual void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
 };
 
 }

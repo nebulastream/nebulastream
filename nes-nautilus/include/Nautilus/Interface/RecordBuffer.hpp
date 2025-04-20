@@ -61,12 +61,12 @@ public:
 
     ///  Get the watermark timestamp of the underlying tuple buffer. The watermark timestamp is a point in time that guarantees no records
     ///  with a lower timestamp will be received.
-    nautilus::val<Runtime::Timestamp> getWatermarkTs();
-    void setWatermarkTs(const nautilus::val<Runtime::Timestamp>& watermarkTs);
+    nautilus::val<Timestamp> getWatermarkTs();
+    void setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs);
 
     /// Get the creation timestamp of the underlying tuple buffer. The creation timestamp is the point in time when the tuple buffer was created.
-    nautilus::val<Runtime::Timestamp> getCreatingTs();
-    void setCreationTs(const nautilus::val<Runtime::Timestamp>& creationTs);
+    nautilus::val<Timestamp> getCreatingTs();
+    void setCreationTs(const nautilus::val<Timestamp>& creationTs);
 
     ~RecordBuffer() = default;
 

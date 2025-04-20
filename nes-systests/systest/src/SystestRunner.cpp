@@ -284,8 +284,8 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
 
         if (runningQuery)
         {
-            while (worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Stopped
-                   and worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Failed)
+            while (worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != QueryStatus::Stopped
+                   and worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != QueryStatus::Failed)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(25));
             }

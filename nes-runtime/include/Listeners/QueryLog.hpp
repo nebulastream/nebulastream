@@ -24,7 +24,7 @@
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 /// Summary structure of the query log for a query
@@ -32,7 +32,7 @@ struct QuerySummary
 {
     /// In the future, this will be extended to include more information such as the query plan, etc.
     QueryId queryId;
-    Execution::QueryStatus currentStatus;
+    QueryStatus currentStatus;
     uint64_t numberOfRestarts;
     std::vector<Exception> exceptions;
 };
@@ -40,15 +40,15 @@ struct QuerySummary
 /// Struct to store the status change of a query. Initialized either with a status or an exception.
 struct QueryStatusChange
 {
-    QueryStatusChange(Execution::QueryStatus state, std::chrono::system_clock::time_point timestamp)
+    QueryStatusChange(QueryStatus state, std::chrono::system_clock::time_point timestamp)
         : state(state), timestamp(timestamp) {};
 
     QueryStatusChange(Exception exception, std::chrono::system_clock::time_point timestamp)
-        : state(Execution::QueryStatus::Failed), timestamp(timestamp), exception(exception) {};
+        : state(QueryStatus::Failed), timestamp(timestamp), exception(exception) {};
 
     friend std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange);
 
-    Execution::QueryStatus state;
+    QueryStatus state;
     std::chrono::system_clock::time_point timestamp;
     std::optional<Exception> exception;
 };
@@ -65,7 +65,7 @@ struct QueryLog : AbstractQueryStatusListener
     bool logSourceTermination(
         QueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point timestamp) override;
     bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
-    bool logQueryStatusChange(QueryId queryId, Execution::QueryStatus status, std::chrono::system_clock::time_point timestamp) override;
+    bool logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point timestamp) override;
 
     [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId);
     [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId);

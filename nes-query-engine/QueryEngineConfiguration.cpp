@@ -23,7 +23,8 @@
 #include <Util/Strings.hpp>
 #include <QueryEngineConfiguration.hpp>
 
-std::shared_ptr<NES::Configurations::ConfigurationValidation> NES::Runtime::QueryEngineConfiguration::numberOfThreadsValidator()
+namespace NES {
+std::shared_ptr<NES::Configurations::ConfigurationValidation> QueryEngineConfiguration::numberOfThreadsValidator()
 {
     struct Validator : Configurations::ConfigurationValidation
     {
@@ -62,7 +63,7 @@ std::shared_ptr<NES::Configurations::ConfigurationValidation> NES::Runtime::Quer
     return std::make_shared<Validator>();
 }
 
-std::shared_ptr<NES::Configurations::ConfigurationValidation> NES::Runtime::QueryEngineConfiguration::taskQueueSizeValidator()
+std::shared_ptr<NES::Configurations::ConfigurationValidation> QueryEngineConfiguration::taskQueueSizeValidator()
 {
     struct Validator : Configurations::ConfigurationValidation
     {

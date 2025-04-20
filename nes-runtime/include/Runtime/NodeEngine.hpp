@@ -22,7 +22,7 @@
 #include <CompiledQueryPlan.hpp>
 #include <QueryEngine.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 /// Forward declaration of QueryEngineTest, which includes Task, which includes SinkMedium, which includes NodeEngine
 class QueryTracker;
@@ -45,7 +45,7 @@ public:
         std::shared_ptr<QueryLog> queryLog,
         std::unique_ptr<QueryEngine> queryEngine);
 
-    [[nodiscard]] QueryId registerExecutableQueryPlan(std::unique_ptr<Execution::CompiledQueryPlan> queryExecutionPlan);
+    [[nodiscard]] QueryId registerExecutableQueryPlan(std::unique_ptr<CompiledQueryPlan> queryExecutionPlan);
     void unregisterQuery(QueryId queryId);
     void startQuery(QueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
