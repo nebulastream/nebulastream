@@ -17,7 +17,6 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/InferModelLogicalOperator.hpp>
-#include <Operators/LogicalOperators/LimitLogicalOperator.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperator.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
@@ -74,8 +73,6 @@ public:
 
     static std::unique_ptr<Sinks::SinkDescriptor>
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
-
-    static void serializeLimitOperator(const LimitLogicalOperator& limitLogicalOperator, SerializableOperator& serializedOperator);
 
     static void serializeWatermarkAssignerOperator(
         const WatermarkAssignerLogicalOperator& watermarkAssignerOperator, SerializableOperator& serializedOperator);
