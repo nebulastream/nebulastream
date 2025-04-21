@@ -15,8 +15,9 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
+#include <Abstract/PhysicalOperator.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Operators/Windows/WindowOperator.hpp>
 #include <AbstractPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 
