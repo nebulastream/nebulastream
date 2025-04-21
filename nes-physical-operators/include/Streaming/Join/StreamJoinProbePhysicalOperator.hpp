@@ -17,13 +17,13 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <Execution/Functions/PhysicalFunction.hpp>
-#include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Operators/Operator.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
+#include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -32,10 +32,10 @@ namespace NES
 /// This class is the second phase of the stream join. The actual implementation (nested-loops, probing hash tables)
 /// is not part of this class. This class takes care of the close() functionality as this universal.
 /// Furthermore, it provides a method of creating the joined tuple
-class StreamJoinProbe : public WindowOperatorProbe
+class StreamJoinProbePhysicalOperator : public WindowOperatorProbe
 {
 public:
-    StreamJoinProbe(
+    StreamJoinProbePhysicalOperator(
         uint64_t operatorHandlerIndex,
         const std::shared_ptr<Functions::PhysicalFunction>& joinFunction,
         WindowMetaData windowMetaData,

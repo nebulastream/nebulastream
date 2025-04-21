@@ -13,8 +13,8 @@
 */
 #pragma once
 #include <memory>
-#include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <AbstractPhysicalOperator.hpp>
+#include <Watermark/TimeFunction.hpp>
 
 namespace NES
 {

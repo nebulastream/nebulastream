@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        AggregationBuild.cpp
-        AggregationProbe.cpp
+add_source_files(nes-physical-operators
+        AggregationBuildPhysicalOperator.cpp
+        AggregationProbePhysicalOperator.cpp
         AggregationOperatorHandler.cpp
         AggregationSlice.cpp
 )

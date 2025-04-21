@@ -16,16 +16,15 @@
 
 #include <cstddef>
 #include <memory>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Aggregation
+namespace NES
 {
 
 class MedianAggregationFunction : public AggregationFunction
@@ -34,7 +33,7 @@ public:
     MedianAggregationFunction(
         std::shared_ptr<PhysicalType> inputType,
         std::shared_ptr<PhysicalType> resultType,
-        std::unique_ptr<Functions::Function> inputFunction,
+        std::unique_ptr<Functions::PhysicalFunction> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
         std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);
     void lift(

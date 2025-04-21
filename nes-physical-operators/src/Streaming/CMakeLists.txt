@@ -13,8 +13,8 @@
 add_subdirectory(Aggregation)
 add_subdirectory(Join)
 
-add_source_files(nes-execution
+add_source_files(nes-physical-operators
         WindowBasedOperatorHandler.cpp
-        WindowOperatorBuild.cpp
-        WindowOperatorProbe.cpp
+        WindowBuildPhysicalOperator.cpp
+        WindowProbePhysicalOperator.cpp
 )

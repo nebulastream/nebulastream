@@ -16,7 +16,7 @@
 
 #include <cstddef>
 #include <memory>
-#include <Execution/Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -43,7 +43,7 @@ public:
     AggregationFunction(
         std::shared_ptr<PhysicalType> inputType,
         std::shared_ptr<PhysicalType> resultType,
-        std::unique_ptr<Functions::Function> inputFunction,
+        std::unique_ptr<Functions::PhysicalFunction> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /// Adds the incoming record to the existing aggregation state
@@ -73,7 +73,7 @@ public:
 protected:
     const std::shared_ptr<PhysicalType> inputType;
     const std::shared_ptr<PhysicalType> resultType;
-    const std::unique_ptr<Functions::Function> inputFunction;
+    const std::unique_ptr<Functions::PhysicalFunction> inputFunction;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 };
 

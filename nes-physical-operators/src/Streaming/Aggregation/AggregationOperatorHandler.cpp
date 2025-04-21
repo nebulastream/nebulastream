@@ -19,11 +19,11 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/SliceStore/Slice.hpp>
-#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>
-#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
+#include <SliceStore/Slice.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Streaming/Aggregation/AggregationOperatorHandler.hpp>
+#include <Streaming/Aggregation/AggregationSlice.hpp>
+#include <Streaming/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>

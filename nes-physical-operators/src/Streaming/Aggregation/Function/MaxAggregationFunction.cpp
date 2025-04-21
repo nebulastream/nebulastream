@@ -16,10 +16,9 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/MaxAggregationFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Streaming/Aggregation/Function/AggregationFunction.hpp>
+#include <Streaming/Aggregation/Function/MaxAggregationFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -27,13 +26,13 @@
 #include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Aggregation
+namespace NES
 {
 
 MaxAggregationFunction::MaxAggregationFunction(
     std::shared_ptr<PhysicalType> inputType,
     std::shared_ptr<PhysicalType> resultType,
-    std::unique_ptr<Functions::Function> inputFunction,
+    std::unique_ptr<Functions::PhysicalFunction> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
 {

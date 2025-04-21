@@ -10,8 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Add ExecutableFunction nes-execution ExecutableFunctionAdd.cpp)
-add_plugin(Div ExecutableFunction nes-execution ExecutableFunctionDiv.cpp)
-add_plugin(Mod ExecutableFunction nes-execution ExecutableFunctionMod.cpp)
-add_plugin(Mul ExecutableFunction nes-execution ExecutableFunctionMul.cpp)
-add_plugin(Sub ExecutableFunction nes-execution ExecutableFunctionSub.cpp)
+add_plugin(Add PhysicalFunction nes-physical-operators AddPhysicalFunction.cpp)
+add_plugin(Div PhysicalFunction nes-physical-operators DivPhysicalFunction.cpp)
+add_plugin(Mod PhysicalFunction nes-physical-operators ModPhysicalFunction.cpp)
+add_plugin(Mul PhysicalFunction nes-physical-operators MulPhysicalFunction.cpp)
+add_plugin(Sub PhysicalFunction nes-physical-operators SubPhysicalFunction.cpp)

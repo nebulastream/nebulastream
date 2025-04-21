@@ -14,8 +14,8 @@
 
 #include <memory>
 #include <utility>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 

@@ -26,11 +26,11 @@ namespace NES::Functions
 class OrPhysicalFunction final : public PhysicalFunction
 {
 public:
-    OrPhysicalFunction(std::unique_ptr<PhysicalFunction> leftExecutableFunction, std::unique_ptr<PhysicalFunction> rightExecutableFunction);
+    OrPhysicalFunction(std::unique_ptr<PhysicalFunction> leftPhysicalFunction, std::unique_ptr<PhysicalFunction> rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
-    const std::unique_ptr<PhysicalFunction> leftExecutableFunction;
-    const std::unique_ptr<PhysicalFunction> rightExecutableFunction;
+    const std::unique_ptr<PhysicalFunction> leftPhysicalFunction;
+    const std::unique_ptr<PhysicalFunction> rightPhysicalFunction;
 };
 }

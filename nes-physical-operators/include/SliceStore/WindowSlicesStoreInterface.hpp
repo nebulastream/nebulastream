@@ -23,8 +23,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
-
+#include <Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES
 {
