@@ -160,7 +160,7 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
     }
     for (const auto& agg : getWindowAggregation())
     {
-        copy.outputSchema.addField(AttributeField(agg->asField.get<FieldAccessLogicalFunction>().getFieldName(), agg->asField.getStamp()));
+        copy.outputSchema.addField(AttributeField(agg->asField.getFieldName(), agg->asField.getStamp()));
     }
     return copy;
 }

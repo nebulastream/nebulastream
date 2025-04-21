@@ -20,6 +20,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
+#include <utility>
 
 namespace NES
 {
@@ -31,19 +32,8 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(std::shared_p
 
 WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     std::shared_ptr<DataType> inputStamp, std::shared_ptr<DataType> partialAggregateStamp, std::shared_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
-    : inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)),onField(onField), asField(asField)
+    : inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)),onField(std::move(onField)), asField(asField)
 {
-}
-
-std::shared_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(const FieldAccessLogicalFunction& asField)
-{
-    this->asField = asField;
-    return std::shared_ptr<WindowAggregationLogicalFunction>(this);
-}
-
-FieldAccessLogicalFunction WindowAggregationLogicalFunction::as() const
-{
-    return asField;
 }
 
 std::string WindowAggregationLogicalFunction::toString() const
@@ -54,11 +44,6 @@ std::string WindowAggregationLogicalFunction::toString() const
     ss << " asField=" << asField;
     ss << std::endl;
     return ss.str();
-}
-
-FieldAccessLogicalFunction WindowAggregationLogicalFunction::on() const
-{
-    return onField;
 }
 
 std::shared_ptr<DataType> WindowAggregationLogicalFunction::getInputStamp() const

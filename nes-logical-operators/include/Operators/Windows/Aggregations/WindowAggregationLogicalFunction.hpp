@@ -25,37 +25,27 @@ class WindowAggregationLogicalFunction
 public:
     virtual ~WindowAggregationLogicalFunction() = default;
 
-    /// Defines the field to which a aggregate output is assigned.
-    std::shared_ptr<WindowAggregationLogicalFunction> as(const FieldAccessLogicalFunction& asField);
-
-    /// Returns the result field of the aggregation
-    FieldAccessLogicalFunction as() const;
-
-    //// Returns the result field of the aggregation
-    FieldAccessLogicalFunction on() const;
-
-    /// @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-    virtual void inferStamp(const Schema& schema) = 0;
-
     std::shared_ptr<DataType> getInputStamp() const;
     std::shared_ptr<DataType> getPartialAggregateStamp() const;
     std::shared_ptr<DataType> getFinalAggregateStamp() const;
 
     std::string toString() const;
-    virtual std::string_view getName() const noexcept = 0;
-
     bool operator==(std::shared_ptr<WindowAggregationLogicalFunction> otherWindowAggregationLogicalFunction) const;
 
-    virtual NES::SerializableAggregationFunction serialize() const = 0;
+    /// @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
+    virtual void inferStamp(const Schema& schema) = 0;
+
+    virtual SerializableAggregationFunction serialize() const = 0;
+
+    virtual std::string_view getName() const noexcept = 0;
+
+    std::shared_ptr<DataType> inputStamp, partialAggregateStamp, finalAggregateStamp;
+    FieldAccessLogicalFunction onField, asField;
 
 protected:
     explicit WindowAggregationLogicalFunction(
         std::shared_ptr<DataType> inputStamp, std::shared_ptr<DataType> partialAggregateStamp, std::shared_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
     explicit WindowAggregationLogicalFunction(std::shared_ptr<DataType> inputStamp, std::shared_ptr<DataType> partialAggregateStamp,
                                        std::shared_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField);
-    WindowAggregationLogicalFunction() = delete;
-
-    std::shared_ptr<DataType> inputStamp, partialAggregateStamp, finalAggregateStamp;
-    FieldAccessLogicalFunction onField, asField;
 };
 }

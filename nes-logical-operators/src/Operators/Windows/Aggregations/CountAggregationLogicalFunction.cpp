@@ -28,7 +28,7 @@
 namespace NES
 {
 
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field)
     : WindowAggregationLogicalFunction(DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), DataTypeProvider::provideDataType(LogicalType::UINT64), field)
 {
 }
@@ -38,9 +38,9 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogi
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction>
-CountAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
+CountAggregationLogicalFunction::create(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
 {
-    return std::make_shared<CountAggregationLogicalFunction>(std::move(onField), std::move(asField));
+    return std::make_shared<CountAggregationLogicalFunction>(onField, asField);
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)

@@ -56,7 +56,7 @@ std::string_view MinAggregationLogicalFunction::getName() const noexcept
 void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
-    onField = onField.withInferredStamp(schema);
+    onField = onField.withInferredStamp(schema).get<FieldAccessLogicalFunction>();
     INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()), "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
