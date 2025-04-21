@@ -74,14 +74,14 @@ struct Query
         TestName name,
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
-        std::shared_ptr<QueryPlan> queryPlan,
+        const QueryPlan& queryPlan,
         const uint64_t queryIdInFile,
         std::filesystem::path workingDir,
         SystestParser::Schema sinkSchema)
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
         , sqlLogicTestFile(std::move(sqlLogicTestFile))
-        , queryPlan(std::move(queryPlan))
+        , queryPlan(queryPlan)
         , queryIdInFile(queryIdInFile)
         , workingDir(std::move(workingDir))
         , expectedSinkSchema(std::move(sinkSchema))
@@ -93,7 +93,7 @@ struct Query
     TestName name;
     std::string queryDefinition;
     std::filesystem::path sqlLogicTestFile;
-    std::shared_ptr<QueryPlan> queryPlan;
+    QueryPlan queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
     SystestParser::Schema expectedSinkSchema;

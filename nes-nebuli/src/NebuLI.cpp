@@ -172,23 +172,22 @@ Sources::SourceDescriptor createSourceDescriptor(
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
 {
-    auto sinkOperators = query.getOperatorByType<SinkLogicalOperator>();
     PRECONDITION(
-        sinkOperators.size() == 1,
+        query.getSinkOperators().size() == 1,
         "NebulaStream currently only supports a single sink per query, but the query contains: {}",
         query.getSinkOperators().size());
     PRECONDITION(not config.sinks.empty(), "Expects at least one sink in the query config!");
     if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
-        sinkOperators.at(0)->sinkDescriptor
+        query.getSinkOperators().at(0)->sinkDescriptor
             = std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
     }
     else
     {
         throw UnknownSinkType(
             "Sinkname {} not specified in the configuration {}",
-            sinkOperators.front()->sinkName,
+            query.getSinkOperators().front()->sinkName,
             fmt::join(std::views::keys(config.sinks), ","));
     }
 }
@@ -229,14 +228,14 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase::create();
 
-    validateAndSetSinkDescriptors(*queryplan, config);
-    logicalSourceExpansionRule->apply(*queryplan);
-    query = typeInference->performTypeInferenceQuery(*queryplan);
-    query = originIdInferencePhase->execute(*queryplan);
-    query = typeInference->performTypeInferenceQuery(*queryplan);
+    validateAndSetSinkDescriptors(query, config);
+    logicalSourceExpansionRule->apply(query);
+    query = typeInference->performTypeInferenceQuery(query);
+    query = originIdInferencePhase->execute(query);
+    query = typeInference->performTypeInferenceQuery(query);
 
-    NES_INFO("QEP:\n {}", queryplan->toString());
-    return queryplan;
+    NES_INFO("QEP:\n {}", query.toString());
+    return query.clone();
 }
 
 std::unique_ptr<QueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)

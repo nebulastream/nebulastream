@@ -213,7 +213,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
 
             config.query = query;
             auto plan = createFullySpecifiedQueryPlan(config);
-            plans.emplace_back(std::move(plan), query, sinkNamesToSchema[sinkName]);
+            plans.emplace_back(*plan, query, sinkNamesToSchema[sinkName]);
         });
     try
     {
@@ -262,7 +262,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                         finishedProducing = true;
                         return;
                     }
-                    const auto queryId = worker.registerQuery(*query.queryPlan);
+                    const auto queryId = worker.registerQuery(query.queryPlan);
                     if (queryId == INVALID_QUERY_ID)
                     {
                         throw QueryInvalid("Received an invalid query id from the worker");
@@ -350,7 +350,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
                         return;
                     }
 
-                    const auto queryId = client.registerQuery(*query.queryPlan);
+                    const auto queryId = client.registerQuery(query.queryPlan);
                     client.start(queryId);
                     auto runningQueryPtr = std::make_unique<RunningQuery>(
                         query, QueryId(queryId), QueryExecutionInfo{std::chrono::high_resolution_clock::now()});

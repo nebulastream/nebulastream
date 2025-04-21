@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <Plans/QueryPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
@@ -33,7 +34,7 @@ struct RunningQuery;
 
 struct LoadedQueryPlan
 {
-    std::shared_ptr<QueryPlan> queryPlan;
+    QueryPlan queryPlan;
     std::string queryName;
     SystestParser::Schema sinkSchema;
 };
