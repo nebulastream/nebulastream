@@ -13,57 +13,74 @@
 */
 
 #include <memory>
+#include <utility>
+#include <vector>
+#include <Nautilus/Interface/Record.hpp>
 #include <Phases/AddScanAndEmitPhase.hpp>
-#include <Plans/PipelineQueryPlan.hpp>
+#include <Plans/Operator.hpp>
+#include <DefaultEmitPhysicalOperator.hpp>
+#include <DefaultScanPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
-#include <ScanPhysicalOperator.hpp>
+#include <Pipeline.hpp>
+#include <PipelinedQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {
 
-std::unique_ptr<PipelineQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<PipelineQueryPlan> pipelineQueryPlan)
+namespace helper
+{
+[[nodiscard]] std::vector<Operator*> getAllLeafNodes(Operator& op)
+{
+    std::vector<Operator*> leaves;
+    auto children = op.getChildren();
+    if (children.empty())
+    {
+        leaves.push_back(&op);
+    }
+    else
+    {
+        for (const auto& child : children)
+        {
+            auto childLeaves = getAllLeafNodes(*child);
+            leaves.insert(leaves.end(), childLeaves.begin(), childLeaves.end());
+        }
+    }
+    return leaves;
+}
+}
+
+std::unique_ptr<PipelinedQueryPlan> AddScanAndEmitPhase::apply(std::unique_ptr<PipelinedQueryPlan> pipelineQueryPlan)
 {
     for (const auto& pipeline : pipelineQueryPlan->pipelines)
     {
+        // OperatorPipelines only
         if (pipeline->isOperatorPipeline())
         {
-            process(pipeline);
+            /// Scan
+            std::vector<Nautilus::Record::RecordFieldIdentifier> emptyProjections{}; // TODO change
+            constexpr uint64_t bufferSize = 100; /// TODO change
+            constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
+            if (auto leafPhys = pipeline->getOperator<PhysicalOperatorWithSchema>(); leafPhys.has_value())
+            {
+                auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, leafPhys.value()->inputSchema);
+                auto newScan = std::make_unique<DefaultScanPhysicalOperator>(std::move(memoryProvider), emptyProjections);
+                ///pipeline->prependOperator(std::move(newScan));
+            }
+
+            /// Emit
+            /*for (auto* leaf : helper::getAllLeafNodes(pipeline->pipelineOperator))
+            {
+                if (auto* leafPhys = dynamic_cast<PhysicalOperatorWithSchema*>(leaf); leafPhys)
+                {
+                    constexpr uint64_t bufferSize = 100; /// TODO change
+                    constexpr uint64_t operatorHandlerIndex = 1; /// TODO change
+                    auto memoryProvider = TupleBufferMemoryProvider::create(bufferSize, leafPhys->outputSchema);
+                    auto emitOperator = std::make_unique<DefaultEmitPhysicalOperator>(operatorHandlerIndex, std::move(memoryProvider));
+                    ///leafPhys->child = std::move(physicalOp);
+                }
+            }*/
         }
     }
     return pipelineQueryPlan;
 }
-
-std::shared_ptr<OperatorPipeline> AddScanAndEmitPhase::process(std::shared_ptr<OperatorPipeline> pipeline)
-{
-    const auto queryPlan = pipeline->getQueryPlan();
-    const auto pipelineRootOperators = queryPlan->getRootOperators();
-    PRECONDITION(!pipelineRootOperators.empty(), "A pipeline should have at least one root operator");
-
-    /// insert buffer scan operator to the pipeline root if necessary
-    const auto& rootOperator = pipelineRootOperators[0];
-    if (!NES::Util::instanceOf<ScanPhysicalOperator>(rootOperator))
-    {
-        PRECONDITION(
-            NES::Util::instanceOf<AbstractPhysicalOperator>(rootOperator),
-            "Pipeline root should be a unary operator but was: {}",
-            *rootOperator);
-        const auto unaryRoot = NES::Util::as<AbstractPhysicalOperator>(rootOperator);
-        const auto newScan = ScanPhysicalOperator(unaryRoot->getInputSchema());
-        pipeline->prependOperator(newScan);
-    }
-
-    /// insert emit buffer operator if necessary
-    auto pipelineLeafOperators = rootOperator->getAllLeafNodes();
-    for (const auto& leaf : pipelineLeafOperators)
-    {
-        auto leafOperator = NES::Util::as<Operator>(leaf);
-        if (!NES::Util::instanceOf<EmitPhysicalOperator>(leafOperator))
-        {
-            auto emitOperator = EmitPhysicalOperator(leafOperator->getOutputSchema());
-            leafOperator->addChild(emitOperator);
-        }
-    }
-    return pipeline;
-}
-
 }

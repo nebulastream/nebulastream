@@ -32,14 +32,12 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
-          configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , listener(std::make_shared<PrintingStatisticListener>(
+    : listener(std::make_shared<PrintingStatisticListener>(
           fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", std::chrono::system_clock::now(), ::getpid())))
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
-    , optimizer(std::make_unique<Optimizer::QueryOptimizer>(configuration.workerConfiguration.queryOptimizer))
-    , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
+    , optimizer(std::make_unique<Optimizer::QueryOptimizer>())
+    , compiler(std::make_unique<QueryCompilation::QueryCompiler>(nodeEngine))
 {
 }
 
@@ -51,12 +49,9 @@ QueryId SingleNodeWorker::registerQuery(LogicalPlan plan)
 {
     try
     {
-        auto logicalQueryPlan
-            = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
+        auto queryPlan = optimizer->optimize(plan.clone());
 
-        listener->onEvent(SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
-
-        auto request = std::make_unique<QueryCompilationRequest>(logicalQueryPlan, bufferSize);
+        listener->onEvent(SubmitQuerySystemEvent{queryPlan->getQueryId(), plan.toString()});
 
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(std::move(queryPlan));
 
