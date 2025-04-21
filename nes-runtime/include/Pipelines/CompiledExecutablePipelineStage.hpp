@@ -34,7 +34,7 @@ class CompiledExecutablePipelineStage final : public ExecutablePipelineStage
 public:
     CompiledExecutablePipelineStage(
         std::shared_ptr<Pipeline> pipeline,
-        std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> operatorHandler,
+        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
         nautilus::engine::Options options);
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
@@ -48,7 +48,7 @@ private:
     compilePipeline() const;
     const nautilus::engine::Options options;
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*> compiledPipelineFunction;
-    std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> operatorHandlers;
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<Pipeline> pipeline;
 };
 

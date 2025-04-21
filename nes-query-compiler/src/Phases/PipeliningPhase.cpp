@@ -62,7 +62,7 @@ void addDefaultEmit(Pipeline* pipeline, const PhysicalOperatorWrapper& wrappedOp
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), bufferSize);
     auto memoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(layout);
     // Create an operator handler for the emit.
-    uint64_t operatorHandlerIndex = getNextOperatorHandlerId().getRawValue();
+    OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
     pipeline->operatorHandlers.emplace(operatorHandlerIndex, std::make_shared<EmitOperatorHandler>());
     pipeline->appendOperator(DefaultEmitPhysicalOperator(operatorHandlerIndex, memoryProvider));
 }

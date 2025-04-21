@@ -110,15 +110,15 @@ void ExecutionContext::setLocalOperatorState(const PhysicalOperatorConcept* op, 
     localStateMap.emplace(op, std::move(state));
 }
 
-OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const uint64_t index)
+OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
 {
     auto handlers = pipelineCtx->getOperatorHandlers();
     return handlers[index].get();
 }
 
-nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const uint64_t handlerIndex) const
+nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const OperatorHandlerId handlerIndex) const
 {
-    const auto handlerIndexValue = nautilus::val<uint64_t>(handlerIndex);
+    const auto handlerIndexValue = nautilus::val<uint64_t>(handlerIndex.getRawValue());
     return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
 }
 
