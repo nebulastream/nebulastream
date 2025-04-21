@@ -28,12 +28,12 @@ namespace NES
 {
 
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field)
-    : WindowAggregationLogicalFunction(field.getStamp().clone(), field.getStamp().clone(), field.getStamp().clone(), field)
+    : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field)
 {
     aggregationType = Type::Min;
 }
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(field.getStamp().clone(), field.getStamp().clone(), field.getStamp().clone(), field, asField)
+    : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field, asField)
 {
     aggregationType = Type::Min;
 }
@@ -58,7 +58,7 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     auto newOnField = onField.withInferredStamp(schema);
-    INVARIANT(dynamic_cast<const Numeric*>(&onField.getStamp()) == nullptr, "aggregations on non numeric fields is not supported.");
+    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()) == nullptr, "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = onField.getFieldName();
@@ -75,7 +75,7 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
-    auto newAsField = asField.withStamp(getFinalAggregateStamp().clone());
+    auto newAsField = asField.withStamp(getFinalAggregateStamp());
 
     this->onField = newOnField.get<FieldAccessLogicalFunction>();
     this->asField = newAsField.get<FieldAccessLogicalFunction>();
