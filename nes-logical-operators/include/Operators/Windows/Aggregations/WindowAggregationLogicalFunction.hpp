@@ -14,13 +14,13 @@
 
 #pragma once
 
+#include <Abstract/LogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {
 
-class WindowAggregationFunction
+class WindowAggregationLogicalFunction
 {
 public:
     enum class Type : uint8_t
@@ -32,10 +32,10 @@ public:
         Sum,
         Median
     };
-    virtual ~WindowAggregationFunction() = default;
+    virtual ~WindowAggregationLogicalFunction() = default;
 
     /// Defines the field to which a aggregate output is assigned.
-    std::unique_ptr<WindowAggregationFunction> as(std::unique_ptr<LogicalFunction> asField);
+    std::unique_ptr<WindowAggregationLogicalFunction> as(std::unique_ptr<LogicalFunction> asField);
 
     /// Returns the result field of the aggregation
     LogicalFunction& as() const;
@@ -50,7 +50,7 @@ public:
     virtual void inferStamp(const Schema& schema) = 0;
 
     /// @brief Creates a deep copy of the window aggregation
-    virtual std::unique_ptr<WindowAggregationFunction> clone() = 0;
+    virtual std::unique_ptr<WindowAggregationLogicalFunction> clone() = 0;
 
     DataType& getInputStamp() const;
     DataType& getPartialAggregateStamp() const;
@@ -60,23 +60,23 @@ public:
 
     std::string getTypeAsString() const;
 
-    bool operator==(std::shared_ptr<WindowAggregationFunction> otherWindowAggregationFunction) const;
+    bool operator==(std::shared_ptr<WindowAggregationLogicalFunction> otherWindowAggregationLogicalFunction) const;
 
     virtual NES::SerializableAggregationFunction serialize() const = 0;
 
 protected:
-    explicit WindowAggregationFunction(
+    explicit WindowAggregationLogicalFunction(
         std::unique_ptr<DataType> inputStamp,
         std::unique_ptr<DataType> partialAggregateStamp,
         std::unique_ptr<DataType> finalAggregateStamp,
         std::unique_ptr<LogicalFunction> onField,
         std::unique_ptr<LogicalFunction> asField);
-    explicit WindowAggregationFunction(
+    explicit WindowAggregationLogicalFunction(
         std::unique_ptr<DataType> inputStamp,
         std::unique_ptr<DataType> partialAggregateStamp,
         std::unique_ptr<DataType> finalAggregateStamp,
         std::unique_ptr<FieldAccessLogicalFunction> onField);
-    WindowAggregationFunction() = default;
+    WindowAggregationLogicalFunction() = default;
     std::unique_ptr<DataType> inputStamp;
     std::unique_ptr<DataType> partialAggregateStamp;
     std::unique_ptr<DataType> finalAggregateStamp;

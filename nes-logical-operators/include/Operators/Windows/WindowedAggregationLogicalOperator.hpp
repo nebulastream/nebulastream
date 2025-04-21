@@ -17,7 +17,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include "Operators/LogicalOperator.hpp"
-#include "Operators/Windows/Aggregations/WindowAggregationFunction.hpp"
+#include "Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp"
 #include "WindowOperator.hpp"
 #include "WindowTypes/Types/WindowType.hpp"
 
@@ -29,7 +29,7 @@ class WindowedAggregationLogicalOperator : public WindowOperator
 public:
     WindowedAggregationLogicalOperator(
         std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
-        std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggregation,
+        std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation,
         std::unique_ptr<Windowing::WindowType> windowType);
     virtual ~WindowedAggregationLogicalOperator() = default;
 
@@ -44,8 +44,8 @@ public:
 
     bool isKeyed() const;
 
-    [[nodiscard]] const std::vector<std::unique_ptr<WindowAggregationFunction>>& getWindowAggregation() const;
-    void setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggregation);
+    [[nodiscard]] const std::vector<std::unique_ptr<WindowAggregationLogicalFunction>>& getWindowAggregation() const;
+    void setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation);
 
     [[nodiscard]] Windowing::WindowType& getWindowType() const;
     void setWindowType(std::unique_ptr<Windowing::WindowType> windowType);
@@ -65,7 +65,7 @@ public:
 
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
-    std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggregation;
+    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation;
     std::unique_ptr<Windowing::WindowType> windowType;
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey;
     std::string windowStartFieldName;

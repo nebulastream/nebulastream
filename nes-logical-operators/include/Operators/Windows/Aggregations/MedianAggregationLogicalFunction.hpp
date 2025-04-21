@@ -16,28 +16,35 @@
 
 #include <memory>
 #include <API/Schema.hpp>
+#include <Abstract/LogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
-class MaxAggregationFunction : public WindowAggregationFunction
+class MedianAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
-    static std::unique_ptr<WindowAggregationFunction>
+    MedianAggregationLogicalFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
+    explicit MedianAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+
+    /// Creates a new MedianAggregationLogicalFunction
+    /// @param onField field on which the aggregation should be performed
+    /// @param asField function describing how the aggregated field should be called
+    static std::unique_ptr<WindowAggregationLogicalFunction>
     create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
-    MaxAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
-    explicit MaxAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
 
     void inferStamp(const Schema& schema) override;
-    std::unique_ptr<WindowAggregationFunction> clone() override;
-    virtual ~MaxAggregationFunction() = default;
+
+    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
+    virtual ~MedianAggregationLogicalFunction() = default;
+
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    static constexpr std::string_view NAME = "Max";
+    static constexpr std::string_view NAME = "Median";
 };
 }

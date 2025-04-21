@@ -14,28 +14,32 @@
 
 #pragma once
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-class CountAggregationFunction : public WindowAggregationFunction
+class MinAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    CountAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
-    explicit CountAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
-    virtual ~CountAggregationFunction() = default;
-    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
-    static std::unique_ptr<WindowAggregationFunction>
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction>
     create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
 
+    MinAggregationLogicalFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
+    explicit MinAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+    virtual ~MinAggregationLogicalFunction() = default;
+
     void inferStamp(const Schema& schema) override;
-    std::unique_ptr<WindowAggregationFunction> clone() override;
+    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    static constexpr std::string_view NAME = "Avg";
+    static constexpr std::string_view NAME = "Min";
 };
 }

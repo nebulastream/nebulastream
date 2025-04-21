@@ -23,7 +23,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/UnaryLogicalOperator.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
 #include <SerializableOperator.pb.h>
@@ -60,7 +60,7 @@ public:
     static std::unique_ptr<Sinks::SinkDescriptor>
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
 
-    static std::unique_ptr<WindowAggregationFunction> deserializeWindowAggregationFunction(
+    static std::unique_ptr<WindowAggregationLogicalFunction> deserializeWindowAggregationFunction(
         const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableWindowAggregationFunction);
 };
 }
