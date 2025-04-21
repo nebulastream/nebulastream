@@ -111,18 +111,6 @@ void QueryPlan::promoteOperatorToRoot(std::unique_ptr<Operator> newRoot)
     rootOperators.push_back(std::move(newRoot));
 }
 
-std::vector<SinkLogicalOperator*> QueryPlan::getSinkOperators() const
-{
-    std::vector<SinkLogicalOperator*> sinkOperators;
-    for (auto& rootOperator : rootOperators)
-    {
-        auto sinkOperator = dynamic_cast<SinkLogicalOperator*>(rootOperator.get());
-        sinkOperators.emplace_back(sinkOperator);
-    }
-    NES_DEBUG("QueryPlan: Found {} sink operators.", sinkOperators.size());
-    return sinkOperators;
-}
-
 std::string QueryPlan::toString() const
 {
     std::stringstream ss;
