@@ -40,11 +40,6 @@ RowLayout::RowLayout(const RowLayout& other)
 {
 }
 
-std::unique_ptr<RowLayout> RowLayout::create(const Schema& schema, uint64_t bufferSize)
-{
-    return std::make_unique<RowLayout>(schema, bufferSize);
-}
-
 uint64_t RowLayout::getFieldOffset(const uint64_t fieldIndex) const
 {
     PRECONDITION(
@@ -76,8 +71,4 @@ uint64_t RowLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fie
     return offSet;
 }
 
-std::shared_ptr<MemoryLayout> RowLayout::deepCopy() const
-{
-    return std::make_unique<RowLayout>(*this);
-}
 }

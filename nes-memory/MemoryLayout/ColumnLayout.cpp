@@ -40,11 +40,6 @@ ColumnLayout::ColumnLayout(const ColumnLayout& other) /// NOLINT(*-copy-construc
 {
 }
 
-std::unique_ptr<ColumnLayout> ColumnLayout::create(const Schema& schema, uint64_t bufferSize)
-{
-    return std::make_unique<ColumnLayout>(schema, bufferSize);
-}
-
 uint64_t ColumnLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fieldIndex) const
 {
     if (fieldIndex >= physicalFieldSizes.size())
@@ -72,8 +67,4 @@ uint64_t ColumnLayout::getColumnOffset(const uint64_t fieldIndex) const
     return columnOffsets[fieldIndex];
 }
 
-std::shared_ptr<MemoryLayout> ColumnLayout::deepCopy() const
-{
-    return std::make_unique<ColumnLayout>(*this);
-}
 }

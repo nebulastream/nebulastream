@@ -269,7 +269,7 @@ TEST_F(VarValTest, writeToMemoryTest)
 
 TEST_F(VarValTest, readFromMemoryTest)
 {
-    auto testVarValReadFromMemory = []<typename T>(const T value, const std::shared_ptr<PhysicalType>& type)
+    auto testVarValReadFromMemory = []<typename T>(const T value, const PhysicalType& type)
     {
         using namespace NES::Nautilus;
         std::vector<int8_t> memory(sizeof(T));

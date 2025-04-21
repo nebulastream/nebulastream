@@ -52,7 +52,7 @@ concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 class DynamicField
 {
 public:
-    explicit DynamicField(const uint8_t* address, std::unique_ptr<PhysicalType> physicalType);
+    explicit DynamicField(const uint8_t* address, std::shared_ptr<PhysicalType> physicalType);
 
     /// Read a pointer type and return the value as a pointer.
     /// @tparam Type of the field requires to be a NesType.
@@ -61,7 +61,7 @@ public:
     requires IsNesType<Type> && std::is_pointer<Type>::value
     [[nodiscard]] Type read() const
     {
-        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
+        if (!PhysicalTypes::isSamePhysicalType<Type>(*physicalType))
         {
             throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
@@ -77,7 +77,7 @@ public:
     requires(IsNesType<Type> && not std::is_pointer<Type>::value)
     [[nodiscard]] Type& read() const
     {
-        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
+        if (!PhysicalTypes::isSamePhysicalType<Type>(*physicalType))
         {
             throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
@@ -93,7 +93,7 @@ public:
     requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
     inline Type read() const
     {
-        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType))
+        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(*physicalType))
         {
             throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
@@ -109,7 +109,7 @@ public:
     requires(IsNesType<Type>)
     void write(Type value)
     {
-        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
+        if (!PhysicalTypes::isSamePhysicalType<Type>(*physicalType))
         {
             throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
@@ -125,7 +125,7 @@ public:
     requires(NESIdentifier<Type>)
     void write(Type value)
     {
-        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType))
+        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(*physicalType))
         {
             throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
@@ -158,7 +158,7 @@ class DynamicTuple
 {
 public:
     /// Each tuple contains the index, to the memory layout and to the tuple buffer.
-    DynamicTuple(uint64_t tupleIndex, std::unique_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
+    DynamicTuple(uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
 
     /// @throws CannotAccessBuffer if field index is invalid
     DynamicField operator[](std::size_t fieldIndex) const;
@@ -181,7 +181,7 @@ public:
 
 private:
     uint64_t tupleIndex;
-    std::unique_ptr<MemoryLayout> memoryLayout;
+    std::shared_ptr<MemoryLayout> memoryLayout;
     Memory::TupleBuffer buffer;
 };
 
@@ -436,7 +436,7 @@ private:
         }
     }
 
-    std::unique_ptr<MemoryLayout> memoryLayout;
+    std::shared_ptr<MemoryLayout> memoryLayout;
     Memory::TupleBuffer buffer;
 };
 

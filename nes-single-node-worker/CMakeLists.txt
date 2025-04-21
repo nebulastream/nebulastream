@@ -27,7 +27,7 @@ target_link_libraries(nes-single-node-worker-lib
         nes-grpc
         nes-runtime
         nes-query-compiler
-        nes-optimizer
+        nes-query-optimizer
 )
 
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
