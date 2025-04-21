@@ -12,6 +12,7 @@
 
 add_subdirectory(Abstract)
 add_subdirectory(Functions)
+add_subdirectory(Plans)
 add_subdirectory(Operators)
 add_subdirectory(Util)
 add_subdirectory(WindowTypes)

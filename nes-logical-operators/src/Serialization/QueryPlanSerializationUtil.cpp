@@ -14,16 +14,16 @@
 
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
 
 void QueryPlanSerializationUtil::serializeQueryPlan(
-    const QueryPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated)
+    const LogicalPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated)
 {
     NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", queryPlan.toString());
     auto rootOperators = queryPlan.rootOperators;
@@ -58,7 +58,7 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
     }
 }
 
-QueryPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
+LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
 {
     std::vector<LogicalOperator> rootOperators;
     std::map<uint64_t, LogicalOperator> operatorIdToOperatorMap;

@@ -30,18 +30,18 @@ namespace NES
 
 
 /// The query plan encapsulates a set of operators and provides a set of utility functions.
-class QueryPlan
+class LogicalPlan
 {
 public:
-    QueryPlan() = default;
-    explicit QueryPlan(LogicalOperator rootOperator);
-    explicit QueryPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
-    static std::unique_ptr<QueryPlan> create(LogicalOperator rootOperator);
-    static std::unique_ptr<QueryPlan> create(QueryId queryId, std::vector<LogicalOperator> rootOperators);
+    LogicalPlan() = default;
+    explicit LogicalPlan(LogicalOperator rootOperator);
+    explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
+    static std::unique_ptr<LogicalPlan> create(LogicalOperator rootOperator);
+    static std::unique_ptr<LogicalPlan> create(QueryId queryId, std::vector<LogicalOperator> rootOperators);
 
-    QueryPlan(const QueryPlan& other);
-    QueryPlan(QueryPlan&& other);
-    QueryPlan& operator=(QueryPlan&& other);
+    LogicalPlan(const LogicalPlan& other);
+    LogicalPlan(LogicalPlan&& other);
+    LogicalPlan& operator=(LogicalPlan&& other);
 
     /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
     void promoteOperatorToRoot(LogicalOperator newRoot);
@@ -69,6 +69,25 @@ public:
         return matchingOperators;
     }
 
+    bool replaceOperator(LogicalOperator& current,
+                         const LogicalOperator& target,
+                         const LogicalOperator& replacement) {
+        bool replaced = false;
+
+        auto& children = current.getChildrenRef();
+
+        for (auto& child : children) {
+            if (child.getId() == target.getId()) {
+                child = replacement;
+                replaced = true;
+            } else if (replaceOperator(child, target, replacement)) {
+                replaced = true;
+            }
+        }
+
+        return replaced;
+    }
+
     bool replaceOperator(const LogicalOperator& target, const LogicalOperator& replacement) {
         bool replaced = false;
 
@@ -76,7 +95,7 @@ public:
             if (root.getId() == target.getId()) {
                 root = replacement;
                 replaced = true;
-            } else if (replaceOperatorRecursively(root, target, replacement)) {
+            } else if (replaceOperator(root, target, replacement)) {
                 replaced = true;
             }
         }
@@ -84,27 +103,6 @@ public:
         return replaced;
     }
 
-    bool replaceOperatorRecursively(LogicalOperator& current,
-                                    const LogicalOperator& target,
-                                    const LogicalOperator& replacement) {
-        bool replaced = false;
-        auto children = current.getChildren();
-
-        for (size_t i = 0; i < children.size(); ++i) {
-            if (children[i].getId() == target.getId()) {
-                children[i] = replacement;
-                replaced = true;
-            } else if (replaceOperatorRecursively(children[i], target, replacement)) {
-                replaced = true;
-            }
-        }
-
-        if (replaced) {
-            current.setChildren(children);
-        }
-
-        return replaced;
-    }
 
     template <class T>
     std::vector<T> getOperatorByType() const
@@ -129,7 +127,7 @@ public:
         return operators;
     }
 
-    std::unique_ptr<QueryPlan> flip() const {
+    std::unique_ptr<LogicalPlan> flip() const {
         std::unordered_map<uint64_t, LogicalOperator> flippedOperators;
         std::unordered_map<uint64_t, std::vector<uint64_t>> parentMapping;
 
@@ -174,7 +172,7 @@ public:
             }
         }
 
-        return std::make_unique<QueryPlan>(getQueryId(), newRoots);
+        return std::make_unique<LogicalPlan>(getQueryId(), newRoots);
     }
 
 
@@ -187,7 +185,7 @@ public:
     void setQueryId(QueryId queryId);
     [[nodiscard]] QueryId getQueryId() const;
 
-    [[nodiscard]] bool operator==(const QueryPlan& otherPlan) const;
+    [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
 
 private:
     /// Owning pointers to the operators

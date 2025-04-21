@@ -15,10 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <Plans/QueryPlan.hpp>
-#include <Util/QueryState.hpp>
 #include <SerializableQueryPlan.pb.h>
-#include <Plans/QueryPlan.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
@@ -28,6 +26,6 @@ public:
     static void
     serializeQueryPlan(const QueryPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated = false);
 
-    static QueryPlan deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
+    static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
 };
 }

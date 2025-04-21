@@ -11,9 +11,14 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
+<<<<<<<< HEAD:nes-execution/src/Execution/Pipelines/CMakeLists.txt
         DecomposedQueryPlan.cpp
         QueryPlan.cpp
         QueryPlanBuilder.cpp
         PipelineQueryPlan.cpp
         OperatorPipeline.cpp
+========
+        LogicalPlan.cpp
+        LogicalPlanBuilder.cpp
+>>>>>>>> cb55065c84 (refactor(LogicalOperators): QueryPlan get to LogicalPlan):nes-logical-operators/src/Plans/CMakeLists.txt
 )
