@@ -14,13 +14,12 @@
 
 #include <memory>
 #include <utility>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
-#include <Watermark/EventTimeWatermarkAssigner.hpp>
+#include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
@@ -34,20 +33,20 @@ struct WatermarkState final : OperatorState
     nautilus::val<Timestamp> currentWatermark = Timestamp(Timestamp::INITIAL_VALUE);
 };
 
-EventTimeWatermarkAssigner::EventTimeWatermarkAssigner(std::unique_ptr<TimeFunction> timeFunction)
-    : timeFunction(std::move(timeFunction)) {};
+EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction)
+    : timeFunction(timeFunction) {};
 
-void EventTimeWatermarkAssigner::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PhysicalOperatorConcept::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(id, std::make_unique<WatermarkState>());
-    timeFunction->open(executionCtx, recordBuffer);
+    timeFunction.open(executionCtx, recordBuffer);
 }
 
-void EventTimeWatermarkAssigner::execute(ExecutionContext& ctx, Record& record) const
+void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     const auto state = static_cast<WatermarkState*>(ctx.getLocalState(id));
-    const auto tsField = timeFunction->getTs(ctx, record);
+    const auto tsField = timeFunction.getTs(ctx, record);
     if (tsField > state->currentWatermark)
     {
         state->currentWatermark = tsField;
@@ -56,7 +55,7 @@ void EventTimeWatermarkAssigner::execute(ExecutionContext& ctx, Record& record) 
     PhysicalOperatorConcept::execute(ctx, record);
 }
 
-void EventTimeWatermarkAssigner::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void EventTimeWatermarkAssignerPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PRECONDITION(
         NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(id)),
