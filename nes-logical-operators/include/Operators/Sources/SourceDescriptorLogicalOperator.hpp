@@ -67,7 +67,7 @@ private:
 
     /// LogicalOperatorConcept member
     std::vector<LogicalOperator> children;
-    Schema inputSchema, outputSchema;
+    std::vector<OriginId> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
 };
 
