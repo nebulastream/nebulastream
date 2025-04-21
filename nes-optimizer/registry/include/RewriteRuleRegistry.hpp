@@ -14,21 +14,23 @@
 
 #pragma once
 
-#include <memory>
-#include <Functions/Function.hpp>
-#include "Nautilus/DataTypes/VarVal.hpp"
+#include <string>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Util/Registry.hpp>
 
-namespace NES::Functions
+namespace NES::Optimizer
 {
 
-class ExecutableFunctionLessEquals final : public Function
+using RewriteRuleRegistryReturnType = NES::Optimizer::AbstractRewriteRule;
+struct RewriteRuleRegistryArguments
 {
-public:
-    ExecutableFunctionLessEquals(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+};
 
-private:
-    const std::unique_ptr<Function> leftExecutableFunction;
-    const std::unique_ptr<Function> rightExecutableFunction;
+class RewriteRuleRegistry : public BaseRegistry<RewriteRuleRegistry, std::string, RewriteRuleRegistryReturnType, RewriteRuleRegistryArguments>
+{
 };
 }
+
+#define INCLUDED_FROM_REGISTRY_REWRITE_RULE
+#include <RewriteRuleGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_REGISTRY_REWRITE_RULE

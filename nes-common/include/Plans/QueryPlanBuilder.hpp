@@ -62,12 +62,12 @@ public:
     /// @param queryPlan the queryPlan the map is added to
     /// @return the updated std::shared_ptr<QueryPlan>
     static std::shared_ptr<QueryPlan>
-    addMap(std::shared_ptr<FieldAssignmentBinaryLogicalFunction> const& mapFunction, std::shared_ptr<QueryPlan> queryPlan);
+    addMap(std::shared_ptr<FieldAssignmentLogicalFunction> const& mapFunction, std::shared_ptr<QueryPlan> queryPlan);
 
     static std::shared_ptr<QueryPlan> addWindowAggregation(
         std::shared_ptr<QueryPlan> queryPlan,
         const std::shared_ptr<Windowing::WindowType>& windowType,
-        const std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>>& windowAggs,
+        const std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>>& windowAggs,
         const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& onKeys);
 
     /// @brief UnionOperator to combine two query plans
@@ -87,13 +87,14 @@ public:
         std::shared_ptr<QueryPlan> rightQueryPlan,
         std::shared_ptr<LogicalFunction> joinFunction,
         const std::shared_ptr<Windowing::WindowType>& windowType,
-        Join::LogicalJoinDescriptor::JoinType joinType);
+        JoinLogicalOperator::JoinType joinType);
 
     static std::shared_ptr<QueryPlan> addSink(std::string sinkName, std::shared_ptr<QueryPlan> queryPlan, WorkerId workerId);
 
+    // TODO
     /// Create watermark assigner operator and adds it to the queryPlan
-    static std::shared_ptr<QueryPlan> assignWatermark(
-        std::shared_ptr<QueryPlan> queryPlan, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
+    //static std::shared_ptr<QueryPlan> assignWatermark(
+    //    std::shared_ptr<QueryPlan> queryPlan, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.

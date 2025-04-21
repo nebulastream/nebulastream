@@ -84,7 +84,7 @@ Successor processSuccessor(
 Runtime::Execution::Source
 processSource(const std::shared_ptr<OperatorPipeline>& pipeline, const std::shared_ptr<PipelineQueryPlan>& pipelineQueryPlan, LoweringContext& loweringContext)
 {
-    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getDecomposedQueryPlan()->toString());
+    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getQueryPlan()->toString());
 
     /// Convert logical source descriptor to actual source descriptor
     const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];

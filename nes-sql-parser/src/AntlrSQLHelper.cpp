@@ -60,16 +60,16 @@ const std::shared_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType() con
     return {};
 }
 
-void AntlrSQLHelper::addMapExpression(std::shared_ptr<NES::FieldAssignmentBinaryLogicalFunction> expressionNode)
+void AntlrSQLHelper::addMapExpression(std::shared_ptr<NES::FieldAssignmentLogicalFunction> expressionNode)
 {
     auto pos = this->mapBuilder.begin();
     this->mapBuilder.insert(pos, std::move(expressionNode));
 }
-std::vector<std::shared_ptr<NES::FieldAssignmentBinaryLogicalFunction>> AntlrSQLHelper::getMapExpressions() const
+std::vector<std::shared_ptr<NES::FieldAssignmentLogicalFunction>> AntlrSQLHelper::getMapExpressions() const
 {
     return this->mapBuilder;
 }
-void AntlrSQLHelper::setMapExpressions(const std::vector<std::shared_ptr<NES::FieldAssignmentBinaryLogicalFunction>> expressions)
+void AntlrSQLHelper::setMapExpressions(const std::vector<std::shared_ptr<NES::FieldAssignmentLogicalFunction>> expressions)
 {
     this->mapBuilder = expressions;
 }

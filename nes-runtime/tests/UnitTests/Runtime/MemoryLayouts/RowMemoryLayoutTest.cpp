@@ -297,7 +297,7 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
 
 TEST_F(RowMemoryLayoutTest, getFieldOffset)
 {
-    const auto schema
+    std::shared_ptr<Schema> const schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
     const auto columnLayout = RowLayout::create(schema, bufferManager->getBufferSize());
 
@@ -311,7 +311,7 @@ TEST_F(RowMemoryLayoutTest, deepCopy)
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
     auto rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
 
-    const auto deepCopy = std::dynamic_pointer_cast<RowLayout>(rowLayout->deepCopy());
+    const auto deepCopy = std::dynamic_pointer_cast<RowLayout>(rowLayout->clone());
 
     ASSERT_NE(deepCopy.get(), rowLayout.get());
     ASSERT_EQ(*deepCopy, *rowLayout);

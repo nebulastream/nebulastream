@@ -16,9 +16,7 @@
 #include <memory>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 
-namespace NES
-{
-namespace QueryCompilation
+namespace NES::QueryCompilation
 {
 class FunctionProvider
 {

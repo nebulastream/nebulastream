@@ -19,26 +19,97 @@
 
 namespace NES
 {
-class PipelineQueryPlan
 
-/// @brief Representation of a query plan, which consists of a set of OperatorPipelines.
+/// @brief Returns the next free pipeline id
+PipelineId getNextPipelineId();
+
+/// @brief Defines a single pipeline, which contains of a query plan of operators.
+/// Each pipeline can have N successor and predecessor pipelines.
+class OperatorPipeline : std::enable_shared_from_this<OperatorPipeline>
 {
 public:
-    static std::shared_ptr<PipelineQueryPlan> create(QueryId queryId = INVALID_QUERY_ID);
+    // TODO we might can get rid of it as we now have a variant
+    /// @brief The type of pipeline
+    /// Source/Sink pipelines only have a single source and sink operator.
+    /// Operator pipelines consist of arbitrary operators, except sources and sinks.
+    enum class Type : uint8_t
+    {
+        SourcePipelineType,
+        SinkPipelineType,
+        OperatorPipelineType
+    };
 
-    void addPipeline(const std::shared_ptr<OperatorPipeline>& pipeline);
-    void removePipeline(const std::shared_ptr<OperatorPipeline>& pipeline);
+    // TODO this could also be an enum...
+    std::string getPipelineProviderType() const {
+        return "Interpreter";
+    };
+
+    static std::shared_ptr<OperatorPipeline> create();
+    static std::shared_ptr<OperatorPipeline> createSourcePipeline();
+    static std::shared_ptr<OperatorPipeline> createSinkPipeline();
+
+    // TODO make public vector
+    void addSuccessor(const std::shared_ptr<OperatorPipeline>& pipeline);
+    void addPredecessor(const std::shared_ptr<OperatorPipeline>& pipeline);
+
+    void removePredecessor(const std::shared_ptr<OperatorPipeline>& pipeline);
+    void removeSuccessor(const std::shared_ptr<OperatorPipeline>& pipeline);
+
+    std::vector<std::shared_ptr<OperatorPipeline>> getPredecessors() const;
+    std::vector<std::shared_ptr<OperatorPipeline>> const& getSuccessors() const;
+
+    void prependOperator(std::shared_ptr<Operator> newRootOperator);
+
+    std::vector<OperatorHandler> getOperatorHandlers() const
+    {
+        return operatorHandlers;
+    }
+
+    void clearPredecessors();
+    void clearSuccessors();
+
+    std::shared_ptr<PhysicalQueryPlan> getPhysicalQueryPlan();
+
+    PipelineId getPipelineId() const;
+    void setType(Type pipelineType);
+
+    void prependOperator(std::shared_ptr<PhysicalOperatorNode> newRootOperator);
+
+    bool hasOperators() const;
+
+    bool isSourcePipeline() const;
+    bool isSinkPipeline() const;
+    bool isOperatorPipeline() const;
+    const std::vector<OperatorId>& getOperatorIds() const;
+
+    std::string toString() const;
+
+protected:
+    OperatorPipeline(PipelineId pipelineId, Type pipelineType);
+
+private:
+    PipelineId id;
+    std::vector<std::shared_ptr<OperatorPipeline>> successorPipelines;
+    std::vector<std::weak_ptr<OperatorPipeline>> predecessorPipelines;
+    std::shared_ptr<PhysicalQueryPlan> physicalQueryPlan;
+    std::vector<OperatorHandler> operatorHandlers;
+    std::vector<OperatorId> operatorIds;
+    Type pipelineType;
+};
+
+
+/// @brief Representation of a query plan, which consists of a set of OperatorPipelines.
+struct PipelineQueryPlan : std::enable_shared_from_this<PipelineQueryPlan>
+{
+    PipelineQueryPlan(QueryId queryId = INVALID_QUERY_ID);
+
+    [[nodiscard]] std::string toString() const;
+
+    const QueryId queryId;
 
     [[nodiscard]] std::vector<std::shared_ptr<OperatorPipeline>> getSourcePipelines() const;
     [[nodiscard]] std::vector<std::shared_ptr<OperatorPipeline>> getSinkPipelines() const;
-    [[nodiscard]] const std::vector<std::shared_ptr<OperatorPipeline>>& getPipelines() const;
 
-    [[nodiscard]] QueryId getQueryId() const;
-    [[nodiscard]] std::string toString() const;
-
-private:
-    PipelineQueryPlan(QueryId queryId);
-    const QueryId queryId;
     std::vector<std::shared_ptr<OperatorPipeline>> pipelines;
 };
 }

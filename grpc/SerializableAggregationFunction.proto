@@ -11,15 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
-#include <functional>
-#include <Plans/PipelineQueryPlan.hpp>
 
-namespace NES::QueryCompilation::NautilusCompilationPhase
-{
-/// Generates code for all pipelines in a pipelined query plan.
-std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> queryPlan);
+syntax = "proto3";
+import "SerializableFunction.proto";
+package NES;
 
-/// Generates code for a particular pipeline.
-std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline);
+message SerializableAggregationFunction {
+    string type = 1;
+    SerializableFunction on_field = 2;
+    SerializableFunction as_field = 3;
+}
+
+message AggregationFunctionList {
+  repeated SerializableAggregationFunction functions = 1;
 }

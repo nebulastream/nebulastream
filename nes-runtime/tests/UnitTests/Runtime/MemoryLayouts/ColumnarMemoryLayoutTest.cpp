@@ -353,7 +353,7 @@ TEST_F(ColumnarMemoryLayoutTest, deepCopy)
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
     auto columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
 
-    const auto deepCopy = columnLayout->deepCopy();
+    const auto deepCopy = columnLayout->clone();
 
     ASSERT_NE(deepCopy, columnLayout);
     ASSERT_EQ(*deepCopy, *columnLayout);

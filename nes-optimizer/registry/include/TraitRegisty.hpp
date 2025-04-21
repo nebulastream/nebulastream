@@ -14,23 +14,23 @@
 
 #pragma once
 
-#include <memory>
-#include <API/Schema.hpp>
+#include <string>
+#include <TraitSets/Trait.hpp>
+#include <Util/Registry.hpp>
 
-
-namespace NES::Windowing
+namespace NES::Optimizer
 {
 
-
-class WatermarkStrategyDescriptor : public std::enable_shared_from_this<WatermarkStrategyDescriptor>
+using TraitRegistryReturnType = NES::Optimizer::AbstractTrait;
+struct TraitRegistryArguments
 {
-public:
-    WatermarkStrategyDescriptor();
-    virtual ~WatermarkStrategyDescriptor() = default;
-    virtual bool equal(std::shared_ptr<WatermarkStrategyDescriptor> other) = 0;
+};
 
-    virtual std::string toString() = 0;
-
-    virtual bool inferStamp(const std::shared_ptr<Schema>& schema) = 0;
+class TraitRegistry : public BaseRegistry<TraitRegistry, std::string, TraitRegistryReturnType, TraitRegistryArguments>
+{
 };
 }
+
+#define INCLUDED_FROM_REGISTRY_TRAIT
+#include <TraitGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_REGISTRY_TRAIT

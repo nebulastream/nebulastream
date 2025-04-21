@@ -16,27 +16,28 @@
 
 /// NOLINT(clang-diagnostic-error)
 #ifndef INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY
-#    error "This file should not be included directly! Include instead include ExecutablePipelineProviderRegistry.hpp"
+#    error "This file should not be included directly! Include instead include <ExecutablePipelineProviderRegistry.hpp>"
 #endif
 
 #include <memory>
 #include <string>
 #include <Util/Registry.hpp>
 
-namespace NES::Runtime::Execution::ExecutablePipelineProviderGeneratedRegistrar
+namespace NES::ExecutablePipelineProviderGeneratedRegistrar
 {
 
 /// declaration of register functions for 'ExecutablePipelineProviders'
 @REGISTER_FUNCTION_DECLARATIONS@
 }
+
 namespace NES
 {
 template <>
 inline void
-Registrar<Runtime::Execution::ExecutablePipelineProviderRegistry, std::string, Runtime::Execution::ExecutablePipelineProviderRegistryReturnType, Runtime::Execution::ExecutablePipelineProviderRegistryArguments>::
+Registrar<ExecutablePipelineProviderRegistry, std::string, ExecutablePipelineProviderRegistryReturnType, ExecutablePipelineProviderRegistryArguments>::
     registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Runtime::Execution::ExecutablePipelineProviderGeneratedRegistrar;
+    using namespace NES::ExecutablePipelineProviderGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

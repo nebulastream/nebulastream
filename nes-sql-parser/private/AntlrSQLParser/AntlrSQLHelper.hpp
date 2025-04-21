@@ -70,11 +70,11 @@ public:
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>> windowAggs;
+    std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>> windowAggs;
     std::vector<std::shared_ptr<LogicalFunction>> projections;
     std::vector<std::shared_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
     std::vector<std::shared_ptr<LogicalFunction>> functionBuilder;
-    std::vector<std::shared_ptr<FieldAssignmentBinaryLogicalFunction>> mapBuilder;
+    std::vector<std::shared_ptr<FieldAssignmentLogicalFunction>> mapBuilder;
     std::vector<std::shared_ptr<FieldAccessLogicalFunction>> groupByFields;
     std::vector<std::string> joinSources;
     std::shared_ptr<LogicalFunction> joinFunction;
@@ -106,8 +106,8 @@ public:
     [[nodiscard]] const std::shared_ptr<Windowing::WindowType> getWindowType();
     void setSource(std::string sourceName);
     const std::string getSource() const;
-    void addMapExpression(std::shared_ptr<FieldAssignmentBinaryLogicalFunction> expressionNode);
-    [[nodiscard]] std::vector<std::shared_ptr<FieldAssignmentBinaryLogicalFunction>> getMapExpressions() const;
-    void setMapExpressions(std::vector<std::shared_ptr<FieldAssignmentBinaryLogicalFunction>> expressions);
+    void addMapExpression(std::shared_ptr<FieldAssignmentLogicalFunction> expressionNode);
+    [[nodiscard]] std::vector<std::shared_ptr<FieldAssignmentLogicalFunction>> getMapExpressions() const;
+    void setMapExpressions(std::vector<std::shared_ptr<FieldAssignmentLogicalFunction>> expressions);
 };
 }
