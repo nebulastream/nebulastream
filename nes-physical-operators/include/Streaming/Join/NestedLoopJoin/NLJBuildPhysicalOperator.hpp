@@ -67,7 +67,7 @@ public:
     };
 
     NLJBuildPhysicalOperator(
-        std::vector<std::shared_ptr<TupleBufferMemoryProvider>> memoryProvider,
+        std::shared_ptr<TupleBufferMemoryProvider> memoryProvider,
         uint64_t operatorHandlerIndex,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction);

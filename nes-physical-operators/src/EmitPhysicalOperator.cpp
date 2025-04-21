@@ -155,7 +155,7 @@ DefaultEmitPhysicalOperator::DefaultEmitPhysicalOperator(
 
 [[nodiscard]] uint64_t DefaultEmitPhysicalOperator::getMaxRecordsPerBuffer() const
 {
-    return memoryProvider->getMemoryLayout().getCapacity();
+    return memoryProvider->getMemoryLayout()->getCapacity();
 }
 
 
