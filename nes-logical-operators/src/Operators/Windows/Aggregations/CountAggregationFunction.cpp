@@ -25,7 +25,7 @@
 #include "Functions/LogicalFunction.hpp"
 #include "Util/Common.hpp"
 
-namespace NES::Windowing
+namespace NES
 {
 
 CountAggregationFunction::CountAggregationFunction(const std::shared_ptr<FieldAccessLogicalFunction> field)

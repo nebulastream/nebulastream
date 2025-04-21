@@ -18,7 +18,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 <<<<<<<< HEAD:nes-logical-operators/include/Operators/Windows/Aggregations/MaxAggregationDescriptor.hpp

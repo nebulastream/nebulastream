@@ -27,7 +27,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 SumAggregationFunction::SumAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)

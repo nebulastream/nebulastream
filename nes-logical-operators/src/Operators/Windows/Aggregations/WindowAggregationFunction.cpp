@@ -21,7 +21,7 @@
 #include <Util/Common.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 WindowAggregationFunction::WindowAggregationFunction(const std::shared_ptr<FieldAccessLogicalFunction>& onField)

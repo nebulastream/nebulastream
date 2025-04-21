@@ -26,7 +26,7 @@
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 AvgAggregationFunction::AvgAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)
