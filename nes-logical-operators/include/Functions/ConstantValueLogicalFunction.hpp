@@ -42,8 +42,8 @@ public:
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] const DataType& getStamp() const override;
-    [[nodiscard]] LogicalFunction withStamp(std::unique_ptr<DataType> stamp) const override;
+    [[nodiscard]] std::shared_ptr<DataType> getStamp() const override;
+    [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override;
     [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren()  const override;

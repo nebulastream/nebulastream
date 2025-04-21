@@ -18,17 +18,13 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
 AttributeField::AttributeField(std::string name, std::shared_ptr<DataType> dataType) : name(std::move(name)), dataType(std::move(dataType))
 {
-}
-
-std::shared_ptr<AttributeField> AttributeField::create(const std::string& name, const std::shared_ptr<DataType>& dataType)
-{
-    return std::make_shared<AttributeField>(AttributeField(name, dataType));
 }
 
 const std::string& AttributeField::getName() const
@@ -43,6 +39,7 @@ void AttributeField::setName(std::string newName)
 
 std::shared_ptr<DataType> AttributeField::getDataType() const
 {
+    INVARIANT(dataType != nullptr, "DataType pointer is null in AttributeField");
     return dataType;
 }
 
@@ -53,16 +50,11 @@ std::string AttributeField::toString() const
     return ss.str();
 }
 
-bool AttributeField::isEqual(const std::shared_ptr<AttributeField>& attr) const
+bool AttributeField::isEqual(const AttributeField& attr) const
 {
-    if (!attr)
-    {
-        return false;
-    }
-
-    const bool equalDataType = (this->dataType == nullptr && attr->dataType == nullptr)
-        || (this->dataType != nullptr && attr->dataType != nullptr && *this->dataType == *attr->dataType);
-    return (attr->name == name) && equalDataType;
+    const bool equalDataType = (this->dataType == nullptr && attr.dataType == nullptr)
+        || (this->dataType != nullptr && attr.dataType != nullptr && *this->dataType == *attr.dataType);
+    return (attr.name == name) && equalDataType;
 }
 
 uint64_t AttributeField::hash() const
@@ -71,11 +63,6 @@ uint64_t AttributeField::hash() const
     hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(name);
     hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(dataType->toString());
     return hashValue;
-}
-
-std::shared_ptr<AttributeField> AttributeField::clone() const
-{
-    return create(name, dataType);
 }
 
 }

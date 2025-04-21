@@ -104,13 +104,12 @@ bool WindowedAggregationLogicalOperator::operator==(LogicalOperatorConcept const
     return false;
 }
 
-/*
-bool WindowedAggregationLogicalOperator::inferSchema()
+bool WindowedAggregationLogicalOperator::inferSchema(Schema inputSchema)
 {
-    if (!WindowOperator::inferSchema())
-    {
-        return false;
-    }
+    //if (!WindowOperator::inferSchema())
+    //{
+    //    return false;
+    //}
     // Infer the default input and output schema.
     NES_DEBUG("WindowLogicalOperator: TypeInferencePhase: infer types for window operator with input schema {}",
               inputSchema.toString());
@@ -161,24 +160,22 @@ bool WindowedAggregationLogicalOperator::inferSchema()
     if (isKeyed())
     {
         // Infer the data type of each key field.
-        auto& keys = getKeys();
-        for (const auto& key : keys)
+        auto keys = getKeys();
+        for (auto& key : keys)
         {
-            key->inferStamp(inputSchema);
-            outputSchema.addField(AttributeField(key->getFieldName(), key->getStamp().clone()));
+            auto newKey = key.withInferredStamp(inputSchema).get<FieldAccessLogicalFunction>();
+            outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getStamp()));
         }
     }
     for (const auto& agg : aggs)
     {
         outputSchema.addField(
-            AttributeField(dynamic_cast<FieldAccessLogicalFunction*>(&agg->as())->getFieldName(),
-                                    agg->as().getStamp().clone()));
+            AttributeField(agg->as().getFieldName(), agg->as().getStamp()));
     }
 
     NES_DEBUG("Outputschema for window={}", outputSchema.toString());
     return true;
 }
- */
 
 Optimizer::TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
 {
@@ -250,7 +247,7 @@ void WindowedAggregationLogicalOperator::setWindowType(std::unique_ptr<Windowing
     windowType = std::move(wt);
 }
 
-const std::vector<FieldAccessLogicalFunction>& WindowedAggregationLogicalOperator::getKeys() const
+std::vector<FieldAccessLogicalFunction> WindowedAggregationLogicalOperator::getKeys() const
 {
     return onKey;
 }

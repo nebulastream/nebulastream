@@ -26,7 +26,7 @@
 namespace NES
 {
 
-AndLogicalFunction::AndLogicalFunction(const AndLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
+AndLogicalFunction::AndLogicalFunction(const AndLogicalFunction& other) : stamp(other.stamp), left(other.left), right(other.right)
 {
 }
 
@@ -35,15 +35,15 @@ AndLogicalFunction::AndLogicalFunction(LogicalFunction left, LogicalFunction rig
 {
 }
 
-const DataType& AndLogicalFunction::getStamp() const
+std::shared_ptr<DataType> AndLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction AndLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction AndLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 
@@ -90,15 +90,15 @@ LogicalFunction AndLogicalFunction::withInferredStamp(Schema schema) const
         newChildren.push_back(node.withInferredStamp(schema));
     }
     /// check if children stamp is correct
-    INVARIANT(left.getStamp() == Boolean(), "the stamp of left child must be boolean, but was: " + left.getStamp().toString());
-    INVARIANT(left.getStamp() == Boolean(), "the stamp of right child must be boolean, but was: " + right.getStamp().toString());
+    INVARIANT(*left.getStamp().get() == Boolean(), "the stamp of left child must be boolean, but was: " + left.getStamp().get()->toString());
+    INVARIANT(*left.getStamp().get() == Boolean(), "the stamp of right child must be boolean, but was: " + right.getStamp().get()->toString());
     return this->withChildren(newChildren);
 }
 
 bool AndLogicalFunction::validateBeforeLowering() const
 {
-    return dynamic_cast<const Boolean*>(&left.getStamp())
-        && dynamic_cast<const Boolean*>(&right.getStamp());
+    return dynamic_cast<const Boolean*>(left.getStamp().get())
+        && dynamic_cast<const Boolean*>(right.getStamp().get());
 }
 
 SerializableFunction AndLogicalFunction::serialize() const

@@ -22,7 +22,7 @@
 namespace NES
 {
 
-GreaterLogicalFunction::GreaterLogicalFunction(const GreaterLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
+GreaterLogicalFunction::GreaterLogicalFunction(const GreaterLogicalFunction& other) : stamp(other.stamp), left(other.left), right(other.right)
 {
 }
 
@@ -48,15 +48,15 @@ std::string GreaterLogicalFunction::toString() const
 }
 
 
-const DataType& GreaterLogicalFunction::getStamp() const
+std::shared_ptr<DataType> GreaterLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction GreaterLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction GreaterLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

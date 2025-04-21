@@ -23,7 +23,7 @@
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(LogicalFunction child) : stamp(child.getStamp()), child(child)
 {
 }
 
@@ -31,15 +31,15 @@ AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& 
 {
 }
 
-const DataType& AbsoluteLogicalFunction::getStamp() const
+std::shared_ptr<DataType> AbsoluteLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction AbsoluteLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction AbsoluteLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

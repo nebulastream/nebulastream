@@ -30,12 +30,12 @@ namespace NES
 {
 
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getStamp().clone(), field.getStamp().clone(), field.getStamp().clone(), std::move(field))
+    : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), std::move(field))
 {
     this->aggregationType = Type::Sum;
 }
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
-    : WindowAggregationLogicalFunction(field.getStamp().clone(), field.getStamp().clone(), field.getStamp().clone(), std::move(field), std::move(asField))
+    : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Sum;
 }
@@ -57,7 +57,7 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     auto newOnField = onField.withInferredStamp(schema);
     this->onField = newOnField.get<FieldAccessLogicalFunction>();
 
-    INVARIANT(dynamic_cast<const Numeric*>(&onField.getStamp()), "aggregations on non numeric fields is not supported.");
+    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()), "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = onField.getFieldName();
@@ -74,7 +74,7 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
-    auto newAsField = asField.withStamp(getFinalAggregateStamp().clone());
+    auto newAsField = asField.withStamp(getFinalAggregateStamp());
     this->asField = newAsField.get<FieldAccessLogicalFunction>();
 }
 

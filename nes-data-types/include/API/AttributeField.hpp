@@ -32,7 +32,7 @@ public:
     AttributeField() = default;
     AttributeField(std::string name, std::shared_ptr<DataType> dataType);
 
-    [[nodiscard]] DataType& getDataType() const;
+    [[nodiscard]] std::shared_ptr<DataType> getDataType() const;
 
     [[nodiscard]] const std::string& getName() const;
 

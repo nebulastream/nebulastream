@@ -52,9 +52,9 @@ public:
     /// @brief Creates a deep copy of the window aggregation
     virtual std::unique_ptr<WindowAggregationLogicalFunction> clone() = 0;
 
-    DataType& getInputStamp() const;
-    DataType& getPartialAggregateStamp() const;
-    DataType& getFinalAggregateStamp() const;
+    std::shared_ptr<DataType> getInputStamp() const;
+    std::shared_ptr<DataType> getPartialAggregateStamp() const;
+    std::shared_ptr<DataType> getFinalAggregateStamp() const;
 
     std::string toString() const;
 
@@ -66,12 +66,12 @@ public:
 
 protected:
     explicit WindowAggregationLogicalFunction(
-        std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
-    explicit WindowAggregationLogicalFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp,
-                                       std::unique_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField);
+        std::shared_ptr<DataType> inputStamp, std::shared_ptr<DataType> partialAggregateStamp, std::shared_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
+    explicit WindowAggregationLogicalFunction(std::shared_ptr<DataType> inputStamp, std::shared_ptr<DataType> partialAggregateStamp,
+                                       std::shared_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField);
     WindowAggregationLogicalFunction() = delete;
 
-    std::unique_ptr<DataType> inputStamp, partialAggregateStamp, finalAggregateStamp;
+    std::shared_ptr<DataType> inputStamp, partialAggregateStamp, finalAggregateStamp;
     FieldAccessLogicalFunction onField, asField;
     Type aggregationType;
 };

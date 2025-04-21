@@ -34,49 +34,47 @@ namespace NES
 {
 
 SerializableDataType*
-DataTypeSerializationUtil::serializeDataType(const std::shared_ptr<DataType>& dataType, SerializableDataType* serializedDataType)
+DataTypeSerializationUtil::serializeDataType(std::shared_ptr<DataType> dataType, SerializableDataType* serializedDataType)
 {
-    if (NES::Util::instanceOf<Undefined>(dataType))
+    if (dynamic_cast<const Undefined*>(dataType.get()))
     {
         serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
     }
-    else if (NES::Util::instanceOf<Integer>(dataType))
+    else if (const auto* intDataType = dynamic_cast<const Integer*>(dataType.get()))
     {
-        auto intDataType = DataType::as<Integer>(dataType);
-        auto serializedInteger = SerializableDataType_IntegerDetails();
+        SerializableDataType_IntegerDetails serializedInteger;
         serializedInteger.set_bits(intDataType->getBits());
         serializedInteger.set_lowerbound(intDataType->lowerBound);
         serializedInteger.set_upperbound(intDataType->upperBound);
         serializedDataType->mutable_details()->PackFrom(serializedInteger);
         serializedDataType->set_type(SerializableDataType_Type_INTEGER);
     }
-    else if (NES::Util::instanceOf<Float>(dataType))
+    else if (const auto* floatDataType = dynamic_cast<const Float*>(dataType.get()))
     {
-        auto floatDataType = DataType::as<Float>(dataType);
-        auto serializableFloat = SerializableDataType_FloatDetails();
+        SerializableDataType_FloatDetails serializableFloat;
         serializableFloat.set_bits(floatDataType->getBits());
         serializableFloat.set_lowerbound(floatDataType->lowerBound);
         serializableFloat.set_upperbound(floatDataType->upperBound);
         serializedDataType->mutable_details()->PackFrom(serializableFloat);
         serializedDataType->set_type(SerializableDataType_Type_FLOAT);
     }
-    else if (NES::Util::instanceOf<Boolean>(dataType))
+    else if (dynamic_cast<const Boolean*>(dataType.get()))
     {
         serializedDataType->set_type(SerializableDataType_Type_BOOLEAN);
     }
-    else if (NES::Util::instanceOf<Char>(dataType))
+    else if (dynamic_cast<const Char*>(dataType.get()))
     {
         serializedDataType->set_type(SerializableDataType_Type_CHAR);
     }
-    else if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
+    else if (dynamic_cast<const VariableSizedDataType*>(dataType.get()))
     {
         serializedDataType->set_type(SerializableDataType_Type_VARIABLE_SIZED_DATA);
     }
     else
     {
-        throw CannotSerialize("serialization is not possible for " + dataType->toString());
+        throw CannotSerialize("serialization is not possible for " + dataType.get()->toString());
     }
-    NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType->toString(), serializedDataType->SerializeAsString());
+    NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType.get()->toString(), serializedDataType->SerializeAsString());
     return serializedDataType;
 }
 
