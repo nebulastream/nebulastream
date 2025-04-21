@@ -10,21 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-<<<<<<<< HEAD:nes-logical-operators/src/Plans/CMakeLists.txt
-add_source_files(nes-logical-operators
-<<<<<<<< HEAD:nes-execution/src/Execution/Pipelines/CMakeLists.txt
-        DecomposedQueryPlan.cpp
-        QueryPlan.cpp
-        QueryPlanBuilder.cpp
-        PipelineQueryPlan.cpp
-        OperatorPipeline.cpp
-========
-        LogicalPlan.cpp
-        LogicalPlanBuilder.cpp
->>>>>>>> cb55065c84 (refactor(LogicalOperators): QueryPlan get to LogicalPlan):nes-logical-operators/src/Plans/CMakeLists.txt
-========
 add_source_files(nes-physical-operators
         Slice.cpp
         DefaultTimeBasedSliceStore.cpp
->>>>>>>> 47a32ed6e7 (refactor(PhysicalOperators): move and rename ExecutableFunctions):nes-physical-operators/src/SliceStore/CMakeLists.txt
 )
