@@ -20,6 +20,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
+#include <QueryOptimizer.hpp>
 #include <SingleNodeWorker.hpp>
 #include <StatisticPrinter.hpp>
 
@@ -31,12 +32,12 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
-          configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , listener(std::make_shared<PrintingStatisticListener>(
+    : listener(std::make_shared<PrintingStatisticListener>(
           fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", std::chrono::system_clock::now(), ::getpid())))
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
+    , optimizer(std::make_unique<Optimizer::QueryOptimizer>())
+    , compiler(std::make_unique<QueryCompilation::QueryCompiler>(nodeEngine))
 {
 }
 
@@ -44,16 +45,13 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(std::unique_ptr<QueryPlan> plan)
+QueryId SingleNodeWorker::registerQuery(QueryPlan plan)
 {
     try
     {
-        auto queryPlan
-            = std::make_unique<QueryPlan>(QueryId(queryIdCounter++), plan->getRootOperators());
+        auto queryPlan = optimizer->optimize(plan.clone());
 
-        listener->onEvent(SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
-
-        auto request = std::make_unique<QueryCompilationRequest>(logicalQueryPlan, bufferSize);
+        listener->onEvent(SubmitQuerySystemEvent{queryPlan->getQueryId(), plan.toString()});
 
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(std::move(queryPlan));
 

@@ -28,8 +28,8 @@ class InterpretationPipelineProvider : public ExecutablePipelineProvider
 {
 public:
     std::unique_ptr<ExecutablePipelineStage> create(
-        std::shared_ptr<Pipeline> pipeline,
-        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+        std::unique_ptr<Pipeline> pipeline,
+        std::vector<std::unique_ptr<OperatorHandler>> operatorHandlers,
         nautilus::engine::Options& options) override;
 };
 }
