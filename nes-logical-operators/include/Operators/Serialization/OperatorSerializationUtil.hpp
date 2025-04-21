@@ -25,7 +25,6 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Operators/Windows/WindowOperator.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES

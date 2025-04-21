@@ -18,13 +18,14 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <Operators/Windows/WindowOperator.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Traits/OriginIdAssignerTrait.hpp>
 
 namespace NES
 {
 
-class WindowedAggregationLogicalOperator final : public WindowOperator
+class WindowedAggregationLogicalOperator final : public LogicalOperatorConcept
 {
 public:
     WindowedAggregationLogicalOperator(std::vector<FieldAccessLogicalFunction> onKey,
