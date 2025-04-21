@@ -110,30 +110,28 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
 
         auto aggregationInputExpression = QueryCompilation::FunctionProvider::lowerFunction(descriptor->on());
         const auto aggregationResultFieldIdentifier = descriptor->as().getFieldName();
-        switch (descriptor->getType())
+        auto name = descriptor->getName();
+        if (name == "Avg")
         {
-            case WindowAggregationLogicalFunction::Type::Avg: {
-                /// We assume that the count is a u64
-                auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
-                aggregationFunctions.emplace_back(
-                    std::make_shared<AvgAggregationFunction>(
-                        std::move(physicalInputType),
-                        std::move(physicalFinalType),
-                        std::move(aggregationInputExpression),
-                        aggregationResultFieldIdentifier,
-                        std::move(countType)));
-                break;
-            }
-            case WindowAggregationLogicalFunction::Type::Sum: {
+            /// We assume that the count is a u64
+            auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
+            aggregationFunctions.emplace_back(
+                std::make_shared<AvgAggregationFunction>(
+                    std::move(physicalInputType),
+                    std::move(physicalFinalType),
+                    std::move(aggregationInputExpression),
+                    aggregationResultFieldIdentifier,
+                    std::move(countType)));
+        } else if (name =="Sum")
+        {
                 aggregationFunctions.emplace_back(
                     std::make_shared<SumAggregationFunction>(
                         std::move(physicalInputType),
                         std::move(physicalFinalType),
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier));
-                break;
-            }
-            case WindowAggregationLogicalFunction::Type::Count: {
+        } else if (name =="Count")
+        {
                 /// We assume that a count is a u64
                 auto countType = physicalTypeFactory.getPhysicalType(DataTypeProvider::provideDataType(LogicalType::UINT64));
                 aggregationFunctions.emplace_back(
@@ -142,27 +140,24 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
                         std::move(physicalFinalType),
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier));
-                break;
-            }
-            case WindowAggregationLogicalFunction::Type::Max: {
+        } else if (name =="Max")
+        {
                 aggregationFunctions.emplace_back(
                     std::make_shared<MaxAggregationFunction>(
                         std::move(physicalInputType),
                         std::move(physicalFinalType),
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier));
-                break;
-            }
-            case WindowAggregationLogicalFunction::Type::Min: {
+        } else if (name =="Min")
+        {
                 aggregationFunctions.emplace_back(
                     std::make_shared<MinAggregationFunction>(
                         std::move(physicalInputType),
                         std::move(physicalFinalType),
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier));
-                break;
-            }
-            case WindowAggregationLogicalFunction::Type::Median: {
+        } else if (name =="Median")
+        {
                 auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
                     logicalOperator.getInputSchemas()[0], config.pageSize.getValue());
                 auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(std::move(layout));
@@ -174,11 +169,8 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
                         aggregationResultFieldIdentifier,
                         std::move(memoryProvider)));
                 break;
-            }
-            default: {
+        } else {
                 throw NotImplemented();
-                break;
-            }
         }
     }
     return aggregationFunctions;
