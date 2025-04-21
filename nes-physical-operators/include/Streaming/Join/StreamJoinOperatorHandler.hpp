@@ -23,8 +23,6 @@
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Streaming/WindowBasedOperatorHandler.hpp>
-#include <Util/Execution.hpp>
-#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
