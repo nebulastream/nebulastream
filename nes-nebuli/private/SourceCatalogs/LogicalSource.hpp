@@ -20,22 +20,18 @@
 #include <API/Schema.hpp>
 namespace NES
 {
-/**
- * @brief The LogicalSource wraps the source name and the schema.
- */
+
+class Schema;
+class LogicalSource;
+using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
+
+/// @brief The LogicalSource wraps the source name and the schema.
 class LogicalSource
 {
 public:
     static std::shared_ptr<LogicalSource> create(const std::string& logicalSourceName, const std::shared_ptr<Schema>& schema);
 
-    /**
-     * @brief Gets the logical source name
-     */
     std::string getLogicalSourceName();
-
-    /**
-     * @brief Gets the schema
-     */
     std::shared_ptr<Schema> getSchema();
 
 private:

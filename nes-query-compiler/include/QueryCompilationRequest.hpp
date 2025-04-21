@@ -19,53 +19,38 @@
 #include <Runtime/NodeEngine.hpp>
 namespace NES::QueryCompilation
 {
-/**
- * @brief Represents a query compilation request.
- * The request encapsulates the decomposed query plan and addition properties.
- */
+/// @brief Represents a query compilation request.
+/// The request encapsulates the decomposed query plan and addition properties.
 class QueryCompilationRequest
 {
 public:
     static std::shared_ptr<QueryCompilationRequest> create(std::shared_ptr<DecomposedQueryPlan> decomposedQueryPlan, size_t bufferSize);
 
-    /**
-     * @brief Enable debugging for this query.
-     */
+    /// @brief Enable debugging for this query.
     void enableDebugging();
 
-    /**
-     * @brief Checks if debugging is enabled
-     * @return bool
-     */
     bool isDebugEnabled() const;
+    /// @brief Checks if debugging is enabled
+    /// @return bool
 
-    /**
-    * @brief Checks if optimizations for this query
-    */
+    /// @brief Checks if optimizations for this query
     void enableOptimizations();
 
-    /**
-     * @brief Checks if optimization flags is enabled
-     * @return bool
-     */
+    /// @brief Checks if optimization flags is enabled
+    /// @return bool
     bool isOptimizeEnabled() const;
 
-    /**
-    * @brief Enable debugging for this query.
-    */
+
+    /// @brief Enable debugging for this query.
     void enableDump();
 
-    /**
-     * @brief Checks if dumping to nesviz is enabled
-     * @return bool
-     */
     bool isDumpEnabled() const;
+    /// @brief Checks if dumping to nesviz is enabled
+    /// @return bool
 
-    /**
-     * @brief Gets the Decomposed query plan of this request
-     * @return std::shared_ptr<DecomposedQueryPlan>
-     */
     std::shared_ptr<DecomposedQueryPlan> getDecomposedQueryPlan();
+    /// @brief Gets the Decomposed query plan of this request
+    /// @return std::shared_ptr<DecomposedQueryPlan>
 
     [[nodiscard]] size_t getBufferSize() const;
     void setBufferSize(size_t bufferSize);

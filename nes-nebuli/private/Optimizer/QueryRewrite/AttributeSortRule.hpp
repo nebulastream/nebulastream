@@ -54,41 +54,31 @@ public:
     AttributeSortRule() = default;
     virtual ~AttributeSortRule() = default;
 
-    /**
-     * @brief Apply Attribute Sort rule on input query plan
-     * @param queryPlan: the original query plan
-     * @return updated logical query plan
-     */
+    /// @brief Apply Attribute Sort rule on input query plan
+    /// @param queryPlan: the original query plan
+    /// @return updated logical query plan
     std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
 
 private:
-    /**
-     * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filter and map.
-     * @param logicalOperator: the operator to be sorted
-     * @return pointer to the updated function
-     */
+    /// @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filter and map.
+    /// @param logicalOperator: the operator to be sorted
+    /// @return pointer to the updated function
     std::shared_ptr<LogicalFunction> sortAttributesInFunction(std::shared_ptr<LogicalFunction> function);
 
-    /**
-     * @brief Alphabetically sort the attributes within the arithmetic function
-     * @param function: the input arithmetic function
-     * @return pointer to the updated function
-     */
+    /// @brief Alphabetically sort the attributes within the arithmetic function
+    /// @param function: the input arithmetic function
+    /// @return pointer to the updated function
     std::shared_ptr<LogicalFunction> sortAttributesInArithmeticalFunctions(std::shared_ptr<LogicalFunction> function);
 
-    /**
-     * @brief Alphabetically sort the attributes within the logical function
-     * @param function: the input logical function
-     * @return pointer to the updated function
-     */
+    /// @brief Alphabetically sort the attributes within the logical function
+    /// @param function: the input logical function
+    /// @return pointer to the updated function
     std::shared_ptr<LogicalFunction> sortAttributesInLogicalFunctions(const std::shared_ptr<LogicalFunction>& function);
 
-    /**
-     * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic function of type
-     * FunctionType. The fetched fields are then sorted alphabetically.
-     * @param function: the function to be used
-     * @return: vector of function containing commutative field access or constant function type
-     */
+    /// @brief fetch all commutative fields of type field access or constant from the relational or arithmetic function of type
+    /// FunctionType. The fetched fields are then sorted alphabetically.
+    /// @param function: the function to be used
+    /// @return: vector of function containing commutative field access or constant function type
     template <class FunctionType>
     std::vector<std::shared_ptr<LogicalFunction>> fetchCommutativeFields(const std::shared_ptr<LogicalFunction>& function)
     {
@@ -108,23 +98,19 @@ private:
         return commutativeFields;
     }
 
-    /**
-     * @brief Replace the original function within parent function with updated function
-     * @param parentFunction: the parent function containing original function
-     * @param originalFunction: the original function
-     * @param updatedFunction: the updated function
-     */
+    /// @brief Replace the original function within parent function with updated function
+    /// @param parentFunction: the parent function containing original function
+    /// @param originalFunction: the original function
+    /// @param updatedFunction: the updated function
     bool replaceCommutativeFunctions(
         const std::shared_ptr<LogicalFunction>& parentFunction,
         const std::shared_ptr<LogicalFunction>& originalFunction,
         const std::shared_ptr<LogicalFunction>& updatedFunction);
 
-    /**
-     * @brief Fetch the value of the left most constant function or the name of the left most field access function within
-     * the input function. This information is then used for performing global sorting in case of a binary function.
-     * @param function: the input function
-     * @return the name or value of field or constant function
-     */
+    /// @brief Fetch the value of the left most constant function or the name of the left most field access function within
+    /// the input function. This information is then used for performing global sorting in case of a binary function.
+    /// @param function: the input function
+    /// @return the name or value of field or constant function
     static std::string fetchLeftMostConstantValueOrFieldName(std::shared_ptr<LogicalFunction> function);
 };
 }

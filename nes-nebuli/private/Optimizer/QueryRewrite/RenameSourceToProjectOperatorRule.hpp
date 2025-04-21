@@ -22,9 +22,7 @@ namespace NES::Optimizer
 {
 
 
-/**
- * @brief This rule is responsible for transforming Source Rename operator to the projection operator
- */
+/// @brief This rule is responsible for transforming Source Rename operator to the projection operator
 class RenameSourceToProjectOperatorRule : public BaseRewriteRule
 {
 public:
@@ -36,11 +34,9 @@ public:
 private:
     RenameSourceToProjectOperatorRule() = default;
 
-    /**
-     * @brief Convert input operator into project operator
-     * @param operatorNode : the rename source operator
-     * @return pointer to the converted project operator
-     */
+    /// @brief Convert input operator into project operator
+    /// @param operatorNode : the rename source operator
+    /// @return pointer to the converted project operator
     static std::shared_ptr<Operator> convert(const std::shared_ptr<Operator>& operatorNode);
 };
 

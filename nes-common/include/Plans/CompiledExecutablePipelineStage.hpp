@@ -25,9 +25,7 @@
 namespace NES
 {
 
-/**
- * @brief A compiled executable pipeline stage uses nautilus-lib to compile a pipeline to a code snippet.
- */
+/// @brief A compiled executable pipeline stage uses nautilus-lib to compile a pipeline to a code snippet.
 class CompiledExecutablePipelineStage final : public ExecutablePipelineStage
 {
 public:

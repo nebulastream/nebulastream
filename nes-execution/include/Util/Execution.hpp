@@ -88,12 +88,10 @@ struct BufferMetaData
 
 namespace NES::QueryCompilation::Util
 {
-/**
- * @brief Get the windowing parameter (size, slide, and time function) for the given window type
- * @param windowType
- * @return Tuple<WindowSize, WindowSlide, TimeFunction>
- */
 std::tuple<uint64_t, uint64_t, std::unique_ptr<Runtime::Execution::Operators::TimeFunction>>
 getWindowingParameters(Windowing::TimeBasedWindowType& windowType);
+/// @brief Get the windowing parameter (size, slide, and time function) for the given window type
+/// @param windowType
+/// @return Tuple<WindowSize, WindowSlide, TimeFunction>
 
 }
