@@ -82,8 +82,7 @@ public:
     }
 private:
     std::vector<LogicalOperator> children;
-    Schema inputSchema;
-    Schema outputSchema;
+    Schema inputSchema, outputSchema;
 
     static constexpr std::string_view NAME = "Source";
     const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;

@@ -50,16 +50,20 @@ std::string OrLogicalFunction::toString() const
     return ss.str();
 }
 
-/*
-void OrLogicalFunction::inferStamp(const Schema& schema)
+
+LogicalFunction OrLogicalFunction::withInferredStamp(Schema schema) const
 {
     std::vector<LogicalFunction> children;
     /// delegate stamp inference of children
-    LogicalFunction::inferStamp(schema);
+    for (auto& node : getChildren())
+    {
+        children.push_back(node.withInferredStamp(schema));
+    }
     /// check if children stamp is correct
     INVARIANT(left.getStamp() == Boolean(), "the stamp of left child must be boolean, but was: " + left.getStamp().toString());
     INVARIANT(right.getStamp() == Boolean(), "the stamp of right child must be boolean, but was: " + right.getStamp().toString());
-}*/
+    return this->withChildren(children);
+}
 
 bool OrLogicalFunction::validateBeforeLowering() const
 {

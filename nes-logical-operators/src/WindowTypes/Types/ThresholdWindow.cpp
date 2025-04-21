@@ -75,7 +75,6 @@ uint64_t ThresholdWindow::getMinimumCount() const
     return minimumCount;
 }
 
-/*
 bool ThresholdWindow::inferStamp(const Schema& schema)
 {
     auto newPredicate = predicate.withInferredStamp(schema);
@@ -83,7 +82,6 @@ bool ThresholdWindow::inferStamp(const Schema& schema)
     this->predicate = newPredicate;
     return true;
 }
- */
 
 std::string ThresholdWindow::toString() const
 {

@@ -24,7 +24,9 @@ namespace NES
 class CountAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    CountAggregationLogicalFunction(LogicalFunction onField, LogicalFunction asField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    CountAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
     explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
     virtual ~CountAggregationLogicalFunction() = default;
 

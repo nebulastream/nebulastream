@@ -34,6 +34,9 @@ FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType>
 {
 };
 
+FieldAccessLogicalFunction::FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other)
+    : fieldName(other.fieldName), stamp(other.stamp->clone()) {};
+
 bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const FieldAccessLogicalFunction*>(&rhs);
@@ -63,16 +66,15 @@ std::string FieldAccessLogicalFunction::toString() const
     return std::format("FieldAccessLogicalFunction( {} [ {} ])", fieldName, stamp->toString());
 }
 
-void FieldAccessLogicalFunction::inferStamp(const Schema& schema)
+LogicalFunction FieldAccessLogicalFunction::withInferredStamp(Schema schema) const
 {
-    /// check if the access field is defined in the schema.
-    if (const auto existingField = schema.getFieldByName(fieldName))
-    {
-        fieldName = existingField.value().getName();
-        stamp = existingField.value().getDataType().clone();
-        return;
-    }
-    throw QueryInvalid("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema.toString());
+    const auto existingField = schema.getFieldByName(fieldName);
+    INVARIANT(existingField, "field is not part of the schema");
+
+    auto copy = *this;
+    copy.stamp = existingField.value().getDataType().clone();
+    copy.fieldName = existingField.value().getName();
+    return copy;
 }
 
 SerializableFunction FieldAccessLogicalFunction::serialize() const

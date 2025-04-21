@@ -24,29 +24,25 @@
 namespace NES
 {
 
-WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, LogicalFunction onField)
+WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField)
     :  inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)), onField(onField), asField(onField)
 {
 }
 
 WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, LogicalFunction onField, LogicalFunction asField)
+    std::unique_ptr<DataType> inputStamp, std::unique_ptr<DataType> partialAggregateStamp, std::unique_ptr<DataType> finalAggregateStamp, FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
     : inputStamp(std::move(inputStamp)), partialAggregateStamp(std::move(partialAggregateStamp)), finalAggregateStamp(std::move(finalAggregateStamp)),onField(onField), asField(asField)
 {
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(LogicalFunction asField)
+std::unique_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(const FieldAccessLogicalFunction& asField)
 {
     this->asField = asField;
     return std::unique_ptr<WindowAggregationLogicalFunction>(this);
 }
 
-LogicalFunction WindowAggregationLogicalFunction::as() const
+FieldAccessLogicalFunction WindowAggregationLogicalFunction::as() const
 {
-    //if (asField == nullptr)
-    //{
-    //    return onField;
-    //}
     return asField;
 }
 
@@ -71,7 +67,7 @@ std::string WindowAggregationLogicalFunction::getTypeAsString() const
     return std::string(magic_enum::enum_name(aggregationType));
 }
 
-LogicalFunction WindowAggregationLogicalFunction::on() const
+FieldAccessLogicalFunction WindowAggregationLogicalFunction::on() const
 {
     return onField;
 }

@@ -27,6 +27,7 @@ public:
 
     FieldAssignmentLogicalFunction(const FieldAccessLogicalFunction& fieldAccess, LogicalFunction logicalFunction);
     FieldAssignmentLogicalFunction(const FieldAssignmentLogicalFunction& other);
+    FieldAssignmentLogicalFunction& operator=(const FieldAssignmentLogicalFunction& other) = default;
 
     [[nodiscard]] const FieldAccessLogicalFunction& getField() const;
     [[nodiscard]] LogicalFunction getAssignment() const;
@@ -38,6 +39,7 @@ public:
 
     const DataType& getStamp() const override {return *stamp;};
     void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    bool inferStamp(Schema) override { return false; };
     std::vector<LogicalFunction> getChildren()  const override { return {fieldAccess, logicalFunction}; };
     void setChildren(std::vector<LogicalFunction> children)  override { fieldAccess = children[0].get<FieldAccessLogicalFunction>(); logicalFunction = children[1]; };
     std::string getType() const override { return std::string(NAME);}

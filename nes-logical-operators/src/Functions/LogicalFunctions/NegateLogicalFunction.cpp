@@ -49,18 +49,15 @@ std::string NegateLogicalFunction::toString() const
     return ss.str();
 }
 
-/*
-void NegateLogicalFunction::inferStamp(const Schema& schema)
-{
-    /// delegate stamp inference of children
-    LogicalFunction::inferStamp(schema);
-    /// check if children stamp is correct
-    if (child.getStamp() != Boolean())
+LogicalFunction NegateLogicalFunction::withInferredStamp(Schema schema) const {
+    auto newChild = child.withInferredStamp(schema);
+    if (newChild.getStamp() != Boolean())
     {
         throw CannotInferSchema(
             "Negate Function Node: the stamp of child must be boolean, but was: {}", child.getStamp().toString());
     }
-}*/
+    return withChildren({newChild});
+}
 
 bool NegateLogicalFunction::validateBeforeLowering() const
 {

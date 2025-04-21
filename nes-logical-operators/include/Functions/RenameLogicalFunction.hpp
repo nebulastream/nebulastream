@@ -55,8 +55,8 @@ public:
     [[nodiscard]] std::string toString() const override;
 
 private:
-    std::shared_ptr<DataType> stamp;
     FieldAccessLogicalFunction child;
+    std::shared_ptr<DataType> stamp;
     std::string newFieldName;
 };
 }

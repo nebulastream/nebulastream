@@ -32,7 +32,7 @@ public:
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    void inferStamp(const Schema& schema);
+    bool inferStamp(Schema schema) override;
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
     const DataType& getStamp() const override {return *stamp;};
