@@ -58,7 +58,7 @@ NLJSlice* getNLJSliceRefProxy(OperatorHandler* ptrOpHandler, const Timestamp tim
 
 NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     std::shared_ptr<TupleBufferMemoryProvider> memoryProvider,
-    const uint64_t operatorHandlerIndex,
+    const OperatorHandlerId operatorHandlerIndex,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction)
     : StreamJoinBuildPhysicalOperator(std::move(memoryProvider), operatorHandlerIndex, joinBuildSide, std::move(timeFunction))
