@@ -20,7 +20,7 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
-#include <Watermark/EventTimeWatermarkAssignment.hpp>
+#include <Watermark/EventTimeWatermarkAssigner.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
@@ -34,17 +34,17 @@ struct WatermarkState final : OperatorState
     nautilus::val<Timestamp> currentWatermark = Timestamp(Timestamp::INITIAL_VALUE);
 };
 
-EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<TimeFunction> timeFunction)
-    : timeFunction(std::move(timeFunction)) { };
+EventTimeWatermarkAssigner::EventTimeWatermarkAssigner(std::unique_ptr<TimeFunction> timeFunction)
+    : timeFunction(std::move(timeFunction)) {};
 
-void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void EventTimeWatermarkAssigner::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PhysicalOperatorConcept::open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(id, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
 }
 
-void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const
+void EventTimeWatermarkAssigner::execute(ExecutionContext& ctx, Record& record) const
 {
     const auto state = static_cast<WatermarkState*>(ctx.getLocalState(id));
     const auto tsField = timeFunction->getTs(ctx, record);
@@ -56,7 +56,7 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
     PhysicalOperatorConcept::execute(ctx, record);
 }
 
-void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void EventTimeWatermarkAssigner::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PRECONDITION(
         NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(id)),
