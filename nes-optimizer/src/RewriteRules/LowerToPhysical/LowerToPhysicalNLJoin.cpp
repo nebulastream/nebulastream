@@ -30,7 +30,7 @@ namespace NES::Optimizer
 RewriteRuleResult LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
-    auto selection = *logicalOperator.get<SelectionLogicalOperator>();
+    auto selection = logicalOperator.get<SelectionLogicalOperator>();
     auto function = selection.getPredicate();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto physicalOperator = SelectionPhysicalOperator(func);

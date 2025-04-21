@@ -18,24 +18,21 @@
 #include <Operators/MapLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
-#include <MapPhysicalOperator.hpp>
-#include <RewriteRuleRegistry.hpp>
 
 namespace NES::Optimizer
 {
 
-std::vector<std::shared_ptr<PhysicalOperator>> LowerToPhysicalMap::applyToPhysical(DynamicTraitSet<QueryForSubtree, Operator>* traitSet)
+RewriteRuleResult LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
 {
-    const auto op = traitSet->get<Operator>();
-    const auto ops = dynamic_cast<MapLogicalOperator*>(op);
-    auto function = ops->getMapFunction();
-    auto fieldName = function->getField()->getFieldName();
-    auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(ops->getInputSchema(), conf.bufferSize.getValue());
-    auto memoryProvider = std::make_unique<RowTupleBufferMemoryProvider>(layout);
-    auto phyOp = std::make_shared<MapPhysicalOperator>(
-        std::vector<std::shared_ptr<TupleBufferMemoryProvider>>{std::move(memoryProvider)}, fieldName, std::move(func));
-    return {phyOp};
+    PRECONDITION(logicalOperator.tryGet<MapLogicalOperator>(), "Expected a MapLogicalOperator");
+    auto map = logicalOperator.get<MapLogicalOperator>();
+    auto function = map.getMapFunction();
+    auto fieldName = function.getField().getFieldName();
+    auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
+    auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+    return {wrapper, {wrapper}};
 }
 
 std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)
