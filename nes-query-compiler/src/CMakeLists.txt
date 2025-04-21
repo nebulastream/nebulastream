@@ -10,7 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        PhysicalStreamJoinBuildOperator.cpp
-        PhysicalStreamJoinProbeOperator.cpp
+add_source_files(nes-query-compiler
+        QueryCompiler.cpp
+        FunctionProvider.cpp
+        QueryCompilationRequest.cpp
 )
+
+add_subdirectory(Phases)
