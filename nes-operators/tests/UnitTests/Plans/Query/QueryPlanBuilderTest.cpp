@@ -121,7 +121,7 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     assertSelectionOperator(queryPlan, "a", "b");
 
     /// Add projection operator and verify
-    std::vector<std::unique_ptr<LogicalFunction>> functions;
+    std::vector<LogicalFunction> functions;
     functions.push_back(std::make_unique<FieldAccessLogicalFunction>("id"));
     queryPlan = QueryPlanBuilder::addProjection(std::move(functions), queryPlan);
     assertProjectionOperator(queryPlan, {"id"});

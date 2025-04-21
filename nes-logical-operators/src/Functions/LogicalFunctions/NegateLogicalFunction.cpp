@@ -24,21 +24,21 @@
 namespace NES
 {
 
-NegateLogicalFunction::NegateLogicalFunction(std::unique_ptr<LogicalFunction> child)
-    : UnaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(child))
+NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
+    : stamp(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)), child(child)
 {
 }
 
-NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other) : UnaryLogicalFunction(other)
+NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other) : stamp(other.stamp->clone()), child(other.child)
 {
 }
 
-bool NegateLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool NegateLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const NegateLogicalFunction*>(&rhs);
     if (other)
     {
-        return this->getChild() == other->getChild();
+        return this->child == other->getChildren()[0];
     }
     return false;
 }
@@ -46,29 +46,26 @@ bool NegateLogicalFunction::operator==(const LogicalFunction& rhs) const
 std::string NegateLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "!" << getChild();
+    ss << "!" << child;
     return ss.str();
 }
 
+/*
 void NegateLogicalFunction::inferStamp(const Schema& schema)
 {
     /// delegate stamp inference of children
     LogicalFunction::inferStamp(schema);
     /// check if children stamp is correct
-    if (!getChild().isPredicate())
+    if (child.getStamp() != Boolean())
     {
         throw CannotInferSchema(
-            fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", getChild().getStamp().toString()));
+            "Negate Function Node: the stamp of child must be boolean, but was: {}", child.getStamp().toString());
     }
-}
-std::unique_ptr<LogicalFunction> NegateLogicalFunction::clone() const
-{
-    return std::make_unique<NegateLogicalFunction>(getChild().clone());
-}
+}*/
 
 bool NegateLogicalFunction::validateBeforeLowering() const
 {
-    return dynamic_cast<Boolean*>(&getChild().getStamp());
+    return dynamic_cast<const Boolean*>(&child.getStamp());
 }
 
 SerializableFunction NegateLogicalFunction::serialize() const
@@ -76,8 +73,8 @@ SerializableFunction NegateLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_functiontype(NAME);
     auto* funcDesc = new SerializableFunction_UnaryFunction();
-    auto* child = funcDesc->mutable_child();
-    child->CopyFrom(getChild().serialize());
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(child.serialize());
 
     DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
 
@@ -87,7 +84,7 @@ SerializableFunction NegateLogicalFunction::serialize() const
 std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
 UnaryLogicalFunctionGeneratedRegistrar::RegisterNegateUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
 {
-    return std::make_unique<NegateLogicalFunction>(std::move(arguments.child));
+    return NegateLogicalFunction(arguments.children[0]);
 }
 
 }

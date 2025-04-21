@@ -20,7 +20,6 @@
 #include <Abstract/LogicalFunction.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/BinaryLogicalOperator.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
 #include <Traits/OriginIdTrait.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
@@ -29,7 +28,7 @@ namespace NES
 {
 class SerializableOperator;
 
-class JoinLogicalOperator : public BinaryLogicalOperator
+class JoinLogicalOperator final : public LogicalOperatorConcept
 {
 public:
     enum class JoinType : uint8_t
@@ -39,18 +38,17 @@ public:
     };
 
     explicit JoinLogicalOperator(
-        std::unique_ptr<LogicalFunction> joinFunction,
-        std::unique_ptr<Windowing::WindowType> windowType,
+        LogicalFunction joinFunction,
+        std::shared_ptr<Windowing::WindowType> windowType,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
         JoinType joinType);
     std::string_view getName() const noexcept override;
 
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    bool inferSchema() override;
-    [[nodiscard]] bool operator==(const Operator& rhs) const override;
+    bool inferSchema();
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
 
-    [[nodiscard]] LogicalFunction& getJoinFunction() const;
+    [[nodiscard]] LogicalFunction getJoinFunction() const;
     [[nodiscard]] Schema getLeftSchema() const;
     [[nodiscard]] Schema getRightSchema() const;
     [[nodiscard]] Windowing::WindowType& getWindowType() const;
@@ -59,6 +57,7 @@ public:
     void updateSchemas(Schema leftSourceSchema, Schema rightSourceSchema);
 
     [[nodiscard]] Schema getOutputSchema() const override;
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
@@ -94,21 +93,24 @@ public:
 
     Optimizer::OriginIdTrait originIdTrait;
 
-protected:
-    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
+    std::vector<LogicalOperator> getChildren() const override { return children; }
+    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
+
+    Optimizer::TraitSet getTraitSet() const override { return {}; }
+
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
 
 private:
     static constexpr std::string_view NAME = "Join";
 
-    std::unique_ptr<LogicalFunction> joinFunction;
-    Schema leftSourceSchema;
-    Schema rightSourceSchema;
-    Schema outputSchema;
-    std::unique_ptr<Windowing::WindowType> windowType;
-    uint64_t numberOfInputEdgesLeft;
-    uint64_t numberOfInputEdgesRight;
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
+    LogicalFunction joinFunction;
+    Schema leftSourceSchema, rightSourceSchema, outputSchema;
+    std::shared_ptr<Windowing::WindowType> windowType;
+    uint64_t numberOfInputEdgesLeft, numberOfInputEdgesRight;
+    std::string windowStartFieldName, windowEndFieldName;
     JoinType joinType;
+
+    std::vector<LogicalOperator> children;
 };
 }

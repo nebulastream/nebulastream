@@ -34,10 +34,7 @@ QueryPlan::QueryPlan(const QueryPlan& other) : queryId(other.queryId)
 {
     for (const auto& op : other.rootOperators)
     {
-        if (op)
-        {
-            rootOperators.push_back(op->clone());
-        }
+        rootOperators.push_back(op);
     }
 }
 
@@ -55,57 +52,47 @@ QueryPlan& QueryPlan::operator=(QueryPlan&& other)
     return *this;
 }
 
-std::unique_ptr<QueryPlan> QueryPlan::clone() const
-{
-    return std::make_unique<QueryPlan>(*this);
-}
-
-std::vector<std::unique_ptr<Operator>> QueryPlan::releaseRootOperators()
-{
-    return std::move(rootOperators);
-}
-
-std::unique_ptr<QueryPlan> QueryPlan::create(std::unique_ptr<Operator> rootOperator)
+std::unique_ptr<QueryPlan> QueryPlan::create(LogicalOperator rootOperator)
 {
     return std::make_unique<QueryPlan>(std::move(rootOperator));
 }
 
-std::unique_ptr<QueryPlan> QueryPlan::create(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators)
+std::unique_ptr<QueryPlan> QueryPlan::create(QueryId queryId, std::vector<LogicalOperator> rootOperators)
 {
     return std::make_unique<QueryPlan>(std::move(queryId), std::move(rootOperators));
 }
 
-QueryPlan::QueryPlan(std::unique_ptr<Operator> rootOperator) : queryId(INVALID_QUERY_ID)
+QueryPlan::QueryPlan(LogicalOperator rootOperator) : queryId(INVALID_QUERY_ID)
 {
     rootOperators.push_back(std::move(rootOperator));
 }
 
-QueryPlan::QueryPlan(QueryId queryId, std::vector<std::unique_ptr<Operator>> rootOperators)
+QueryPlan::QueryPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators)
     : rootOperators(std::move(rootOperators)), queryId(queryId)
 {
 }
 
-void QueryPlan::addRootOperator(std::unique_ptr<Operator> newRootOperator)
+void QueryPlan::addRootOperator(LogicalOperator newRootOperator)
 {
     /// Check if a root with the id already present
     auto found = std::find_if(
-        rootOperators.begin(), rootOperators.end(), [&](const std::unique_ptr<Operator>& root) { return newRootOperator->id == root->id; });
+        rootOperators.begin(), rootOperators.end(), [&](const LogicalOperator& root) { return newRootOperator.getId() == root.getId(); });
     if (found == rootOperators.end())
     {
         rootOperators.push_back(std::move(newRootOperator));
     }
     else
     {
-        NES_WARNING("Root operator with id {} already present in the plan. Will not add it to the roots.", newRootOperator->id);
+        NES_WARNING("Root operator with id {} already present in the plan. Will not add it to the roots.", newRootOperator.getId());
     }
 }
 
-void QueryPlan::promoteOperatorToRoot(std::unique_ptr<Operator> newRoot)
+void QueryPlan::promoteOperatorToRoot(LogicalOperator newRoot)
 {
     for (auto& oldRoot : rootOperators)
     {
-        oldRoot->parents.emplace_back(newRoot.get());
-        newRoot->children.push_back(std::move(oldRoot));
+        //oldRoot->parents.emplace_back(newRoot);
+        newRoot.setChildren({oldRoot});
     }
     rootOperators.clear();
     rootOperators.push_back(std::move(newRoot));
@@ -117,42 +104,42 @@ std::string QueryPlan::toString() const
     auto dumpHandler = QueryConsoleDumpHandler::create(ss);
     for (auto& rootOperator : rootOperators)
     {
-        dumpHandler->dump(*rootOperator);
+        dumpHandler->dump(rootOperator);
     }
     return ss.str();
 }
 
-std::vector<Operator*> QueryPlan::getRootOperators() const
+std::vector<LogicalOperator> QueryPlan::getRootOperators() const
 {
-    std::vector<Operator*> rawOps;
+    std::vector<LogicalOperator> rawOps;
     rawOps.reserve(rootOperators.size());
     for (const auto& op : rootOperators)
     {
-        rawOps.push_back(op.get());
+        rawOps.push_back(op);
     }
     return rawOps;
 }
 
-std::vector<Operator*> QueryPlan::getLeafOperators() const
+std::vector<LogicalOperator> QueryPlan::getLeafOperators() const
 {
     /// Find all the leaf nodes in the query plan
     NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
-    std::vector<Operator*> leafOperators;
+    std::vector<LogicalOperator> leafOperators;
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::set<OperatorId> visitedOpIds;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
-        for (auto itr : BFSRange<Operator>(rootOperator.get()))
+        for (auto itr : BFSRange<LogicalOperator>(rootOperator))
         {
-            if (visitedOpIds.contains(itr->id))
+            if (visitedOpIds.contains(itr.getId()))
             {
                 /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
             NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
-            visitedOpIds.insert(itr->id);
-            if (itr->children.empty())
+            visitedOpIds.insert(itr.getId());
+            if (itr.getChildren().empty())
             {
                 NES_DEBUG("QueryPlan: Found leaf node. Adding to the collection of leaf nodes.");
                 leafOperators.push_back(itr);
@@ -162,14 +149,14 @@ std::vector<Operator*> QueryPlan::getLeafOperators() const
     return leafOperators;
 }
 
-std::unordered_set<Operator*> QueryPlan::getAllOperators() const
+std::unordered_set<LogicalOperator> QueryPlan::getAllOperators() const
 {
     /// Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<Operator*> visitedOperators;
+    std::unordered_set<LogicalOperator> visitedOperators;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
-        for (auto itr : BFSRange<Operator>(rootOperator.get()))
+        for (auto itr : BFSRange<LogicalOperator>(rootOperator))
         {
             if (visitedOperators.contains(itr))
             {
@@ -204,7 +191,7 @@ bool QueryPlan::operator==(const QueryPlan& otherPlan) const
     }
 
     /// add all root-operators to stack
-    std::stack<std::pair<Operator*, Operator*>> stack;
+    std::stack<std::pair<LogicalOperator, LogicalOperator>> stack;
     for (size_t i = 0; i < leftRootOperators.size(); ++i)
     {
         stack.emplace(leftRootOperators[i], rightRootOperators[i]);
@@ -213,27 +200,23 @@ bool QueryPlan::operator==(const QueryPlan& otherPlan) const
     /// iterate over stack
     while (!stack.empty())
     {
-        /// get last discovered left and right operator
-        auto [leftOperator, rightOperator] = stack.top();
-        stack.pop();
+        auto [leftOperator, rightOperator] = operatorPairs.top();
+        operatorPairs.pop();
 
-        if (leftOperator->children.size() != rightOperator->children.size())
+        if (leftOperator != rightOperator)
+        {
+            return false;
+        }
+
+        if (leftOperator.getChildren().size() != rightOperator.getChildren().size())
             return false;
 
         /// discover children and add them to stack
-        for (size_t j = 0; j < leftOperator->children.size(); ++j)
+        for (size_t j = 0; j < leftOperator.getChildren().size(); ++j)
         {
-            auto leftChild = leftOperator->children[j].get();
-            auto rightChild = rightOperator->children[j].get();
-            if (!leftChild || !rightChild)
-                return false;
-            stack.emplace(leftChild, rightChild);
-        }
-
-        /// comparison of both operators
-        if (leftOperator == rightOperator)
-        {
-            return false;
+            auto leftChild = leftOperator.getChildren()[j];
+            auto rightChild = rightOperator.getChildren()[j];
+            operatorPairs.emplace(leftChild, rightChild);
         }
     }
     return true;

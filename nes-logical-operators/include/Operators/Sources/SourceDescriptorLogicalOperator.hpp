@@ -14,8 +14,9 @@
 
 #pragma once
 
-#include <Operators/UnaryLogicalOperator.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <string>
+#include <string_view>
+#include <Operators/LogicalOperator.hpp>
 #include <Traits/OriginIdTrait.hpp>
 
 namespace NES
@@ -26,19 +27,19 @@ namespace NES
 /// The logical source is then used as key to a multimap, with all descriptors that name the logical source as values.
 /// In the LogicalSourceExpansionRule, we take the keys from SourceNameLogicalOperator operators, get all corresponding (physical) source
 /// descriptors from the catalog, construct SourceDescriptorLogicalOperators from the descriptors and attach them to the query plan.
-class SourceDescriptorLogicalOperator final : public UnaryLogicalOperator
+class SourceDescriptorLogicalOperator final : public LogicalOperatorConcept
 {
 public:
-    explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor);
+    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
     [[nodiscard]] std::string_view getName() const noexcept override;
 
-    [[nodiscard]] Sources::SourceDescriptor getSourceDescriptor() const;
+    [[nodiscard]] std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
+    [[nodiscard]] Sources::SourceDescriptor& getSourceDescriptorRef() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
-    bool inferSchema() override;
+    //bool inferSchema();
 
-    [[nodiscard]] bool operator==(const Operator& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
 
     Optimizer::OriginIdTrait originIdTrait;
 
@@ -48,12 +49,25 @@ protected:
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
     [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
-protected:
-    [[nodiscard]] std::unique_ptr<Operator> cloneImpl() const override;
+    virtual std::vector<LogicalOperator> getChildren() const override { return children; }
+
+    [[nodiscard]] Optimizer::TraitSet getTraitSet() const override { return {}; }
+
+    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
+
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; };
 
 private:
+    std::vector<LogicalOperator> children;
+    Schema inputSchema;
+    Schema outputSchema;
+
     static constexpr std::string_view NAME = "SourceDescriptor";
-    const Sources::SourceDescriptor sourceDescriptor;
+    const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
 };
 
 }

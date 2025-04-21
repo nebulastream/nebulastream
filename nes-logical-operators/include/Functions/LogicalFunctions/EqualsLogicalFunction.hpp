@@ -14,27 +14,35 @@
 
 #pragma once
 #include <memory>
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
 
-class EqualsLogicalFunction final : public BinaryLogicalFunction
+class EqualsLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    EqualsLogicalFunction() noexcept;
+    static constexpr std::string_view NAME = "Equals";
+
+    EqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
+    EqualsLogicalFunction(const EqualsLogicalFunction& other);
     ~EqualsLogicalFunction() override = default;
 
-    static std::shared_ptr<LogicalFunction>
-    create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
+    [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
     bool validateBeforeLowering() const;
-    std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
-    explicit EqualsLogicalFunction(EqualsLogicalFunction* other);
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren() const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
     [[nodiscard]] std::string toString() const override;
+
+private:
+    LogicalFunction left, right;
+    std::shared_ptr<DataType> stamp;
 };
 }
+FMT_OSTREAM(NES::EqualsLogicalFunction);

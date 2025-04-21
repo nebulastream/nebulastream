@@ -18,29 +18,24 @@
 #include <Abstract/LogicalFunction.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/UnaryLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
 /// Selection operator, which contains an function as a predicate.
-class SelectionLogicalOperator : public UnaryLogicalOperator
+class SelectionLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    static constexpr std::string_view NAME = "Selection";
-
-    explicit SelectionLogicalOperator(const std::shared_ptr<LogicalFunction>&);
-    ~SelectionLogicalOperator() override = default;
+    explicit SelectionLogicalOperator(LogicalFunction predicate);
     std::string_view getName() const noexcept override;
 
-    std::shared_ptr<LogicalFunction> getPredicate() const;
-    void setPredicate(std::shared_ptr<LogicalFunction> newPredicate);
+    [[nodiscard]] LogicalFunction getPredicate() const;
+    void setPredicate(LogicalFunction newPredicate);
 
-    [[nodiscard]] bool operator==(const Operator& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
 
-    bool inferSchema() override;
-    std::shared_ptr<Operator> clone() const override;
+    bool inferSchema();
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
@@ -61,7 +56,21 @@ public:
 protected:
     std::string toString() const override;
 
+    std::vector<LogicalOperator> getChildren() const override { return children; }
+
+    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
+
+    Optimizer::TraitSet getTraitSet() const override { return {}; }
+
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; }
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
 private:
-    std::shared_ptr<LogicalFunction> predicate;
+    std::vector<LogicalOperator> children;
+    static constexpr std::string_view NAME = "Selection";
+    LogicalFunction predicate;
+    Schema inputSchema, outputSchema;
 };
 }

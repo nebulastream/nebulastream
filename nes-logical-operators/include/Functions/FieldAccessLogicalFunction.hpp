@@ -14,34 +14,57 @@
 
 #pragma once
 
-#include <Functions/LogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES
 {
 
 /// @brief A FieldAccessFunction reads a specific field of the current record.
 /// It can be created typed or untyped.
-class FieldAccessLogicalFunction : public LogicalFunction
+class FieldAccessLogicalFunction : public LogicalFunctionConcept
 {
 public:
-    static std::shared_ptr<LogicalFunction> create(std::shared_ptr<DataType> stamp, std::string fieldName);
-    static std::shared_ptr<LogicalFunction> create(std::string fieldName);
+    static constexpr std::string_view NAME = "FieldAccess";
 
-    bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
-
-    std::string getFieldName() const;
-    void updateFieldName(std::string fieldName);
-
-    void inferStamp(const Schema& schema) override;
-
-protected:
-    explicit FieldAccessLogicalFunction(FieldAccessLogicalFunction* other);
-
+    FieldAccessLogicalFunction(std::string fieldName);
     FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName);
+    FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other);
+
+    void inferStamp(const Schema& schema);
+
+    [[nodiscard]] std::string getFieldName() const;
+    [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren() const override { throw UnsupportedOperation(); };
+    std::string getType() const override { return std::string(NAME); }
+
+    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+    validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    struct ConfigParameters
+    {
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> FIELD_NAME{
+            "fieldName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(FIELD_NAME, config);
+            }};
+
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(FIELD_NAME);
+    };
 
     std::string toString() const override;
 
+private:
     std::string fieldName;
+    std::shared_ptr<DataType> stamp;
 };
 
 }
+FMT_OSTREAM(NES::FieldAccessLogicalFunction);

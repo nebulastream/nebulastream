@@ -12,41 +12,29 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <memory>
-#include <utility>
-
+#include <Abstract/LogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/SqrtLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Sqrt") {};
+SqrtLogicalFunction::SqrtLogicalFunction(LogicalFunction child) : stamp(child.getStamp()), child(child) {};
 
-SqrtLogicalFunction::SqrtLogicalFunction(SqrtLogicalFunction* other) : UnaryLogicalFunction(other)
+SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : stamp(other.stamp), child(other.child)
 {
 }
 
-std::shared_ptr<LogicalFunction> SqrtLogicalFunction::create(const std::shared_ptr<LogicalFunction>& child)
+bool SqrtLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto sqrtNode = std::make_shared<SqrtLogicalFunction>(child->getStamp());
-    sqrtNode->setChild(child);
-    return sqrtNode;
-}
-
-bool SqrtLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
-{
-    if (NES::Util::instanceOf<SqrtLogicalFunction>(rhs))
+    auto other = dynamic_cast<const SqrtLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherSqrtNode = NES::Util::as<SqrtLogicalFunction>(rhs);
-        return getChild()->equal(otherSqrtNode->getChild());
+        return child == other->child;
     }
     return false;
 }
@@ -54,13 +42,27 @@ bool SqrtLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs
 std::string SqrtLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "SQRT(" << *getChild() << ")";
+    ss << "SQRT(" << child << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> SqrtLogicalFunction::clone() const
+SerializableFunction SqrtLogicalFunction::serialize() const
 {
-    return SqrtLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(getChildren()[0].serialize());
+
+    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
+UnaryLogicalFunctionRegistryReturnType
+UnaryLogicalFunctionGeneratedRegistrar::RegisterSqrtUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+{
+    return SqrtLogicalFunction(arguments.child);
 }
 
 }

@@ -18,7 +18,7 @@
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/UnaryLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Traits/OriginIdTrait.hpp>
@@ -27,7 +27,7 @@
 namespace NES
 {
 
-class WindowOperator : public UnaryLogicalOperator
+class WindowOperator : public LogicalOperatorConcept
 {
 public:
     WindowOperator(OriginId originId);
@@ -45,11 +45,10 @@ public:
     [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
     void setWindowType(std::shared_ptr<Windowing::WindowType> windowType);
 
-    [[nodiscard]] std::vector<std::shared_ptr<FieldAccessLogicalFunction>> getKeys() const;
-    void setOnKey(const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& keys);
+    [[nodiscard]] std::vector<FieldAccessLogicalFunction> getKeys() const;
 
     [[nodiscard]] OriginId getOriginId() const;
-    const std::vector<OriginId>& getInputOriginIds() const;
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
     Optimizer::OriginIdTrait originIds;
@@ -58,7 +57,7 @@ protected:
     static constexpr std::string_view NAME = "Window";
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
     std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<std::shared_ptr<FieldAccessLogicalFunction>> onKey;
+    std::vector<FieldAccessLogicalFunction> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
 };

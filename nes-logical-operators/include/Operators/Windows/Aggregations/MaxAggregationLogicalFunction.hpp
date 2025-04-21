@@ -26,11 +26,11 @@ namespace NES
 class MaxAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(LogicalFunction onField);
     static std::unique_ptr<WindowAggregationLogicalFunction>
-    create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
-    MaxAggregationLogicalFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
-    explicit MaxAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+    create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    MaxAggregationLogicalFunction(LogicalFunction onField, LogicalFunction asField);
+    explicit MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
     void inferStamp(const Schema& schema) override;
     std::unique_ptr<WindowAggregationLogicalFunction> clone() override;

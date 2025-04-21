@@ -14,32 +14,43 @@
 
 #pragma once
 
-#include "API/TimeUnit.hpp"
-#include "Functions/LogicalFunction.hpp"
-#include "UnaryLogicalOperator.hpp"
+#include <API/TimeUnit.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
-class EventTimeWatermarkAssignerLogicalOperator : public UnaryLogicalOperator
+class EventTimeWatermarkAssignerLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
-
-    EventTimeWatermarkAssignerLogicalOperator(std::shared_ptr<LogicalFunction> onField, Windowing::TimeUnit unit);
+    EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, Windowing::TimeUnit unit);
     std::string_view getName() const noexcept override;
 
-    [[nodiscard]] bool operator==(const Operator& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::shared_ptr<Operator> clone() const override;
-    bool inferSchema() override;
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
+    //bool inferSchema();
 
     [[nodiscard]] SerializableOperator serialize() const override;
-
     [[nodiscard]] std::string toString() const override;
 
+    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
+
+    std::vector<LogicalOperator> getChildren() const override { return children; }
+
+    Optimizer::TraitSet getTraitSet() const override { return {}; }
+
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; };
+
 private:
-    std::shared_ptr<LogicalFunction> onField;
+    static constexpr std::string_view NAME = "EventTimeWatermarkAssigner";
+    LogicalFunction onField;
     Windowing::TimeUnit unit;
+
+    std::vector<LogicalOperator> children;
+    Schema inputSchema, outputSchema;
 };
 }

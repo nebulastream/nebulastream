@@ -14,28 +14,36 @@
 
 #pragma once
 
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
-class AndLogicalFunction final : public BinaryLogicalFunction
+class AndLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    AndLogicalFunction();
-    ~AndLogicalFunction() override = default;
-    static std::shared_ptr<LogicalFunction>
-    create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
+    static constexpr std::string_view NAME = "And";
 
-    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
-    void inferStamp(const Schema& schema) override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    AndLogicalFunction(LogicalFunction left, LogicalFunction right);
+    AndLogicalFunction(const AndLogicalFunction& other);
+    ~AndLogicalFunction() override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
     bool validateBeforeLowering() const;
 
-protected:
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+    void inferStamp(const Schema& schema);
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren() const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit AndLogicalFunction(AndLogicalFunction* other);
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left, right;
 };
 
 }
+FMT_OSTREAM(NES::AndLogicalFunction);

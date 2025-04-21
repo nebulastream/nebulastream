@@ -12,37 +12,29 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
-#include <utility>
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-SubLogicalFunction::SubLogicalFunction(std::shared_ptr<DataType> stamp) : BinaryLogicalFunction(std::move(stamp), "Sub") {};
+SubLogicalFunction::SubLogicalFunction(LogicalFunction left, LogicalFunction right)
+    : stamp(left.getStamp().clone()), left(left), right(right) {};
 
-SubLogicalFunction::SubLogicalFunction(SubLogicalFunction* other) : BinaryLogicalFunction(other)
+SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
 {
 }
 
-std::shared_ptr<LogicalFunction>
-SubLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+bool SubLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto subNode = std::make_shared<SubLogicalFunction>(left->getStamp());
-    subNode->setLeftChild(left);
-    subNode->setRightChild(right);
-    return subNode;
-}
-
-bool SubLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
-{
-    if (NES::Util::instanceOf<SubLogicalFunction>(rhs))
+    if (auto other = dynamic_cast<const SubLogicalFunction*>(&rhs))
     {
-        auto otherSubNode = NES::Util::as<SubLogicalFunction>(rhs);
-        return getLeftChild()->equal(otherSubNode->getLeftChild()) && getRightChild()->equal(otherSubNode->getRightChild());
+        return left == other->left and right == other->right;
     }
     return false;
 }
@@ -50,13 +42,29 @@ bool SubLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs)
 std::string SubLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *children[0] << "-" << *children[1];
+    ss << left << "-" << right;
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> SubLogicalFunction::clone() const
+SerializableFunction SubLogicalFunction::serialize() const
 {
-    return SubLogicalFunction::create(Util::as<LogicalFunction>(children[0])->clone(), Util::as<LogicalFunction>(children[1])->clone());
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(left.serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(right.serialize());
+
+    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
+BinaryLogicalFunctionRegistryReturnType
+BinaryLogicalFunctionGeneratedRegistrar::RegisterSubBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return SubLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
 }

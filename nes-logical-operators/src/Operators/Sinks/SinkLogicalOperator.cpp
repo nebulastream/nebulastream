@@ -15,8 +15,6 @@
 #include <memory>
 #include <utility>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/UnaryLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <ErrorHandling.hpp>
@@ -24,18 +22,11 @@
 namespace NES
 {
 
-bool SinkLogicalOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
+bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    return equal(rhs) && NES::Util::as<SinkLogicalOperator>(rhs)->getId() == id;
-}
-
-bool SinkLogicalOperator::equal(const std::shared_ptr<Node>& rhs) const
-{
-    if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
+    if (const auto rhsOperator = dynamic_cast<const SinkLogicalOperator*>(&rhs))
     {
-        const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rhs);
-        return this->sinkName == sinkOperator->sinkName
-            and ((this->sinkDescriptor) ? this->sinkDescriptor == sinkOperator->sinkDescriptor : true);
+        return this->sinkName == rhsOperator->sinkName and this->sinkDescriptor == rhsOperator->sinkDescriptor;
     }
     return false;
 };
@@ -44,10 +35,16 @@ std::string SinkLogicalOperator::toString() const
 {
     std::stringstream ss;
     ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
-    ((sinkDescriptor) ? (ss << sinkDescriptor) : ss << "(null))");
+    ss << sinkDescriptor;
     ss << ")";
     return ss.str();
 }
+
+std::string_view SinkLogicalOperator::getName() const noexcept
+{
+    return sinkName;
+}
+
 bool SinkLogicalOperator::inferSchema()
 {
     const auto result = UnaryLogicalOperator::inferSchema();
@@ -60,29 +57,27 @@ bool SinkLogicalOperator::inferSchema()
     return result && sinkDescriptor;
 }
 
-const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
-{
-    if (this->sinkDescriptor)
-    {
-        return *sinkDescriptor;
-    }
-    throw UnknownSinkType("Tried to access the SinkDescriptor of a SinkLogicalOperator that does not have a SinkDescriptor yet.");
-}
-std::shared_ptr<Sinks::SinkDescriptor> SinkLogicalOperator::getSinkDescriptor() const
-{
-    return sinkDescriptor;
-}
 
-std::shared_ptr<Operator> SinkLogicalOperator::copy()
+SerializableOperator SinkLogicalOperator::serialize() const
 {
-    ///We pass invalid worker id here because the properties will be copied later automatically.
-    auto sinkDescriptorPtrCopy = sinkDescriptor;
-    auto copy = std::make_shared<SinkLogicalOperator>(sinkName, id);
-    copy->sinkDescriptor = std::move(sinkDescriptorPtrCopy);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
+    SerializableOperator serializedOperator;
+
+    const auto serializedSink = new SerializableOperator_SinkLogicalOperator();
+
+    const auto serializedSinkDescriptor = new SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor();
+    SchemaSerializationUtil::serializeSchema(std::move(this->outputSchema), serializedSinkDescriptor->mutable_sinkschema());
+    serializedSinkDescriptor->set_sinktype(sinkDescriptor->sinkType);
+    serializedSinkDescriptor->set_addtimestamp(sinkDescriptor->addTimestamp);
+    /// Iterate over SinkDescriptor config and serialize all key-value pairs.
+    for (const auto& [key, value] : sinkDescriptor->config)
+    {
+        auto* kv = serializedSinkDescriptor->mutable_config();
+        kv->emplace(key, descriptorConfigTypeToProto(value));
+    }
+    serializedSink->set_allocated_sinkdescriptor(serializedSinkDescriptor);
+
+    serializedOperator.set_allocated_sink(serializedSink);
+    return serializedOperator;
 }
 
 }

@@ -14,36 +14,31 @@
 
 #include <memory>
 #include <sstream>
-#include <utility>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-AddLogicalFunction::AddLogicalFunction(std::shared_ptr<DataType> stamp) : BinaryLogicalFunction(std::move(stamp), "Add") {};
-
-AddLogicalFunction::AddLogicalFunction(AddLogicalFunction* other) : BinaryLogicalFunction(other)
+AddLogicalFunction::AddLogicalFunction(LogicalFunction left, LogicalFunction right)
+    : stamp(left.getStamp().join(right.getStamp())), left(left), right(right)
 {
 }
 
-std::shared_ptr<LogicalFunction>
-AddLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+AddLogicalFunction::AddLogicalFunction(const AddLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
 {
-    auto addNode = std::make_shared<AddLogicalFunction>(left->getStamp());
-    addNode->setLeftChild(left);
-    addNode->setRightChild(right);
-    return addNode;
 }
 
-bool AddLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
+bool AddLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (NES::Util::instanceOf<AddLogicalFunction>(rhs))
+    auto other = dynamic_cast<const AddLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto other = NES::Util::as<AddLogicalFunction>(rhs);
-        const bool simpleMatch = getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
-        const bool commutativeMatch = getLeftChild() == other->getRightChild() and getRightChild() == other->getLeftChild();
+        const bool simpleMatch = left == other->left and right == other->right;
+        const bool commutativeMatch = right == other->right and right == other->left;
         return simpleMatch or commutativeMatch;
     }
     return false;
@@ -52,13 +47,29 @@ bool AddLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs)
 std::string AddLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *getLeftChild() << "+" << *getRightChild();
+    ss << left << "+" << right;
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> AddLogicalFunction::clone() const
+SerializableFunction AddLogicalFunction::serialize() const
 {
-    return AddLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(left.serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(right.serialize());
+
+    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
+BinaryLogicalFunctionRegistryReturnType
+BinaryLogicalFunctionGeneratedRegistrar::RegisterAddBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return AddLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
 }

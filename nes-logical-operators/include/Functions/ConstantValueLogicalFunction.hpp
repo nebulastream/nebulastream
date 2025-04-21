@@ -16,7 +16,10 @@
 
 #include <memory>
 #include <string>
-#include <Functions/LogicalFunction.hpp>
+#include <string_view>
+#include <Abstract/LogicalFunction.hpp>
+#include <Configurations/Descriptor.hpp>
+#include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -24,26 +27,42 @@ namespace NES
 
 /// This function node represents a constant value and a fixed data type.
 /// Thus the samp of this function is always fixed.
-class ConstantValueLogicalFunction : public LogicalFunction
+class ConstantValueLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    static std::shared_ptr<LogicalFunction> create(const std::shared_ptr<DataType>& type, std::string value);
+    static constexpr std::string_view NAME = "ConstantValue";
+
+    ConstantValueLogicalFunction(std::shared_ptr<DataType> stamp, std::string constantValueAsString);
+    ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other);
     ~ConstantValueLogicalFunction() noexcept override = default;
 
     std::string getConstantValue() const;
 
-    void inferStamp(const Schema& schema) override;
+    [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
+    void inferStamp(const Schema& schema);
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
-
-protected:
-    explicit ConstantValueLogicalFunction(const ConstantValueLogicalFunction* other);
-
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren() const override { throw UnsupportedOperation(); };
+    std::string getType() const override { return std::string(NAME); }
     std::string toString() const override;
 
+    struct ConfigParameters
+    {
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> CONSTANT_VALUE_AS_STRING{
+            "constantValueAsString", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(CONSTANT_VALUE_AS_STRING, config);
+            }};
+
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(CONSTANT_VALUE_AS_STRING);
+    };
+
 private:
-    explicit ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string&& value);
-    std::string constantValue;
+    const std::string constantValue;
+    std::shared_ptr<DataType> stamp;
 };
 }
+FMT_OSTREAM(NES::ConstantValueLogicalFunction);
