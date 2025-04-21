@@ -15,154 +15,117 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Functions/FunctionProvider.hpp>
-
-#include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
-#include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
-#include <Execution/Functions/ExecutableFunctionReadField.hpp>
-#include <Execution/Functions/Function.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
-#include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
+#include <Functions/ConstantValuePhysicalFunction.hpp>
+#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FieldAccessPhysicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::QueryCompilation
 {
-using namespace Runtime::Execution::Functions;
+using namespace Functions;
 
-< < < < < < < < HEAD : nes
-                       - execution / src / QueryCompiler / Phases / Translations
-                           / FunctionProvider.cpp std::unique_ptr<Function>
-                             FunctionProvider::lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction)
-    == == ==
-    == std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(const std::shared_ptr<LogicalFunction>& logicalFunction)
-        >>>>>>>> 90577b636a(refactor(PhysicalOperators)
-                            : rename ExecutableFunction to PhysicalFunction)
-    : nes - physical - operators / src / Functions / FunctionProvider.cpp
+PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
 {
-    /// 1. Check if the function is valid.
-    auto ret = nodeFunction->validateBeforeLowering();
-    INVARIANT(ret, "Function not valid: {}", *nodeFunction);
+    /// 1. Recursively lower the children of the function node.
+    std::vector<PhysicalFunction> childFunction;
+    for (auto& child : logicalFunction.getChildren())
+    {
+        childFunction.emplace_back(lowerFunction(child));
+    }
 
-    /// 2. Recursively lower the children of the function node.
-    < < < < < < < < HEAD : nes
-                           - execution / src / QueryCompiler / Phases / Translations
-                               / FunctionProvider.cpp std::vector<std::unique_ptr<Function>> childFunction;
-    for (const auto& child : nodeFunction->getChildren())
-        == == == == std::vector<std::unique_ptr<PhysicalFunction>> childFunction;
-    for (const auto& child : logicalFunction->getChildren())
-        >>>>>>>> 90577b636a(refactor(PhysicalOperators)
-                            : rename ExecutableFunction to PhysicalFunction)
-            : nes - physical - operators / src / Functions / FunctionProvider.cpp
-        {
-            childFunction.emplace_back(lowerFunction(NES::Util::as<NodeFunction>(child)));
-        }
-
-    /// 3. The field access and constant value nodes are special as they require a different treatment,
+    /// 2. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessNode = NES::Util::as_if<NodeFunctionFieldAccess>(nodeFunction); fieldAccessNode != nullptr)
+    if (const auto fieldAccessNode = logicalFunction.tryGet<FieldAccessLogicalFunction>())
     {
-        return std::make_unique<ReadFieldPhysicalFunction>(fieldAccessNode->getFieldName());
+        return FieldAccessPhysicalFunction(fieldAccessNode->getFieldName());
     }
-    if (const auto constantValueNode = NES::Util::as_if<NodeFunctionConstantValue>(nodeFunction); constantValueNode != nullptr)
+    if (auto constantValueNode = logicalFunction.tryGet<ConstantValueLogicalFunction>())
     {
-        return lowerConstantFunction(constantValueNode);
+        return lowerConstantFunction(*constantValueNode);
     }
 
-    /// 4. Calling the registry to create an executable function.
-    auto executableFunctionArguments = ExecutableFunctionRegistryArguments(std::move(childFunction));
-    auto function = ExecutableFunctionRegistry::instance().create(nodeFunction->getType(), std::move(executableFunctionArguments));
+    /// 3. Calling the registry to create an executable function.
+    auto executableFunctionArguments = PhysicalFunctionRegistryArguments(childFunction);
+    auto function = PhysicalFunctionRegistry::instance().create(logicalFunction.getType(), std::move(executableFunctionArguments));
     if (not function.has_value())
     {
-        throw UnknownFunctionType(fmt::format("Can not lower function: {}", nodeFunction->getType()));
+        throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
     }
 
     return std::move(function.value());
 }
 
-< < < < < < < < HEAD : nes
-                       - execution / src / QueryCompiler / Phases / Translations
-                           / FunctionProvider.cpp std::unique_ptr<Function>
-                             FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
-    == == ==
-    == std::unique_ptr<PhysicalFunction> FunctionProvider::lowerConstantFunction(
-           const std::shared_ptr<ConstantValueLogicalFunction>& constantFunction)
-        >>>>>>>> 90577b636a(refactor(PhysicalOperators)
-                            : rename ExecutableFunction to PhysicalFunction)
-    : nes - physical - operators / src / Functions / FunctionProvider.cpp
+PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)
 {
-    const auto stringValue = constantFunction->getConstantValue();
-    const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());
-    if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
+    const auto stringValue = constantFunction.getConstantValue();
+    const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction.getStamp());
+    if (const auto basicType = dynamic_cast<BasicPhysicalType*>(physicalType.get()))
     {
         switch (basicType->nativeType)
         {
             case BasicPhysicalType::NativeType::UINT_8: {
                 auto intValue = static_cast<uint8_t>(std::stoul(stringValue));
-                return std::make_unique<ConstantUInt8ValueFunction>(intValue);
+                return ConstantUInt8ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::UINT_16: {
                 auto intValue = static_cast<uint16_t>(std::stoul(stringValue));
-                return std::make_unique<ConstantUInt16ValueFunction>(intValue);
+                return ConstantUInt16ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::UINT_32: {
                 auto intValue = static_cast<uint32_t>(std::stoul(stringValue));
-                return std::make_unique<ConstantUInt32ValueFunction>(intValue);
+                return ConstantUInt32ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::UINT_64: {
                 auto intValue = static_cast<uint64_t>(std::stoull(stringValue));
-                return std::make_unique<ConstantUInt64ValueFunction>(intValue);
+                return ConstantUInt64ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::INT_8: {
                 auto intValue = static_cast<int8_t>(std::stoi(stringValue));
-                return std::make_unique<ConstantInt8ValueFunction>(intValue);
+                return ConstantInt8ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::INT_16: {
                 auto intValue = static_cast<int16_t>(std::stoi(stringValue));
-                return std::make_unique<ConstantInt16ValueFunction>(intValue);
+                return ConstantInt16ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::INT_32: {
                 auto intValue = static_cast<int32_t>(std::stoi(stringValue));
-                return std::make_unique<ConstantInt32ValueFunction>(intValue);
+                return ConstantInt32ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::INT_64: {
                 auto intValue = static_cast<int64_t>(std::stol(stringValue));
-                return std::make_unique<ConstantInt64ValueFunction>(intValue);
+                return ConstantInt64ValueFunction(intValue);
             };
             case BasicPhysicalType::NativeType::FLOAT: {
                 auto floatValue = std::stof(stringValue);
-                return std::make_unique<ConstantFloatValueFunction>(floatValue);
+                return ConstantFloatValueFunction(floatValue);
             };
             case BasicPhysicalType::NativeType::DOUBLE: {
                 auto doubleValue = std::stod(stringValue);
-                return std::make_unique<ConstantDoubleValueFunction>(doubleValue);
+                return ConstantDoubleValueFunction(doubleValue);
             };
             case BasicPhysicalType::NativeType::CHAR:
                 break;
             case BasicPhysicalType::NativeType::BOOLEAN: {
                 auto boolValue = static_cast<bool>(std::stoi(stringValue)) == 1;
-                return std::make_unique<ConstantBooleanValueFunction>(boolValue);
+                return ConstantBooleanValueFunction(boolValue);
             };
             default: {
-                throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", basicType->toString()));
+                throw UnknownPhysicalType("the basic type {} is not supported", basicType->toString());
             }
         }
     }
-    else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType))
+    else if (dynamic_cast<VariableSizedDataPhysicalType*>(physicalType.get()))
     {
-        return std::make_unique<ExecutableFunctionConstantValueVariableSize>(
-            reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
+        return ConstantValueVariableSizePhysicalFunction(reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
     }
-    throw UnknownPhysicalType(
-        fmt::format("couldn't create ConstantValueFunction for: {}, not a BasicPhysicalType.", physicalType->toString()));
+    throw UnknownPhysicalType("couldn't create ConstantValueFunction for: {}, not a BasicPhysicalType.", physicalType->toString());
 }
 }

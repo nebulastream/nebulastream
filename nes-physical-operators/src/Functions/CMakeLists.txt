@@ -16,8 +16,7 @@ add_source_files(nes-physical-operators
         ConstantValueVariableSizePhysicalFunction.cpp
         )
 
-add_plugin(Concat ExecutableFunction nes-execution ExecutableFunctionConcat.cpp)
-
+add_plugin(Concat PhysicalFunction nes-physical-operators ConcatPhysicalFunction.cpp)
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(Comparison)
