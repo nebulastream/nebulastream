@@ -15,9 +15,9 @@
 
 #include <memory>
 #include <string>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {

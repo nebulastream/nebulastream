@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Functions/FunctionProvider.hpp>
+
 #include <memory>
 #include <utility>
 #include <vector>

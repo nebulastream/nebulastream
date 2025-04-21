@@ -16,11 +16,11 @@ limitations under the License.
 #include <memory>
 #include <string>
 #include <utility>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <ErrorHandling.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
