@@ -19,8 +19,8 @@
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalProjection.hpp>
-#include <DefaultEmitPhysicalOperator.hpp>
-#include <DefaultScanPhysicalOperator.hpp>
+#include <EmitPhysicalOperator.hpp>
+#include <ScanPhysicalOperator.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <RewriteRuleRegistry.hpp>
 
@@ -36,13 +36,13 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
 
     auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(inputSchema, bufferSize);
     auto scanMemoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(scanLayout);
-    auto scan = DefaultScanPhysicalOperator(scanMemoryProvider, outputSchema.getFieldNames());
+    auto scan = ScanPhysicalOperator(scanMemoryProvider, outputSchema.getFieldNames());
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(scan, outputSchema, outputSchema);
     scanWrapper->isScan = true;
 
     auto emitLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(outputSchema, bufferSize);
     auto emitMemoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(emitLayout);
-    auto emit = DefaultEmitPhysicalOperator(handlerId, emitMemoryProvider);
+    auto emit = EmitPhysicalOperator(handlerId, emitMemoryProvider);
     auto emitWrapper = std::make_shared<PhysicalOperatorWrapper>(emit, outputSchema, outputSchema);
     emitWrapper->isEmit = true;
     emitWrapper->handler = std::make_shared<EmitOperatorHandler>();
