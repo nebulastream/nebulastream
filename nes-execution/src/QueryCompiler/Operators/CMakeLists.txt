@@ -11,9 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        StreamJoinBuild.cpp
+        StreamJoinBuildPhysicalOperator.cpp
         StreamJoinOperatorHandler.cpp
-        StreamJoinProbe.cpp
+        StreamJoinProbePhysicalOperator.cpp
         StreamJoinUtil.cpp
 )
 
