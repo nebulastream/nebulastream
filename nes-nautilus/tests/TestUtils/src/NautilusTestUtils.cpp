@@ -198,7 +198,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 const auto fieldName = field.getName();
                 if (dynamic_cast<BasicPhysicalType*>(type.get()))
                 {
-                    const auto varValue = Nautilus::Util::createNautilusConstValue(value, type);
+                    const auto varValue = Nautilus::Util::createNautilusConstValue(value, *type);
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }

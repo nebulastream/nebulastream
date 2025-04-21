@@ -36,7 +36,7 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-DynamicField::DynamicField(const uint8_t* address, std::unique_ptr<PhysicalType> physicalType)
+DynamicField::DynamicField(const uint8_t* address, std::shared_ptr<PhysicalType> physicalType)
     : address(address), physicalType(std::move(physicalType))
 {
 }
@@ -60,7 +60,7 @@ DynamicField DynamicTuple::operator[](std::string fieldName) const
     return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }
 
-DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::unique_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer)
+DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer)
     : tupleIndex(tupleIndex), memoryLayout(std::move(memoryLayout)), buffer(std::move(buffer))
 {
 }
@@ -236,11 +236,11 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
     {
         throw CannotAccessBuffer("index {} is out of bound for capacity {}", std::to_string(tupleIndex), std::to_string(getCapacity()));
     }
-    return {tupleIndex, memoryLayout->clone(), buffer};
+    return {tupleIndex, memoryLayout, buffer};
 }
 
-TestTupleBuffer::TestTupleBuffer(std::unique_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer)
-    : memoryLayout(std::move(memoryLayout)), buffer(buffer)
+TestTupleBuffer::TestTupleBuffer(std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer)
+    : memoryLayout(memoryLayout), buffer(buffer)
 {
     PRECONDITION(
         memoryLayout->getBufferSize() == buffer.getBufferSize(),
@@ -364,12 +364,12 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer
 {
     if (schema.getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto memoryLayout = RowLayout::create(schema, buffer.getBufferSize());
+        auto memoryLayout = std::make_shared<RowLayout>(schema, buffer.getBufferSize());
         return TestTupleBuffer(std::move(memoryLayout), buffer);
     }
     else if (schema.getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto memoryLayout = ColumnLayout::create(schema, buffer.getBufferSize());
+        auto memoryLayout = std::make_shared<ColumnLayout>(schema, buffer.getBufferSize());
         return TestTupleBuffer(std::move(memoryLayout), buffer);
     }
     else

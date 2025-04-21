@@ -38,16 +38,12 @@ public:
     ColumnLayout(const Schema& schema, uint64_t bufferSize);
     ColumnLayout(const ColumnLayout& other);
 
-    static std::unique_ptr<ColumnLayout> create(const Schema& schema, uint64_t bufferSize);
-
     /// @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
     /// For the column layout the field offset is calculated as follows:
     /// \f$ offSet = (recordIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex] \f$
     /// @throws CannotAccessBuffer if the tuple index or the field index is out of bounds.
     /// @return offset in the tuple buffer.
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
-
-    [[nodiscard]] std::unique_ptr<MemoryLayout> clone() const override;
 
     [[nodiscard]] uint64_t getColumnOffset(uint64_t fieldIndex) const;
 

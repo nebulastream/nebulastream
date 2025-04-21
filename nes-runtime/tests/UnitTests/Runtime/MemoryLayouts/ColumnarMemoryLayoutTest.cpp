@@ -61,9 +61,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutCreateTest)
     const Schema schema
         = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT8).addField("t3", BasicType::UINT8);
 
-    std::unique_ptr<ColumnLayout> columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(std::move(columnLayout), nullptr);
+    std::shared_ptr<ColumnLayout> columnLayout;
+    ASSERT_NO_THROW(columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(columnLayout, nullptr);
 }
 
 /**
@@ -73,13 +73,13 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
 {
     const Schema schema = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
-    std::unique_ptr<ColumnLayout> columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(std::move(columnLayout), nullptr);
+    std::shared_ptr<ColumnLayout> columnLayout;
+    ASSERT_NO_THROW(columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(std::move(columnLayout), tupleBuffer);
+    const auto testBuffer = std::make_shared<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const auto capacity = tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes();
     ASSERT_EQ(testBuffer->getCapacity(), capacity);
@@ -97,13 +97,13 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecor
     const Schema schema
         = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
-    std::unique_ptr<ColumnLayout> columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(std::move(columnLayout), nullptr);
+    std::shared_ptr<ColumnLayout> columnLayout;
+    ASSERT_NO_THROW(columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(std::move(columnLayout), tupleBuffer);
+    const auto testBuffer = std::make_shared<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(dist(rng), dist(rng), dist(rng));
     testBuffer->pushRecordToBuffer(writeRecord);
@@ -122,13 +122,13 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultiple
     const Schema schema
         = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
-    std::unique_ptr<ColumnLayout> columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(std::move(columnLayout), nullptr);
+    std::shared_ptr<ColumnLayout> columnLayout;
+    ASSERT_NO_THROW(columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(std::move(columnLayout), tupleBuffer);
+    const auto testBuffer = std::make_shared<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const size_t numTuples = (tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes());
 
@@ -157,12 +157,12 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
     const Schema schema
         = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
-    std::unique_ptr<ColumnLayout> columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
-    ASSERT_NE(std::move(columnLayout), nullptr);
+    auto columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize());
+    ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(std::move(columnLayout), tupleBuffer);
+    const auto testBuffer = std::make_shared<Memory::MemoryLayouts::TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const size_t numTuples = (tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes());
 
@@ -174,9 +174,9 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
         testBuffer->pushRecordToBuffer(writeRecord);
     }
 
-    auto field0 = ColumnLayoutField<uint8_t, true>::create(0, std::move(columnLayout), tupleBuffer);
-    auto field1 = ColumnLayoutField<uint16_t, true>::create(1, std::move(columnLayout), tupleBuffer);
-    auto field2 = ColumnLayoutField<uint32_t, true>::create(2, std::move(columnLayout), tupleBuffer);
+    auto field0 = ColumnLayoutField<uint8_t, true>::create(0, columnLayout, tupleBuffer);
+    auto field1 = ColumnLayoutField<uint16_t, true>::create(1, columnLayout, tupleBuffer);
+    auto field2 = ColumnLayoutField<uint32_t, true>::create(2, columnLayout, tupleBuffer);
 
     for (size_t i = 0; i < numTuples; ++i)
     {
@@ -194,13 +194,13 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
     const Schema schema
         = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
-    std::unique_ptr<ColumnLayout> columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(std::move(columnLayout), nullptr);
+    std::shared_ptr<ColumnLayout> columnLayout;
+    ASSERT_NO_THROW(columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(std::move(columnLayout), tupleBuffer);
+    auto testBuffer = std::make_shared<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes());
 
@@ -212,12 +212,12 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
         testBuffer->pushRecordToBuffer(writeRecord);
     }
 
-    auto field0 = ColumnLayoutField<uint8_t, true>::create(0, std::move(columnLayout), tupleBuffer);
-    auto field1 = ColumnLayoutField<uint16_t, true>::create(1, std::move(columnLayout), tupleBuffer);
-    auto field2 = ColumnLayoutField<uint32_t, true>::create(2, std::move(columnLayout), tupleBuffer);
-    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint8_t, true>::create(3, std::move(columnLayout), tupleBuffer)), "Invariant violated:.*");
-    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint16_t, true>::create(4, std::move(columnLayout), tupleBuffer)), "Invariant violated:.*");
-    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create(5, std::move(columnLayout), tupleBuffer)), "Invariant violated:.*");
+    auto field0 = ColumnLayoutField<uint8_t, true>::create(0, columnLayout, tupleBuffer);
+    auto field1 = ColumnLayoutField<uint16_t, true>::create(1, columnLayout, tupleBuffer);
+    auto field2 = ColumnLayoutField<uint32_t, true>::create(2, columnLayout, tupleBuffer);
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint8_t, true>::create(3, columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint16_t, true>::create(4, columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create(5, columnLayout, tupleBuffer)), "Invariant violated:.*");
 
     size_t i = 0;
     for (; i < NUM_TUPLES; ++i)
@@ -244,21 +244,21 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
     const Schema schema
         = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
-    std::unique_ptr<ColumnLayout> columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(std::move(columnLayout), nullptr);
+    std::shared_ptr<ColumnLayout> columnLayout;
+    ASSERT_NO_THROW(columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(std::move(columnLayout), tupleBuffer);
+    auto testBuffer = std::make_shared<TestTupleBuffer>(columnLayout, tupleBuffer);
 
-    ASSERT_NO_THROW((ColumnLayoutField<uint8_t, true>::create("t1", std::move(columnLayout), tupleBuffer)));
-    ASSERT_NO_THROW((ColumnLayoutField<uint16_t, true>::create("t2", std::move(columnLayout), tupleBuffer)));
-    ASSERT_NO_THROW((ColumnLayoutField<uint32_t, true>::create("t3", std::move(columnLayout), tupleBuffer)));
+    ASSERT_NO_THROW((ColumnLayoutField<uint8_t, true>::create("t1", columnLayout, tupleBuffer)));
+    ASSERT_NO_THROW((ColumnLayoutField<uint16_t, true>::create("t2", columnLayout, tupleBuffer)));
+    ASSERT_NO_THROW((ColumnLayoutField<uint32_t, true>::create("t3", columnLayout, tupleBuffer)));
 
-    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create("t4", std::move(columnLayout), tupleBuffer)), "Invariant violated:.*");
-    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create("t5", std::move(columnLayout), tupleBuffer)), "Invariant violated:.*");
-    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create("t6", std::move(columnLayout), tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create("t4", columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create("t5", columnLayout, tupleBuffer)), "Invariant violated:.*");
+    ASSERT_DEATH_DEBUG((ColumnLayoutField<uint32_t, true>::create("t6", columnLayout, tupleBuffer)), "Invariant violated:.*");
 }
 
 /**
@@ -269,12 +269,12 @@ TEST_F(ColumnarMemoryLayoutTest, accessDynamicColumnBufferTest)
     const Schema schema
         = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
-    std::unique_ptr<ColumnLayout> columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(std::move(columnLayout), nullptr);
+    std::shared_ptr<ColumnLayout> columnLayout;
+    ASSERT_NO_THROW(columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(columnLayout, nullptr);
 
     const auto tupleBuffer = bufferManager->getBufferBlocking();
-    const auto buffer = TestTupleBuffer(std::move(columnLayout), tupleBuffer);
+    const auto buffer = TestTupleBuffer(columnLayout, tupleBuffer);
     const uint32_t numberOfRecords = 10;
     for (uint32_t i = 0; i < numberOfRecords; i++)
     {
@@ -301,13 +301,13 @@ TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
     const Schema schema
         = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
-    std::unique_ptr<ColumnLayout> columnLayout;
-    ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
-    ASSERT_NE(std::move(columnLayout), nullptr);
+    std::shared_ptr<ColumnLayout> columnLayout;
+    ASSERT_NO_THROW(columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize()));
+    ASSERT_NE(columnLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(std::move(columnLayout), tupleBuffer);
+    const auto testBuffer = std::make_shared<TestTupleBuffer>(columnLayout, tupleBuffer);
 
     const size_t numTuples = tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes();
 
@@ -340,28 +340,9 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldOffset)
 {
     const auto schema
         = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT8).addField("t3", BasicType::UINT8);
-    const auto columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+    const auto columnLayout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize());
 
     ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(2, 4), ErrorCode::CannotAccessBuffer);
     ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(1000000000, 2), ErrorCode::CannotAccessBuffer);
 }
-
-TEST_F(ColumnarMemoryLayoutTest, deepCopy)
-{
-    const auto schema
-        = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT8).addField("t3", BasicType::UINT8);
-    auto columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
-
-    const auto deepCopy = columnLayout->clone();
-
-    ASSERT_NE(deepCopy, columnLayout);
-    ASSERT_EQ(*deepCopy, *columnLayout);
-
-    /// checking if changing the schema does not affect the deep copy
-    const auto schema2 = Schema().addField("r1", BasicType::UINT8);
-    columnLayout = ColumnLayout::create(schema2, bufferManager->getBufferSize());
-
-    ASSERT_TRUE(deepCopy->getSchema() != columnLayout->getSchema());
-}
-
 }

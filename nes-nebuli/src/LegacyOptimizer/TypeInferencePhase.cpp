@@ -78,7 +78,7 @@ LogicalOperator propagateSchema(const LogicalOperator& op)
     return updatedOperator.withInferredSchema(childSchemas);
 }
 
-void TypeInferencePhase::apply(QueryPlan& queryPlan)
+void TypeInferencePhase::apply(LogicalPlan& queryPlan)
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& sink : queryPlan.rootOperators)
@@ -88,7 +88,5 @@ void TypeInferencePhase::apply(QueryPlan& queryPlan)
     }
     queryPlan.rootOperators = newRoots;
 }
-
-
 
 }
