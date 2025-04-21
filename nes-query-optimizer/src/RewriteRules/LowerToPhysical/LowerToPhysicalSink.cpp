@@ -12,26 +12,24 @@
     limitations under the License.
 */
 
-#include <vector>
 #include <memory>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <Functions/FunctionProvider.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSink.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
 namespace NES::Optimizer
 {
 
-std::vector<PhysicalOperatorWrapper> LowerToPhysicalSink::apply(LogicalOperator logicalOperator)
+RewriteRuleResult LowerToPhysicalSink::apply(LogicalOperator logicalOperator)
 {
-    auto sink = *logicalOperator.get<SinkLogicalOperator>();
+    PRECONDITION(logicalOperator.tryGet<SinkLogicalOperator>(), "Expected a SinkLogicalOperator");
+    auto sink = logicalOperator.get<SinkLogicalOperator>();
     auto physicalOperator = SinkPhysicalOperator(sink.sinkDescriptor);
-    auto wrapper = PhysicalOperatorWrapper(physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema());
-    return {wrapper};
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema());
+    return {wrapper, {wrapper}};
 }
 
 std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSinkRewriteRule(RewriteRuleRegistryArguments argument)
