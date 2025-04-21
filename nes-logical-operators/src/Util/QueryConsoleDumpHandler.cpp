@@ -33,20 +33,20 @@ std::shared_ptr<QueryConsoleDumpHandler> QueryConsoleDumpHandler::create(std::os
 }
 
 void QueryConsoleDumpHandler::dumpHelper(
-    const std::shared_ptr<Operator>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
+    const Operator& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
     out << std::string(indent * depth, ' ') << operationNode << '\n';
     ++depth;
-    for (auto&& child : operationNode->getChildren())
+    for (auto& child : operationNode.getChildren())
     {
         dumpHelper(child, depth, indent, out);
     }
 }
 
 void QueryConsoleDumpHandler::multilineDumpHelper(
-    const std::shared_ptr<Operator>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
+    const Operator& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
-    std::vector<std::string> multiLineNodeString = {fmt::format("{}", *operationNode)};
+    std::vector<std::string> multiLineNodeString = {fmt::format("{}", operationNode)};
     for (const std::string& line : multiLineNodeString)
     {
         for (auto i{0ULL}; i < indent * depth; ++i)
@@ -74,24 +74,24 @@ void QueryConsoleDumpHandler::multilineDumpHelper(
         out << line << std::endl;
     }
     ++depth;
-    for (auto&& child : operationNode->getChildren())
+    for (auto& child : operationNode.getChildren())
     {
         multilineDumpHelper(child, depth, indent, out);
     }
 }
 
-void QueryConsoleDumpHandler::dump(std::shared_ptr<Operator> node)
+void QueryConsoleDumpHandler::dump(const Operator& node)
 {
     multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
 }
 
-void QueryConsoleDumpHandler::multilineDump(const std::shared_ptr<Operator>& node)
+void QueryConsoleDumpHandler::multilineDump(const Operator& node)
 {
     multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
 }
 
-void QueryConsoleDumpHandler::dump(std::string, std::string, std::shared_ptr<QueryPlan> queryPlan)
+void QueryConsoleDumpHandler::dump(std::string, std::string, QueryPlan queryPlan)
 {
-    out << "Dumping queryPlan: " << queryPlan->toString() << std::endl;
+    out << "Dumping queryPlan: " << queryPlan.toString() << std::endl;
 }
 }

@@ -14,45 +14,34 @@
 
 #pragma once
 
+#include <variant>
+#include <optional>
+#include <string_view>
 #include <vector>
 #include <memory>
 #include <API/Schema.hpp>
 #include <Plans/Operator.hpp>
+#include <Traits/Trait.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {
 class SerializableOperator;
 
-/// Logical operator, enables schema inference and signature computation.
-class LogicalOperator : public virtual Operator
+struct LogicalOperatorConcept : public OperatorConcept
 {
-public:
-    explicit LogicalOperator() : outputSchema(Schema::create()) {};
-    explicit LogicalOperator(std::shared_ptr<LogicalOperator> logicalOp);
-    virtual std::string_view getName() const noexcept = 0;
+    ~LogicalOperatorConcept() override = default;
+    virtual bool operator==(struct LogicalOperatorConcept const& rhs) const = 0;
 
-    /// If this operator does not assign new origin ids, e.g., windowing,
-    /// this function collects the origin ids from all upstream operators.
-    virtual void inferInputOrigins() = 0;
-    virtual std::vector<OriginId> getOutputOriginIds() const = 0;
+    [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
+    [[nodiscard]] virtual SerializableOperator serialize() const = 0;
+    [[nodiscard]] virtual Optimizer::TraitSet getTraitSet() const = 0;
 
-    /// @brief infers the input and out schema of this operator depending on its child.
-    /// @param typeInferencePhaseContext needed for stamp inferring
-    /// @return true if schema was correctly inferred
-    virtual bool inferSchema() = 0;
+    [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
+    [[nodiscard]] virtual Schema getOutputSchema() const = 0;
 
-    virtual std::shared_ptr<Schema> getOutputSchema() const = 0;
-    virtual void setOutputSchema(std::shared_ptr<Schema> outputSchema) = 0;
-
-    virtual SerializableOperator serialize() const = 0;
-
-    virtual std::shared_ptr<Operator> clone() const = 0;
-    virtual bool operator==(Operator const& rhs) const = 0;
-    virtual bool isIdentical(Operator const& rhs) const = 0;
-
-protected:
-    /// The output schema of this operator
-    std::shared_ptr<Schema> outputSchema;
+    [[nodiscard]] virtual std::vector<std::vector<OriginId>> getInputOriginIds() const = 0;
+    [[nodiscard]] virtual std::vector<OriginId> getOutputOriginIds() const = 0;
 };
+
 }
-FMT_OSTREAM(NES::LogicalOperator);

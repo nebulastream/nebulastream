@@ -30,27 +30,27 @@
 namespace NES
 {
 
-SelectionLogicalOperator::SelectionLogicalOperator(std::shared_ptr<LogicalFunction> const& predicate, OperatorId id)
-    : Operator(id), UnaryLogicalOperator(id), predicate(std::move(predicate))
+SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : predicate(predicate)
 {
 }
 
-std::shared_ptr<LogicalFunction> SelectionLogicalOperator::getPredicate() const
+std::string_view SelectionLogicalOperator::getName() const noexcept
+{
+    return NAME;
+}
+
+LogicalFunction SelectionLogicalOperator::getPredicate() const
 {
     return predicate;
 }
 
-void SelectionLogicalOperator::setPredicate(std::shared_ptr<LogicalFunction> newPredicate)
+void SelectionLogicalOperator::setPredicate(LogicalFunction newPredicate)
 {
     predicate = std::move(newPredicate);
 }
 
-bool SelectionLogicalOperator::isIdentical(const Operator& rhs) const
-{
-    return *this == rhs && dynamic_cast<const SelectionLogicalOperator*>(&rhs)->getId() == id;
-}
 
-bool SelectionLogicalOperator::operator==(Operator const& rhs) const
+bool SelectionLogicalOperator::operator==(LogicalOperatorConcept const& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const SelectionLogicalOperator*>(&rhs)) {
         return predicate == rhsOperator->predicate;
@@ -61,62 +61,26 @@ bool SelectionLogicalOperator::operator==(Operator const& rhs) const
 std::string SelectionLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "FILTER(opId: " << id << ": predicate: " << *predicate << ")";
+    ss << "FILTER(opId: " << id << ": predicate: " << predicate << ")";
     return ss.str();
 }
 
+/*
 bool SelectionLogicalOperator::inferSchema()
 {
     if (!UnaryLogicalOperator::inferSchema())
     {
         return false;
     }
-    predicate->inferStamp(*inputSchema);
-    if (!predicate->isPredicate())
+    predicate->inferStamp(inputSchema);
+    if (predicate->getStamp() != Boolean())
     {
         throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
     }
     return true;
 }
-
-std::shared_ptr<Operator> SelectionLogicalOperator::clone() const
-{
-    auto copy = std::make_shared<SelectionLogicalOperator>(predicate->clone(), id);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
-}
-
-float SelectionLogicalOperator::getSelectivity() const
-{
-    return selectivity;
-}
-void SelectionLogicalOperator::setSelectivity(float newSelectivity)
-{
-    selectivity = newSelectivity;
-}
-
-std::vector<std::string> SelectionLogicalOperator::getFieldNamesUsedByFilterPredicate() const
-{
-    ///vector to save the names of all the fields that are used in this predicate
-    std::vector<std::string> fieldsInPredicate;
-
-    ///iterator to go over all the fields of the predicate
-    for (auto itr : DFSRange<LogicalFunction>(predicate))
-    {
-        ///LogicalFunctionif it finds a fieldAccess this means that the predicate uses this specific field that comes from any source
-        if (NES::Util::instanceOf<FieldAccessLogicalFunction>(itr))
-        {
-            const std::shared_ptr<FieldAccessLogicalFunction> accessLogicalFunction = NES::Util::as<FieldAccessLogicalFunction>(itr);
-            fieldsInPredicate.push_back(accessLogicalFunction->getFieldName());
-        }
-    }
-
-    return fieldsInPredicate;
-}
-
-std::unique_ptr<LogicalOperator>
+*/
+LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
 {
     auto functionVariant = config.config[SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME];
@@ -124,12 +88,22 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::Logical
         const auto& functionList = std::get<NES::FunctionList>(functionVariant);
         const auto& functions = functionList.functions();
         INVARIANT(functions.size() == 1, "Expected exactly one function");
-        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-        return std::make_unique<SelectionLogicalOperator>(function, getNextOperatorId());
 
+        auto functionType = functions[0].functiontype();
+        NES::Configurations::DescriptorConfig::Config functionDescriptorConfig{};
+        for (const auto& [key, value] : functions[0].config())
+        {
+            functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
+        }
+
+        if (auto function = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
+        {
+            throw UnknownLogicalOperator();
+            //return SelectionLogicalOperator(function.value());
+        }
+        throw UnknownLogicalOperator();
     }
-    //throw CannotDeserialize("Error while deserializing SelectionLogicalOperator with config {}", config);
-    return nullptr;
+    throw UnknownLogicalOperator();
 }
 
 SerializableOperator SelectionLogicalOperator::serialize() const
@@ -138,32 +112,31 @@ SerializableOperator SelectionLogicalOperator::serialize() const
 
     auto* opDesc = new SerializableOperator_LogicalOperator();
     opDesc->set_operatortype(NAME);
-    serializedOperator.set_operatorid(this->getId().getRawValue());
-    serializedOperator.add_childrenids(children[0]->getId().getRawValue());
+    serializedOperator.set_operatorid(this->id.getRawValue());
+    serializedOperator.add_childrenids(children[0].getId().getRawValue());
 
     NES::FunctionList list;
     auto* serializedFunction = list.add_functions();
-    FunctionSerializationUtil::serializeFunction(this->getPredicate(), serializedFunction);
+    serializedFunction->CopyFrom(getPredicate().serialize());
 
-    Configurations::DescriptorConfig::ConfigType configVariant = list;
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
     SerializableVariantDescriptor variantDescriptor =
         Configurations::descriptorConfigTypeToProto(configVariant);
     (*opDesc->mutable_config())["selectionFunctionName"] = variantDescriptor;
 
     auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
-    auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
-    unaryOpDesc->set_allocated_outputschema(outputSchema);
-
     auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchema(), inputSchema);
+    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
     unaryOpDesc->set_allocated_inputschema(inputSchema);
 
-    for (const auto& originId : this->getInputOriginIds()) {
+    for (const auto& originId : this->getInputOriginIds()[0]) {
         unaryOpDesc->add_originids(originId.getRawValue());
     }
 
     opDesc->set_allocated_unaryoperator(unaryOpDesc);
+    auto* outputSchema = new SerializableSchema();
+    SchemaSerializationUtil::serializeSchema(this->outputSchema, outputSchema);
+    serializedOperator.set_allocated_outputschema(outputSchema);
     serializedOperator.set_allocated_operator_(opDesc);
 
     return serializedOperator;

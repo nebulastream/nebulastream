@@ -15,26 +15,22 @@
 #pragma once
 
 #include <memory>
-#include "BinaryLogicalOperator.hpp"
 #include <Configurations/Descriptor.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
-class UnionLogicalOperator : public BinaryLogicalOperator
+class UnionLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    static constexpr std::string_view NAME = "Union";
-
     explicit UnionLogicalOperator();
     std::string_view getName() const noexcept override;
 
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
     ///infer schema of two child operators
-    bool inferSchema() override;
-    void inferInputOrigins() override;
-    std::shared_ptr<Operator> clone() const override;
-    [[nodiscard]] bool operator==(Operator const& rhs) const override;
+    bool inferSchema();
+    void inferInputOrigins();
+    [[nodiscard]] bool operator==(LogicalOperatorConcept const& rhs) const override;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
@@ -49,6 +45,31 @@ public:
 
 protected:
     std::string toString() const override;
+
+    std::vector<Operator> getChildren() const override
+    {
+        return children;
+    }
+
+    void setChildren(std::vector<Operator> children) override
+    {
+        this->children = children;
+    }
+
+    Optimizer::TraitSet getTraitSet() const override
+    {
+        return {};
+    }
+
+    std::vector<Schema> getInputSchemas() const override { return {leftInputSchema, rightInputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema;}
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
+private:
+    static constexpr std::string_view NAME = "Union";
+    std::vector<Operator> children;
+    Schema leftInputSchema, rightInputSchema, outputSchema;
 };
 
 

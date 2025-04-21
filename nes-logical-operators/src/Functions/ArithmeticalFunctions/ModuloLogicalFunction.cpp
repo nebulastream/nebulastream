@@ -14,41 +14,28 @@
 
 #include <memory>
 #include <sstream>
-#include <utility>
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
-#include <Functions/BinaryLogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
 
-ModuloLogicalFunction::ModuloLogicalFunction(std::shared_ptr<DataType> stamp)
-    : BinaryLogicalFunction(std::move(stamp), "Mod") {};
-
-ModuloLogicalFunction::ModuloLogicalFunction(ModuloLogicalFunction* other) : BinaryLogicalFunction(other)
+ModuloLogicalFunction::ModuloLogicalFunction(const ModuloLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
 {
 }
 
-std::shared_ptr<LogicalFunction>
-ModuloLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+ModuloLogicalFunction::ModuloLogicalFunction(LogicalFunction left, LogicalFunction right) : stamp(left.getStamp().join(right.getStamp())), left(left), right(right)
 {
-    auto addNode = std::make_shared<ModuloLogicalFunction>(DataTypeProvider::provideDataType(LogicalType::FLOAT32));
-    addNode->setLeftChild(left);
-    addNode->setRightChild(right);
-    return addNode;
 }
 
-bool ModuloLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool ModuloLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (NES::Util::instanceOf<ModuloLogicalFunction>(rhs))
+    auto other = dynamic_cast<const ModuloLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherAddNode = NES::Util::as<ModuloLogicalFunction>(rhs);
-        return getLeftChild()->equal(otherAddNode->getLeftChild()) && getRightChild()->equal(otherAddNode->getRightChild());
+        return left == other->left and right == other->right;
     }
     return false;
 }
@@ -56,13 +43,31 @@ bool ModuloLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& r
 std::string ModuloLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *getLeftChild() << "%" << *getRightChild();
+    ss << left << "%" << right;
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> ModuloLogicalFunction::clone() const
+SerializableFunction ModuloLogicalFunction::serialize() const
 {
-    return ModuloLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(left.serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(right.serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
+
+BinaryLogicalFunctionRegistryReturnType
+BinaryLogicalFunctionGeneratedRegistrar::RegisterModuloBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return ModuloLogicalFunction(arguments.children[0], arguments.children[1]);
+}
+
 
 }

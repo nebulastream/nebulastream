@@ -24,12 +24,9 @@ namespace NES
 class CountAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    CountAggregationLogicalFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
-    explicit CountAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+    CountAggregationLogicalFunction(LogicalFunction onField, LogicalFunction asField);
+    explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
     virtual ~CountAggregationLogicalFunction() = default;
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
-    static std::unique_ptr<WindowAggregationLogicalFunction>
-    create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
     std::unique_ptr<WindowAggregationLogicalFunction> clone() override;

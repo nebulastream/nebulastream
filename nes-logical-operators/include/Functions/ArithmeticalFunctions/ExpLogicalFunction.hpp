@@ -14,24 +14,32 @@
 
 #pragma once
 
-#include <Functions/UnaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
-
-class ExpLogicalFunction final : public UnaryLogicalFunction
+class ExpLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    explicit ExpLogicalFunction(std::shared_ptr<DataType> stamp);
-    ~ExpLogicalFunction() noexcept override = default;
-    [[nodiscard]] static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    static constexpr std::string_view NAME = "Exp";
 
-protected:
+    ExpLogicalFunction(LogicalFunction child);
+    ExpLogicalFunction(const ExpLogicalFunction& other);
+    ~ExpLogicalFunction() noexcept override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override {return *stamp;};
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {child}; };
+    std::string getType() const override { return std::string(NAME);}
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit ExpLogicalFunction(ExpLogicalFunction* other);
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction child;
 };
 }
+FMT_OSTREAM(NES::ExpLogicalFunction);

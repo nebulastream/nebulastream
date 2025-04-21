@@ -14,32 +14,38 @@
 
 #pragma once
 
-#include <Functions/BinaryLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 
 namespace NES
 {
 
 /// @brief A FieldAssignmentLogicalFunction represents the assignment of a function result to a specific field.
-class FieldAssignmentLogicalFunction : public BinaryLogicalFunction
+class FieldAssignmentLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    explicit FieldAssignmentLogicalFunction(std::shared_ptr<DataType> stamp);
+    static constexpr std::string_view NAME = "FieldAssignment";
 
-    static std::shared_ptr<FieldAssignmentLogicalFunction> create(
-        std::shared_ptr<FieldAccessLogicalFunction> fieldAccess, std::shared_ptr<LogicalFunction> LogicalFunction);
+    FieldAssignmentLogicalFunction(const FieldAccessLogicalFunction& fieldAccess, LogicalFunction logicalFunction);
+    FieldAssignmentLogicalFunction(const FieldAssignmentLogicalFunction& other);
 
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
+    [[nodiscard]] const FieldAccessLogicalFunction& getField() const;
+    [[nodiscard]] LogicalFunction getAssignment() const;
 
-    [[nodiscard]] std::shared_ptr<FieldAccessLogicalFunction> getField() const;
-    [[nodiscard]] std::shared_ptr<LogicalFunction> getAssignment() const;
-    void inferStamp(const Schema& schema) override;
+    [[nodiscard]] SerializableFunction serialize() const override;
 
-    std::shared_ptr<LogicalFunction> clone() const override;
+    //void inferStamp(const Schema& schema);
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
-protected:
-    explicit FieldAssignmentLogicalFunction(FieldAssignmentLogicalFunction* other);
+    const DataType& getStamp() const override {return *stamp;};
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {fieldAccess, logicalFunction}; };
+    std::string getType() const override { return std::string(NAME);}
 
     [[nodiscard]] std::string toString() const override;
+
+private:
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction fieldAccess, logicalFunction;
 };
 }
+FMT_OSTREAM(NES::FieldAssignmentLogicalFunction);

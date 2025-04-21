@@ -15,25 +15,31 @@
 #pragma once
 
 #include <memory>
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
-
-class SubLogicalFunction final : public BinaryLogicalFunction
+class SubLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    explicit SubLogicalFunction(std::shared_ptr<DataType> stamp);
+    static constexpr std::string_view NAME = "Sub";
+
+    SubLogicalFunction(LogicalFunction left, LogicalFunction right);
+    SubLogicalFunction(const SubLogicalFunction& other);
     ~SubLogicalFunction() noexcept override = default;
-    static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
 
-protected:
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
     [[nodiscard]] std::string toString() const override;
-
 private:
-    explicit SubLogicalFunction(SubLogicalFunction* other);
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left, right;
 };
-
 }
+FMT_OSTREAM(NES::SubLogicalFunction);

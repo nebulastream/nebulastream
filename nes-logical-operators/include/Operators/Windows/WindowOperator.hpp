@@ -18,7 +18,7 @@
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/UnaryLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
@@ -27,7 +27,7 @@
 namespace NES
 {
 
-class WindowOperator : public UnaryLogicalOperator
+class WindowOperator : public LogicalOperatorConcept
 {
 public:
     WindowOperator(OriginId originId);
@@ -49,7 +49,7 @@ public:
     void setOnKey(const std::vector<std::shared_ptr<FieldAccessLogicalFunction>>& keys);
 
     [[nodiscard]] OriginId getOriginId() const;
-    const std::vector<OriginId>& getInputOriginIds() const;
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
     Optimizer::OriginIdTrait originIds;

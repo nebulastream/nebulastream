@@ -14,26 +14,37 @@
 
 #pragma once
 
-#include <Functions/UnaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
 
-class NegateLogicalFunction final : public UnaryLogicalFunction
+class NegateLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    NegateLogicalFunction();
+    static constexpr std::string_view NAME = "Negate";
+
+    NegateLogicalFunction(LogicalFunction child);
+    NegateLogicalFunction(const NegateLogicalFunction& other);
     ~NegateLogicalFunction() override = default;
 
-    static std::shared_ptr<LogicalFunction> create(std::shared_ptr<LogicalFunction> const& child);
+    bool validateBeforeLowering() const;
 
+    [[nodiscard]] SerializableFunction serialize() const override;
 
-    void inferStamp(const Schema& schema) override;
+    void inferStamp(const Schema& schema);
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
-    std::shared_ptr<LogicalFunction> clone() const override;
-
-protected:
-    explicit NegateLogicalFunction(NegateLogicalFunction* other);
+    const DataType& getStamp() const override {return *stamp;};
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {child}; };
+    std::string getType() const override { return std::string(NAME);}
     [[nodiscard]] std::string toString() const override;
+
+private:
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction child;
 };
 }
+FMT_OSTREAM(NES::NegateLogicalFunction);
+

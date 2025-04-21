@@ -14,26 +14,32 @@
 
 #pragma once
 
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
-class AddLogicalFunction final : public BinaryLogicalFunction
+class AddLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    explicit AddLogicalFunction(std::shared_ptr<DataType> stamp);
+    static constexpr std::string_view NAME = "Add";
+
+    AddLogicalFunction(LogicalFunction left, LogicalFunction right);
+    AddLogicalFunction(const AddLogicalFunction& other);
     ~AddLogicalFunction() noexcept override = default;
 
-    static std::shared_ptr<LogicalFunction>
-    create(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] SerializableFunction serialize() const override;
 
-protected:
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit AddLogicalFunction(AddLogicalFunction* other);
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left, right;
 };
-
 }
+FMT_OSTREAM(NES::AddLogicalFunction);

@@ -27,11 +27,10 @@ namespace NES
 class AvgAggregationLogicalFunction final : public WindowAggregationLogicalFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
-    static std::unique_ptr<WindowAggregationLogicalFunction>
-    create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
-    AvgAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
-    explicit AvgAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(LogicalFunction onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    explicit AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
     void inferStamp(const Schema& schema) override;
     std::unique_ptr<WindowAggregationLogicalFunction> clone() override;

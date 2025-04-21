@@ -14,32 +14,27 @@
 
 #include <Functions/ArithmeticalFunctions/CeilLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
 
-CeilLogicalFunction::CeilLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Ceil") {};
+CeilLogicalFunction::CeilLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
+{
+};
 
-CeilLogicalFunction::CeilLogicalFunction(CeilLogicalFunction* other) : UnaryLogicalFunction(other)
+CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : stamp(other.stamp->clone()), child(other.child)
 {
 }
 
-std::shared_ptr<LogicalFunction> CeilLogicalFunction::create(std::shared_ptr<LogicalFunction> const& child)
+bool CeilLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto ceilNode = std::make_shared<CeilLogicalFunction>(child->getStamp());
-    ceilNode->setChild(child);
-    return ceilNode;
-}
-
-bool CeilLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
-{
-    if (NES::Util::instanceOf<CeilLogicalFunction>(rhs))
+    auto other = dynamic_cast<const CeilLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherCeilNode = NES::Util::as<CeilLogicalFunction>(rhs);
-        return getChild()->equal(otherCeilNode->getChild());
+        return child == other->child;
     }
     return false;
 }
@@ -47,12 +42,28 @@ bool CeilLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs
 std::string CeilLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "CEIL(" << *getChild() << ")";
+    ss << "CEIL(" << child << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> CeilLogicalFunction::clone() const
+SerializableFunction CeilLogicalFunction::serialize() const
 {
-    return CeilLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(child.serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
+
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterCeilLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    return CeilLogicalFunction(arguments.children[0]);
+}
+
 }

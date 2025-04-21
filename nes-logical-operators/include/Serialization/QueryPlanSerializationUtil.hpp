@@ -25,21 +25,9 @@ namespace NES
 class QueryPlanSerializationUtil
 {
 public:
-    /**
-     * @brief Serializes a Query Plan and all its root operators to a SerializableQueryPlan object.
-     * @param queryPlan: The query plan
-     * @param serializableQueryPlan: pointer to the serializable query Plan object
-     * @param isClientOriginated Indicate if the source operator is originated from a client.
-     * @return the pointer to serialized SerializableQueryPlan
-     */
     static void
     serializeQueryPlan(const QueryPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated = false);
 
-    /**
-     * @brief De-serializes the SerializableQueryPlan and all its root operators back to a std::shared_ptr<QueryPlan>
-     * @param serializedQueryPlan the serialized query plan.
-     * @return the pointer to the deserialized query plan
-     */
-    static std::shared_ptr<QueryPlan> deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
+    static QueryPlan deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
 };
 }

@@ -33,26 +33,26 @@ public:
         EventTime
     };
     explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit);
+    TimeCharacteristic(Type type, AttributeField field, TimeUnit unit);
 
     /// @brief Factory to create a time characteristic for ingestion time window
     /// @param unit the time unit of the ingestion time
     /// @return std::shared_ptr<TimeCharacteristic>
-    static std::shared_ptr<TimeCharacteristic> createIngestionTime();
+    static TimeCharacteristic createIngestionTime();
 
     /// @brief Factory to create a event time window with an time extractor on a specific field.
     /// @param unit the time unit of the EventTime, defaults to milliseconds
     /// @param field the field from which we want to extract the time.
     /// @return std::shared_ptr<TimeCharacteristic>
-    static std::shared_ptr<TimeCharacteristic> createEventTime(const std::shared_ptr<LogicalFunction>& field, const TimeUnit& unit);
-    static std::shared_ptr<TimeCharacteristic> createEventTime(const std::shared_ptr<LogicalFunction>& field);
+    static TimeCharacteristic createEventTime(LogicalFunction field, const TimeUnit& unit);
+    static TimeCharacteristic createEventTime(LogicalFunction field);
 
     /// @return The TimeCharacteristic type.
     [[nodiscard]] Type getType() const;
 
     [[nodiscard]] bool operator==(const TimeCharacteristic& other) const;
 
-    [[nodiscard]] std::shared_ptr<AttributeField> getField() const;
+    [[nodiscard]] AttributeField getField() const;
 
     [[nodiscard]] uint64_t hash() const;
 
@@ -64,7 +64,7 @@ public:
 
 private:
     Type type;
-    std::shared_ptr<AttributeField> field;
+    AttributeField field;
     TimeUnit unit;
 };
 }

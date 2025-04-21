@@ -27,14 +27,14 @@ namespace NES
 class MedianAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    MedianAggregationLogicalFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
-    explicit MedianAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+    MedianAggregationLogicalFunction(LogicalFunction onField, LogicalFunction asField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(LogicalFunction onField);
+    explicit MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
     /// Creates a new MedianAggregationLogicalFunction
     /// @param onField field on which the aggregation should be performed
     /// @param asField function describing how the aggregated field should be called
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
 
     void inferStamp(const Schema& schema) override;
 

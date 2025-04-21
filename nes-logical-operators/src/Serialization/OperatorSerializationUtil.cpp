@@ -26,16 +26,16 @@
 namespace NES
 {
 
-SerializableOperator OperatorSerializationUtil::serializeOperator(std::unique_ptr<LogicalOperator> operatorNode)
+SerializableOperator OperatorSerializationUtil::serializeOperator(Operator operatorNode)
 {
     auto serializedOperator = SerializableOperator();
 
-    if (auto* sourceOp = dynamic_cast<SourceDescriptorLogicalOperator*>(operatorNode.get()))
+    if (auto* sourceOp = operatorNode.get<SourceDescriptorLogicalOperator>())
     {
         // Serialize source operator
         serializeSourceOperator(*sourceOp, serializedOperator);
     }
-    else if (auto* sinkOp = dynamic_cast<SinkLogicalOperator*>(operatorNode.get()))
+    else if (auto* sinkOp = operatorNode.get<SinkLogicalOperator>())
     {
         // Serialize sink operator
         serializeSinkOperator(*sinkOp, serializedOperator);
@@ -43,7 +43,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(std::unique_pt
     return serializedOperator;
 }
 
-std::unique_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator)
+Operator OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator)
 {
     if (serializedOperator.has_source())
     {
@@ -68,7 +68,7 @@ std::unique_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
 }
 
 void OperatorSerializationUtil::serializeSourceOperator(
-    SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator)
+    const SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator)
 {
     auto* sourceDetails = new SerializableOperator_SourceDescriptorLogicalOperator();
     const auto& sourceDescriptor = sourceOperator.getSourceDescriptor();
@@ -78,13 +78,13 @@ void OperatorSerializationUtil::serializeSourceOperator(
     serializedOperator.set_allocated_source(sourceDetails);
 }
 
-std::unique_ptr<UnaryLogicalOperator>
+Operator
 OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails)
 {
     const auto& serializedSourceDescriptor = sourceDetails.sourcedescriptor();
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDescriptor);
-    auto logicalOperator = std::make_unique<SourceDescriptorLogicalOperator>(sourceDescriptor);
-    logicalOperator->originIdTrait.originIds = {OriginId(sourceDetails.sourceoriginid())};
+    auto logicalOperator = SourceDescriptorLogicalOperator(sourceDescriptor);
+    logicalOperator.originIdTrait.originIds = {OriginId(sourceDetails.sourceoriginid())};
     return logicalOperator;
 }
 
@@ -93,20 +93,18 @@ void OperatorSerializationUtil::serializeSinkOperator(
     const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator)
 {
     auto* sinkDetails = new SerializableOperator_SinkLogicalOperator();
-    const auto& sinkDescriptor = sinkOperator.getSinkDescriptorRef();
+    const auto& sinkDescriptor = sinkOperator.sinkDescriptor;
     serializeSinkDescriptor(sinkOperator.getOutputSchema(), sinkDescriptor, *sinkDetails);
 
     serializedOperator.set_allocated_sink(sinkDetails);
 }
 
-std::unique_ptr<UnaryLogicalOperator>
-OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
+Operator OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
     const auto& serializedSinkDescriptor = sinkDetails.sinkdescriptor();
-    auto sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
-    auto sinkOperator = std::make_unique<SinkLogicalOperator>();
-    sinkOperator->sinkDescriptor = sinkDescriptor.clone();
-    return std::move(sinkOperator);
+    auto sinkOperator = SinkLogicalOperator();
+    sinkOperator.sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
+    return sinkOperator;
 }
 
 void OperatorSerializationUtil::serializeSourceDescriptor(
@@ -135,7 +133,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     sourceDetails.set_allocated_sourcedescriptor(serializedSourceDescriptor);
 }
 
-std::unique_ptr<LogicalOperator> OperatorSerializationUtil::deserializeLogicalOperator(
+Operator OperatorSerializationUtil::deserializeLogicalOperator(
     const SerializableOperator_LogicalOperator& operatorDescriptor)
 {
     auto operatorType = operatorDescriptor.operatortype();
@@ -152,7 +150,7 @@ std::unique_ptr<LogicalOperator> OperatorSerializationUtil::deserializeLogicalOp
     {
         return std::move(logicalOperator.value());
     }
-    return nullptr;
+    throw UnknownLogicalOperator();
 }
 
 Sources::SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(

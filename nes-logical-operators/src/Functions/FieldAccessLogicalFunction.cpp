@@ -26,12 +26,15 @@
 namespace NES
 {
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
-    : LogicalFunction(DataTypeProvider::provideDataType(LogicalType::UNDEFINED)), fieldName(std::move(fieldName)) {};
+    : fieldName(std::move(fieldName)), stamp(DataTypeProvider::provideDataType(LogicalType::UNDEFINED))
+{};
 
-FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::unique_ptr<DataType> stamp, std::string fieldName)
-    : LogicalFunction(std::move(stamp)), fieldName(std::move(fieldName)) {};
+FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName)
+    : fieldName(std::move(fieldName)), stamp(stamp)
+{
+};
 
-bool FieldAccessLogicalFunction::operator==(const LogicalFunction& rhs) const
+bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const FieldAccessLogicalFunction*>(&rhs);
     if (other)
@@ -72,16 +75,6 @@ void FieldAccessLogicalFunction::inferStamp(const Schema& schema)
     throw QueryInvalid("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema.toString());
 }
 
-std::unique_ptr<LogicalFunction> FieldAccessLogicalFunction::clone() const
-{
-    return std::make_unique<FieldAccessLogicalFunction>(stamp->clone(), fieldName);
-}
-
-std::span<const std::unique_ptr<LogicalFunction>> FieldAccessLogicalFunction::getChildren() const
-{
-    return {};
-}
-
 SerializableFunction FieldAccessLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
@@ -102,7 +95,7 @@ LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     auto fieldName = get<std::string>(arguments.config["FieldName"]);
-    return std::make_unique<FieldAccessLogicalFunction>(std::move(arguments.stamp), fieldName);
+    return FieldAccessLogicalFunction(arguments.stamp, fieldName);
 }
 
 }

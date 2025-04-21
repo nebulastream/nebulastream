@@ -14,94 +14,165 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
-#include <ostream>
+#include <memory>
+#include <stack>
 #include <string>
+#include <span>
+#include <ostream>
 #include <API/Schema.hpp>
-#include <fmt/base.h>
-#include <fmt/ostream.h>
 #include <Common/DataTypes/DataType.hpp>
-#include <Util/Common.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <SerializableFunction.pb.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-/// @brief this indicates an function, which is a parameter for a FilterOperator or a MapOperator.
-/// Each function declares a stamp, which expresses the data type of this function.
-/// A stamp can be of a concrete type or invalid if the data type was not yet inferred.
-class LogicalFunction : std::enable_shared_from_this<LogicalFunction>
+struct LogicalFunctionConcept
 {
 public:
-    explicit LogicalFunction(std::shared_ptr<DataType> stamp, std::string type);
-    virtual ~LogicalFunction() = default;
+    virtual ~LogicalFunctionConcept() = default;
+    [[nodiscard]] virtual std::string toString() const = 0;
 
-    /// @brief Indicates if this function is a predicate -> if its result stamp is a boolean
-    [[nodiscard]] bool isPredicate() const;
+    [[nodiscard]] virtual const DataType& getStamp() const = 0;
+    virtual void setStamp(std::shared_ptr<DataType> stamp) = 0;
 
-    /// Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-    virtual void inferStamp(const Schema& schema);
+    [[nodiscard]] virtual std::vector<struct LogicalFunction> getChildren() const = 0;
 
-    std::shared_ptr<DataType> getStamp() const;
-    void setStamp(std::shared_ptr<DataType> stamp);
+    [[nodiscard]] virtual std::string getType() const = 0;
+    [[nodiscard]] virtual SerializableFunction serialize() const = 0;
+};
 
-    virtual bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const = 0;
+struct LogicalFunction {
+public:
+    template<typename T>
+    LogicalFunction(const T& op) : self(std::make_unique<Model<T>>(op)) {}
 
-    virtual std::shared_ptr<LogicalFunction> clone() const = 0;
+    LogicalFunction(const LogicalFunction& other)
+        : self(other.self->clone()) {}
 
-    virtual std::string toString() const  = 0;
-
-    const std::string& getType() const
-    {
-        return type;
+    template<typename T>
+    const T& get() const {
+        if (auto p = dynamic_cast<const Model<T>*>(self.get()))
+        {
+            return p->data;
+        }
+        INVARIANT(false, "Bad cast: requested type {} , but stored type is {}", typeid(T).name(), self->getType());
     }
 
-
-    template <class FunctionType>
-    void getFunctionByTypeHelper(std::vector<std::shared_ptr<FunctionType>>& foundNodes)
-    {
-        auto sharedThis = this->shared_from_this();
-        if (NES::Util::instanceOf<FunctionType>(sharedThis))
-        {
-            foundNodes.push_back(NES::Util::as<FunctionType>(sharedThis));
+    template<typename T>
+    const T* tryGet() const {
+        if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
+            return &(p->data);
         }
-        for (auto& successor : this->children)
+        return nullptr;
+    }
+
+    LogicalFunction(LogicalFunction&&) noexcept = default;
+
+    LogicalFunction& operator=(const LogicalFunction& other) {
+        if (this != &other)
         {
-            successor->getFunctionByTypeHelper(foundNodes);
+            self = other.self->clone();
+        }
+        return *this;
+    }
+
+    bool operator==(const LogicalFunction &other) const {
+        return self->equals(*other.self);
+    }
+
+    [[nodiscard]] std::string toString() const
+    {
+        return self->toString();
+    }
+
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const
+    {
+        return self->getChildren();
+    }
+
+    const DataType& getStamp() const
+    {
+        return self->getStamp();
+    }
+
+    void setStamp(std::shared_ptr<DataType> stamp)
+    {
+        self->setStamp(stamp);
+    }
+
+    SerializableFunction serialize() const
+    {
+        return self->serialize();
+    }
+
+    std::string getType() const
+    {
+        return self->getType();
+    }
+
+private:
+    struct Concept : LogicalFunctionConcept {
+        [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
+        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
+    };
+
+    template<typename T>
+    struct Model : Concept {
+        T data;
+        explicit Model(T d) : data(std::move(d)) {}
+
+        [[nodiscard]] std::unique_ptr<Concept> clone() const override {
+            return std::unique_ptr<Concept>(new Model<T>(data));
+        }
+
+        [[nodiscard]] std::string toString() const override
+        {
+            return data.toString();
+        }
+
+        [[nodiscard]] std::vector<LogicalFunction> getChildren() const override
+        {
+            return data.getChildren();
+        }
+
+        SerializableFunction serialize() const override
+        {
+            return data.serialize();
+        }
+
+        std::string getType() const override
+        {
+            return data.getType();
+        }
+
+        const DataType& getStamp() const override
+        {
+            return data.getStamp();
+        }
+
+        void setStamp(std::shared_ptr<DataType> stamp) override
+        {
+            data.setStamp(stamp);
+        }
+
+        [[nodiscard]] bool equals(const Concept& other) const override {
+            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
+                return data == p->data;
+            }
+            return false;
         }
     };
 
-    template <class FunctionType>
-    std::vector<std::shared_ptr<FunctionType>> getFunctionByType()
-    {
-        std::vector<std::shared_ptr<FunctionType>> vector;
-        getFunctionByTypeHelper<FunctionType>(vector);
-        return vector;
-    }
-
-    std::vector<std::shared_ptr<LogicalFunction>> getChildren() const
-    {
-        return children;
-    }
-
-protected:
-    explicit LogicalFunction(const LogicalFunction* other);
-
-    std::vector<std::shared_ptr<LogicalFunction>> children;
-
-    std::shared_ptr<DataType> stamp;
-    std::string type;
+    std::unique_ptr<Concept> self;
 };
 
-inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& function)
+inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& lf)
 {
-    return os << function.toString();
-}
+    return os << lf.toString();
 }
 
-template <typename T>
-requires(std::is_base_of_v<NES::LogicalFunction, T>)
-struct fmt::formatter<T> : fmt::ostream_formatter
-{
-};
+}
+FMT_OSTREAM(NES::LogicalFunction);

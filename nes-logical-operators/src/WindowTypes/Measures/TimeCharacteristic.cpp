@@ -31,32 +31,28 @@ TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1)
 {
 }
 
-TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit)
+TimeCharacteristic::TimeCharacteristic(Type type, AttributeField field, TimeUnit unit)
     : type(type), field(std::move(field)), unit(std::move(unit))
 {
 }
-std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<LogicalFunction>& field)
+TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction field)
 {
-    return createEventTime(field, TimeUnit(1));
+    return createEventTime(std::move(field), TimeUnit(1));
 }
 
-std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<LogicalFunction>& fieldValue, const TimeUnit& unit)
+TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction fieldValue, const TimeUnit& unit)
 {
-    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(fieldValue))
-    {
-        throw QueryInvalid(fmt::format("Query: window key has to be an FieldAccessFunction but it was a  {}", *fieldValue));
-    }
-    auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(fieldValue);
-    std::shared_ptr<AttributeField> keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
+    const auto& fieldAccess = fieldValue.get<FieldAccessLogicalFunction>();
+    auto keyField = AttributeField(fieldAccess.getFieldName(), fieldAccess.getStamp().clone());
+    return TimeCharacteristic(Type::EventTime, keyField, unit);
 }
 
-std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createIngestionTime()
+TimeCharacteristic TimeCharacteristic::createIngestionTime()
 {
-    return std::make_shared<TimeCharacteristic>(Type::IngestionTime);
+    return TimeCharacteristic(Type::IngestionTime);
 }
 
-std::shared_ptr<AttributeField> TimeCharacteristic::getField() const
+AttributeField TimeCharacteristic::getField() const
 {
     return field;
 }
@@ -81,11 +77,7 @@ std::string TimeCharacteristic::toString() const
     std::stringstream ss;
     ss << "TimeCharacteristic: ";
     ss << " type=" << getTypeAsString();
-    if (field)
-    {
-        ss << " field=" << field->toString();
-    }
-
+    ss << " field=" << field.toString();
     ss << std::endl;
     return ss.str();
 }
@@ -105,8 +97,7 @@ std::string TimeCharacteristic::getTypeAsString() const
 
 bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
 {
-    const bool equalField = (this->field == nullptr && other.field == nullptr)
-        || (this->field != nullptr && other.field != nullptr && this->field->isEqual(other.field));
+    const bool equalField = (this->field.isEqual(other.field));
 
     return this->type == other.type && equalField && (this->unit == other.unit);
 }
@@ -115,10 +106,7 @@ uint64_t TimeCharacteristic::hash() const
 {
     uint64_t hashValue = 0;
     hashValue = hashValue * 0x9e3779b1 + std::hash<uint8_t>{}((unsigned char)type);
-    if (field)
-    {
-        hashValue = hashValue * 0x9e3779b1 + field->hash();
-    }
+    hashValue = hashValue * 0x9e3779b1 + field.hash();
     hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(unit.getMillisecondsConversionMultiplier());
     return hashValue;
 }

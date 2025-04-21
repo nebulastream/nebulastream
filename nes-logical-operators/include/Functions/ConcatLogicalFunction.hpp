@@ -16,33 +16,38 @@
 
 #include <memory>
 #include <string>
-#include <Functions/LogicalFunction.hpp>
+#include <string_view>
+#include <Abstract/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <API/Schema.hpp>
 
 namespace NES
 {
 
-class ConcatLogicalFunction final : public BinaryLogicalFunction
+class ConcatLogicalFunction final : public LogicalFunctionConcept
 {
 public:
     static constexpr std::string_view NAME = "Concat";
 
-    explicit ConcatLogicalFunction(std::shared_ptr<LogicalFunction> const& left, std::shared_ptr<LogicalFunction> const& right);
+    ConcatLogicalFunction(LogicalFunction left, LogicalFunction right);
+    ConcatLogicalFunction(const ConcatLogicalFunction& other);
     ~ConcatLogicalFunction() noexcept override = default;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    void inferStamp(const Schema& schema) override;
-    [[nodiscard]] bool operator==(std::shared_ptr<LogicalFunction> const& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
 
-    std::span<const std::shared_ptr<LogicalFunction>> getChildren() const override;
+    const DataType& getStamp() const override {return *stamp;};
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren()  const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME);}
+    [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit ConcatLogicalFunction(const ConcatLogicalFunction& other);
-    std::string toString() const override;
-
     const std::string constantValue;
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left;
+    LogicalFunction right;
 };
 }
 FMT_OSTREAM(NES::ConcatLogicalFunction);

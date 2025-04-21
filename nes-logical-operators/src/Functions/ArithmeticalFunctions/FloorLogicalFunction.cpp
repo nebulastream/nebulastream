@@ -12,35 +12,29 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <Functions/ArithmeticalFunctions/FloorLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
 
-FloorLogicalFunction::FloorLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Floor") {};
+FloorLogicalFunction::FloorLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
+{
+};
 
-FloorLogicalFunction::FloorLogicalFunction(FloorLogicalFunction* other) : UnaryLogicalFunction(other)
+FloorLogicalFunction::FloorLogicalFunction(const FloorLogicalFunction& other) : stamp(other.getStamp().clone()), child(other.child)
 {
 }
 
-std::shared_ptr<LogicalFunction> FloorLogicalFunction::create(std::shared_ptr<LogicalFunction> const& child)
+bool FloorLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto floorNode = std::make_shared<FloorLogicalFunction>(child->getStamp());
-    floorNode->setChild(child);
-    return floorNode;
-}
-
-bool FloorLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
-{
-    if (NES::Util::instanceOf<FloorLogicalFunction>(rhs))
+    auto other = dynamic_cast<const FloorLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherFloorNode = NES::Util::as<FloorLogicalFunction>(rhs);
-        return getChild() == otherFloorNode->getChild();
+        return child == other->child;
     }
     return false;
 }
@@ -48,12 +42,28 @@ bool FloorLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rh
 std::string FloorLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "FLOOR(" << *getChild() << ")";
+    ss << "FLOOR(" << child << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> FloorLogicalFunction::clone() const
+SerializableFunction FloorLogicalFunction::serialize() const
 {
-    return FloorLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(child.serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
+
+UnaryLogicalFunctionRegistryReturnType
+UnaryLogicalFunctionGeneratedRegistrar::RegisterFloorUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+{
+    return FloorLogicalFunction(arguments.children[0]);
+}
+
 }

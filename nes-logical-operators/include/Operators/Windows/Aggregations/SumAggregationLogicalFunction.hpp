@@ -27,13 +27,13 @@ namespace NES
 class SumAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    SumAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
-    explicit SumAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+    SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    explicit SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
     virtual ~SumAggregationLogicalFunction() = default;
 
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(LogicalFunction onField);
     static std::unique_ptr<WindowAggregationLogicalFunction>
-    create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
+    create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
 
     void inferStamp(const Schema& schema) override;
     std::unique_ptr<WindowAggregationLogicalFunction> clone() override;

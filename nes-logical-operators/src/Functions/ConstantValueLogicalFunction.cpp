@@ -13,33 +13,34 @@
 */
 
 #include <memory>
+#include <span>
 #include <string>
 #include <utility>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Abstract/LogicalFunction.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>
+#include <SerializableFunction.pb.h>
 #include <API/Schema.hpp>
-#include <Util/Common.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
-ConstantValueLogicalFunction::ConstantValueLogicalFunction(const std::shared_ptr<DataType>& type, std::string value)
-    : LogicalFunction(type, "ConstantValue"), constantValue(std::move(value))
-{
-}
+ConstantValueLogicalFunction::ConstantValueLogicalFunction(std::shared_ptr<DataType> stamp, std::string value)
+    : constantValue(std::move(value)), stamp(stamp) {}
 
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other)
-    : LogicalFunction(other.getStamp(), "ConstantValue"), constantValue(other.constantValue)
+    :  constantValue(other.constantValue), stamp(other.stamp->clone())
 {
 }
 
-bool ConstantValueLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool ConstantValueLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (Util::instanceOf<ConstantValueLogicalFunction>(rhs))
+    auto other = dynamic_cast<const ConstantValueLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherConstantValueNode = Util::as<ConstantValueLogicalFunction>(rhs);
-        return otherConstantValueNode->stamp == stamp && constantValue == otherConstantValueNode->constantValue;
+        return other->stamp == stamp && constantValue == other->constantValue;
     }
     return false;
 }
@@ -60,9 +61,27 @@ void ConstantValueLogicalFunction::inferStamp(const Schema&)
     /// thus ut is already assigned correctly when the function node is created.
 }
 
-std::shared_ptr<LogicalFunction> ConstantValueLogicalFunction::clone() const
+SerializableFunction ConstantValueLogicalFunction::serialize() const
 {
-    return std::make_shared<ConstantValueLogicalFunction>(getStamp(), constantValue);
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = getConstantValue();
+    SerializableVariantDescriptor variantDescriptor =
+        Configurations::descriptorConfigTypeToProto(configVariant);
+    (*serializedFunction.mutable_config())["constantValueAsString"] = variantDescriptor;
+
+    return serializedFunction;
+}
+
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);
+    return ConstantValueLogicalFunction(std::move(arguments.stamp), constantValueAsString);
 }
 
 }
