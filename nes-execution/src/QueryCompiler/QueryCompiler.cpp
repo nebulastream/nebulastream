@@ -17,8 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
-#include <QueryCompiler/Phases/MemoryLayoutSelection/MemoryLayoutSelectionPhase.hpp>
-#include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
+#include <QueryCompiler/Phases/NautilusCompilationPhase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
@@ -28,7 +27,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
 #include <fmt/format.h>
-#include "CompiledQueryPlan.hpp"
+#include <CompiledQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -44,7 +43,8 @@ QueryCompiler::QueryCompiler(Configurations::QueryCompilerConfiguration queryCom
 {
 }
 
-std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQuery(const std::shared_ptr<QueryCompilationRequest>& request) const
+std::unique_ptr<Runtime::Execution::CompiledQueryPlan>
+QueryCompiler::compileQuery(const std::shared_ptr<QueryCompilationRequest>& request) const
 {
     NES_INFO("Compile Query with Nautilus");
 
