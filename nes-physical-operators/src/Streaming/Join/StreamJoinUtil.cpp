@@ -24,27 +24,27 @@
 
 namespace NES::Util
 {
-std::shared_ptr<Schema> createJoinSchema(const std::shared_ptr<Schema>& leftSchema, const std::shared_ptr<Schema>& rightSchema)
+Schema createJoinSchema(const Schema& leftSchema, const Schema& rightSchema)
 {
     PRECONDITION(
-        leftSchema->getLayoutType() == rightSchema->getLayoutType(),
+        leftSchema.getLayoutType() == rightSchema.getLayoutType(),
         "Left and right schema do not have the same layout type (left: {} and right: {})",
-        magic_enum::enum_name(leftSchema->getLayoutType()),
-        magic_enum::enum_name(rightSchema->getLayoutType()));
-    auto retSchema = Schema::create(leftSchema->getLayoutType());
-    auto newQualifierForSystemField = leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier();
+        magic_enum::enum_name(leftSchema.getLayoutType()),
+        magic_enum::enum_name(rightSchema.getLayoutType()));
+    auto retSchema = Schema(leftSchema.getLayoutType());
+    auto newQualifierForSystemField = leftSchema.getSourceNameQualifier() + rightSchema.getSourceNameQualifier();
 
-    retSchema->addField(newQualifierForSystemField + "$start", BasicType::UINT64);
-    retSchema->addField(newQualifierForSystemField + "$end", BasicType::UINT64);
+    retSchema.addField(newQualifierForSystemField + "$start", BasicType::UINT64);
+    retSchema.addField(newQualifierForSystemField + "$end", BasicType::UINT64);
 
-    for (const auto& fields : *leftSchema)
+    for (auto& fields : leftSchema)
     {
-        retSchema->addField(fields->getName(), fields->getDataType());
+        retSchema.addField(fields.getName(), fields.getDataType());
     }
 
-    for (const auto& fields : *rightSchema)
+    for (auto& fields : rightSchema)
     {
-        retSchema->addField(fields->getName(), fields->getDataType());
+        retSchema.addField(fields.getName(), fields.getDataType());
     }
 
     return retSchema;
