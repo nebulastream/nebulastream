@@ -145,7 +145,7 @@ private:
         explicit Model(T d) : data(std::move(d)) {}
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override {
-            return std::unique_ptr<Concept>(new Model<T>(data));
+            return std::unique_ptr<Concept>(new Model(data));
         }
 
         [[nodiscard]] std::string toString() const override
@@ -197,7 +197,7 @@ private:
         }
 
         [[nodiscard]] bool equals(const Concept& other) const override {
-            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
+            if (auto p = dynamic_cast<const Model*>(&other)) {
                 return data.operator==(p->data);
             }
             return false;

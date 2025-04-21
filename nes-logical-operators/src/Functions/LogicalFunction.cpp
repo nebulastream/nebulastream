@@ -30,7 +30,7 @@ std::string NullLogicalFunction::toString() const
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
 
-const DataType& NullLogicalFunction::getStamp() const
+std::shared_ptr<DataType> NullLogicalFunction::getStamp() const
 {
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
@@ -112,9 +112,10 @@ LogicalFunction LogicalFunction::withChildren(std::vector<LogicalFunction> child
     return self->withChildren(children);
 }
 
-const DataType& LogicalFunction::getStamp() const
-{
-    return self->getStamp();
+std::shared_ptr<DataType> LogicalFunction::getStamp() const {
+    auto s = self->getStamp();
+    PRECONDITION(s != nullptr, "Invariant violation: Stamp is null in LogicalFunction::getStamp()");
+    return s;
 }
 
 LogicalFunction LogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const

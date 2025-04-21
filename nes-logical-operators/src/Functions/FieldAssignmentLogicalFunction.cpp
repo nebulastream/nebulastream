@@ -57,7 +57,7 @@ std::string FieldAssignmentLogicalFunction::toString() const
     return ss.str();
 }
 
-const FieldAccessLogicalFunction& FieldAssignmentLogicalFunction::getField() const
+FieldAccessLogicalFunction FieldAssignmentLogicalFunction::getField() const
 {
     return fieldAccess;
 }
@@ -68,9 +68,9 @@ LogicalFunction FieldAssignmentLogicalFunction::getAssignment() const
 }
 
 
-const DataType& FieldAssignmentLogicalFunction::getStamp() const
+std::shared_ptr<DataType> FieldAssignmentLogicalFunction::getStamp() const
 {
-return *stamp;
+    return stamp;
 };
 
 LogicalFunction FieldAssignmentLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
