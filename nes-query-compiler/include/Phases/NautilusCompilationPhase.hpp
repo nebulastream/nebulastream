@@ -13,11 +13,9 @@
 */
 #pragma once
 #include <functional>
-#include <memory>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/QueryCompilerConfiguration.hpp>
+#include <Plans/OperatorPipeline.hpp>
+#include <Plans/PipelineQueryPlan.hpp>
+#include <QueryCompilerConfiguration.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -32,7 +30,7 @@ public:
     std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> queryPlan);
 
     /// Generates code for a particular pipeline.
-    std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline);
+    std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> pipeline);
 
 private:
     Configurations::QueryCompilerConfiguration compilerOptions;
