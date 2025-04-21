@@ -44,8 +44,6 @@ public:
     QueryPlan(QueryPlan&& other);
     QueryPlan& operator=(QueryPlan&& other);
 
-    std::vector<SinkLogicalOperator*> getSinkOperators() const;
-
     /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
     void promoteOperatorToRoot(std::unique_ptr<Operator> newRoot);
     /// Adds operator to roots vector
@@ -127,6 +125,71 @@ public:
             }
         }
         return operators;
+    }
+
+    std::unique_ptr<QueryPlan> flip()
+    {
+        std::unordered_map<Operator*, Operator*> parentMap;
+        std::unordered_map<Operator*, std::unique_ptr<Operator>*> opPtrMap;
+
+        std::function<void(Operator*, Operator*, std::unique_ptr<Operator>*)> buildMaps
+            = [&](Operator* op, Operator* parent, std::unique_ptr<Operator>* opOwner)
+        {
+            if (parent != nullptr)
+            {
+                parentMap[op] = parent;
+            }
+            opPtrMap[op] = opOwner;
+            for (auto& child : op->children)
+            {
+                buildMaps(child.get(), op, &child);
+            }
+        };
+
+        for (auto& root : rootOperators)
+        {
+            buildMaps(root.get(), nullptr, &root);
+        }
+
+        std::vector<Operator*> leaves;
+        std::function<void(Operator*)> findLeaves = [&](Operator* op)
+        {
+            if (op->children.empty())
+            {
+                leaves.push_back(op);
+            }
+            else
+            {
+                for (auto& child : op->children)
+                {
+                    findLeaves(child.get());
+                }
+            }
+        };
+        for (auto& root : rootOperators)
+        {
+            findLeaves(root.get());
+        }
+
+        std::function<std::unique_ptr<Operator>(Operator*)> buildReversedChain = [&](Operator* op) -> std::unique_ptr<Operator>
+        {
+            std::unique_ptr<Operator> current = std::move(*opPtrMap[op]);
+            current->children.clear();
+            if (parentMap.find(op) != parentMap.end())
+            {
+                Operator* parent = parentMap[op];
+                current->children.push_back(buildReversedChain(parent));
+            }
+            return current;
+        };
+
+        std::vector<std::unique_ptr<Operator>> flippedRoots;
+        for (Operator* leaf : leaves)
+        {
+            flippedRoots.push_back(buildReversedChain(leaf));
+        }
+
+        return std::make_unique<QueryPlan>(this->getQueryId(), std::move(flippedRoots));
     }
 
     /// Get all the leaf operators in the query plan (leaf operator is the one without any child)
