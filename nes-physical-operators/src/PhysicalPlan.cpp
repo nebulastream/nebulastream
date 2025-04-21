@@ -15,8 +15,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <memory>
 #include <queue>
 #include <utility>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <SinkPhysicalOperator.hpp>
 

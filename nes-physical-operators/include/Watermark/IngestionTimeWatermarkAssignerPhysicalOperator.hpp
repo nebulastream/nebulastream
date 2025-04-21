@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #pragma once
-#include <Abstract/PhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {

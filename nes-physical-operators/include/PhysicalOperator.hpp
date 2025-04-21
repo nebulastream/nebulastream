@@ -21,6 +21,7 @@
 #include <string>
 #include <typeinfo>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -146,7 +147,6 @@ struct PhysicalOperator
 
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
 
-        void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
         std::string toString() const override
         {
             const auto name = typeid(T).name();

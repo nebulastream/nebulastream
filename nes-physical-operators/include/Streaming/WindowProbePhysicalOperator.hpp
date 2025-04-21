@@ -16,9 +16,7 @@
 
 #include <cstdint>
 #include <vector>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <AbstractPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 
 

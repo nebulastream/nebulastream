@@ -16,9 +16,8 @@
 
 #include <cstdint>
 #include <memory>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <AbstractPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {

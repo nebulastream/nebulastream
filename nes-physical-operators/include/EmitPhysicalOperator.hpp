@@ -19,7 +19,7 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <nautilus/val.hpp>
+#include <PhysicalOperator.hpp>
 #include <val.hpp>
 
 namespace NES

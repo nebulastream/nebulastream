@@ -14,7 +14,6 @@
 
 #include <cstdint>
 #include <utility>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -23,6 +22,7 @@
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 #include <function.hpp>
 
 namespace NES
