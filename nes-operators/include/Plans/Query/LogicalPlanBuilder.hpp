@@ -93,12 +93,6 @@ public:
     //checkAndAddWatermarkAssignment(std::shared_ptr<LogicalPlan> queryPlan, std::shared_ptr<Windowing::WindowType> windowType);
 
 private:
-    /// @brief This method checks if an LogicalFunction is instance Of FieldAccessLogicalFunction for Join and BatchJoin
-    /// @param function the function node to test
-    /// @param side points out from which side, i.e., left or right query plan, the LogicalFunction is
-    // @return LogicalFunction as FieldAccessLogicalFunction
-    static FieldAccessLogicalFunction asFieldAccessLogicalFunction(LogicalFunction function, std::string side);
-
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources
     /// @param operatorNode the binary operator to add
     /// @param: leftLogicalPlan the left query plan of the binary operation
