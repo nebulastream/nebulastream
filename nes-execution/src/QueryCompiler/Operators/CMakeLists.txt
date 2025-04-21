@@ -10,13 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        OperatorPipeline.cpp
-        PipelineQueryPlan.cpp
-        ExecutableOperator.cpp
-        PipelineQueryPlanIterator.cpp
-        NautilusPipelineOperator.cpp
+add_source_files(nes-physical-operators
+        StreamJoinBuild.cpp
+        StreamJoinOperatorHandler.cpp
+        StreamJoinProbe.cpp
+        StreamJoinUtil.cpp
 )
 
-add_subdirectory(PhysicalOperators)
-
+add_subdirectory(NestedLoopJoin)
