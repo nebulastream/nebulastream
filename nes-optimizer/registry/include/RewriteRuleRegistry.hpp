@@ -11,15 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
-#include <functional>
-#include <Plans/PipelineQueryPlan.hpp>
 
-namespace NES::QueryCompilation::NautilusCompilationPhase
+#include <string>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Util/Registry.hpp>
+
+namespace NES::Optimizer
 {
-/// Generates code for all pipelines in a pipelined query plan.
-std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> queryPlan);
 
-/// Generates code for a particular pipeline.
-std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline);
+using RewriteRuleRegistryReturnType = NES::Optimizer::AbstractRewriteRule;
+struct RewriteRuleRegistryArguments
+{
+};
+
+class RewriteRuleRegistry
+    : public BaseRegistry<RewriteRuleRegistry, std::string, RewriteRuleRegistryReturnType, RewriteRuleRegistryArguments>
+{
+};
 }
+
+#define INCLUDED_FROM_REGISTRY_REWRITE_RULE
+#include <RewriteRuleGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_REGISTRY_REWRITE_RULE

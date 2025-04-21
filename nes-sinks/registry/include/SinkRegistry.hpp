@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -23,7 +22,7 @@
 namespace NES::Sinks
 {
 
-using SinkRegistryReturnType = std::unique_ptr<Sink>;
+using SinkRegistryReturnType = Sink;
 struct SinkRegistryArguments
 {
     SinkDescriptor sinkDescriptor;

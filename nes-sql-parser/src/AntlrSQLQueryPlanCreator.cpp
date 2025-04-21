@@ -99,17 +99,17 @@ std::shared_ptr<LogicalFunction> createFunctionFromOpBoolean(
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::EQ:
-            return EqualsBinaryLogicalFunction::create(leftFunction, rightFunction);
+            return EqualsLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::NEQJ:
-            return NegateUnaryLogicalFunction::create(EqualsBinaryLogicalFunction::create(leftFunction, rightFunction));
+            return NegateLogicalFunction::create(EqualsLogicalFunction::create(leftFunction, rightFunction));
         case AntlrSQLLexer::LT:
-            return LessBinaryLogicalFunction::create(leftFunction, rightFunction);
+            return LessLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::GT:
-            return GreaterBinaryLogicalFunction::create(leftFunction, rightFunction);
+            return GreaterLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::GTE:
-            return GreaterEqualsBinaryLogicalFunction::create(leftFunction, rightFunction);
+            return GreaterEqualsLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::LTE:
-            return LessEqualsBinaryLogicalFunction::create(leftFunction, rightFunction);
+            return LessEqualsLogicalFunction::create(leftFunction, rightFunction);
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
@@ -123,9 +123,9 @@ std::shared_ptr<LogicalFunction> createLogicalBinaryFunction(
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::AND:
-            return AndBinaryLogicalFunction::create(leftFunction, rightFunction);
+            return AndLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::OR:
-            return OrBinaryLogicalFunction::create(leftFunction, rightFunction);
+            return OrLogicalFunction::create(leftFunction, rightFunction);
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(

@@ -16,12 +16,12 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Phases/NautilusCompilationPhase.hpp>
-#include <Phases/Translations/AddScanAndEmitPhase.hpp>
-#include <Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
-#include <Phases/Translations/PipeliningPhase.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
+#include "Phases/AddScanAndEmitPhase.hpp"
+#include "Phases/LowerToExecutableQueryPlanPhase.hpp"
+#include "Phases/PipeliningPhase.hpp"
 
 namespace NES::QueryCompilation
 {

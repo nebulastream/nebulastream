@@ -20,8 +20,8 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <API/Query.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -42,9 +42,9 @@ enum class AntlrSQLWindowType : uint8_t
 };
 class AntlrSQLHelper
 {
-    std::vector<std::shared_ptr<NodeFunction>> projectionFields; ///vector needed for logicalProjectionOperator constructor
-    std::vector<std::shared_ptr<NodeFunction>> whereClauses; ///where and having clauses need to be accessed in reverse
-    std::vector<std::shared_ptr<NodeFunction>> havingClauses;
+    std::vector<std::shared_ptr<LogicalFunction>> projectionFields;
+    std::vector<std::shared_ptr<LogicalFunction>> whereClauses;
+    std::vector<std::shared_ptr<LogicalFunction>> havingClauses;
     std::string source;
 
 public:
@@ -70,15 +70,15 @@ public:
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>> windowAggs;
-    std::vector<std::shared_ptr<NodeFunction>> projections;
+    std::vector<std::shared_ptr<Windowing::WindowAggregationFunction>> windowAggs;
+    std::vector<std::shared_ptr<LogicalFunction>> projections;
     std::vector<std::shared_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
-    std::vector<std::shared_ptr<NodeFunction>> functionBuilder;
-    std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> mapBuilder;
-    std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByFields;
+    std::vector<std::shared_ptr<LogicalFunction>> functionBuilder;
+    std::vector<std::shared_ptr<FieldAssignmentLogicalFunction>> mapBuilder;
+    std::vector<std::shared_ptr<FieldAccessLogicalFunction>> groupByFields;
     std::vector<std::string> joinSources;
-    std::shared_ptr<NodeFunction> joinFunction;
-    std::vector<std::shared_ptr<NodeFunction>> joinKeyRelationHelper;
+    std::shared_ptr<LogicalFunction> joinFunction;
+    std::vector<std::shared_ptr<LogicalFunction>> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
     Join::LogicalJoinDescriptor::JoinType joinType;
 
@@ -97,17 +97,17 @@ public:
     int identCountHelper = 0;
     int implicitMapCountHelper = 0;
 
-    [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getWhereClauses() const;
-    [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getHavingClauses() const;
-    [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getProjectionFields() const;
-    void addWhereClause(const std::shared_ptr<NodeFunction>& expressionNode);
-    void addHavingClause(const std::shared_ptr<NodeFunction>& expressionNode);
-    void addProjectionField(const std::shared_ptr<NodeFunction>& expressionNode);
-    [[nodiscard]] static std::shared_ptr<Windowing::WindowType> getWindowType();
+    [[nodiscard]] const std::vector<std::shared_ptr<LogicalFunction>>& getWhereClauses() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<LogicalFunction>>& getHavingClauses() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<LogicalFunction>>& getProjectionFields() const;
+    void addWhereClause(const std::shared_ptr<LogicalFunction> expressionNode);
+    void addHavingClause(const std::shared_ptr<LogicalFunction> expressionNode);
+    void addProjectionField(const std::shared_ptr<LogicalFunction> expressionNode);
+    [[nodiscard]] const std::shared_ptr<Windowing::WindowType> getWindowType();
     void setSource(std::string sourceName);
     const std::string getSource() const;
-    void addMapExpression(std::shared_ptr<NodeFunctionFieldAssignment> expressionNode);
-    [[nodiscard]] std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> getMapExpressions() const;
-    void setMapExpressions(std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> expressions);
+    void addMapExpression(std::shared_ptr<FieldAssignmentLogicalFunction> expressionNode);
+    [[nodiscard]] std::vector<std::shared_ptr<FieldAssignmentLogicalFunction>> getMapExpressions() const;
+    void setMapExpressions(std::vector<std::shared_ptr<FieldAssignmentLogicalFunction>> expressions);
 };
 }

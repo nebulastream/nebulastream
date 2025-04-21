@@ -222,23 +222,7 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
                 INITIAL<WorkerId>));
     }
 
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule(sourceCatalog);
-    auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
-    auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-    auto queryRewritePhase = Optimizer::QueryRewritePhase::create();
-
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
-
-    validateAndSetSinkDescriptors(*query, config);
-    semanticQueryValidation->validate(query); /// performs the first type inference
-
-    logicalSourceExpansionRule.apply(query);
-    typeInference->performTypeInferenceQuery(query);
-
-    originIdInferencePhase->execute(query);
-    queryRewritePhase->execute(query);
-    typeInference->performTypeInferenceQuery(query);
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());

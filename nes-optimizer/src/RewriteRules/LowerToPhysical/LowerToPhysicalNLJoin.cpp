@@ -12,10 +12,16 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <memory>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
+#include <RewriteRuleRegistry.hpp>
 
-namespace NES::Windowing
+namespace NES::Optimizer
 {
+std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterLowerToPhysicalJoin()
+{
+    return std::make_unique<LowerToPhysicalNLJoin>();
+}
 
-WatermarkStrategyDescriptor::WatermarkStrategyDescriptor() = default;
 }
