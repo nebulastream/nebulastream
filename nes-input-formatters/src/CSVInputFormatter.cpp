@@ -287,9 +287,9 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
     std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     physicalTypes.reserve(schema.getFieldCount());
-    for (const std::shared_ptr<AttributeField>& field : schema)
+    for (const AttributeField& field : schema)
     {
-        physicalTypes.emplace_back(defaultPhysicalTypeFactory.getPhysicalType(field->getDataType()));
+        physicalTypes.emplace_back(defaultPhysicalTypeFactory.getPhysicalType(field.getDataType()));
     }
 
     /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value

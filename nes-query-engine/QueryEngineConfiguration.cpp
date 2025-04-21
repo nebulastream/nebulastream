@@ -80,3 +80,4 @@ std::shared_ptr<NES::Configurations::ConfigurationValidation> QueryEngineConfigu
 
     return std::make_shared<Validator>();
 }
+}

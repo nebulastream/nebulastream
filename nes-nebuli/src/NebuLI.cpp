@@ -171,7 +171,7 @@ Sources::SourceDescriptor createSourceDescriptor(
         std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
 }
 
-void validateAndSetSinkDescriptors(const LogicalPlan& query, const QueryConfig& config)
+void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config)
 {
     auto sinkOperators = query.getOperatorByType<SinkLogicalOperator>();
     PRECONDITION(
@@ -180,12 +180,12 @@ void validateAndSetSinkDescriptors(const LogicalPlan& query, const QueryConfig& 
         sinkOperators.size());
     PRECONDITION(not config.sinks.empty(), "Expects at least one sink in the query config!");
     auto sinkRef = sinkOperators.at(0).getSinkName();
-    auto i = config.sinks.find(sinkRef);
     if (const auto& sink = config.sinks.find(sinkRef); sink != config.sinks.end())
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
-        sinkOperators.at(0).sinkDescriptor =
-            std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+        auto copy = sinkOperators.at(0);
+        copy.sinkDescriptor = std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+        query.replaceOperator(sinkOperators.at(0), copy);
     }
     else
     {
@@ -226,19 +226,16 @@ std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& co
                 INITIAL<WorkerId>));
     }
 
-    auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
-    /// TODO: AntlrSQLQueryParser creates query from source to sink -> no flip required
-    auto queryplan = std::move(query).flip();
-    std::cout << queryplan->toString() << "\n";
+    auto queryplan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
 
-    validateAndSetSinkDescriptors(*queryplan, config);
-    LegacyOptimizer::LogicalSourceExpansionRule::apply(*queryplan, *sourceCatalog);
-    LegacyOptimizer::TypeInferencePhase::apply(*queryplan);
-    LegacyOptimizer::OriginIdInferencePhase::apply(*queryplan);
-    LegacyOptimizer::TypeInferencePhase::apply(*queryplan);
+    validateAndSetSinkDescriptors(queryplan, config);
+    LegacyOptimizer::TypeInferencePhase::apply(queryplan, *sourceCatalog);
+    LegacyOptimizer::LogicalSourceExpansionRule::apply(queryplan, *sourceCatalog);
+    LegacyOptimizer::TypeInferencePhase::apply(queryplan);
+    LegacyOptimizer::OriginIdInferencePhase::apply(queryplan);
+    LegacyOptimizer::TypeInferencePhase::apply(queryplan);
 
-    NES_INFO("QEP:\n {}", queryplan->toString());
-    return queryplan;
+    return std::make_unique<LogicalPlan>(queryplan);
 }
 
 std::unique_ptr<LogicalPlan> loadFromYAMLFile(const std::filesystem::path& filePath)

@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
-#include "../../../include/WindowTypes/Measures/WindowMeasure.hpp"
+#include <memory>
+#include <PipelinedQueryPlan.hpp>
+#include <CompiledQueryPlan.hpp>
 
-namespace NES::Windowing
+namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
 {
+std::unique_ptr<CompiledQueryPlan> apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan);
 }

@@ -12,7 +12,7 @@
 
 add_subdirectory(src)
 
-find_program(CLANG_EXECUTABLE NAMES clang clang-18 REQUIRED)
+find_program(CLANG_EXECUTABLE NAMES clang clang-19 REQUIRED)
 message(STATUS "Found Clang Binary: ${CLANG_EXECUTABLE}")
 
 set(PATH_TO_BINARY_DIR ${CMAKE_BINARY_DIR})

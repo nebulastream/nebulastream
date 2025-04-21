@@ -235,8 +235,8 @@ public:
             node->id,
             node,
             buffer,
-            injectReferenceCountReducer(node, std::move(complete)),
-            injectQueryFailure(node, injectReferenceCountReducer(node, std::move(failure))));
+            injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete)),
+            injectQueryFailure(node, injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(failure))));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread
@@ -714,7 +714,7 @@ void QueryEngine::stop(QueryId queryId)
 /// NOLINTNEXTLINE Intentionally non-const
 void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
 {
-    ENGINE_LOG_INFO("Starting Query: {}", fmt::streamed(*instantiatedQueryPlan));
+    ENGINE_LOG_INFO("Starting Query: {}", fmt::streamed(*executableQueryPlan));
     threadPool->admissionQueue.blockingWrite(
         StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, {}, {}});
 }
