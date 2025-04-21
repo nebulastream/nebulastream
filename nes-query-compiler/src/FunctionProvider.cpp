@@ -43,11 +43,11 @@ QPhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunctio
 
     /// 2. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessNode = logicalFunction.tryGet<FieldAccessLogicalFunction>(); fieldAccessNode != nullptr)
+    if (const auto fieldAccessNode = logicalFunction.tryGet<FieldAccessLogicalFunction>())
     {
         return FieldAccessPhysicalFunction(fieldAccessNode->getFieldName());
     }
-    if (auto constantValueNode = logicalFunction.tryGet<ConstantValueLogicalFunction>(); constantValueNode != nullptr)
+    if (auto constantValueNode = logicalFunction.tryGet<ConstantValueLogicalFunction>())
     {
         return lowerConstantFunction(*constantValueNode);
     }

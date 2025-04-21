@@ -51,7 +51,7 @@ namespace YAML
 {
 using namespace NES::CLI;
 
-std::unique_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
+std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
 {
     try
     {
@@ -228,7 +228,7 @@ std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& co
         NES_INFO("Adding logical source: {}", logicalSourceName);
         for (auto& [name, type] : schemaFields)
         {
-            schema = schema.addField(name, type->clone());
+            schema = schema.addField(name, type);
         }
         sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }
@@ -277,7 +277,7 @@ SchemaField::SchemaField(std::string name, const std::string& typeName) : Schema
 {
 }
 
-SchemaField::SchemaField(std::string name, std::unique_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
+SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
 {
 }
 
