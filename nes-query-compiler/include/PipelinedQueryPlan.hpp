@@ -22,16 +22,33 @@
 namespace NES
 {
 /// Representation of a query plan of pipelines
-struct PipelinedQueryPlan
+struct PipelinedQueryPlan final
 {
-    PipelinedQueryPlan(QueryId id);
+    PipelinedQueryPlan(QueryId id) : queryId(id) {};
     [[nodiscard]] std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t);
-    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines() const;
-    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSinkPipelines() const;
+
+    std::vector<std::unique_ptr<Pipeline>> releaseSourcePipelines()
+    {
+        std::vector<std::unique_ptr<Pipeline>> sourcePipelines;
+        auto it = pipelines.begin();
+        while (it != pipelines.end())
+        {
+            if (it->get()->isSourcePipeline())
+            {
+                sourcePipelines.push_back(std::move(*it));
+                it = pipelines.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+        return sourcePipelines;
+    }
 
     const QueryId queryId;
-    std::vector<std::shared_ptr<Pipeline>> pipelines;
+    std::vector<std::unique_ptr<Pipeline>> pipelines;
 };
 }
 FMT_OSTREAM(NES::PipelinedQueryPlan);

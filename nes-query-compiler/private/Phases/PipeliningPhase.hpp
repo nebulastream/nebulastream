@@ -12,21 +12,12 @@
     limitations under the License.
 */
 
-#pragma once
-
 #include <memory>
-#include <Plans/QueryPlan.hpp>
+#include <PipelinedQueryPlan.hpp>
 #include "PhysicalPlan.hpp"
 
-namespace NES::Optimizer
+namespace NES::QueryCompilation::PipeliningPhase
 {
-
-class QueryOptimizer final
-{
-public:
-    explicit QueryOptimizer() = default;
-    /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] std::unique_ptr<PhysicalPlan> optimize(QueryPlan plan);
-};
-
+/// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
+std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PhysicalPlan> queryPlan);
 }
