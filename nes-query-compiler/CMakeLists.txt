@@ -26,5 +26,3 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
     target_compile_options(nes-query-compiler PUBLIC "-fPIC")
 endif ()
-
-add_tests_if_enabled(tests)

@@ -37,30 +37,31 @@
 namespace NES::Sinks
 {
 
-CSVFormat::CSVFormat(std::shared_ptr<Schema> pSchema) : schema(std::move(pSchema))
+CSVFormat::CSVFormat(const Schema& pSchema) : schema(pSchema)
 {
-    PRECONDITION(schema->getFieldCount() != 0, "Formatter expected a non-empty schema");
+    PRECONDITION(schema.getFieldCount() != 0, "Formatter expected a non-empty schema");
     const DefaultPhysicalTypeFactory factory;
     size_t offset = 0;
-    for (const auto& f : *schema)
+    for (const auto& field : schema)
     {
-        auto physicalType = factory.getPhysicalType(f->getDataType());
+        auto physicalType = factory.getPhysicalType(field.getDataType());
         PRECONDITION(
             Util::instanceOf<BasicPhysicalType>(physicalType) || Util::instanceOf<VariableSizedDataPhysicalType>(physicalType),
             "Formatter can only handle basic and variable size physical types");
 
         formattingContext.offsets.push_back(offset);
         offset += physicalType->size();
-        if (auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
+        if (auto basicType = Util::dynamic_pointer_cast<BasicPhysicalType>(std::move(physicalType)))
         {
             formattingContext.physicalTypes.emplace_back(std::move(basicType));
         }
         else
         {
-            formattingContext.physicalTypes.emplace_back(std::dynamic_pointer_cast<VariableSizedDataPhysicalType>(physicalType));
+            formattingContext.physicalTypes.emplace_back(
+                Util::dynamic_pointer_cast<VariableSizedDataPhysicalType>(std::move(physicalType)));
         }
     }
-    formattingContext.schemaSizeInBytes = schema->getSchemaSizeInBytes();
+    formattingContext.schemaSizeInBytes = schema.getSchemaSizeInBytes();
 }
 
 std::string CSVFormat::getFormattedSchema() const

@@ -728,7 +728,7 @@ void QueryEngine::stop(QueryId queryId)
 /// NOLINTNEXTLINE Intentionally non-const
 void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
 {
-    ENGINE_LOG_INFO("Starting Query: {}", fmt::streamed(*instantiatedQueryPlan));
+    ENGINE_LOG_INFO("Starting Query: {}", fmt::streamed(*executableQueryPlan));
     threadPool->admissionQueue.blockingWrite(
         StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, {}, {}});
 }
