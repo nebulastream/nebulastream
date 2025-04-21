@@ -32,7 +32,7 @@ FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType>
     : fieldName(std::move(fieldName)), stamp(stamp) {};
 
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other)
-    : fieldName(other.fieldName), stamp(other.stamp->clone()) {};
+    : fieldName(other.fieldName), stamp(other.stamp) {};
 
 bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
@@ -54,7 +54,7 @@ std::string FieldAccessLogicalFunction::getFieldName() const
 LogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName) const
 {
     auto copy = *this;
-    copy.fieldName = fieldName;
+    copy.fieldName = std::move(fieldName);
     return copy;
 }
 
@@ -69,22 +69,23 @@ LogicalFunction FieldAccessLogicalFunction::withInferredStamp(Schema schema) con
     INVARIANT(existingField, "field is not part of the schema");
 
     auto copy = *this;
-    copy.stamp = existingField.value().getDataType().clone();
+    copy.stamp = existingField.value().getDataType();
     copy.fieldName = existingField.value().getName();
     return copy;
 }
 
-const DataType& FieldAccessLogicalFunction::getStamp() const
+std::shared_ptr<DataType> FieldAccessLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction FieldAccessLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+LogicalFunction FieldAccessLogicalFunction::withStamp(std::shared_ptr<DataType> newStamp) const
 {
+    PRECONDITION(newStamp != nullptr, "newStamp is null in FieldAccessLogicalFunction::withStamp");
     auto copy = *this;
-    copy.stamp = stamp;
-    return *this;
-};
+    copy.stamp = newStamp;
+    return copy;
+}
 
 std::vector<LogicalFunction> FieldAccessLogicalFunction::getChildren() const
 {

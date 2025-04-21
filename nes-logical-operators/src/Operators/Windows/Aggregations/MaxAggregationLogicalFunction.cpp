@@ -52,7 +52,7 @@ void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField = onField.withInferredStamp(schema).get<FieldAccessLogicalFunction>();
-    INVARIANT(dynamic_cast<const Numeric*>(&onField.getStamp()) == nullptr, "aggregations on non numeric fields is not supported.");
+    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()) == nullptr, "aggregations on non numeric fields is not supported.");
 
     ///Set fully qualified name for the as Field
     auto onFieldName = onField.getFieldName();
@@ -69,7 +69,7 @@ void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         asField = asField.withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>();
     }
-    asField = asField.withStamp(getFinalAggregateStamp().clone()).get<FieldAccessLogicalFunction>();
+    asField = asField.withStamp(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>();
 }
 
 
