@@ -31,7 +31,8 @@ public:
     /// If they have no possible joined data type, the coined type is Undefined.
     /// @param other data type
     /// @return std::shared_ptr<DataType> joined data type
-    std::shared_ptr<DataType> join(const std::shared_ptr<DataType> otherDataType) const override;
+    std::unique_ptr<DataType> join(const DataType& otherDataType) const override;
+    std::unique_ptr<DataType> clone() const override;
 
     std::string toString() override;
 };

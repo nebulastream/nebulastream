@@ -93,14 +93,14 @@ std::shared_ptr<Schema> Schema::addField(const std::string& name, const BasicTyp
     return addField(name, DataTypeProvider::provideBasicType(type));
 }
 
-std::shared_ptr<Schema> Schema::addField(const std::string& name, const std::shared_ptr<DataType>& data)
+std::shared_ptr<Schema> Schema::addField(const std::string& name, std::shared_ptr<DataType> data)
 {
     return addField(AttributeField::create(name, data));
 }
 
 void Schema::removeField(const std::shared_ptr<AttributeField>& field)
 {
-    std::erase_if(fields, [&](const std::shared_ptr<AttributeField>& otherField) { return otherField->getName() == field->getName(); });
+    std::erase_if(fields, [&](const std::shared_ptr<AttributeField>& f) { return f->getName() == field->getName(); });
 }
 
 void Schema::replaceField(const std::string& name, const std::shared_ptr<DataType>& type)
@@ -276,7 +276,7 @@ std::shared_ptr<Schema> Schema::updateSourceName(const std::string& srcName) con
         newName << currName.back();
         field->setName(newName.str());
     }
-    return copy();
+    return clone();
 }
 
 }
