@@ -29,7 +29,7 @@ bool TimeBasedWindowType::inferStamp(const Schema& schema)
 {
     if (timeCharacteristic.getType() == TimeCharacteristic::Type::EventTime)
     {
-        auto fieldName = timeCharacteristic.getField().getName();
+        auto fieldName = timeCharacteristic.field.getName();
         auto existingField = schema.getFieldByName(fieldName);
         if (existingField)
         {
@@ -37,7 +37,7 @@ bool TimeBasedWindowType::inferStamp(const Schema& schema)
             {
                 throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field " + fieldName);
             }
-            timeCharacteristic.getField().setName(existingField.value().getName());
+            timeCharacteristic.field.setName(existingField.value().getName());
             return true;
         }
         if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
