@@ -78,7 +78,7 @@ SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask
 }
 
 NLJProbePhysicalOperator::NLJProbePhysicalOperator(
-    const uint64_t operatorHandlerIndex,
+    const OperatorHandlerId operatorHandlerIndex,
     Functions::PhysicalFunction joinFunction,
     const std::string windowStartFieldName,
     const std::string windowEndFieldName,

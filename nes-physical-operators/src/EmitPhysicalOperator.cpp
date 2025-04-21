@@ -57,7 +57,7 @@ void removeSequenceStateProxy(void* operatorHandlerPtr, OriginId originId, Seque
 
 namespace
 {
-nautilus::val<bool> isLastChunk(ExecutionContext& context, size_t operatorHandlerIndex)
+nautilus::val<bool> isLastChunk(ExecutionContext& context, OperatorHandlerId operatorHandlerIndex)
 {
     return nautilus::invoke(
         isLastChunkProxy,
@@ -68,13 +68,13 @@ nautilus::val<bool> isLastChunk(ExecutionContext& context, size_t operatorHandle
         context.lastChunk);
 }
 
-nautilus::val<ChunkNumber> getNextChunkNr(ExecutionContext& context, size_t operatorHandlerIndex)
+nautilus::val<ChunkNumber> getNextChunkNr(ExecutionContext& context, OperatorHandlerId operatorHandlerIndex)
 {
     return nautilus::invoke(
         getNextChunkNumberProxy, context.getGlobalOperatorHandler(operatorHandlerIndex), context.originId, context.sequenceNumber);
 }
 
-void removeSequenceState(ExecutionContext& context, size_t operatorHandlerIndex)
+void removeSequenceState(ExecutionContext& context, OperatorHandlerId operatorHandlerIndex)
 {
     nautilus::invoke(
         removeSequenceStateProxy, context.getGlobalOperatorHandler(operatorHandlerIndex), context.originId, context.sequenceNumber);
@@ -148,7 +148,7 @@ void DefaultEmitPhysicalOperator::emitRecordBuffer(
 }
 
 DefaultEmitPhysicalOperator::DefaultEmitPhysicalOperator(
-    size_t operatorHandlerIndex, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+    OperatorHandlerId operatorHandlerIndex, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : memoryProvider(std::move(memoryProvider)), operatorHandlerIndex(operatorHandlerIndex)
 {
 }
