@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <string>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -22,16 +23,16 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <ErrorHandling.hpp>
-
+#include <Plans/Operator.hpp>
 
 namespace NES
 {
 
 /// Stores members that are needed for both phases of the aggregation, build and probe
-class WindowAggregationPhysicalOperator
+class WindowAggregation : Operator
 {
 public:
-    WindowAggregationPhysicalOperator(
+    WindowAggregation(
         std::vector<std::unique_ptr<AggregationFunction>> aggregationFunctions,
         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys,
@@ -52,7 +53,7 @@ public:
             "The number of aggregation functions must match the number of field values");
     }
 
-    WindowAggregationPhysicalOperator(std::shared_ptr<WindowAggregationPhysicalOperator>& other) noexcept
+    WindowAggregation(std::shared_ptr<WindowAggregation>& other) noexcept
         : aggregationFunctions(std::move(other->aggregationFunctions))
         , hashFunction(std::move(other->hashFunction))
         , fieldKeys(std::move(other->fieldKeys))
@@ -61,6 +62,8 @@ public:
         , entrySize(other->entrySize)
     {
     }
+
+    std::string toString() const override {return typeid(this).name(); }
 
 protected:
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
