@@ -41,7 +41,7 @@ struct SourceDescriptor final : public NES::Configurations::Descriptor
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
-        std::shared_ptr<Schema> schema,
+        Schema schema,
         std::string logicalSourceName,
         std::string sourceType,
         int numberOfBuffersInSourceLocalBufferPool,
@@ -49,7 +49,7 @@ struct SourceDescriptor final : public NES::Configurations::Descriptor
         Configurations::DescriptorConfig::Config&& config);
 
     ~SourceDescriptor() = default;
-    const std::shared_ptr<Schema> schema;
+    const Schema schema;
     const std::string logicalSourceName;
     const std::string sourceType;
     const int numberOfBuffersInSourceLocalBufferPool;

@@ -194,7 +194,7 @@ Sources::SourceDescriptor createSourceDescriptor(
         std::move(validSourceConfig));
 }
 
-void validateAndSetSinkDescriptors(const LogicalPlan& query, const QueryConfig& config)
+void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config)
 {
     PRECONDITION(
         sinkOperators.size() == 1,
@@ -204,8 +204,9 @@ void validateAndSetSinkDescriptors(const LogicalPlan& query, const QueryConfig& 
     if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
-        sinkOperators.at(0).sinkDescriptor
-            = std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+        auto copy = sinkOperators.at(0);
+        copy.sinkDescriptor = std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+        query.replaceOperator(sinkOperators.at(0), copy);
     }
     else
     {
@@ -252,14 +253,14 @@ std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& co
     auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase::create();
 
-    validateAndSetSinkDescriptors(*queryplan, config);
-    LegacyOptimizer::LogicalSourceExpansionRule::apply(*queryplan, *sourceCatalog);
-    LegacyOptimizer::TypeInferencePhase::apply(*queryplan);
-    LegacyOptimizer::OriginIdInferencePhase::apply(*queryplan);
-    LegacyOptimizer::TypeInferencePhase::apply(*queryplan);
+    validateAndSetSinkDescriptors(queryplan, config);
+    LegacyOptimizer::TypeInferencePhase::apply(queryplan, *sourceCatalog);
+    LegacyOptimizer::LogicalSourceExpansionRule::apply(queryplan, *sourceCatalog);
+    LegacyOptimizer::TypeInferencePhase::apply(queryplan);
+    LegacyOptimizer::OriginIdInferencePhase::apply(queryplan);
+    LegacyOptimizer::TypeInferencePhase::apply(queryplan);
 
-    NES_INFO("QEP:\n {}", queryplan->toString());
-    return queryplan;
+    return std::make_unique<LogicalPlan>(queryplan);
 }
 
 std::unique_ptr<LogicalPlan> loadFromYAMLFile(const std::filesystem::path& filePath)

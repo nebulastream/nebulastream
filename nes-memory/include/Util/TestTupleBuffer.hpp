@@ -143,7 +143,7 @@ public:
 
     bool operator!=(const DynamicField& rhs) const;
 
-    [[nodiscard]] const std::shared_ptr<PhysicalType>& getPhysicalType() const;
+    [[nodiscard]] std::shared_ptr<PhysicalType> getPhysicalType() const;
 
     [[nodiscard]] const uint8_t* getAddressPointer() const;
 

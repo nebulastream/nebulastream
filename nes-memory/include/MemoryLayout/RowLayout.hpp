@@ -36,11 +36,11 @@ class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLa
 {
 public:
     /// @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
-    RowLayout(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
+    RowLayout(const Schema& schema, uint64_t bufferSize);
     RowLayout(const RowLayout&);
 
     /// @brief Factory to create a RowLayout
-    static std::shared_ptr<RowLayout> create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
+    static std::unique_ptr<RowLayout> create(const Schema& schema, uint64_t bufferSize);
 
     /// Gets the offset in bytes of all fields within a single tuple.
     /// For a single tuple with three int64 fields, the second field has a offset of 8 bytes.
