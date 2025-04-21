@@ -30,11 +30,9 @@
 namespace NES
 {
 
-FieldAssignmentLogicalFunction::FieldAssignmentLogicalFunction(const FieldAssignmentLogicalFunction& other)
-    : stamp(other.stamp), fieldAccess(other.fieldAccess), logicalFunction(other.logicalFunction) {};
 
 FieldAssignmentLogicalFunction::FieldAssignmentLogicalFunction(const FieldAccessLogicalFunction& fieldAccess, LogicalFunction logicalFunction)
-    : stamp(logicalFunction.getStamp().clone()), fieldAccess(fieldAccess), logicalFunction(logicalFunction)
+    : stamp(logicalFunction.getStamp()), fieldAccess(fieldAccess), logicalFunction(logicalFunction)
 {
 }
 
@@ -77,7 +75,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withStamp(std::shared_ptr<DataTy
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 std::vector<LogicalFunction> FieldAssignmentLogicalFunction::getChildren() const

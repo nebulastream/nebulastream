@@ -34,8 +34,6 @@ FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType>
 {
 };
 
-FieldAccessLogicalFunction::FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other)
-    : fieldName(other.fieldName), stamp(other.stamp) {};
 
 bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {

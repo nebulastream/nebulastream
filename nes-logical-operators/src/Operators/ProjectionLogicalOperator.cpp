@@ -102,26 +102,25 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(Schema inputSchema
     std::vector<LogicalFunction> newFunctions;
     for (auto& function : functions)
     {
-        if (function.tryGet<FieldAccessLogicalFunction>())
+        auto func = function.withInferredStamp(inputSchema);
+
+        if (func.tryGet<FieldAccessLogicalFunction>())
         {
-            const auto& fieldAccess = function.get<FieldAccessLogicalFunction>();
+            const auto& fieldAccess = func.get<FieldAccessLogicalFunction>();
             copy.outputSchema.addField(fieldAccess.getFieldName(), fieldAccess.getStamp());
-            std::cout << "Projection access: " << fieldAccess.getFieldName() << "\n";
-            std::cout << "Projection access: " << fieldAccess.getStamp()->toString() << "\n";
             newFunctions.emplace_back(fieldAccess);
         }
-        else if (function.tryGet<FieldAssignmentLogicalFunction>())
+        else if (func.tryGet<FieldAssignmentLogicalFunction>())
         {
-            const auto& fieldAssignment = function.withInferredStamp(inputSchema).get<FieldAssignmentLogicalFunction>();
-            auto stampPtr = fieldAssignment.getField().getStamp();
-            copy.outputSchema = copy.outputSchema.addField(fieldAssignment.getField().getFieldName(), fieldAssignment.getField().getStamp());
+            const auto& fieldAssignment = func.withInferredStamp(inputSchema).get<FieldAssignmentLogicalFunction>();
+            copy.outputSchema.addField(fieldAssignment.getField().getFieldName(), fieldAssignment.getField().getStamp());
             newFunctions.emplace_back(fieldAssignment);
         }
         else
         {
             throw CannotInferSchema(
                 "Function has to be a FieldAccessLogicalFunction or a FieldAssignmentLogicalFunction, but it was a {}",
-                function);
+                func);
         }
     }
     copy.functions = newFunctions;
