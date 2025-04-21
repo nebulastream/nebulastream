@@ -20,6 +20,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
@@ -156,6 +157,12 @@ Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorR
     serializedOperator.set_allocated_source(serializedSource);
 
     return serializedOperator;
+}
+
+LogicalOperatorRegistryReturnType
+LogicalOperatorGeneratedRegistrar::RegisterSourceDescriptorLogicalOperator(LogicalOperatorRegistryArguments)
+{
+    throw UnsupportedOperation();
 }
 
 }

@@ -56,8 +56,8 @@ public:
     };
 
 private:
-    FieldAccessLogicalFunction child;
     std::shared_ptr<DataType> stamp;
+    FieldAccessLogicalFunction child;
     std::string newFieldName;
 };
 }
