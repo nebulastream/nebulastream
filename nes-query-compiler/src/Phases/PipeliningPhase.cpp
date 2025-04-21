@@ -20,13 +20,13 @@
 #include <Phases/PipeliningPhase.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <DefaultEmitPhysicalOperator.hpp>
-#include <DefaultScanPhysicalOperator.hpp>
 #include <EmitOperatorHandler.hpp>
+#include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
+#include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
@@ -49,7 +49,7 @@ void addDefaultScan(std::shared_ptr<Pipeline> pipeline, const PhysicalOperatorWr
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), bufferSize);
     auto memoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(layout);
     // Prepend the default scan operator.
-    pipeline->prependOperator(DefaultScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
+    pipeline->prependOperator(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
 }
 
 /// Helper function to add a default emit operator
@@ -66,7 +66,7 @@ void addDefaultEmit(std::shared_ptr<Pipeline> pipeline, const PhysicalOperatorWr
     // Create an operator handler for the emit
     OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
     pipeline->operatorHandlers.emplace(operatorHandlerIndex, std::make_shared<EmitOperatorHandler>());
-    pipeline->appendOperator(DefaultEmitPhysicalOperator(operatorHandlerIndex, memoryProvider));
+    pipeline->appendOperator(EmitPhysicalOperator(operatorHandlerIndex, memoryProvider));
 }
 
 void buildPipelineRecursive(
