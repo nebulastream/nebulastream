@@ -27,6 +27,7 @@ struct PhysicalFunctionConcept
 };
 
 struct PhysicalFunction {
+public:
     template<typename T>
     PhysicalFunction(const T& op) : self(std::make_unique<Model<T>>(op)) {}
 
@@ -34,20 +35,20 @@ struct PhysicalFunction {
         : self(other.self->clone()) {}
 
     template<typename T>
-    [[nodiscard]] const T get() const {
+    const T& get() const {
         if (auto p = dynamic_cast<const Model<T>*>(self.get()))
         {
             return p->data;
         }
-        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        INVARIANT(false, "Bad cast: requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
 
     template<typename T>
-    [[nodiscard]] std::optional<T> tryGet() const {
+    const T* tryGet() const {
         if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
-            return p->data;
+            return &(p->data);
         }
-        return std::nullopt;
+        return nullptr;
     }
 
     PhysicalFunction(PhysicalFunction&&) noexcept = default;
@@ -81,7 +82,7 @@ private:
         explicit Model(T d) : data(std::move(d)) {}
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override {
-            return std::unique_ptr<Concept>(new Model(data));
+            return std::unique_ptr<Concept>(new Model<T>(data));
         }
 
         VarVal execute(const Record& record, ArenaRef& arena) const override
@@ -90,7 +91,7 @@ private:
         }
 
         [[nodiscard]] bool equals(const Concept& other) const override {
-            if (auto p = dynamic_cast<const Model*>(&other)) {
+            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
                 return data.operator==(p->data);
             }
             return false;
