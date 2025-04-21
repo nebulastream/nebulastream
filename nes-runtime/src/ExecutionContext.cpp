@@ -21,8 +21,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
-#include <nautilus/val.hpp>
-#include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -84,7 +82,7 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer*
     delete tb;
 }
 
-void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
+void ExecutionContext::emitBuffer(const Nautilus::RecordBuffer& buffer) const
 {
     nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
 }

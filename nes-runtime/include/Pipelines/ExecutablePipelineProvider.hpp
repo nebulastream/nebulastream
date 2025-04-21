@@ -11,25 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
+#pragma once
 #include <memory>
 #include <vector>
-#include <Pipelines/ExecutablePipelineProvider.hpp>
 #include <Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <options.hpp>
+#include <nautilus/options.hpp>
 
 namespace NES
 {
+class ExecutablePipelineStage;
 
-/// @brief Creates an executable pipeline stage that can be executed using interpretation
-class InterpretationPipelineProvider : public ExecutablePipelineProvider
+/// The executable pipeline provider creates an executable pipeline stage out of a pipeline of physical operators.
+/// We differentiate between different implementations that can use different execution strategies, e.g. compilation or interpretation.
+class ExecutablePipelineProvider
 {
 public:
-    std::unique_ptr<ExecutablePipelineStage> create(
+    /// Creates an executable pipeline for the pipeline of physical operators.
+    /// Options for the nautilus compilation backend: https://github.com/nebulastream/nautilus/blob/main/docs/options.md
+    virtual std::unique_ptr<ExecutablePipelineStage> create(
         std::shared_ptr<OperatorPipeline> pipeline,
         std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
-        nautilus::engine::Options& options) override;
+        nautilus::engine::Options& options)
+        = 0;
+    virtual ~ExecutablePipelineProvider() = default;
 };
+
 }

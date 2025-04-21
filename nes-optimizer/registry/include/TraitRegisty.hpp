@@ -14,16 +14,23 @@
 
 #pragma once
 
-#include <cinttypes>
+#include <string>
+#include <TraitSets/Trait.hpp>
+#include <Util/Registry.hpp>
 
 namespace NES::Optimizer
 {
-enum class PlacementStrategy : uint8_t
+
+using TraitRegistryReturnType = NES::Optimizer::AbstractTrait;
+struct TraitRegistryArguments
 {
-    TopDown = 0,
-    BottomUp = 1,
-    IFCOP = 2,
-    ILP = 3,
-    MlHeuristic = 4,
+};
+
+class TraitRegistry : public BaseRegistry<TraitRegistry, std::string, TraitRegistryReturnType, TraitRegistryArguments>
+{
 };
 }
+
+#define INCLUDED_FROM_REGISTRY_TRAIT
+#include <TraitGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_REGISTRY_TRAIT

@@ -23,6 +23,16 @@
 namespace NES::QueryCompilation
 {
 
+/// Represents a query compilation request.
+struct QueryCompilationRequest
+{
+    std::unique_ptr<QueryPlan> queryPlan;
+
+    /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
+    bool debug = false;
+    bool dumpQueryPlans = false;
+};
+
 /// The query compiler behaves as a pure function: QueryPlan -> ExecutableQueryPlan
 /// This guarantees that identical QueryPlan instances produce identical ExecutableQueryPlan results.
 class QueryCompiler
@@ -31,7 +41,7 @@ public:
     /// TODO: get rid of the options, they should be set during query optimization
     QueryCompiler(const std::shared_ptr<QueryCompilerConfiguration> options, const std::shared_ptr<NodeEngine> nodeEngine);
 
-    std::unique_ptr<ExecutableQueryPlan> compileQuery(std::shared_ptr<QueryCompilationRequest> request);
+    std::unique_ptr<ExecutableQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
 
 private:
     std::shared_ptr<NodeEngine> nodeEngine;

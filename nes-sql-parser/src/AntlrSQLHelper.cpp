@@ -24,15 +24,15 @@ const std::string AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
-const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getWhereClauses() const
+const std::vector<std::shared_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getWhereClauses() const
 {
     return this->whereClauses;
 }
-const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getHavingClauses() const
+const std::vector<std::shared_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getHavingClauses() const
 {
     return this->havingClauses;
 }
-const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getProjectionFields() const
+const std::vector<std::shared_ptr<NES::LogicalFunction>>& AntlrSQLHelper::getProjectionFields() const
 {
     return this->projectionFields;
 }
@@ -42,11 +42,11 @@ void AntlrSQLHelper::setSource(std::string sourceName)
 {
     this->source = sourceName;
 }
-void AntlrSQLHelper::addWhereClause(const std::shared_ptr<NES::NodeFunction>& expressionNode)
+void AntlrSQLHelper::addWhereClause(const std::shared_ptr<NES::LogicalFunction> expressionNode)
 {
     this->whereClauses.emplace_back(expressionNode);
 }
-void AntlrSQLHelper::addHavingClause(const std::shared_ptr<NES::NodeFunction>& expressionNode)
+void AntlrSQLHelper::addHavingClause(const std::shared_ptr<NES::LogicalFunction> expressionNode)
 {
     this->havingClauses.emplace_back(expressionNode);
 }
@@ -55,21 +55,21 @@ void AntlrSQLHelper::addProjectionField(const std::shared_ptr<NES::NodeFunctionF
     this->projectionFields.push_back(expressionNode);
 }
 
-std::shared_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType()
+const std::shared_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType() const
 {
     return {};
 }
 
-void AntlrSQLHelper::addMapExpression(std::shared_ptr<NES::NodeFunctionFieldAssignment> expressionNode)
+void AntlrSQLHelper::addMapExpression(std::shared_ptr<NES::FieldAssignmentLogicalFunction> expressionNode)
 {
     auto pos = this->mapBuilder.begin();
     this->mapBuilder.insert(pos, std::move(expressionNode));
 }
-std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> AntlrSQLHelper::getMapExpressions() const
+std::vector<std::shared_ptr<NES::FieldAssignmentLogicalFunction>> AntlrSQLHelper::getMapExpressions() const
 {
     return this->mapBuilder;
 }
-void AntlrSQLHelper::setMapExpressions(const std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> expressions)
+void AntlrSQLHelper::setMapExpressions(const std::vector<std::shared_ptr<NES::FieldAssignmentLogicalFunction>> expressions)
 {
     this->mapBuilder = expressions;
 }

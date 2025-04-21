@@ -19,9 +19,7 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 
-namespace NES
-{
-namespace QueryCompilation
+namespace NES::QueryCompilation
 {
 class FunctionProvider
 {

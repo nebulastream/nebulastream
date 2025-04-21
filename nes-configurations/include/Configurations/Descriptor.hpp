@@ -25,8 +25,11 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <google/protobuf/json/json.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <ProtobufHelper.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES::Configurations
 {
@@ -52,7 +55,7 @@ concept HasParameterMap = requires(T configuration) {
 class DescriptorConfig
 {
 public:
-    using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, EnumWrapper>;
+    using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, EnumWrapper, FunctionList>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Tag struct that tags a config key with a type.
@@ -333,6 +336,80 @@ protected:
 private:
     friend std::ostream& operator<<(std::ostream& out, const DescriptorConfig::Config& config);
 };
+
+/*
+static DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& proto_var)
+{
+    switch (proto_var.value_case())
+    {
+        case SerializableVariantDescriptor::kIntValue:
+            return proto_var.int_value();
+        case SerializableVariantDescriptor::kUintValue:
+            return proto_var.uint_value();
+        case SerializableVariantDescriptor::kBoolValue:
+            return proto_var.bool_value();
+        case SerializableVariantDescriptor::kCharValue:
+            return static_cast<char>(proto_var.char_value()); /// Convert (fixed32) ascii number to char.
+        case SerializableVariantDescriptor::kFloatValue:
+            return proto_var.float_value();
+        case SerializableVariantDescriptor::kDoubleValue:
+            return proto_var.double_value();
+        case SerializableVariantDescriptor::kStringValue:
+            return proto_var.string_value();
+        case SerializableVariantDescriptor::kEnumValue:
+            return Configurations::EnumWrapper(proto_var.enum_value().value());
+        default:
+            std::string protoVarAsJson;
+            /// Log proto variable as json, in exception, if possible.
+            if (const auto conversionResult = google::protobuf::json::MessageToJsonString(proto_var, &protoVarAsJson);
+                conversionResult.ok())
+            {
+                throw CannotSerialize("Unknown variant type: {}", protoVarAsJson);
+            }
+            throw CannotSerialize("Unknown variant type.");
+    }
+}*/
+
+SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::DescriptorConfig::ConfigType& var)
+{
+    SerializableVariantDescriptor protoVar;
+    std::visit(
+        [&protoVar]<typename T>(T&& arg)
+        {
+            /// Remove const, volatile, and reference to simplify type matching
+            using U = std::remove_cvref_t<T>;
+            if constexpr (std::is_same_v<U, int32_t>)
+                protoVar.set_int_value(arg);
+            else if constexpr (std::is_same_v<U, uint32_t>)
+                protoVar.set_uint_value(arg);
+            else if constexpr (std::is_same_v<U, bool>)
+                protoVar.set_bool_value(arg);
+            else if constexpr (std::is_same_v<U, char>)
+                protoVar.set_char_value(arg);
+            else if constexpr (std::is_same_v<U, float>)
+                protoVar.set_float_value(arg);
+            else if constexpr (std::is_same_v<U, double>)
+                protoVar.set_double_value(arg);
+            else if constexpr (std::is_same_v<U, std::string>)
+                protoVar.set_string_value(arg);
+            else if constexpr (std::is_same_v<U, Configurations::EnumWrapper>)
+            {
+                auto enumWrapper = SerializableEnumWrapper().New();
+                enumWrapper->set_value(arg.getValue());
+                protoVar.set_allocated_enum_value(enumWrapper);
+            }
+            else if constexpr (std::is_same_v<U, NES::FunctionList>)
+            {
+                NES::FunctionList* funcList = arg.New();
+                funcList->CopyFrom(arg);
+                protoVar.set_allocated_function_list(funcList);
+            }
+            else
+                static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
+        },
+        var);
+    return protoVar;
+}
 
 }
 
