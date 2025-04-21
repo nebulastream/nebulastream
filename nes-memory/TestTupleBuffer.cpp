@@ -273,7 +273,7 @@ std::string TestTupleBuffer::toString(const Schema& schema, const bool showHeade
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
-    std::vector<std::unique_ptr<PhysicalType>> types;
+    std::vector<std::shared_ptr<PhysicalType>> types;
     const auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (const auto& field : schema)
     {
