@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 #include <Functions/ConstantValuePhysicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Common.hpp>
