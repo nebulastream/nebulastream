@@ -382,7 +382,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         {
             auto aggFunc = helper.windowAggs.back();
             helper.windowAggs.pop_back();
-            aggFunc = aggFunc->as(FieldAccessLogicalFunction(context->getText()));
+            aggFunc->asField = FieldAccessLogicalFunction(context->getText());
             helper.windowAggs.push_back(std::move(aggFunc));
         }
         else
