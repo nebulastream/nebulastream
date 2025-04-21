@@ -16,14 +16,16 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationFunction.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+#include <SerializableAggregationFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
-
 
 namespace NES::Windowing
 {

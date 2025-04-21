@@ -14,26 +14,21 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Operators/Operator.hpp>
 
 namespace NES
 {
-WindowOperator::WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id)
-    : WindowOperator(std::move(windowDefinition), id, INVALID_ORIGIN_ID)
+
+WindowOperator::WindowOperator(OperatorId id) : WindowOperator(id, INVALID_ORIGIN_ID)
 {
 }
 
-WindowOperator::WindowOperator(
-    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, const OperatorId id, const OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(std::move(windowDefinition))
+WindowOperator::WindowOperator(const OperatorId id, const OriginId originId)
+    : Operator(id), UnaryLogicalOperator(id), OriginIdAssignmentOperator(id, originId)
 {
-}
-
-std::shared_ptr<Windowing::LogicalWindowDescriptor> WindowOperator::getWindowDefinition() const
-{
-    return windowDefinition;
 }
 
 std::vector<OriginId> WindowOperator::getOutputOriginIds() const
@@ -43,8 +38,6 @@ std::vector<OriginId> WindowOperator::getOutputOriginIds() const
 void WindowOperator::setOriginId(const OriginId originId)
 {
     OriginIdAssignmentOperator::setOriginId(originId);
-    windowDefinition->setOriginId(originId);
 }
-
 
 }
