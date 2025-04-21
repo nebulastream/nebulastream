@@ -32,7 +32,7 @@ public:
     /// Options for the nautilus compilation backend: https://github.com/nebulastream/nautilus/blob/main/docs/options.md
     virtual std::unique_ptr<ExecutablePipelineStage> create(
         std::shared_ptr<Pipeline> pipeline,
-        std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> operatorHandlers,
+        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
         nautilus::engine::Options& options)
         = 0;
     virtual ~ExecutablePipelineProvider() = default;

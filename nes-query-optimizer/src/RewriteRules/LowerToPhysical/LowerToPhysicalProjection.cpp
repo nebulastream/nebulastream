@@ -42,7 +42,7 @@ RewriteRuleResult LowerToPhysicalProjection::apply(LogicalOperator projectionLog
 
     auto emitLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(outputSchema, bufferSize);
     auto emitMemoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(emitLayout);
-    auto emit = DefaultEmitPhysicalOperator(handlerId.getRawValue(), emitMemoryProvider);
+    auto emit = DefaultEmitPhysicalOperator(handlerId, emitMemoryProvider);
     auto emitWrapper = std::make_shared<PhysicalOperatorWrapper>(emit, outputSchema, outputSchema);
     emitWrapper->isEmit = true;
     emitWrapper->handler = std::make_shared<EmitOperatorHandler>();
