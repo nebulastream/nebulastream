@@ -11,22 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#pragma once
 
 #include <memory>
-#include <optional>
 #include <vector>
-#include <Execution/Operators/ExecutableOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
-#include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
+#include <Pipelines/ExecutablePipelineProvider.hpp>
+#include <Pipelines/PhysicalOperatorPipeline.hpp>
+#include <options.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
-namespace NES::QueryCompilation
+namespace NES
 {
 
-    const std::shared_ptr<PhysicalOperators::PhysicalOperator>&, std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>&)
-std::optional<Operators::ExecutableOperatorPtr>
-    {
-        return {};
-    }
-
-    }
+/// @brief Creates an executable pipeline stage that can be executed using interpretation
+class InterpretationPipelineProvider : public ExecutablePipelineProvider
+{
+public:
+    std::unique_ptr<ExecutablePipelineStage> create(
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline,
+        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+        nautilus::engine::Options& options) override;
+};
+}

@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-optimizer
+add_source_files(nes-optimizer-legacy
         TypeInferencePhase.cpp
         QueryRewritePhase.cpp
         OriginIdInferencePhase.cpp
