@@ -35,7 +35,7 @@
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
-#include <SerializableDecomposedQueryPlan.pb.h>
+
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>

@@ -9,7 +9,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#set(CMAKE_VERBOSE_MAKEFILE on)
+
+# include registrar generation functions
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 include_directories(tests/include)
 
@@ -19,8 +21,7 @@ get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
 add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
-target_link_libraries(nes-runtime PUBLIC nes-common nes-logical-operators nes-data-types nes-memory nes-sources nes-query-engine nes-execution)
-
+target_link_libraries(nes-runtime PUBLIC nes-common nes-logical-operators nes-physical-operators nes-data-types nes-memory nes-nautilus nes-sources nes-query-engine)
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -39,3 +40,9 @@ endif ()
 target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 
 add_tests_if_enabled(tests)
+
+# Create library for the registries, and privately link it against nes-execution so that nes-execution can access its registries
+create_plugin_registry_library(nes-runtime-registry nes-runtime)
+target_link_libraries(nes-runtime PRIVATE nes-runtime-registry)
+# Generate a registrar for each registry in nes-executions
+generate_plugin_registrars(nes-runtime ExecutablePipelineProvider)

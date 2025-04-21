@@ -14,11 +14,24 @@
 
 #pragma once
 
-namespace NES
+#include <TraitSets/Trait.hpp>
+#include <TraitSets/TraitSet.hpp>
+
+namespace NES::Optimizer
 {
-class LogicalNodeFunction
+class AbstractRewriteRule
 {
-protected:
-    LogicalNodeFunction() = default;
+public:
+    virtual VirtualTraitSet* apply(VirtualTraitSet*);
+    virtual ~AbstractRewriteRule();
 };
+
+template <Trait... T>
+class TypedAbstractRewriteRule : AbstractRewriteRule
+{
+    VirtualTraitSet* apply(VirtualTraitSet* inputTS) override { applyTyped(DynamicTraitSet<T...>{inputTS}); };
+
+    virtual DynamicTraitSet<T...>* applyTyped(DynamicTraitSet<T...>*) = 0;
+};
+
 }

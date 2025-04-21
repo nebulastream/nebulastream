@@ -10,5 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Phases)
-add_subdirectory(QueryRewrite)
+add_source_files(nes-logical-operators
+        QueryPlan.cpp
+        QueryPlanBuilder.cpp
+        PipelineQueryPlan.cpp
+        OperatorPipeline.cpp
+)

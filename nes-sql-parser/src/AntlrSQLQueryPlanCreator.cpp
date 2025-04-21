@@ -26,30 +26,34 @@
 #include <API/Windowing.hpp>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Functions/NodeFunctionConcat.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Query/QueryPlanBuilder.hpp>
-#include <Types/SlidingWindow.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Types/TumblingWindow.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/AndLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/GreaterLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/LessEqualsLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/LessLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
+#include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalJoinDescriptor.hpp>
+#include <Plans/QueryPlan.hpp>
+#include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Strings.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/SlidingWindow.hpp>
+#include <WindowTypes/Types/ThresholdWindow.hpp>
+#include <WindowTypes/Types/TumblingWindow.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Integer.hpp>
 
 namespace NES::Parsers
 {
@@ -89,23 +93,23 @@ Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
     }
 }
 
-std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
-    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const uint64_t tokenType)
+std::shared_ptr<LogicalFunction> createFunctionFromOpBoolean(
+    const std::shared_ptr<LogicalFunction>& leftFunction, const std::shared_ptr<LogicalFunction>& rightFunction, const uint64_t tokenType)
 {
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::EQ:
-            return NodeFunctionEquals::create(leftFunction, rightFunction);
+            return EqualsBinaryLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::NEQJ:
-            return NodeFunctionNegate::create(NodeFunctionEquals::create(leftFunction, rightFunction));
+            return NegateUnaryLogicalFunction::create(EqualsBinaryLogicalFunction::create(leftFunction, rightFunction));
         case AntlrSQLLexer::LT:
-            return NodeFunctionLess::create(leftFunction, rightFunction);
+            return LessBinaryLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::GT:
-            return NodeFunctionGreater::create(leftFunction, rightFunction);
+            return GreaterBinaryLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::GTE:
-            return NodeFunctionGreaterEquals::create(leftFunction, rightFunction);
+            return GreaterEqualsBinaryLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::LTE:
-            return NodeFunctionLessEquals::create(leftFunction, rightFunction);
+            return LessEqualsBinaryLogicalFunction::create(leftFunction, rightFunction);
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
@@ -113,15 +117,15 @@ std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
     }
 }
 
-std::shared_ptr<NodeFunction> createLogicalBinaryFunction(
-    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const uint64_t tokenType)
+std::shared_ptr<LogicalFunction> createLogicalBinaryFunction(
+    const std::shared_ptr<LogicalFunction>& leftFunction, const std::shared_ptr<LogicalFunction>& rightFunction, const uint64_t tokenType)
 {
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::AND:
-            return NodeFunctionAnd::create(leftFunction, rightFunction);
+            return AndBinaryLogicalFunction::create(leftFunction, rightFunction);
         case AntlrSQLLexer::OR:
-            return NodeFunctionOr::create(leftFunction, rightFunction);
+            return OrBinaryLogicalFunction::create(leftFunction, rightFunction);
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
@@ -207,7 +211,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
 void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    for (const std::shared_ptr<NodeFunction>& selectFunction : helper.functionBuilder)
+    for (const std::shared_ptr<LogicalFunction>& selectFunction : helper.functionBuilder)
     {
         helper.addProjectionField(selectFunction);
     }
@@ -256,7 +260,7 @@ void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::Compariso
 void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context)
 {
     auto helper = helpers.top();
-    std::shared_ptr<NodeFunction> function;
+    std::shared_ptr<LogicalFunction> function;
 
     const auto rightFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
@@ -290,7 +294,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
 void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    std::shared_ptr<NodeFunction> function;
+    std::shared_ptr<LogicalFunction> function;
 
     const auto innerFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
@@ -342,12 +346,13 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     if (helper.isGroupBy)
     {
-        const auto key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(context->getText()));
+        const auto key = Util::as<FieldAccessLogicalFunction>(FieldAccessLogicalFunction::create(context->getText()));
         helper.groupByFields.push_back(key);
     }
     else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
         /// add identifiers in select, window, where and having clauses to the function builder list
+        //helper.functionBuilder.push_back(std::make_shared<NES::LogicalFunction>(Attribute(context->getText())));
         helper.functionBuilder.push_back(Attribute(context->getText()));
     }
     else if (helper.isFrom and not helper.isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
@@ -364,7 +369,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         }
         if ((helper.isWhereOrHaving || helper.isSelect))
         {
-            const std::shared_ptr<NodeFunction> attr = helper.functionBuilder.back();
+            const std::shared_ptr<LogicalFunction> attr = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
             if (helper.identCountHelper == 1)
             {
@@ -629,14 +634,14 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         && context->children.size() == 1)
     {
         std::string implicitFieldName;
-        const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
+        const std::shared_ptr<LogicalFunction> mapFunction = helper.functionBuilder.back();
         /// there must be a field access function node in mapFunction.
         for (size_t countNodeFieldAccess = 0; const auto& child : mapFunction->getChildren())
         {
-            if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
+            if (NES::Util::instanceOf<FieldAccessLogicalFunction>(child))
             {
-                const auto fieldAccessNode = NES::Util::as<NodeFunctionFieldAccess>(child);
-                implicitFieldName = fmt::format("{}_{}", fieldAccessNode->getFieldName(), helper.implicitMapCountHelper);
+                const auto fieldAccessNodePtr = NES::Util::as<FieldAccessLogicalFunction>(child);
+                implicitFieldName = fmt::format("{}_{}", fieldAccessNodePtr->getFieldName(), helper.implicitMapCountHelper);
                 ++countNodeFieldAccess;
                 INVARIANT(
                     countNodeFieldAccess < 2, "The function of a named function must only have one child that is a field access function.");
@@ -874,7 +879,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
         /// Getting the constant value without the type,e .g., 42.0_D, 42.0_F, 42_U or 42_I --> 42.0, 42.0, 42, 42
         const auto constantText = context->getText();
         auto constFunctionItem
-            = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText.substr(0, constantText.find('_'))));
+            = FunctionItem(NES::ConstantValueLogicalFunction::create(dataType, constantText.substr(0, constantText.find('_'))));
         helper.functionBuilder.push_back(constFunctionItem);
     }
     else if (dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->constant()) != nullptr)

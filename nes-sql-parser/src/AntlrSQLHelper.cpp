@@ -14,7 +14,7 @@
 
 #include <utility>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
-#include <Types/WindowType.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES::Parsers
 {

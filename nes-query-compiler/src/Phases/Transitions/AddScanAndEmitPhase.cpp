@@ -14,9 +14,6 @@
 
 
 #include <memory>
-#include <Phases/Translations/AddScanAndEmitPhase.hpp>
-#include <Plans/DecomposedQueryPlan.hpp>
-#include <Plans/OperatorPipeline.hpp>
 #include <Plans/PipelineQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ScanPhysicalOperator.hpp>
