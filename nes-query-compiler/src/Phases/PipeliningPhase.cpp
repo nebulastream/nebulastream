@@ -15,7 +15,6 @@
 #include <memory>
 #include <utility>
 #include <variant>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Phases/PipeliningPhase.hpp>
 #include <Util/Common.hpp>
@@ -23,6 +22,7 @@
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
+#include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>

@@ -97,17 +97,17 @@ nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId() const
     return nautilus::invoke(getWorkerThreadIdProxy, pipelineContext);
 }
 
-OperatorState* ExecutionContext::getLocalState(const PhysicalOperatorConcept* op)
+OperatorState* ExecutionContext::getLocalState(OperatorId operatorId)
 {
-    const auto stateEntry = localStateMap.find(op);
+    const auto stateEntry = localStateMap.find(operatorId);
     INVARIANT(stateEntry != localStateMap.end(), "No local state registered for operator");
     return stateEntry->second.get();
 }
 
-void ExecutionContext::setLocalOperatorState(const PhysicalOperatorConcept* op, std::unique_ptr<OperatorState> state)
+void ExecutionContext::setLocalOperatorState(OperatorId operatorId, std::unique_ptr<OperatorState> state)
 {
-    INVARIANT(not localStateMap.contains(op), "Operators state already registered for operator");
-    localStateMap.emplace(op, std::move(state));
+    INVARIANT(not localStateMap.contains(operatorId), "Operators state already registered for operator");
+    localStateMap.emplace(operatorId, std::move(state));
 }
 
 OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)

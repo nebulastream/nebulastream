@@ -20,11 +20,11 @@
 #include <vector>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
