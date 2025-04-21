@@ -14,22 +14,22 @@ include_directories(tests/include)
 
 # Set Sources and Headers
 add_subdirectory(src)
-get_source(nes-optimizer NES_OPTIMIZER_SOURCE_FILES)
+get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
-target_link_libraries(nes-optimizer PUBLIC nes-nautilus nes-logical-operators nes-physical-operators)
-target_include_directories(nes-optimizer
+add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
+target_link_libraries(nes-query-optimizer PUBLIC nes-nautilus nes-logical-operators nes-physical-operators)
+target_include_directories(nes-query-optimizer
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-optimizer REUSE_FROM nes-common)
+    target_precompile_headers(nes-query-optimizer REUSE_FROM nes-common)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
-    target_compile_options(nes-optimizer PUBLIC "-fPIC")
+    target_compile_options(nes-query-optimizer PUBLIC "-fPIC")
 endif ()
 
-create_plugin_registry_library(nes-optimizer-registry nes-optimizer)
-target_link_libraries(nes-optimizer PRIVATE nes-optimizer-registry)
-# Generate a registrar for every registry in nes-optimizer
-generate_plugin_registrars(nes-optimizer RewriteRule Trait)
+create_plugin_registry_library(nes-query-optimizer-registry nes-query-optimizer)
+target_link_libraries(nes-query-optimizer PRIVATE nes-query-optimizer-registry)
+# Generate a registrar for every registry in nes-query-optimizer
+generate_plugin_registrars(nes-query-optimizer RewriteRule Trait)
