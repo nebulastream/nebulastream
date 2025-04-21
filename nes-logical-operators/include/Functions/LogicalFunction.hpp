@@ -102,7 +102,7 @@ struct LogicalFunction final
         {
             return p->data;
         }
-        INVARIANT(false, "Bad cast: requested type {} , but stored type is {}", typeid(T).name(), self->getType());
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
 
     template <typename T>
