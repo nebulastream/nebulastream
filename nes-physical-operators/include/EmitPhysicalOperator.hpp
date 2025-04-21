@@ -29,10 +29,10 @@ namespace NES
 
 /// @brief Basic emit operator that receives records from an upstream operator and
 /// writes them to a tuple buffer according to a memory layout.
-class DefaultEmitPhysicalOperator final : public PhysicalOperatorConcept
+class EmitPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit DefaultEmitPhysicalOperator(OperatorHandlerId operatorHandlerIndex, std::shared_ptr<TupleBufferMemoryProvider> memoryProvider);
+    explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerIndex, std::shared_ptr<TupleBufferMemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
