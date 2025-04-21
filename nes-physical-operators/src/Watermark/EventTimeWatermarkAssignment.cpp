@@ -40,13 +40,13 @@ EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(std::unique_ptr<TimeF
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PhysicalOperatorConcept::open(executionCtx, recordBuffer);
-    executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
+    executionCtx.setLocalOperatorState(id, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
 }
 
 void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const
 {
-    const auto state = static_cast<WatermarkState*>(ctx.getLocalState(this));
+    const auto state = static_cast<WatermarkState*>(ctx.getLocalState(id));
     const auto tsField = timeFunction->getTs(ctx, record);
     if (tsField > state->currentWatermark)
     {
@@ -59,9 +59,9 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
 void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     PRECONDITION(
-        NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(this)),
+        NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(id)),
         "Expects the local state to be of type WatermarkState");
-    const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
+    const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(id));
     executionCtx.watermarkTs = state->currentWatermark;
     PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }
