@@ -16,16 +16,15 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <QueryCompiler.hpp>
+#include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES
 {
 struct PrintingStatisticListener;
-}
 
 /// @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
 /// coordination. The SingleNodeWorker can register LogicalQueryPlans which are lowered into an executable format, by the
@@ -33,10 +32,11 @@ struct PrintingStatisticListener;
 /// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
-    std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
     std::shared_ptr<PrintingStatisticListener> listener;
     std::shared_ptr<NodeEngine> nodeEngine;
     size_t bufferSize;
+    std::unique_ptr<Optimizer::QueryOptimizer> optimizer;
+    std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
 
 public:
     explicit SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration&);

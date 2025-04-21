@@ -13,12 +13,9 @@
 */
 #pragma once
 
-#include <Nodes/Node.hpp>
-
-#include <memory>
-#include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <Plans/PhysicalQueryPlan.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES
 {

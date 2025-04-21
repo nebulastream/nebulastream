@@ -10,13 +10,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-optimizer-legacy
-        AttributeSortRule.cpp
-        BinaryOperatorSortRule.cpp
-        FilterMergeRule.cpp
-        FilterPushDownRule.cpp
-        FilterSplitUpRule.cpp
-        LogicalSourceExpansionRule.cpp
-        PredicateReorderingRule.cpp
-        ProjectBeforeUnionOperatorRule.cpp
-)

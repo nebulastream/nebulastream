@@ -23,8 +23,6 @@
 #include <grpcpp/support/status.h>
 #include <gtest/gtest-assertion-result.h>
 #include <GrpcService.hpp>
-#include <SerializableDecomposedQueryPlan.pb.h>
-
 
 namespace NES::IntegrationTestUtil
 {

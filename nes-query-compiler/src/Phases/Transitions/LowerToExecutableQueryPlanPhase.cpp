@@ -27,12 +27,9 @@
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Plans/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Operators/ExecutableOperator.hpp>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
-#include <Runtime/NodeEngine.hpp>
+#include <Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <Plans/ExecutableOperator.hpp>
+#include <Plans/PipelineQueryPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Ranges.hpp>
