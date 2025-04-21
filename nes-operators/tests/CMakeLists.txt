@@ -14,7 +14,7 @@
 include(ExternalProject)
 
 ### Query Plan Builder Tests ###
-add_nes_unit_test(query-plan-builder-tests "UnitTests/Plans/Query/QueryPlanBuilderTest.cpp")
+add_nes_unit_test(query-plan-builder-tests "UnitTests/Plans/QueryPlanBuilderTest.cpp")
 target_link_libraries(query-plan-builder-tests nes-logical-operators nes-test-util)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)

@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <iostream>
 #include <vector>
-#include <Plans/QueryPlan.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <fmt/format.h>

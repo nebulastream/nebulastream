@@ -21,28 +21,25 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-
 
 namespace NES
 {
 
 
 /// The query plan encapsulates a set of operators and provides a set of utility functions.
-class QueryPlan
+class LogicalPlan
 {
 public:
-    QueryPlan() = default;
-    explicit QueryPlan(LogicalOperator rootOperator);
-    explicit QueryPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
-    static std::unique_ptr<QueryPlan> create(LogicalOperator rootOperator);
-    static std::unique_ptr<QueryPlan> create(QueryId queryId, std::vector<LogicalOperator> rootOperators);
+    LogicalPlan() = default;
+    explicit LogicalPlan(LogicalOperator rootOperator);
+    explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
+    static std::unique_ptr<LogicalPlan> create(LogicalOperator rootOperator);
+    static std::unique_ptr<LogicalPlan> create(QueryId queryId, std::vector<LogicalOperator> rootOperators);
 
-    QueryPlan(const QueryPlan& other);
-    QueryPlan(QueryPlan&& other);
-    QueryPlan& operator=(QueryPlan&& other);
+    LogicalPlan(const LogicalPlan& other);
+    LogicalPlan(LogicalPlan&& other);
+    LogicalPlan& operator=(LogicalPlan&& other);
 
     /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
     void promoteOperatorToRoot(LogicalOperator newRoot);
@@ -75,49 +72,47 @@ public:
         return matchingOperators;
     }
 
-    bool replaceOperator(const LogicalOperator& target, const LogicalOperator& replacement)
+    bool replaceOperator(LogicalOperator& current, const LogicalOperator& target, LogicalOperator replacement)
     {
-        bool replaced = false;
-
-        for (auto& root : rootOperators)
+        if (current.getId() == target.getId())
         {
-            if (root.getId() == target.getId())
-            {
-                root = replacement;
-                replaced = true;
-            }
-            else if (replaceOperatorRecursively(root, target, replacement))
-            {
-                replaced = true;
-            }
+            replacement.setChildren(current.getChildren());
+            current = replacement;
+            return true;
         }
-
-        return replaced;
-    }
-
-    bool replaceOperatorRecursively(LogicalOperator& current, const LogicalOperator& target, const LogicalOperator& replacement)
-    {
         bool replaced = false;
         auto children = current.getChildren();
-
         for (size_t i = 0; i < children.size(); ++i)
         {
-            if (children[i].getId() == target.getId())
-            {
-                children[i] = replacement;
-                replaced = true;
-            }
-            else if (replaceOperatorRecursively(children[i], target, replacement))
+            if (replaceOperator(children[i], target, replacement))
             {
                 replaced = true;
             }
         }
-
         if (replaced)
         {
             current.setChildren(children);
         }
+        return replaced;
+    }
 
+    bool replaceOperator(const LogicalOperator& target, LogicalOperator replacement)
+    {
+        bool replaced = false;
+        for (auto& root : rootOperators)
+        {
+            if (root.getId() == target.getId())
+            {
+                replacement.setChildren(root.getChildren());
+                root = replacement;
+
+                replaced = true;
+            }
+            else if (replaceOperator(root, target, replacement))
+            {
+                replaced = true;
+            }
+        }
         return replaced;
     }
 
@@ -144,63 +139,73 @@ public:
         return operators;
     }
 
-    std::unique_ptr<QueryPlan> flip() const
+    std::unique_ptr<LogicalPlan> flip() const
     {
-        std::unordered_map<uint64_t, LogicalOperator> flippedOperators;
-        std::unordered_map<uint64_t, std::vector<uint64_t>> parentMapping;
+        std::unordered_map<OperatorId, std::vector<LogicalOperator>> reversedEdges;
+        std::unordered_map<OperatorId, LogicalOperator> idToOperator;
+        std::set<OperatorId> allOperators;
 
-        /// Collect all operators without children
         for (const auto& root : rootOperators)
         {
-            for (const auto& op : BFSRange<LogicalOperator>(root))
+            for (auto op : BFSRange<LogicalOperator>(root))
             {
-                auto opIdRaw = op.getId().getRawValue();
-                if (!flippedOperators.contains(opIdRaw))
-                {
-                    LogicalOperator opCopy = op;
-                    opCopy.setChildren({});
-                    flippedOperators.emplace(opIdRaw, std::move(opCopy));
-                }
-
+                idToOperator[op.getId()] = op;
+                allOperators.insert(op.getId());
                 for (const auto& child : op.getChildren())
                 {
-                    auto childIdRaw = child.getId().getRawValue();
-                    parentMapping[childIdRaw].push_back(opIdRaw);
+                    reversedEdges[child.getId()].push_back(op);
                 }
-            }
-        }
-
-        /// Build the flipped plan
-        for (const auto& [childId, parentIds] : parentMapping)
-        {
-            std::vector<LogicalOperator> parents;
-            for (auto pid : parentIds)
-            {
-                parents.push_back(flippedOperators[pid]);
-            }
-            flippedOperators[childId].setChildren(parents);
-        }
-
-        /// New root nodes
-        std::unordered_set<uint64_t> nonRoots;
-        for (const auto& [_, parents] : parentMapping)
-        {
-            for (auto parentId : parents)
-            {
-                nonRoots.insert(parentId);
             }
         }
 
         std::vector<LogicalOperator> newRoots;
-        for (const auto& [id, op] : flippedOperators)
+        for (const auto& id : allOperators)
         {
-            if (!nonRoots.contains(id))
+            if (idToOperator[id].getChildren().empty())
             {
-                newRoots.push_back(op);
+                newRoots.push_back(idToOperator[id]);
             }
         }
 
-        return std::make_unique<QueryPlan>(getQueryId(), newRoots);
+        std::unordered_map<OperatorId, LogicalOperator> flippedOperators;
+        std::unordered_set<OperatorId> visited;
+
+        std::function<LogicalOperator(const LogicalOperator&)> flipOperator;
+        flipOperator = [&](const LogicalOperator& op) -> LogicalOperator
+        {
+            auto opId = op.getId();
+            if (visited.contains(opId))
+            {
+                return flippedOperators[opId];
+            }
+            visited.insert(opId);
+
+            LogicalOperator flippedOp = op;
+            flippedOp.setChildren({});
+            flippedOperators[opId] = flippedOp;
+
+            std::vector<LogicalOperator> newChildren;
+            for (const auto& parent : reversedEdges[opId])
+            {
+                newChildren.push_back(flipOperator(parent));
+            }
+            flippedOperators[opId].setChildren(newChildren);
+
+            return flippedOperators[opId];
+        };
+
+        std::vector<LogicalOperator> flippedRoots;
+        std::unordered_set<OperatorId> rootIds;
+        for (const auto& root : newRoots)
+        {
+            if (!rootIds.contains(root.getId()))
+            {
+                flippedRoots.push_back(flipOperator(root));
+                rootIds.insert(root.getId());
+            }
+        }
+
+        return std::make_unique<LogicalPlan>(getQueryId(), flippedRoots);
     }
 
 
@@ -213,7 +218,7 @@ public:
     void setQueryId(QueryId queryId);
     [[nodiscard]] QueryId getQueryId() const;
 
-    [[nodiscard]] bool operator==(const QueryPlan& otherPlan) const;
+    [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
 
 private:
     /// Owning pointers to the operators
