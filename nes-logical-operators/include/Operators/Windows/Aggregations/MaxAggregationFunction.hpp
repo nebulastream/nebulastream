@@ -20,7 +20,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
-namespace NES::Windowing
+namespace NES
 {
 
 class MaxAggregationFunction : public WindowAggregationFunction
