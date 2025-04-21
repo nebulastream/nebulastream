@@ -77,7 +77,7 @@ Schema Schema::addField(const std::string& name, const BasicType& type)
 
 Schema Schema::addField(const std::string& name, std::shared_ptr<DataType> type)
 {
-    return addField(AttributeField(name, std::move(type)));
+    return addField(AttributeField(name, type));
 }
 
 void Schema::removeField(const AttributeField& field)
@@ -91,7 +91,7 @@ void Schema::replaceField(const std::string& name, std::shared_ptr<DataType> typ
     {
         if (field.getName() == name)
         {
-            field = AttributeField(name, std::move(type));
+            field = AttributeField(name, type);
             return;
         }
     }

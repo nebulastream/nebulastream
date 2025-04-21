@@ -51,12 +51,12 @@ public:
         std::random_device rd;
         std::mt19937 mt(RND_SEED);
 
-        std::vector<std::shared_ptr<AttributeField>> rndFields;
+        std::vector<AttributeField> rndFields;
         for (auto fieldCnt = 0_u64; fieldCnt < numberOfFields; ++fieldCnt)
         {
             const auto fieldName = fmt::format("field{}", fieldCnt);
             const auto basicType = getRandomBasicType(mt());
-            rndFields.emplace_back(AttributeField::create(fieldName, DataTypeProvider::provideBasicType(basicType)));
+            rndFields.emplace_back(AttributeField(fieldName, DataTypeProvider::provideBasicType(basicType)));
         }
 
         return rndFields;
@@ -67,26 +67,23 @@ TEST_F(SchemaTest, createTest)
 {
     {
         /// Checking for default values
-        std::shared_ptr<Schema> testSchema;
-        ASSERT_NO_THROW(testSchema = Schema::create());
-        ASSERT_TRUE(testSchema);
-        ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
+        Schema testSchema;
+        ASSERT_NO_THROW(testSchema = Schema());
+        ASSERT_EQ(testSchema.getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
     }
 
     {
         /// Checking with row memory layout
-        std::shared_ptr<Schema> testSchema;
-        ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT));
-        ASSERT_TRUE(testSchema);
-        ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
+        Schema testSchema;
+        ASSERT_NO_THROW(testSchema = Schema(Schema::MemoryLayoutType::ROW_LAYOUT));
+        ASSERT_EQ(testSchema.getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
     }
 
     {
         /// Checking with col memory layout
-        std::shared_ptr<Schema> testSchema;
-        ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
-        ASSERT_TRUE(testSchema);
-        ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+        Schema testSchema;
+        ASSERT_NO_THROW(testSchema = Schema(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
+        ASSERT_EQ(testSchema.getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     }
 }
 
@@ -96,13 +93,13 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding one field
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
-            std::shared_ptr<Schema> testSchema;
-            ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
-            ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-            ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
-            ASSERT_EQ(testSchema->getFieldCount(), 1);
-            ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
+            Schema testSchema;
+            ASSERT_NO_THROW(testSchema = Schema(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
+            ASSERT_EQ(testSchema.getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+            testSchema.addField("field", basicTypeVal);
+            ASSERT_EQ(testSchema.getFieldCount(), 1);
+            ASSERT_EQ(testSchema.getFieldByIndex(0).getName(), "field");
+            ASSERT_EQ(*testSchema.getFieldByIndex(0).getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
         }
     }
 
@@ -110,21 +107,21 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
-        auto testSchema = Schema::create();
+        auto testSchema = Schema();
         for (const auto& field : rndFields)
         {
-            ASSERT_TRUE(testSchema->addField(field));
+            testSchema.addField(field);
         }
 
-        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
+        ASSERT_EQ(testSchema.getFieldCount(), rndFields.size());
         for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
         {
             const auto& curField = rndFields[fieldCnt];
-            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
-            if (testSchema->getFieldByName(curField->getName()).has_value())
+            EXPECT_TRUE(testSchema.getFieldByIndex(fieldCnt).isEqual(curField));
+            EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).has_value());
+            if (testSchema.getFieldByName(curField.getName()).has_value())
             {
-                EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+                EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).value().isEqual(curField));
             }
         }
     }
@@ -134,37 +131,37 @@ TEST_F(SchemaTest, removeFieldsTest)
 {
     constexpr auto NUM_FIELDS = 10_u64;
     auto rndFields = getRandomFields(NUM_FIELDS);
-    auto testSchema = Schema::create();
+    auto testSchema = Schema();
     for (const auto& field : rndFields)
     {
-        ASSERT_TRUE(testSchema->addField(field));
+        testSchema.addField(field);
     }
 
-    ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
+    ASSERT_EQ(testSchema.getFieldCount(), rndFields.size());
     for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
     {
         const auto& curField = rndFields[fieldCnt];
-        EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
-        EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
-        if (testSchema->getFieldByName(curField->getName()).has_value())
+        EXPECT_TRUE(testSchema.getFieldByIndex(fieldCnt).isEqual(curField));
+        EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).has_value());
+        if (testSchema.getFieldByName(curField.getName()).has_value())
         {
-            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+            EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).value().isEqual(curField));
         }
     }
 
     /// Removing fields while we still have one field
-    while (testSchema->getFieldCount() > 0)
+    while (testSchema.getFieldCount() > 0)
     {
-        const auto rndPos = rand() % testSchema->getFieldCount();
+        const auto rndPos = rand() % testSchema.getFieldCount();
         const auto& fieldToRemove = rndFields[rndPos];
-        EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
-        if (testSchema->getFieldCount() < 1)
+        EXPECT_NO_THROW(testSchema.removeField(fieldToRemove));
+        if (testSchema.getFieldCount() < 1)
         {
-            EXPECT_DEATH_DEBUG([&]() { auto field = testSchema->getFieldByName(fieldToRemove->getName()); }(), "Precondition violated:.*");
+            EXPECT_DEATH_DEBUG([&]() { auto field = testSchema.getFieldByName(fieldToRemove.getName()); }(), "Precondition violated:.*");
         }
         else
         {
-            EXPECT_FALSE(testSchema->getFieldByName(fieldToRemove->getName()));
+            EXPECT_FALSE(testSchema.getFieldByName(fieldToRemove.getName()));
         }
 
         rndFields.erase(rndFields.begin() + rndPos);
@@ -177,18 +174,19 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Replacing one field with a random one
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
-            std::shared_ptr<Schema> testSchema;
-            ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
-            ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-            ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
-            ASSERT_EQ(testSchema->getFieldCount(), 1);
-            ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
+            Schema testSchema;
+            ASSERT_NO_THROW(testSchema = Schema(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
+            ASSERT_EQ(testSchema.getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+            testSchema.addField("field", basicTypeVal);
+            ASSERT_EQ(testSchema.getFieldCount(), 1);
+            ASSERT_EQ(testSchema.getFieldByIndex(0).getName(), "field");
+            ASSERT_EQ(*testSchema.getFieldByIndex(0).getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
 
             /// Replacing field
-            const auto newDataType = getRandomFields(1_u64)[0]->getDataType();
-            ASSERT_NO_THROW(testSchema->replaceField("field", newDataType));
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *newDataType);
+            auto newDataType = getRandomFields(1_u64)[0].getDataType();
+            auto clone = newDataType;
+            ASSERT_NO_THROW(testSchema.replaceField("field", std::move(newDataType)));
+            ASSERT_EQ(*testSchema.getFieldByIndex(0).getDataType(), *clone);
         }
     }
 
@@ -196,39 +194,39 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
-        auto testSchema = Schema::create();
+        auto testSchema = Schema();
         for (const auto& field : rndFields)
         {
-            ASSERT_TRUE(testSchema->addField(field));
+            testSchema.addField(field);
         }
 
-        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
+        ASSERT_EQ(testSchema.getFieldCount(), rndFields.size());
         for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
         {
             const auto& curField = rndFields[fieldCnt];
-            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
-            if (testSchema->getFieldByName(curField->getName()).has_value())
+            EXPECT_TRUE(testSchema.getFieldByIndex(fieldCnt).isEqual(curField));
+            EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).has_value());
+            if (testSchema.getFieldByName(curField.getName()).has_value())
             {
-                EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+                EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).value().isEqual(curField));
             }
         }
 
         /// Replacing multiple fields with new data types
         auto replacingFields = getRandomFields(NUM_FIELDS);
-        for (const auto& replaceField : replacingFields)
+        for (auto replaceField : replacingFields)
         {
-            testSchema->replaceField(replaceField->getName(), replaceField->getDataType());
+            testSchema.replaceField(replaceField.getName(), replaceField.getDataType());
         }
 
         for (auto fieldCnt = 0_u64; fieldCnt < replacingFields.size(); ++fieldCnt)
         {
             const auto& curField = replacingFields[fieldCnt];
-            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
-            if (testSchema->getFieldByName(curField->getName()).has_value())
+            EXPECT_TRUE(testSchema.getFieldByIndex(fieldCnt).isEqual(curField));
+            EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).has_value());
+            if (testSchema.getFieldByName(curField.getName()).has_value())
             {
-                EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+                EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).value().isEqual(curField));
             }
         }
     }
@@ -241,13 +239,13 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
-            std::shared_ptr<Schema> testSchema;
-            ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
-            ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-            ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
-            ASSERT_EQ(testSchema->getFieldCount(), 1);
-            ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
-            ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
+            Schema testSchema;
+            ASSERT_NO_THROW(testSchema = Schema(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
+            ASSERT_EQ(testSchema.getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
+            testSchema.addField("field", basicTypeVal);
+            ASSERT_EQ(testSchema.getFieldCount(), 1);
+            ASSERT_EQ(testSchema.getFieldByIndex(0).getName(), "field");
+            ASSERT_EQ(*testSchema.getFieldByIndex(0).getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
             ASSERT_EQ(
                 testSchema.getSchemaSizeInBytes(),
                 defaultPhysicalTypeFactory.getPhysicalType(DataTypeProvider::provideBasicType(basicTypeVal))->size());
@@ -257,13 +255,13 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
     {
         using enum NES::BasicType;
         /// Calculating the schema size for multiple fields
-        auto testSchema = Schema::create()
-                              ->addField("field1", UINT8)
-                              ->addField("field2", UINT16)
-                              ->addField("field3", INT32)
-                              ->addField("field4", FLOAT32)
-                              ->addField("field5", FLOAT64);
-        EXPECT_EQ(testSchema->getSchemaSizeInBytes(), 1 + 2 + 4 + 4 + 8);
+        auto testSchema = Schema()
+                              .addField("field1", UINT8)
+                              .addField("field2", UINT16)
+                              .addField("field3", INT32)
+                              .addField("field4", FLOAT32)
+                              .addField("field5", FLOAT64);
+        EXPECT_EQ(testSchema.getSchemaSizeInBytes(), 1 + 2 + 4 + 4 + 8);
     }
 }
 
@@ -272,25 +270,25 @@ TEST_F(SchemaTest, containsTest)
     using enum NES::BasicType;
     {
         /// Checking contains for one fieldName
-        auto testSchema = Schema::create()->addField("field1", UINT8);
-        EXPECT_TRUE(testSchema->contains("field1"));
-        EXPECT_FALSE(testSchema->contains("notExistingField1"));
+        auto testSchema = Schema().addField("field1", UINT8);
+        EXPECT_TRUE(testSchema.contains("field1"));
+        EXPECT_FALSE(testSchema.contains("notExistingField1"));
     }
 
     {
         /// Checking contains with multiple fields
-        auto testSchema = Schema::create()
-                              ->addField("field1", UINT8)
-                              ->addField("field2", UINT16)
-                              ->addField("field3", INT32)
-                              ->addField("field4", FLOAT32)
-                              ->addField("field5", FLOAT64);
+        auto testSchema = Schema()
+                              .addField("field1", UINT8)
+                              .addField("field2", UINT16)
+                              .addField("field3", INT32)
+                              .addField("field4", FLOAT32)
+                              .addField("field5", FLOAT64);
 
         /// Existing fields
-        EXPECT_TRUE(testSchema->contains("field3"));
+        EXPECT_TRUE(testSchema.contains("field3"));
 
         /// Not existing fields
-        EXPECT_FALSE(testSchema->contains("notExistingField3"));
+        EXPECT_FALSE(testSchema.contains("notExistingField3"));
     }
 }
 
@@ -299,17 +297,17 @@ TEST_F(SchemaTest, getFieldByNameTestInSchemaWithSourceName)
     using enum BasicType;
 
     /// Checking contains for one fieldName but with fields containing already a source name, e.g., after a join
-    const auto testSchema = Schema::create()
-                                ->addField("streamstream2$start", UINT64)
-                                ->addField("streamstream2$end", UINT64)
-                                ->addField("stream$id", UINT64)
-                                ->addField("stream$value", UINT64)
-                                ->addField("stream$timestamp", UINT64)
-                                ->addField("stream2$id2", UINT64)
-                                ->addField("stream2$value2", UINT64)
-                                ->addField("stream2$timestamp", UINT64);
-    EXPECT_TRUE(testSchema->getFieldByName("id"));
-    EXPECT_FALSE(testSchema->getFieldByName("notExistingField1"));
+    const auto testSchema = Schema()
+                                .addField("streamstream2$start", UINT64)
+                                .addField("streamstream2$end", UINT64)
+                                .addField("stream$id", UINT64)
+                                .addField("stream$value", UINT64)
+                                .addField("stream$timestamp", UINT64)
+                                .addField("stream2$id2", UINT64)
+                                .addField("stream2$value2", UINT64)
+                                .addField("stream2$timestamp", UINT64);
+    EXPECT_TRUE(testSchema.getFieldByName("id"));
+    EXPECT_FALSE(testSchema.getFieldByName("notExistingField1"));
 }
 
 TEST_F(SchemaTest, getSourceNameQualifierTest)
@@ -317,34 +315,34 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
     using enum NES::BasicType;
     /// TODO once #4355 is done, we can use updateSourceName(source1) here
     const auto sourceName = std::string("source1");
-    auto testSchema = Schema::create()
-                          ->addField(sourceName + "$field1", UINT8)
-                          ->addField(sourceName + "$field2", UINT16)
-                          ->addField(sourceName + "$field3", INT32)
-                          ->addField(sourceName + "$field4", FLOAT32)
-                          ->addField(sourceName + "$field5", FLOAT64);
+    auto testSchema = Schema()
+                          .addField(sourceName + "$field1", UINT8)
+                          .addField(sourceName + "$field2", UINT16)
+                          .addField(sourceName + "$field3", INT32)
+                          .addField(sourceName + "$field4", FLOAT32)
+                          .addField(sourceName + "$field5", FLOAT64);
 
-    EXPECT_EQ(testSchema->getSourceNameQualifier(), sourceName);
+    EXPECT_EQ(testSchema.getSourceNameQualifier(), sourceName);
 }
 
 TEST_F(SchemaTest, copyTest)
 {
-    auto testSchema = Schema::create()->addField("field1", BasicType::UINT8)->addField("field2", BasicType::UINT16);
-    auto testSchemaCopy = testSchema->clone();
+    auto testSchema = Schema().addField("field1", BasicType::UINT8).addField("field2", BasicType::UINT16);
+    auto testSchemaCopy = testSchema;
 
-    ASSERT_EQ(testSchema->getSchemaSizeInBytes(), testSchemaCopy->getSchemaSizeInBytes());
-    ASSERT_EQ(testSchema->getLayoutType(), testSchemaCopy->getLayoutType());
-    ASSERT_EQ(testSchema->getFieldCount(), testSchemaCopy->getFieldCount());
+    ASSERT_EQ(testSchema.getSchemaSizeInBytes(), testSchemaCopy.getSchemaSizeInBytes());
+    ASSERT_EQ(testSchema.getLayoutType(), testSchemaCopy.getLayoutType());
+    ASSERT_EQ(testSchema.getFieldCount(), testSchemaCopy.getFieldCount());
 
     /// Comparing fields
     for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy.getFieldCount(); ++fieldCnt)
     {
-        const auto& curField = testSchemaCopy->getFieldByIndex(fieldCnt);
-        EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
-        EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
-        if (testSchema->getFieldByName(curField->getName()).has_value())
+        const auto& curField = testSchemaCopy.getFieldByIndex(fieldCnt);
+        EXPECT_TRUE(testSchema.getFieldByIndex(fieldCnt).isEqual(curField));
+        EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).has_value());
+        if (testSchema.getFieldByName(curField.getName()).has_value())
         {
-            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+            EXPECT_TRUE(testSchema.getFieldByName(curField.getName()).value().isEqual(curField));
         }
     }
 }
