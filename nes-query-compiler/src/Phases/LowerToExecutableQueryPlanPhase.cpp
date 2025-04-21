@@ -27,14 +27,14 @@
 #include <ExecutablePipelineProviderRegistry.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <Pipeline.hpp>
+#include <PipelinedQueryPlan.hpp>
 #include <options.hpp>
 
 namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
 {
 
-class LoweringContext
+struct LoweringContext
 {
-public:
     struct PredecessorRef
     {
         std::variant<OriginId, std::weak_ptr<ExecutablePipeline>> ref;
@@ -42,7 +42,7 @@ public:
         explicit PredecessorRef(const std::weak_ptr<ExecutablePipeline>& ptr) : ref(ptr) { }
     };
 
-    void addSink(std::unique_ptr<Sinks::SinkDescriptor> sinkDesc, const PredecessorRef& predecessor)
+    void addSink(std::shared_ptr<Sinks::SinkDescriptor> sinkDesc, const PredecessorRef& predecessor)
     {
         auto sinkDescShared = std::shared_ptr<Sinks::SinkDescriptor>(std::move(sinkDesc));
         sinks[sinkDescShared].push_back(predecessor);
@@ -150,7 +150,7 @@ Source processSource(std::unique_ptr<Pipeline> pipeline, const PipelinedQueryPla
     for (auto& successor : pipeline->successorPipelines)
     {
         if (auto executableSuccessor = processSuccessor(
-                pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->originIdTrait.originIds[0],
+                pipeline->rootOperator.get<SourcePhysicalOperator>()->getOriginId(),
                 std::move(successor),
                 pipelineQueryPlan,
                 loweringContext))
@@ -160,9 +160,9 @@ Source processSource(std::unique_ptr<Pipeline> pipeline, const PipelinedQueryPla
     }
 
     Source newSource(
-        pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->originIdTrait.originIds[0],
-        std::make_shared<NES::Sources::SourceDescriptor>(
-            pipeline->getOperator<SourceDescriptorLogicalOperator>().value()->getSourceDescriptor()),
+        pipeline->rootOperator.get<SourcePhysicalOperator>()->getOriginId(),
+
+        pipeline->rootOperator.get<SourcePhysicalOperator>()->getDescriptor(),
         executableSuccessorPipelines);
     loweringContext.addSource(newSource);
     return newSource;
@@ -172,8 +172,8 @@ Source processSource(std::unique_ptr<Pipeline> pipeline, const PipelinedQueryPla
 void processSink(const OriginId& predecessor, std::unique_ptr<Pipeline> pipeline, LoweringContext& loweringContext)
 {
     PRECONDITION(pipeline->isSinkPipeline(), "expected a SinkPipeline {}", pipeline->toString());
-    auto& sinkOperatorDescriptor = pipeline->getOperator<SinkLogicalOperator>().value()->sinkDescriptor;
-    loweringContext.addSink(std::move(sinkOperatorDescriptor), LoweringContext::PredecessorRef(predecessor));
+    auto sinkOperatorDescriptor = pipeline->rootOperator.get<SinkPhysicalOperator>()->getDescriptor();
+    loweringContext.addSink(sinkOperatorDescriptor, LoweringContext::PredecessorRef(predecessor));
 }
 
 std::optional<std::shared_ptr<ExecutablePipeline>> processSuccessor(

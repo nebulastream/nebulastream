@@ -174,7 +174,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     return "";
                 }
                 const auto intoLength = std::string("INTO").length();
-                auto trimmedSinkName = std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
+                auto trimmedSinkName = std::string(NES::Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
 
                 /// As the sink name might have a semicolon at the end, we remove it
                 if (trimmedSinkName.back() == ';')

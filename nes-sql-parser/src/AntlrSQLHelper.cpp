@@ -59,17 +59,17 @@ std::unique_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType()
     return std::unique_ptr<NES::Windowing::WindowType>();
 }
 
-void AntlrSQLHelper::addMapExpression(std::unique_ptr<FieldAssignmentLogicalFunction> expressionNode)
+void AntlrSQLHelper::addMapExpression(FieldAssignmentLogicalFunction expressionNode)
 {
     auto pos = this->mapBuilder.begin();
-    this->mapBuilder.insert(pos, std::move(expressionNode));
+    this->mapBuilder.insert(pos, expressionNode);
 }
-std::vector<std::unique_ptr<FieldAssignmentLogicalFunction>>& AntlrSQLHelper::getMapExpressions()
+std::vector<FieldAssignmentLogicalFunction>& AntlrSQLHelper::getMapExpressions()
 {
     return mapBuilder;
 }
 
-void AntlrSQLHelper::setMapExpressions(std::vector<std::unique_ptr<FieldAssignmentLogicalFunction>> expressions)
+void AntlrSQLHelper::setMapExpressions(std::vector<FieldAssignmentLogicalFunction> expressions)
 {
     this->mapBuilder = std::move(expressions);
 }

@@ -13,12 +13,8 @@
 */
 #pragma once
 
-#include <optional>
-#include <unordered_map>
-#include <Plans/PhysicalQueryPlan.hpp>
-#include <Plans/QueryPlan.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <CompiledQueryPlan.hpp>
+#include "PhysicalPlan.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -26,7 +22,7 @@ namespace NES::QueryCompilation
 /// Represents a query compilation request.
 struct QueryCompilationRequest
 {
-    std::unique_ptr<QueryPlan> queryPlan;
+    std::unique_ptr<PhysicalPlan> queryPlan;
 
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;
