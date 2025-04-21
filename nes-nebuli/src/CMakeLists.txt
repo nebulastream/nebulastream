@@ -11,4 +11,3 @@
 # limitations under the License.
 
 add_subdirectory(SourceCatalogs)
-add_subdirectory(QueryValidation)
