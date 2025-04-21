@@ -16,11 +16,8 @@
 #include <sstream>
 #include <string>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <magic_enum.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <utility>
 
 namespace NES
 {
