@@ -67,7 +67,7 @@ public:
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
 private:
-    std::vector<Configurations::BaseOption*> getOptions() override
+    std::vector<NES::Configurations::BaseOption*> getOptions() override
     {
         return {
             &localWorkerHost,

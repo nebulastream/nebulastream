@@ -13,18 +13,11 @@
 */
 
 #include <memory>
-#include <Phases/LowerToPhysicalOperators.hpp>
-#include <Plans/QueryPlan.hpp>
-#include <QueryOptimizer.hpp>
+#include <PipelinedQueryPlan.hpp>
+#include "PhysicalPlan.hpp"
 
-namespace NES::Optimizer
+namespace NES::QueryCompilation::PipeliningPhase
 {
-/// Takes the query plan as a logical plan and returns a fully physical plan
-std::unique_ptr<PhysicalPlan> QueryOptimizer::optimize(QueryPlan plan)
-{
-    /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
-    /// For now, we just 'purely' lower to physical operators here.
-    return LowerToPhysicalOperators::apply(plan);
-}
-
+/// During this step we create a PipelinedQueryPlan out of the QueryPlan obj
+std::unique_ptr<PipelinedQueryPlan> apply(std::unique_ptr<PhysicalPlan> queryPlan);
 }

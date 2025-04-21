@@ -26,8 +26,30 @@ struct OriginIdTrait final : public TraitConcept
 {
     std::vector<OriginId> originIds;
 
-    bool operator==(const TraitConcept& other) const override;
-    [[nodiscard]] std::string toString() const;
+    bool operator==(const TraitConcept& other) const override
+    {
+        if (auto otherTrait = dynamic_cast<const OriginIdTrait*>(&other))
+        {
+            return std::ranges::equal(otherTrait->originIds, this->originIds);
+        }
+        return false;
+    }
+
+    std::string toString() const
+    {
+        std::ostringstream oss;
+        oss << "[";
+        for (size_t i = 0; i < originIds.size(); ++i)
+        {
+            if (i != 0)
+            {
+                oss << ", ";
+            }
+            oss << originIds[i];
+        }
+        oss << "]";
+        return oss.str();
+    }
 };
 
 }

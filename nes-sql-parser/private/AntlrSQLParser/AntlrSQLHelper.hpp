@@ -153,12 +153,12 @@ public:
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::unique_ptr<Windowing::WindowType> windowType;
-    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggs;
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs;
     std::vector<LogicalFunction> projections;
     std::vector<std::unique_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
     std::vector<LogicalFunction> functionBuilder;
-    std::vector<std::unique_ptr<FieldAssignmentLogicalFunction>> mapBuilder;
-    std::vector<std::unique_ptr<FieldAccessLogicalFunction>> groupByFields;
+    std::vector<FieldAssignmentLogicalFunction> mapBuilder;
+    std::vector<FieldAccessLogicalFunction> groupByFields;
     std::vector<std::string> joinSources;
     std::optional<LogicalFunction> joinFunction;
     std::vector<LogicalFunction> joinKeyRelationHelper;
@@ -183,7 +183,7 @@ public:
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getProjectionFields();
-    [[nodiscard]] std::vector<std::unique_ptr<FieldAssignmentLogicalFunction>>& getMapExpressions();
+    [[nodiscard]] std::vector<FieldAssignmentLogicalFunction>& getMapExpressions();
 
     void addWhereClause(LogicalFunction expressionNode);
     void addHavingClause(LogicalFunction expressionNode);
@@ -191,7 +191,7 @@ public:
     [[nodiscard]] static std::unique_ptr<Windowing::WindowType> getWindowType();
     void setSource(std::string sourceName);
     const std::string getSource() const;
-    void addMapExpression(std::unique_ptr<FieldAssignmentLogicalFunction> expressionNode);
-    void setMapExpressions(std::vector<std::unique_ptr<FieldAssignmentLogicalFunction>> expressions);
+    void addMapExpression(FieldAssignmentLogicalFunction expressionNode);
+    void setMapExpressions(std::vector<FieldAssignmentLogicalFunction> expressions);
 };
 }

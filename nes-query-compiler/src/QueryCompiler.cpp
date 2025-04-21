@@ -31,7 +31,6 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     try
     {
         auto pipelinedQueryPlan = PipeliningPhase::apply(std::move(request->queryPlan));
-        pipelinedQueryPlan = AddScanAndEmitPhase::apply(std::move(pipelinedQueryPlan));
         return LowerToExecutableQueryPlanPhase::apply(std::move(pipelinedQueryPlan));
     }
     catch (...)
