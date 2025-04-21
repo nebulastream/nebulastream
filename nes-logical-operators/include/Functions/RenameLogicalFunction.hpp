@@ -27,14 +27,22 @@ public:
     RenameLogicalFunction(const FieldAccessLogicalFunction& originalField, std::string newFieldName);
     RenameLogicalFunction(const RenameLogicalFunction& other);
 
-    bool inferStamp(Schema schema) override;
-
     [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] std::string getNewFieldName() const;
     [[nodiscard]] const FieldAccessLogicalFunction& getOriginalField() const;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+
+    [[nodiscard]] const DataType& getStamp() const override;
+    [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override;
+    [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const override;
+
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
+    [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override;
+
+    [[nodiscard]] std::string getType() const override;
+    [[nodiscard]] std::string toString() const override;
 
     struct ConfigParameters
     {
@@ -46,13 +54,6 @@ public:
         static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
             = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(NEW_FIELD_NAME);
     };
-
-    const DataType& getStamp() const override { return *stamp; };
-    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
-    std::vector<LogicalFunction> getChildren() const override { return {child}; };
-    void setChildren(std::vector<LogicalFunction> children) override { child = children[0].get<FieldAccessLogicalFunction>(); };
-    std::string getType() const override { return std::string(NAME); }
-    [[nodiscard]] std::string toString() const override;
 
 private:
     FieldAccessLogicalFunction child;

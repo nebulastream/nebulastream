@@ -65,6 +65,35 @@ bool NegateLogicalFunction::validateBeforeLowering() const
     return dynamic_cast<const Boolean*>(&child.getStamp());
 }
 
+const DataType& NegateLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction NegateLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+std::vector<LogicalFunction> NegateLogicalFunction::getChildren() const
+{
+    return {child};
+};
+
+LogicalFunction NegateLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.child = children[0];
+    return copy;
+};
+
+std::string NegateLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 SerializableFunction NegateLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;

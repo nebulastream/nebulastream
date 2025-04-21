@@ -32,19 +32,22 @@ public:
     FieldAccessLogicalFunction(const FieldAccessLogicalFunction& other);
     FieldAccessLogicalFunction& operator=(const FieldAccessLogicalFunction& other) = default;
 
-    bool inferStamp(Schema schema) override;
-
     [[nodiscard]] std::string getFieldName() const;
     [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
 
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
 
-    const DataType& getStamp() const override { return *stamp; };
-    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
-    std::vector<LogicalFunction> getChildren() const override { throw UnsupportedOperation(); };
-    std::string getType() const override { return std::string(NAME); }
+    [[nodiscard]] const DataType& getStamp() const override;
+    [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override;
+    [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const override;
+
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
+    [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override;
+
+    [[nodiscard]] std::string getType() const override;
+    [[nodiscard]] std::string toString() const override;
 
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -59,8 +62,6 @@ public:
         static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
             = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(FIELD_NAME);
     };
-
-    std::string toString() const override;
 
 private:
     std::string fieldName;

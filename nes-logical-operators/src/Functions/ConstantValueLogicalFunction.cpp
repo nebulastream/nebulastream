@@ -13,10 +13,12 @@
 */
 
 #include <memory>
+#include <span>
+#include <string>
 #include <utility>
+#include <API/Schema.hpp>
 #include <Abstract/LogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <fmt/format.h>
 #include <LogicalFunctionRegistry.hpp>
@@ -31,20 +33,20 @@ ConstantValueLogicalFunction::ConstantValueLogicalFunction(std::shared_ptr<DataT
 }
 
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other)
-    : constantValue(other.constantValue), stamp(other.stamp)
+    : constantValue(other.constantValue), stamp(other.stamp->clone())
 {
 }
 
-std::shared_ptr<DataType> ConstantValueLogicalFunction::getStamp() const
+const DataType& ConstantValueLogicalFunction::getStamp() const
 {
-    return stamp;
+    return *stamp;
 };
 
 LogicalFunction ConstantValueLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return copy;
+    return *this;
 };
 
 std::vector<LogicalFunction> ConstantValueLogicalFunction::getChildren() const

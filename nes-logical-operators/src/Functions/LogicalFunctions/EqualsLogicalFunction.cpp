@@ -48,6 +48,46 @@ bool EqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
+const DataType& EqualsLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction EqualsLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction EqualsLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> EqualsLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+LogicalFunction EqualsLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string EqualsLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 std::string EqualsLogicalFunction::toString() const
 {
     std::stringstream ss;
