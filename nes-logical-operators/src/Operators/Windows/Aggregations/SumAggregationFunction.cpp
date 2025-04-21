@@ -26,7 +26,7 @@
 #include <SerializableAggregationFunction.pb.h>
 #include <Functions/FunctionSerializationUtil.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 SumAggregationFunction::SumAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)

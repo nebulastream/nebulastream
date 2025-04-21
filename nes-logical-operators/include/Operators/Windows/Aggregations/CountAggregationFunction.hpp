@@ -18,7 +18,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 class CountAggregationFunction : public WindowAggregationFunction

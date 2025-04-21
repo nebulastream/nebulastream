@@ -26,7 +26,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
 AvgAggregationFunction::AvgAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)
