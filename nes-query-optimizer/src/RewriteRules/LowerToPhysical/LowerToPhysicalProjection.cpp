@@ -27,12 +27,12 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
 {
     auto handlerId = getNextOperatorHandlerId();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];
     auto outputSchema = projectionLogicalOperator.getOutputSchema();
-    auto bufferSize = conf.bufferSize.getValue();
+    auto bufferSize = NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE;
 
     auto scanLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(inputSchema, bufferSize);
     auto scanMemoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(scanLayout);
@@ -48,9 +48,9 @@ RewriteRuleResult LowerToPhysicalProjection::apply(LogicalOperator projectionLog
     emitWrapper->handler = std::make_shared<EmitOperatorHandler>();
     emitWrapper->handlerId = handlerId;
 
-    scanWrapper->children.emplace_back(emitWrapper);
+    emitWrapper->children.emplace_back(scanWrapper);
 
-    return {scanWrapper, {emitWrapper}};
+    return {emitWrapper, {scanWrapper}};
 }
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterProjectionRewriteRule(RewriteRuleRegistryArguments argument)

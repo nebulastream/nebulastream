@@ -45,6 +45,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Optimizer
 {
@@ -79,7 +80,7 @@ std::shared_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOp
     switch (timeWindow->getTimeCharacteristic().getType())
     {
         case Windowing::TimeCharacteristic::Type::IngestionTime: {
-            if (timeWindow->getTimeCharacteristic().getField().getName() == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+            if (timeWindow->getTimeCharacteristic().field.getName() == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
             {
                 return std::make_shared<IngestionTimeFunction>();
             }
@@ -88,7 +89,7 @@ std::shared_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOp
         }
         case Windowing::TimeCharacteristic::Type::EventTime: {
             /// For event time fields, we look up the reference field name and create an expression to read the field.
-            auto timeCharacteristicField = timeWindow->getTimeCharacteristic().getField().getName();
+            auto timeCharacteristicField = timeWindow->getTimeCharacteristic().field.getName();
             auto timeStampField = Functions::FieldAccessPhysicalFunction(timeCharacteristicField);
             return std::make_shared<EventTimeFunction>(timeStampField, timeWindow->getTimeCharacteristic().getTimeUnit());
         }
@@ -98,8 +99,8 @@ std::shared_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOp
     }
 }
 
-std::vector<std::shared_ptr<AggregationFunction>> getAggregationFunctions(
-    const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration& config)
+std::vector<std::shared_ptr<AggregationFunction>>
+getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration&)
 {
     std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
@@ -160,16 +161,15 @@ std::vector<std::shared_ptr<AggregationFunction>> getAggregationFunctions(
         }
         else if (name == "Median")
         {
-            auto layout
-                = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(logicalOperator.getInputSchemas()[0], config.pageSize.getValue());
-            auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(std::move(layout));
+            auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(
+                logicalOperator.getInputSchemas()[0], NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE);
+            auto memoryProvider = std::make_unique<ColumnTupleBufferMemoryProvider>(layout);
             aggregationFunctions.emplace_back(std::make_shared<MedianAggregationFunction>(
                 std::move(physicalInputType),
                 std::move(physicalFinalType),
                 std::move(aggregationInputExpression),
                 aggregationResultFieldIdentifier,
                 std::move(memoryProvider)));
-            break;
         }
         else
         {
@@ -179,13 +179,19 @@ std::vector<std::shared_ptr<AggregationFunction>> getAggregationFunctions(
     return aggregationFunctions;
 }
 
-RewriteRuleResult LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
+    PRECONDITION(logicalOperator.getInputOriginIds().size() == 1, "Expected one origin id vector");
+    PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
+    PRECONDITION(logicalOperator.getInputSchemas().size() == 1, "Expected one input schema");
+
     auto aggregation = logicalOperator.get<WindowedAggregationLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
-    auto inputSchema = logicalOperator.getInputSchemas()[0];
-    auto outputSchema = logicalOperator.getOutputSchema();
+    auto inputSchema = aggregation.getInputSchemas()[0];
+    auto outputSchema = aggregation.getOutputSchema();
+    auto inputOriginIds = aggregation.getInputOriginIds()[0];
+    auto outputOriginId = aggregation.getOutputOriginIds()[0];
     auto timeFunction = getTimeFunction(aggregation);
     auto windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(&aggregation.getWindowType());
     auto aggregationFunctions = getAggregationFunctions(aggregation, conf);
@@ -206,7 +212,9 @@ RewriteRuleResult LowerToPhysicalWindowedAggregation::apply(LogicalOperator logi
         keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
     }
     const auto entrySize = sizeof(Interface::ChainedHashMapEntry) + keySize + valueSize;
-    const auto entriesPerPage = NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE / entrySize;
+    const auto numberOfBuckets = NES::Configurations::DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES;
+    const auto pageSize = NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE;
+    const auto entriesPerPage = pageSize / entrySize;
 
     const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(aggregation);
     const auto& [fieldKeys, fieldValues] = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldKeyNames, fieldValueNames);
@@ -215,25 +223,27 @@ RewriteRuleResult LowerToPhysicalWindowedAggregation::apply(LogicalOperator logi
         aggregationFunctions, std::make_shared<Interface::MurMur3HashFunction>(), fieldKeys, fieldValues, entriesPerPage, entrySize);
 
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        windowType->getSize().getTime(), windowType->getSlide().getTime(), logicalOperator.getInputOriginIds()[0].size());
-    auto handler = std::make_shared<AggregationOperatorHandler>(
-        logicalOperator.getInputOriginIds()[0], logicalOperator.getOutputOriginIds()[0], std::move(sliceAndWindowStore));
+        windowType->getSize().getTime(), windowType->getSlide().getTime(), inputOriginIds.size());
+    auto handler = std::make_shared<AggregationOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    handler->setHashMapParams(keySize, valueSize, pageSize, numberOfBuckets);
 
     auto build = AggregationBuildPhysicalOperator(handlerId, timeFunction, keyFunctions, windowAggregation);
     auto probe = AggregationProbePhysicalOperator(
         windowAggregation, handlerId, aggregation.getWindowStartFieldName(), aggregation.getWindowEndFieldName());
 
-    auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(build, aggregation.getInputSchemas()[0], aggregation.getOutputSchema());
+    auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(build, inputSchema, outputSchema);
     buildWrapper->handlerId = handlerId;
     buildWrapper->handler = handler;
+    buildWrapper->isEmit = true;
 
-    auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(probe, aggregation.getInputSchemas()[0], aggregation.getOutputSchema());
+    auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(probe, inputSchema, outputSchema);
     probeWrapper->handlerId = handlerId;
-    buildWrapper->handler = handler;
+    probeWrapper->handler = handler;
+    probeWrapper->isScan = true;
 
-    buildWrapper->children.push_back(probeWrapper);
+    probeWrapper->children.push_back(buildWrapper);
 
-    return {.root = buildWrapper, .leafOperators = {probeWrapper}};
+    return {probeWrapper, {buildWrapper}};
 }
 
 std::unique_ptr<AbstractRewriteRule>

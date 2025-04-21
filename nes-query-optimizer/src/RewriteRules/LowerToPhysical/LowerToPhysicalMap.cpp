@@ -14,15 +14,16 @@
 
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/MapLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
+#include <MapPhysicalOperator.hpp>
+#include <RewriteRuleRegistry.hpp>
 
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<MapLogicalOperator>(), "Expected a MapLogicalOperator");
     auto map = logicalOperator.get<MapLogicalOperator>();
@@ -35,8 +36,8 @@ RewriteRuleResult LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
     return {wrapper, {wrapper}};
 }
 
-std::unique_ptr<Optimizer::AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)
 {
-    return std::make_unique<NES::Optimizer::LowerToPhysicalMap>(argument.conf);
+    return std::make_unique<LowerToPhysicalMap>(argument.conf);
 }
 }
