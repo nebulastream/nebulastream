@@ -47,7 +47,7 @@ namespace NES
 std::shared_ptr<QueryPlan> QueryPlanBuilder::createQueryPlan(std::string logicalSourceName)
 {
     NES_TRACE("QueryPlanBuilder: create query plan for input source  {}", logicalSourceName);
-    Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
+    NES::Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
     auto sourceOperator = std::make_shared<SourceNameLogicalOperator>(logicalSourceName);
     auto queryPlan = QueryPlan::create(sourceOperator);
     return queryPlan;
