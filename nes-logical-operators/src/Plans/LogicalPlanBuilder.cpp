@@ -187,17 +187,17 @@ LogicalPlan LogicalPlanBuilder::addSink(std::string sinkName, LogicalPlan queryP
     return queryPlan;
 }
 
-LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(
-    LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType> windowType)
+LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType> windowType)
 {
     NES_TRACE("LogicalPlanBuilder: checkAndAddWatermarkAssigner for a (sub)query plan");
-LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType> windowType)
-    if (queryPlan.getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>().empty() and
-        queryPlan.getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>().empty())
-    {
-        if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
+    auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowType);
+
     if (queryPlan.getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>().empty()
         and queryPlan.getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>().empty())
+    {
+        if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
+        {
+            queryPlan.promoteOperatorToRoot(IngestionTimeWatermarkAssignerLogicalOperator());
             return queryPlan;
         }
         if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::EventTime)
@@ -215,8 +215,8 @@ LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPl
 LogicalPlan LogicalPlanBuilder::addBinaryOperatorAndUpdateSource(
     LogicalOperator operatorNode, LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan)
 {
-    leftLogicalPlan.addRootOperator(rightLogicalPlan.getRootOperators()[0]);
     leftLogicalPlan.rootOperators.push_back(rightLogicalPlan.rootOperators[0]);
+    leftLogicalPlan.promoteOperatorToRoot(std::move(operatorNode));
     NES_TRACE("LogicalPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
     return leftLogicalPlan;
 }
