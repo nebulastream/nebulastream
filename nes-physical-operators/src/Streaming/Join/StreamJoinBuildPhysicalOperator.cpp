@@ -20,6 +20,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Streaming/Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -32,13 +33,13 @@ namespace NES
 {
 
 StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
+    std::shared_ptr<TupleBufferMemoryProvider> memoryProvider,
     const uint64_t operatorHandlerIndex,
     const JoinBuildSideType joinBuildSide,
-    std::unique_ptr<TimeFunction> timeFunction,
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
+    std::unique_ptr<TimeFunction> timeFunction)
     : WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
     , joinBuildSide(joinBuildSide)
-    , memoryProvider(memoryProvider)
+    , memoryProvider(std::move(memoryProvider))
 {
 }
 }

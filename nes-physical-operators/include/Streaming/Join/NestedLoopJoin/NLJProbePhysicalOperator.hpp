@@ -37,8 +37,8 @@ public:
         const std::string windowStartFieldName,
         const std::string windowEndFieldName,
         const JoinSchema& joinSchema,
-        std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
-        std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider);
+        std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
+        std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
@@ -47,7 +47,8 @@ public:
 
 private:
     std::optional<PhysicalOperator> child;
-    std::unique_ptr<TupleBufferMemoryProvider> leftMemoryProvider;
-    std::unique_ptr<TupleBufferMemoryProvider> rightMemoryProvider;
+    std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider;
+    std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider;
+    static constexpr bool PIPELINE_BREAKER = true;
 };
 }
