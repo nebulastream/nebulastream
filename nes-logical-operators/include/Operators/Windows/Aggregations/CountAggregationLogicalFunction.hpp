@@ -14,31 +14,28 @@
 
 #pragma once
 
-#include <memory>
 #include <API/Schema.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+
 namespace NES
 {
 
-class SumAggregationFunction : public WindowAggregationFunction
+class CountAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    SumAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
-    explicit SumAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
-    virtual ~SumAggregationFunction() = default;
-
-    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
-    static std::unique_ptr<WindowAggregationFunction>
+    CountAggregationLogicalFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
+    explicit CountAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+    virtual ~CountAggregationLogicalFunction() = default;
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction>
     create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
-    std::unique_ptr<WindowAggregationFunction> clone() override;
+    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    static constexpr std::string_view NAME = "Sum";
+    static constexpr std::string_view NAME = "Count";
 };
 }

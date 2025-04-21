@@ -20,7 +20,9 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Types/ContentBasedWindowType.hpp>
@@ -35,7 +37,7 @@ namespace NES
 
 WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
-    std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggregation,
+    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation,
     std::unique_ptr<Windowing::WindowType> windowType)
     : Operator()
     , WindowOperator()
@@ -85,7 +87,7 @@ bool WindowedAggregationLogicalOperator::operator==(const Operator& rhs) const
 
         for (uint64_t i = 0; i < this->getKeys().size(); i++)
         {
-            if (!this->getKeys()[i]->equal(rhsOperator->getKeys()[i]))
+            if (this->getKeys()[i] != rhsOperator->getKeys()[i])
             {
                 return false;
             }
@@ -201,12 +203,12 @@ bool WindowedAggregationLogicalOperator::isKeyed() const
     return !onKey.empty();
 }
 
-const std::vector<std::unique_ptr<WindowAggregationFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
+const std::vector<std::unique_ptr<WindowAggregationLogicalFunction>>& WindowedAggregationLogicalOperator::getWindowAggregation() const
 {
     return windowAggregation;
 }
 
-void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationFunction>> wa)
+void WindowedAggregationLogicalOperator::setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> wa)
 {
     windowAggregation = std::move(wa);
 }
