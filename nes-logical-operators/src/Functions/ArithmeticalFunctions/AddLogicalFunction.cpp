@@ -31,6 +31,45 @@ AddLogicalFunction::AddLogicalFunction(const AddLogicalFunction& other) : stamp(
 {
 }
 
+const DataType& AddLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction AddLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction AddLogicalFunction::withInferredStamp(Schema schema) const {
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return this->withChildren(newChildren);
+}
+
+std::vector<LogicalFunction> AddLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+LogicalFunction AddLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string AddLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 bool AddLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const AddLogicalFunction*>(&rhs);

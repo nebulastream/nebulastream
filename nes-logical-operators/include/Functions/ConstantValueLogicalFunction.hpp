@@ -38,16 +38,19 @@ public:
 
     std::string getConstantValue() const;
 
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+
     [[nodiscard]] SerializableFunction serialize() const override;
 
-    bool inferStamp(Schema schema) override;
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+    [[nodiscard]] const DataType& getStamp() const override;
+    [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override;
+    [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const override;
 
-    const DataType& getStamp() const override { return *stamp; };
-    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
-    std::vector<LogicalFunction> getChildren()  const override { throw UnsupportedOperation(); };
-    std::string getType() const override { return std::string(NAME); }
-    std::string toString() const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren()  const override;
+    [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override;
+
+    [[nodiscard]] std::string getType() const override;
+    [[nodiscard]] std::string toString() const override;
 
     struct ConfigParameters
     {

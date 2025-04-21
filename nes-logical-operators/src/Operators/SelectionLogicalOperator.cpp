@@ -59,21 +59,29 @@ std::string SelectionLogicalOperator::toString() const
     return ss.str();
 }
 
-/*
-bool SelectionLogicalOperator::inferSchema()
+bool SelectionLogicalOperator::inferSchema(Schema inputSchema)
 {
-    if (!UnaryLogicalOperator::inferSchema())
-    {
-        return false;
-    }
-    predicate->inferStamp(inputSchema);
-    if (predicate->getStamp() != Boolean())
+    predicate = predicate.withInferredStamp(inputSchema);
+    if (predicate.getStamp() != Boolean())
     {
         throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
     }
+    this->inputSchema = inputSchema;
+    this->outputSchema = inputSchema;
+
+    /// Infer schema of all child operators
+    std::vector<LogicalOperator> newChildren;
+    for (auto& child : children)
+    {
+        if (!child.inferSchema(outputSchema))
+        {
+            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
+        }
+        newChildren.push_back(child);
+    }
+    this->children = newChildren;
     return true;
 }
-*/
 
 Optimizer::TraitSet SelectionLogicalOperator::getTraitSet() const
 {

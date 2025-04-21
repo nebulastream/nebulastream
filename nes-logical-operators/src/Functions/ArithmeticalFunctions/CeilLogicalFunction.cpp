@@ -29,6 +29,46 @@ CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : sta
 {
 }
 
+const DataType& CeilLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction CeilLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction CeilLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> CeilLogicalFunction::getChildren() const
+{
+    return {child};
+};
+
+LogicalFunction CeilLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.child = children[0];
+    return copy;
+};
+
+std::string CeilLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
+
 bool CeilLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const CeilLogicalFunction*>(&rhs);

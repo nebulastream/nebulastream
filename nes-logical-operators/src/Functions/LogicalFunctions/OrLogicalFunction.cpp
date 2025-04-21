@@ -50,6 +50,35 @@ std::string OrLogicalFunction::toString() const
     return ss.str();
 }
 
+const DataType& OrLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction OrLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+std::vector<LogicalFunction> OrLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+LogicalFunction OrLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string OrLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
 
 LogicalFunction OrLogicalFunction::withInferredStamp(Schema schema) const
 {

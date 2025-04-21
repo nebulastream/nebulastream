@@ -39,6 +39,45 @@ bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
+const DataType& ExpLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction ExpLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction ExpLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return this->withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const
+{
+    return {child};
+};
+
+LogicalFunction ExpLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.child = children[0];
+    return copy;
+};
+
+std::string ExpLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 std::string ExpLogicalFunction::toString() const
 {
     std::stringstream ss;

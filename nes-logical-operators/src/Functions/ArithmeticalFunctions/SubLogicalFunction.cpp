@@ -47,6 +47,46 @@ std::string SubLogicalFunction::toString() const
     return ss.str();
 }
 
+const DataType& SubLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction SubLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction SubLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return this->withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> SubLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+LogicalFunction SubLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string SubLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 SerializableFunction SubLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;

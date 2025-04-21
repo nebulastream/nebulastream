@@ -35,12 +35,38 @@ ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLo
 {
 }
 
+const DataType& ConstantValueLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction ConstantValueLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+std::vector<LogicalFunction> ConstantValueLogicalFunction::getChildren() const
+{
+    return {};
+};
+
+LogicalFunction ConstantValueLogicalFunction::withChildren(std::vector<LogicalFunction>) const
+{
+    return *this;
+};
+
+std::string ConstantValueLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 bool ConstantValueLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const ConstantValueLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const ConstantValueLogicalFunction*>(&rhs))
     {
-        return other->stamp == stamp && constantValue == other->constantValue;
+        return constantValue == other->constantValue;
     }
     return false;
 }
