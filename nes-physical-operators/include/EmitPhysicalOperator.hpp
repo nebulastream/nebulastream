@@ -30,7 +30,7 @@ namespace NES
 class DefaultEmitPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit DefaultEmitPhysicalOperator(size_t operatorHandlerIndex, std::shared_ptr<TupleBufferMemoryProvider> memoryProvider);
+    explicit DefaultEmitPhysicalOperator(OperatorHandlerId operatorHandlerIndex, std::shared_ptr<TupleBufferMemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
@@ -48,7 +48,7 @@ private:
 
     std::optional<PhysicalOperator> child;
     std::shared_ptr<TupleBufferMemoryProvider> memoryProvider;
-    size_t operatorHandlerIndex;
+    OperatorHandlerId operatorHandlerIndex;
 };
 
 }
