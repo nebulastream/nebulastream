@@ -17,18 +17,18 @@
 #include <optional>
 #include <regex>
 #include <string>
+#include <utility>
 #include <AntlrSQLLexer.h>
 #include <AntlrSQLParser.h>
 #include <ParserRuleContext.h>
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
 #include <API/Functions/LogicalFunctions.hpp>
-#include <API/Windowing.hpp>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
+#include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/AndLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/GreaterEqualsLogicalFunction.hpp>
@@ -37,13 +37,10 @@
 #include <Functions/LogicalFunctions/LessLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalJoinDescriptor.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Strings.hpp>
-#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/ThresholdWindow.hpp>
@@ -52,8 +49,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Integer.hpp>
-
+#include "ParserUtil.hpp"
 namespace NES::Parsers
 {
 

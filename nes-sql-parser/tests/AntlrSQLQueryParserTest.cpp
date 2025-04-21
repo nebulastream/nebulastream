@@ -18,12 +18,12 @@
 #include <string>
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
-#include <API/Windowing.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <API/WindowedQuery.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <Types/SlidingWindow.hpp>
-#include <Types/TumblingWindow.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <WindowTypes/Types/SlidingWindow.hpp>
+#include <WindowTypes/Types/TumblingWindow.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
