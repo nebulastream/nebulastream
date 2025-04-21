@@ -55,7 +55,7 @@ public:
 
     WindowAggregation(const std::shared_ptr<WindowAggregation>& other) noexcept
         : aggregationFunctions(other->aggregationFunctions)
-        , hashFunction(other->hashFunction->clone())
+        , hashFunction(other->hashFunction)
         , fieldKeys(other->fieldKeys)
         , fieldValues(other->fieldValues)
         , entriesPerPage(other->entriesPerPage)
