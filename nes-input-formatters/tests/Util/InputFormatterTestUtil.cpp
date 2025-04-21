@@ -25,12 +25,11 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
 #include <InputFormatterTestUtil.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::InputFormatterTestUtil
 {
 
-std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataTypes)
+Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
 {
     auto schema = std::make_shared<Schema>();
     for (size_t fieldNumber = 1; const auto& dataType : testDataTypes)
@@ -132,7 +131,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
     const std::string& filePath,
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
     const int numberOfLocalBuffersInSource)
 {

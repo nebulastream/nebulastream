@@ -24,7 +24,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -50,7 +49,6 @@
 #include <std/sstream.h>
 #include <ErrorHandling.hpp>
 #include <NautilusTestUtils.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
@@ -64,7 +62,7 @@ std::unique_ptr<Interface::HashFunction> NautilusTestUtils::getMurMurHashFunctio
 }
 
 std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     const uint64_t numberOfTuples,
     Memory::BufferManager& bufferManager,
     const uint64_t minSizeVarSizedData)
@@ -78,14 +76,14 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
 }
 
 std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const std::shared_ptr<Schema>& schema, const uint64_t numberOfTuples, Memory::BufferManager& bufferManager)
+    const Schema& schema, const uint64_t numberOfTuples, Memory::BufferManager& bufferManager)
 {
     constexpr auto minSizeVarSizedData = 10;
     return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, minSizeVarSizedData);
 }
 
 std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     const uint64_t numberOfTuples,
     Memory::BufferManager& bufferManager,
     const uint64_t seed,
@@ -151,17 +149,17 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     return buffers;
 }
 
-std::shared_ptr<Schema> NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes)
+Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes)
 {
     constexpr auto typeIdxOffset = 0;
     return createSchemaFromBasicTypes(basicTypes, typeIdxOffset);
 }
 
-std::shared_ptr<Schema>
+Schema
 NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<BasicType>& basicTypes, const uint64_t typeIdxOffset)
 {
     /// Creating a schema for the memory provider
-    const auto schema = Schema::create();
+    const auto schema{};
     for (const auto& [typeIdx, type] : views::enumerate(basicTypes))
     {
         schema->addField(Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset)), type);
@@ -173,7 +171,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     std::string_view functionName,
     Configurations::NautilusBackend backend,
     nautilus::engine::Options& options,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.

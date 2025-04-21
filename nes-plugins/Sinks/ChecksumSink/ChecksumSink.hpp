@@ -41,7 +41,6 @@ namespace NES::Sinks
 class ChecksumSink : public Sink
 {
 public:
-    static constexpr std::string_view NAME = "Checksum";
     explicit ChecksumSink(const SinkDescriptor& sinkDescriptor);
 
     /// Opens file and writes schema to file, if the file is empty.
@@ -60,18 +59,6 @@ private:
     Checksum checksum;
     size_t schemaSizeInBytes;
     std::unique_ptr<CSVFormat> formatter;
-};
-
-struct ConfigParametersChecksum
-{
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
-
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH);
 };
 
 }

@@ -14,15 +14,12 @@
 
 #include <string>
 #include <unordered_set>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/NodeFunctionBinary.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
-std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames(std::shared_ptr<NES::NodeFunction> joinFunction)
+std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames(std::shared_ptr<NES::Expression> joinFunction)
 {
     std::basic_string<char> leftJoinKeyNameEqui;
     std::basic_string<char> rightJoinKeyNameEqui;
@@ -50,10 +47,10 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
                 if (!Util::instanceOf<NodeFunctionBinary>(Util::as<NodeFunctionBinary>((*itr))->getLeft())
                     && Util::instanceOf<NodeFunctionEquals>((*itr)))
                 {
-                    const auto leftJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>((*itr))->getLeft());
+                    const auto leftJoinKey = Util::as<FieldAccessExpression>(Util::as<NodeFunctionBinary>((*itr))->getLeft());
                     leftJoinKeyNameEqui = leftJoinKey->getFieldName();
 
-                    const auto rightJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>((*itr))->getRight());
+                    const auto rightJoinKey = Util::as<FieldAccessExpression>(Util::as<NodeFunctionBinary>((*itr))->getRight());
                     rightJoinKeyNameEqui = rightJoinKey->getFieldName();
 
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");

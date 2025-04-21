@@ -14,14 +14,11 @@
 
 #include <memory>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
-#include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
-#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+// #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
-#include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
@@ -35,13 +32,10 @@ std::shared_ptr<QueryRewritePhase> QueryRewritePhase::create()
 
 QueryRewritePhase::QueryRewritePhase()
 {
-    attributeSortRule = AttributeSortRule::create();
-    binaryOperatorSortRule = BinaryOperatorSortRule::create();
     filterMergeRule = FilterMergeRule::create();
-    filterPushDownRule = FilterPushDownRule::create();
+    // filterPushDownRule = FilterPushDownRule::create();
     filterSplitUpRule = FilterSplitUpRule::create();
     predicateReorderingRule = PredicateReorderingRule::create();
-    projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
 }
 
@@ -49,13 +43,12 @@ void QueryRewritePhase::execute(std::shared_ptr<QueryPlan>& queryPlan) const
 {
     /// Apply rules necessary for enabling query execution when stream alias or union operators are involved
     queryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
-    queryPlan = projectBeforeUnionOperatorRule->apply(queryPlan);
 
     /// TODO #105 Once we have added And, Or, and other logical functions, we can call filterMergeRule. Otherwise, it might happen that we have a filter operator with an And function as a child.
     /// Apply rule for filter split up
     queryPlan = filterSplitUpRule->apply(queryPlan);
     /// Apply rule for filter push down optimization
-    queryPlan = filterPushDownRule->apply(queryPlan);
+    // queryPlan = filterPushDownRule->apply(queryPlan);
     /// Apply rule for filter merge
     /// queryPlan = filterMergeRule->apply(queryPlan);
     /// Apply rule for filter reordering optimization

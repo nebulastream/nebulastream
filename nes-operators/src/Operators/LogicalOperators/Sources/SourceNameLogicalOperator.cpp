@@ -29,7 +29,7 @@ SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceNa
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, const OperatorId id)
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, Schema schema, const OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
@@ -92,11 +92,11 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
 {
     return logicalSourceName;
 }
-std::shared_ptr<Schema> SourceNameLogicalOperator::getSchema() const
+Schema SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
-void SourceNameLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
+void SourceNameLogicalOperator::setSchema(Schema schema)
 {
     this->schema = std::move(schema);
 }

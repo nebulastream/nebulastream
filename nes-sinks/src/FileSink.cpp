@@ -25,12 +25,14 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/FileSink.hpp>
+#include <Sinks/FileSinkDescriptor.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -41,11 +43,11 @@ namespace NES::Sinks
 
 FileSink::FileSink(const SinkDescriptor& sinkDescriptor)
     : Sink()
-    , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
-    , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
+    , outputFilePath(sinkDescriptor.getFromConfig(FileSinkConfig::FILEPATH))
+    , isAppend(sinkDescriptor.getFromConfig(FileSinkConfig::APPEND))
     , isOpen(false)
 {
-    switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersFile::INPUT_FORMAT))
+    switch (const auto inputFormat = sinkDescriptor.getFromConfig(FileSinkConfig::INPUT_FORMAT))
     {
         case Configurations::InputFormat::CSV:
             formatter = std::make_unique<CSVFormat>(sinkDescriptor.schema);
@@ -119,16 +121,6 @@ void FileSink::stop(Runtime::Execution::PipelineExecutionContext&)
     auto stream = outputFileStream.wlock();
     stream->flush();
     stream->close();
-}
-
-Configurations::DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return FileSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
 SinkRegistryReturnType SinkGeneratedRegistrar::RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)

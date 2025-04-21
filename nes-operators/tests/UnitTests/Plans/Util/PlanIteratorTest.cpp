@@ -15,9 +15,7 @@
 #include <memory>
 #include <vector>
 #include <API/QueryAPI.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/Expression.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
@@ -29,7 +27,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 using namespace std;
 
@@ -49,13 +46,13 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
 
-        pred1 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "1");
-        pred2 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "2");
-        pred3 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "3");
-        pred4 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "4");
-        pred5 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "5");
-        pred6 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "6");
-        pred7 = NodeFunctionConstantValue::create(DataTypeProvider::provideDataType(LogicalType::INT8), "7");
+        pred1 = ConstantExpression::create(DataTypeProvider::provideDataType(LogicalType::INT8), "1");
+        pred2 = ConstantExpression::create(DataTypeProvider::provideDataType(LogicalType::INT8), "2");
+        pred3 = ConstantExpression::create(DataTypeProvider::provideDataType(LogicalType::INT8), "3");
+        pred4 = ConstantExpression::create(DataTypeProvider::provideDataType(LogicalType::INT8), "4");
+        pred5 = ConstantExpression::create(DataTypeProvider::provideDataType(LogicalType::INT8), "5");
+        pred6 = ConstantExpression::create(DataTypeProvider::provideDataType(LogicalType::INT8), "6");
+        pred7 = ConstantExpression::create(DataTypeProvider::provideDataType(LogicalType::INT8), "7");
 
         sourceOp1 = std::make_shared<SourceNameLogicalOperator>("test_source_1", getNextOperatorId());
         sourceOp2 = std::make_shared<SourceNameLogicalOperator>("test_source_2", getNextOperatorId());
@@ -72,7 +69,7 @@ public:
     }
 
 protected:
-    std::shared_ptr<NodeFunction> pred1, pred2, pred3, pred4, pred5, pred6, pred7;
+    ExpressionValue pred1, pred2, pred3, pred4, pred5, pred6, pred7;
     std::shared_ptr<LogicalOperator> sourceOp1, sourceOp2;
 
     std::shared_ptr<LogicalOperator> filterOp1, filterOp2, filterOp3, filterOp4;

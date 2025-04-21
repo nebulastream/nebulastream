@@ -19,7 +19,7 @@
 #include <vector>
 #include <API/Query.hpp>
 #include <API/Windowing.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/Expression.hpp>
 #include <Types/WindowType.hpp>
 namespace NES::WindowOperatorBuilder
 {
@@ -35,7 +35,7 @@ public:
     * @param windowType
     */
     KeyedWindowedQuery(
-        Query& originalQuery, std::shared_ptr<Windowing::WindowType> windowType, std::vector<std::shared_ptr<NodeFunction>> keys);
+        Query& originalQuery, std::shared_ptr<Windowing::WindowType> windowType, std::vector<ExpressionValue> keys);
 
     /**
     * @brief: Applies a set of aggregation functions to the window and returns a query object.
@@ -53,7 +53,7 @@ public:
 private:
     Query& originalQuery;
     std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<std::shared_ptr<NodeFunction>> keys;
+    std::vector<ExpressionValue> keys;
 };
 
 /**
@@ -78,7 +78,7 @@ public:
     template <class... FunctionItems>
     [[nodiscard]] KeyedWindowedQuery byKey(FunctionItems... onKeys)
     {
-        std::vector<std::shared_ptr<NodeFunction>> keyFunctions;
+        std::vector<ExpressionValue> keyFunctions;
         (keyFunctions.emplace_back(std::forward<FunctionItems>(onKeys).getNodeFunction()), ...);
         return KeyedWindowedQuery(originalQuery, windowType, keyFunctions);
     };

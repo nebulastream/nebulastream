@@ -55,36 +55,25 @@ bool LogicalUnionOperator::inferSchema()
         return false;
     }
 
-    leftInputSchema->clear();
-    rightInputSchema->clear();
     if (distinctSchemas.size() == 1)
     {
-        leftInputSchema->copyFields(distinctSchemas[0]);
-        rightInputSchema->copyFields(distinctSchemas[0]);
+        leftInputSchema = distinctSchemas[0];
+        rightInputSchema = distinctSchemas[0];
     }
     else
     {
-        leftInputSchema->copyFields(distinctSchemas[0]);
-        rightInputSchema->copyFields(distinctSchemas[1]);
+        leftInputSchema = distinctSchemas[0];
+        rightInputSchema = distinctSchemas[1];
     }
 
-    if (!(*leftInputSchema == *rightInputSchema))
+    if (!(leftInputSchema == rightInputSchema))
     {
         throw CannotInferSchema(
-            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}",
-            leftInputSchema->toString(),
-            rightInputSchema->toString());
-    }
-
-    if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType())
-    {
-        throw CannotInferSchema("Left and right should have same memory layout");
+            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}", leftInputSchema, rightInputSchema);
     }
 
     ///Copy the schema of left input
-    outputSchema->clear();
-    outputSchema->copyFields(leftInputSchema);
-    outputSchema->setLayoutType(leftInputSchema->getLayoutType());
+    outputSchema = leftInputSchema;
     return true;
 }
 
@@ -110,7 +99,7 @@ bool LogicalUnionOperator::equal(const std::shared_ptr<Node>& rhs) const
     if (NES::Util::instanceOf<LogicalUnionOperator>(rhs))
     {
         const auto rhsUnion = NES::Util::as<LogicalUnionOperator>(rhs);
-        return (*leftInputSchema == *rhsUnion->getLeftInputSchema()) && (*outputSchema == *rhsUnion->getOutputSchema());
+        return (leftInputSchema == rhsUnion->getLeftInputSchema()) && (outputSchema == rhsUnion->getOutputSchema());
     }
     return false;
 }

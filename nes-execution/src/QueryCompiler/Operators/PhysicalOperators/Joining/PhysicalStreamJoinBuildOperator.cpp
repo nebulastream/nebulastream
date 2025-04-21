@@ -28,8 +28,8 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
-    const std::shared_ptr<Schema>& inputSchema,
-    const std::shared_ptr<Schema>& outputSchema,
+    const Schema& inputSchema,
+    const Schema& outputSchema,
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
     const Configurations::StreamJoinStrategy joinStrategy,
     const std::vector<std::string>& joinFieldNames,

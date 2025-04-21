@@ -29,7 +29,7 @@ class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator
 {
 protected:
     PhysicalBinaryOperator(
-        OperatorId id, std::shared_ptr<Schema> leftSchema, std::shared_ptr<Schema> rightSchema, std::shared_ptr<Schema> outputSchema);
+        OperatorId id, Schema leftSchema, Schema rightSchema, Schema outputSchema);
 
     std::string toString() const override;
 };

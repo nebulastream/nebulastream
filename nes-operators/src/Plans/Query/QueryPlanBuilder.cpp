@@ -18,13 +18,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
+#include <Functions/Expression.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
@@ -68,7 +62,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::createQueryPlan(std::string logical
 }
 
 std::shared_ptr<QueryPlan>
-QueryPlanBuilder::addProjection(const std::vector<std::shared_ptr<NodeFunction>>& functions, std::shared_ptr<QueryPlan> queryPlan)
+QueryPlanBuilder::addProjection(const std::vector<ExpressionValue>& functions, std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add projection operator to query plan");
     const std::shared_ptr<Operator> op = std::make_shared<LogicalProjectionOperator>(functions, getNextOperatorId());
@@ -84,14 +78,8 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addRename(const std::string& newSou
     return queryPlan;
 }
 
-std::shared_ptr<QueryPlan>
-QueryPlanBuilder::addSelection(const std::shared_ptr<NodeFunction>& selectionFunction, std::shared_ptr<QueryPlan> queryPlan)
+std::shared_ptr<QueryPlan> QueryPlanBuilder::addSelection(ExpressionValue selectionFunction, std::shared_ptr<QueryPlan> queryPlan)
 {
-    NES_TRACE("QueryPlanBuilder: add selection operator to query plan");
-    if (!selectionFunction->getNodesByType<NodeFunctionFieldRename>().empty())
-    {
-        throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
-    }
     const std::shared_ptr<Operator> op = std::make_shared<LogicalSelectionOperator>(selectionFunction, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
@@ -105,15 +93,9 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addLimit(const uint64_t limit, std:
     return queryPlan;
 }
 
-std::shared_ptr<QueryPlan>
-QueryPlanBuilder::addMap(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction, std::shared_ptr<QueryPlan> queryPlan)
+std::shared_ptr<QueryPlan> QueryPlanBuilder::addMap(Schema::Identifier asField, ExpressionValue value, std::shared_ptr<QueryPlan> queryPlan)
 {
-    NES_TRACE("QueryPlanBuilder: add map operator to query plan");
-    if (!mapFunction->getNodesByType<NodeFunctionFieldRename>().empty())
-    {
-        throw UnsupportedQuery("Map function cannot have a FieldRenameFunction");
-    }
-    const std::shared_ptr<Operator> op = std::make_shared<LogicalMapOperator>(mapFunction, getNextOperatorId());
+    const std::shared_ptr<Operator> op = std::make_shared<LogicalMapOperator>(getNextOperatorId(), value, asField);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
@@ -122,7 +104,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addWindowAggregation(
     std::shared_ptr<QueryPlan> queryPlan,
     const std::shared_ptr<Windowing::WindowType>& windowType,
     const std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>>& windowAggs,
-    const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& onKeys)
+    const std::vector<ExpressionValue>& onKeys)
 {
     PRECONDITION(not queryPlan->getRootOperators().empty(), "invalid query plan, as the root operator is empty");
 
@@ -141,8 +123,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addWindowAggregation(
             case Windowing::TimeCharacteristic::Type::EventTime:
                 queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
                     Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                        NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->field->getName()),
-                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()),
+                        timeBasedWindowType->getTimeCharacteristic()->value, timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()),
                     getNextOperatorId()));
                 break;
         }
@@ -173,42 +154,11 @@ QueryPlanBuilder::addUnion(std::shared_ptr<QueryPlan> leftQueryPlan, const std::
 std::shared_ptr<QueryPlan> QueryPlanBuilder::addJoin(
     std::shared_ptr<QueryPlan> leftQueryPlan,
     std::shared_ptr<QueryPlan> rightQueryPlan,
-    const std::shared_ptr<NodeFunction>& joinFunction,
+    ExpressionValue joinFunction,
     const std::shared_ptr<Windowing::WindowType>& windowType,
     Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT)
 {
     NES_TRACE("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
-    std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
-    auto bfsIterator = BreadthFirstNodeIterator(joinFunction);
-    /// We are iterating over all binary functions and check if each side's leaf is a constant value, as we are supposedly not supporting this
-    /// I am not sure why this is the case, but I will keep it for now. IMHO, the whole QueryPlanBuilder should be refactored to be more readable and
-    /// also to be more maintainable. TODO #506
-    for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
-    {
-        if (NES::Util::instanceOf<NodeFunctionBinary>(*itr)
-            and not NES::Util::instanceOf<NodeFunctionBinary>(NES::Util::as<NodeFunctionBinary>(*itr)->getLeft()))
-        {
-            auto visitingOp = NES::Util::as<NodeFunctionBinary>(*itr);
-            if (not visitedFunctions.contains(visitingOp))
-            {
-                visitedFunctions.insert(visitingOp);
-                auto onLeftKey = visitingOp->getLeft();
-                auto onRightKey = visitingOp->getRight();
-                /// ensure that the child nodes are not binary
-                if (!NES::Util::instanceOf<NodeFunctionBinary>(onLeftKey) && !NES::Util::instanceOf<NodeFunctionBinary>(onRightKey))
-                {
-                    if (NES::Util::instanceOf<NodeFunctionConstantValue>(onLeftKey)
-                        || NES::Util::instanceOf<NodeFunctionConstantValue>(onRightKey))
-                    {
-                        throw InvalidQuerySyntax("One of the join keys does only consist of a constant function. Use WHERE instead.");
-                    }
-                    auto leftKeyFieldAccess = asNodeFunctionFieldAccess(onLeftKey, "leftSide");
-                    auto rightQueryPlanKeyFieldAccess = asNodeFunctionFieldAccess(onRightKey, "rightSide");
-                }
-            }
-        }
-    }
-
     INVARIANT(rightQueryPlan, "invalid rightQueryPlan query plan, it is a nullptr");
     INVARIANT(!rightQueryPlan->getRootOperators().empty(), "RootOperators of rightQueryPlan are empty");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
@@ -273,8 +223,7 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::checkAndAddWatermarkAssignment(
             return assignWatermark(
                 queryPlan,
                 Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                    NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->field->getName()),
-                    timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
+                    timeBasedWindowType->getTimeCharacteristic()->value, timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
         }
     }
     return queryPlan;
@@ -293,13 +242,4 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addBinaryOperatorAndUpdateSource(
     return leftQueryPlan;
 }
 
-std::shared_ptr<NodeFunctionFieldAccess>
-QueryPlanBuilder::asNodeFunctionFieldAccess(const std::shared_ptr<NodeFunction>& function, std::string side)
-{
-    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
-    {
-        throw UnsupportedQuery("Window key ({}) has to be an FieldAccessFunction but it was a  {}", side, *function);
-    }
-    return NES::Util::as<NodeFunctionFieldAccess>(function);
-}
 }

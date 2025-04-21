@@ -46,7 +46,6 @@
 #include <SystestResultCheck.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Systest
 {

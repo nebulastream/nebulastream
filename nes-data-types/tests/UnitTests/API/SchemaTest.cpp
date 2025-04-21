@@ -14,7 +14,6 @@
 #include <memory>
 #include <random>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -22,8 +21,6 @@
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseUnitTest.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -67,7 +64,7 @@ TEST_F(SchemaTest, createTest)
 {
     {
         /// Checking for default values
-        std::shared_ptr<Schema> testSchema;
+        Schema testSchema;
         ASSERT_NO_THROW(testSchema = Schema::create());
         ASSERT_TRUE(testSchema);
         ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -75,7 +72,7 @@ TEST_F(SchemaTest, createTest)
 
     {
         /// Checking with row memory layout
-        std::shared_ptr<Schema> testSchema;
+        Schema testSchema;
         ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT));
         ASSERT_TRUE(testSchema);
         ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -83,7 +80,7 @@ TEST_F(SchemaTest, createTest)
 
     {
         /// Checking with col memory layout
-        std::shared_ptr<Schema> testSchema;
+        Schema testSchema;
         ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
         ASSERT_TRUE(testSchema);
         ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
@@ -96,7 +93,7 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding one field
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
-            std::shared_ptr<Schema> testSchema;
+            Schema testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
@@ -110,7 +107,7 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
-        auto testSchema = Schema::create();
+        auto testSchema{};
         for (const auto& field : rndFields)
         {
             ASSERT_TRUE(testSchema->addField(field));
@@ -170,7 +167,7 @@ TEST_F(SchemaTest, removeFieldsTest)
     GTEST_FLAG_SET(death_test_style, "threadsafe");
     constexpr auto NUM_FIELDS = 10_u64;
     auto rndFields = getRandomFields(NUM_FIELDS);
-    auto testSchema = Schema::create();
+    auto testSchema{};
     for (const auto& field : rndFields)
     {
         ASSERT_TRUE(testSchema->addField(field));
@@ -213,7 +210,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Replacing one field with a random one
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
-            std::shared_ptr<Schema> testSchema;
+            Schema testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
@@ -232,7 +229,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
-        auto testSchema = Schema::create();
+        auto testSchema{};
         for (const auto& field : rndFields)
         {
             ASSERT_TRUE(testSchema->addField(field));
@@ -277,7 +274,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
         for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
         {
-            std::shared_ptr<Schema> testSchema;
+            Schema testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));

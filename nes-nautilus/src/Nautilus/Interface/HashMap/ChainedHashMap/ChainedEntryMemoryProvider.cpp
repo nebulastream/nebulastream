@@ -15,7 +15,6 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>

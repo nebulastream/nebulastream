@@ -65,9 +65,9 @@ public:
 
     bool containAsGrandParent(const std::shared_ptr<Node>& operatorNode) override;
 
-    virtual std::shared_ptr<Schema> getOutputSchema() const = 0;
+    virtual const Schema& getOutputSchema() const = 0;
 
-    virtual void setOutputSchema(std::shared_ptr<Schema> outputSchema) = 0;
+    virtual void setOutputSchema(Schema outputSchema) = 0;
 
     void addProperty(const std::string& key, const std::any value);
 

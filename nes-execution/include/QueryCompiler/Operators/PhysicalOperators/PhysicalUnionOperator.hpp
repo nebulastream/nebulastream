@@ -37,16 +37,16 @@ class PhysicalUnionOperator : public PhysicalBinaryOperator
 public:
     PhysicalUnionOperator(
         OperatorId id,
-        const std::shared_ptr<Schema>& leftSchema,
-        const std::shared_ptr<Schema>& rightSchema,
-        const std::shared_ptr<Schema>& outputSchema);
+        const Schema& leftSchema,
+        const Schema& rightSchema,
+        const Schema& outputSchema);
     static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
-        const std::shared_ptr<Schema>& leftSchema,
-        const std::shared_ptr<Schema>& rightSchema,
-        const std::shared_ptr<Schema>& outputSchema);
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& schema);
-    static std::shared_ptr<PhysicalOperator> create(const std::shared_ptr<Schema>& schema);
+        const Schema& leftSchema,
+        const Schema& rightSchema,
+        const Schema& outputSchema);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const Schema& schema);
+    static std::shared_ptr<PhysicalOperator> create(const Schema& schema);
     std::shared_ptr<Operator> copy() override;
 
 protected:

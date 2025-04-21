@@ -12,23 +12,32 @@
 
 add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
+get_source(nes-sources-runtime NES_SOURCES_RUNTIME_SOURCE_FILES)
 
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
-target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory)
-
+target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-data-types)
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-sources REUSE_FROM nes-common)
-endif ()
+add_library(nes-sources-runtime ${NES_SOURCES_RUNTIME_SOURCE_FILES})
+target_link_libraries(nes-sources-runtime PUBLIC nes-common nes-configurations nes-memory nes-sources)
+
+target_include_directories(nes-sources-runtime PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 # Create library for the registries, and privately link it against nes-sources so that nes-sources can access its registries.
 create_plugin_registry_library(nes-sources-registry nes-sources)
 target_link_libraries(nes-sources PRIVATE nes-sources-registry)
 # Generate a registrar for every registry in nes-sources
-generate_plugin_registrars(nes-sources Source SourceValidation)
+generate_plugin_registrars(nes-sources SourceValidation)
+
+create_plugin_registry_library(nes-sources-runtime-registry nes-sources-runtime)
+target_link_libraries(nes-sources-runtime PRIVATE nes-sources-runtime-registry)
+# Generate a registrar for every registry in nes-sources
+generate_plugin_registrars(nes-sources-runtime Source)
 
 add_tests_if_enabled(tests)

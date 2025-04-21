@@ -12,4 +12,3 @@
 
 add_subdirectory(API)
 add_subdirectory(Common)
-add_subdirectory(Serialization)

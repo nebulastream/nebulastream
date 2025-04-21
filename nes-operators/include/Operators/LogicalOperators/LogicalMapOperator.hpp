@@ -15,10 +15,11 @@
 #pragma once
 
 #include <memory>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/Expression.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+
 namespace NES
 {
 
@@ -28,13 +29,16 @@ namespace NES
 class LogicalMapOperator : public LogicalUnaryOperator
 {
 public:
-    LogicalMapOperator(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction, OperatorId id);
+    LogicalMapOperator(const OperatorId& id, ExpressionValue map_function, Schema::Identifier as_field)
+        : Operator(id), LogicalUnaryOperator(id), mapFunction(std::move(map_function)), asField(std::move(as_field))
+    {
+    }
 
     /**
     * @brief Returns the function of this map operator
     * @return std::shared_ptr<NodeFunctionFieldAssignment>
     */
-    std::shared_ptr<NodeFunctionFieldAssignment> getMapFunction() const;
+    const ExpressionValue& getMapFunction() const;
 
     /**
      * @brief Infers the schema of the map operator. We support two cases:
@@ -54,6 +58,7 @@ protected:
     std::string toString() const override;
 
 private:
-    std::shared_ptr<NodeFunctionFieldAssignment> mapFunction;
+    ExpressionValue mapFunction;
+    Schema::Identifier asField;
 };
 }

@@ -35,7 +35,7 @@ class TupleBufferMemoryProvider
 public:
     virtual ~TupleBufferMemoryProvider();
 
-    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const std::shared_ptr<Schema>& schema);
+    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const Schema& schema);
 
     virtual std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() = 0;
 

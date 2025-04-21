@@ -17,13 +17,11 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -64,7 +62,7 @@ uint64_t MemoryLayout::getFieldSize(const uint64_t fieldIndex) const
     return physicalFieldSizes[fieldIndex];
 }
 
-MemoryLayout::MemoryLayout(const uint64_t bufferSize, const std::shared_ptr<Schema>& schema)
+MemoryLayout::MemoryLayout(const uint64_t bufferSize, const Schema& schema)
     : bufferSize(bufferSize), schema(schema), recordSize(0)
 {
     for (size_t fieldIndex = 0; fieldIndex < this->schema->getFieldCount(); fieldIndex++)
@@ -96,7 +94,7 @@ uint64_t MemoryLayout::getCapacity() const
     return capacity;
 }
 
-const std::shared_ptr<Schema>& MemoryLayout::getSchema() const
+const Schema& MemoryLayout::getSchema() const
 {
     return schema;
 }

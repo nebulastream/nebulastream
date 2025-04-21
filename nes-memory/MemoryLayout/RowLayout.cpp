@@ -14,7 +14,6 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -25,7 +24,7 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-RowLayout::RowLayout(const std::shared_ptr<Schema>& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+RowLayout::RowLayout(const Schema& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -39,7 +38,7 @@ RowLayout::RowLayout(const RowLayout& other) : MemoryLayout(other), fieldOffSets
 {
 }
 
-std::shared_ptr<RowLayout> RowLayout::create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize)
+std::shared_ptr<RowLayout> RowLayout::create(const Schema& schema, uint64_t bufferSize)
 {
     return std::make_shared<RowLayout>(schema, bufferSize);
 }

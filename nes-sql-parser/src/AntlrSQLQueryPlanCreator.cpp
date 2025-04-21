@@ -26,17 +26,9 @@
 #include <API/Windowing.hpp>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Functions/NodeFunctionConcat.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/ConstantExpression.hpp>
+#include <Functions/FieldAssignmentExpression.hpp>
+#include <Functions/FieldRenameExpression.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -46,10 +38,10 @@
 #include <Types/TumblingWindow.hpp>
 #include <Util/Common.hpp>
 #include <Util/Strings.hpp>
+#include <argparse/argparse.hpp>
 #include <fmt/format.h>
+
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Parsers
 {
@@ -89,23 +81,22 @@ Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
     }
 }
 
-std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
-    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const uint64_t tokenType)
+ExpressionValue createFunctionFromOpBoolean(ExpressionValue leftFunction, ExpressionValue rightFunction, const uint64_t tokenType)
 {
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::EQ:
-            return NodeFunctionEquals::create(leftFunction, rightFunction);
+            return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::Equal);
         case AntlrSQLLexer::NEQJ:
-            return NodeFunctionNegate::create(NodeFunctionEquals::create(leftFunction, rightFunction));
+            return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::NotEqual);
         case AntlrSQLLexer::LT:
-            return NodeFunctionLess::create(leftFunction, rightFunction);
+            return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::Less);
         case AntlrSQLLexer::GT:
-            return NodeFunctionGreater::create(leftFunction, rightFunction);
+            return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::Greater);
         case AntlrSQLLexer::GTE:
-            return NodeFunctionGreaterEquals::create(leftFunction, rightFunction);
+            return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::GreaterEqual);
         case AntlrSQLLexer::LTE:
-            return NodeFunctionLessEquals::create(leftFunction, rightFunction);
+            return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::LessEqual);
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
@@ -113,23 +104,22 @@ std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
     }
 }
 
-std::shared_ptr<NodeFunction> createLogicalBinaryFunction(
-    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const uint64_t tokenType)
+ExpressionValue createLogicalBinaryFunction(ExpressionValue leftFunction, ExpressionValue rightFunction, const uint64_t tokenType)
 {
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::AND:
-            return NodeFunctionAnd::create(leftFunction, rightFunction);
+            return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::And);
         case AntlrSQLLexer::OR:
-            return NodeFunctionOr::create(leftFunction, rightFunction);
+            return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::Or);
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
                 "Unknown binary function in SQL query for op {} with type: {} and left {} and right {}",
                 lexer.getVocabulary().getSymbolicName(tokenType),
                 tokenType,
-                *leftFunction,
-                *rightFunction);
+                leftFunction,
+                rightFunction);
     }
 }
 
@@ -207,7 +197,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
 void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    for (const std::shared_ptr<NodeFunction>& selectFunction : helper.functionBuilder)
+    for (const auto& selectFunction : helper.functionBuilder)
     {
         helper.addProjectionField(selectFunction);
     }
@@ -256,33 +246,31 @@ void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::Compariso
 void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context)
 {
     auto helper = helpers.top();
-    std::shared_ptr<NodeFunction> function;
 
     const auto rightFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
     const auto leftFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
     auto opTokenType = context->op->getType();
-    switch (opTokenType) /// TODO #619: improve this switch case
+    ExpressionValue function = [&]()
     {
-        case AntlrSQLLexer::ASTERISK:
-            function = leftFunction * rightFunction;
-            break;
-        case AntlrSQLLexer::SLASH:
-            function = leftFunction / rightFunction;
-            break;
-        case AntlrSQLLexer::PLUS:
-            function = leftFunction + rightFunction;
-            break;
-        case AntlrSQLLexer::MINUS:
-            function = leftFunction - rightFunction;
-            break;
-        case AntlrSQLLexer::PERCENT:
-            function = leftFunction % rightFunction;
-            break;
-        default:
-            throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
-    }
+        switch (opTokenType) /// TODO #619: improve this switch case
+        {
+            case AntlrSQLLexer::ASTERISK:
+                return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::Mul);
+            case AntlrSQLLexer::SLASH:
+                return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::Div);
+            case AntlrSQLLexer::PLUS:
+                return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::Add);
+            case AntlrSQLLexer::MINUS:
+                return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::Sub);
+            case AntlrSQLLexer::PERCENT:
+                return make_expression<FunctionExpression>({leftFunction, rightFunction}, WellKnown::Mod);
+            default:
+                throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
+        }
+    }();
+
     helper.functionBuilder.push_back(function);
     poppush(helper);
 }
@@ -290,22 +278,27 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
 void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    std::shared_ptr<NodeFunction> function;
 
     const auto innerFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
     auto opTokenType = context->op->getType();
-    switch (opTokenType) /// TODO #619: improve this switch case
+    auto function = [&]()
     {
-        case AntlrSQLLexer::PLUS:
-            function = innerFunction;
-            break;
-        case AntlrSQLLexer::MINUS:
-            function = -1 * innerFunction;
-            break;
-        default:
-            throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
-    }
+        switch (opTokenType) /// TODO #619: improve this switch case
+        {
+            case AntlrSQLLexer::PLUS:
+                return innerFunction;
+                break;
+            case AntlrSQLLexer::MINUS:
+                return make_expression<FunctionExpression>(
+                    {make_expression<FunctionExpression>({make_expression<ConstantExpression>({}, "-1")}, WellKnown::Integer),
+                     innerFunction},
+                    WellKnown::Mul);
+                break;
+            default:
+                throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
+        }
+    }();
     helper.functionBuilder.push_back(function);
     poppush(helper);
 }
@@ -342,7 +335,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     if (helper.isGroupBy)
     {
-        const auto key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(context->getText()));
+        const auto key = make_expression<FieldAccessExpression>({}, context->getText());
         helper.groupByFields.push_back(key);
     }
     else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
@@ -364,7 +357,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         }
         if ((helper.isWhereOrHaving || helper.isSelect))
         {
-            const std::shared_ptr<NodeFunction> attr = helper.functionBuilder.back();
+            const ExpressionValue attr = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
             if (helper.identCountHelper == 1)
             {
@@ -376,9 +369,7 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             else
             {
                 /// renaming an function (mapBuilder) and adding a projection (functionBuilder) on the renamed function.
-                const auto renamedAttribute = Attribute(context->getText()) = attr;
-                helper.functionBuilder.push_back(renamedAttribute);
-                helper.mapBuilder.push_back(renamedAttribute);
+                helper.mapBuilder.emplace_back(Schema::Identifier(context->getText()), attr);
             }
         }
     }
@@ -388,16 +379,14 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         {
             auto aggFunc = helper.windowAggs.back();
             helper.windowAggs.pop_back();
-            aggFunc = aggFunc->as(Attribute(context->getText()));
+            aggFunc = aggFunc->as(Schema::Identifier(context->getText()));
             helper.windowAggs.push_back(aggFunc);
         }
         else
         {
             auto projection = helper.functionBuilder.back();
             helper.functionBuilder.pop_back();
-            auto renamedAttribute = Attribute(context->getText()) = projection;
-            helper.functionBuilder.push_back(renamedAttribute);
-            helper.mapBuilder.push_back(renamedAttribute);
+            helper.mapBuilder.emplace_back(Schema::Identifier(context->getText()), projection);
         }
     }
     else if (helper.isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
@@ -464,9 +453,9 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = QueryPlanBuilder::addSelection(*whereExpr, queryPlan);
     }
 
-    for (const auto& mapExpr : helper.mapBuilder)
+    for (const auto& [field, mapExpr] : helper.mapBuilder)
     {
-        queryPlan = QueryPlanBuilder::addMap(mapExpr, queryPlan);
+        queryPlan = QueryPlanBuilder::addMap(field, mapExpr, queryPlan);
     }
     /// We handle projections AFTER map functions, because:
     /// SELECT (id * 3) as new_id FROM ...
@@ -633,14 +622,13 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         && context->children.size() == 1)
     {
         std::string implicitFieldName;
-        const std::shared_ptr<NodeFunction> mapFunction = helper.functionBuilder.back();
+        ExpressionValue mapFunction = helper.functionBuilder.back();
         /// there must be a field access function node in mapFunction.
-        for (size_t countNodeFieldAccess = 0; const auto& child : mapFunction->getChildren())
+        for (size_t countNodeFieldAccess = 0; const auto& child : mapFunction.getChildren())
         {
-            if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
+            if (const auto fieldAccess = child.as<FieldAccessExpression>())
             {
-                const auto fieldAccessNode = NES::Util::as<NodeFunctionFieldAccess>(child);
-                implicitFieldName = fmt::format("{}_{}", fieldAccessNode->getFieldName(), helper.implicitMapCountHelper);
+                implicitFieldName = fmt::format("{}_{}", fieldAccess->getFieldName(), helper.implicitMapCountHelper);
                 ++countNodeFieldAccess;
                 INVARIANT(
                     countNodeFieldAccess < 2, "The function of a named function must only have one child that is a field access function.");
@@ -648,7 +636,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         }
         INVARIANT(not implicitFieldName.empty(), "");
         helper.functionBuilder.pop_back();
-        helper.mapBuilder.push_back(Attribute(implicitFieldName) = mapFunction);
+        helper.mapBuilder.emplace_back(Schema::Identifier(implicitFieldName), mapFunction);
 
         helper.implicitMapCountHelper++;
     }
@@ -778,7 +766,7 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     helper.queryPlans.clear();
 
     const auto queryPlan
-        = QueryPlanBuilder::addJoin(leftQueryPlan, rightQueryPlan, helper.joinFunction, helper.windowType, helper.joinType);
+        = QueryPlanBuilder::addJoin(leftQueryPlan, rightQueryPlan, helper.joinFunction.value(), helper.windowType, helper.joinType);
     if (not helpers.empty())
     {
         /// we are in a subquery
@@ -804,7 +792,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
     {
         const auto innerFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
-        const auto negatedFunction = !helper.joinFunction;
+        const auto negatedFunction = make_expression<FunctionExpression>({helper.joinFunction.value()}, WellKnown::Negate);
         helper.joinKeyRelationHelper.push_back(negatedFunction);
         helper.joinFunction = negatedFunction;
     }
@@ -825,70 +813,40 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     if (const auto valueAsNumeric = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant()))
     {
         const auto concreteValue = valueAsNumeric->number();
-        std::shared_ptr<DataType> dataType = nullptr;
-        /// Signed Integers
-        if (dynamic_cast<AntlrSQLParser::TinyIntLiteralContext*>(concreteValue))
+        auto constant = [&]()
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT8);
-        }
-        else if (dynamic_cast<AntlrSQLParser::SmallIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT16);
-        }
-        else if (dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT32);
-        }
-        else if (dynamic_cast<AntlrSQLParser::BigIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT64);
-        }
+            auto constantExpression = make_expression<ConstantExpression>({}, context->getText());
+            /// Signed Integers
+            if (dynamic_cast<AntlrSQLParser::TinyIntLiteralContext*>(concreteValue)
+                || dynamic_cast<AntlrSQLParser::SmallIntLiteralContext*>(concreteValue)
+                || dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(concreteValue)
+                || dynamic_cast<AntlrSQLParser::BigIntLiteralContext*>(concreteValue)
+                || dynamic_cast<AntlrSQLParser::UnsignedTinyIntLiteralContext*>(concreteValue)
+                || dynamic_cast<AntlrSQLParser::UnsignedSmallIntLiteralContext*>(concreteValue)
+                || dynamic_cast<AntlrSQLParser::UnsignedIntegerLiteralContext*>(concreteValue)
+                || dynamic_cast<AntlrSQLParser::UnsignedBigIntLiteralContext*>(concreteValue))
+            {
+                return make_expression<FunctionExpression>({constantExpression}, WellKnown::Integer);
+            }
 
-        /// Unsigned Integers
-        else if (dynamic_cast<AntlrSQLParser::UnsignedTinyIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT8);
-        }
-        else if (dynamic_cast<AntlrSQLParser::UnsignedSmallIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT16);
-        }
-        else if (dynamic_cast<AntlrSQLParser::UnsignedIntegerLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT32);
-        }
-        else if (dynamic_cast<AntlrSQLParser::UnsignedBigIntLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(LogicalType::INT64);
-        }
+            /// Floating Point
+            else if (
+                dynamic_cast<AntlrSQLParser::DoubleLiteralContext*>(concreteValue)
+                || dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(concreteValue))
+            {
+                return make_expression<FunctionExpression>({constantExpression}, WellKnown::Float);
+            }
 
-        /// Floating Point
-        else if (dynamic_cast<AntlrSQLParser::DoubleLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(LogicalType::FLOAT64);
-        }
-        else if (dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(concreteValue))
-        {
-            dataType = DataTypeProvider::provideDataType(LogicalType::FLOAT32);
-        }
-        else
-        {
             throw InvalidQuerySyntax("Unknown numerical data type: {}", concreteValue->getText());
-        }
-        /// Getting the constant value without the type,e .g., 42.0_D, 42.0_F, 42_U or 42_I --> 42.0, 42.0, 42, 42
-        const auto constantText = context->getText();
-        auto constFunctionItem
-            = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText.substr(0, constantText.find('_'))));
-        helper.functionBuilder.push_back(constFunctionItem);
+        }();
+        helper.functionBuilder.push_back(constant);
     }
     else if (dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->constant()) != nullptr)
     {
-        const auto constantText = std::string(Util::trimCharacters(context->getText(), '\"'));
+        auto constantText = make_expression<FunctionExpression>(
+            {make_expression<ConstantExpression>({}, std::string(Util::trimCharacters(context->getText(), '\"')))}, WellKnown::Text);
 
-        const auto dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
-        auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));
-
-        helper.functionBuilder.push_back(constFunctionItem);
+        helper.functionBuilder.push_back(constantText);
     }
 
     poppush(helper);
@@ -924,20 +882,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
             break;
         default:
-            if (funcName == "concat")
-            {
-                INVARIANT(helper.functionBuilder.size() == 2, "Concat requires two arguments, but got {}", helper.functionBuilder.size());
-                const auto rightFunction = helper.functionBuilder.back();
-                helper.functionBuilder.pop_back();
-                const auto leftFunction = helper.functionBuilder.back();
-                helper.functionBuilder.pop_back();
-
-                parentHelper.functionBuilder.push_back(NodeFunctionConcat::create(leftFunction, rightFunction));
-            }
-            else
-            {
-                throw InvalidQuerySyntax("Unknown aggregation function: {}, resolved to token type: {}", funcName, tokenType);
-            }
+            parentHelper.functionBuilder = {make_expression<FunctionExpression>(helper.functionBuilder, funcName)};
     }
 }
 

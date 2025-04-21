@@ -15,8 +15,6 @@
 #pragma once
 
 #include <string>
-#include <Functions/NodeFunctionBinary.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 
 namespace NES
 {

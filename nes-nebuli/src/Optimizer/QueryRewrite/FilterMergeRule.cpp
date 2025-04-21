@@ -14,7 +14,9 @@
 
 #include <memory>
 #include <vector>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
+
+#include <Functions/FunctionExpression.hpp>
+#include <Functions/WellKnownFunctions.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/Operator.hpp>
@@ -52,7 +54,7 @@ std::shared_ptr<QueryPlan> FilterMergeRule::apply(std::shared_ptr<QueryPlan> que
                 for (unsigned int i = 1; i < consecutiveFilters.size(); i++)
                 {
                     auto predicate = consecutiveFilters.at(i)->getPredicate();
-                    combinedPredicate = NodeFunctionAnd::create(combinedPredicate, predicate);
+                    combinedPredicate = make_expression<FunctionExpression>({combinedPredicate, predicate}, WellKnown::And);
                 }
                 NES_DEBUG("FilterMergeRule: Create new combined filter with the conjunction of all filter predicates");
                 auto combinedFilter = std::make_shared<LogicalSelectionOperator>(combinedPredicate, getNextOperatorId());

@@ -34,7 +34,7 @@ public:
      * @param id operator id
      * @param inputSchema input schema for the emit operator
      */
-    PhysicalEmitOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema);
+    PhysicalEmitOperator(OperatorId id, const Schema& inputSchema);
 
     /**
      * @brief Creates a physical emit operator
@@ -42,14 +42,14 @@ public:
      * @param inputSchema
      * @return std::shared_ptr<PhysicalOperator>
      */
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& inputSchema);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const Schema& inputSchema);
 
     /**
      * @brief Creates a physical emit operator
      * @param inputSchema
      * @return std::shared_ptr<PhysicalOperator>
      */
-    static std::shared_ptr<PhysicalOperator> create(const std::shared_ptr<Schema>& inputSchema);
+    static std::shared_ptr<PhysicalOperator> create(const Schema& inputSchema);
 
     std::shared_ptr<Operator> copy() override;
 

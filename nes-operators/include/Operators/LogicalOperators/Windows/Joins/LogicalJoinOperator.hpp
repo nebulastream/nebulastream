@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/Expression.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
@@ -50,7 +50,7 @@ public:
     void inferStringSignature() override;
     std::vector<OriginId> getOutputOriginIds() const override;
     void setOriginId(OriginId originId) override;
-    std::shared_ptr<NodeFunction> getJoinFunction() const;
+    ExpressionValue getJoinFunction() const;
 
     WindowMetaData windowMetaData;
 

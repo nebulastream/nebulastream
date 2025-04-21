@@ -31,6 +31,6 @@ public:
 
     virtual std::string toString() = 0;
 
-    virtual bool inferStamp(const std::shared_ptr<Schema>& schema) = 0;
+    virtual bool inferStamp(const Schema& schema) = 0;
 };
 }

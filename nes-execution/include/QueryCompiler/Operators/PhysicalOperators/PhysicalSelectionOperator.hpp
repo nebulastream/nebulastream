@@ -15,7 +15,7 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/Expression.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
@@ -30,23 +30,23 @@ class PhysicalSelectionOperator : public PhysicalUnaryOperator
 {
 public:
     PhysicalSelectionOperator(
-        OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema, std::shared_ptr<NodeFunction> predicate);
+        OperatorId id, Schema inputSchema, Schema outputSchema, ExpressionValue predicate);
     static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<NodeFunction>& function);
+        const Schema& inputSchema,
+        const Schema& outputSchema,
+        ExpressionValue function);
     static std::shared_ptr<PhysicalOperator> create(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::shared_ptr<NodeFunction>& function);
+        const Schema& inputSchema,
+        const Schema& outputSchema,
+        ExpressionValue function);
     std::shared_ptr<Operator> copy() override;
-    std::shared_ptr<NodeFunction> getPredicate();
+    ExpressionValue getPredicate();
 
 protected:
     std::string toString() const override;
 
 private:
-    std::shared_ptr<NodeFunction> predicate;
+    ExpressionValue predicate;
 };
 }

@@ -16,10 +16,7 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
 {
@@ -29,21 +26,14 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor
 public:
     virtual ~SumAggregationDescriptor() = default;
 
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
-
-    static std::shared_ptr<WindowAggregationDescriptor>
-    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
+    static std::shared_ptr<WindowAggregationDescriptor> create(ExpressionValue onField, Schema::Identifier asField);
 
     void inferStamp(const Schema& schema) override;
 
     std::shared_ptr<WindowAggregationDescriptor> copy() override;
 
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
 
 private:
-    explicit SumAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
-    SumAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
+    SumAggregationDescriptor(ExpressionValue onField, Schema::Identifier asField);
 };
 }

@@ -16,11 +16,9 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 # Set Sources and Headers
 add_subdirectory(src)
 
-get_source(nes-data-types NES_COMPILER_SOURCE_FILES)
-
 # Add Library
-add_library(nes-data-types ${NES_COMPILER_SOURCE_FILES})
-target_link_libraries(nes-data-types PUBLIC nes-configurations)
+add_library(nes-data-types src/SchemaSerializationUtil.cpp src/API/Schema.cpp)
+target_link_libraries(nes-data-types PUBLIC nes-configurations data-type)
 target_include_directories(nes-data-types PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -29,9 +27,3 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 add_tests_if_enabled(tests)
-
-# # Create library for the registries, and privately link it against nes-data-types so that nes-data-types can access its registries
-create_plugin_registry_library(nes-data-types-registry nes-data-types)
-target_link_libraries(nes-data-types PRIVATE nes-data-types-registry)
-# Generate a registrar for every registry in nes-data-types
-generate_plugin_registrars(nes-data-types DataType)

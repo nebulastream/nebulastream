@@ -13,17 +13,15 @@
 */
 
 #include <memory>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Runtime::Execution::Util
 {
-std::shared_ptr<Schema> createJoinSchema(const std::shared_ptr<Schema>& leftSchema, const std::shared_ptr<Schema>& rightSchema)
+Schema createJoinSchema(const Schema& leftSchema, const Schema& rightSchema)
 {
     PRECONDITION(
         leftSchema->getLayoutType() == rightSchema->getLayoutType(),

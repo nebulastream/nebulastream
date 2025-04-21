@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/Expression.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
@@ -29,19 +29,19 @@ namespace NES
 class LogicalSelectionOperator : public LogicalUnaryOperator
 {
 public:
-    explicit LogicalSelectionOperator(std::shared_ptr<NodeFunction>, OperatorId id);
+    explicit LogicalSelectionOperator(ExpressionValue, OperatorId id);
     ~LogicalSelectionOperator() override = default;
 
     /**
    * @brief get the filter predicate.
    * @return PredicatePtr
    */
-    std::shared_ptr<NodeFunction> getPredicate() const;
+    ExpressionValue getPredicate() const;
     /**
      * @brief exchanges the predicate of a filter with a new predicate
      * @param newPredicate the predicate which will be the new predicate of the filter
      */
-    void setPredicate(std::shared_ptr<NodeFunction> newPredicate);
+    void setPredicate(ExpressionValue newPredicate);
     float getSelectivity() const;
     void setSelectivity(float newSelectivity);
 
@@ -73,7 +73,7 @@ protected:
     std::string toString() const override;
 
 private:
-    std::shared_ptr<NodeFunction> predicate;
+    ExpressionValue predicate;
     float selectivity = 1.0F;
 };
 }

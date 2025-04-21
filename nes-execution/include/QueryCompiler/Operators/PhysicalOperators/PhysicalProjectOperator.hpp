@@ -16,7 +16,7 @@
 #include <memory>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/Expression.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
@@ -32,30 +32,30 @@ class PhysicalProjectOperator : public PhysicalUnaryOperator
 public:
     PhysicalProjectOperator(
         OperatorId id,
-        std::shared_ptr<Schema> inputSchema,
-        std::shared_ptr<Schema> outputSchema,
-        std::vector<std::shared_ptr<NodeFunction>> functions);
+        Schema inputSchema,
+        Schema outputSchema,
+        std::vector<ExpressionValue> functions);
     static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::vector<std::shared_ptr<NodeFunction>>& functions);
+        const Schema& inputSchema,
+        const Schema& outputSchema,
+        const std::vector<ExpressionValue>& functions);
     static std::shared_ptr<PhysicalOperator> create(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
-        const std::vector<std::shared_ptr<NodeFunction>>& functions);
+        const Schema& inputSchema,
+        const Schema& outputSchema,
+        const std::vector<ExpressionValue>& functions);
     /**
      * @brief returns the list of fields that remain in the output schema.
-     * @return  std::vector<std::shared_ptr<NodeFunction>>
+     * @return  std::vector<ExpressionValue>
      */
-    std::vector<std::shared_ptr<NodeFunction>> getFunctions();
+    std::vector<ExpressionValue> getFunctions();
     std::shared_ptr<Operator> copy() override;
 
 protected:
     std::string toString() const override;
 
 private:
-    std::vector<std::shared_ptr<NodeFunction>> functions;
+    std::vector<ExpressionValue> functions;
 };
 
 }

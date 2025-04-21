@@ -16,7 +16,6 @@
 #include <memory>
 #include <tuple>
 
-#include <API/AttributeField.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>

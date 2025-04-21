@@ -44,24 +44,20 @@ bool LogicalUnaryOperator::inferSchema()
     const auto childSchema = NES::Util::as<Operator>(children[0])->getOutputSchema();
     for (const auto& child : children)
     {
-        if (!(*NES::Util::as<Operator>(child)->getOutputSchema() == *childSchema))
+        if (!(NES::Util::as<Operator>(child)->getOutputSchema() == childSchema))
         {
             NES_ERROR(
                 "UnaryOperator: infer schema failed. The schema has to be the same across all child operators."
                 "this op schema= {} child schema={}",
-                NES::Util::as<Operator>(child)->getOutputSchema()->toString(),
-                childSchema->toString());
+                NES::Util::as<Operator>(child)->getOutputSchema(),
+                childSchema);
             return false;
         }
     }
 
     ///Reset and reinitialize the input and output schemas
-    inputSchema->clear();
-    inputSchema = inputSchema->copyFields(childSchema);
-    inputSchema->setLayoutType(childSchema->getLayoutType());
-    outputSchema->clear();
-    outputSchema = outputSchema->copyFields(childSchema);
-    outputSchema->setLayoutType(childSchema->getLayoutType());
+    inputSchema = childSchema;
+    outputSchema = childSchema;
     return true;
 }
 

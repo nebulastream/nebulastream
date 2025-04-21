@@ -20,49 +20,18 @@ package NES;
 The serializable wrapper definition for data type objects
  */
 message SerializableDataType{
-  // Enum do identify the data type
-  enum Type{
-    UNDEFINED = 0;
-    INTEGER = 1;
-    FLOAT = 2;
-    CHAR = 3;
-    ARRAY = 4;
-    BOOLEAN = 5;
-    VARIABLE_SIZED_DATA = 6;
+  message Scalar{};
+  message FixedList{
+    int32 size = 1;
+  };
+  message VariableSizedList{};
+
+  oneof shape {
+    Scalar scalar = 1;
+    FixedList list = 2;
+    VariableSizedList varsized = 3;
   }
-
-  /**
-  Details for array data types
-   */
-  message ArrayDetails{
-    SerializableDataType componentType = 1;
-    uint64 dimensions = 2;
-  }
-
-  /**
-  Details for integer data types
-   */
-  message IntegerDetails{
-    uint64 bits = 1;
-    bool isSigned = 2;
-  }
-
-  /**
- Details for Float data types
-  */
-  message FloatDetails{
-    uint64 bits = 1;
-  }
-
-  /**
-  Details for char data types
-   */
-  message CharDetails{
-    uint64 dimensions = 2;
-  }
-
-  Type type = 1;
-  // field for custom type properties
-  google.protobuf.Any details = 2;
-
+  string name = 4;
+  bool nullable = 5;
+  bytes impl = 6;
 }

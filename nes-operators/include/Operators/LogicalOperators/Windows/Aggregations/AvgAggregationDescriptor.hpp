@@ -16,34 +16,23 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <DataType.hpp>
 namespace NES::Windowing
 {
 
 class AvgAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
-    /// Factory method to creates a avg aggregation on a particular field.
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
-
-    static std::shared_ptr<WindowAggregationDescriptor>
-    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
+    static std::shared_ptr<WindowAggregationDescriptor> create(ExpressionValue onField, Schema::Identifier asField);
 
     void inferStamp(const Schema& schema) override;
 
     std::shared_ptr<WindowAggregationDescriptor> copy() override;
 
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
-
     virtual ~AvgAggregationDescriptor() = default;
 
 private:
-    explicit AvgAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
-    AvgAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
+    AvgAggregationDescriptor(ExpressionValue onField, Schema::Identifier asField);
 };
 }

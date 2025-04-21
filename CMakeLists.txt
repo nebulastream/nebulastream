@@ -226,6 +226,8 @@ foreach (NES_DIR ${NES_DIRECTORIES})
     add_subdirectory(${NES_DIR})
 endforeach ()
 
+add_subdirectory(data-types)
+
 # Other configurations
 project_enable_format()
 

@@ -9,16 +9,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 add_source_files(nes-sources
-        SourceThread.cpp
         SourceDescriptor.cpp
-        Source.cpp
-        SourceHandle.cpp
-        SourceProvider.cpp
         SourceValidationProvider.cpp
 )
 
+add_source_files(nes-sources-runtime
+        SourceThread.cpp
+        Source.cpp
+        SourceHandle.cpp
+        SourceProvider.cpp
+)
+
 # Register plugins
-add_plugin(File Source nes-sources FileSource.cpp)
-add_plugin(File SourceValidation nes-sources FileSource.cpp)
+add_plugin(File Source nes-sources-runtime FileSource.cpp)
+add_plugin(File SourceValidation nes-sources FileSourceDescriptor.cpp)

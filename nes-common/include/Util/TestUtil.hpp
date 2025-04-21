@@ -94,7 +94,7 @@ inline std::string dynamicTupleToString(
     return ss.str();
 }
 
-inline std::string testTupleBufferToString(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema)
+inline std::string testTupleBufferToString(const Memory::TupleBuffer& buffer, const Schema& schema)
 {
     auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
     if (testTupleBuffer.getBuffer().getNumberOfTuples() == 0)
@@ -148,7 +148,7 @@ void createTuple(Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer, Memory
 ///         TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
 template <typename TupleSchema, bool containsVarSized = false, bool PrintDebug = false>
 Memory::TupleBuffer
-createTupleBufferFromTuples(std::shared_ptr<Schema> schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
+createTupleBufferFromTuples(Schema schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
     PRECONDITION(schema != nullptr, "Cannot create a test tuple buffer from a schema that is null");
     PRECONDITION(bufferManager.getAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");

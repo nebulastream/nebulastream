@@ -16,14 +16,10 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <API/Functions/Functions.hpp>
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -56,7 +52,7 @@ WindowedQuery::WindowedQuery(Query& originalQuery, std::shared_ptr<Windowing::Wi
 }
 
 KeyedWindowedQuery::KeyedWindowedQuery(
-    Query& originalQuery, std::shared_ptr<Windowing::WindowType> windowType, std::vector<std::shared_ptr<NodeFunction>> keys)
+    Query& originalQuery, std::shared_ptr<Windowing::WindowType> windowType, std::vector<ExpressionValue> keys)
     : originalQuery(originalQuery), windowType(std::move(windowType)), keys(std::move(keys))
 {
 }
@@ -73,16 +69,13 @@ Query::window(const std::shared_ptr<Windowing::WindowType>& windowType, std::vec
 }
 
 Query& Query::windowByKey(
-    std::vector<std::shared_ptr<NodeFunction>> keys,
+    std::vector<ExpressionValue> keys,
     const std::shared_ptr<Windowing::WindowType>& windowType,
     std::vector<std::shared_ptr<API::WindowAggregation>> aggregations)
 {
     std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>> windowAggregationDescriptors(aggregations.size());
     std::ranges::transform(aggregations, windowAggregationDescriptors.begin(), [](const auto& agg) { return agg->aggregation; });
-    std::vector<std::shared_ptr<NodeFunctionFieldAccess>> onKeysFieldAccess;
-    std::ranges::transform(
-        keys, std::back_inserter(onKeysFieldAccess), [](const auto& key) { return NES::Util::as<NodeFunctionFieldAccess>(key); });
-    this->queryPlan = QueryPlanBuilder::addWindowAggregation(this->queryPlan, windowType, windowAggregationDescriptors, onKeysFieldAccess);
+    this->queryPlan = QueryPlanBuilder::addWindowAggregation(this->queryPlan, windowType, windowAggregationDescriptors, keys);
     return *this;
 }
 

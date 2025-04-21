@@ -21,16 +21,16 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema)
+PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const Schema& inputSchema)
     : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema)
 {
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(const std::shared_ptr<Schema>& inputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(const Schema& inputSchema)
 {
     return create(getNextOperatorId(), std::move(inputSchema));
 }
-std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(OperatorId id, const std::shared_ptr<Schema>& inputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(OperatorId id, const Schema& inputSchema)
 {
     return std::make_shared<PhysicalEmitOperator>(id, inputSchema);
 }

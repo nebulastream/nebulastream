@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/Expression.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/WindowType.hpp>
@@ -36,7 +36,7 @@ public:
     * @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
     * @return std::shared_ptr<WindowType>
     */
-    static std::shared_ptr<WindowType> of(std::shared_ptr<NodeFunction> predicate);
+    static std::shared_ptr<WindowType> of(ExpressionValue predicate);
 
     /**
     * @brief Constructor for ThresholdWindow
@@ -44,7 +44,7 @@ public:
     * @param minimumCount specifies the minimum amount of tuples to occur within the window
     * @return std::shared_ptr<WindowType>
     */
-    static std::shared_ptr<WindowType> of(std::shared_ptr<NodeFunction> predicate, uint64_t minimumCount);
+    static std::shared_ptr<WindowType> of(ExpressionValue predicate, uint64_t minimumCount);
 
     std::string toString() const override;
 
@@ -56,17 +56,17 @@ public:
      */
     ContentBasedSubWindowType getContentBasedSubWindowType() override;
 
-    [[nodiscard]] const std::shared_ptr<NodeFunction>& getPredicate() const;
+    [[nodiscard]] ExpressionValue getPredicate() const;
 
     uint64_t getMinimumCount() const;
 
     bool inferStamp(const Schema& schema) override;
 
 private:
-    explicit ThresholdWindow(std::shared_ptr<NodeFunction> predicate);
-    ThresholdWindow(std::shared_ptr<NodeFunction> predicate, uint64_t minCount);
+    explicit ThresholdWindow(ExpressionValue predicate);
+    ThresholdWindow(ExpressionValue predicate, uint64_t minCount);
 
-    std::shared_ptr<NodeFunction> predicate;
+    ExpressionValue predicate;
     uint64_t minimumCount = 0;
 };
 

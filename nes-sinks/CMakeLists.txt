@@ -13,24 +13,33 @@
 # Set Sinks and Headers
 add_subdirectory(src)
 get_source(nes-sinks NES_SINKS_SOURCE_FILES)
+get_source(nes-sinks-runtime NES_SINKS_RUNTIME_SOURCE_FILES)
 
 # Add Library
 add_library(nes-sinks ${NES_SINKS_SOURCE_FILES})
+add_library(nes-sinks-runtime ${NES_SINKS_RUNTIME_SOURCE_FILES})
+
+target_link_libraries(nes-sinks PUBLIC nes-common nes-configurations nes-data-types)
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
-target_link_libraries(nes-sinks PUBLIC nes-common nes-configurations nes-data-types nes-memory nes-executable)
+target_link_libraries(nes-sinks-runtime PUBLIC nes-common nes-configurations nes-data-types nes-memory nes-executable nes-sinks)
 
 target_include_directories(nes-sinks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+target_include_directories(nes-sinks-runtime PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/runtime>
+        $<INSTALL_INTERFACE:include/nebulastream/>)
 
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-sinks REUSE_FROM nes-common)
-endif ()
+# Create library for the registries, and privately link it against nes-sinks so that nes-sinks can access its registries.
+create_plugin_registry_library(nes-sinks-runtime-registry nes-sinks-runtime)
+target_link_libraries(nes-sinks-runtime PRIVATE nes-sinks-runtime-registry)
+# Generate a registrar for every registry in nes-sinks
+generate_plugin_registrars(nes-sinks-runtime Sink)
 
 # Create library for the registries, and privately link it against nes-sinks so that nes-sinks can access its registries.
 create_plugin_registry_library(nes-sinks-registry nes-sinks)
 target_link_libraries(nes-sinks PRIVATE nes-sinks-registry)
 # Generate a registrar for every registry in nes-sinks
-generate_plugin_registrars(nes-sinks Sink SinkValidation)
+generate_plugin_registrars(nes-sinks SinkValidation)

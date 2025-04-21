@@ -14,5 +14,4 @@ add_source_files(nes-operators
         DecomposedQueryPlanSerializationUtil.cpp
         OperatorSerializationUtil.cpp
         QueryPlanSerializationUtil.cpp
-        SchemaSerializationUtil.cpp
 )

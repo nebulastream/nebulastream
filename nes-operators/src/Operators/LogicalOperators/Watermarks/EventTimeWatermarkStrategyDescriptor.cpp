@@ -16,10 +16,9 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/Expression.hpp>
+#include <Functions/FieldAccessExpression.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeUnit.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -31,24 +30,23 @@
 namespace NES::Windowing
 {
 
-EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(std::shared_ptr<NodeFunction> onField, TimeUnit unit)
+EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionValue onField, TimeUnit unit)
     : onField(std::move(onField)), unit(std::move(unit))
 {
 }
 
-std::shared_ptr<WatermarkStrategyDescriptor>
-EventTimeWatermarkStrategyDescriptor::create(const std::shared_ptr<NodeFunction>& onField, TimeUnit unit)
+std::shared_ptr<WatermarkStrategyDescriptor> EventTimeWatermarkStrategyDescriptor::create(ExpressionValue onField, TimeUnit unit)
 {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
         Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(unit)));
 }
 
-std::shared_ptr<NodeFunction> EventTimeWatermarkStrategyDescriptor::getOnField() const
+ExpressionValue EventTimeWatermarkStrategyDescriptor::getOnField() const
 {
     return onField;
 }
 
-void EventTimeWatermarkStrategyDescriptor::setOnField(const std::shared_ptr<NodeFunction>& newField)
+void EventTimeWatermarkStrategyDescriptor::setOnField(ExpressionValue newField)
 {
     this->onField = newField;
 }
@@ -56,7 +54,7 @@ void EventTimeWatermarkStrategyDescriptor::setOnField(const std::shared_ptr<Node
 bool EventTimeWatermarkStrategyDescriptor::equal(std::shared_ptr<WatermarkStrategyDescriptor> other)
 {
     const auto eventTimeWatermarkStrategyDescriptor = NES::Util::as<EventTimeWatermarkStrategyDescriptor>(other);
-    return eventTimeWatermarkStrategyDescriptor->onField->equal(onField);
+    return eventTimeWatermarkStrategyDescriptor->onField == onField;
 }
 
 TimeUnit EventTimeWatermarkStrategyDescriptor::getTimeUnit() const
@@ -73,22 +71,22 @@ std::string EventTimeWatermarkStrategyDescriptor::toString()
 {
     std::stringstream ss;
     ss << "TYPE = EVENT-TIME,";
-    ss << "FIELD =" << *onField << ",";
+    ss << "FIELD =" << format_as(onField) << ",";
     return ss.str();
 }
 
-bool EventTimeWatermarkStrategyDescriptor::inferStamp(const std::shared_ptr<Schema>& schema)
+bool EventTimeWatermarkStrategyDescriptor::inferStamp(const Schema& schema)
 {
-    const auto fieldAccessFunction = NES::Util::as<NodeFunctionFieldAccess>(onField);
+    const auto* fieldAccessFunction = onField.as<FieldAccessExpression>();
+    INVARIANT(fieldAccessFunction, "Expected fieldAccessFunction, but received a different expression");
+
     auto fieldName = fieldAccessFunction->getFieldName();
-    ///Check if the field exists in the schema
-    const auto existingField = schema->getFieldByName(fieldName);
+    const auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
-        fieldAccessFunction->updateFieldName(existingField.value()->getName());
         return true;
     }
-    else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+    else if (fieldName.name == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
     {
         return true;
     }

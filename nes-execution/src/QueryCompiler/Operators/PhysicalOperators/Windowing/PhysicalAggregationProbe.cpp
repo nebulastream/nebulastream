@@ -34,8 +34,8 @@ WindowMetaData PhysicalAggregationProbe::getWindowMetaData() const
 
 std::shared_ptr<PhysicalOperator> PhysicalAggregationProbe::create(
     const OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema,
+    Schema inputSchema,
+    Schema outputSchema,
     std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler,
     WindowMetaData windowMetaData)
@@ -56,8 +56,8 @@ std::shared_ptr<Operator> PhysicalAggregationProbe::copy()
 
 PhysicalAggregationProbe::PhysicalAggregationProbe(
     OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema,
+    Schema inputSchema,
+    Schema outputSchema,
     std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler,
     WindowMetaData windowMetaData)

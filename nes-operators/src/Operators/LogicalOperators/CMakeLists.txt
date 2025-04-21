@@ -15,7 +15,6 @@ add_source_files(nes-operators
         LogicalSelectionOperator.cpp
         LogicalProjectionOperator.cpp
         LogicalMapOperator.cpp
-        LogicalInferModelOperator.cpp
         LogicalUnionOperator.cpp
         RenameSourceOperator.cpp
         LogicalBinaryOperator.cpp

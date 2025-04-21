@@ -21,7 +21,7 @@ namespace NES::Sources
 {
 
 SourceDescriptor::SourceDescriptor(
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     std::string logicalSourceName,
     std::string sourceType,
     ParserConfig parserConfig,
@@ -36,7 +36,6 @@ SourceDescriptor::SourceDescriptor(
 
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
-    const auto schemaString = ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL");
     const auto parserConfigString = fmt::format(
         "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
         sourceDescriptor.parserConfig.parserType,
@@ -46,7 +45,7 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescri
                "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
                sourceDescriptor.logicalSourceName,
                sourceDescriptor.sourceType,
-               schemaString,
+               sourceDescriptor.schema,
                parserConfigString,
                sourceDescriptor.toStringConfig());
 }

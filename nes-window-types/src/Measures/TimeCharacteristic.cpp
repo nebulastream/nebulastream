@@ -14,41 +14,29 @@
 
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
-#include <ErrorHandling.hpp>
 
 
 namespace NES::Windowing
 {
 
-TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1))
+TimeCharacteristic::TimeCharacteristic(Type type)
+    : value(make_expression<FieldAccessExpression>({}, "timestamp")), type(type), unit(TimeUnit(1))
 {
 }
-TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit)
-    : field(std::move(field)), type(type), unit(std::move(unit))
+TimeCharacteristic::TimeCharacteristic(Type type, ExpressionValue value, TimeUnit unit)
+    : value(std::move(value)), type(type), unit(std::move(unit))
 {
 }
-std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& field)
+std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(ExpressionValue field)
 {
-    return createEventTime(field, TimeUnit(1));
+    return createEventTime(std::move(field), TimeUnit(1));
 }
 
-std::shared_ptr<TimeCharacteristic>
-TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& fieldValue, const TimeUnit& unit)
+std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(ExpressionValue value, const TimeUnit& unit)
 {
-    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(fieldValue))
-    {
-        throw QueryInvalid(fmt::format("Query: window key has to be an FieldAccessFunction but it was a  {}", *fieldValue));
-    }
-    auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(fieldValue);
-    const std::shared_ptr<AttributeField> keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
-    return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
+    return std::make_shared<TimeCharacteristic>(Type::EventTime, std::move(value), unit);
 }
 
 std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createIngestionTime()
@@ -62,7 +50,7 @@ TimeCharacteristic::Type TimeCharacteristic::getType() const
 }
 bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
 {
-    const auto isFieldsEqual = (this->field == nullptr and other.field == nullptr) or (this->field->isEqual(other.field));
+    const auto isFieldsEqual = value == other.value;
     const auto isTypesEqual = this->type == other.type;
     const auto isEqual = isFieldsEqual and isTypesEqual and this->unit == other.unit;
     return isEqual;
@@ -93,7 +81,6 @@ std::string TimeCharacteristic::getTypeAsString() const
 
 std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic)
 {
-    std::string fieldString = (timeCharacteristic.field != nullptr) ? timeCharacteristic.field->toString() : "NONE";
-    return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), fieldString);
+    return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), timeCharacteristic.value);
 }
 }

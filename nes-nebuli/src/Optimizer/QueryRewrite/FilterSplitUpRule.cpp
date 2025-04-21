@@ -15,13 +15,14 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
+
+#include <Functions/FunctionExpression.hpp>
+#include <Functions/WellKnownFunctions.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Optimizer
 {
 
@@ -67,70 +68,88 @@ std::shared_ptr<QueryPlan> FilterSplitUpRule::apply(std::shared_ptr<QueryPlan> q
     }
 }
 
+bool demorgan(const std::shared_ptr<LogicalSelectionOperator>& filterOperator)
+{
+    auto predicateExpression = filterOperator->getPredicate();
+    PRECONDITION(
+        filterOperator->getPredicate().as<FunctionExpression>()
+            && filterOperator->getPredicate().as<FunctionExpression>()->getFunctionName() == WellKnown::Negate,
+        "This function assume a `Negate` function");
+
+    auto childExpression = predicateExpression.getChildren().at(0);
+    auto possibleOrFunction = childExpression.as<FunctionExpression>();
+    if (!possibleOrFunction)
+    {
+        return false;
+    }
+
+    if (possibleOrFunction->getFunctionName() != WellKnown::Or)
+    {
+        return false;
+    }
+
+    filterOperator->setPredicate(make_expression<FunctionExpression>(
+        {
+            make_expression<FunctionExpression>({childExpression.getChildren().at(0)}, WellKnown::Negate),
+            make_expression<FunctionExpression>({childExpression.getChildren().at(1)}, WellKnown::Negate),
+        },
+        WellKnown::And));
+    return true;
+}
+
 void FilterSplitUpRule::splitUpFilters(const std::shared_ptr<LogicalSelectionOperator>& filterOperator)
 {
     /// if our query plan contains a parentOperaters->filter(function1 && function2)->childOperator.
     /// We can rewrite this plan to parentOperaters->filter(function1)->filter(function2)->childOperator.
-    if (Util::instanceOf<NodeFunctionAnd>(filterOperator->getPredicate()))
+    auto predicateExpression = filterOperator->getPredicate();
+    if (!filterOperator->getPredicate().as<FunctionExpression>())
     {
-        /// create filter that contains function1 of the andFunction
-        auto child1 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
-        child1->setId(getNextOperatorId());
-        child1->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[0]));
-
-        /// create filter that contains function2 of the andFunction
-        auto child2 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
-        child2->setId(getNextOperatorId());
-        child2->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[1]));
-
-        /// insert new filter with function1 of the andFunction
-        if (!filterOperator->insertBetweenThisAndChildNodes(child1))
-        {
-            NES_ERROR("FilterSplitUpRule: Error while trying to insert a filterOperator into the queryPlan");
-            throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
-        }
-        /// insert new filter with function2 of the andFunction
-        if (!child1->insertBetweenThisAndChildNodes(child2))
-        {
-            NES_ERROR("FilterSplitUpRule: Error while trying to insert a filterOperator into the queryPlan");
-            throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
-        }
-        /// remove old filter that had the andFunction
-        if (!filterOperator->removeAndJoinParentAndChildren())
-        {
-            NES_ERROR("FilterSplitUpRule: Error while trying to remove a filterOperator from the queryPlan");
-            throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
-        }
-
-        /// newly created filters could also be andFunctions that can be further split up
-        splitUpFilters(child1);
-        splitUpFilters(child2);
+        return;
     }
-    /// it might be possible to reformulate negated functions
-    else if (Util::instanceOf<NodeFunctionNegate>(filterOperator->getPredicate()))
-    {
-        /// In the case that the predicate is of the form !( function1 || function2 ) it can be reformulated to ( !function1 && !function2 ).
-        /// The reformulated predicate can be used to apply the split up filter rule again.
-        if (Util::instanceOf<NodeFunctionOr>(filterOperator->getPredicate()->getChildren()[0]))
-        {
-            auto orFunction = filterOperator->getPredicate()->getChildren()[0];
-            auto negatedChild1 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[0]));
-            auto negatedChild2 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[1]));
 
-            auto equivalentAndFunction = NodeFunctionAnd::create(negatedChild1, negatedChild2);
-            filterOperator->setPredicate(equivalentAndFunction); /// changing predicate to equivalent AndFunction
-            splitUpFilters(filterOperator); /// splitting up the filter
-        }
-        /// Reformulates predicates in the form (!!function) to (function)
-        else if (Util::instanceOf<NodeFunctionNegate>(filterOperator->getPredicate()->getChildren()[0]))
+    if (predicateExpression.as<FunctionExpression>()->getFunctionName() == WellKnown::Negate)
+    {
+        if (demorgan(filterOperator))
         {
-            /// getPredicate() is the first FunctionNegate; first getChildren()[0] is the second FunctionNegate;
-            /// second getChildren()[0] is the nodeFunction that was negated twice. copy() only copies children of this nodeFunction. (probably not mandatory but no reference to the negations needs to be kept)
-            filterOperator->setPredicate(
-                Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0])->deepCopy());
             splitUpFilters(filterOperator);
         }
+        return;
     }
+
+    if (predicateExpression.as<FunctionExpression>()->getFunctionName() != WellKnown::Equal)
+    {
+        return;
+    }
+
+    auto child1 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
+    child1->setId(getNextOperatorId());
+    child1->setPredicate(predicateExpression.getChildren().at(0));
+
+    auto child2 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
+    child2->setId(getNextOperatorId());
+    child2->setPredicate(predicateExpression.getChildren().at(1));
+
+    /// insert new filter with function1 of the andFunction
+    if (!filterOperator->insertBetweenThisAndChildNodes(child1))
+    {
+        NES_ERROR("FilterSplitUpRule: Error while trying to insert a filterOperator into the queryPlan");
+        throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
+    }
+    /// insert new filter with function2 of the andFunction
+    if (!child1->insertBetweenThisAndChildNodes(child2))
+    {
+        NES_ERROR("FilterSplitUpRule: Error while trying to insert a filterOperator into the queryPlan");
+        throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
+    }
+    /// remove old filter that had the andFunction
+    if (!filterOperator->removeAndJoinParentAndChildren())
+    {
+        NES_ERROR("FilterSplitUpRule: Error while trying to remove a filterOperator from the queryPlan");
+        throw std::logic_error("FilterSplitUpRule: query plan not valid anymore");
+    }
+
+    splitUpFilters(child1);
+    splitUpFilters(child2);
 }
 
 }

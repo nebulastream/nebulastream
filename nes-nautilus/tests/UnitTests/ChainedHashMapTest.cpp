@@ -29,7 +29,6 @@
 #include <BaseUnitTest.hpp>
 #include <ChainedHashMapTestUtils.hpp>
 #include <NautilusTestUtils.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Nautilus::Interface
 {

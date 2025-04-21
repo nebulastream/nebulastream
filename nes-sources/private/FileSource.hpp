@@ -50,27 +50,12 @@ public:
     /// Close file socket.
     void close() override;
 
-    /// validates and formats a string to string configuration
-    static NES::Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
-
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     std::ifstream inputFile;
     std::string filePath;
     std::atomic<size_t> totalNumBytesRead;
-};
-
-struct ConfigParametersCSV
-{
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
-
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH);
 };
 
 }

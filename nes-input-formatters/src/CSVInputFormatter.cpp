@@ -29,7 +29,6 @@
 #include <utility>
 #include <vector>
 #include <strings.h>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>

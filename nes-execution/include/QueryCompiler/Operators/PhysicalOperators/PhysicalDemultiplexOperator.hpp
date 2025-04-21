@@ -35,9 +35,9 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalDemultiplexOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalDemultiplexOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema);
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const std::shared_ptr<Schema>& inputSchema);
-    static std::shared_ptr<PhysicalOperator> create(const std::shared_ptr<Schema>& inputSchema);
+    PhysicalDemultiplexOperator(OperatorId id, const Schema& inputSchema);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const Schema& inputSchema);
+    static std::shared_ptr<PhysicalOperator> create(const Schema& inputSchema);
     std::shared_ptr<Operator> copy() override;
 
 protected:

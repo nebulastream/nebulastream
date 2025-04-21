@@ -22,7 +22,6 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Systest
 {

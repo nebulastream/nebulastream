@@ -57,7 +57,6 @@ private:
     std::shared_ptr<FilterPushDownRule> filterPushDownRule;
     std::shared_ptr<FilterSplitUpRule> filterSplitUpRule;
     std::shared_ptr<PredicateReorderingRule> predicateReorderingRule;
-    std::shared_ptr<ProjectBeforeUnionOperatorRule> projectBeforeUnionOperatorRule;
     std::shared_ptr<RenameSourceToProjectOperatorRule> renameSourceToProjectOperatorRule;
 };
 }

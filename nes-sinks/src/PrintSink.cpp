@@ -23,11 +23,13 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/PrintSink.hpp>
+#include <Sinks/PrintSinkDescriptor.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -38,7 +40,7 @@ namespace NES::Sinks
 
 PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::cout)
 {
-    switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
+    switch (const auto inputFormat = sinkDescriptor.getFromConfig(PrintSinkConfig::INPUT_FORMAT))
     {
         case Configurations::InputFormat::CSV:
             outputParser = std::make_unique<CSVFormat>(sinkDescriptor.schema);
@@ -67,16 +69,6 @@ std::ostream& PrintSink::toString(std::ostream& str) const
 {
     str << fmt::format("PRINT_SINK(Writing to: std::cout, using outputParser: {}", *outputParser);
     return str;
-}
-
-Configurations::DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterPrintSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return PrintSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
 SinkRegistryReturnType SinkGeneratedRegistrar::RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)

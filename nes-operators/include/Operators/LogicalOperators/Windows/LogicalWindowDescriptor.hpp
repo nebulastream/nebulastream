@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <vector>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Types/WindowType.hpp>
@@ -31,7 +30,7 @@ class LogicalWindowDescriptor
 {
 public:
     explicit LogicalWindowDescriptor(
-        const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& keys,
+        const std::vector<ExpressionValue>& keys,
         std::vector<std::shared_ptr<WindowAggregationDescriptor>> windowAggregation,
         std::shared_ptr<WindowType> windowType);
 
@@ -39,7 +38,7 @@ public:
         const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregations, const std::shared_ptr<WindowType>& windowType);
 
     static std::shared_ptr<LogicalWindowDescriptor> create(
-        const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& keys,
+        const std::vector<ExpressionValue>& keys,
         const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregation,
         const std::shared_ptr<WindowType>& windowType);
 
@@ -83,8 +82,8 @@ public:
      */
     void setWindowType(std::shared_ptr<WindowType> windowType);
 
-    [[nodiscard]] std::vector<std::shared_ptr<NodeFunctionFieldAccess>> getKeys() const;
-    void setOnKey(const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& onKeys);
+    [[nodiscard]] std::vector<ExpressionValue> getKeys() const;
+    void setOnKey(const std::vector<ExpressionValue>& onKeys);
 
     /**
      * @brief Getter for the allowed lateness. The allowed lateness defines,
@@ -130,7 +129,7 @@ public:
 private:
     std::vector<std::shared_ptr<WindowAggregationDescriptor>> windowAggregation;
     std::shared_ptr<WindowType> windowType;
-    std::vector<std::shared_ptr<NodeFunctionFieldAccess>> onKey;
+    std::vector<ExpressionValue> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
     OriginId originId = INVALID_ORIGIN_ID;

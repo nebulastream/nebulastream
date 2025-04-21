@@ -18,130 +18,35 @@ import "SerializableDataType.proto";
 package NES;
 
 
+message SchemaIdentifier{
+  string name = 1;
+  optional string table = 2;
+}
 /*
 The serializable wrapper definition for fields
  */
 message SerializableField{
-  string name = 1;
+  SchemaIdentifier identifier = 1;
   SerializableDataType type = 2;
 }
 
 /**
 The serializable wrapper definition for function nodes
  */
- message SerializableFunction {
-   message FunctionConstantValue{
+message SerializableFunction {
+  message ConstantExpression{
     string value = 1;
   }
-   message FunctionFieldAccess{
-    string fieldName = 1;
-    SerializableDataType type = 2;
-  }
-   message FunctionFunction{
+  message FunctionExpression{
     string functionName = 1;
-     repeated SerializableFunction arguments = 2;
   }
-   message FunctionFieldRename{
-    string newFieldName = 1;
-     SerializableFunction functionOriginalFieldAccess = 2;
-  }
-   message FunctionFieldAssignment{
-     FunctionFieldAccess field = 1;
-     SerializableFunction assignment = 2;
-  }
-   message FunctionWhen{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionCase{
-     repeated SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionAnd{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionEquals{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionGreaterEquals{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionGreater{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionLessEquals{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionLess{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionNegate{
-     SerializableFunction child = 1;
-  }
-   message FunctionOr{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionAbs{
-     SerializableFunction child = 1;
-  }
-   message FunctionAdd{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionCeil{
-     SerializableFunction child = 1;
-  }
-   message FunctionDiv{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionExp{
-     SerializableFunction child = 1;
-  }
-   message FunctionFloor{
-     SerializableFunction child = 1;
-  }
-   message FunctionMod{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionMul{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionPow{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionRound{
-     SerializableFunction child = 1;
-  }
-   message FunctionSqrt{
-     SerializableFunction child = 1;
-  }
-   message FunctionSub{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-  }
-   message FunctionConcat{
-     SerializableFunction left = 1;
-     SerializableFunction right = 2;
-   }
-   message FunctionUdfCall{
-     FunctionConstantValue udfName = 1;
-     repeated SerializableFunction functionArguments = 2;
+  message FunctionFieldAccess{
+    SchemaIdentifier field = 1;
   }
 
-  SerializableDataType stamp = 1;
+  optional SerializableDataType stamp = 1;
   google.protobuf.Any details = 2;
-   repeated SerializableFunction children = 3;
+  repeated SerializableFunction children = 3;
 
 }
 

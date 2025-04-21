@@ -17,8 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/Expression.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
@@ -45,12 +44,12 @@ public:
     virtual ~FilterPushDownRule() = default;
 
     /**
-     * @brief Get the @link std::shared_ptr<NodeFunctionFieldAccess> @endlink used in the filter predicate
+     * @brief Get the @link ExpressionValue @endlink used in the filter predicate
      * @param filterOperator
-     * @return @link std::vector<std::shared_ptr<NodeFunctionFieldAccess>> @endLink
+     * @return @link std::vector<ExpressionValue> @endLink
      */
-    static std::vector<std::shared_ptr<NodeFunctionFieldAccess>>
-    getFilterAccessFunctions(const std::shared_ptr<NodeFunction>& filterPredicate);
+    static std::vector<ExpressionValue>
+    getFilterAccessFunctions(ExpressionValue filterPredicate);
 
 private:
     explicit FilterPushDownRule();
@@ -199,27 +198,10 @@ private:
      *
      * @param filterOperator the filter operator to be pushed down
      * @param projectionOperator the projection operator to which the filter should be pushed down below. (it is currently the child of the filter)
-     * @return @link std::vector<std::shared_ptr<NodeFunctionFieldAccess>> @endLink
+     * @return @link std::vector<ExpressionValue> @endLink
      */
     void
     pushBelowProjection(const std::shared_ptr<LogicalSelectionOperator>& filterOperator, const std::shared_ptr<Node>& projectionOperator);
-
-    /**
-     * @brief Rename the attributes in the filter predicate if the attribute is changed by the expression node
-     * @param filterOperator filter operator whose predicate need to be checked and updated
-     * @param expressionNodes expression nodes containing the attribute name and the new attribute name
-     */
-    static void renameFilterAttributesByNodeFunctions(
-        const std::shared_ptr<LogicalSelectionOperator>& filterOperator, const std::vector<std::shared_ptr<NodeFunction>>& expressionNodes);
-
-    /**
-     * @brief Rename the attribute in the field access expression node.
-     * @param expressionNode to be renamed
-     * @param toReplace attribute name to be replaced
-     * @param replacement new attribute name
-     */
-    static void renameNodeFunctionFieldAccesss(
-        const std::shared_ptr<NodeFunction>& nodeFunction, const std::string& toReplace, const std::string& replacement);
 
     /**
      * @brief Substitute the filter predicate's field access expression node with the map operator's expression node if needed

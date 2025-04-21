@@ -25,14 +25,11 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/Expression.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
@@ -53,16 +50,16 @@ public:
                           ->addField("f2", BasicType::INT64)
                           ->addField("f3", BasicType::BOOLEAN)
                           ->updateSourceName("src");
-        nodeFunctionReadLeft = NodeFunctionFieldAccess::create("f1");
-        nodeFunctionReadRight = NodeFunctionFieldAccess::create("f2");
-        nodeFunctionReadBool = NodeFunctionFieldAccess::create("f3");
+        nodeFunctionReadLeft = FieldAccessExpression::create("f1");
+        nodeFunctionReadRight = FieldAccessExpression::create("f2");
+        nodeFunctionReadBool = FieldAccessExpression::create("f3");
     }
 
 protected:
-    std::shared_ptr<Schema> dummySchema;
-    std::shared_ptr<NodeFunction> nodeFunctionReadLeft;
-    std::shared_ptr<NodeFunction> nodeFunctionReadRight;
-    std::shared_ptr<NodeFunction> nodeFunctionReadBool;
+    Schema dummySchema;
+    ExpressionValue nodeFunctionReadLeft;
+    ExpressionValue nodeFunctionReadRight;
+    ExpressionValue nodeFunctionReadBool;
 };
 
 TEST_F(FunctionProviderTest, testLoweringCurrentlyUnsupportedFunction)

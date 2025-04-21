@@ -15,7 +15,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Types/WindowType.hpp>
@@ -25,7 +24,7 @@ namespace NES::Windowing
 {
 
 LogicalWindowDescriptor::LogicalWindowDescriptor(
-    const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& keys,
+    const std::vector<ExpressionValue>& keys,
     std::vector<std::shared_ptr<WindowAggregationDescriptor>> windowAggregation,
     std::shared_ptr<WindowType> windowType)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(keys)
@@ -45,7 +44,7 @@ std::shared_ptr<LogicalWindowDescriptor> LogicalWindowDescriptor::create(
 }
 
 std::shared_ptr<LogicalWindowDescriptor> LogicalWindowDescriptor::create(
-    const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& keys,
+    const std::vector<ExpressionValue>& keys,
     const std::vector<std::shared_ptr<WindowAggregationDescriptor>>& windowAggregation,
     const std::shared_ptr<WindowType>& windowType)
 {
@@ -70,7 +69,7 @@ std::shared_ptr<WindowType> LogicalWindowDescriptor::getWindowType() const
     return windowType;
 }
 
-std::vector<std::shared_ptr<NodeFunctionFieldAccess>> LogicalWindowDescriptor::getKeys() const
+std::vector<ExpressionValue> LogicalWindowDescriptor::getKeys() const
 {
     return onKey;
 }
@@ -85,7 +84,7 @@ void LogicalWindowDescriptor::setWindowType(std::shared_ptr<WindowType> windowTy
     this->windowType = windowType;
 }
 
-void LogicalWindowDescriptor::setOnKey(const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& onKey)
+void LogicalWindowDescriptor::setOnKey(const std::vector<ExpressionValue>& onKey)
 {
     this->onKey = onKey;
 }
@@ -131,7 +130,7 @@ bool LogicalWindowDescriptor::equal(const std::shared_ptr<LogicalWindowDescripto
 
     for (uint64_t i = 0; i < this->getKeys().size(); i++)
     {
-        if (!this->getKeys()[i]->equal(otherWindowDefinition->getKeys()[i]))
+        if (this->getKeys() != otherWindowDefinition->getKeys())
         {
             return false;
         }
@@ -144,7 +143,7 @@ bool LogicalWindowDescriptor::equal(const std::shared_ptr<LogicalWindowDescripto
 
     for (uint64_t i = 0; i < this->getWindowAggregation().size(); i++)
     {
-        if (!this->getWindowAggregation()[i]->equal(otherWindowDefinition->getWindowAggregation()[i]))
+        if (!this->getWindowAggregation().at(i)->equal(otherWindowDefinition->getWindowAggregation().at(i)))
         {
             return false;
         }

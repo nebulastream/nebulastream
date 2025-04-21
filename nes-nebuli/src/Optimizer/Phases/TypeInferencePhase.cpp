@@ -13,7 +13,6 @@
 */
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -67,26 +66,19 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto logicalSourceName = source->getLogicalSourceName();
-        std::shared_ptr<Schema> schema = Schema::create();
+        Schema schema{};
         if (!sourceCatalog->containsLogicalSource(logicalSourceName))
         {
             NES_ERROR("Source name: {} not registered.", logicalSourceName);
             throw LogicalSourceNotFoundInQueryDescription(fmt::format("Logical source not registered. Source Name: {}", logicalSourceName));
         }
         auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
-        schema = schema->copyFields(originalSchema);
-        schema->setLayoutType(originalSchema->getLayoutType());
-        auto qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-        /// perform attribute name resolution
-        for (const auto& field : *schema)
+        for (const auto& [filedName, type] : originalSchema.getFields())
         {
-            if (!field->getName().starts_with(qualifierName))
-            {
-                field->setName(qualifierName + field->getName());
-            }
+            schema.addField(Schema::Identifier{filedName.name, logicalSourceName}, type);
         }
         source->setSchema(schema);
-        NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema->toString());
+        NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema);
     }
 }
 

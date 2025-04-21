@@ -16,7 +16,6 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>

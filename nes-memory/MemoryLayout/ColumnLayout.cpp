@@ -14,7 +14,6 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
@@ -25,7 +24,7 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-ColumnLayout::ColumnLayout(const std::shared_ptr<Schema>& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+ColumnLayout::ColumnLayout(const Schema& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -40,7 +39,7 @@ ColumnLayout::ColumnLayout(const ColumnLayout& other) /// NOLINT(*-copy-construc
 {
 }
 
-std::shared_ptr<ColumnLayout> ColumnLayout::create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize)
+std::shared_ptr<ColumnLayout> ColumnLayout::create(const Schema& schema, uint64_t bufferSize)
 {
     return std::make_shared<ColumnLayout>(schema, bufferSize);
 }

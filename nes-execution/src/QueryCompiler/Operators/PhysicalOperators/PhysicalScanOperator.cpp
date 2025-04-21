@@ -22,16 +22,16 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalScanOperator::PhysicalScanOperator(OperatorId id, const std::shared_ptr<Schema>& outputSchema)
+PhysicalScanOperator::PhysicalScanOperator(OperatorId id, const Schema& outputSchema)
     : Operator(id), PhysicalUnaryOperator(id, outputSchema, outputSchema)
 {
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(const std::shared_ptr<Schema>& outputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(const Schema& outputSchema)
 {
     return create(getNextOperatorId(), std::move(outputSchema));
 }
-std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(OperatorId id, const std::shared_ptr<Schema>& outputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(OperatorId id, const Schema& outputSchema)
 {
     return std::make_shared<PhysicalScanOperator>(id, outputSchema);
 }

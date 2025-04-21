@@ -20,7 +20,6 @@
 #include <random>
 #include <sstream>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -43,9 +42,6 @@
 #include <options.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 
 #include <PagedVectorTestUtils.hpp>

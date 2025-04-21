@@ -14,8 +14,7 @@
 
 #pragma once
 
-#include <memory>
-#include <Functions/NodeFunction.hpp>
+#include "Expression.hpp"
 
 namespace NES
 {
@@ -43,20 +42,13 @@ public:
     * @param serializedFunction The corresponding protobuff object, which is used to capture the state of the object.
     * @return the modified serializedFunction
     */
-    static SerializableFunction*
-    serializeFunction(const std::shared_ptr<NodeFunction>& nodeFunction, SerializableFunction* serializedFunction);
+    static void serializeExpression(const ExpressionValue& nodeFunction, SerializableFunction* serializedFunction);
 
     /**
     * @brief De-serializes the SerializableFunction and all its children to a corresponding std::shared_ptr<NodeFunction>
     * @param serializedFunction the serialized function.
     * @return std::shared_ptr<NodeFunction>
     */
-    static std::shared_ptr<NodeFunction> deserializeFunction(const SerializableFunction& serializedFunction);
-
-private:
-    static void serializeLogicalFunctions(const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction);
-    static void serializeArithmeticalFunctions(const std::shared_ptr<NodeFunction>& function, SerializableFunction* serializedFunction);
-    static std::shared_ptr<NodeFunction> deserializeLogicalFunctions(const SerializableFunction& serializedFunction);
-    static std::shared_ptr<NodeFunction> deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction);
+    static ExpressionValue deserializeExpression(const SerializableFunction& serializedFunction);
 };
 }

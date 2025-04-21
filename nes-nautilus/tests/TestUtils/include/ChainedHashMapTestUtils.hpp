@@ -32,7 +32,6 @@
 #include <gtest/gtest.h>
 #include <nautilus/Engine.hpp>
 #include <NautilusTestUtils.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Nautilus::TestUtils
 {
@@ -55,7 +54,7 @@ struct TestParams
     TestParams() = default;
     TestParams(const MinMaxValue& minMaxNumberOfItems, const MinMaxValue& minMaxNumberOfBuckets, const MinMaxValue& minMaxPageSize);
     uint64_t numberOfItems{}, numberOfBuckets{}, pageSize{};
-    std::vector<std::shared_ptr<Schema>> keyDataTypes, valueDataTypes;
+    std::vector<Schema> keyDataTypes, valueDataTypes;
 };
 
 class ChainedHashMapTestUtils : public TestUtils::NautilusTestUtils
@@ -63,7 +62,7 @@ class ChainedHashMapTestUtils : public TestUtils::NautilusTestUtils
 public:
     std::shared_ptr<Memory::BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
-    std::shared_ptr<Schema> inputSchema;
+    Schema inputSchema;
     std::vector<Interface::MemoryProvider::FieldOffsets> fieldKeys, fieldValues;
     std::vector<Record::RecordFieldIdentifier> projectionKeys, projectionValues;
     std::vector<Memory::TupleBuffer> inputBuffers;

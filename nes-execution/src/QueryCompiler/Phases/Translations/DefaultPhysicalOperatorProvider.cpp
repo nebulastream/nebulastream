@@ -22,8 +22,7 @@
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/Expression.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -216,7 +215,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const std::shared_ptr<Log
 
 std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
     const std::shared_ptr<LogicalJoinOperator>& joinOperator,
-    const std::shared_ptr<Schema>& outputSchema,
+    const Schema& outputSchema,
     std::vector<std::shared_ptr<Operator>> children)
 {
     PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", *joinOperator);
@@ -243,7 +242,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
     const auto& joinDefinition = joinOperator->getJoinDefinition();
 
-    auto getJoinFieldNames = [](const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<NodeFunction>& joinFunction)
+    auto getJoinFieldNames = [](const Schema& inputSchema, ExpressionValue joinFunction)
     {
         std::vector<std::string> joinFieldNames;
         std::vector<std::string> fieldNamesInJoinFunction;
@@ -251,9 +250,9 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
             joinFunction->getAndFlattenAllChildren(false),
             [&fieldNamesInJoinFunction](const auto& child)
             {
-                if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
+                if (NES::Util::instanceOf<FieldAccessExpression>(child))
                 {
-                    fieldNamesInJoinFunction.push_back(NES::Util::as<NodeFunctionFieldAccess>(child)->getFieldName());
+                    fieldNamesInJoinFunction.push_back(NES::Util::as<FieldAccessExpression>(child)->getFieldName());
                 }
             });
 
@@ -299,7 +298,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
             break;
     }
 
-    auto createBuildOperator = [&](const std::shared_ptr<Schema>& inputSchema,
+    auto createBuildOperator = [&](const Schema& inputSchema,
                                    const std::vector<std::string>& joinFieldNames,
                                    JoinBuildSideType buildSideType,
                                    const TimestampField& timeStampField)
@@ -382,7 +381,7 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
         auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
         /// Lambda function for extracting the timestamp from a schema
-        auto findTimeStampFieldName = [&](const std::shared_ptr<Schema>& schema)
+        auto findTimeStampFieldName = [&](const Schema& schema)
         {
             for (const auto& field : *schema)
             {

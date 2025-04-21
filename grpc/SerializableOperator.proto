@@ -118,6 +118,7 @@ message SerializableOperator {
    */
   message MapDetails {
     SerializableFunction function = 1;
+    SchemaIdentifier asField = 2;
   }
 
   /**
@@ -133,8 +134,9 @@ message SerializableOperator {
   */
   message ProjectionDetails {
     repeated SerializableFunction function = 1;
-
+    repeated SchemaIdentifier asField = 2;
   }
+
   /**
    Union Details contains properties for the union operator, which is empty currently.
    */
@@ -197,7 +199,7 @@ message SerializableOperator {
       IngestionTime = 1;
     }
     Type type = 1;
-    string field = 2;
+    SerializableFunction field = 2;
     uint64 multiplier = 3;
   }
 
@@ -242,7 +244,7 @@ message SerializableOperator {
       }
       Type type = 1;
       SerializableFunction onField = 2;
-      SerializableFunction asField = 3;
+      SchemaIdentifier asField = 3;
     }
 
     google.protobuf.Any windowType = 1;

@@ -13,11 +13,9 @@
 */
 #include <memory>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
+#include <Functions/Expression.hpp>
+#include <Functions/FieldAccessExpression.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/Operator.hpp>
@@ -53,18 +51,15 @@ std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::
     auto newSourceName = renameSourceOperator->getNewSourceName();
     auto inputSchema = renameSourceOperator->getInputSchema();
 
-    std::vector<std::shared_ptr<NodeFunction>> projectionAttributes;
+    std::vector<std::pair<Schema::Identifier, ExpressionValue>> projectionAttributes;
     /// Iterate over the input schema and add a new field rename function
-    for (const auto& field : *inputSchema)
+    for (const auto& [field, type] : inputSchema.getFields())
     {
         /// compute the new name for the field by added new source name as field qualifier
-        std::string fieldName = field->getName();
         /// Compute new name without field qualifier
-        std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
+        auto updatedFieldName = Schema::Identifier{field.name, newSourceName};
         /// Compute field access and field rename function
-        auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), fieldName);
-        auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);
-        projectionAttributes.push_back(fieldRenameFunction);
+        projectionAttributes.emplace_back(updatedFieldName, make_expression<FieldAccessExpression>(field));
     }
     /// Construct a new project operator
     auto projectOperator = std::make_shared<LogicalProjectionOperator>(projectionAttributes, getNextOperatorId());

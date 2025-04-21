@@ -116,11 +116,11 @@ public:
 
     /**
      * @brief add a logical source
-     * @param std::shared_ptr<Schema> schema of the new logical source
+     * @param Schema schema of the new logical source
      * @param string name of the new logical source
      * @return successfully added
      */
-    bool addLogicalSource(std::shared_ptr<Schema> schema, const std::string& sourceName);
+    bool addLogicalSource(Schema schema, const std::string& sourceName);
 
     /**
      * @brief get logical sources

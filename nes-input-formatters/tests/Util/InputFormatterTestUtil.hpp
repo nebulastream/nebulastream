@@ -135,7 +135,7 @@ public:
     }
 };
 
-std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataTypes);
+Schema createSchema(const std::vector<TestDataTypes>& testDataTypes);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
@@ -145,7 +145,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
     const std::string& filePath,
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
     int numberOfLocalBuffersInSource);
 
@@ -169,7 +169,7 @@ struct TestHandle
     TestConfig<TupleSchemaTemplate> testConfig;
     std::shared_ptr<Memory::BufferManager> testBufferManager;
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
     std::unique_ptr<Runtime::Execution::SingleThreadedTestTaskQueue> testTaskQueue;
     std::vector<TaskPackage> inputBuffers;
     std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors;
@@ -251,7 +251,7 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
         = Memory::BufferManager::create(testConfig.bufferSize, 2 * testConfig.numRequiredBuffers);
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers
         = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(1);
-    std::shared_ptr<Schema> schema = createSchema(testConfig.testSchema);
+    Schema schema = createSchema(testConfig.testSchema);
     return {
         testConfig,
         testBufferManager,

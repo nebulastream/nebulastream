@@ -35,7 +35,7 @@ public:
      * @param schema : the schema to be used for inferring the types
      * @return true if success else false
      */
-    bool inferStamp(const std::shared_ptr<Schema>& schema) override;
+    bool inferStamp(const Schema& schema) override;
 
 private:
     explicit IngestionTimeWatermarkStrategyDescriptor();

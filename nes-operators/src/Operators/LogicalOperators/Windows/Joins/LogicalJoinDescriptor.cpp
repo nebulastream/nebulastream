@@ -17,10 +17,7 @@
 #include <unordered_set>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionBinary.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/Expression.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
@@ -33,16 +30,13 @@ namespace NES::Join
 {
 
 LogicalJoinDescriptor::LogicalJoinDescriptor(
-    std::shared_ptr<NodeFunction> joinFunction,
+    ExpressionValue joinFunction,
     std::shared_ptr<Windowing::WindowType> windowType,
     const uint64_t numberOfInputEdgesLeft,
     const uint64_t numberOfInputEdgesRight,
     const JoinType joinType,
     const OriginId originId)
     : joinFunction(std::move(joinFunction))
-    , leftSourceType(Schema::create())
-    , rightSourceType(Schema::create())
-    , outputSchema(Schema::create())
     , windowType(std::move(windowType))
     , numberOfInputEdgesLeft(numberOfInputEdgesLeft)
     , numberOfInputEdgesRight(numberOfInputEdgesRight)
@@ -59,7 +53,7 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(
 }
 
 std::shared_ptr<LogicalJoinDescriptor> LogicalJoinDescriptor::create(
-    const std::shared_ptr<NodeFunction>& joinFunctions,
+    ExpressionValue joinFunctions,
     const std::shared_ptr<Windowing::WindowType>& windowType,
     uint64_t numberOfInputEdgesLeft,
     uint64_t numberOfInputEdgesRight,
@@ -69,14 +63,14 @@ std::shared_ptr<LogicalJoinDescriptor> LogicalJoinDescriptor::create(
         joinFunctions, windowType, numberOfInputEdgesLeft, numberOfInputEdgesRight, joinType);
 }
 
-std::shared_ptr<Schema> LogicalJoinDescriptor::getLeftSourceType() const
+const Schema& LogicalJoinDescriptor::getLeftSourceType() const
 {
-    return leftSourceType;
+    return leftSourceType.value();
 }
 
-std::shared_ptr<Schema> LogicalJoinDescriptor::getRightSourceType() const
+const Schema& LogicalJoinDescriptor::getRightSourceType() const
 {
-    return rightSourceType;
+    return rightSourceType.value();
 }
 
 std::shared_ptr<Windowing::WindowType> LogicalJoinDescriptor::getWindowType() const
@@ -99,31 +93,21 @@ uint64_t LogicalJoinDescriptor::getNumberOfInputEdgesRight() const
     return numberOfInputEdgesRight;
 }
 
-void LogicalJoinDescriptor::updateSourceTypes(std::shared_ptr<Schema> leftSourceType, std::shared_ptr<Schema> rightSourceType)
+void LogicalJoinDescriptor::updateSourceTypes(Schema leftSourceType, Schema rightSourceType)
 {
-    if (leftSourceType)
-    {
-        this->leftSourceType = std::move(leftSourceType);
-    }
-    if (rightSourceType)
-    {
-        this->rightSourceType = std::move(rightSourceType);
-    }
+    this->leftSourceType = std::move(leftSourceType);
+    this->rightSourceType = std::move(rightSourceType);
 }
 
-void LogicalJoinDescriptor::updateOutputDefinition(std::shared_ptr<Schema> outputSchema)
+void LogicalJoinDescriptor::updateOutputDefinition(Schema outputSchema)
 {
-    if (outputSchema)
-    {
-        this->outputSchema = std::move(outputSchema);
-    }
+    this->outputSchema = std::move(outputSchema);
 }
 
-std::shared_ptr<Schema> LogicalJoinDescriptor::getOutputSchema() const
+const Schema& LogicalJoinDescriptor::getOutputSchema() const
 {
-    return outputSchema;
+    return outputSchema.value();
 }
-
 void LogicalJoinDescriptor::setNumberOfInputEdgesLeft(const uint64_t numberOfInputEdgesLeft)
 {
     LogicalJoinDescriptor::numberOfInputEdgesLeft = numberOfInputEdgesLeft;
@@ -143,7 +127,7 @@ void LogicalJoinDescriptor::setOriginId(const OriginId originId)
     this->originId = originId;
 }
 
-std::shared_ptr<NodeFunction> LogicalJoinDescriptor::getJoinFunction()
+ExpressionValue LogicalJoinDescriptor::getJoinFunction()
 {
     return this->joinFunction;
 }
@@ -151,7 +135,7 @@ std::shared_ptr<NodeFunction> LogicalJoinDescriptor::getJoinFunction()
 bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor& other) const
 {
     return (*leftSourceType == *other.leftSourceType) && (*rightSourceType == *other.rightSourceType)
-        && (*outputSchema == *other.outputSchema) && windowType->equal(other.windowType) && joinFunction->equal(other.joinFunction)
+        && (*outputSchema == *other.outputSchema) && windowType->equal(other.windowType) && joinFunction == other.joinFunction
         && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft && numberOfInputEdgesRight == other.numberOfInputEdgesRight
         && joinType == other.joinType && originId == other.originId;
 }

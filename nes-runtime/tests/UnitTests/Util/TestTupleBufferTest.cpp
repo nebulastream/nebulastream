@@ -19,8 +19,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -35,7 +33,7 @@ class TestTupleBufferTest : public Testing::BaseUnitTest, public testing::WithPa
 {
 public:
     std::shared_ptr<Memory::BufferManager> bufferManager;
-    std::shared_ptr<Schema> schema, varSizedDataSchema;
+    Schema schema, varSizedDataSchema;
     std::unique_ptr<TestTupleBuffer> testBuffer, testBufferVarSize;
 
     static void SetUpTestCase()

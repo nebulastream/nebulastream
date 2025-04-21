@@ -28,8 +28,8 @@ class PhysicalAggregationBuild final : public PhysicalWindowOperator
 public:
     static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
-        std::shared_ptr<Schema> inputSchema,
-        std::shared_ptr<Schema> outputSchema,
+        Schema inputSchema,
+        Schema outputSchema,
         std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
         std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler);
 
@@ -38,8 +38,8 @@ public:
 private:
     PhysicalAggregationBuild(
         OperatorId id,
-        std::shared_ptr<Schema> inputSchema,
-        std::shared_ptr<Schema> outputSchema,
+        Schema inputSchema,
+        Schema outputSchema,
         std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
         std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler);
 };

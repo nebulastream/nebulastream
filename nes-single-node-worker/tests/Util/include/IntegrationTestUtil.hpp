@@ -34,7 +34,7 @@ static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
 /// Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId = 0,
     const std::string& timestampFieldname = "ts",
@@ -54,13 +54,13 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider);
 
 /// Loads the output @link Schema of the SinkOperator in the @link SerializableDecomposedQueryPlan. This requieres the plan to only
 /// have a single root operator, which is the SinkOperator
-std::shared_ptr<Schema> loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan);
+Schema loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan);
 
 QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPCServer& uut);
 

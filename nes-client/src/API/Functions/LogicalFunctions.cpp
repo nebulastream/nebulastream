@@ -12,78 +12,61 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <utility>
 #include <API/Functions/Functions.hpp>
 #include <API/Functions/LogicalFunctions.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/FunctionExpression.hpp>
+#include <Functions/WellKnownFunctions.hpp>
 
 namespace NES
 {
 
-std::shared_ptr<NodeFunction>
-operator||(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+ExpressionValue operator||(ExpressionValue functionLeft, ExpressionValue functionRight)
 {
-    return NodeFunctionOr::create(std::move(functionLeft), std::move(functionRight));
+    return make_expression<FunctionExpression>({functionLeft, functionRight}, WellKnown::Or);
 }
 
-std::shared_ptr<NodeFunction>
-operator&&(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+ExpressionValue operator&&(ExpressionValue functionLeft, ExpressionValue functionRight)
 {
-    return NodeFunctionAnd::create(std::move(functionLeft), std::move(functionRight));
+    return make_expression<FunctionExpression>({functionLeft, functionRight}, WellKnown::And);
 }
 
-std::shared_ptr<NodeFunction>
-operator==(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+ExpressionValue operator==(ExpressionValue functionLeft, ExpressionValue functionRight)
 {
-    return NodeFunctionEquals::create(std::move(functionLeft), std::move(functionRight));
+    return make_expression<FunctionExpression>({functionLeft, functionRight}, WellKnown::Equal);
 }
 
-std::shared_ptr<NodeFunction>
-operator!=(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+ExpressionValue operator!=(ExpressionValue functionLeft, ExpressionValue functionRight)
 {
-    return NodeFunctionNegate::create(NodeFunctionEquals::create(std::move(functionLeft), std::move(functionRight)));
+    return make_expression<FunctionExpression>({functionLeft, functionRight}, WellKnown::NotEqual);
 }
 
-std::shared_ptr<NodeFunction>
-operator<=(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+ExpressionValue operator<=(ExpressionValue functionLeft, ExpressionValue functionRight)
 {
-    return NodeFunctionLessEquals::create(std::move(functionLeft), std::move(functionRight));
+    return make_expression<FunctionExpression>({functionLeft, functionRight}, WellKnown::LessEqual);
 }
 
-std::shared_ptr<NodeFunction>
-operator<(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+ExpressionValue operator<(ExpressionValue functionLeft, ExpressionValue functionRight)
 {
-    return NodeFunctionLess::create(std::move(functionLeft), std::move(functionRight));
+    return make_expression<FunctionExpression>({functionLeft, functionRight}, WellKnown::Less);
 }
 
-std::shared_ptr<NodeFunction>
-operator>=(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+ExpressionValue operator>=(ExpressionValue functionLeft, ExpressionValue functionRight)
 {
-    return NodeFunctionGreaterEquals::create(std::move(functionLeft), std::move(functionRight));
+    return make_expression<FunctionExpression>({functionLeft, functionRight}, WellKnown::GreaterEqual);
 }
 
-std::shared_ptr<NodeFunction>
-operator>(const std::shared_ptr<NodeFunction>& functionLeft, const std::shared_ptr<NodeFunction>& functionRight)
+ExpressionValue operator>(ExpressionValue functionLeft, ExpressionValue functionRight)
 {
-    return NodeFunctionGreater::create(std::move(functionLeft), std::move(functionRight));
+    return make_expression<FunctionExpression>({functionLeft, functionRight}, WellKnown::Greater);
 }
 
-std::shared_ptr<NodeFunction> operator!(const std::shared_ptr<NodeFunction>& exp)
+ExpressionValue operator!(ExpressionValue exp)
 {
-    return NodeFunctionNegate::create(std::move(exp));
+    return make_expression<FunctionExpression>({exp}, WellKnown::Negate);
 }
-std::shared_ptr<NodeFunction> operator!(const FunctionItem& exp)
+ExpressionValue operator!(const FunctionItem& exp)
 {
-    return !exp.getNodeFunction();
+    return make_expression<FunctionExpression>({exp.getNodeFunction()}, WellKnown::Negate);
 }
 
 }

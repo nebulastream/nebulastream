@@ -27,7 +27,7 @@ class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, publi
 {
 public:
     std::shared_ptr<Memory::BufferManager> bufferManager;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
     std::unique_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
 

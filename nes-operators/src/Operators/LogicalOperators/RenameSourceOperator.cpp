@@ -13,7 +13,6 @@
 */
 
 #include <memory>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
@@ -58,14 +57,10 @@ bool RenameSourceOperator::inferSchema()
     {
         return false;
     }
-    ///Update output schema by changing the qualifier and corresponding attribute names
-    const auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (const auto& field : *outputSchema)
+    outputSchema = {};
+    for (const auto& [field, type] : inputSchema.getFields())
     {
-        ///Extract field name without qualifier
-        auto fieldName = field->getName();
-        ///Add new qualifier name to the field and update the field name
-        field->setName(newQualifierName + fieldName);
+        outputSchema.addField(Schema::Identifier{field.name, newSourceName}, type);
     }
     return true;
 }

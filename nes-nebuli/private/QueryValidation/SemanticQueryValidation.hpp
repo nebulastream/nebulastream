@@ -59,12 +59,6 @@ public:
 
 private:
     /**
-     * Check if infer model operator is correctly defined or not
-     * @param queryPlan: query plan to check
-     */
-    static void inferModelValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan);
-
-    /**
      * Performs semantic validation if the query plan has sink as it root operator.
      * @param queryPlan: query plan on which the semantic validation is to be applied
      */

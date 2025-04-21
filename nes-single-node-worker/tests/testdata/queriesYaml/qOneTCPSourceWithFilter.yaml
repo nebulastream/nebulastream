@@ -11,7 +11,7 @@ logical:
   - name: tcp_source
     schema:
       - name: id
-        type: UINT64
+        type: Integer
 physical:
   - logical: tcp_source
     parserConfig:

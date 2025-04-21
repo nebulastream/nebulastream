@@ -51,6 +51,6 @@ public:
     std::vector<std::shared_ptr<Operator>> getRightOperators() const;
 
 private:
-    std::vector<std::shared_ptr<Operator>> getOperatorsBySchema(const std::shared_ptr<Schema>& schema) const;
+    std::vector<std::shared_ptr<Operator>> getOperatorsBySchema(const Schema& schema) const;
 };
 }

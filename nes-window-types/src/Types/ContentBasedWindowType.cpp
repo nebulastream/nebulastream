@@ -16,6 +16,7 @@
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Windowing
 {

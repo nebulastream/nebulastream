@@ -11,8 +11,8 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
-add_plugin_as_library(Checksum Sink nes-sinks-registry checksum_sink_plugin ChecksumSink.cpp)
-add_plugin_as_library(Checksum SinkValidation nes-sinks-registry checksum_sink_validation_plugin ChecksumSink.cpp)
+add_plugin_as_library(Checksum Sink nes-sinks-runtime-registry checksum_sink_plugin ChecksumSink.cpp)
+add_plugin_as_library(Checksum SinkValidation nes-sinks-registry checksum_sink_validation_plugin ChecksumSinkDescriptor.cpp)
 
 target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)
 target_link_libraries(checksum_sink_validation_plugin PRIVATE systest-checksum)

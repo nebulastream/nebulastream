@@ -13,8 +13,6 @@
 */
 
 #include <memory>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -24,11 +22,6 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Numeric.hpp>
-#include <Common/DataTypes/Undefined.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 using namespace std::string_literals;
 
@@ -65,9 +58,6 @@ void SemanticQueryValidation::validate(const std::shared_ptr<QueryPlan>& queryPl
         std::string errorMessage = e.what();
         throw QueryInvalid(errorMessage);
     }
-
-    /// check if infer model is correctly defined
-    inferModelValidityCheck(queryPlan);
 }
 
 void SemanticQueryValidation::createExceptionForPredicate(std::string& predicateString)
@@ -170,40 +160,4 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const std::shared_ptr<Qu
     }
 }
 
-void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan)
-{
-    auto inferModelOperators = queryPlan->getOperatorByType<InferModel::LogicalInferModelOperator>();
-    if (!inferModelOperators.empty())
-    {
-        std::shared_ptr<DataType> commonStamp;
-        for (const auto& inferModelOperator : inferModelOperators)
-        {
-            for (const auto& inputField : inferModelOperator->getInputFields())
-            {
-                auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
-                if (!NES::Util::instanceOf<Numeric>(field->getStamp()) && !NES::Util::instanceOf<Boolean>(field->getStamp())
-                    && !NES::Util::instanceOf<VariableSizedDataType>(field->getStamp()))
-                {
-                    throw QueryInvalid(
-                        "SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for infer model not supported: "
-                        + field->getStamp()->toString());
-                }
-                if (!commonStamp)
-                {
-                    commonStamp = field->getStamp();
-                }
-                else
-                {
-                    commonStamp = commonStamp->join(field->getStamp());
-                }
-            }
-        }
-        NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp->toString());
-        if (NES::Util::instanceOf<Undefined>(commonStamp))
-        {
-            throw QueryInvalid("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as "
-                               "input to infer model.");
-        }
-    }
-}
 }

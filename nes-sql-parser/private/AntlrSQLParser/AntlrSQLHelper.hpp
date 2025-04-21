@@ -20,8 +20,6 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -42,9 +40,9 @@ enum class AntlrSQLWindowType : uint8_t
 };
 class AntlrSQLHelper
 {
-    std::vector<std::shared_ptr<NodeFunction>> projectionFields; ///vector needed for logicalProjectionOperator constructor
-    std::vector<std::shared_ptr<NodeFunction>> whereClauses; ///where and having clauses need to be accessed in reverse
-    std::vector<std::shared_ptr<NodeFunction>> havingClauses;
+    std::vector<ExpressionValue> projectionFields; ///vector needed for logicalProjectionOperator constructor
+    std::vector<ExpressionValue> whereClauses; ///where and having clauses need to be accessed in reverse
+    std::vector<ExpressionValue> havingClauses;
     std::string source;
 
 public:
@@ -71,14 +69,14 @@ public:
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>> windowAggs;
-    std::vector<std::shared_ptr<NodeFunction>> projections;
+    std::vector<ExpressionValue> projections;
     std::vector<std::shared_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
-    std::vector<std::shared_ptr<NodeFunction>> functionBuilder;
-    std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> mapBuilder;
-    std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByFields;
+    std::vector<ExpressionValue> functionBuilder;
+    std::vector<std::pair<Schema::Identifier, ExpressionValue>> mapBuilder;
+    std::vector<ExpressionValue> groupByFields;
     std::vector<std::string> joinSources;
-    std::shared_ptr<NodeFunction> joinFunction;
-    std::vector<std::shared_ptr<NodeFunction>> joinKeyRelationHelper;
+    std::optional<ExpressionValue> joinFunction;
+    std::vector<ExpressionValue> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
     Join::LogicalJoinDescriptor::JoinType joinType;
 
@@ -97,17 +95,17 @@ public:
     int identCountHelper = 0;
     int implicitMapCountHelper = 0;
 
-    [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getWhereClauses() const;
-    [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getHavingClauses() const;
-    [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getProjectionFields() const;
-    void addWhereClause(const std::shared_ptr<NodeFunction>& expressionNode);
-    void addHavingClause(const std::shared_ptr<NodeFunction>& expressionNode);
-    void addProjectionField(const std::shared_ptr<NodeFunction>& expressionNode);
+    [[nodiscard]] const std::vector<ExpressionValue>& getWhereClauses() const;
+    [[nodiscard]] const std::vector<ExpressionValue>& getHavingClauses() const;
+    [[nodiscard]] const std::vector<ExpressionValue>& getProjectionFields() const;
+    void addWhereClause(ExpressionValue expressionNode);
+    void addHavingClause(ExpressionValue expressionNode);
+    void addProjectionField(ExpressionValue expressionNode);
     [[nodiscard]] static std::shared_ptr<Windowing::WindowType> getWindowType();
     void setSource(std::string sourceName);
     const std::string getSource() const;
-    void addMapExpression(std::shared_ptr<NodeFunctionFieldAssignment> expressionNode);
-    [[nodiscard]] std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> getMapExpressions() const;
-    void setMapExpressions(std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> expressions);
+    void addMapExpression(Schema::Identifier identifier, ExpressionValue expression);
+    [[nodiscard]] std::vector<std::pair<Schema::Identifier, ExpressionValue>> getMapExpressions() const;
+    void setMapExpressions(std::vector<std::pair<Schema::Identifier, ExpressionValue>> expressions);
 };
 }

@@ -51,7 +51,7 @@ public:
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
     std::shared_ptr<RowLayout> rowLayout;
@@ -64,7 +64,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest)
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
@@ -86,7 +86,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
@@ -111,7 +111,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord)
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
@@ -146,7 +146,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord)
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
@@ -185,7 +185,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
@@ -236,7 +236,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
 TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
@@ -259,7 +259,7 @@ TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout)
  */
 TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;

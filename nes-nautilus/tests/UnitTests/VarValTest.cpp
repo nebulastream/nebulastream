@@ -20,7 +20,6 @@
 #include <nautilus/std/sstream.h>
 #include <BaseUnitTest.hpp>
 #include <val_ptr.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 

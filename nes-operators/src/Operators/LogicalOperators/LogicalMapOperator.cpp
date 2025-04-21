@@ -14,9 +14,7 @@
 
 #include <memory>
 #include <string>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -28,12 +26,7 @@
 namespace NES
 {
 
-LogicalMapOperator::LogicalMapOperator(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), mapFunction(mapFunction)
-{
-}
-
-std::shared_ptr<NodeFunctionFieldAssignment> LogicalMapOperator::getMapFunction() const
+const ExpressionValue& LogicalMapOperator::getMapFunction() const
 {
     return mapFunction;
 }
@@ -48,7 +41,7 @@ bool LogicalMapOperator::equal(const std::shared_ptr<Node>& rhs) const
     if (NES::Util::instanceOf<LogicalMapOperator>(rhs))
     {
         const auto mapOperator = NES::Util::as<LogicalMapOperator>(rhs);
-        return mapFunction->equal(mapOperator->mapFunction);
+        return mapFunction == mapOperator->mapFunction;
     }
     return false;
 };
@@ -62,39 +55,26 @@ bool LogicalMapOperator::inferSchema()
     }
 
     /// use the default input schema to calculate the out schema of this operator.
-    mapFunction->inferStamp(*getInputSchema());
+    mapFunction.inferStamp(getInputSchema());
+    outputSchema.addField(asField, mapFunction.getStamp().value());
 
-    const auto assignedField = mapFunction->getField();
-    if (std::string fieldName = assignedField->getFieldName(); outputSchema->getFieldByName(fieldName))
-    {
-        /// The assigned field is part of the current schema.
-        /// Thus we check if it has the correct type.
-        NES_TRACE("MAP Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
-        outputSchema->replaceField(fieldName, assignedField->getStamp());
-    }
-    else
-    {
-        /// The assigned field is not part of the current schema.
-        /// Thus we extend the schema by the new attribute.
-        NES_TRACE("MAP Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
-        outputSchema->addField(fieldName, assignedField->getStamp());
-    }
     return true;
 }
 
 std::string LogicalMapOperator::toString() const
 {
     std::stringstream ss;
-    ss << "MAP(opId: " << id << ": predicate: " << *mapFunction << ")";
+    ss << "MAP(opId: " << id << ": predicate: " << format_as(mapFunction) << ")";
     return ss.str();
 }
 
 std::shared_ptr<Operator> LogicalMapOperator::copy()
 {
-    auto copy = std::make_shared<LogicalMapOperator>(Util::as<NodeFunctionFieldAssignment>(mapFunction->deepCopy()), id);
+    auto copy = std::make_shared<LogicalMapOperator>(id, this->mapFunction, asField);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
     for (const auto& [key, value] : properties)
@@ -114,7 +94,7 @@ void LogicalMapOperator::inferStringSignature()
     /// Infer signature for this operator.
     std::stringstream signatureStream;
     const auto childSignature = child->getHashBasedSignature();
-    signatureStream << "MAP(" << *mapFunction << ")." << *childSignature.begin()->second.begin();
+    signatureStream << "MAP(" << format_as(mapFunction) << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
     const auto hashCode = hashGenerator(signatureStream.str());

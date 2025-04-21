@@ -20,30 +20,30 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-std::shared_ptr<PhysicalOperator> PhysicalUnionOperator::create(OperatorId id, const std::shared_ptr<Schema>& schema)
+std::shared_ptr<PhysicalOperator> PhysicalUnionOperator::create(OperatorId id, const Schema& schema)
 {
     return create(id, schema, schema, schema);
 }
 
 std::shared_ptr<PhysicalOperator> PhysicalUnionOperator::create(
     OperatorId id,
-    const std::shared_ptr<Schema>& leftSchema,
-    const std::shared_ptr<Schema>& rightSchema,
-    const std::shared_ptr<Schema>& outputSchema)
+    const Schema& leftSchema,
+    const Schema& rightSchema,
+    const Schema& outputSchema)
 {
     return std::make_shared<PhysicalUnionOperator>(id, leftSchema, rightSchema, outputSchema);
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalUnionOperator::create(const std::shared_ptr<Schema>& schema)
+std::shared_ptr<PhysicalOperator> PhysicalUnionOperator::create(const Schema& schema)
 {
     return create(getNextOperatorId(), schema);
 }
 
 PhysicalUnionOperator::PhysicalUnionOperator(
     OperatorId id,
-    const std::shared_ptr<Schema>& leftSchema,
-    const std::shared_ptr<Schema>& rightSchema,
-    const std::shared_ptr<Schema>& outputSchema)
+    const Schema& leftSchema,
+    const Schema& rightSchema,
+    const Schema& outputSchema)
     : Operator(id), PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema)
 {
 }

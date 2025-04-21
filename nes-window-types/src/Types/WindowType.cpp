@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 

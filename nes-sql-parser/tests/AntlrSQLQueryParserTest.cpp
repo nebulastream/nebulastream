@@ -49,6 +49,15 @@ bool parseAndCompareQueryPlans(const std::string& antlrQueryString, const Query&
     return antlrQueryParsed->compare(internalLogicalQuery.getQueryPlan());
 }
 
+TEST_F(AntlrSQLQueryParserTest, simple_test)
+{
+    AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(R"(
+SELECT id * 3 FROM stream INTO sink
+)");
+     AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(R"(
+SELECT id * 3 as id FROM stream INTO sink
+)");
+}
 TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
 {
     /// Query::from("window").project(Attribute("id")).sink("File")
@@ -58,7 +67,7 @@ TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
     {
         const std::string antlrQueryString = "SELECT (id*3) AS new_id FROM window INTO File";
         const auto internalLogicalQuery
-            = Query::from("window").map(Attribute("new_id") = Attribute("id") * 3).project(Attribute("new_id")).sink("File");
+            = Query::from("window").map("new_id", Attribute("id") * 3).project(Attribute("new_id")).sink("File");
         EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
     }
     /// Todo #440: the grammar currently does not support a mixture of '*' and projections.
@@ -68,7 +77,7 @@ TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
     /// Query::from("window").map(Attribute("id")).sink("File")
     /// {
     ///     const std::string antlrQueryString = "SELECT *, (id*3) AS id FROM window INTO File";
-    ///     const auto internalLogicalQuery = Query::from("window").map(Attribute("id") = Attribute("id") * 3).sink("File");
+    ///     const auto internalLogicalQuery = Query::from("window").map("id",  Attribute("id") * 3).sink("File");
     ///     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
     /// }
 }
@@ -86,26 +95,25 @@ TEST_F(AntlrSQLQueryParserTest, multipleFieldsProjectionTest)
                                 "(u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS g, "
                                 "(u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS h "
                                 "FROM stream INTO Print"s;
-        const auto internalLogicalQuery
-            = Query::from("stream")
-                  .map(Attribute("a") = Attribute("i8") == 1 && ((Attribute("i16") == 1) && (Attribute("i32") == 1)))
-                  .map(Attribute("b") = Attribute("i32") == 1 && ((Attribute("i64") == 1) && (Attribute("u8") == 2)))
-                  .map(Attribute("c") = Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
-                  .map(Attribute("d") = Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
-                  .map(Attribute("e") = Attribute("i8") == 1 && !(Attribute("i16") == 1 && Attribute("i32") == 1))
-                  .map(Attribute("f") = Attribute("i32") == 1 && !(Attribute("i64") == 1 && Attribute("u8") == 2))
-                  .map(Attribute("g") = Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
-                  .map(Attribute("h") = Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
-                  .project(
-                      Attribute("a"),
-                      Attribute("b"),
-                      Attribute("c"),
-                      Attribute("d"),
-                      Attribute("e"),
-                      Attribute("f"),
-                      Attribute("g"),
-                      Attribute("h"))
-                  .sink("Print");
+        const auto internalLogicalQuery = Query::from("stream")
+                                              .map("a", Attribute("i8") == 1 && ((Attribute("i16") == 1) && (Attribute("i32") == 1)))
+                                              .map("b", Attribute("i32") == 1 && ((Attribute("i64") == 1) && (Attribute("u8") == 2)))
+                                              .map("c", Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
+                                              .map("d", Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
+                                              .map("e", Attribute("i8") == 1 && !(Attribute("i16") == 1 && Attribute("i32") == 1))
+                                              .map("f", Attribute("i32") == 1 && !(Attribute("i64") == 1 && Attribute("u8") == 2))
+                                              .map("g", Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
+                                              .map("h", Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
+                                              .project(
+                                                  Attribute("a"),
+                                                  Attribute("b"),
+                                                  Attribute("c"),
+                                                  Attribute("d"),
+                                                  Attribute("e"),
+                                                  Attribute("f"),
+                                                  Attribute("g"),
+                                                  Attribute("h"))
+                                              .sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
 }
@@ -596,7 +604,7 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
                                     .where(Attribute("userId") == Attribute("id"))
                                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
                                     .selection(Attribute("field") >= 23 && Attribute("field2") <= 12)
-                                    .map(Attribute("userId2") = Attribute("id2") + 1)
+                                    .map("userId2", Attribute("id2") + 1)
                                     .project(Attribute("userId2"))
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
@@ -610,7 +618,7 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
                                         .where(Attribute("userId") == Attribute("id"))
                                         .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
                                         .selection(Attribute("field") >= 23 || Attribute("field2") <= 12)
-                                        .map(Attribute("userId2") = Attribute("id2") + 1)
+                                        .map("userId2", Attribute("id2") + 1)
                                         .project(Attribute("userId2"))
                                         .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
@@ -630,7 +638,7 @@ TEST_F(AntlrSQLQueryParserTest, globalWindowTest)
         = "select sum(id) as average_id from StreamName window sliding (timestamp, size 10 sec, advance by 5 ms) INTO PRINT"s;
     const auto queryEventTime = Query::from("StreamName")
                                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
-                                    .apply(Sum(Attribute("id"))->as(Attribute("average_id")))
+                                    .apply(Sum(Attribute("id"))->as("average_id"))
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
@@ -649,7 +657,7 @@ TEST_F(AntlrSQLQueryParserTest, keyedWindowTest)
     const auto queryEventTime = Query::from("StreamName")
                                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
                                     .byKey(Attribute("grouped_field"))
-                                    .apply(Avg(Attribute("id"))->as(Attribute("average_id")))
+                                    .apply(Avg(Attribute("id"))->as("average_id"))
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
@@ -670,7 +678,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedWindowTestWithHaving)
     const auto queryEventTime = Query::from("StreamName")
                                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Days(10)))
                                     .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
-                                    .apply(Avg(Attribute("id"))->as(Attribute("average_id")))
+                                    .apply(Avg(Attribute("id"))->as("average_id"))
                                     .selection(Attribute("average_id") > 24 && Attribute("average_id") < 100)
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
@@ -680,7 +688,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedWindowTestWithHaving)
     const auto queryIngestionTime = Query::from("StreamName")
                                         .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
                                         .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
-                                        .apply(Avg(Attribute("id"))->as(Attribute("average_id")))
+                                        .apply(Avg(Attribute("id"))->as("average_id"))
                                         .selection(24 < Attribute("average_id") && Attribute("average_id") < 100)
                                         .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
@@ -694,8 +702,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
         = Query::from("StreamName")
               .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
               .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
-              .apply(
-                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .apply(Avg(Attribute("id"))->as("average_id"), Sum(Attribute("id2")), Max(Attribute("id3"))->as("max_id"))
               .selection(Attribute("average_id") > 24 && Attribute("max_id") < 100)
               .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
@@ -706,8 +713,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
         = Query::from("StreamName")
               .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
               .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
-              .apply(
-                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .apply(Avg(Attribute("id"))->as("average_id"), Sum(Attribute("id2")), Max(Attribute("id3"))->as("max_id"))
               .selection(Attribute("average_id") > 24 && Attribute("max_id") < 100)
               .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
@@ -724,8 +730,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
         = Query::from("StreamName")
               .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
               .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
-              .apply(
-                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .apply(Avg(Attribute("id"))->as("average_id"), Sum(Attribute("id2")), Max(Attribute("id3"))->as("max_id"))
               .selection(Attribute("average_id") > 24 && Attribute("max_id") < 100)
               .joinWith(Query::from("stream2"))
               .where(Attribute("average_id") == Attribute("id2"))
@@ -742,8 +747,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
         = Query::from("StreamName")
               .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
               .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
-              .apply(
-                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .apply(Avg(Attribute("id"))->as("average_id"), Sum(Attribute("id2")), Max(Attribute("id3"))->as("max_id"))
               .selection(Attribute("average_id") > 24 && Attribute("max_id") < 100)
               .joinWith(Query::from("stream2"))
               .where(Attribute("average_id") == Attribute("id2"))
@@ -765,8 +769,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1)))
               .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
               .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
-              .apply(
-                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .apply(Avg(Attribute("id"))->as("average_id"), Sum(Attribute("id2")), Max(Attribute("id3"))->as("max_id"))
               .selection(Attribute("average_id") > 24 && Attribute("max_id") < 123)
               .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
@@ -782,8 +785,7 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1)))
               .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
               .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
-              .apply(
-                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .apply(Avg(Attribute("id"))->as("average_id"), Sum(Attribute("id2")), Max(Attribute("id3"))->as("max_id"))
               .selection(Attribute("average_id") > 24 && Attribute("max_id") >= 456)
               .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));

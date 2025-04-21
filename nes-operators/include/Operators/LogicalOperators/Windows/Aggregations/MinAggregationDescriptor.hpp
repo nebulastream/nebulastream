@@ -16,31 +16,24 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/Expression.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES::Windowing
 {
 
 class MinAggregationDescriptor : public WindowAggregationDescriptor
 {
 public:
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
-
     static std::shared_ptr<WindowAggregationDescriptor>
-    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
+    create(ExpressionValue onField, Schema::Identifier asField);
 
     void inferStamp(const Schema& schema) override;
     std::shared_ptr<WindowAggregationDescriptor> copy() override;
-    std::shared_ptr<DataType> getInputStamp() override;
-    std::shared_ptr<DataType> getPartialAggregateStamp() override;
-    std::shared_ptr<DataType> getFinalAggregateStamp() override;
+
 
     virtual ~MinAggregationDescriptor() = default;
 
 private:
-    explicit MinAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
-    MinAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
+    MinAggregationDescriptor(ExpressionValue onField, Schema::Identifier asField);
 };
 }

@@ -58,7 +58,7 @@ public:
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutCreateTest)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -71,7 +71,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutCreateTest)
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -95,7 +95,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecord)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -120,7 +120,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecor
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultipleRecord)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -155,7 +155,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultiple
  */
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
@@ -193,7 +193,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldSimple)
 TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -244,7 +244,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
 TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -269,7 +269,7 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
  */
 TEST_F(ColumnarMemoryLayoutTest, accessDynamicColumnBufferTest)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;
@@ -301,7 +301,7 @@ TEST_F(ColumnarMemoryLayoutTest, accessDynamicColumnBufferTest)
  */
 TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
 {
-    const std::shared_ptr<Schema> schema
+    const Schema schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
     std::shared_ptr<ColumnLayout> columnLayout;

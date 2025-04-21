@@ -38,7 +38,7 @@ public:
      * @brief returns the names of every key used in the aggregation
      * @return a vector containing the key names used in the aggregation
      */
-    std::vector<std::string> getGroupByKeyNames() const;
+    std::vector<Schema::Identifier> getGroupByKeyNames() const;
 
 protected:
     std::string toString() const override;

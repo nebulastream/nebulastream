@@ -15,7 +15,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -27,7 +26,6 @@
 #include <include/Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -120,7 +118,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(const std::shared_ptr<Schema>& schema) const
+std::string DynamicTuple::toString(const Schema& schema) const
 {
     std::stringstream ss;
     for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
@@ -278,12 +276,12 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema) const
+std::string TestTupleBuffer::toString(const Schema& schema) const
 {
     return toString(schema, PrintMode::SHOW_HEADER_END_IN_NEWLINE);
 }
 
-std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, const PrintMode printMode) const
+std::string TestTupleBuffer::toString(const Schema& schema, const PrintMode printMode) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
@@ -381,7 +379,7 @@ std::shared_ptr<MemoryLayout> TestTupleBuffer::getMemoryLayout() const
     return memoryLayout;
 }
 
-TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema)
+TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema)
 {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {

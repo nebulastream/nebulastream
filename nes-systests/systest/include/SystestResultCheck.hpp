@@ -26,8 +26,6 @@
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Systest
 {

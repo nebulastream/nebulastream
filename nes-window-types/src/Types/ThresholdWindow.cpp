@@ -18,31 +18,31 @@
 #include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/Expression.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Windowing
 {
 
-ThresholdWindow::ThresholdWindow(std::shared_ptr<NodeFunction> predicate) : predicate(std::move(predicate))
+ThresholdWindow::ThresholdWindow(ExpressionValue predicate) : predicate(std::move(predicate))
 {
 }
 
-ThresholdWindow::ThresholdWindow(std::shared_ptr<NodeFunction> predicate, uint64_t minCount)
-    : predicate(std::move(predicate)), minimumCount(minCount)
+ThresholdWindow::ThresholdWindow(ExpressionValue predicate, uint64_t minCount) : predicate(std::move(predicate)), minimumCount(minCount)
 {
 }
 
-std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<NodeFunction> predicate)
+std::shared_ptr<WindowType> ThresholdWindow::of(ExpressionValue predicate)
 {
     return std::reinterpret_pointer_cast<WindowType>(std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate))));
 }
 
-std::shared_ptr<WindowType> ThresholdWindow::of(std::shared_ptr<NodeFunction> predicate, uint64_t minimumCount)
+std::shared_ptr<WindowType> ThresholdWindow::of(ExpressionValue predicate, uint64_t minimumCount)
 {
     return std::reinterpret_pointer_cast<WindowType>(
         std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount)));
@@ -52,7 +52,7 @@ bool ThresholdWindow::equal(std::shared_ptr<WindowType> otherWindowType)
 {
     if (auto otherThresholdWindow = std::dynamic_pointer_cast<ThresholdWindow>(otherWindowType))
     {
-        return this->minimumCount == otherThresholdWindow->minimumCount && this->predicate->equal(otherThresholdWindow->predicate);
+        return this->minimumCount == otherThresholdWindow->minimumCount && this->predicate == otherThresholdWindow->predicate;
     }
     return false;
 }
@@ -62,7 +62,7 @@ ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBas
     return ContentBasedSubWindowType::THRESHOLDWINDOW;
 }
 
-const std::shared_ptr<NodeFunction>& ThresholdWindow::getPredicate() const
+ExpressionValue ThresholdWindow::getPredicate() const
 {
     return predicate;
 }
@@ -75,8 +75,11 @@ uint64_t ThresholdWindow::getMinimumCount() const
 bool ThresholdWindow::inferStamp(const Schema& schema)
 {
     NES_INFO("inferStamp for ThresholdWindow")
-    predicate->inferStamp(schema);
-    INVARIANT(predicate->isPredicate(), "the threshold function is not a valid predicate");
+    predicate.inferStamp(schema);
+    if (predicate.getStamp().value().name() != "Bool")
+    {
+        throw CannotInferSchema("ThreholdWindows predicate function does not return a boolean. {}", predicate);
+    }
     return true;
 }
 
@@ -84,7 +87,7 @@ std::string ThresholdWindow::toString() const
 {
     std::stringstream ss;
     ss << "Threshold Window: predicate ";
-    ss << *predicate;
+    ss << format_as(predicate);
     ss << "and minimumCount";
     ss << minimumCount;
     ss << '\n';

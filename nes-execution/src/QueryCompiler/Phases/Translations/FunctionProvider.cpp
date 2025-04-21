@@ -20,10 +20,7 @@
 #include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Functions/Function.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/Expression.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Common.hpp>
@@ -38,7 +35,7 @@ namespace NES::QueryCompilation
 {
 using namespace Runtime::Execution::Functions;
 
-std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction)
+std::unique_ptr<Function> FunctionProvider::lowerFunction(ExpressionValue nodeFunction)
 {
     /// 1. Check if the function is valid.
     auto ret = nodeFunction->validateBeforeLowering();
@@ -48,16 +45,16 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<
     std::vector<std::unique_ptr<Function>> childFunction;
     for (const auto& child : nodeFunction->getChildren())
     {
-        childFunction.emplace_back(lowerFunction(NES::Util::as<NodeFunction>(child)));
+        childFunction.emplace_back(lowerFunction(NES::Util::as<Expression>(child)));
     }
 
     /// 3. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessNode = NES::Util::as_if<NodeFunctionFieldAccess>(nodeFunction); fieldAccessNode != nullptr)
+    if (const auto fieldAccessNode = NES::Util::as_if<FieldAccessExpression>(nodeFunction); fieldAccessNode != nullptr)
     {
         return std::make_unique<ExecutableFunctionReadField>(fieldAccessNode->getFieldName());
     }
-    if (const auto constantValueNode = NES::Util::as_if<NodeFunctionConstantValue>(nodeFunction); constantValueNode != nullptr)
+    if (const auto constantValueNode = NES::Util::as_if<ConstantExpression>(nodeFunction); constantValueNode != nullptr)
     {
         return lowerConstantFunction(constantValueNode);
     }
@@ -73,7 +70,7 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<
     return std::move(function.value());
 }
 
-std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
+std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::shared_ptr<ConstantExpression>& constantFunction)
 {
     const auto stringValue = constantFunction->getConstantValue();
     const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());

@@ -19,8 +19,6 @@
 #include <vector>
 #include <API/Functions/Functions.hpp>
 #include <API/Windowing.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -57,7 +55,7 @@ public:
      * @param joinFunction : a set of binary functions to compare left and right tuples
      * @return object of type JoinWhere on which window function is defined and can be called.
      */
-    [[nodiscard]] JoinWhere where(std::shared_ptr<NodeFunction> joinFunction) const;
+    [[nodiscard]] JoinWhere where(ExpressionValue joinFunction) const;
 
 private:
     const Query& subQueryRhs;
@@ -73,7 +71,7 @@ public:
      * @param originalQuery
      * @param joinFunction : a set of binary functions to compare left and right tuples
      */
-    JoinWhere(const Query& subQueryRhs, Query& originalQuery, std::shared_ptr<NodeFunction> joinFunctions);
+    JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionValue joinFunctions);
 
     /**
      * @brief: calls internal the original joinWith function with all the gathered parameters.
@@ -85,7 +83,7 @@ public:
 private:
     const Query& subQueryRhs;
     Query& originalQuery;
-    std::shared_ptr<NodeFunction> joinFunctions;
+    ExpressionValue joinFunctions;
 };
 
 }
@@ -113,7 +111,7 @@ public:
 private:
     Query& subQueryRhs;
     Query& originalQuery;
-    std::shared_ptr<NodeFunction> joinFunction;
+    ExpressionValue joinFunction;
 };
 
 class Seq
@@ -136,7 +134,7 @@ public:
 private:
     Query& subQueryRhs;
     Query& originalQuery;
-    std::shared_ptr<NodeFunction> joinFunction;
+    ExpressionValue joinFunction;
 };
 
 /**
@@ -294,7 +292,7 @@ public:
       * @param attribute list
       * @return the query
       */
-    Query& project(const std::vector<std::shared_ptr<NodeFunction>>& functions);
+    Query& project(const std::vector<ExpressionValue>& functions);
 
     /**
      * @brief: Filter records according to the predicate. An
@@ -302,7 +300,7 @@ public:
      * @param predicate as function node
      * @return the query
      */
-    Query& selection(const std::shared_ptr<NodeFunction>& filterFunction);
+    Query& selection(ExpressionValue filterFunction);
 
     /**
      * @brief: Limit the number of records according to the limit count.
@@ -324,7 +322,8 @@ public:
      * @param map function
      * @return query
      */
-    Query& map(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction);
+    Query& map(Schema::Identifier asField, ExpressionValue mapFunction);
+    Query& map(std::string asField, ExpressionValue mapFunction);
 
     /// Add a sink operator to the query plan that contains a SinkName. In a later step, we look up all sinks that registered using that SinkName
     /// and replace the operator containing only the sink name with operators containing the concrete descriptor of the sink.
@@ -352,7 +351,7 @@ private:
      */
     Query& joinWith(
         const Query& subQueryRhs,
-        const std::shared_ptr<NodeFunction>& joinFunction,
+        ExpressionValue joinFunction,
         const std::shared_ptr<Windowing::WindowType>& windowType);
 
     /**
@@ -367,7 +366,7 @@ private:
      */
     Query& andWith(
         const Query& subQueryRhs,
-        const std::shared_ptr<NodeFunction>& joinFunctions,
+        ExpressionValue joinFunctions,
         const std::shared_ptr<Windowing::WindowType>& windowType);
 
     /**
@@ -382,7 +381,7 @@ private:
      */
     Query& seqWith(
         const Query& subQueryRhs,
-        const std::shared_ptr<NodeFunction>& joinFunctions,
+        ExpressionValue joinFunctions,
         const std::shared_ptr<Windowing::WindowType>& windowType);
 
     /**
@@ -397,7 +396,7 @@ private:
 
 
     Query& windowByKey(
-        std::vector<std::shared_ptr<NodeFunction>> keys,
+        std::vector<ExpressionValue> keys,
         const std::shared_ptr<Windowing::WindowType>& windowType,
         std::vector<std::shared_ptr<API::WindowAggregation>> aggregations);
 
@@ -407,7 +406,7 @@ private:
       * @param joinFunctions key functions
       * @return joinType
       */
-    static Join::LogicalJoinDescriptor::JoinType identifyJoinType(const std::shared_ptr<NodeFunction>& joinFunctions);
+    static Join::LogicalJoinDescriptor::JoinType identifyJoinType(ExpressionValue joinFunctions);
 };
 
 

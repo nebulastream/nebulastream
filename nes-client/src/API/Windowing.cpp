@@ -16,8 +16,7 @@
 #include <utility>
 #include <API/Functions/Functions.hpp>
 #include <API/Windowing.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/FunctionExpression.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
@@ -28,6 +27,8 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
+#include <WellKnownDataTypes.hpp>
+
 namespace NES::API
 {
 
@@ -36,39 +37,50 @@ WindowAggregation::WindowAggregation(std::shared_ptr<Windowing::WindowAggregatio
 {
 }
 
-std::shared_ptr<API::WindowAggregation> WindowAggregation::as(const NES::FunctionItem& asField) const
+std::shared_ptr<API::WindowAggregation> WindowAggregation::as(std::string asField) const
 {
-    return std::make_shared<API::WindowAggregation>(aggregation->as(asField.getNodeFunction()));
+    return as(Schema::Identifier{asField, {}});
+}
+
+std::shared_ptr<API::WindowAggregation> WindowAggregation::as(Schema::Identifier asField) const
+{
+    return std::make_shared<API::WindowAggregation>(aggregation->as(std::move(asField)));
 }
 
 std::shared_ptr<API::WindowAggregation> Sum(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::SumAggregationDescriptor::on(onField.getNodeFunction()));
+    return std::make_shared<API::WindowAggregation>(
+        Windowing::SumAggregationDescriptor::create(onField.getNodeFunction(), Schema::Identifier("Sum")));
 }
 
 std::shared_ptr<API::WindowAggregation> Avg(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::AvgAggregationDescriptor::on(onField.getNodeFunction()));
+    return std::make_shared<API::WindowAggregation>(
+        Windowing::AvgAggregationDescriptor::create(onField.getNodeFunction(), Schema::Identifier("Avg")));
 }
 
 std::shared_ptr<API::WindowAggregation> Min(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::MinAggregationDescriptor::on(onField.getNodeFunction()));
+    return std::make_shared<API::WindowAggregation>(
+        Windowing::MinAggregationDescriptor::create(onField.getNodeFunction(), Schema::Identifier("Min")));
 }
 
 std::shared_ptr<API::WindowAggregation> Max(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::MaxAggregationDescriptor::on(onField.getNodeFunction()));
+    return std::make_shared<API::WindowAggregation>(
+        Windowing::MaxAggregationDescriptor::create(onField.getNodeFunction(), Schema::Identifier("Max")));
 }
 
 std::shared_ptr<API::WindowAggregation> Count(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::CountAggregationDescriptor::on(onField.getNodeFunction()));
+    return std::make_shared<API::WindowAggregation>(
+        Windowing::CountAggregationDescriptor::create(onField.getNodeFunction(), Schema::Identifier("Count")));
 }
 
 std::shared_ptr<API::WindowAggregation> Median(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getNodeFunction()));
+    return std::make_shared<API::WindowAggregation>(
+        Windowing::MedianAggregationDescriptor::create(onField.getNodeFunction(), Schema::Identifier("Median")));
 }
 
 Windowing::TimeMeasure Milliseconds(const uint64_t milliseconds)
@@ -136,9 +148,10 @@ std::shared_ptr<Windowing::TimeCharacteristic> IngestionTime()
     return Windowing::TimeCharacteristic::createIngestionTime();
 }
 
-std::shared_ptr<NodeFunction> RecordCreationTs()
+ExpressionValue RecordCreationTs()
 {
-    return Attribute(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME, BasicType::UINT64).getNodeFunction();
+    return make_expression<FunctionExpression>(
+        {Attribute(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME).getNodeFunction()}, WellKnown::Integer);
 }
 
 }

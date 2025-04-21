@@ -16,8 +16,8 @@
 
 #include <memory>
 #include <ostream>
-#include <API/AttributeField.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <API/Schema.hpp>
+#include <Functions/FieldAccessExpression.hpp>
 #include <Measures/TimeUnit.hpp>
 
 namespace NES
@@ -38,12 +38,12 @@ public:
         EventTime
     };
     explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit);
+    TimeCharacteristic(Type type, ExpressionValue field, TimeUnit unit);
 
     static std::shared_ptr<TimeCharacteristic> createIngestionTime();
 
-    static std::shared_ptr<TimeCharacteristic> createEventTime(const std::shared_ptr<NodeFunction>& field, const TimeUnit& unit);
-    static std::shared_ptr<TimeCharacteristic> createEventTime(const std::shared_ptr<NodeFunction>& field);
+    static std::shared_ptr<TimeCharacteristic> createEventTime(ExpressionValue value, const TimeUnit& unit);
+    static std::shared_ptr<TimeCharacteristic> createEventTime(ExpressionValue field);
 
     Type getType() const;
 
@@ -56,7 +56,7 @@ public:
     void setTimeUnit(const TimeUnit& unit);
 
     /// Public, since we need to both get and set it.
-    std::shared_ptr<AttributeField> field;
+    ExpressionValue value;
 
 private:
     Type type;

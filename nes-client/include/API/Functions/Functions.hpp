@@ -14,12 +14,7 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
+#include <Functions/Expression.hpp>
 
 namespace NES
 {
@@ -43,21 +38,21 @@ public:
     FunctionItem(double value); ///NOLINT(google-explicit-constructor)
     FunctionItem(bool value); ///NOLINT(google-explicit-constructor)
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    FunctionItem(std::shared_ptr<NodeFunction> exp); /// NOLINT(google-explicit-constructor)
+    FunctionItem(ExpressionValue exp); /// NOLINT(google-explicit-constructor)
 
     FunctionItem(const FunctionItem&) = default;
     FunctionItem(FunctionItem&&) = default;
 
-    std::shared_ptr<NodeFunctionFieldAssignment> /// NOLINT(misc-unconventional-assign-operator)
+    ExpressionValue /// NOLINT(misc-unconventional-assign-operator)
     operator=(const FunctionItem & assignItem) const;
 
-    std::shared_ptr<NodeFunctionFieldAssignment> /// NOLINT(misc-unconventional-assign-operator)
-    operator=(const std::shared_ptr<NodeFunction>& assignFunction) const;
+    ExpressionValue /// NOLINT(misc-unconventional-assign-operator)
+    operator=(const ExpressionValue assignFunction) const;
 
     /// Gets the function node of this function item.
-    [[nodiscard]] std::shared_ptr<NodeFunction> getNodeFunction() const;
+    [[nodiscard]] ExpressionValue getNodeFunction() const;
     /// ReSharper disable once CppNonExplicitConversionOperator
-    operator std::shared_ptr<NodeFunction>(); /// NOLINT(google-explicit-constructor)
+    operator ExpressionValue(); /// NOLINT(google-explicit-constructor)
 
     /// Rename the function item
     /// @param name : the new name
@@ -65,7 +60,7 @@ public:
     FunctionItem as(std::string name);
 
 private:
-    std::shared_ptr<NodeFunction> function;
+    ExpressionValue function;
 };
 
 /// Attribute(name) allows the user to reference a field in his function.
@@ -73,30 +68,5 @@ private:
 /// todo rename to field if conflict with legacy code is resolved.
 /// @param fieldName
 FunctionItem Attribute(std::string name);
-
-/// Attribute(name, type) allows the user to reference a field, with a specific type in his function.
-/// Field("f1", Int) < 10.
-/// todo remove this case if we added type inference at Runtime from the operator tree.
-/// todo rename to field if conflict with legacy code is resolved.
-/// @param fieldName, type
-FunctionItem Attribute(std::string name, BasicType type);
-
-/// WHEN(condition,value) can only be used as part of the left vector in a CASE() function.
-/// Allows to only return the value function if condition is met.
-/// @param conditionExp : a logical condition which will be evaluated.
-/// @param valueExp : the value to return if the condition is the first true one.
-std::shared_ptr<NodeFunction> WHEN(const std::shared_ptr<NodeFunction>& conditionExp, const std::shared_ptr<NodeFunction>& valueExp);
-std::shared_ptr<NodeFunction> WHEN(FunctionItem conditionExp, std::shared_ptr<NodeFunction> valueExp);
-std::shared_ptr<NodeFunction> WHEN(std::shared_ptr<NodeFunction> conditionExp, FunctionItem valueExp);
-std::shared_ptr<NodeFunction> WHEN(FunctionItem conditionExp, FunctionItem valueExp);
-
-/// CASE({WHEN(condition,value),WHEN(condition, value)} , value) allows to evaluate all
-/// WHEN functions from the vector list and only return the first one where the condition evaluated to true, or the value of the default function.
-/// The CASE({WHEN()},default) is evaluated as a concatenated ternary operator in C++.
-/// @param whenFunctions : a vector of at least one WHEN function to evaluate.
-/// @param defaultValueExp : an function which will be returned if no WHEN condition evaluated to true.
-std::shared_ptr<NodeFunction>
-CASE(const std::vector<std::shared_ptr<NodeFunction>>& whenFunctions, const std::shared_ptr<NodeFunction>& defaultValueExp);
-std::shared_ptr<NodeFunction> CASE(const std::vector<std::shared_ptr<NodeFunction>>& whenFunctions, const FunctionItem& defaultValueExp);
 
 }

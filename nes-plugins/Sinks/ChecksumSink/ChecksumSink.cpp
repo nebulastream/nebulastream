@@ -13,6 +13,7 @@
 */
 
 #include "ChecksumSink.hpp"
+#include "ChecksumSinkDescriptor.hpp"
 
 #include <cstddef>
 #include <filesystem>
@@ -38,7 +39,7 @@ namespace NES::Sinks
 
 ChecksumSink::ChecksumSink(const SinkDescriptor& sinkDescriptor)
     : isOpen(false)
-    , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILEPATH))
+    , outputFilePath(sinkDescriptor.getFromConfig(ChecksumSinkConfig::FILEPATH))
     , schemaSizeInBytes(sinkDescriptor.schema->getSchemaSizeInBytes())
     , formatter(std::make_unique<CSVFormat>(sinkDescriptor.schema))
 {
@@ -88,17 +89,6 @@ void ChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Exec
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     const std::string formatted = formatter->getFormattedBuffer(inputBuffer);
     checksum.add(formatted);
-}
-
-Configurations::DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType
-SinkValidationGeneratedRegistrar::RegisterChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return ChecksumSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
 SinkRegistryReturnType SinkGeneratedRegistrar::RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)

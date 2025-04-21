@@ -25,7 +25,6 @@
 #include <Execution/Operators/Streaming/Aggregation/Function/SumAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
@@ -41,7 +40,6 @@
 #include <Util/Common.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -49,8 +47,8 @@ namespace NES::QueryCompilation::PhysicalOperators
 
 PhysicalWindowOperator::PhysicalWindowOperator(
     const OperatorId id,
-    std::shared_ptr<Schema> inputSchema,
-    std::shared_ptr<Schema> outputSchema,
+    Schema inputSchema,
+    Schema outputSchema,
     std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
     : Operator(id)
@@ -110,7 +108,7 @@ PhysicalWindowOperator::getKeyAndValueFields() const
     }
     for (const auto& descriptor : aggregationDescriptors)
     {
-        if (const auto fieldAccessExpression = NES::Util::as_if<NodeFunctionFieldAccess>(descriptor->on()))
+        if (const auto fieldAccessExpression = NES::Util::as_if<FieldAccessExpression>(descriptor->on()))
         {
             const auto aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
             fieldValueNames.emplace_back(aggregationResultFieldIdentifier);
@@ -137,7 +135,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
         auto physicalFinalType = physicalTypeFactory.getPhysicalType(descriptor->getFinalAggregateStamp());
 
         auto aggregationInputExpression = FunctionProvider::lowerFunction(descriptor->on());
-        if (const auto fieldAccessExpression = NES::Util::as_if<NodeFunctionFieldAccess>(descriptor->as()))
+        if (const auto fieldAccessExpression = NES::Util::as_if<FieldAccessExpression>(descriptor->as()))
         {
             const auto aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
             switch (descriptor->getType())

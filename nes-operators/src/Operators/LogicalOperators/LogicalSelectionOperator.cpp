@@ -14,11 +14,12 @@
 
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <utility>
+#include <ranges>
 #include <vector>
-#include <Functions/FunctionSerializationUtil.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/Expression.hpp>
+#include <Functions/FieldAccessExpression.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
@@ -31,17 +32,17 @@
 namespace NES
 {
 
-LogicalSelectionOperator::LogicalSelectionOperator(std::shared_ptr<NodeFunction> predicate, OperatorId id)
+LogicalSelectionOperator::LogicalSelectionOperator(ExpressionValue predicate, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), predicate(std::move(predicate))
 {
 }
 
-std::shared_ptr<NodeFunction> LogicalSelectionOperator::getPredicate() const
+ExpressionValue LogicalSelectionOperator::getPredicate() const
 {
     return predicate;
 }
 
-void LogicalSelectionOperator::setPredicate(std::shared_ptr<NodeFunction> newPredicate)
+void LogicalSelectionOperator::setPredicate(ExpressionValue newPredicate)
 {
     predicate = std::move(newPredicate);
 }
@@ -56,7 +57,7 @@ bool LogicalSelectionOperator::equal(const std::shared_ptr<Node>& rhs) const
     if (NES::Util::instanceOf<LogicalSelectionOperator>(rhs))
     {
         const auto filterOperator = NES::Util::as<LogicalSelectionOperator>(rhs);
-        return predicate->equal(filterOperator->predicate);
+        return predicate == filterOperator->predicate;
     }
     return false;
 };
@@ -64,7 +65,7 @@ bool LogicalSelectionOperator::equal(const std::shared_ptr<Node>& rhs) const
 std::string LogicalSelectionOperator::toString() const
 {
     std::stringstream ss;
-    ss << "FILTER(opId: " << id << ": predicate: " << *predicate << ")";
+    ss << "FILTER(opId: " << id << ": predicate: " << format_as(predicate) << ")";
     return ss.str();
 }
 
@@ -74,17 +75,13 @@ bool LogicalSelectionOperator::inferSchema()
     {
         return false;
     }
-    predicate->inferStamp(*inputSchema);
-    if (!predicate->isPredicate())
-    {
-        throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
-    }
-    return true;
+    predicate.inferStamp(inputSchema);
+    return predicate.getStamp()->name() == "Bool";
 }
 
 std::shared_ptr<Operator> LogicalSelectionOperator::copy()
 {
-    auto copy = std::make_shared<LogicalSelectionOperator>(predicate->deepCopy(), id);
+    auto copy = std::make_shared<LogicalSelectionOperator>(predicate, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -111,8 +108,8 @@ void LogicalSelectionOperator::inferStringSignature()
     }
 
     std::stringstream signatureStream;
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << "FILTER(" << *predicate << ")." << *childSignature.begin()->second.begin();
+    const auto childSignature = NES::Util::as<LogicalOperator>(children.at(0))->getHashBasedSignature();
+    signatureStream << "FILTER(" << format_as(predicate) << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
     const auto hashCode = hashGenerator(signatureStream.str());
@@ -130,23 +127,11 @@ void LogicalSelectionOperator::setSelectivity(float newSelectivity)
 std::vector<std::string> LogicalSelectionOperator::getFieldNamesUsedByFilterPredicate() const
 {
     NES_TRACE("LogicalSelectionOperator: Find all field names used in filter operator");
+    auto fieldAccesses = predicate.dfs() | std::views::filter([](const auto& expr) { return expr.template as<FieldAccessExpression>() != nullptr; })
+        | std::views::transform([](const auto& expr) { return expr.template as<FieldAccessExpression>()->getFieldName().name; })
+        | std::ranges::to<std::vector>();
 
-    ///vector to save the names of all the fields that are used in this predicate
-    std::vector<std::string> fieldsInPredicate;
-
-    ///iterator to go over all the fields of the predicate
-    const DepthFirstNodeIterator depthFirstNodeIterator(predicate);
-    for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
-    {
-        ///NodeFunctionif it finds a fieldAccess this means that the predicate uses this specific field that comes from any source
-        if (NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr))
-        {
-            const std::shared_ptr<NodeFunctionFieldAccess> accessNodeFunction = NES::Util::as<NodeFunctionFieldAccess>(*itr);
-            fieldsInPredicate.push_back(accessNodeFunction->getFieldName());
-        }
-    }
-
-    return fieldsInPredicate;
+    return {fieldAccesses.begin(), fieldAccesses.end()};
 }
 
 }

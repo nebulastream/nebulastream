@@ -18,9 +18,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/Expression.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
@@ -48,8 +46,7 @@ public:
       * @param queryPlan the queryPlan to add the projection node
       * @return the updated queryPlan
       */
-    static std::shared_ptr<QueryPlan>
-    addProjection(const std::vector<std::shared_ptr<NodeFunction>>& functions, std::shared_ptr<QueryPlan> queryPlan);
+    static std::shared_ptr<QueryPlan> addProjection(const std::vector<ExpressionValue>& functions, std::shared_ptr<QueryPlan> queryPlan);
 
     /**
      * @brief this call add the rename operator to the queryPlan, this operator renames the source
@@ -66,8 +63,7 @@ public:
      * @param std::shared_ptr<QueryPlan> the queryPlan the selection node is added to
      * @return the updated queryPlan
      */
-    static std::shared_ptr<QueryPlan>
-    addSelection(const std::shared_ptr<NodeFunction>& selectionFunction, std::shared_ptr<QueryPlan> queryPlan);
+    static std::shared_ptr<QueryPlan> addSelection(ExpressionValue selectionFunction, std::shared_ptr<QueryPlan> queryPlan);
 
     /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
@@ -84,14 +80,13 @@ public:
      * @param queryPlan the queryPlan the map is added to
      * @return the updated std::shared_ptr<QueryPlan>
      */
-    static std::shared_ptr<QueryPlan>
-    addMap(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction, std::shared_ptr<QueryPlan> queryPlan);
+    static std::shared_ptr<QueryPlan> addMap(Schema::Identifier, ExpressionValue, std::shared_ptr<QueryPlan> queryPlan);
 
     static std::shared_ptr<QueryPlan> addWindowAggregation(
         std::shared_ptr<QueryPlan> queryPlan,
         const std::shared_ptr<Windowing::WindowType>& windowType,
         const std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>>& windowAggs,
-        const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& onKeys);
+        const std::vector<ExpressionValue>& onKeys);
 
     /**
     * @brief UnionOperator to combine two query plans
@@ -112,7 +107,7 @@ public:
     static std::shared_ptr<QueryPlan> addJoin(
         std::shared_ptr<QueryPlan> leftQueryPlan,
         std::shared_ptr<QueryPlan> rightQueryPlan,
-        const std::shared_ptr<NodeFunction>& joinFunction,
+        ExpressionValue joinFunction,
         const std::shared_ptr<Windowing::WindowType>& windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
@@ -130,14 +125,6 @@ public:
     checkAndAddWatermarkAssignment(std::shared_ptr<QueryPlan> queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType);
 
 private:
-    /**
-     * @brief This method checks if an NodeFunction is instance Of NodeFunctionFieldAccess for Joins
-     * @param function the function node to test
-     * @param side points out from which side, i.e., left or right query plan, the NodeFunction is
-     * @return nodeFunction as NodeFunctionFieldAccess
-     */
-    static std::shared_ptr<NodeFunctionFieldAccess>
-    asNodeFunctionFieldAccess(const std::shared_ptr<NodeFunction>& function, std::string side);
 
     /**
     * @brief: This method adds a binary operator to the query plan and updates the consumed sources

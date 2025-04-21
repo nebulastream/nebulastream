@@ -29,7 +29,7 @@ namespace detail
 * @return string representation for a given type
 */
 [[maybe_unused]] std::string concatenateFunctionHelper(uint64_t value);
-[[maybe_unused]] std::string concatenateFunctionHelper(const std::shared_ptr<NES::Schema>& schema);
+[[maybe_unused]] std::string concatenateFunctionHelper(const NES::Schema& schema);
 }
 
 /**

@@ -18,8 +18,6 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <SystestParser.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Systest
 {

@@ -40,29 +40,24 @@
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace YAML
 {
 using namespace NES::CLI;
 
-std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
+NES::DataType stringToFieldType(const std::string& fieldNodeType)
 {
-    try
-    {
-        return NES::DataTypeProvider::provideDataType(fieldNodeType);
-    }
-    catch (std::runtime_error& e)
+    auto dataType = NES::DataTypeRegistry::instance().lookup(fieldNodeType);
+    if (!dataType)
     {
         throw NES::SLTWrongSchema("Found Invalid Logical Source Configuration. {} is not a proper Schema Field Type.", fieldNodeType);
     }
+    return *dataType;
 }
 
 template <>
@@ -161,7 +156,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
@@ -207,11 +202,11 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalSourceName, schemaFields] : config.logical)
     {
-        auto schema = Schema::create();
+        Schema schema;
         NES_INFO("Adding logical source: {}", logicalSourceName);
         for (const auto& [name, type] : schemaFields)
         {
-            schema = schema->addField(name, type);
+            schema.addField(Schema::Identifier(name), *type);
         }
         sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }
@@ -248,7 +243,7 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     typeInference->performTypeInferenceQuery(query);
 
     NES_INFO("QEP:\n {}", query->toString());
-    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
+    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema());
     return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
@@ -267,7 +262,7 @@ SchemaField::SchemaField(std::string name, const std::string& typeName) : Schema
 {
 }
 
-SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
+SchemaField::SchemaField(std::string name, DataType type) : name(std::move(name)), type(std::move(type))
 {
 }
 

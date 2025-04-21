@@ -27,28 +27,22 @@ UnaryOperator::UnaryOperator(OperatorId id) : Operator(id)
 {
 }
 
-void UnaryOperator::setInputSchema(std::shared_ptr<Schema> inputSchema)
+void UnaryOperator::setInputSchema(Schema inputSchema)
 {
-    if (inputSchema)
-    {
-        this->inputSchema = std::move(inputSchema);
-    }
+    this->inputSchema = std::move(inputSchema);
 }
 
-void UnaryOperator::setOutputSchema(std::shared_ptr<Schema> outputSchema)
+void UnaryOperator::setOutputSchema(Schema outputSchema)
 {
-    if (outputSchema)
-    {
-        this->outputSchema = std::move(outputSchema);
-    }
+    this->outputSchema = std::move(outputSchema);
 }
 
-std::shared_ptr<Schema> UnaryOperator::getInputSchema() const
+Schema UnaryOperator::getInputSchema() const
 {
     return inputSchema;
 }
 
-std::shared_ptr<Schema> UnaryOperator::getOutputSchema() const
+const Schema& UnaryOperator::getOutputSchema() const
 {
     return outputSchema;
 }
@@ -74,8 +68,8 @@ std::string UnaryOperator::toString() const
         "inputSchema: {}\n"
         "outputSchema: {}\n"
         "inputOriginIds: {}",
-        inputSchema->toString(),
-        outputSchema->toString(),
+        inputSchema,
+        outputSchema,
         fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
 }
 

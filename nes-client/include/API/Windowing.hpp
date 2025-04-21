@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <API/Functions/Functions.hpp>
-#include <Functions/NodeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Measures/TimeUnit.hpp>
@@ -32,7 +31,8 @@ class WindowAggregation
 {
 public:
     explicit WindowAggregation(std::shared_ptr<Windowing::WindowAggregationDescriptor> windowAggregationDescriptor);
-    [[nodiscard]] std::shared_ptr<API::WindowAggregation> as(const FunctionItem& asField) const;
+    [[nodiscard]] std::shared_ptr<API::WindowAggregation> as(std::string asField) const;
+    [[nodiscard]] std::shared_ptr<API::WindowAggregation> as(Schema::Identifier asField) const;
     std::shared_ptr<Windowing::WindowAggregationDescriptor> aggregation;
 };
 
@@ -55,6 +55,6 @@ Windowing::TimeUnit Seconds();
 Windowing::TimeUnit Minutes();
 Windowing::TimeUnit Hours();
 Windowing::TimeUnit Days();
-[[maybe_unused]] std::shared_ptr<NodeFunction> RecordCreationTs();
+[[maybe_unused]] ExpressionValue RecordCreationTs();
 
 }

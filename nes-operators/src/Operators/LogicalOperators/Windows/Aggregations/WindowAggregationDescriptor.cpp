@@ -14,8 +14,6 @@
 
 #include <memory>
 #include <sstream>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -24,30 +22,19 @@
 namespace NES::Windowing
 {
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField)
-    : onField(onField), asField(onField), aggregationType(Type::None)
+WindowAggregationDescriptor::WindowAggregationDescriptor(ExpressionValue onField, Schema::Identifier asField)
+    : onField(std::move(onField)), asField(std::move(asField)), aggregationType(Type::None)
 {
 }
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(
-    const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField)
-    : onField(onField), asField(asField), aggregationType(Type::None)
+std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptor::as(Schema::Identifier asField)
 {
-}
-
-std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptor::as(const std::shared_ptr<NodeFunction>& asField)
-{
-    const auto& field = NES::Util::as<NodeFunctionFieldAccess>(asField);
-    this->asField = field;
+    this->asField = std::move(asField);
     return this->copy();
 }
 
-std::shared_ptr<NodeFunction> WindowAggregationDescriptor::as() const
+Schema::Identifier WindowAggregationDescriptor::as() const
 {
-    if (asField == nullptr)
-    {
-        return onField;
-    }
     return asField;
 }
 
@@ -56,8 +43,8 @@ std::string WindowAggregationDescriptor::toString() const
     std::stringstream ss;
     ss << "WindowAggregation: ";
     ss << " Type=" << getTypeAsString();
-    ss << " onField=" << *onField;
-    ss << " asField=" << *asField;
+    ss << " onField=" << fmt::format("{}", onField);
+    ss << " asField=" << fmt::format("{}", asField);
     ss << std::endl;
     return ss.str();
 }
@@ -72,15 +59,15 @@ std::string WindowAggregationDescriptor::getTypeAsString() const
     return std::string(magic_enum::enum_name(aggregationType));
 }
 
-std::shared_ptr<NodeFunction> WindowAggregationDescriptor::on() const
+ExpressionValue WindowAggregationDescriptor::on() const
 {
     return onField;
 }
 
 bool WindowAggregationDescriptor::equal(const std::shared_ptr<WindowAggregationDescriptor>& otherWindowAggregationDescriptor) const
 {
-    return this->getType() == otherWindowAggregationDescriptor->getType() && this->onField->equal(otherWindowAggregationDescriptor->onField)
-        && this->asField->equal(otherWindowAggregationDescriptor->asField);
+    return this->getType() == otherWindowAggregationDescriptor->getType() && this->onField == otherWindowAggregationDescriptor->onField
+        && this->asField == otherWindowAggregationDescriptor->asField;
 }
 
 }

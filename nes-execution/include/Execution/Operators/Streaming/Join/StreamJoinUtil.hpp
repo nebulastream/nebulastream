@@ -25,19 +25,19 @@ namespace NES::Runtime::Execution
 struct JoinSchema
 {
     JoinSchema(
-        const std::shared_ptr<Schema>& leftSchema, const std::shared_ptr<Schema>& rightSchema, const std::shared_ptr<Schema>& joinSchema)
+        const Schema& leftSchema, const Schema& rightSchema, const Schema& joinSchema)
         : leftSchema(leftSchema), rightSchema(rightSchema), joinSchema(joinSchema)
     {
     }
 
-    std::shared_ptr<Schema> leftSchema;
-    std::shared_ptr<Schema> rightSchema;
-    std::shared_ptr<Schema> joinSchema;
+    Schema leftSchema;
+    Schema rightSchema;
+    Schema joinSchema;
 };
 
 namespace Util
 {
 /// Creates the join schema from the left and right schema
-std::shared_ptr<Schema> createJoinSchema(const std::shared_ptr<Schema>& leftSchema, const std::shared_ptr<Schema>& rightSchema);
+Schema createJoinSchema(const Schema& leftSchema, const Schema& rightSchema);
 }
 }

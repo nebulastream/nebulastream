@@ -104,7 +104,7 @@ bool TupleBufferMemoryProvider::includesField(
 TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 
 std::shared_ptr<TupleBufferMemoryProvider>
-TupleBufferMemoryProvider::create(const uint64_t bufferSize, const std::shared_ptr<Schema>& schema)
+TupleBufferMemoryProvider::create(const uint64_t bufferSize, const Schema& schema)
 {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {

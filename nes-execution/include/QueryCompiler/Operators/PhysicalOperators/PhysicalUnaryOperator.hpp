@@ -28,7 +28,7 @@ class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator
 {
     /// only other Physical-/UnaryOperators should construct a PhysicalUnaryOperator.
 protected:
-    PhysicalUnaryOperator(OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema);
+    PhysicalUnaryOperator(OperatorId id, Schema inputSchema, Schema outputSchema);
 
     std::string toString() const override;
 

@@ -14,12 +14,15 @@ add_subdirectory(SinksParsing)
 
 add_source_files(nes-sinks
         SinkDescriptor.cpp
+)
+
+add_source_files(nes-sinks-runtime
         Sink.cpp
         SinkProvider.cpp
 )
 
 # Register plugins
-add_plugin(File Sink nes-sinks FileSink.cpp)
-add_plugin(File SinkValidation nes-sinks FileSink.cpp)
-add_plugin(Print Sink nes-sinks PrintSink.cpp)
-add_plugin(Print SinkValidation nes-sinks PrintSink.cpp)
+add_plugin(File Sink nes-sinks-runtime FileSink.cpp)
+add_plugin(File SinkValidation nes-sinks FileSinkDescriptor.cpp)
+add_plugin(Print Sink nes-sinks-runtime PrintSink.cpp)
+add_plugin(Print SinkValidation nes-sinks PrintSinkDescriptor.cpp)

@@ -18,7 +18,6 @@
 #include <fstream>
 #include <memory>
 #include <thread>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -47,7 +46,7 @@ namespace NES::IntegrationTestUtil
 
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId,
     const std::string& timestampFieldName,
@@ -65,7 +64,7 @@ namespace NES::IntegrationTestUtil
         std::getline(file, line);
     }
 
-    auto getPhysicalTypes = [](const std::shared_ptr<Schema>& schema)
+    auto getPhysicalTypes = [](const Schema& schema)
     {
         std::vector<std::shared_ptr<PhysicalType>> retVector;
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
@@ -134,7 +133,7 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)
 {
@@ -230,7 +229,7 @@ void writeFieldValueToTupleBuffer(
     }
 }
 
-std::shared_ptr<Schema> loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
+Schema loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
 {
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);
