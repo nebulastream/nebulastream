@@ -15,15 +15,16 @@
 #include <memory>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationFunction.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
-
+#include <SerializableAggregationFunction.pb.h>
+#include <Functions/FunctionSerializationUtil.hpp>
 
 namespace NES::Windowing
 {

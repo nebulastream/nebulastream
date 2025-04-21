@@ -15,7 +15,7 @@
 #pragma once
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 

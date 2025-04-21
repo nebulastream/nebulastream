@@ -17,6 +17,11 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 
+namespace NES
+{
+class SerializableAggregationFunction;
+}
+
 namespace NES::Windowing
 {
 
