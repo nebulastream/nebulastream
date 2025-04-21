@@ -46,7 +46,7 @@ namespace YAML
 {
 using namespace NES::CLI;
 
-std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
+std::unique_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
 {
     try
     {
@@ -196,13 +196,13 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
 
 
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
-    for (const auto& [logicalSourceName, schemaFields] : config.logical)
+    for (auto& [logicalSourceName, schemaFields] : config.logical)
     {
         auto schema = Schema();
         NES_INFO("Adding logical source: {}", logicalSourceName);
-        for (const auto& [name, type] : schemaFields)
+        for (auto& [name, type] : schemaFields)
         {
-            schema = schema.addField(name, type);
+            schema = schema.addField(name, type->clone());
         }
         sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }
@@ -226,11 +226,11 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase::create();
 
-    validateAndSetSinkDescriptors(*query, config);
-    query = logicalSourceExpansionRule->apply(*query);
-    query = typeInference->performTypeInferenceQuery(*query);
-    query = originIdInferencePhase->execute(*query);
-    query = typeInference->performTypeInferenceQuery(*query);
+    validateAndSetSinkDescriptors(query, config);
+    query = logicalSourceExpansionRule->apply(query);
+    query = typeInference->performTypeInferenceQuery(query);
+    query = originIdInferencePhase->execute(query);
+    query = typeInference->performTypeInferenceQuery(query);
 
     NES_INFO("QEP:\n {}", query.toString());
     auto rawOperators = query.getRootOperators();
@@ -258,7 +258,7 @@ SchemaField::SchemaField(std::string name, const std::string& typeName) : Schema
 {
 }
 
-SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
+SchemaField::SchemaField(std::string name, std::unique_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
 {
 }
 

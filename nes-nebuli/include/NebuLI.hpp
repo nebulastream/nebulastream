@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Plans/QueryPlan.hpp>
 
@@ -29,11 +30,11 @@ namespace NES::CLI
 struct SchemaField
 {
     SchemaField(std::string name, const std::string& typeName);
-    SchemaField(std::string name, std::shared_ptr<NES::DataType> type);
+    SchemaField(std::string name, std::unique_ptr<NES::DataType> type);
     SchemaField() = default;
 
     std::string name;
-    std::shared_ptr<NES::DataType> type;
+    std::unique_ptr<NES::DataType> type;
 };
 
 struct Sink
