@@ -26,7 +26,7 @@ namespace NES::Optimizer
 RewriteRuleResult LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
-    auto source = *logicalOperator.get<SourceDescriptorLogicalOperator>();
+    auto source = logicalOperator.get<SourceDescriptorLogicalOperator>();
 
     auto outputOriginIds = source.getOutputOriginIds();
     PRECONDITION(outputOriginIds.size() == 1, "SourceDescriptorLogicalOperator should have exactly one origin id");

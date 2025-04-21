@@ -133,11 +133,11 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)
 {
-    auto& dataType = schema->getFieldByIndex(schemaFieldIndex).getDataType();
+    auto dataType = schema.getFieldByIndex(schemaFieldIndex).getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 
     INVARIANT(!inputString.empty(), "Input string for parsing is empty");
@@ -426,7 +426,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
 
     EXPECT_TRUE(rootOperator.has_sink()) << "Redirection expects the single root operator to be a sink operator";
     const auto deserializedSinkOperator = OperatorSerializationUtil::deserializeOperator(rootOperator).get<SinkLogicalOperator>();
-    auto descriptor = deserializedSinkOperator->sinkDescriptor;
+    auto descriptor = deserializedSinkOperator.sinkDescriptor;
     if (descriptor->sinkType == Sinks::FileSink::NAME)
     {
         const auto deserializedOutputSchema = SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
@@ -435,7 +435,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
         auto sinkDescriptorUpdated
             = std::make_unique<Sinks::SinkDescriptor>(descriptor->sinkType, std::move(configCopy), descriptor->addTimestamp);
         sinkDescriptorUpdated->schema = deserializedOutputSchema;
-        auto sinkLogicalOperatorUpdated = SinkLogicalOperator(deserializedSinkOperator->getSinkName());
+        auto sinkLogicalOperatorUpdated = SinkLogicalOperator(deserializedSinkOperator.getSinkName());
         sinkLogicalOperatorUpdated.sinkDescriptor = std::move(sinkDescriptorUpdated);
         sinkLogicalOperatorUpdated.setOutputSchema(deserializedOutputSchema);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(sinkLogicalOperatorUpdated);
@@ -456,7 +456,7 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
         if (value.has_source())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            const auto sourceDescriptor = deserializedSourceOperator.get<SourceDescriptorLogicalOperator>()->getSourceDescriptor();
+            const auto sourceDescriptor = deserializedSourceOperator.get<SourceDescriptorLogicalOperator>().getSourceDescriptor();
             if (sourceDescriptor->sourceType == "File")
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
@@ -489,7 +489,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
         if (value.has_source())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            const auto sourceDescriptor = deserializedSourceOperator.get<SourceDescriptorLogicalOperator>()->getSourceDescriptor();
+            const auto sourceDescriptor = deserializedSourceOperator.get<SourceDescriptorLogicalOperator>().getSourceDescriptor();
             if (sourceDescriptor->sourceType == "TCP")
             {
                 if (sourceNumber == queryPlanTCPSourceCounter)
