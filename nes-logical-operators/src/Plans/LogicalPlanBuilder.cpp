@@ -170,8 +170,8 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     auto rightLogicalPlanJoinType = rootOperatorRhs.getOutputSchema();
 
     /// check if query contain watermark assigner, and add if missing (as default behaviour)
-    leftLogicalPlan = checkAndAddWatermarkAssignment(leftLogicalPlan, windowType);
-    rightLogicalPlan = checkAndAddWatermarkAssignment(rightLogicalPlan, windowType);
+    leftLogicalPlan = checkAndAddWatermarkAssigner(leftLogicalPlan, windowType);
+    rightLogicalPlan = checkAndAddWatermarkAssigner(rightLogicalPlan, windowType);
 
     NES_TRACE("LogicalPlanBuilder: add join operator to query plan");
     ///TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
@@ -187,12 +187,11 @@ LogicalPlan LogicalPlanBuilder::addSink(std::string sinkName, LogicalPlan queryP
     return queryPlan;
 }
 
-LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssignment(
+LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(
     LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType> windowType)
 {
-    NES_TRACE("LogicalPlanBuilder: checkAndAddWatermarkAssignment for a (sub)query plan");
-    auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowType);
-
+    NES_TRACE("LogicalPlanBuilder: checkAndAddWatermarkAssigner for a (sub)query plan");
+LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType> windowType)
     if (queryPlan.getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>().empty() and
         queryPlan.getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>().empty())
     {

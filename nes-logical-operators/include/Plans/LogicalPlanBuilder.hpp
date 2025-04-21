@@ -88,7 +88,7 @@ public:
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
     static LogicalPlan
-    checkAndAddWatermarkAssignment(LogicalPlan queryPlan, std::shared_ptr<Windowing::WindowType> windowType);
+    checkAndAddWatermarkAssigner(LogicalPlan queryPlan, std::shared_ptr<Windowing::WindowType> windowType);
 
 private:
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources
