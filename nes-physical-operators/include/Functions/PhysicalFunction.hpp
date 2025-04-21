@@ -35,16 +35,16 @@ public:
         : self(other.self->clone()) {}
 
     template<typename T>
-    const T& get() const {
+    [[nodiscard]] const T& get() const {
         if (auto p = dynamic_cast<const Model<T>*>(self.get()))
         {
             return p->data;
         }
-        INVARIANT(false, "Bad cast: requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
 
     template<typename T>
-    const T* tryGet() const {
+    [[nodiscard]] const T* tryGet() const {
         if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
             return &(p->data);
         }
