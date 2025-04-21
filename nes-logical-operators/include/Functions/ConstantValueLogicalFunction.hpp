@@ -17,8 +17,8 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <Abstract/LogicalFunction.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 

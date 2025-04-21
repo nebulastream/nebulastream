@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/ContentBasedWindowType.hpp>
 

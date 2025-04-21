@@ -13,7 +13,7 @@
 */
 
 #pragma once
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {

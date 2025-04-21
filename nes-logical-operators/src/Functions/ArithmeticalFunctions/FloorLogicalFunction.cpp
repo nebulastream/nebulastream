@@ -36,7 +36,7 @@ LogicalFunction FloorLogicalFunction::withStamp(std::shared_ptr<DataType> stamp)
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction FloorLogicalFunction::withInferredStamp(Schema schema) const

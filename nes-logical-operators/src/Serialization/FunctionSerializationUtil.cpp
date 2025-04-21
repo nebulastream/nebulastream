@@ -14,8 +14,8 @@
 
 #include <memory>
 #include <utility>
-#include <Abstract/LogicalFunction.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>

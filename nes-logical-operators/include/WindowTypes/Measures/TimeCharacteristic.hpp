@@ -16,7 +16,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/TimeUnit.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES::Windowing
 {
