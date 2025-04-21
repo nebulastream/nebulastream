@@ -13,8 +13,11 @@
 */
 
 #pragma once
+
 #include <memory>
+#include <Functions/PhysicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -22,22 +25,12 @@ class FunctionProvider
 {
 public:
     /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
-<<<<<<<< HEAD:nes-physical-operators/include/Functions/FunctionProvider.hpp
-<<<<<<<< HEAD:nes-execution/include/QueryCompiler/Phases/Translations/FunctionProvider.hpp
     /// NodeFunction a NodeFunctionConstantValue, FieldAccessLogicalFunction or FieldAssignment
-========
-    /// NodeFunction a NodeFunctionConstantValue, NodeFunctionFieldAccess or FieldAssignment
->>>>>>>> 90577b636a (refactor(PhysicalOperators): rename ExecutableFunction to PhysicalFunction):nes-physical-operators/include/Functions/FunctionProvider.hpp
-    static std::unique_ptr<Functions::PhysicalFunction> lowerFunction(const std::shared_ptr<LogicalFunction>& nodeFunction);
-========
-    ///NodeFunction a NodeFunctionConstantValue, NodeFunctionFieldAccess or FieldAssignment
-    static std::unique_ptr<Functions::Function> lowerFunction(const std::shared_ptr<LogicalFunction>& nodeFunction);
->>>>>>>> 986c942e4d (refactor(QueryCompiler): move into):nes-query-compiler/include/FunctionProvider.hpp
+    static Functions::PhysicalFunction lowerFunction(LogicalFunction nodeFunction);
 
 private:
-    static std::unique_ptr<Functions::Function>
-    lowerConstantFunction(const std::shared_ptr<ConstantValueLogicalFunction>& nodeFunction);
+    static Functions::PhysicalFunction lowerConstantFunction(const ConstantValueLogicalFunction& nodeFunction);
 };
 
 }
-}
+

@@ -15,31 +15,19 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <Traits/Trait.hpp>
 #include <Identifiers/Identifiers.hpp>
 
 namespace NES::Optimizer
 {
 
-struct OriginIdTrait : public AbstractTrait
+struct OriginIdTrait final : public TraitConcept
 {
-    std::vector<OriginId> originIds{};
+    std::vector<OriginId> originIds;
 
-    std::string toString() const
-    {
-        std::ostringstream oss;
-        oss << "[";
-        for (size_t i = 0; i < originIds.size(); ++i)
-        {
-            if (i != 0)
-            {
-                oss << ", ";
-            }
-            oss << originIds[i];
-        }
-        oss << "]";
-        return oss.str();
-    }
+    bool operator==(const TraitConcept& other) const override;
+    [[nodiscard]] std::string toString() const;
 };
 
 }

@@ -14,14 +14,118 @@
 
 #pragma once
 
+#include <algorithm>
 #include <memory>
-#include <string>
-#include <vector>
+#include <set>
+#include <Identifiers/Identifiers.hpp>
+
+namespace NES
+{
+struct Operator;
+}
 
 namespace NES::Optimizer
 {
 
-struct AbstractTrait { };
-using TraitSet = std::vector<std::unique_ptr<AbstractTrait>>;
+struct TraitConcept
+{
+    virtual ~TraitConcept() = default;
+    virtual bool operator==(const TraitConcept& other) const = 0;
+};
+
+struct Trait {
+public:
+    template<typename T>
+    Trait(const T& op) : self(std::make_unique<Model<T>>(op)) {}
+
+    Trait(const Trait& other)
+        : self(other.self->clone()) {}
+
+    Trait(Trait&&) noexcept = default;
+
+    Trait& operator=(const Trait& other) {
+        if (this != &other)
+        {
+            self = other.self->clone();
+        }
+        return *this;
+    }
+
+    [[nodiscard]] std::string toString() const
+    {
+        return self->toString();
+    }
+
+    [[nodiscard]] std::vector<Operator> getChildren() const {
+        return self->getChildren();
+    }
+
+    void setChildren(std::vector<Operator> children) {
+        return self->setChildren(children);
+    }
+
+    OperatorId getId() const {
+        return self->id;
+    }
+
+private:
+    struct Concept : OperatorConcept {
+        [[nodiscard]] virtual std::unique_ptr<Concept> clone() const = 0;
+        [[nodiscard]] virtual bool equals(const Concept& other) const = 0;
+    };
+
+    template<typename T>
+    struct Model : Concept {
+        T data;
+        explicit Model(T d) : data(std::move(d)) {}
+
+        [[nodiscard]] std::unique_ptr<Concept> clone() const override {
+            return std::unique_ptr<Concept>(new Model<T>(data));
+        }
+
+        [[nodiscard]] std::string toString() const override
+        {
+            return data.toString();
+        }
+
+        [[nodiscard]] std::vector<Operator> getChildren() const override
+        {
+            return data.getChildren();
+        }
+
+        void setChildren(std::vector<Operator> children)
+        {
+            data.setChildren(children);
+        }
+
+        [[nodiscard]] bool equals(const Concept& other) const override {
+            if (auto p = dynamic_cast<const Model<T>*>(&other)) {
+                return data == p->data;
+            }
+            return false;
+        }
+    };
+
+    std::unique_ptr<Concept> self;
+};
+
+
+
+using TraitSet = std::set<std::unique_ptr<Trait>>;
+
+template <typename T>
+bool hasTrait(const TraitSet& traitSet)
+{
+    return std::any_of(traitSet.begin(), traitSet.end(),
+                       [](const auto& trait) {
+                           return dynamic_cast<T*>(trait.get()) != nullptr;
+                       });
+}
+
+template <typename... TraitTypes>
+bool hasTraits(const TraitSet& traitSet)
+{
+    return (hasTrait<TraitTypes>(traitSet) && ...);
+}
 
 }

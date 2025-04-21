@@ -40,7 +40,7 @@ public:
     /// @param queryPlan the queryPlan to add the projection node
     /// @return the updated queryPlan
     static QueryPlan
-    addProjection(std::vector<std::unique_ptr<LogicalFunction>> functions, QueryPlan queryPlan);
+    addProjection(std::vector<LogicalFunction> functions, QueryPlan queryPlan);
 
     /// @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate. An
     /// exemplary usage would be: selection(Attribute("f1" < 10))
@@ -48,7 +48,7 @@ public:
     /// @param std::shared_ptr<QueryPlan> the queryPlan the selection node is added to
     /// @return the updated queryPlan
     static QueryPlan
-    addSelection(std::unique_ptr<LogicalFunction> selectionFunction, QueryPlan queryPlan);
+    addSelection(LogicalFunction selectionFunction, QueryPlan queryPlan);
 
     /// @brief: Map records according to a map function. An
     /// exemplary usage would be: map(Attribute("f2") = Attribute("f1") * 42 )
@@ -56,7 +56,7 @@ public:
     /// @param queryPlan the queryPlan the map is added to
     /// @return the updated std::shared_ptr<QueryPlan>
     static QueryPlan
-    addMap(std::unique_ptr<FieldAssignmentLogicalFunction> mapFunction, QueryPlan queryPlan);
+    addMap(LogicalFunction mapFunction, QueryPlan queryPlan);
 
     static QueryPlan addWindowAggregation(
         QueryPlan queryPlan,
@@ -79,7 +79,7 @@ public:
     static QueryPlan addJoin(
         QueryPlan leftQueryPlan,
         QueryPlan rightQueryPlan,
-        std::unique_ptr<LogicalFunction> joinFunction,
+        LogicalFunction joinFunction,
         std::unique_ptr<Windowing::WindowType> windowType,
         JoinLogicalOperator::JoinType joinType);
 
@@ -101,7 +101,7 @@ private:
     /// @param side points out from which side, i.e., left or right query plan, the LogicalFunction is
     // @return LogicalFunction as FieldAccessLogicalFunction
     static std::unique_ptr<FieldAccessLogicalFunction>
-    asFieldAccessLogicalFunction(std::unique_ptr<LogicalFunction> function, std::string side);
+    asFieldAccessLogicalFunction(LogicalFunction function, std::string side);
 
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources
     /// @param operatorNode the binary operator to add
@@ -109,6 +109,6 @@ private:
     /// @param: rightQueryPlan the right query plan of the binary operation
     /// @return the updated queryPlan
     static QueryPlan addBinaryOperatorAndUpdateSource(
-        std::unique_ptr<Operator> operatorNode, QueryPlan leftQueryPlan, QueryPlan rightQueryPlan);
+        Operator operatorNode, QueryPlan leftQueryPlan, QueryPlan rightQueryPlan);
 };
 }
