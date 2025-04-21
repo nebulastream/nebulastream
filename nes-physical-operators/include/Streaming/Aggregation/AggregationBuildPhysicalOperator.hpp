@@ -26,18 +26,18 @@
 namespace NES
 {
 
-class AggregationBuild final : public WindowAggregationOperator, public WindowOperatorBuild
+class AggregationBuildPhysicalOperator final : public WindowAggregationPhysicalOperator, public WindowBuildPhysicalOperator
 {
 public:
-    AggregationBuild(
+    AggregationBuildPhysicalOperator(
         uint64_t operatorHandlerIndex,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::vector<std::unique_ptr<Functions::Function>> keyFunctions,
-        WindowAggregationOperator windowAggregationOperator);
+        std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions,
+        std::shared_ptr<WindowAggregationPhysicalOperator> windowAggregationOperator);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    const std::vector<std::unique_ptr<Functions::Function>> keyFunctions;
+    const std::vector<std::unique_ptr<Functions::PhysicalFunction>> keyFunctions;
 };
 
 }

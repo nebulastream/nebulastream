@@ -26,17 +26,17 @@ namespace NES
 {
 /// This class is the first phase of the stream join. The actual implementation is not part of this class
 /// It only takes care of the close() and terminate() functionality as these are universal
-class StreamJoinBuildPhysicalOperator : public WindowOperatorBuild
+class StreamJoinBuildPhysicalOperator : public WindowBuildPhysicalOperator
 {
 public:
     StreamJoinBuildPhysicalOperator(
         uint64_t operatorHandlerIndex,
-        QueryCompilation::JoinBuildSideType joinBuildSide,
+        JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
 
 protected:
-    const QueryCompilation::JoinBuildSideType joinBuildSide;
+    const JoinBuildSideType joinBuildSide;
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 

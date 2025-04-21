@@ -21,11 +21,10 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
 #include <Util/Locks.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>

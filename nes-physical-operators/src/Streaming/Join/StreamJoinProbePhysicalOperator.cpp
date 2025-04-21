@@ -28,16 +28,19 @@
 namespace NES
 {
 
-StreamJoinProbe::StreamJoinProbe(
+StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
     const uint64_t operatorHandlerIndex,
-    const std::shared_ptr<Functions::Function>& joinFunction,
-    WindowMetaData windowMetaData,
+    const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
+    std::string windowStartFieldName,
+    std::string windowEndFieldName,
     JoinSchema joinSchema)
-    : WindowOperatorProbe(operatorHandlerIndex, std::move(windowMetaData)), joinFunction(joinFunction), joinSchema(std::move(joinSchema))
+    : WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName)
+    , joinFunction(joinFunction)
+    , joinSchema(std::move(joinSchema))
 {
 }
 
-Record StreamJoinProbe::createJoinedRecord(
+Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     const Record& leftRecord,
     const Record& rightRecord,
     const nautilus::val<Timestamp>& windowStart,
@@ -48,8 +51,8 @@ Record StreamJoinProbe::createJoinedRecord(
     Record joinedRecord;
 
     /// Writing the window start, end, and key field
-    joinedRecord.write(windowMetaData.windowStartFieldName, windowStart.convertToValue());
-    joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
+    joinedRecord.write(windowStartFieldName, windowStart.convertToValue());
+    joinedRecord.write(windowEndFieldName, windowEnd.convertToValue());
 
     /// Writing the leftSchema fields, expect the join schema to have the fields in the same order then the left schema
     for (const auto& fieldName : nautilus::static_iterable(projectionsLeft))
@@ -66,7 +69,7 @@ Record StreamJoinProbe::createJoinedRecord(
     return joinedRecord;
 }
 
-Record StreamJoinProbe::createJoinedRecord(
+Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     const Record& leftRecord,
     const Record& rightRecord,
     const nautilus::val<Timestamp>& windowStart,

@@ -15,20 +15,20 @@
 #pragma once
 
 /// NOLINT(clang-diagnostic-error)
-#ifndef INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
-#    error "This file should not be included directly! Include instead include ExecutableFunctionRegistry.hpp"
+#ifndef INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION
+#    error "This file should not be included directly! Include instead include <PhysicalFunctionRegistry.hpp>"
 #endif
 
 #include <memory>
 #include <string>
 #include <vector>
-#include <Execution/Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Runtime::Execution::Functions::ExecutableFunctionGeneratedRegistrar
+namespace NES::Functions::PhysicalFunctionGeneratedRegistrar
 {
 
-/// declaration of register functions for 'ExecutableFunctions'
+/// declaration of register functions for 'PhysicalFunctions'
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 
@@ -36,10 +36,10 @@ namespace NES
 {
 template <>
 inline void
-Registrar<Runtime::Execution::Functions::ExecutableFunctionRegistry, std::string, Runtime::Execution::Functions::ExecutableFunctionRegistryReturnType, Runtime::Execution::Functions::ExecutableFunctionRegistryArguments>::registerAll(
+Registrar<Functions::PhysicalFunctionRegistry, std::string, Functions::PhysicalFunctionRegistryReturnType, Functions::PhysicalFunctionRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Runtime::Execution::Functions::ExecutableFunctionGeneratedRegistrar;
+    using namespace NES::Functions::PhysicalFunctionGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

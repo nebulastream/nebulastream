@@ -32,7 +32,7 @@ public:
     CountAggregationFunction(
         std::shared_ptr<PhysicalType> inputType,
         std::shared_ptr<PhysicalType> resultType,
-        std::unique_ptr<Functions::Function> inputFunction,
+        std::unique_ptr<Functions::PhysicalFunction> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
