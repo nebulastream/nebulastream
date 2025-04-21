@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -23,16 +24,15 @@
 #include <Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <ErrorHandling.hpp>
 
-
 namespace NES
 {
 
 /// Stores members that are needed for both phases of the aggregation, build and probe
-class WindowAggregationOperator
+class WindowAggregation : Operator
 {
 public:
-    WindowAggregationOperator(
-        std::vector<std::unique_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+    WindowAggregation(
+        std::vector<std::unique_ptr<AggregationFunction>> aggregationFunctions,
         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues,
@@ -52,19 +52,21 @@ public:
             "The number of aggregation functions must match the number of field values");
     }
 
-    WindowAggregationOperator(WindowAggregationOperator&& other) noexcept
-        : aggregationFunctions(std::move(other.aggregationFunctions))
-        , hashFunction(std::move(other.hashFunction))
-        , fieldKeys(std::move(other.fieldKeys))
-        , fieldValues(std::move(other.fieldValues))
-        , entriesPerPage(other.entriesPerPage)
-        , entrySize(other.entrySize)
+    WindowAggregation(std::shared_ptr<WindowAggregation>& other) noexcept
+        : aggregationFunctions(std::move(other->aggregationFunctions))
+        , hashFunction(std::move(other->hashFunction))
+        , fieldKeys(std::move(other->fieldKeys))
+        , fieldValues(std::move(other->fieldValues))
+        , entriesPerPage(other->entriesPerPage)
+        , entrySize(other->entrySize)
     {
     }
 
+    std::string toString() const override { return typeid(this).name(); }
+
 protected:
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
-    std::vector<std::unique_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
+    std::vector<std::unique_ptr<AggregationFunction>> aggregationFunctions;
     std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys;
     std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues;

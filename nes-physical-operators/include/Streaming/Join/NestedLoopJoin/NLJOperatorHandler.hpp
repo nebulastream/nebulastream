@@ -69,5 +69,5 @@ private:
 
 /// Proxy function that returns the pointer to the correct PagedVector
 Nautilus::Interface::PagedVector*
-getNLJPagedVectorProxy(const NLJSlice* nljSlice, WorkerThreadId workerThreadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+getNLJPagedVectorProxy(const NLJSlice* nljSlice, WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide);
 }
