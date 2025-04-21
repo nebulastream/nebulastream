@@ -14,7 +14,7 @@
 #pragma once
 
 #include <vector>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SinkPhysicalOperator.hpp>

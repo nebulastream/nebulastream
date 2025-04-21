@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <vector>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 
 namespace NES::Optimizer

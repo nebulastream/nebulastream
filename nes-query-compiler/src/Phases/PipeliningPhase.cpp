@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include <EmitPhysicalOperator.hpp>
-#include <ScanPhysicalOperator.hpp>
 #include <EmitOperatorHandler.hpp>
+#include <EmitPhysicalOperator.hpp>
 #include <memory>
 #include <utility>
 #include <variant>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <Phases/PipeliningPhase.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -26,6 +25,7 @@
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
+#include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 
