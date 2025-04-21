@@ -31,28 +31,31 @@ namespace NES
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field)
 {
-    aggregationType = Type::Min;
 }
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field, asField)
 {
-    aggregationType = Type::Min;
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction>
+std::shared_ptr<WindowAggregationLogicalFunction>
 MinAggregationLogicalFunction::create(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
 {
-    return std::make_unique<MinAggregationLogicalFunction>(std::move(onField), std::move(asField));
+    return std::make_shared<MinAggregationLogicalFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
 {
-    return std::make_unique<MinAggregationLogicalFunction>(onField);
+    return std::make_shared<MinAggregationLogicalFunction>(onField);
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::clone()
+std::shared_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::clone()
 {
-    return std::make_unique<MinAggregationLogicalFunction>(onField, asField);
+    return std::make_shared<MinAggregationLogicalFunction>(onField, asField);
+}
+
+std::string_view MinAggregationLogicalFunction::getName() const noexcept
+{
+    return NAME;
 }
 
 void MinAggregationLogicalFunction::inferStamp(const Schema& schema)

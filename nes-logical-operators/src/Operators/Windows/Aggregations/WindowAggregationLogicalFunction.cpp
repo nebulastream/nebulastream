@@ -35,10 +35,10 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
 {
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(const FieldAccessLogicalFunction& asField)
+std::shared_ptr<WindowAggregationLogicalFunction> WindowAggregationLogicalFunction::as(const FieldAccessLogicalFunction& asField)
 {
     this->asField = asField;
-    return std::unique_ptr<WindowAggregationLogicalFunction>(this);
+    return std::shared_ptr<WindowAggregationLogicalFunction>(this);
 }
 
 FieldAccessLogicalFunction WindowAggregationLogicalFunction::as() const
@@ -50,21 +50,10 @@ std::string WindowAggregationLogicalFunction::toString() const
 {
     std::stringstream ss;
     ss << "WindowAggregation: ";
-    ss << " Type=" << getTypeAsString();
     ss << " onField=" << onField;
     ss << " asField=" << asField;
     ss << std::endl;
     return ss.str();
-}
-
-WindowAggregationLogicalFunction::Type WindowAggregationLogicalFunction::getType() const
-{
-    return aggregationType;
-}
-
-std::string WindowAggregationLogicalFunction::getTypeAsString() const
-{
-    return std::string(magic_enum::enum_name(aggregationType));
 }
 
 FieldAccessLogicalFunction WindowAggregationLogicalFunction::on() const
@@ -89,7 +78,7 @@ std::shared_ptr<DataType> WindowAggregationLogicalFunction::getFinalAggregateSta
 
 bool WindowAggregationLogicalFunction::operator==(std::shared_ptr<WindowAggregationLogicalFunction> otherWindowAggregationLogicalFunction) const
 {
-    return this->getType() == otherWindowAggregationLogicalFunction->getType()
+    return this->getName() == otherWindowAggregationLogicalFunction->getName()
         && this->onField == otherWindowAggregationLogicalFunction->onField
         && this->asField == otherWindowAggregationLogicalFunction->asField;
 }

@@ -32,23 +32,26 @@ namespace NES
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), std::move(field))
 {
-    this->aggregationType = Type::Sum;
 }
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), std::move(field), std::move(asField))
 {
-    this->aggregationType = Type::Sum;
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction>
+std::string_view SumAggregationLogicalFunction::getName() const noexcept
+{
+    return NAME;
+}
+
+std::shared_ptr<WindowAggregationLogicalFunction>
 SumAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
-    return std::make_unique<SumAggregationLogicalFunction>(onField, asField);
+    return std::make_shared<SumAggregationLogicalFunction>(onField, asField);
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::create(LogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::create(LogicalFunction onField)
 {
-    return std::make_unique<SumAggregationLogicalFunction>(onField.get<FieldAccessLogicalFunction>());
+    return std::make_shared<SumAggregationLogicalFunction>(onField.get<FieldAccessLogicalFunction>());
 }
 
 void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
@@ -78,9 +81,9 @@ void SumAggregationLogicalFunction::inferStamp(const Schema& schema)
     this->asField = newAsField.get<FieldAccessLogicalFunction>();
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::clone()
+std::shared_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::clone()
 {
-    return std::make_unique<SumAggregationLogicalFunction>(onField, asField);
+    return std::make_shared<SumAggregationLogicalFunction>(onField, asField);
 }
 
 NES::SerializableAggregationFunction SumAggregationLogicalFunction::serialize() const

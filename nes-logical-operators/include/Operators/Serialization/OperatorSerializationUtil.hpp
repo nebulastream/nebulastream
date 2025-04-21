@@ -46,7 +46,7 @@ public:
     deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
     static std::unique_ptr<Sinks::SinkDescriptor>
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
-    static std::unique_ptr<WindowAggregationLogicalFunction>
+    static std::shared_ptr<WindowAggregationLogicalFunction>
     deserializeWindowAggregationFunction(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableWindowAggregationFunction);
 };
 }
