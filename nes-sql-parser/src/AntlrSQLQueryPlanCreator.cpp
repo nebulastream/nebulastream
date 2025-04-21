@@ -98,8 +98,7 @@ Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
     }
 }
 
-std::unique_ptr<LogicalFunction> createFunctionFromOpBoolean(
-    std::unique_ptr<LogicalFunction> leftFunction, std::unique_ptr<LogicalFunction> rightFunction, const uint64_t tokenType)
+LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction, LogicalFunction rightFunction, const uint64_t tokenType)
 {
     switch (tokenType) /// TODO #619: improve this switch case
     {
@@ -123,8 +122,7 @@ std::unique_ptr<LogicalFunction> createFunctionFromOpBoolean(
     }
 }
 
-std::unique_ptr<LogicalFunction> createLogicalBinaryFunction(
-    std::unique_ptr<LogicalFunction> leftFunction, std::unique_ptr<LogicalFunction> rightFunction, const uint64_t tokenType)
+LogicalFunction createLogicalBinaryFunction(LogicalFunction leftFunction, LogicalFunction rightFunction, const uint64_t tokenType)
 {
     switch (tokenType) /// TODO #619: improve this switch case
     {
@@ -257,7 +255,7 @@ void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::Compariso
 void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context)
 {
     auto helper = helpers.top();
-    std::unique_ptr<LogicalFunction> function;
+    LogicalFunction function;
 
     auto& rightFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
@@ -291,7 +289,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
 void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    std::unique_ptr<LogicalFunction> function;
+    LogicalFunction function;
 
     auto& innerFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();

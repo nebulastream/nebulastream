@@ -33,43 +33,42 @@ namespace NES::QueryCompilation
 {
 using namespace Functions;
 
-std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(const std::shared_ptr<LogicalFunction>& logicalFunction)
+std::unique_ptr<PhysicalFunction> FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
 {
     /// 1. Recursively lower the children of the function node.
     std::vector<std::unique_ptr<PhysicalFunction>> childFunction;
-    for (const auto& child : logicalFunction->getChildren())
+    for (auto& child : logicalFunction.getChildren())
     {
-        childFunction.emplace_back(lowerFunction(NES::Util::as<LogicalFunction>(child)));
+        childFunction.emplace_back(lowerFunction(child));
     }
 
     /// 2. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessNode = NES::Util::as_if<FieldAccessLogicalFunction>(logicalFunction); fieldAccessNode != nullptr)
+    if (const auto fieldAccessNode = logicalFunction.tryGet<FieldAccessLogicalFunction>(); fieldAccessNode != nullptr)
     {
         return std::make_unique<FieldAccessPhysicalFunction>(fieldAccessNode->getFieldName());
     }
-    if (const auto constantValueNode = NES::Util::as_if<ConstantValueLogicalFunction>(logicalFunction); constantValueNode != nullptr)
+    if (auto constantValueNode = logicalFunction.tryGet<ConstantValueLogicalFunction>(); constantValueNode != nullptr)
     {
         return lowerConstantFunction(constantValueNode);
     }
 
     /// 3. Calling the registry to create an executable function.
     auto executableFunctionArguments = PhysicalFunctionRegistryArguments(std::move(childFunction));
-    auto function = PhysicalFunctionRegistry::instance().create(logicalFunction->getType(), std::move(executableFunctionArguments));
+    auto function = PhysicalFunctionRegistry::instance().create(logicalFunction.getType(), std::move(executableFunctionArguments));
     if (not function.has_value())
     {
-        throw UnknownFunctionType(fmt::format("Can not lower function: {}", *logicalFunction));
+        throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
     }
 
     return std::move(function.value());
 }
 
-std::unique_ptr<PhysicalFunction>
-FunctionProvider::lowerConstantFunction(const std::shared_ptr<ConstantValueLogicalFunction>& constantFunction)
+std::unique_ptr<PhysicalFunction> FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)
 {
-    const auto stringValue = constantFunction->getConstantValue();
-    const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());
-    if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
+    const auto stringValue = constantFunction.getConstantValue();
+    const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction.getStamp());
+    if (const auto basicType = dynamic_cast<BasicPhysicalType*>(physicalType.get()))
     {
         switch (basicType->nativeType)
         {
@@ -124,7 +123,7 @@ FunctionProvider::lowerConstantFunction(const std::shared_ptr<ConstantValueLogic
             }
         }
     }
-    else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType))
+    else if (dynamic_cast<VariableSizedDataPhysicalType*>(physicalType.get()))
     {
         return std::make_unique<ConstantValueVariableSizePhysicalFunction>(
             reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
