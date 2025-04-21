@@ -83,7 +83,7 @@ protected:
     uint64_t recordSize;
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
-    std::vector<std::unique_ptr<PhysicalType>> physicalTypes;
+    std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
     std::vector<std::string> keyFieldNames;
 };
