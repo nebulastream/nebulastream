@@ -223,7 +223,7 @@ std::unique_ptr<QueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& conf
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
 
     NES_INFO("QEP:\n {}", query->toString());
-    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
+    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->outputSchema->toString());
     return std::make_unique<QueryPlan>(INITIAL<QueryId>, query->getRootOperators());
 }
 
