@@ -37,7 +37,6 @@ struct Pipeline {
 
     void appendOperator(PhysicalOperator newOp);
     void prependOperator(PhysicalOperator newOp);
-    std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> releaseOperatorHandlers();
 
     std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const Pipeline& p);
@@ -52,8 +51,7 @@ struct Pipeline {
     const PipelineId pipelineId;
 
     std::vector<std::shared_ptr<Pipeline>> successorPipelines;
-    std::vector<std::weak_ptr<Pipeline>> predecessorPipelines;
-    std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> operatorHandlers;
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
 };
 
 }

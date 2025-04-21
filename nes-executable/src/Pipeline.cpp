@@ -38,12 +38,6 @@ PipelineId getNextPipelineId() {
 }
 }
 
-
-std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> Pipeline::releaseOperatorHandlers()
-{
-    return std::move(operatorHandlers);
-}
-
 Pipeline::Pipeline(PhysicalOperator op) : rootOperator(std::move(op)), pipelineId(getNextPipelineId())
 {
 }
