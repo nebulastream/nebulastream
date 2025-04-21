@@ -20,7 +20,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Windows/WindowOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 
