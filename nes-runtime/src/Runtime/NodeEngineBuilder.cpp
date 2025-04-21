@@ -12,19 +12,18 @@
     limitations under the License.
 */
 
+#include <Runtime/NodeEngineBuilder.hpp>
 #include <chrono>
 #include <memory>
 #include <utility>
 #include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
+#include <Listeners/SystemEventListener.hpp>
 #include <QueryEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
-
-#include <Listeners/SystemEventListener.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 
 namespace NES
 {
