@@ -120,7 +120,6 @@ public:
 
 /// Id is preserved during copy
 struct LogicalOperator {
-public:
     template<typename T>
     LogicalOperator(const T& op) : self(std::make_unique<Model<T>>(op, op.id)) {}
 
@@ -129,7 +128,7 @@ public:
     LogicalOperator(const LogicalOperator& other) : self(other.self->clone()) {}
 
     template<typename T>
-    const T* tryGet() const {
+    [[nodiscard]] const T* tryGet() const {
         if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
             return &(p->data);
         }
@@ -137,11 +136,12 @@ public:
     }
 
     template<typename T>
-    const T* get() const {
-        if (auto p = dynamic_cast<const Model<T>*>(self.get())) {
-            return &(p->data);
+    [[nodiscard]] const T& get() const {
+        if (auto p = dynamic_cast<const Model<T>*>(self.get()))
+        {
+            return p->data;
         }
-        return nullptr;
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
 
     LogicalOperator(LogicalOperator&&) noexcept = default;

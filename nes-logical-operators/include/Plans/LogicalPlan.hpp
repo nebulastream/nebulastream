@@ -121,7 +121,7 @@ public:
                 visitedOpIds.insert(op.getId());
                 if (op.tryGet<T>())
                 {
-                    operators.push_back(*op.get<T>());
+                    operators.push_back(op.get<T>());
                 }
             }
         }
