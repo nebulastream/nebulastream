@@ -20,11 +20,11 @@ namespace NES
 class TimeFunction;
 /// @brief Watermark assignment operator.
 /// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
-class IngestionTimeWatermarkAssignment : public PhysicalOperatorConcept
+class IngestionTimeWatermarkAssigner : public PhysicalOperatorConcept
 {
 public:
-    /// @brief Creates a IngestionTimeWatermarkAssignment operator without function
-    IngestionTimeWatermarkAssignment(std::shared_ptr<TimeFunction> timeFunction);
+    /// @brief Creates a IngestionTimeWatermarkAssigner operator without function
+    IngestionTimeWatermarkAssigner(std::shared_ptr<TimeFunction> timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     std::optional<PhysicalOperator> getChild() const override { return child; }
