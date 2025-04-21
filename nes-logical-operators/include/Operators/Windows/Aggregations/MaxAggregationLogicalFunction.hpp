@@ -18,28 +18,27 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 
 namespace NES
 {
 
-class MinAggregationFunction : public WindowAggregationFunction
+class MaxAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
-    static std::unique_ptr<WindowAggregationFunction>
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
+    static std::unique_ptr<WindowAggregationLogicalFunction>
     create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
-
-    MinAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
-    explicit MinAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
-    virtual ~MinAggregationFunction() = default;
+    MaxAggregationLogicalFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
+    explicit MaxAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
 
     void inferStamp(const Schema& schema) override;
-    std::unique_ptr<WindowAggregationFunction> clone() override;
+    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
+    virtual ~MaxAggregationLogicalFunction() = default;
     NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    static constexpr std::string_view NAME = "Min";
+    static constexpr std::string_view NAME = "Max";
 };
 }

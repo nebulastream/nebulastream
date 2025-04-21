@@ -22,11 +22,18 @@
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/RenameLogicalFunction.hpp>
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/MapLogicalOperator.hpp>
+#include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/UnionLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <Plans/Operator.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -34,13 +41,6 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <ErrorHandling.hpp>
-#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
-#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
-#include <Operators/MapLogicalOperator.hpp>
-#include <Operators/ProjectionLogicalOperator.hpp>
-#include <Operators/SelectionLogicalOperator.hpp>
-#include <Operators/UnionLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 
 namespace NES
 {
@@ -87,7 +87,7 @@ QueryPlanBuilder::addMap(std::unique_ptr<FieldAssignmentLogicalFunction> mapFunc
 QueryPlan QueryPlanBuilder::addWindowAggregation(
     QueryPlan queryPlan,
     std::unique_ptr<Windowing::WindowType> windowType,
-    std::vector<std::unique_ptr<WindowAggregationFunction>> windowAggs,
+    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggs,
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys)
 {
     PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");

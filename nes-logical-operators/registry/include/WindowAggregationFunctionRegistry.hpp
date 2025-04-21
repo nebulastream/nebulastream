@@ -16,7 +16,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::Windowing

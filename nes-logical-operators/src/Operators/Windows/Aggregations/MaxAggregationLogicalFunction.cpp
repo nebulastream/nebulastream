@@ -14,58 +14,52 @@
 
 #include <memory>
 #include <utility>
-#include <Operators/Windows/Aggregations/AvgAggregationFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Numeric.hpp>
-#include <Common/DataTypes/Undefined.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <SerializableFunction.pb.h>
+#include <Abstract/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <SerializableFunction.pb.h>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 
 namespace NES
 {
 
-AvgAggregationFunction::AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
-    : WindowAggregationFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field))
+MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
+    : WindowAggregationLogicalFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(),std::move(field))
 {
-    this->aggregationType = Type::Avg;
+    this->aggregationType = Type::Max;
 }
 
-AvgAggregationFunction::AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field, std::unique_ptr<FieldAccessLogicalFunction> asField)
-    : WindowAggregationFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field), std::move(asField))
+MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
+    : WindowAggregationLogicalFunction(field->getStamp().clone(), field->getStamp().clone(), field->getStamp().clone(), std::move(field), std::move(asField))
 {
-    this->aggregationType = Type::Avg;
+    this->aggregationType = Type::Max;
 }
 
-std::unique_ptr<WindowAggregationFunction>
-AvgAggregationFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
+std::unique_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::create(std::unique_ptr<LogicalFunction> onField)
 {
-    return std::make_unique<AvgAggregationFunction>(std::move(onField), std::move(asField));
+    return std::make_unique<MaxAggregationLogicalFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
 }
 
-std::unique_ptr<WindowAggregationFunction> AvgAggregationFunction::create(std::unique_ptr<LogicalFunction> onField)
+std::unique_ptr<WindowAggregationLogicalFunction>
+MaxAggregationLogicalFunction::create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
 {
-    return std::make_unique<AvgAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(std::move(onField)));
+    return std::make_unique<MaxAggregationLogicalFunction>(std::move(onField), std::move(asField));
 }
 
-std::unique_ptr<WindowAggregationFunction> AvgAggregationFunction::clone()
-{
-    return std::make_unique<AvgAggregationFunction>(Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(this->onField->clone()), Util::unique_ptr_dynamic_cast<FieldAccessLogicalFunction>(this->asField->clone()));
-}
-
-void AvgAggregationFunction::inferStamp(const Schema& schema)
+void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
     if (dynamic_cast<Numeric*>(&onField->getStamp()) == nullptr)
     {
-        NES_FATAL_ERROR("AvgAggregationFunction: aggregations on non numeric fields is not supported.");
+        NES_FATAL_ERROR("MaxAggregationLogicalFunction: aggregations on non numeric fields is not supported.");
     }
+
     ///Set fully qualified name for the as Field
     const auto onFieldName = dynamic_cast<FieldAccessLogicalFunction*>(onField.get())->getFieldName();
     const auto asFieldName = dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->getFieldName();
@@ -84,7 +78,12 @@ void AvgAggregationFunction::inferStamp(const Schema& schema)
     asField->setStamp(getFinalAggregateStamp().clone());
 }
 
-NES::SerializableAggregationFunction AvgAggregationFunction::serialize() const
+std::unique_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::clone()
+{
+    return std::make_unique<MaxAggregationLogicalFunction>(onField->clone(), asField->clone());
+}
+
+NES::SerializableAggregationFunction MaxAggregationLogicalFunction::serialize() const
 {
     NES::SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
@@ -99,5 +98,4 @@ NES::SerializableAggregationFunction AvgAggregationFunction::serialize() const
     serializedAggregationFunction.set_allocated_on_field(onFieldFuc);
     return serializedAggregationFunction;
 }
-
 }

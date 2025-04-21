@@ -19,10 +19,10 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/OriginIdAssignmentOperator.hpp>
-#include "Operators/UnaryLogicalOperator.hpp"
-#include "Operators/Windows/Aggregations/WindowAggregationFunction.hpp"
-#include "Streaming/Join/StreamJoinUtil.hpp"
-#include "WindowTypes/Types/WindowType.hpp"
+#include <Operators/UnaryLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES
 {
@@ -42,8 +42,8 @@ public:
     [[nodiscard]] uint64_t getNumberOfInputEdges() const;
     void setNumberOfInputEdges(uint64_t numberOfInputEdges);
 
-    [[nodiscard]] std::vector<std::shared_ptr<WindowAggregationFunction>> getWindowAggregation() const;
-    void setWindowAggregation(const std::vector<std::shared_ptr<WindowAggregationFunction>>& windowAggregation);
+    [[nodiscard]] std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> getWindowAggregation() const;
+    void setWindowAggregation(const std::vector<std::shared_ptr<WindowAggregationLogicalFunction>>& windowAggregation);
 
     [[nodiscard]]std::shared_ptr<Windowing::WindowType> getWindowType() const;
     void setWindowType(std::shared_ptr<Windowing::WindowType> windowType);
@@ -57,7 +57,7 @@ public:
 
 protected:
     static constexpr std::string_view NAME = "Window";
-    std::vector<std::shared_ptr<WindowAggregationFunction>> windowAggregation;
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<std::shared_ptr<FieldAccessLogicalFunction>> onKey;
     uint64_t numberOfInputEdges = 0;

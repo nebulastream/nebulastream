@@ -18,28 +18,28 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 
 namespace NES
 {
 
-class MedianAggregationFunction : public WindowAggregationFunction
+class MedianAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    MedianAggregationFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
-    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<LogicalFunction> onField);
-    explicit MedianAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
+    MedianAggregationLogicalFunction(std::unique_ptr<LogicalFunction> onField, std::unique_ptr<LogicalFunction> asField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<LogicalFunction> onField);
+    explicit MedianAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> onField);
 
-    /// Creates a new MedianAggregationFunction
+    /// Creates a new MedianAggregationLogicalFunction
     /// @param onField field on which the aggregation should be performed
     /// @param asField function describing how the aggregated field should be called
-    static std::unique_ptr<WindowAggregationFunction> create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
+    static std::unique_ptr<WindowAggregationLogicalFunction> create(std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
 
-    std::unique_ptr<WindowAggregationFunction> clone() override;
-    virtual ~MedianAggregationFunction() = default;
+    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
+    virtual ~MedianAggregationLogicalFunction() = default;
 
     NES::SerializableAggregationFunction serialize() const override;
 
