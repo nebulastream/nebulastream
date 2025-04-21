@@ -103,17 +103,17 @@ struct LogicalOperator
     LogicalOperator(const LogicalOperator& other);
 
     template <typename T>
-    [[nodiscard]] const T* tryGet() const
+    [[nodiscard]] std::optional<T> tryGet() const
     {
         if (auto p = dynamic_cast<const Model<T>*>(self.get()))
         {
-            return &(p->data);
+            return p->data;
         }
-        return nullptr;
+        return std::nullopt;
     }
 
     template <typename T>
-    [[nodiscard]] const T& get() const
+    [[nodiscard]] const T get() const
     {
         if (auto p = dynamic_cast<const Model<T>*>(self.get()))
         {
@@ -166,13 +166,16 @@ private:
 
         Model(T d, OperatorId existingId) : Concept(existingId), data(std::move(d)) { }
 
-        [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::make_unique<Model<T>>(data, this->id); }
+        [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(data, this->id); }
 
         [[nodiscard]] std::string toString() const override { return data.toString(); }
 
         [[nodiscard]] std::vector<LogicalOperator> getChildren() const override { return data.getChildren(); }
 
-        LogicalOperator withChildren(std::vector<LogicalOperator> children) const override { return data.withChildren(children); }
+        [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const override
+        {
+            return data.withChildren(children);
+        }
 
         [[nodiscard]] std::string_view getName() const noexcept override { return data.getName(); }
 
@@ -200,9 +203,13 @@ private:
 
         LogicalOperator withInferredSchema(Schema inputSchema) const override { return data.withInferredSchema(inputSchema); }
 
+        [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override { return data.setOutputOriginIds(ids); }
+
+        [[nodiscard]] LogicalOperator withInferredSchema(Schema inputSchema) const override { return data.withInferredSchema(inputSchema); }
+
         [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override
         {
-            if (auto* p = dynamic_cast<const Concept*>(&rhs))
+            if (const auto* p = dynamic_cast<const Concept*>(&rhs))
             {
                 return equals(*p);
             }
@@ -211,7 +218,7 @@ private:
 
         [[nodiscard]] bool equals(const Concept& other) const override
         {
-            if (auto p = dynamic_cast<const Model<T>*>(&other))
+            if (auto p = dynamic_cast<const Model*>(&other))
             {
                 return data.operator==(p->data);
             }
