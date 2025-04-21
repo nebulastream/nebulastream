@@ -16,28 +16,28 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <Execution/Functions/Function.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::Functions
 {
 
-using ExecutableFunctionRegistryReturnType = std::unique_ptr<Function>;
-struct ExecutableFunctionRegistryArguments
+using PhysicalFunctionRegistryReturnType = Functions::PhysicalFunction;
+struct PhysicalFunctionRegistryArguments
 {
-    std::vector<ExecutableFunctionRegistryReturnType> childFunctions;
+    std::vector<std::unique_ptr<PhysicalFunctionRegistryReturnType>> childFunctions;
 };
 
-class ExecutableFunctionRegistry : public BaseRegistry<
-                                       ExecutableFunctionRegistry,
+class PhysicalFunctionRegistry : public BaseRegistry<
+                                       PhysicalFunctionRegistry,
                                        std::string,
-                                       ExecutableFunctionRegistryReturnType,
-                                       ExecutableFunctionRegistryArguments>
+                                       PhysicalFunctionRegistryReturnType,
+                                       PhysicalFunctionRegistryArguments>
 {
 };
 }
 
 
-#define INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
-#include <ExecutableFunctionGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
+#define INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION
+#include <PhysicalFunctionGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_REGISTRY_PHYSICAL_FUNCTION

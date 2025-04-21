@@ -43,7 +43,7 @@ Interface::HashMap* getHashMapPtrProxy(const EmittedAggregationWindow* emittedAg
     return emittedAggregationWindow->hashMaps[currentHashMapVal];
 }
 
-void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -51,7 +51,7 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
-    Operator::open(executionCtx, recordBuffer);
+    AbstractPhysicalOperator::open(executionCtx, recordBuffer);
 
     /// Getting necessary values from the record buffer
     const auto aggregationWindowRef = static_cast<nautilus::val<EmittedAggregationWindow*>>(recordBuffer.getBuffer());
@@ -89,8 +89,8 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
                 {
                     /// Combining the aggregation states of the current entry with the aggregation states of the final hash map
                     const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnUpdate, fieldKeys, fieldValues);
-                    auto globalState = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefOnInsert.getValueMemArea());
-                    auto entryRefState = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
+                    auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
+                    auto entryRefState = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
                     {
                         aggFunction->combine(globalState, entryRefState, executionCtx.pipelineMemoryProvider);
@@ -104,8 +104,8 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
                     /// If the entry for the provided key has not been seen by this hash map / worker thread, we need
                     /// to create a new one and initialize the aggregation states. After that, we can combine the aggregation states.
                     const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnInsert, fieldKeys, fieldValues);
-                    auto globalState = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefOnInsert.getValueMemArea());
-                    auto entryRefStatePtr = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
+                    auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
+                    auto entryRefStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
                     {
                         /// In contrast to the lambda method above, we have to reset the aggregation state before combining it with the other state
@@ -125,7 +125,7 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
         const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
         const auto recordKey = entryRef.getKey();
         Record outputRecord;
-        auto finalStatePtr = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
+        auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
         for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
         {
             outputRecord.reassignFields(aggFunction->lower(finalStatePtr, executionCtx.pipelineMemoryProvider));
@@ -134,15 +134,15 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
 
         /// Adding the window start and end to the output record and then passing the record to the child
         outputRecord.reassignFields(recordKey);
-        outputRecord.write(windowMetaData.windowStartFieldName, windowStart.convertToValue());
-        outputRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
+        outputRecord.write(windowStartFieldName, windowStart.convertToValue());
+        outputRecord.write(windowEndFieldName, windowEnd.convertToValue());
         child->execute(executionCtx, outputRecord);
     }
 }
 
-AggregationProbe::AggregationProbe(
-    WindowAggregationOperator windowAggregationOperator, const uint64_t operatorHandlerIndex, WindowMetaData windowMetaData)
-    : WindowAggregationOperator(std::move(windowAggregationOperator)), WindowOperatorProbe(operatorHandlerIndex, std::move(windowMetaData))
+AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(
+    std::shared_ptr<WindowAggregationPhysicalOperator> windowAggregationOperator, const uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
+    : WindowAggregationPhysicalOperator(windowAggregationOperator), WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName)
 {
 }
 

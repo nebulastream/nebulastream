@@ -25,14 +25,14 @@ namespace NES
 
 /// Is the general probe operator for window operators. It is responsible for garbage collecting slices and windows.
 /// It is part of the second phase (probe) that processes the build up state of the first phase (build).
-class WindowOperatorProbe : public Operator
+class WindowProbePhysicalOperator : public AbstractPhysicalOperator
 {
 public:
-    explicit WindowOperatorProbe(uint64_t operatorHandlerIndex, WindowMetaData windowMetaData);
+    explicit WindowProbePhysicalOperator(uint64_t operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName);
 
     /// The setup method is called for each pipeline during the query initialization procedure. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
-    /// Therefore, any setup to the operator handler should ONLY happen in the WindowOperatorProbe.
+    /// Therefore, any setup to the operator handler should ONLY happen in the WindowProbePhysicalOperator.
     void setup(ExecutionContext& executionCtx) const override;
 
     /// Checks the current watermark and then deletes all slices and windows that are not valid anymore
@@ -43,7 +43,8 @@ public:
 
 protected:
     uint64_t operatorHandlerIndex;
-    WindowMetaData windowMetaData;
+    std::string windowStartFieldName;
+    std::string windowEndFieldName;
 };
 
 }

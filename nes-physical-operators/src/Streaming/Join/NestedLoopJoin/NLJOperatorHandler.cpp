@@ -101,8 +101,8 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
         tupleBuffer.getOriginId(),
         nljSliceLeft.getNumberOfTuplesLeft(),
         nljSliceRight.getNumberOfTuplesRight(),
-        windowInfoAndSeqNumber.windowInfo.windowStart,
-        windowInfoAndSeqNumber.windowInfo.windowEnd);
+Nautilus::Interface::PagedVector*
+getNLJPagedVectorProxy(const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
 
     /// Calculating a rolling average of the number of tuples in the slices
     const auto averageNumberLeft = this->averageNumberOfTuplesLeft.wlock();
@@ -117,14 +117,14 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
 }
 
 Nautilus::Interface::PagedVector* getNLJPagedVectorProxy(
-    const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
+    const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
     switch (joinBuildSide)
     {
-        case QueryCompilation::JoinBuildSideType::Left:
+        case JoinBuildSideType::Left:
             return nljSlice->getPagedVectorRefLeft(workerThreadId);
-        case QueryCompilation::JoinBuildSideType::Right:
+        case JoinBuildSideType::Right:
             return nljSlice->getPagedVectorRefRight(workerThreadId);
     }
 }

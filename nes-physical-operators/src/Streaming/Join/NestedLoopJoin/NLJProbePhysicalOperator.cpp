@@ -65,33 +65,34 @@ Timestamp getNLJWindowEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTa
     return nljWindowTriggerTask->windowInfo.windowEnd;
 }
 
-SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask, const QueryCompilation::JoinBuildSideType joinBuildSide)
+SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask, const JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljWindowTriggerTask != nullptr, "nljWindowTriggerTask should not be null");
 
     switch (joinBuildSide)
     {
-        case QueryCompilation::JoinBuildSideType::Left:
+        case JoinBuildSideType::Left:
             return nljWindowTriggerTask->leftSliceEnd;
-        case QueryCompilation::JoinBuildSideType::Right:
+        case JoinBuildSideType::Right:
             return nljWindowTriggerTask->rightSliceEnd;
     }
 }
 
-NLJProbe::NLJProbe(
+NLJProbePhysicalOperator::NLJProbePhysicalOperator(
     const uint64_t operatorHandlerIndex,
-    const std::shared_ptr<Functions::Function>& joinFunction,
-    const WindowMetaData& windowMetaData,
+    const std::shared_ptr<Functions::PhysicalFunction> joinFunction,
+    const std::string windowStartFieldName,
+    const std::string windowEndFieldName,
     const JoinSchema& joinSchema,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
     const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
-    : StreamJoinProbe(operatorHandlerIndex, joinFunction, windowMetaData, joinSchema)
+    : StreamJoinProbePhysicalOperator(operatorHandlerIndex, joinFunction, windowStartFieldName, windowEndFieldName, joinSchema)
     , leftMemoryProvider(leftMemoryProvider)
     , rightMemoryProvider(rightMemoryProvider)
 {
 }
 
-void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -99,18 +100,18 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
-    Operator::open(executionCtx, recordBuffer);
+    AbstractPhysicalOperator::open(executionCtx, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
     const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getBuffer());
     const auto sliceIdLeft = invoke(
         getNLJSliceEndProxy,
         nljWindowTriggerTaskRef,
-        nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Left));
+        nautilus::val<JoinBuildSideType>(JoinBuildSideType::Left));
     const auto sliceIdRight = invoke(
         getNLJSliceEndProxy,
         nljWindowTriggerTaskRef,
-        nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
+        nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right));
     const auto windowStart = invoke(getNLJWindowStartProxy, nljWindowTriggerTaskRef);
     const auto windowEnd = invoke(getNLJWindowEndProxy, nljWindowTriggerTaskRef);
 
@@ -126,12 +127,12 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         getNLJPagedVectorProxy,
         sliceRefLeft,
         workerThreadIdForPages,
-        nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Left));
+        nautilus::val<JoinBuildSideType>(JoinBuildSideType::Left));
     const auto rightPagedVectorRef = invoke(
         getNLJPagedVectorProxy,
         sliceRefRight,
         workerThreadIdForPages,
-        nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right));
+        nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right));
 
     const Interface::PagedVectorRef leftPagedVector(
         leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
