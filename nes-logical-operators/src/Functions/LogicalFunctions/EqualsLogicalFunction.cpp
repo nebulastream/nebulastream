@@ -16,40 +16,32 @@
 #include <sstream>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
-
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES
 {
 
-EqualsLogicalFunction::EqualsLogicalFunction() noexcept : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "Equals")
+EqualsLogicalFunction::EqualsLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
+    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
 {
 }
 
-EqualsLogicalFunction::EqualsLogicalFunction(EqualsLogicalFunction* other) : BinaryLogicalFunction(other)
+EqualsLogicalFunction::EqualsLogicalFunction(const EqualsLogicalFunction& other) : BinaryLogicalFunction(other)
 {
 }
 
-std::shared_ptr<LogicalFunction>
-EqualsLogicalFunction::create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
+bool EqualsLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    auto equals = std::make_shared<EqualsLogicalFunction>();
-    equals->setLeftChild(left);
-    equals->setRightChild(right);
-    return equals;
-}
-
-bool EqualsLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
-{
-    if (NES::Util::instanceOf<EqualsLogicalFunction>(rhs))
+    auto other = dynamic_cast<const EqualsLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto other = NES::Util::as<EqualsLogicalFunction>(rhs);
-        const bool simpleMatch = getLeftChild()->equal(other->getLeftChild()) and getRightChild()->equal(other->getRightChild());
-        const bool commutativeMatch = getLeftChild()->equal(other->getRightChild()) and getRightChild()->equal(other->getLeftChild());
+        const bool simpleMatch = getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
+        const bool commutativeMatch = getLeftChild() == other->getRightChild() and getRightChild() == other->getLeftChild();
         return simpleMatch or commutativeMatch;
     }
     return false;
@@ -58,28 +50,41 @@ bool EqualsLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& r
 std::string EqualsLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *getLeftChild() << "==" << *getRightChild();
+    ss << getLeftChild() << "==" << getRightChild();
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> EqualsLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> EqualsLogicalFunction::clone() const
 {
-    return EqualsLogicalFunction::create(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_unique<EqualsLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
 }
 
 bool EqualsLogicalFunction::validateBeforeLowering() const
 {
-    const auto childLeft = Util::as<LogicalFunction>(getLeftChild());
-    const auto childRight = Util::as<LogicalFunction>(getRightChild());
+    return dynamic_cast<VariableSizedDataType*>(&getLeftChild().getStamp())
+        && dynamic_cast<VariableSizedDataType*>(&getRightChild().getStamp());
+}
 
-    /// If one of the children has a stamp of type text, the other child must also have a stamp of type text
-    if (NES::Util::instanceOf<VariableSizedDataType>(childLeft->getStamp())
-        != NES::Util::instanceOf<VariableSizedDataType>(childRight->getStamp()))
-    {
-        return false;
-    }
+SerializableFunction EqualsLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
 
-    return true;
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild().serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild().serialize());
+
+    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<EqualsLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
 }
 
 }

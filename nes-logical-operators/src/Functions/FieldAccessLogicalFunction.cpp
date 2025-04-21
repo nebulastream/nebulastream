@@ -17,16 +17,17 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 namespace NES
 {
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
-    : LogicalFunction(DataTypeFactory::createUndefined(), "FieldAccess"), fieldName(std::move(fieldName)) {};
+    : LogicalFunction(DataTypeProvider::provideDataType(LogicalType::UNDEFINED)), fieldName(std::move(fieldName)) {};
 
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName)
-    : LogicalFunction(std::move(stamp), "FieldAccess"), fieldName(std::move(fieldName)) {};
+    : LogicalFunction(std::move(stamp)), fieldName(std::move(fieldName)) {};
 
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(FieldAccessLogicalFunction* other)
     : LogicalFunction(other), fieldName(other->getFieldName()) {};
@@ -85,6 +86,25 @@ void FieldAccessLogicalFunction::inferStamp(const Schema& schema)
 std::shared_ptr<LogicalFunction> FieldAccessLogicalFunction::deepCopy()
 {
     return std::make_shared<FieldAccessLogicalFunction>(stamp, fieldName);
+}
+
+std::span<const std::shared_ptr<LogicalFunction>> FieldAccessLogicalFunction::getChildren() const
+{
+    return {};
+}
+
+SerializableFunction FieldAccessLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+
+    NES::Configurations::DescriptorConfig::ConfigType configVariant = getFieldName();
+    SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
+    (*serializedFunction.mutable_config())["FieldName"] = variantDescriptor;
+
+    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
 
 }
