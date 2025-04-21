@@ -19,6 +19,7 @@
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
@@ -147,6 +148,11 @@ SerializableOperator SinkLogicalOperator::serialize() const
 
     serializedOperator.set_allocated_sink(serializedSink);
     return serializedOperator;
+}
+
+LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterSinkLogicalOperator(LogicalOperatorRegistryArguments)
+{
+    throw UnsupportedOperation();
 }
 
 }

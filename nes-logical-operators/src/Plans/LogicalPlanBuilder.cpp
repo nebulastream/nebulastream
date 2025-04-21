@@ -187,33 +187,33 @@ LogicalPlan LogicalPlanBuilder::addSink(std::string sinkName, LogicalPlan queryP
 LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType> windowType)
 {
     NES_TRACE("LogicalPlanBuilder: checkAndAddWatermarkAssigner for a (sub)query plan");
-    LogicalPlan
-    LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType> windowType) if (
-        queryPlan.getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>().empty()
+    auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowType);
+
+    if (queryPlan.getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>().empty()
         and queryPlan.getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>().empty())
     {
         if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
-            if (queryPlan.getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>().empty()
-                and queryPlan.getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>().empty())
-                return queryPlan;
+        {
+            queryPlan.promoteOperatorToRoot(IngestionTimeWatermarkAssignerLogicalOperator());
+            return queryPlan;
+        }
+        if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::EventTime)
+        {
+            auto logicalFunction = FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.getName());
+            auto assigner
+                = EventTimeWatermarkAssignerLogicalOperator(logicalFunction, timeBasedWindowType->getTimeCharacteristic().getTimeUnit());
+            queryPlan.promoteOperatorToRoot(assigner);
+            return queryPlan;
+        }
     }
-    if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::EventTime)
-    {
-        auto logicalFunction = FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.getName());
-        auto assigner
-            = EventTimeWatermarkAssignerLogicalOperator(logicalFunction, timeBasedWindowType->getTimeCharacteristic().getTimeUnit());
-        queryPlan.promoteOperatorToRoot(assigner);
-        return queryPlan;
-    }
-}
-return queryPlan;
+    return queryPlan;
 }
 
 LogicalPlan LogicalPlanBuilder::addBinaryOperatorAndUpdateSource(
     LogicalOperator operatorNode, LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan)
 {
-    leftLogicalPlan.addRootOperator(rightLogicalPlan.getRootOperators()[0]);
     leftLogicalPlan.rootOperators.push_back(rightLogicalPlan.rootOperators[0]);
+    leftLogicalPlan.promoteOperatorToRoot(std::move(operatorNode));
     NES_TRACE("LogicalPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");
     return leftLogicalPlan;
 }
