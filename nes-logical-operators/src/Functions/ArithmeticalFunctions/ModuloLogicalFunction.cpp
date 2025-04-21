@@ -42,6 +42,46 @@ bool ModuloLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
+const DataType& ModuloLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction ModuloLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction ModuloLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> ModuloLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+LogicalFunction ModuloLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string ModuloLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 std::string ModuloLogicalFunction::toString() const
 {
     std::stringstream ss;

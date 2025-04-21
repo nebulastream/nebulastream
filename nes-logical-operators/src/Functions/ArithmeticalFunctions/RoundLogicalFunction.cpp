@@ -48,6 +48,46 @@ std::string RoundLogicalFunction::toString() const
     return ss.str();
 }
 
+
+const DataType& RoundLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction RoundLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction RoundLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> RoundLogicalFunction::getChildren() const
+{
+    return {child};
+};
+
+LogicalFunction RoundLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.child = children[0];
+    return copy;
+};
+
+std::string RoundLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 SerializableFunction RoundLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;

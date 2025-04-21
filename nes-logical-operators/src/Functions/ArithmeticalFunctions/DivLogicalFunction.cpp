@@ -38,6 +38,46 @@ bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
+const DataType& DivLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction DivLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return copy;
+};
+
+LogicalFunction DivLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> DivLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+LogicalFunction DivLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string DivLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 std::string DivLogicalFunction::toString() const
 {
     std::stringstream ss;

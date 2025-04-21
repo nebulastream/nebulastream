@@ -31,6 +31,45 @@ AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& 
 {
 }
 
+const DataType& AbsoluteLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction AbsoluteLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction AbsoluteLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return this->withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> AbsoluteLogicalFunction::getChildren() const
+{
+    return {child};
+};
+
+LogicalFunction AbsoluteLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.child = children[0];
+    return *this;
+};
+
+std::string AbsoluteLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 bool AbsoluteLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs);

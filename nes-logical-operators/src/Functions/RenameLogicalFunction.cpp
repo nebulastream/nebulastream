@@ -43,6 +43,35 @@ bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
+const DataType& RenameLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction RenameLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+std::vector<LogicalFunction> RenameLogicalFunction::getChildren() const
+{
+    return {child};
+};
+
+LogicalFunction RenameLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.child = children[0].get<FieldAccessLogicalFunction>();
+    return copy;
+};
+
+std::string RenameLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 const FieldAccessLogicalFunction& RenameLogicalFunction::getOriginalField() const
 {
     return child;

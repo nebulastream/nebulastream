@@ -27,6 +27,45 @@ FloorLogicalFunction::FloorLogicalFunction(const FloorLogicalFunction& other) : 
 {
 }
 
+const DataType& FloorLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction FloorLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction FloorLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return this->withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> FloorLogicalFunction::getChildren() const
+{
+    return {child};
+};
+
+LogicalFunction FloorLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.child = children[0];
+    return copy;
+};
+
+std::string FloorLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
 bool FloorLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     auto other = dynamic_cast<const FloorLogicalFunction*>(&rhs);

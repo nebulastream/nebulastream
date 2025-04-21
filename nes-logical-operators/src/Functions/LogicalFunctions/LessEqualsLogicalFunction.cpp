@@ -49,6 +49,48 @@ std::string LessEqualsLogicalFunction::toString() const
     return ss.str();
 }
 
+
+const DataType& LessEqualsLogicalFunction::getStamp() const
+{
+    return *stamp;
+};
+
+LogicalFunction LessEqualsLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return *this;
+};
+
+LogicalFunction LessEqualsLogicalFunction::withInferredStamp(Schema schema) const
+{
+    std::vector<LogicalFunction> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return this->withChildren(newChildren);
+};
+
+std::vector<LogicalFunction> LessEqualsLogicalFunction::getChildren() const
+{
+    return {left, right};
+};
+
+LogicalFunction LessEqualsLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+{
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    return copy;
+};
+
+std::string LessEqualsLogicalFunction::getType() const
+{
+    return std::string(NAME);
+}
+
+
 SerializableFunction LessEqualsLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
