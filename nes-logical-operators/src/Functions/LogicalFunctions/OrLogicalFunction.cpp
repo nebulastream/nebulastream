@@ -24,7 +24,7 @@
 
 namespace NES
 {
-OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : stamp(other.stamp->clone()), left(other.left), right(other.right)
+OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : stamp(other.stamp), left(other.left), right(other.right)
 {
 }
 
@@ -52,15 +52,15 @@ std::string OrLogicalFunction::toString() const
     return ss.str();
 }
 
-const DataType& OrLogicalFunction::getStamp() const
+std::shared_ptr<DataType> OrLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction OrLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction OrLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 
@@ -91,14 +91,16 @@ LogicalFunction OrLogicalFunction::withInferredStamp(Schema schema) const
         children.push_back(node.withInferredStamp(schema));
     }
     /// check if children stamp is correct
-    INVARIANT(left.getStamp() == Boolean(), "the stamp of left child must be boolean, but was: " + left.getStamp().toString());
-    INVARIANT(right.getStamp() == Boolean(), "the stamp of right child must be boolean, but was: " + right.getStamp().toString());
+    INVARIANT(
+        *left.getStamp().get() == Boolean(), "the stamp of left child must be boolean, but was: " + left.getStamp().get()->toString());
+    INVARIANT(
+        *right.getStamp().get() == Boolean(), "the stamp of right child must be boolean, but was: " + right.getStamp().get()->toString());
     return this->withChildren(children);
 }
 
 bool OrLogicalFunction::validateBeforeLowering() const
 {
-    return dynamic_cast<const Boolean*>(&left.getStamp()) && dynamic_cast<const Boolean*>(&right.getStamp());
+    return dynamic_cast<const Boolean*>(left.getStamp().get()) && dynamic_cast<const Boolean*>(right.getStamp().get());
 }
 
 SerializableFunction OrLogicalFunction::serialize() const

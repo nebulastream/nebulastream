@@ -27,7 +27,7 @@ class SerializableDataType;
 class DataTypeSerializationUtil
 {
 public:
-    static SerializableDataType* serializeDataType(const std::shared_ptr<DataType>& dataType, SerializableDataType* serializedDataType);
+    static SerializableDataType* serializeDataType(std::shared_ptr<DataType> dataType, SerializableDataType* serializedDataType);
     static std::shared_ptr<DataType> deserializeDataType(const SerializableDataType& serializedDataType);
 };
 }

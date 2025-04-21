@@ -77,7 +77,7 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 
     /// a count aggregation is always on an uint 64
     auto newOnfield = onField.withStamp(DataTypeProvider::provideDataType(LogicalType::UINT64));
-    auto newAsField = asField.withStamp(onField.getStamp().clone());
+    auto newAsField = asField.withStamp(onField.getStamp());
     this->onField = newOnfield.get<FieldAccessLogicalFunction>();
     this->asField = newAsField.get<FieldAccessLogicalFunction>();
 }

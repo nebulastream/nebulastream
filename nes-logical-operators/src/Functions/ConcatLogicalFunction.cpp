@@ -24,12 +24,11 @@ namespace NES
 {
 
 ConcatLogicalFunction::ConcatLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : stamp(left.getStamp().join(right.getStamp())), left(left), right(right)
+    : stamp(left.getStamp()->join(*right.getStamp())), left(left), right(right)
 {
 }
 
-ConcatLogicalFunction::ConcatLogicalFunction(const ConcatLogicalFunction& other)
-    : stamp(other.stamp->clone()), left(other.left), right(other.right)
+ConcatLogicalFunction::ConcatLogicalFunction(const ConcatLogicalFunction& other) : stamp(other.stamp), left(other.left), right(other.right)
 {
 }
 
@@ -47,15 +46,15 @@ std::string ConcatLogicalFunction::toString() const
     return fmt::format("Concat({}, {})", left, right);
 }
 
-const DataType& ConcatLogicalFunction::getStamp() const
+std::shared_ptr<DataType> ConcatLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction ConcatLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction ConcatLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 
@@ -79,7 +78,7 @@ LogicalFunction ConcatLogicalFunction::withChildren(std::vector<LogicalFunction>
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.stamp = children[0].getStamp().join(children[1].getStamp());
+    copy.stamp = children[0].getStamp()->join(*children[1].getStamp().get());
     return copy;
 };
 

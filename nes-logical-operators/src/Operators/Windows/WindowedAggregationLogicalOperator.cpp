@@ -101,19 +101,17 @@ bool WindowedAggregationLogicalOperator::operator==(const LogicalOperatorConcept
     return false;
 }
 
-/*
-bool WindowedAggregationLogicalOperator::inferSchema()
+bool WindowedAggregationLogicalOperator::inferSchema(Schema inputSchema)
 {
-    if (!WindowOperator::inferSchema())
-    {
-        return false;
-    }
+    //if (!WindowOperator::inferSchema())
+    //{
+    //    return false;
+    //}
     // Infer the default input and output schema.
-    NES_DEBUG("WindowLogicalOperator: TypeInferencePhase: infer types for window operator with input schema {}",
-              inputSchema.toString());
+    NES_DEBUG("WindowLogicalOperator: TypeInferencePhase: infer types for window operator with input schema {}", inputSchema.toString());
 
     // Infer type of aggregation.
-    auto &aggs = getWindowAggregation();
+    auto& aggs = getWindowAggregation();
     for (const auto& agg : aggs)
     {
         agg->inferStamp(inputSchema);
@@ -134,16 +132,17 @@ bool WindowedAggregationLogicalOperator::inferSchema()
         const auto& newQualifierForSystemField = sourceName;
 
         windowStartFieldName = newQualifierForSystemField + "$start";
-        windowEndFieldName   = newQualifierForSystemField + "$end";
+        windowEndFieldName = newQualifierForSystemField + "$end";
         outputSchema.addField(windowStartFieldName, BasicType::UINT64);
         outputSchema.addField(windowEndFieldName, BasicType::UINT64);
     }
     else if (auto* contentBasedWindowType = dynamic_cast<Windowing::ContentBasedWindowType*>(&getWindowType()))
     {
-        if (contentBasedWindowType->getContentBasedSubWindowType() ==
-            Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
+        if (contentBasedWindowType->getContentBasedSubWindowType()
+            == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
         {
-            auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(std::unique_ptr<Windowing::ContentBasedWindowType>(contentBasedWindowType));
+            auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(
+                std::unique_ptr<Windowing::ContentBasedWindowType>(contentBasedWindowType));
             if (!thresholdWindow->inferStamp(inputSchema))
             {
                 return false;
@@ -158,24 +157,21 @@ bool WindowedAggregationLogicalOperator::inferSchema()
     if (isKeyed())
     {
         // Infer the data type of each key field.
-        auto& keys = getKeys();
-        for (const auto& key : keys)
+        auto keys = getKeys();
+        for (auto& key : keys)
         {
-            key->inferStamp(inputSchema);
-            outputSchema.addField(AttributeField(key->getFieldName(), key->getStamp().clone()));
+            auto newKey = key.withInferredStamp(inputSchema).get<FieldAccessLogicalFunction>();
+            outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getStamp()));
         }
     }
     for (const auto& agg : aggs)
     {
-        outputSchema.addField(
-            AttributeField(dynamic_cast<FieldAccessLogicalFunction*>(&agg->as())->getFieldName(),
-                                    agg->as().getStamp().clone()));
+        outputSchema.addField(AttributeField(agg->as().getFieldName(), agg->as().getStamp()));
     }
 
     NES_DEBUG("Outputschema for window={}", outputSchema.toString());
     return true;
 }
- */
 
 Optimizer::TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
 {
@@ -247,7 +243,7 @@ void WindowedAggregationLogicalOperator::setWindowType(std::unique_ptr<Windowing
     windowType = std::move(wt);
 }
 
-const std::vector<FieldAccessLogicalFunction>& WindowedAggregationLogicalOperator::getKeys() const
+std::vector<FieldAccessLogicalFunction> WindowedAggregationLogicalOperator::getKeys() const
 {
     return onKey;
 }

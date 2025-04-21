@@ -24,8 +24,7 @@
 namespace NES
 {
 
-LessLogicalFunction::LessLogicalFunction(const LessLogicalFunction& other)
-    : left(other.left), right(other.right), stamp(other.stamp->clone())
+LessLogicalFunction::LessLogicalFunction(const LessLogicalFunction& other) : left(other.left), right(other.right), stamp(other.stamp)
 {
 }
 
@@ -51,15 +50,15 @@ std::string LessLogicalFunction::toString() const
     return ss.str();
 }
 
-const DataType& LessLogicalFunction::getStamp() const
+std::shared_ptr<DataType> LessLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction LessLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction LessLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

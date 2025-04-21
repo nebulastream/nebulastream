@@ -29,16 +29,16 @@ bool Boolean::operator==(const NES::DataType& other) const
 }
 
 
-std::unique_ptr<DataType> Boolean::join(const DataType& otherDataType) const
+std::shared_ptr<DataType> Boolean::join(const DataType& otherDataType) const
 {
-    if (NES::Util::instanceOf<Boolean>(otherDataType))
+    if (dynamic_cast<const Boolean*>(&otherDataType))
     {
         return DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
     }
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
 }
 
-std::string Boolean::toString()
+std::string Boolean::toString() const
 {
     return std::string(magic_enum::enum_name(BasicType::BOOLEAN));
 }

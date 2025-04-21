@@ -25,7 +25,7 @@ namespace NES
 {
 
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const GreaterEqualsLogicalFunction& other)
-    : left(other.left), right(other.right), stamp(other.stamp->clone())
+    : left(other.left), right(other.right), stamp(other.stamp)
 {
 }
 
@@ -51,15 +51,15 @@ std::string GreaterEqualsLogicalFunction::toString() const
     return ss.str();
 }
 
-const DataType& GreaterEqualsLogicalFunction::getStamp() const
+std::shared_ptr<DataType> GreaterEqualsLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction GreaterEqualsLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 
