@@ -23,19 +23,10 @@ namespace NES
 class WindowAggregationLogicalFunction
 {
 public:
-    enum class Type : uint8_t
-    {
-        Avg,
-        Count,
-        Max,
-        Min,
-        Sum,
-        Median
-    };
     virtual ~WindowAggregationLogicalFunction() = default;
 
     /// Defines the field to which a aggregate output is assigned.
-    std::unique_ptr<WindowAggregationLogicalFunction> as(const FieldAccessLogicalFunction& asField);
+    std::shared_ptr<WindowAggregationLogicalFunction> as(const FieldAccessLogicalFunction& asField);
 
     /// Returns the result field of the aggregation
     FieldAccessLogicalFunction as() const;
@@ -43,22 +34,18 @@ public:
     //// Returns the result field of the aggregation
     FieldAccessLogicalFunction on() const;
 
-    /// Returns the type of this aggregation.
-    Type getType() const;
-
     /// @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
     virtual void inferStamp(const Schema& schema) = 0;
 
     /// @brief Creates a deep copy of the window aggregation
-    virtual std::unique_ptr<WindowAggregationLogicalFunction> clone() = 0;
+    virtual std::shared_ptr<WindowAggregationLogicalFunction> clone() = 0;
 
     std::shared_ptr<DataType> getInputStamp() const;
     std::shared_ptr<DataType> getPartialAggregateStamp() const;
     std::shared_ptr<DataType> getFinalAggregateStamp() const;
 
     std::string toString() const;
-
-    std::string getTypeAsString() const;
+    virtual std::string_view getName() const noexcept = 0;
 
     bool operator==(std::shared_ptr<WindowAggregationLogicalFunction> otherWindowAggregationLogicalFunction) const;
 
@@ -80,6 +67,5 @@ protected:
 
     std::shared_ptr<DataType> inputStamp, partialAggregateStamp, finalAggregateStamp;
     FieldAccessLogicalFunction onField, asField;
-    Type aggregationType;
 };
 }

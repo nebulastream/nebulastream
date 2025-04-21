@@ -27,16 +27,17 @@ namespace NES
 class MinAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
 
     MinAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
     explicit MinAggregationLogicalFunction(FieldAccessLogicalFunction onField);
     virtual ~MinAggregationLogicalFunction() = default;
 
     void inferStamp(const Schema& schema) override;
-    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
+    std::shared_ptr<WindowAggregationLogicalFunction> clone() override;
     NES::SerializableAggregationFunction serialize() const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
     static constexpr std::string_view NAME = "Min";

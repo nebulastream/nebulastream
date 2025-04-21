@@ -30,13 +30,14 @@ public:
     explicit SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
     virtual ~SumAggregationLogicalFunction() = default;
 
-    static std::unique_ptr<WindowAggregationLogicalFunction> create(LogicalFunction onField);
-    static std::unique_ptr<WindowAggregationLogicalFunction>
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(LogicalFunction onField);
+    static std::shared_ptr<WindowAggregationLogicalFunction>
     create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
 
     void inferStamp(const Schema& schema) override;
-    std::unique_ptr<WindowAggregationLogicalFunction> clone() override;
+    std::shared_ptr<WindowAggregationLogicalFunction> clone() override;
     NES::SerializableAggregationFunction serialize() const override;
+    [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:
     static constexpr std::string_view NAME = "Sum";
