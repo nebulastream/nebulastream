@@ -26,6 +26,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 using namespace NES;
 
@@ -56,7 +57,7 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     queryPlan = QueryPlanBuilder::addSelection(std::move(filterFunction), queryPlan);
     EXPECT_TRUE(queryPlan.getOperatorByType<SelectionLogicalOperator>().size() == 1);
     EXPECT_EQ(
-        dynamic_cast<LogicalFunction*>(queryPlan.getOperatorByType<SelectionLogicalOperator>()[0]->getPredicate()), filterFunction.get());
+        dynamic_cast<LogicalFunction*>(&queryPlan.getOperatorByType<SelectionLogicalOperator>()[0]->getPredicate()), filterFunction.get());
     ///test addProjection
     std::vector<std::unique_ptr<LogicalFunction>> functions;
     functions.push_back(std::make_unique<FieldAccessLogicalFunction>("id"));
@@ -65,8 +66,9 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     EXPECT_EQ(queryPlan.getOperatorByType<ProjectionLogicalOperator>()[0]->getFunctions(), functions);
     ///test addMap
     queryPlan = QueryPlanBuilder::addMap(
-        std::make_unique<EqualsLogicalFunction>(
-            std::make_unique<FieldAccessLogicalFunction>("b"), std::make_unique<ConstantValueLogicalFunction>("1")),
+        std::make_unique<FieldAssignmentLogicalFunction>(
+            std::make_unique<FieldAccessLogicalFunction>("b"),
+            std::make_unique<ConstantValueLogicalFunction>(DataTypeProvider::provideDataType(LogicalType::INT32), "1")),
         queryPlan);
     EXPECT_TRUE(queryPlan.getOperatorByType<MapLogicalOperator>().size() == 1);
     ///test addUnion
