@@ -13,18 +13,19 @@
 */
 #pragma once
 
-#include <Functions/PhysicalFunction.hpp>
-#include <ExecutionContext.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Functions
 {
 
-class FieldAccessPhysicalFunction : public PhysicalFunction
+/// @brief This function reads a specific field from the input record and returns its value.
+class ExecutableFunctionReadField : public Function
 {
 public:
-    explicit FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field);
+    explicit ExecutableFunctionReadField(Record::RecordFieldIdentifier field);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
