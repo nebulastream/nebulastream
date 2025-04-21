@@ -22,35 +22,99 @@ namespace NES
 
 namespace
 {
-PipelineId getNextPipelineId()
-{
-    static std::atomic_uint64_t id = INITIAL_PIPELINE_ID.getRawValue();
+std::string operatorChainToString(const NES::PhysicalOperator& op, int indent = 0) {
+    std::ostringstream oss;
+    std::string indentation(indent, ' ');
+    oss << indentation << op.toString() << "\n";
+    if (auto childOpt = op.getChild()) {
+        oss << operatorChainToString(childOpt.value(), indent + 2);
+    }
+    return oss.str();
+}
+
+PipelineId getNextPipelineId() {
+    static std::atomic_uint64_t id = NES::INITIAL_PIPELINE_ID.getRawValue();
     return PipelineId(id++);
 }
+}
 
-std::string providerTypeToString(Pipeline::ProviderType providerType) {
-    switch(providerType) {
-        case Pipeline::ProviderType::Interpreter:
-            return "Interpreter";
-        case Pipeline::ProviderType::Compiler:
-            return "Compiler";
-        default:
-            return "Unknown";
+
+std::unordered_map<uint64_t, std::shared_ptr<OperatorHandler>> Pipeline::releaseOperatorHandlers()
+{
+    return std::move(operatorHandlers);
+}
+
+Pipeline::Pipeline(PhysicalOperator op) : rootOperator(std::move(op)), pipelineId(getNextPipelineId())
+{
+}
+
+Pipeline::Pipeline(SourcePhysicalOperator op) : rootOperator(std::move(op)), pipelineId(getNextPipelineId())
+{
+}
+
+Pipeline::Pipeline(SinkPhysicalOperator op) : rootOperator(std::move(op)), pipelineId(getNextPipelineId())
+{
+}
+
+bool Pipeline::isSourcePipeline()
+{
+    return rootOperator.tryGet<SourcePhysicalOperator>().has_value();
+}
+
+bool Pipeline::isOperatorPipeline()
+{
+    return not (isSinkPipeline() or isSourcePipeline());
+}
+
+bool Pipeline::isSinkPipeline()
+{
+    return rootOperator.tryGet<SinkPhysicalOperator>().has_value();
+}
+
+std::string Pipeline::getProviderType() const {
+    switch (providerType) {
+        case ProviderType::Interpreter: return "Interpreter";
+        case ProviderType::Compiler: return "Compiler";
+        default: return "Unknown";
     }
 }
+
+void Pipeline::prependOperator(PhysicalOperator newOp) {
+    PRECONDITION(not (isSourcePipeline() or isSinkPipeline()), "Cannot add new operator to source or sink pipeline");
+    newOp.setChild(rootOperator);
+    rootOperator = newOp;
 }
 
-std::string Pipeline::getProviderType() const
-{
-    return providerTypeToString(this->providerType);
+PhysicalOperator appendOperatorHelper(PhysicalOperator op, const PhysicalOperator& newOp) {
+    if (not op.getChild()) {
+        op.setChild(newOp);
+        return op;
+    } else {
+        PhysicalOperator child = op.getChild().value();
+        child = appendOperatorHelper(child, newOp);
+        op.setChild(child);
+        return op;
+    }
 }
 
-Pipeline::Pipeline() : pipelineId(getNextPipelineId()), providerType(ProviderType::Compiler) {};
-
-
-std::ostream& operator<<(std::ostream& os, const Pipeline& t)
-{
-    return os << t.toString();
+void Pipeline::appendOperator(PhysicalOperator newOp) {
+    PRECONDITION(not (isSourcePipeline() or isSinkPipeline()), "Cannot add new operator to source or sink pipeline");
+    rootOperator = appendOperatorHelper(rootOperator, newOp);
 }
 
+std::string Pipeline::toString() const {
+    std::ostringstream oss;
+    oss << "PipelineId: " << pipelineId.getRawValue() << "\n";
+    oss << "Provider: " << getProviderType() << "\n";
+    oss << "Successors: " << successorPipelines.size() << "\n";
+    oss << "Predecessors: " << predecessorPipelines.size() << "\n";
+    oss << "Operator Chain:\n";
+    oss << operatorChainToString(rootOperator);
+    return oss.str();
+}
+
+std::ostream& operator<<(std::ostream& os, const Pipeline& p) {
+    os << p.toString();
+    return os;
+}
 }

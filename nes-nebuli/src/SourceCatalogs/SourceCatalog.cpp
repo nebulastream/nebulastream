@@ -28,7 +28,7 @@
 namespace NES::Catalogs::Source
 {
 
-bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema)
+bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, Schema schema)
 {
     std::unique_lock lock(catalogMutex);
     /// check if source already exist
