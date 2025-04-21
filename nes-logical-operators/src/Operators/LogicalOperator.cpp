@@ -16,14 +16,11 @@
 #include <memory>
 #include <string>
 #include <Configurations/Descriptor.hpp>
-#include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/MapLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
-#include <SerializableSchema.pb.h>
 
 namespace NES
 {
