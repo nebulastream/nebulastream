@@ -28,24 +28,27 @@ namespace NES
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field)
 {
-    aggregationType = Type::Max;
 }
 
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field, asField)
 {
-    aggregationType = Type::Max;
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
 {
-    return std::make_unique<MaxAggregationLogicalFunction>(onField);
+    return std::make_shared<MaxAggregationLogicalFunction>(onField);
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction>
+std::shared_ptr<WindowAggregationLogicalFunction>
 MaxAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
-    return std::make_unique<MaxAggregationLogicalFunction>(onField, asField);
+    return std::make_shared<MaxAggregationLogicalFunction>(onField, asField);
+}
+
+std::string_view MaxAggregationLogicalFunction::getName() const noexcept
+{
+    return NAME;
 }
 
 void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
@@ -73,9 +76,9 @@ void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
 }
 
 
-std::unique_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::clone()
+std::shared_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::clone()
 {
-    return std::make_unique<MaxAggregationLogicalFunction>(onField, asField);
+    return std::make_shared<MaxAggregationLogicalFunction>(onField, asField);
 }
 
 NES::SerializableAggregationFunction MaxAggregationLogicalFunction::serialize() const
