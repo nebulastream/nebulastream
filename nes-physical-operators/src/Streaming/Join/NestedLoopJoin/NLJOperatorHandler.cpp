@@ -85,7 +85,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
     bufferMemory->windowInfo = windowInfoAndSeqNumber.windowInfo;
 
-    pipelineCtx->emitBuffer(tupleBuffer, PipelineExecutionContext::ContinuationPolicy::NEVER);
+    pipelineCtx->emitBuffer(tupleBuffer);
     NES_DEBUG(
         "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",
@@ -96,23 +96,12 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
         tupleBuffer.getOriginId(),
         nljSliceLeft.getNumberOfTuplesLeft(),
         nljSliceRight.getNumberOfTuplesRight(),
-Nautilus::Interface::PagedVector*
-getNLJPagedVectorProxy(const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
-
-    /// Calculating a rolling average of the number of tuples in the slices
-    const auto averageNumberLeft = this->averageNumberOfTuplesLeft.wlock();
-    averageNumberLeft->second = std::min(averageNumberLeft->second + 1, windowSizeRollingAverage);
-    averageNumberLeft->first
-        += (static_cast<int64_t>(nljSliceLeft.getNumberOfTuplesLeft()) - averageNumberLeft->first) / averageNumberLeft->second;
-
-    const auto averageNumberRight = this->averageNumberOfTuplesRight.wlock();
-    averageNumberRight->second = std::min(averageNumberRight->second + 1, windowSizeRollingAverage);
-    averageNumberRight->first
-        += (static_cast<int64_t>(nljSliceRight.getNumberOfTuplesRight()) - averageNumberRight->first) / averageNumberRight->second;
+        windowInfoAndSeqNumber.windowInfo.windowStart,
+        windowInfoAndSeqNumber.windowInfo.windowEnd);
 }
 
-Nautilus::Interface::PagedVector* getNLJPagedVectorProxy(
-    const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
+Nautilus::Interface::PagedVector*
+getNLJPagedVectorProxy(const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
     switch (joinBuildSide)
