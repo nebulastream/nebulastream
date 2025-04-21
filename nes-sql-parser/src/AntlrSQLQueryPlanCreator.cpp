@@ -39,12 +39,12 @@
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
 #include <Functions/RenameLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/AvgAggregationFunction.hpp>
-#include <Operators/Windows/Aggregations/CountAggregationFunction.hpp>
-#include <Operators/Windows/Aggregations/MaxAggregationFunction.hpp>
-#include <Operators/Windows/Aggregations/MedianAggregationFunction.hpp>
-#include <Operators/Windows/Aggregations/MinAggregationFunction.hpp>
-#include <Operators/Windows/Aggregations/SumAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>
@@ -59,6 +59,7 @@
 #include <ParserUtil.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+
 namespace NES::Parsers
 {
 
@@ -777,22 +778,22 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     switch (tokenType)
     {
         case AntlrSQLLexer::COUNT:
-            helper.windowAggs.push_back(CountAggregationFunction::create(std::move(helper.functionBuilder.back())));
+            helper.windowAggs.push_back(CountAggregationLogicalFunction::create(std::move(helper.functionBuilder.back())));
             break;
         case AntlrSQLLexer::AVG:
-            helper.windowAggs.push_back(AvgAggregationFunction::create(std::move(helper.functionBuilder.back())));
+            helper.windowAggs.push_back(AvgAggregationLogicalFunction::create(std::move(helper.functionBuilder.back())));
             break;
         case AntlrSQLLexer::MAX:
-            helper.windowAggs.push_back(MaxAggregationFunction::create(std::move(helper.functionBuilder.back())));
+            helper.windowAggs.push_back(MaxAggregationLogicalFunction::create(std::move(helper.functionBuilder.back())));
             break;
         case AntlrSQLLexer::MIN:
-            helper.windowAggs.push_back(MinAggregationFunction::create(std::move(helper.functionBuilder.back())));
+            helper.windowAggs.push_back(MinAggregationLogicalFunction::create(std::move(helper.functionBuilder.back())));
             break;
         case AntlrSQLLexer::SUM:
-            helper.windowAggs.push_back(SumAggregationFunction::create(std::move(helper.functionBuilder.back())));
+            helper.windowAggs.push_back(SumAggregationLogicalFunction::create(std::move(helper.functionBuilder.back())));
             break;
         case AntlrSQLLexer::MEDIAN:
-            helper.windowAggs.push_back(MedianAggregationFunction::create(std::move(helper.functionBuilder.back())));
+            helper.windowAggs.push_back(MedianAggregationLogicalFunction::create(std::move(helper.functionBuilder.back())));
             break;
         default:
             if (funcName == "concat")
