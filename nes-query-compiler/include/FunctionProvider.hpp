@@ -24,11 +24,12 @@ namespace NES::QueryCompilation
 class FunctionProvider
 {
 public:
-    static std::unique_ptr<Functions::PhysicalFunction> lowerFunction(const std::shared_ptr<LogicalFunction>& nodeFunction);
+    /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
+    /// NodeFunction a NodeFunctionConstantValue, FieldAccessLogicalFunction or FieldAssignment
+    static Functions::PhysicalFunction lowerFunction(LogicalFunction nodeFunction);
 
 private:
-    static std::unique_ptr<Functions::PhysicalFunction>
-    lowerConstantFunction(const std::shared_ptr<ConstantValueLogicalFunction>& nodeFunction);
+    static Functions::PhysicalFunction lowerConstantFunction(const ConstantValueLogicalFunction& nodeFunction);
 };
 
 }

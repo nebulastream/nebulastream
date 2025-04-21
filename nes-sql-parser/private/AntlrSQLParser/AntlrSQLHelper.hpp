@@ -31,9 +31,9 @@ namespace NES::Parsers
 
 class AntlrSQLHelper
 {
-    std::vector<std::unique_ptr<LogicalFunction>> projectionFields; ///vector needed for logicalProjectionOperator constructor
-    std::vector<std::unique_ptr<LogicalFunction>> whereClauses; ///where and having clauses need to be accessed in reverse
-    std::vector<std::unique_ptr<LogicalFunction>> havingClauses;
+    std::vector<LogicalFunction> projectionFields; ///vector needed for logicalProjectionOperator constructor
+    std::vector<LogicalFunction> whereClauses; ///where and having clauses need to be accessed in reverse
+    std::vector<LogicalFunction> havingClauses;
     std::string source;
 
 public:
@@ -69,14 +69,14 @@ public:
     /// Containers that hold state of specific objects that we create during parsing.
     std::unique_ptr<Windowing::WindowType> windowType;
     std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggs;
-    std::vector<std::unique_ptr<LogicalFunction>> projections;
+    std::vector<LogicalFunction> projections;
     std::vector<std::unique_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
-    std::vector<std::unique_ptr<LogicalFunction>> functionBuilder;
+    std::vector<LogicalFunction> functionBuilder;
     std::vector<std::unique_ptr<FieldAssignmentLogicalFunction>> mapBuilder;
     std::vector<std::unique_ptr<FieldAccessLogicalFunction>> groupByFields;
     std::vector<std::string> joinSources;
-    std::unique_ptr<LogicalFunction> joinFunction;
-    std::vector<std::unique_ptr<LogicalFunction>> joinKeyRelationHelper;
+    LogicalFunction joinFunction;
+    std::vector<LogicalFunction> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
     Join::LogicalJoinDescriptor::JoinType joinType;
 
@@ -94,13 +94,15 @@ public:
     std::optional<int> minimumCount;
     int implicitMapCountHelper = 0;
 
-    [[nodiscard]] std::vector<std::unique_ptr<LogicalFunction>>& getWhereClauses();
-    [[nodiscard]] std::vector<std::unique_ptr<LogicalFunction>>& getHavingClauses();
-    [[nodiscard]] std::vector<std::unique_ptr<LogicalFunction>>& getProjectionFields();
-    void addWhereClause(std::unique_ptr<LogicalFunction> expressionNode);
-    void addHavingClause(std::unique_ptr<LogicalFunction> expressionNode);
-    void addProjectionField(std::unique_ptr<LogicalFunction> expressionNode);
-    [[nodiscard]] const std::unique_ptr<Windowing::WindowType> getWindowType() const;
+    [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
+    [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();
+    [[nodiscard]] std::vector<LogicalFunction>& getProjectionFields();
+    [[nodiscard]] std::vector<std::unique_ptr<FieldAssignmentLogicalFunction>>& getMapExpressions();
+
+    void addWhereClause(LogicalFunction expressionNode);
+    void addHavingClause(LogicalFunction expressionNode);
+    void addProjectionField(LogicalFunction expressionNode);
+    [[nodiscard]] static std::unique_ptr<Windowing::WindowType> getWindowType();
     void setSource(std::string sourceName);
     [[nodiscard]] const std::string getSource() const;
     void addMapExpression(std::unique_ptr<FieldAssignmentLogicalFunction> expressionNode);
