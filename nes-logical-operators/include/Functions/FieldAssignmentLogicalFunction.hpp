@@ -26,8 +26,6 @@ public:
     static constexpr std::string_view NAME = "FieldAssignment";
 
     FieldAssignmentLogicalFunction(const FieldAccessLogicalFunction& fieldAccess, LogicalFunction logicalFunction);
-    FieldAssignmentLogicalFunction(const FieldAssignmentLogicalFunction& other);
-    FieldAssignmentLogicalFunction& operator=(const FieldAssignmentLogicalFunction& other) = default;
 
     [[nodiscard]] FieldAccessLogicalFunction getField() const;
     [[nodiscard]] LogicalFunction getAssignment() const;
