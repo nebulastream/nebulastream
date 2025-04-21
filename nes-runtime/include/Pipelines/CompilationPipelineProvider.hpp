@@ -13,19 +13,22 @@
 */
 #pragma once
 #include <memory>
-#include <Execution/Operators/Operator.hpp>
-namespace NES::Runtime::Execution
+#include <vector>
+#include <Pipelines/ExecutablePipelineProvider.hpp>
+#include <Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <nautilus/options.hpp>
+
+namespace NES
 {
 
-/// The physical operator pipeline captures a set of operators within a pipeline.
-class PhysicalOperatorPipeline
+/// @brief Creates an executable pipeline stage that can be executed using compilation.
+class CompilationPipelineProvider : public ExecutablePipelineProvider
 {
 public:
-    void setRootOperator(std::shared_ptr<Operators::Operator> rootOperator);
-    [[nodiscard]] std::shared_ptr<Operators::Operator> getRootOperator() const;
-
-private:
-    std::shared_ptr<Operators::Operator> rootOperator;
+    std::unique_ptr<ExecutablePipelineStage> create(
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline,
+        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+        nautilus::engine::Options& options) override;
 };
-
 }

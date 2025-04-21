@@ -11,26 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
+
 #include <memory>
-#include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
-#include <Functions/NodeFunctionBinary.hpp>
-#include <Nodes/Node.hpp>
-#include <Util/Common.hpp>
+#include <vector>
+#include <Pipelines/ExecutablePipelineProvider.hpp>
+#include <Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <options.hpp>
+
 namespace NES
 {
 
-/// This node represents a logical binary function.
-class NodeFunctionLogicalBinary : public NodeFunctionBinary, public LogicalNodeFunction
+/// @brief Creates an executable pipeline stage that can be executed using interpretation
+class InterpretationPipelineProvider : public ExecutablePipelineProvider
 {
 public:
-    [[nodiscard]] bool equal(const std::shared_ptr<Node>& rhs) const override;
-    bool validateBeforeLowering() const override;
-
-protected:
-    NodeFunctionLogicalBinary(std::string name);
-    ~NodeFunctionLogicalBinary() override = default;
-    explicit NodeFunctionLogicalBinary(NodeFunctionLogicalBinary* other);
+    std::unique_ptr<ExecutablePipelineStage> create(
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline,
+        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+        nautilus::engine::Options& options) override;
 };
 }
