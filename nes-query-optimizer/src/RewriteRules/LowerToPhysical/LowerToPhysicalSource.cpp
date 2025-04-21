@@ -13,12 +13,12 @@
 */
 
 #include <memory>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
+#include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 
 namespace NES::Optimizer

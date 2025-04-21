@@ -14,10 +14,10 @@
 #pragma once
 
 #include <vector>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <PhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <SourcePhysicalOperator.hpp>
 

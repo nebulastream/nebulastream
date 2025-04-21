@@ -34,6 +34,7 @@
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
+#include <PhysicalOperator.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <function.hpp>
 #include <val.hpp>
@@ -162,8 +163,8 @@ struct ExecutionContext final
 {
     explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena);
 
-    void setLocalOperatorState(const PhysicalOperatorConcept* op, std::unique_ptr<OperatorState> state);
-    OperatorState* getLocalState(const PhysicalOperatorConcept* op);
+    void setLocalOperatorState(OperatorId operatorId, std::unique_ptr<OperatorState> state);
+    OperatorState* getLocalState(OperatorId operatorId);
 
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(OperatorHandlerId handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
@@ -179,7 +180,7 @@ struct ExecutionContext final
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
 
-    std::unordered_map<const PhysicalOperatorConcept*, std::unique_ptr<OperatorState>> localStateMap;
+    std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     PipelineMemoryProvider pipelineMemoryProvider;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.

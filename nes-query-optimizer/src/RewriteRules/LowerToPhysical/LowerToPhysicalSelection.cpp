@@ -13,11 +13,11 @@
 */
 
 #include <memory>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
+#include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SelectionPhysicalOperator.hpp>
 

@@ -16,7 +16,6 @@
 #include <memory>
 #include <numeric>
 #include <utility>
-#include <Abstract/PhysicalOperator.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
@@ -43,6 +42,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
