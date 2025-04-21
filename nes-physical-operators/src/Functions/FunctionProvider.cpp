@@ -13,6 +13,7 @@
 */
 
 #include <Functions/FunctionProvider.hpp>
+
 #include <memory>
 #include <utility>
 #include <vector>
@@ -33,7 +34,7 @@ namespace NES::QueryCompilation
 {
 using namespace Functions;
 
-QPhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
+PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
 {
     /// 1. Recursively lower the children of the function node.
     std::vector<PhysicalFunction> childFunction;

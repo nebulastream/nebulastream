@@ -23,7 +23,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <function.hpp>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {

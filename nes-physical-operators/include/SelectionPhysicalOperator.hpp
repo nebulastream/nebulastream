@@ -15,7 +15,7 @@
 
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES

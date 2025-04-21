@@ -22,7 +22,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <nautilus/val.hpp>
 #include <val.hpp>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {

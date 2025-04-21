@@ -17,7 +17,7 @@ limitations under the License.
 #include <utility>
 #include <string>
 #include <Functions/PhysicalFunction.hpp>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 

@@ -23,7 +23,7 @@
 #include <Watermark/TimeFunction.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {

@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 
 

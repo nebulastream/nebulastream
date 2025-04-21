@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES

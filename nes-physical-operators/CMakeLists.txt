@@ -26,6 +26,7 @@ target_include_directories(nes-physical-operators PUBLIC
 
 # Create library for the registries
 create_plugin_registry_library(nes-physical-operators-registry nes-physical-operators)
-target_link_libraries(nes-physical-operators PRIVATE nes-physical-operators-registry)
+# Public linkage to be accessible by the optimizer
+target_link_libraries(nes-physical-operators PUBLIC nes-physical-operators-registry)
 # Generate a registrar for each registry
 generate_plugin_registrars(nes-physical-operators PhysicalFunction)

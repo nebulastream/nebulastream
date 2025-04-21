@@ -20,7 +20,7 @@
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {

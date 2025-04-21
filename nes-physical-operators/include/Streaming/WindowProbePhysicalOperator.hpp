@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <vector>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Abstract/PhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 
 namespace NES
