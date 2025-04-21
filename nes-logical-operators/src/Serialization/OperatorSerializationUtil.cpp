@@ -29,15 +29,15 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(LogicalOperato
 {
     auto serializedOperator = SerializableOperator();
 
-    if (auto* sourceOp = operatorNode.get<SourceDescriptorLogicalOperator>())
+    if (operatorNode.tryGet<SourceDescriptorLogicalOperator>())
     {
         // Serialize source operator
-        serializeSourceOperator(*sourceOp, serializedOperator);
+        serializeSourceOperator(operatorNode.get<SourceDescriptorLogicalOperator>(), serializedOperator);
     }
-    else if (auto* sinkOp = operatorNode.get<SinkLogicalOperator>())
+    else if (operatorNode.tryGet<SinkLogicalOperator>())
     {
         // Serialize sink operator
-        serializeSinkOperator(*sinkOp, serializedOperator);
+        serializeSinkOperator(operatorNode.get<SinkLogicalOperator>(), serializedOperator);
     }
     return serializedOperator;
 }
