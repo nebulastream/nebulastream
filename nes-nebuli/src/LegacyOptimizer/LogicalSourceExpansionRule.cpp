@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <ranges>
 #include <string>
 #include <utility>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
@@ -19,6 +20,7 @@
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <ErrorHandling.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES::LegacyOptimizer
 {
@@ -27,25 +29,33 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan, Catalogs::Source:
 {
     auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
 
-    for (auto sourceOp : sourceOperators)
+    for (const auto& sourceOp : sourceOperators)
     {
-        std::string logicalSourceName(sourceOp.getLogicalSourceName());
-        auto sourceCatalogEntries = sourceCatalog.getPhysicalSources(logicalSourceName);
+        const std::string logicalSourceName(sourceOp.getLogicalSourceName());
+        auto entries = sourceCatalog.getPhysicalSources(logicalSourceName);
 
-        if (sourceCatalogEntries.empty())
+        if (entries.empty())
         {
             throw PhysicalSourceNotFoundInQueryDescription(
                 "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source " + logicalSourceName);
         }
 
-        for (auto& sourceCatalogEntry : sourceCatalogEntries)
-        {
-            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(sourceOp.getSchema());
+        /// Replace the SourceNameLogicalOperator with the SourceDescriptorLogicalOperator corresponding to the first entry.
+        auto sourceDescriptor = entries.front()->getPhysicalSource()->createSourceDescriptor(sourceOp.getSchema());
+        const LogicalOperator firstOperatorSourceLogicalDescriptor(SourceDescriptorLogicalOperator(std::move(sourceDescriptor)));
+        queryPlan.replaceOperator(sourceOp, firstOperatorSourceLogicalDescriptor);
 
-            LogicalOperator logicalDescOp(SourceDescriptorLogicalOperator(std::move(sourceDescriptor)));
-            auto replaced = queryPlan.replaceOperator(sourceOp, logicalDescOp);
+        /// Iterate over all subsequent entries, create the corresponding SourceDescriptorLogicalOperators and add them to the query plan.
+        for (auto const& entry : entries | std::views::drop(1)) {
+            auto desc = entry->getPhysicalSource()->createSourceDescriptor(sourceOp.getSchema());
+            auto nextOp = LogicalOperator{ SourceDescriptorLogicalOperator(std::move(desc)) };
 
-            std::cout << "Replacement was " << (replaced ? "successful" : "not successful") << "\n";
+            for (auto const& parent : queryPlan.getParents(firstOperatorSourceLogicalDescriptor)) {
+                auto children = parent.getChildren();
+                children.push_back(nextOp);
+                auto newParent = parent.withChildren(std::move(children));
+                queryPlan.replaceOperatorExact(parent, std::move(newParent));
+            }
         }
     }
 }

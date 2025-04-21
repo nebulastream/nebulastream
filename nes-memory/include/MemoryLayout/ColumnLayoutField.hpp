@@ -34,7 +34,8 @@ template <class T, bool boundaryChecks = true>
 class ColumnLayoutField
 {
 public:
-    static inline ColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, const ColumnLayout& layout, Memory::TupleBuffer& buffer);
+    static inline ColumnLayoutField<T, boundaryChecks>
+    create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer);
     static inline ColumnLayoutField<T, boundaryChecks>
     create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer);
 
@@ -57,9 +58,9 @@ inline ColumnLayoutField<T, boundaryChecks>
 ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer)
 {
     INVARIANT(
-        boundaryChecks && fieldIndex < layout->getSchema()->getFieldCount(),
+        boundaryChecks && fieldIndex < layout->getSchema().getFieldCount(),
         "fieldIndex out of bounds {} >= {}",
-        layout->getSchema()->getFieldCount(),
+        layout->getSchema().getFieldCount(),
         fieldIndex);
 
     auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);

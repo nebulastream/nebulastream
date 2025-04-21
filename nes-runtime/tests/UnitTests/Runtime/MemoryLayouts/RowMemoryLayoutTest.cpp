@@ -51,11 +51,10 @@ public:
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest)
 {
-    const std::shared_ptr<Schema> schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    const auto schema = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT8).addField("t3", BasicType::UINT8);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = std::make_shared<RowLayout>(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 }
 
@@ -64,21 +63,20 @@ TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest)
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
 {
-    const std::shared_ptr<Schema> schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+    auto schema = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = std::make_shared<RowLayout>(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_shared<TestTupleBuffer>(rowLayout, tupleBuffer);
 
-    ASSERT_EQ(testBuffer->getCapacity(), tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
+    ASSERT_EQ(testBuffer->getCapacity(), tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes());
     ASSERT_EQ(testBuffer->getNumberOfTuples(), 0U);
-    ASSERT_EQ(rowLayout->getFieldOffset(1, 2), schema->getSchemaSizeInBytes() * 1 + (1 + 2));
-    ASSERT_EQ(rowLayout->getFieldOffset(4, 0), schema->getSchemaSizeInBytes() * 4 + 0);
+    ASSERT_EQ(rowLayout->getFieldOffset(1, 2), schema.getSchemaSizeInBytes() * 1 + (1 + 2));
+    ASSERT_EQ(rowLayout->getFieldOffset(4, 0), schema.getSchemaSizeInBytes() * 4 + 0);
 }
 
 /**
@@ -86,16 +84,15 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord)
 {
-    const std::shared_ptr<Schema> schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+    const auto schema = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = std::make_shared<RowLayout>(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_shared<TestTupleBuffer>(rowLayout, tupleBuffer);
 
     const std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(1, 2, 3);
     testBuffer->pushRecordToBuffer(writeRecord);
@@ -111,18 +108,17 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord)
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord)
 {
-    const std::shared_ptr<Schema> schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+    const auto schema = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = std::make_shared<RowLayout>(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_shared<TestTupleBuffer>(rowLayout, tupleBuffer);
 
-    const size_t numTuples = 230; ///tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    const size_t numTuples = 230; ///tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes();
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     for (size_t i = 0; i < numTuples; i++)
@@ -146,18 +142,17 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord)
  */
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
 {
-    const std::shared_ptr<Schema> schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+    const auto schema = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = std::make_shared<RowLayout>(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_shared<TestTupleBuffer>(rowLayout, tupleBuffer);
 
-    const size_t numTuples = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    const size_t numTuples = tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes();
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     for (size_t i = 0; i < numTuples; ++i)
@@ -185,18 +180,18 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
 TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const std::shared_ptr<Schema> schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+    const auto schema
+        = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = std::make_shared<RowLayout>(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    auto testBuffer = std::make_shared<TestTupleBuffer>(rowLayout, tupleBuffer);
 
-    size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes();
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     for (size_t i = 0; i < NUM_TUPLES; ++i)
@@ -236,11 +231,11 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
 TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout)
 {
     GTEST_FLAG_SET(death_test_style, "threadsafe");
-    const std::shared_ptr<Schema> schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+    const auto schema
+        = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = std::make_shared<RowLayout>(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
@@ -259,18 +254,17 @@ TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout)
  */
 TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
 {
-    const std::shared_ptr<Schema> schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+    const auto schema = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT16).addField("t3", BasicType::UINT32);
 
     std::shared_ptr<RowLayout> rowLayout;
-    ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
+    ASSERT_NO_THROW(rowLayout = std::make_shared<RowLayout>(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    const auto testBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+    const auto testBuffer = std::make_shared<TestTupleBuffer>(rowLayout, tupleBuffer);
 
-    const size_t numTuples = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    const size_t numTuples = tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes();
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
     size_t i = 0;
@@ -299,30 +293,11 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
 
 TEST_F(RowMemoryLayoutTest, getFieldOffset)
 {
-    const std::shared_ptr<Schema> schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-    const auto columnLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+    const auto schema = Schema().addField("t1", BasicType::UINT8).addField("t2", BasicType::UINT8).addField("t3", BasicType::UINT8);
+    const auto columnLayout = RowLayout(schema, bufferManager->getBufferSize());
 
-    ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(2, 4), ErrorCode::CannotAccessBuffer);
-    ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(1000000000, 2), ErrorCode::CannotAccessBuffer);
-}
-
-TEST_F(RowMemoryLayoutTest, deepCopy)
-{
-    const auto schema
-        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
-    auto rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
-
-    const auto deepCopy = std::dynamic_pointer_cast<RowLayout>(rowLayout->clone());
-
-    ASSERT_NE(deepCopy.get(), rowLayout.get());
-    ASSERT_EQ(*deepCopy, *rowLayout);
-
-    /// checking if changing the schema does not affect the deep copy
-    const auto schema2 = Schema::create()->addField("r1", BasicType::UINT8);
-    rowLayout = RowLayout::create(schema2, bufferManager->getBufferSize());
-
-    ASSERT_NE(deepCopy->getSchema(), rowLayout->getSchema());
+    ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout.getFieldOffset(2, 4), ErrorCode::CannotAccessBuffer);
+    ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout.getFieldOffset(1000000000, 2), ErrorCode::CannotAccessBuffer);
 }
 
 }

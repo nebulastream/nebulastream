@@ -10,12 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(Join RewriteRule nes-optimizer LowerToPhysicalNLJoin.cpp)
-add_plugin(Map RewriteRule nes-optimizer LowerToPhysicalMap.cpp)
-add_plugin(Selection RewriteRule nes-optimizer LowerToPhysicalSelection.cpp)
-add_plugin(Projection RewriteRule nes-optimizer LowerToPhysicalProjection.cpp)
-add_plugin(WindowedAggregation RewriteRule nes-optimizer LowerToPhysicalWindowedAggregation.cpp)
-add_plugin(Sink RewriteRule nes-optimizer LowerToPhysicalSink.cpp)
-add_plugin(Source RewriteRule nes-optimizer LowerToPhysicalSource.cpp)
-add_plugin(IngestionTimeWatermarkAssigner RewriteRule nes-optimizer LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
-add_plugin(EventTimeWatermarkAssigner RewriteRule nes-optimizer LowerToPhysicalEventTimeWatermarkAssigner.cpp)
+add_plugin(Join RewriteRule nes-query-optimizer LowerToPhysicalNLJoin.cpp)
+add_plugin(Map RewriteRule nes-query-optimizer LowerToPhysicalMap.cpp)
+add_plugin(Selection RewriteRule nes-query-optimizer LowerToPhysicalSelection.cpp)
+add_plugin(Projection RewriteRule nes-query-optimizer LowerToPhysicalProjection.cpp)
+add_plugin(WindowedAggregation RewriteRule nes-query-optimizer LowerToPhysicalWindowedAggregation.cpp)
+add_plugin(Sink RewriteRule nes-query-optimizer LowerToPhysicalSink.cpp)
+add_plugin(Source RewriteRule nes-query-optimizer LowerToPhysicalSource.cpp)
+add_plugin(IngestionTimeWatermarkAssigner RewriteRule nes-query-optimizer LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
+add_plugin(EventTimeWatermarkAssigner RewriteRule nes-query-optimizer LowerToPhysicalEventTimeWatermarkAssigner.cpp)

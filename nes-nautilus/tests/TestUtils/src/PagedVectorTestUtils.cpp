@@ -40,7 +40,7 @@ namespace NES::Nautilus::TestUtils
 
 void runStoreTest(
     Interface::PagedVector& pagedVector,
-    const std::shared_ptr<Schema>& testSchema,
+    const Schema& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -94,7 +94,7 @@ void runStoreTest(
 
 void runRetrieveTest(
     Interface::PagedVector& pagedVector,
-    const std::shared_ptr<Schema>& testSchema,
+    const Schema& testSchema,
     const uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<Memory::TupleBuffer>& allRecords,
@@ -105,7 +105,7 @@ void runRetrieveTest(
     const uint64_t numberOfExpectedTuples = std::accumulate(
         allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
     ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), numberOfExpectedTuples);
-    auto outputBufferVal = bufferManager.getUnpooledBuffer(numberOfExpectedTuples * testSchema->getSchemaSizeInBytes());
+    auto outputBufferVal = bufferManager.getUnpooledBuffer(numberOfExpectedTuples * testSchema.getSchemaSizeInBytes());
     ASSERT_TRUE(outputBufferVal.has_value());
     auto outputBuffer = outputBufferVal.value();
 
@@ -170,7 +170,7 @@ void runRetrieveTest(
 
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     const uint64_t entrySize,
     const uint64_t pageSize,
     const std::vector<std::vector<Memory::TupleBuffer>>& allRecordsAndVectors,

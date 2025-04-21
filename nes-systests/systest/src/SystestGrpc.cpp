@@ -13,7 +13,7 @@
 */
 
 
-#include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <grpcpp/channel.h>
 #include <magic_enum/magic_enum.hpp>
