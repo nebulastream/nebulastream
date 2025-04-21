@@ -21,21 +21,21 @@
 namespace NES
 {
 
-FloorLogicalFunction::FloorLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child) {};
+FloorLogicalFunction::FloorLogicalFunction(LogicalFunction child) : stamp(child.getStamp()), child(child) {};
 
-FloorLogicalFunction::FloorLogicalFunction(const FloorLogicalFunction& other) : stamp(other.getStamp().clone()), child(other.child)
+FloorLogicalFunction::FloorLogicalFunction(const FloorLogicalFunction& other) : stamp(other.getStamp()), child(other.child)
 {
 }
 
-const DataType& FloorLogicalFunction::getStamp() const
+std::shared_ptr<DataType> FloorLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction FloorLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction FloorLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

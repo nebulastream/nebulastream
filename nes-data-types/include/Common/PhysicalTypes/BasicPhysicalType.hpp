@@ -46,12 +46,11 @@ public:
     /// Constructor for a basic physical type.
     /// @param type the data type represented by this physical type
     /// @param nativeType the native type of the nes type.
-    BasicPhysicalType(std::unique_ptr<DataType> type, NativeType nativeType);
+    BasicPhysicalType(std::shared_ptr<DataType> type, NativeType nativeType);
     BasicPhysicalType(const BasicPhysicalType& other);
     ~BasicPhysicalType() override = default;
 
-    static std::unique_ptr<PhysicalType> create(std::unique_ptr<DataType> type, NativeType nativeType);
-    static std::unique_ptr<PhysicalType> create(const DataType& type, NativeType nativeType);
+    static std::unique_ptr<PhysicalType> create(std::shared_ptr<DataType> type, NativeType nativeType);
 
     /// Returns the number of bytes occupied by this data type.
     [[nodiscard]] uint64_t size() const override;

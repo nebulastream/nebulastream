@@ -34,19 +34,19 @@ ConstantValueLogicalFunction::ConstantValueLogicalFunction(std::shared_ptr<DataT
 }
 
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(const ConstantValueLogicalFunction& other)
-    : constantValue(other.constantValue), stamp(other.stamp->clone())
+    : constantValue(other.constantValue), stamp(other.stamp)
 {
 }
 
-const DataType& ConstantValueLogicalFunction::getStamp() const
+std::shared_ptr<DataType> ConstantValueLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction ConstantValueLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction ConstantValueLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

@@ -29,7 +29,7 @@ NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
 {
 }
 
-NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other) : stamp(other.stamp->clone()), child(other.child)
+NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other) : stamp(other.stamp), child(other.child)
 {
 }
 
@@ -53,27 +53,28 @@ std::string NegateLogicalFunction::toString() const
 LogicalFunction NegateLogicalFunction::withInferredStamp(Schema schema) const
 {
     auto newChild = child.withInferredStamp(schema);
-    if (newChild.getStamp() != Boolean())
+    if (*newChild.getStamp().get() != Boolean())
     {
-        throw CannotInferSchema("Negate Function Node: the stamp of child must be boolean, but was: {}", child.getStamp().toString());
+        throw CannotInferSchema(
+            "Negate Function Node: the stamp of child must be boolean, but was: {}", child.getStamp().get()->toString());
     }
     return withChildren({newChild});
 }
 
 bool NegateLogicalFunction::validateBeforeLowering() const
 {
-    return dynamic_cast<const Boolean*>(&child.getStamp());
+    return dynamic_cast<const Boolean*>(child.getStamp().get());
 }
 
-const DataType& NegateLogicalFunction::getStamp() const
+std::shared_ptr<DataType> NegateLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction NegateLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction NegateLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 

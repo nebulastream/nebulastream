@@ -79,7 +79,7 @@ uint64_t ThresholdWindow::getMinimumCount() const
 bool ThresholdWindow::inferStamp(const Schema& schema)
 {
     auto newPredicate = predicate.withInferredStamp(schema);
-    INVARIANT(newPredicate.getStamp() == Boolean(), "the threshold function is not a valid predicate");
+    INVARIANT(*newPredicate.getStamp().get() == Boolean(), "the threshold function is not a valid predicate");
     this->predicate = newPredicate;
     return true;
 }

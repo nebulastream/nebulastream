@@ -27,7 +27,7 @@
 namespace NES
 {
 RenameLogicalFunction::RenameLogicalFunction(const FieldAccessLogicalFunction& originalField, std::string newFieldName)
-    : stamp(originalField.getStamp().clone()), child(originalField), newFieldName(std::move(newFieldName)) {};
+    : stamp(originalField.getStamp()), child(originalField), newFieldName(std::move(newFieldName)) {};
 
 RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
     : RenameLogicalFunction(other.getOriginalField(), other.getNewFieldName()) {};
@@ -43,15 +43,15 @@ bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-const DataType& RenameLogicalFunction::getStamp() const
+std::shared_ptr<DataType> RenameLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction RenameLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction RenameLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 
@@ -115,7 +115,7 @@ LogicalFunction RenameLogicalFunction::withInferredStamp(Schema schema) const
     }
     /// assign the stamp of this field access with the type of this field.
     auto copy = *this;
-    copy.stamp = fieldAttribute.value().getDataType().clone();
+    copy.stamp = fieldAttribute.value().getDataType();
     copy.newFieldName = fieldName;
     return copy;
 }

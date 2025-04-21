@@ -63,7 +63,7 @@ std::string SelectionLogicalOperator::toString() const
 bool SelectionLogicalOperator::inferSchema(Schema inputSchema)
 {
     predicate = predicate.withInferredStamp(inputSchema);
-    if (predicate.getStamp() != Boolean())
+    if (*predicate.getStamp().get() != Boolean())
     {
         throw CannotInferSchema("the filter expression is not a valid predicate");
     }

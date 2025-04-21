@@ -31,8 +31,7 @@ EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFuncti
 {
 }
 
-EqualsLogicalFunction::EqualsLogicalFunction(const EqualsLogicalFunction& other)
-    : left(other.left), right(other.right), stamp(other.stamp->clone())
+EqualsLogicalFunction::EqualsLogicalFunction(const EqualsLogicalFunction& other) : left(other.left), right(other.right), stamp(other.stamp)
 {
 }
 
@@ -48,15 +47,15 @@ bool EqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-const DataType& EqualsLogicalFunction::getStamp() const
+std::shared_ptr<DataType> EqualsLogicalFunction::getStamp() const
 {
-    return *stamp;
+    return stamp;
 };
 
-LogicalFunction EqualsLogicalFunction::withStamp(std::unique_ptr<DataType> stamp) const
+LogicalFunction EqualsLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) const
 {
     auto copy = *this;
-    copy.stamp = stamp->clone();
+    copy.stamp = stamp;
     return copy;
 };
 
@@ -97,7 +96,8 @@ std::string EqualsLogicalFunction::toString() const
 
 bool EqualsLogicalFunction::validateBeforeLowering() const
 {
-    return dynamic_cast<const VariableSizedDataType*>(&left.getStamp()) && dynamic_cast<const VariableSizedDataType*>(&right.getStamp());
+    return dynamic_cast<const VariableSizedDataType*>(left.getStamp().get())
+        && dynamic_cast<const VariableSizedDataType*>(right.getStamp().get());
 }
 
 SerializableFunction EqualsLogicalFunction::serialize() const

@@ -43,7 +43,7 @@ TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction field)
 TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction fieldValue, const TimeUnit& unit)
 {
     const auto& fieldAccess = fieldValue.get<FieldAccessLogicalFunction>();
-    auto keyField = AttributeField(fieldAccess.getFieldName(), fieldAccess.getStamp().clone());
+    auto keyField = AttributeField(fieldAccess.getFieldName(), fieldAccess.getStamp());
     return TimeCharacteristic(Type::EventTime, keyField, unit);
 }
 
