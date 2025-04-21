@@ -22,20 +22,20 @@ class TimeFunction;
 
 /// @brief Watermark assignment operator.
 /// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
-class EventTimeWatermarkAssigner : public PhysicalOperatorConcept
+class EventTimeWatermarkAssignerPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
     /// @brief Creates a EventTimeWatermarkAssigner operator with a watermarkExtractionFunction function.
     /// @param TimeFunction the time function
-    EventTimeWatermarkAssigner(std::unique_ptr<TimeFunction> timeFunction);
+    EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     std::optional<PhysicalOperator> getChild() const override { return child; }
-    void setChild(struct PhysicalOperator child) override { this->child = child; }
+    void setChild(PhysicalOperator child) override { this->child = child; }
 
 private:
-    std::unique_ptr<TimeFunction> timeFunction;
+    EventTimeFunction timeFunction;
     std::optional<PhysicalOperator> child;
 };
 
