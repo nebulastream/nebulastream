@@ -52,8 +52,6 @@ public:
 
     [[nodiscard]] bool operator==(const TimeCharacteristic& other) const;
 
-    [[nodiscard]] AttributeField getField() const;
-
     [[nodiscard]] uint64_t hash() const;
 
     [[nodiscard]] std::string toString() const;
@@ -62,9 +60,9 @@ public:
 
     void setTimeUnit(const TimeUnit& unit);
 
+    AttributeField field;
 private:
     Type type;
-    AttributeField field;
     TimeUnit unit;
 };
 }
