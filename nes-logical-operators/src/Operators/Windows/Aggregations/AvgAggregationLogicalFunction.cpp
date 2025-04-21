@@ -89,7 +89,7 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     }
     auto newAsField = asField.withStamp(getFinalAggregateStamp());
     asField = newAsField.get<FieldAccessLogicalFunction>();
-    onField = newOnField.get<FieldAccessLogicalFunction>();
+    onField = newOnField;
     inputStamp = onField.getStamp();
 }
 

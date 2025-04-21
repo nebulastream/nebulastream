@@ -25,10 +25,9 @@ class CountAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
     static std::shared_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
-    static std::shared_ptr<WindowAggregationLogicalFunction>
-    create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
     CountAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
-    explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    explicit CountAggregationLogicalFunction(FieldAccessLogicalFunction onField);
     virtual ~CountAggregationLogicalFunction() = default;
 
     void inferStamp(const Schema& schema) override;
