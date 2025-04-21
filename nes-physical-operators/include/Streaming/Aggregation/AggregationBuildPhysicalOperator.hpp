@@ -19,25 +19,25 @@
 #include <memory>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
-#include <Streaming/Aggregation/WindowAggregationPhysicalOperator.hpp>
+#include <Streaming/Aggregation/WindowAggregation.hpp>
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 
 namespace NES
 {
 
-class AggregationBuildPhysicalOperator final : public WindowAggregationPhysicalOperator, public WindowBuildPhysicalOperator
+class AggregationBuildPhysicalOperator final : public WindowAggregation, public WindowBuildPhysicalOperator
 {
 public:
     AggregationBuildPhysicalOperator(
-        const OperatorHandlerId operatorHandlerIndex,
+        OperatorHandlerId operatorHandlerIndex,
         std::shared_ptr<TimeFunction> timeFunction,
         std::vector<Functions::PhysicalFunction> keyFunctions,
         std::shared_ptr<WindowAggregation> windowAggregationOperator);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     std::optional<PhysicalOperator> getChild() const override { return child; }
-    void setChild(struct PhysicalOperator child) override { this->child = child; }
+    void setChild(PhysicalOperator child) override { this->child = child; }
 
 private:
     std::optional<PhysicalOperator> child;
