@@ -14,9 +14,9 @@
 
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/EmitOperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <EmitOperatorHandler.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
