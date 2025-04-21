@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <utility>
-#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 
