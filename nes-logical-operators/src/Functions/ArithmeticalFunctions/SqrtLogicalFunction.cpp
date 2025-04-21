@@ -13,8 +13,8 @@
 */
 
 #include <memory>
-#include <Abstract/LogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/SqrtLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -55,7 +55,7 @@ LogicalFunction SqrtLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) 
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction SqrtLogicalFunction::withInferredStamp(Schema schema) const

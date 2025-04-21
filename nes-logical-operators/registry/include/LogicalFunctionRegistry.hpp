@@ -16,8 +16,8 @@
 
 #include <memory>
 #include <string>
-#include <Abstract/LogicalFunction.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Registry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 

@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <Abstract/LogicalFunction.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {

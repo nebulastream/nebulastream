@@ -17,8 +17,8 @@
 #include <cstdint>
 #include <memory>
 #include <API/Schema.hpp>
-#include <Abstract/LogicalFunction.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Windows/WindowOperator.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>

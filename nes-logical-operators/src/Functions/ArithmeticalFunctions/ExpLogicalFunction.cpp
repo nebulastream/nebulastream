@@ -46,7 +46,7 @@ LogicalFunction ExpLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction ExpLogicalFunction::withInferredStamp(Schema schema) const

@@ -13,7 +13,7 @@
 */
 
 #include <memory>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctions/LessLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
@@ -60,7 +60,7 @@ LogicalFunction LessLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) 
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction LessLogicalFunction::withInferredStamp(Schema schema) const

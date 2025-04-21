@@ -15,8 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <Abstract/LogicalFunction.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 

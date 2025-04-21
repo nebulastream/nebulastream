@@ -18,7 +18,7 @@
 #include <string>
 #include <string_view>
 #include <API/Schema.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES

@@ -15,6 +15,7 @@
 #include <memory>
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -54,7 +55,7 @@ LogicalFunction PowLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction PowLogicalFunction::withInferredStamp(Schema schema) const
@@ -77,6 +78,7 @@ LogicalFunction PowLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
+    copy.stamp = children[0].getStamp().join(children[1].getStamp());
     return copy;
 };
 

@@ -14,9 +14,8 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctions/AndLogicalFunction.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/Boolean.hpp>
@@ -44,7 +43,7 @@ LogicalFunction AndLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 std::vector<LogicalFunction> AndLogicalFunction::getChildren() const

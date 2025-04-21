@@ -36,7 +36,7 @@ LogicalFunction CeilLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) 
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction CeilLogicalFunction::withInferredStamp(Schema schema) const

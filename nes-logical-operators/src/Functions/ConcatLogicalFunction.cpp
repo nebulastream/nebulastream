@@ -13,8 +13,8 @@
 */
 
 #include <memory>
-#include <Abstract/LogicalFunction.hpp>
 #include <Functions/ConcatLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <fmt/format.h>
 #include <LogicalFunctionRegistry.hpp>
@@ -56,7 +56,7 @@ LogicalFunction ConcatLogicalFunction::withStamp(std::shared_ptr<DataType> stamp
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction ConcatLogicalFunction::withInferredStamp(Schema schema) const
@@ -79,6 +79,7 @@ LogicalFunction ConcatLogicalFunction::withChildren(std::vector<LogicalFunction>
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
+    copy.stamp = children[0].getStamp().join(children[1].getStamp());
     return copy;
 };
 

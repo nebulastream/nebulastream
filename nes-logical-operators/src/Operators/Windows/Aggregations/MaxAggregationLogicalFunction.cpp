@@ -15,8 +15,8 @@
 #include <memory>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Abstract/LogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableFunction.pb.h>

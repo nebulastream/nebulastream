@@ -14,8 +14,8 @@
 
 #include <memory>
 #include <sstream>
-#include <Abstract/LogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -59,7 +59,7 @@ LogicalFunction MulLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction MulLogicalFunction::withInferredStamp(Schema schema) const
@@ -82,6 +82,7 @@ LogicalFunction MulLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
+    copy.stamp = children[0].getStamp().join(children[1].getStamp());
     return copy;
 };
 
