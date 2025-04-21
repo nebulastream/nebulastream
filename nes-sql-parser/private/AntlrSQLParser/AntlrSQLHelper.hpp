@@ -22,9 +22,7 @@
 #include <vector>
 #include <API/Query.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 
 namespace NES::Parsers

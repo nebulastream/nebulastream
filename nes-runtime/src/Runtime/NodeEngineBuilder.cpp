@@ -18,13 +18,12 @@
 #include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <QueryEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
-
-#include <Listeners/SystemEventListener.hpp>
 
 namespace NES
 {

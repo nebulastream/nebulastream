@@ -37,9 +37,8 @@
 #include <Functions/LogicalFunctions/LessLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
-#include <Operators/LogicalOperators/BinaryLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalJoinDescriptor.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Common.hpp>

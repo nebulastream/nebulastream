@@ -14,7 +14,7 @@
 #include <sstream>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Operator.hpp>
+#include <Plans/Operator.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 
 namespace NES
