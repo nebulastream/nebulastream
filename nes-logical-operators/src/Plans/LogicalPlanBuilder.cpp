@@ -98,7 +98,7 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
                 break;
             case Windowing::TimeCharacteristic::Type::EventTime:
                 queryPlan.promoteOperatorToRoot(EventTimeWatermarkAssignerLogicalOperator(
-                    FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().getField().getName()),
+                    FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.getName()),
                     timeBasedWindowType->getTimeCharacteristic().getTimeUnit()));
                 break;
         }
@@ -199,7 +199,7 @@ LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPl
     }
     if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::EventTime)
     {
-        auto logicalFunction = FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().getField().getName());
+        auto logicalFunction = FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.getName());
         auto assigner
             = EventTimeWatermarkAssignerLogicalOperator(logicalFunction, timeBasedWindowType->getTimeCharacteristic().getTimeUnit());
         queryPlan.promoteOperatorToRoot(assigner);
