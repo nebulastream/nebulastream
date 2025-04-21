@@ -14,26 +14,35 @@
 
 #pragma once
 
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
-class OrLogicalFunction final : public BinaryLogicalFunction
+class OrLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    OrLogicalFunction();
-    ~OrLogicalFunction() override = default;
+    static constexpr std::string_view NAME = "Or";
 
-    static std::shared_ptr<LogicalFunction>
-    create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
-    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
-    void inferStamp(const Schema& schema) override;
+    OrLogicalFunction(LogicalFunction left, LogicalFunction right);
+    OrLogicalFunction(const OrLogicalFunction& other);
 
-    std::shared_ptr<LogicalFunction> clone() const override;
+    bool validateBeforeLowering() const;
 
-protected:
-    explicit OrLogicalFunction(OrLogicalFunction* other);
+    [[nodiscard]] SerializableFunction serialize() const override;
 
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+    void inferStamp(const Schema& schema);
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren() const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
     [[nodiscard]] std::string toString() const override;
+
+private:
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left;
+    LogicalFunction right;
 };
 }
+FMT_OSTREAM(NES::OrLogicalFunction);

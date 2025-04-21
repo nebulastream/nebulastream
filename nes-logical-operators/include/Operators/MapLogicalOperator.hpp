@@ -18,21 +18,19 @@
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
 /// Map operator, which contains a field assignment function that manipulates a field of the record.
-class MapLogicalOperator : public UnaryLogicalOperator
+class MapLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    static constexpr std::string_view NAME = "Map";
-
-    MapLogicalOperator(const std::shared_ptr<FieldAssignmentLogicalFunction>& mapFunction);
+    MapLogicalOperator(const FieldAssignmentLogicalFunction& mapFunction);
     std::string_view getName() const noexcept override;
 
-    [[nodiscard]] std::shared_ptr<FieldAssignmentLogicalFunction> getMapFunction() const;
+    [[nodiscard]] const FieldAssignmentLogicalFunction& getMapFunction() const;
 
     /// @brief Infers the schema of the map operator. We support two cases:
     /// 1. the assignment statement manipulates a already existing field. In this case the data type of the field can change.
@@ -40,11 +38,9 @@ public:
     /// @throws throws exception if inference was not possible.
     /// @param typeInferencePhaseContext needed for stamp inferring
     /// @return true if inference was possible
-    [[nodiscard]] bool inferSchema() override;
+    //[[nodiscard]] bool inferSchema();
 
-    [[nodiscard]] bool operator==(const Operator& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::shared_ptr<Operator> clone() const override;
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
@@ -65,7 +61,21 @@ public:
 protected:
     std::string toString() const override;
 
+    std::vector<LogicalOperator> getChildren() const override { return children; }
+    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; }
+
+    Optimizer::TraitSet getTraitSet() const override { return {}; }
+
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; }
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
 private:
-    const std::shared_ptr<FieldAssignmentLogicalFunction> mapFunction;
+    static constexpr std::string_view NAME = "Map";
+    LogicalFunction mapFunction;
+
+    std::vector<LogicalOperator> children;
+    Schema inputSchema, outputSchema;
 };
 }

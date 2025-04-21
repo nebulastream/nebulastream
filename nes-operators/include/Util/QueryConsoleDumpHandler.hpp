@@ -31,21 +31,19 @@ public:
     static std::shared_ptr<QueryConsoleDumpHandler> create(std::ostream& out);
     explicit QueryConsoleDumpHandler(std::ostream& out);
 
-    void dump(std::shared_ptr<Operator> node);
-    void multilineDump(const std::shared_ptr<Operator>& node);
+    void dump(const LogicalOperator& node);
+    void multilineDump(const LogicalOperator& node);
 
-    /**
-     * @brief Dump a query plan with a specific context and scope.
-     * @param context the context
-     * @param scope the scope
-     * @param plan the query plan
-     */
-    void dump(const std::string& context, const std::string& scope, const std::shared_ptr<QueryPlan>& plan);
+    /// @brief Dump a query plan with a specific context and scope.
+    /// @param context the context
+    /// @param scope the scope
+    /// @param plan the query plan
+    void dump(std::string context, std::string scope, QueryPlan plan);
 
 private:
     std::ostream& out;
-    void dumpHelper(const std::shared_ptr<Operator>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
-    void multilineDumpHelper(const std::shared_ptr<Operator>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
+    void dumpHelper(const LogicalOperator& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
+    void multilineDumpHelper(const LogicalOperator& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
 };
 
 }

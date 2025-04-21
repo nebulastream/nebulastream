@@ -14,26 +14,32 @@
 
 #pragma once
 
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 
 namespace NES
 {
-
-class MulLogicalFunction final : public BinaryLogicalFunction
+class MulLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    explicit MulLogicalFunction(std::shared_ptr<DataType> stamp);
-    ~MulLogicalFunction() noexcept override = default;
-    static std::shared_ptr<LogicalFunction>
-    create(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right);
-    [[nodiscard]] bool operator==(const std::shared_ptr<LogicalFunction>& rhs) const override;
-    std::shared_ptr<LogicalFunction> clone() const override;
+    static constexpr std::string_view NAME = "Mul";
 
-protected:
+    MulLogicalFunction(LogicalFunction left, LogicalFunction right);
+    MulLogicalFunction(const MulLogicalFunction& other);
+    ~MulLogicalFunction() noexcept override = default;
+
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const;
+
+    const DataType& getStamp() const override { return *stamp; };
+    void setStamp(std::shared_ptr<DataType> stamp) override { this->stamp = stamp; };
+    std::vector<LogicalFunction> getChildren() const override { return {left, right}; };
+    std::string getType() const override { return std::string(NAME); }
     [[nodiscard]] std::string toString() const override;
 
 private:
-    explicit MulLogicalFunction(MulLogicalFunction* other);
+    std::shared_ptr<DataType> stamp;
+    LogicalFunction left, right;
 };
-
 }
+FMT_OSTREAM(NES::MulLogicalFunction);

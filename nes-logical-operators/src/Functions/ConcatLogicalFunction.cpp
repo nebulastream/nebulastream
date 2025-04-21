@@ -13,49 +13,38 @@
 */
 
 #include <memory>
-#include <utility>
-#include <Functions/BinaryLogicalFunction.hpp>
+#include <Abstract/LogicalFunction.hpp>
 #include <Functions/ConcatLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
 #include <fmt/format.h>
-#include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES
 {
 
-ConcatLogicalFunction::ConcatLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right)
-    : BinaryLogicalFunction(left->getStamp()->join(right->getStamp()), left, right)
+ConcatLogicalFunction::ConcatLogicalFunction(LogicalFunction left, LogicalFunction right)
+    : stamp(left.getStamp().join(right.getStamp())), left(left), right(right)
 {
-    PRECONDITION(
-        NES::Util::instanceOf<VariableSizedDataType>(getLeftChild()->getStamp())
-            and NES::Util::instanceOf<VariableSizedDataType>(getRightChild()->getStamp()),
-        "Expected VariableSizedDataTypes");
 }
 
-
-std::shared_ptr<LogicalFunction> ConcatLogicalFunction::clone() const
+ConcatLogicalFunction::ConcatLogicalFunction(const ConcatLogicalFunction& other)
+    : stamp(other.stamp->clone()), left(other.left), right(other.right)
 {
-    return std::make_shared<ConcatLogicalFunction>(
-        Util::as<LogicalFunction>(getLeftChild())->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
 }
 
-bool ConcatLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
+bool ConcatLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (NES::Util::instanceOf<ConcatLogicalFunction>(rhs))
+    if (auto other = dynamic_cast<const ConcatLogicalFunction*>(&rhs))
     {
-        const auto otherMulNode = NES::Util::as<ConcatLogicalFunction>(rhs);
-        return getLeftChild() == otherMulNode->getLeftChild() and getRightChild() == otherMulNode->getRightChild();
+        return left == other->left and left == other->right;
     }
     return false;
 }
 
 std::string ConcatLogicalFunction::toString() const
 {
-    return fmt::format("Concat({}, {})", *getLeftChild(), *getRightChild());
+    return fmt::format("Concat({}, {})", left, right);
 }
 
 SerializableFunction ConcatLogicalFunction::serialize() const
@@ -65,13 +54,19 @@ SerializableFunction ConcatLogicalFunction::serialize() const
 
     auto* funcDesc = new SerializableFunction_BinaryFunction();
     auto* leftChild = funcDesc->mutable_leftchild();
-    leftChild->CopyFrom(getLeftChild()->serialize());
+    leftChild->CopyFrom(left.serialize());
     auto* rightChild = funcDesc->mutable_rightchild();
-    rightChild->CopyFrom(getRightChild()->serialize());
+    rightChild->CopyFrom(right.serialize());
 
-    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+    DataTypeSerializationUtil::serializeDataType(getStamp(), serializedFunction.mutable_stamp());
 
     return serializedFunction;
+}
+
+BinaryLogicalFunctionRegistryReturnType
+BinaryLogicalFunctionGeneratedRegistrar::RegisterConcatBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return ConcatLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
 }

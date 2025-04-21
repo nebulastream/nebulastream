@@ -14,8 +14,7 @@
 
 #pragma once
 
-
-#include "Operators/UnaryLogicalOperator.hpp"
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
@@ -24,34 +23,42 @@ namespace NES
 /// In the LogicalSourceExpansionRule, we use the logical source name as input to the source catalog, to retrieve all (physical) source descriptors
 /// configured for the specific logical source name. We then expand 1 SourceNameLogicalOperator to N SourceDescriptorLogicalOperators,
 /// one SourceDescriptorLogicalOperator for each descriptor found in the source catalog with the logical source name as input.
-class SourceNameLogicalOperator : public UnaryLogicalOperator
+class SourceNameLogicalOperator : public LogicalOperatorConcept
 {
 public:
     explicit SourceNameLogicalOperator(std::string logicalSourceName);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema);
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
-    bool inferSchema() override;
+    bool inferSchema();
 
-    [[nodiscard]] bool operator==(const Operator& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
 
-    std::shared_ptr<Operator> clone() const override;
-    void inferInputOrigins() override;
+    void inferInputOrigins();
 
-    [[nodiscard]] std::string getLogicalSourceName() const;
-    [[nodiscard]] std::shared_ptr<Schema> getSchema() const;
-    void setSchema(std::shared_ptr<Schema> schema);
+    [[nodiscard]] Schema getSchema() const;
+    void setSchema(const Schema& schema);
 
     [[nodiscard]] SerializableOperator serialize() const override;
-
-protected:
     [[nodiscard]] std::string toString() const override;
+
+    [[nodiscard]] std::string getLogicalSourceName() const;
+
+    std::vector<LogicalOperator> getChildren() const override { return children; };
+    void setChildren(std::vector<LogicalOperator> children) override { this->children = children; };
+    Optimizer::TraitSet getTraitSet() const override { return {}; };
+
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
+    std::vector<Schema> getInputSchemas() const override { return {schema}; };
+    Schema getOutputSchema() const override { return schema; };
 
 private:
     std::string logicalSourceName;
-    std::shared_ptr<Schema> schema;
+    std::vector<LogicalOperator> children;
+    Schema schema;
 };
 
 }

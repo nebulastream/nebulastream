@@ -15,41 +15,41 @@
 #pragma once
 
 #include <memory>
+#include <Abstract/LogicalFunction.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES
 {
 
 /// The projection operator only narrows down the fields of an input schema to a smaller subset. The map operator handles renaming and adding new fields.
-class ProjectionLogicalOperator : public UnaryLogicalOperator
+class ProjectionLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    static constexpr std::string_view NAME = "Projection";
-
-    explicit ProjectionLogicalOperator(std::vector<std::shared_ptr<LogicalFunction>> functions, OperatorId id);
+    explicit ProjectionLogicalOperator(std::vector<LogicalFunction> functions);
     ~ProjectionLogicalOperator() override = default;
+    std::string_view getName() const noexcept override;
 
-    const std::vector<std::shared_ptr<LogicalFunction>>& getFunctions() const;
+    const std::vector<LogicalFunction>& getFunctions() const;
 
-    [[nodiscard]] bool operator==(const Operator& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
 
-
-    bool inferSchema() override;
-    std::shared_ptr<Operator> clone() const override;
+    bool inferSchema();
 
     [[nodiscard]] SerializableOperator serialize() const override;
 
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
 
+    std::vector<LogicalOperator> getChildren() const override { return {}; };
+    void setChildren(std::vector<LogicalOperator>) override{};
+    Optimizer::TraitSet getTraitSet() const override { return {}; };
+
     struct ConfigParameters
     {
-        static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> PROJECTION_FUNCTION_NAME{
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> PROJECTION_FUNCTION_NAME{
             "projectionFunctionName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-                return Configurations::DescriptorConfig::tryGet(PROJECTION_FUNCTION_NAME, config);
+                return NES::Configurations::DescriptorConfig::tryGet(PROJECTION_FUNCTION_NAME, config);
             }};
 
         static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
@@ -59,8 +59,15 @@ public:
 protected:
     [[nodiscard]] std::string toString() const override;
 
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; }
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override { return {}; }
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
 private:
-    std::vector<std::shared_ptr<LogicalFunction>> functions;
+    static constexpr std::string_view NAME = "Projection";
+    std::vector<LogicalFunction> functions;
+    Schema inputSchema, outputSchema;
 };
 
 }

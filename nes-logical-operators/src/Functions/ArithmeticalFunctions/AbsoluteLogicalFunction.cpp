@@ -12,35 +12,31 @@
     limitations under the License.
 */
 
-#include <cmath>
+#include <memory>
+#include <sstream>
 #include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/StdInt.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <LogicalFunctionRegistry.hpp>
+#include <SerializableFunction.pb.h>
 
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Abs") {};
-
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(AbsoluteLogicalFunction* other) : UnaryLogicalFunction(other)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child)
 {
 }
 
-std::shared_ptr<LogicalFunction> AbsoluteLogicalFunction::create(const std::shared_ptr<LogicalFunction>& child)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(const AbsoluteLogicalFunction& other) : stamp(other.stamp), child(other.child)
 {
-    auto absNode = std::make_shared<AbsoluteLogicalFunction>(child->getStamp());
-    absNode->setChild(child);
-    return absNode;
 }
 
-bool AbsoluteLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
+bool AbsoluteLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (NES::Util::instanceOf<AbsoluteLogicalFunction>(rhs))
+    auto other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherAbsNode = NES::Util::as<AbsoluteLogicalFunction>(rhs);
-        return getChild()->equal(otherAbsNode->getChild());
+        return child == other->child;
     }
     return false;
 }
@@ -48,13 +44,27 @@ bool AbsoluteLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>&
 std::string AbsoluteLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "ABS(" << *getChild() << ")";
+    ss << "ABS(" << child << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> AbsoluteLogicalFunction::clone() const
+SerializableFunction AbsoluteLogicalFunction::serialize() const
 {
-    return AbsoluteLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* funcChild = funcDesc->mutable_child();
+    funcChild->CopyFrom(child.serialize());
+
+    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
+UnaryLogicalFunctionRegistryReturnType
+UnaryLogicalFunctionGeneratedRegistrar::RegisterAbsoluteUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+{
+    return AbsoluteLogicalFunction(arguments.children[0]);
 }
 
 }

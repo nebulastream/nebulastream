@@ -10,19 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-logical-operators
-        FunctionSerializationUtil.cpp
-        LogicalFunction.cpp
-        LogicalFunction.cpp
-        CaseLogicalFunction.cpp
-        ConstantValueLogicalFunction.cpp
-        FieldAccessLogicalFunction.cpp
-        FieldAssignmentLogicalFunction.cpp
-        RenameLogicalFunction.cpp
-        LogicalFunction.cpp
-        WhenLogicalFunction.cpp
-        UnaryLogicalFunction.cpp
-        BinaryLogicalFunction.cpp
-)
 add_subdirectory(LogicalFunctions)
 add_subdirectory(ArithmeticalFunctions)
+
+add_plugin(ConstantValue LogicalFunction nes-logical-operators ConstantValueLogicalFunction.cpp)
+add_plugin(FieldAccess LogicalFunction nes-logical-operators FieldAccessLogicalFunction.cpp)
+add_plugin(FieldAssignment LogicalFunction nes-logical-operators FieldAssignmentLogicalFunction.cpp)
+add_plugin(Rename LogicalFunction nes-logical-operators RenameLogicalFunction.cpp)
+add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)

@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <memory>
-#include <utility>
+#include <Abstract/LogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/RoundLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
@@ -26,25 +25,18 @@
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(std::shared_ptr<DataType> stamp) : UnaryLogicalFunction(std::move(stamp), "Round") {};
+RoundLogicalFunction::RoundLogicalFunction(LogicalFunction child) : stamp(child.getStamp().clone()), child(child) {};
 
-RoundLogicalFunction::RoundLogicalFunction(RoundLogicalFunction* other) : UnaryLogicalFunction(other)
+RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : stamp(other.stamp->clone()), child(other.child)
 {
 }
 
-std::shared_ptr<LogicalFunction> RoundLogicalFunction::create(const std::shared_ptr<LogicalFunction>& child)
+bool RoundLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto roundNode = std::make_shared<RoundLogicalFunction>(child->getStamp());
-    roundNode->setChild(child);
-    return roundNode;
-}
-
-bool RoundLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rhs) const
-{
-    if (NES::Util::instanceOf<RoundLogicalFunction>(rhs))
+    auto other = dynamic_cast<const RoundLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto otherRoundNode = NES::Util::as<RoundLogicalFunction>(rhs);
-        return getChild()->equal(otherRoundNode->getChild());
+        return child == other->getChildren()[0];
     }
     return false;
 }
@@ -52,12 +44,27 @@ bool RoundLogicalFunction::operator==(const std::shared_ptr<LogicalFunction>& rh
 std::string RoundLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "ROUND(" << *getChild() << ")";
+    ss << "ROUND(" << child << ")";
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> RoundLogicalFunction::clone() const
+SerializableFunction RoundLogicalFunction::serialize() const
 {
-    return RoundLogicalFunction::create(Util::as<LogicalFunction>(getChild())->clone());
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child_ = funcDesc->mutable_child();
+    child_->CopyFrom(child.serialize());
+
+    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
 }
+
+UnaryLogicalFunctionRegistryReturnType
+UnaryLogicalFunctionGeneratedRegistrar::RegisterRoundUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+{
+    return RoundLogicalFunction(arguments.children[0]);
+}
+
 }

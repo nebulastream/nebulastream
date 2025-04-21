@@ -12,37 +12,33 @@
     limitations under the License.
 */
 
-#include "Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp"
-#include <memory>
-#include <sstream>
+#include <string>
+#include <string_view>
 #include <utility>
-#include "API/Schema.hpp"
-#include "ErrorHandling.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <API/Schema.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const OperatorId id)
-    : Operator(id), UnaryLogicalOperator(id), logicalSourceName(std::move(logicalSourceName))
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName) : logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, const OperatorId id)
-    : Operator(id), UnaryLogicalOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
 
-bool SourceNameLogicalOperator::isIdentical(const Operator& rhs) const
+bool SourceNameLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    return *this == rhs && dynamic_cast<const SourceNameLogicalOperator*>(&rhs)->getId() == id;
-}
-
-bool SourceNameLogicalOperator::operator==(const Operator& rhs) const
-{
-    if (auto rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs))
+    if (auto* rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs))
     {
-        return this->getSchema() == rhsOperator->getSchema() && this->getLogicalSourceName() == rhsOperator->getLogicalSourceName();
+        return this->getSchema() == rhsOperator->getSchema() && this->getName() == rhsOperator->getName();
     }
     return false;
 }
@@ -52,39 +48,29 @@ std::string SourceNameLogicalOperator::toString() const
     return fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
 }
 
-bool SourceNameLogicalOperator::inferSchema()
-{
-    inputSchema = schema;
-    outputSchema = schema;
-    return true;
-}
-
-std::shared_ptr<Operator> SourceNameLogicalOperator::clone() const
-{
-    auto copy = std::make_shared<SourceNameLogicalOperator>(logicalSourceName, id);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    return copy;
-}
-
-
 void SourceNameLogicalOperator::inferInputOrigins()
 {
     /// Data sources have no input origins.
     NES_INFO("Data sources have no input origins, so inferInputOrigins is a noop.");
 }
 
-std::string SourceNameLogicalOperator::getLogicalSourceName() const
+std::string_view SourceNameLogicalOperator::getName() const noexcept
 {
     return logicalSourceName;
 }
-std::shared_ptr<Schema> SourceNameLogicalOperator::getSchema() const
+
+Schema SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
-void SourceNameLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
+void SourceNameLogicalOperator::setSchema(const Schema& schema)
 {
-    this->schema = std::move(schema);
+    this->schema = schema;
+}
+
+SerializableOperator SourceNameLogicalOperator::serialize() const
+{
+    PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined");
 }
 
 }

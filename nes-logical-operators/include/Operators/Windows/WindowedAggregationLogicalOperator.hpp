@@ -16,46 +16,39 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include "Operators/LogicalOperator.hpp"
-#include "Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp"
-#include "WindowOperator.hpp"
-#include "WindowTypes/Types/WindowType.hpp"
+#include <Operators/LogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Operators/Windows/WindowOperator.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES
 {
 
-class WindowedAggregationLogicalOperator : public WindowOperator
+class WindowedAggregationLogicalOperator final : public WindowOperator
 {
 public:
     WindowedAggregationLogicalOperator(
-        std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey,
-        std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation,
-        std::unique_ptr<Windowing::WindowType> windowType);
+        std::vector<FieldAccessLogicalFunction> onKey,
+        std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation,
+        std::shared_ptr<Windowing::WindowType> windowType);
     virtual ~WindowedAggregationLogicalOperator() = default;
 
     std::string_view getName() const noexcept override;
 
-    [[nodiscard]] bool operator==(const Operator& rhs) const override;
-    [[nodiscard]] bool isIdentical(const Operator& rhs) const override;
-    std::unique_ptr<Operator> clone() const override;
-    bool inferSchema() override;
+    [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
+    //bool inferSchema() override;
 
     std::vector<std::string> getGroupByKeyNames() const;
 
     bool isKeyed() const;
 
-    [[nodiscard]] const std::vector<std::unique_ptr<WindowAggregationLogicalFunction>>& getWindowAggregation() const;
-    void setWindowAggregation(std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation);
+    [[nodiscard]] const std::vector<std::shared_ptr<WindowAggregationLogicalFunction>>& getWindowAggregation() const;
+    void setWindowAggregation(std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation);
 
     [[nodiscard]] Windowing::WindowType& getWindowType() const;
     void setWindowType(std::unique_ptr<Windowing::WindowType> windowType);
 
-    [[nodiscard]] const std::vector<std::unique_ptr<FieldAccessLogicalFunction>>& getKeys() const;
-    void setOnKey(std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKeys);
-
-    [[nodiscard]] OriginId getOriginId() const;
-    const std::vector<OriginId>& getInputOriginIds() const;
-    void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
+    [[nodiscard]] const std::vector<FieldAccessLogicalFunction>& getKeys() const;
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
@@ -63,16 +56,26 @@ public:
     [[nodiscard]] SerializableOperator serialize() const override;
     std::string toString() const override;
 
+    std::vector<Schema> getInputSchemas() const override { return {inputSchema}; };
+    Schema getOutputSchema() const override { return outputSchema; }
+    std::vector<std::vector<OriginId>> getInputOriginIds() const override;
+    std::vector<OriginId> getOutputOriginIds() const override { return {}; }
+
+    std::vector<LogicalOperator> getChildren() const override { return {}; };
+    void setChildren(std::vector<LogicalOperator>) override { }
+    Optimizer::TraitSet getTraitSet() const override { return {}; }
+
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
-    std::vector<std::unique_ptr<WindowAggregationLogicalFunction>> windowAggregation;
-    std::unique_ptr<Windowing::WindowType> windowType;
-    std::vector<std::unique_ptr<FieldAccessLogicalFunction>> onKey;
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
+    std::shared_ptr<Windowing::WindowType> windowType;
+    std::vector<FieldAccessLogicalFunction> onKey;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
     OriginId originId = INVALID_ORIGIN_ID;
+    Schema inputSchema, outputSchema;
 };
 
 }

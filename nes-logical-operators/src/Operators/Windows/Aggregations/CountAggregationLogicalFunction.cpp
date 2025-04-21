@@ -28,52 +28,36 @@
 namespace NES
 {
 
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(LogicalType::UINT64),
           DataTypeProvider::provideDataType(LogicalType::UINT64),
           DataTypeProvider::provideDataType(LogicalType::UINT64),
-          std::move(field))
+          field)
 {
     this->aggregationType = Type::Count;
 }
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(
-    std::unique_ptr<LogicalFunction> field, std::unique_ptr<LogicalFunction> asField)
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(LogicalFunction field, LogicalFunction asField)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(LogicalType::UINT64),
           DataTypeProvider::provideDataType(LogicalType::UINT64),
           DataTypeProvider::provideDataType(LogicalType::UINT64),
-          std::move(field),
-          std::move(asField))
+          field,
+          asField)
 {
     this->aggregationType = Type::Count;
 }
 
-std::unique_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(
-    std::unique_ptr<FieldAccessLogicalFunction> onField, std::unique_ptr<FieldAccessLogicalFunction> asField)
-{
-    return std::make_unique<CountAggregationLogicalFunction>(std::move(onField), std::move(asField));
-}
-
-std::unique_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(std::unique_ptr<LogicalFunction> onField)
-{
-    if (!dynamic_cast<FieldAccessLogicalFunction*>(onField.get()))
-    {
-        throw DifferentFieldTypeExpected("Query: window key has to be a FieldAccessFunction but it was " + onField->toString());
-    }
-    std::unique_ptr<FieldAccessLogicalFunction> fieldAccess(static_cast<FieldAccessLogicalFunction*>(onField.release()));
-    return std::make_unique<CountAggregationLogicalFunction>(std::move(fieldAccess));
-}
-
+/*
 void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     const auto attributeNameResolver = schema.getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    const auto asFieldName = dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->getFieldName();
+    const auto asFieldName = dynamic_cast<FieldAccessLogicalFunction*>(asField)->getFieldName();
 
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        dynamic_cast<FieldAccessLogicalFunction*>(asField.get())->setFieldName(attributeNameResolver + asFieldName);
+        dynamic_cast<FieldAccessLogicalFunction*>(asField)->setFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
@@ -85,10 +69,11 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
     onField->setStamp(DataTypeProvider::provideDataType(LogicalType::UINT64));
     asField->setStamp(onField->getStamp().clone());
 }
+ */
 
 std::unique_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::clone()
 {
-    return std::make_unique<CountAggregationLogicalFunction>(onField->clone(), asField->clone());
+    return std::make_unique<CountAggregationLogicalFunction>(onField, asField);
 }
 
 NES::SerializableAggregationFunction CountAggregationLogicalFunction::serialize() const
@@ -97,10 +82,10 @@ NES::SerializableAggregationFunction CountAggregationLogicalFunction::serialize(
     serializedAggregationFunction.set_type(NAME);
 
     auto* onFieldFuc = new SerializableFunction();
-    FunctionSerializationUtil::serializeFunction(onField, onFieldFuc);
+    onFieldFuc->CopyFrom(onField.serialize());
 
     auto* asFieldFuc = new SerializableFunction();
-    FunctionSerializationUtil::serializeFunction(asField, asFieldFuc);
+    asFieldFuc->CopyFrom(asField.serialize());
 
     serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
     serializedAggregationFunction.set_allocated_on_field(onFieldFuc);

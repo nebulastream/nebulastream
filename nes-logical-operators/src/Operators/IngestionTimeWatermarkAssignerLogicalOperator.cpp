@@ -15,11 +15,8 @@
 #include <memory>
 #include <sstream>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
-
-#include "LogicalOperatorRegistry.hpp"
 
 namespace NES
 {
@@ -46,66 +43,14 @@ bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOper
     return false;
 }
 
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+bool IngestionTimeWatermarkAssignerLogicalOperator::inferSchema()
 {
-    auto copy = *this;
-    PRECONDITION(inputSchemas.size() == 1, "Watermark assigner should have only one input");
-    const auto& inputSchema = inputSchemas[0];
-    copy.inputSchema = inputSchema;
-    copy.outputSchema = inputSchema;
-    return copy;
-}
-
-Optimizer::TraitSet IngestionTimeWatermarkAssignerLogicalOperator::getTraitSet() const
-{
-    return {};
-}
-
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
-{
-    auto copy = *this;
-    copy.children = children;
-    return copy;
-}
-
-std::vector<Schema> IngestionTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
-{
-    return {inputSchema};
-};
-
-Schema IngestionTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
-}
-
-std::vector<std::vector<OriginId>> IngestionTimeWatermarkAssignerLogicalOperator::getInputOriginIds() const
-{
-    return {inputOriginIds};
-}
-
-std::vector<OriginId> IngestionTimeWatermarkAssignerLogicalOperator::getOutputOriginIds() const
-{
-    return outputOriginIds;
-}
-
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
-{
-    PRECONDITION(ids.size() == 1, "Watermark assigner should have only one input");
-    auto copy = *this;
-    copy.inputOriginIds = ids[0];
-    return copy;
-}
-
-LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
-{
-    auto copy = *this;
-    copy.outputOriginIds = ids;
-    return copy;
-}
-
-std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getChildren() const
-{
-    return children;
+    if (!UnaryLogicalOperator::inferSchema())
+    {
+        return false;
+    }
+    // If any additional schema inference is needed, add it here.
+    return true;
 }
 
 SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() const
