@@ -22,10 +22,8 @@
 
 namespace NES::Optimizer
 {
-/**
- * @brief This rule is defined for adding a Projection Operator before a Union Operator. Following are the conditions:
- * - If there exists a Union operator with different schemas then add on one side a project operator to make both schema equal.
- */
+/// @brief This rule is defined for adding a Projection Operator before a Union Operator. Following are the conditions:
+/// - If there exists a Union operator with different schemas then add on one side a project operator to make both schema equal.
 class ProjectBeforeUnionOperatorRule : public BaseRewriteRule
 {
 public:
@@ -36,12 +34,10 @@ public:
 private:
     ProjectBeforeUnionOperatorRule() = default;
 
-    /**
-     * @brief Construct the project operator to be added between union and one of the child.
-     * @param sourceSchema : the source schema for project.
-     * @param destinationSchema : the destination schema for project.
-     * @return std::shared_ptr<LogicalOperator>: the project operator based on source and destination schema
-     */
+    /// @brief Construct the project operator to be added between union and one of the child.
+    /// @param sourceSchema : the source schema for project.
+    /// @param destinationSchema : the destination schema for project.
+    /// @return std::shared_ptr<LogicalOperator>: the project operator based on source and destination schema
     static std::shared_ptr<LogicalOperator>
     constructProjectOperator(const std::shared_ptr<Schema>& sourceSchema, const std::shared_ptr<Schema>& destinationSchema);
 };

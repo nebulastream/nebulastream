@@ -38,9 +38,9 @@ public:
     std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) override;
 
 private:
+    static void sortChildren(const std::shared_ptr<BinaryOperator>& binaryOperator);
     ///  @brief This method takes input as a binary operator and sort the children alphabetically based on source qualifier name
-    ///  @param binaryOperator : the input binary operator
-    static void sortChildren(const std::shared_ptr<BinaryLogicalOperator>& binaryOperator);
+    static void sortChildren(const std::shared_ptr<LogicalBinaryOperator>& binaryOperator);
 
     BinaryOperatorSortRule();
 };

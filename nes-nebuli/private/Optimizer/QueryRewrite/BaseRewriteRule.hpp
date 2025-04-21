@@ -27,18 +27,14 @@ namespace NES::Optimizer
 class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule>
 {
 public:
-    /**
-     * @brief Apply the rule to the Query plan
-     * @param queryPlan: The original query plan
-     * @return The updated query plan
-     */
-    virtual std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan) = 0;
+    /// @brief Apply the rule to the Query plan
+    /// @param std::shared_ptr<QueryPlan> : The original query plan
+    /// @return The updated query plan
+    virtual std::shared_ptr<QueryPlan> apply(std::shared_ptr<QueryPlan> queryPlan);
 
-    /**
-     * @brief Checks if the current node is of type RuleType
-     * @tparam RefinementType
-     * @return bool true if node is of RuleType
-     */
+    /// @brief Checks if the current node is of type RuleType/
+    /// @tparam RefinementType
+    /// @return bool true if node is of RuleType
     template <class RefinementType>
     bool instanceOf()
     {

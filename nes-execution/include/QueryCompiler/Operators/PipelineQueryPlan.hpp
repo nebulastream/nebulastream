@@ -22,10 +22,9 @@
 
 namespace NES::QueryCompilation
 {
-/**
- * @brief Representation of a query plan, which consists of a set of OperatorPipelines.
- */
 class PipelineQueryPlan
+
+/// @brief Representation of a query plan, which consists of a set of OperatorPipelines.
 {
 public:
     static std::shared_ptr<PipelineQueryPlan> create(QueryId queryId = INVALID_QUERY_ID);
