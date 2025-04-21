@@ -14,7 +14,7 @@
 
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/EmitOperatorHandler.hpp>
+#include <EmitOperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <PipelineExecutionContext.hpp>
