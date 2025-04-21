@@ -27,16 +27,17 @@
 #include <ExecutionContext.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <function.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES
 {
 
 StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
+    std::shared_ptr<TupleBufferMemoryProvider> memoryProvider,
     const uint64_t operatorHandlerIndex,
     const JoinBuildSideType joinBuildSide,
-    std::unique_ptr<TimeFunction> timeFunction,
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
-    : WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction)), joinBuildSide(joinBuildSide), memoryProvider(memoryProvider)
+    std::unique_ptr<TimeFunction> timeFunction)
+    : WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction)),  joinBuildSide(joinBuildSide), memoryProvider(std::move(memoryProvider))
 {
 }
 }

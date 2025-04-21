@@ -35,7 +35,7 @@ public:
         std::unique_ptr<PhysicalType> resultType,
         Functions::PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);
+        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -50,7 +50,7 @@ public:
     ~MedianAggregationFunction() override = default;
 
 private:
-    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector;
+    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector;
 };
 
 }

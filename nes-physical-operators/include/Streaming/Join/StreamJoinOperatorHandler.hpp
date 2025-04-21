@@ -37,8 +37,8 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-        const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider);
+        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
+        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider);
 
 protected:
     void triggerSlices(

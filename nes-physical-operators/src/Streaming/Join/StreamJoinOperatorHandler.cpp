@@ -30,11 +30,11 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
+    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
+    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
-    , leftMemoryProvider(leftMemoryProvider)
-    , rightMemoryProvider(rightMemoryProvider)
+    , leftMemoryProvider(std::move(leftMemoryProvider))
+    , rightMemoryProvider(std::move(rightMemoryProvider))
 {
 }
 

@@ -37,7 +37,7 @@ MedianAggregationFunction::MedianAggregationFunction(
     std::unique_ptr<PhysicalType> resultType,
     Functions::PhysicalFunction inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
+    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , memProviderPagedVector(std::move(memProviderPagedVector))
 {
@@ -77,7 +77,7 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, std::move(memProviderPagedVector), pipelineMemoryProvider.bufferProvider);
-    const auto allFieldNames = memProviderPagedVector->getMemoryLayout().getSchema().getFieldNames();
+    const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema().getFieldNames();
     const auto numberOfEntries = invoke(
         +[](const Nautilus::Interface::PagedVector* pagedVector)
         {
