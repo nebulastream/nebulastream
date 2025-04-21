@@ -15,7 +15,7 @@
 #pragma once
 
 #include <API/Schema.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 
 namespace NES

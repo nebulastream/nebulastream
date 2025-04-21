@@ -14,11 +14,11 @@
 
 #include <memory>
 #include <sstream>
-#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <SerializableFunction.pb.h>
-#include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <../../include/Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
+#include <../../../nes-common/include/Util/Common.hpp>
+#include <../../../cmake-build-debug-docker/grpc_generated_src/SerializableFunction.pb.h>
+#include <../../../nes-data-types/include/Serialization/DataTypeSerializationUtil.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {

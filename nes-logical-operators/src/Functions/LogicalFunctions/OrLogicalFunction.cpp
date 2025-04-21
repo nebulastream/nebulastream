@@ -15,7 +15,7 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -59,7 +59,7 @@ LogicalFunction OrLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) co
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 std::vector<LogicalFunction> OrLogicalFunction::getChildren() const

@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <Functions/ArithmeticalFunctions/RoundLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
@@ -58,7 +58,7 @@ LogicalFunction RoundLogicalFunction::withStamp(std::shared_ptr<DataType> stamp)
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction RoundLogicalFunction::withInferredStamp(Schema schema) const

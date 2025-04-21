@@ -57,7 +57,7 @@ LogicalFunction GreaterLogicalFunction::withStamp(std::shared_ptr<DataType> stam
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction GreaterLogicalFunction::withInferredStamp(Schema schema) const {

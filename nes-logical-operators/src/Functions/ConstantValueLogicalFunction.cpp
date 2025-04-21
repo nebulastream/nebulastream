@@ -17,7 +17,7 @@
 #include <string>
 #include <utility>
 #include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <SerializableFunction.pb.h>
@@ -44,7 +44,7 @@ LogicalFunction ConstantValueLogicalFunction::withStamp(std::shared_ptr<DataType
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 std::vector<LogicalFunction> ConstantValueLogicalFunction::getChildren() const

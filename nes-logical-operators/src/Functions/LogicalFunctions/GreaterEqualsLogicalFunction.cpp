@@ -58,7 +58,7 @@ LogicalFunction GreaterEqualsLogicalFunction::withStamp(std::shared_ptr<DataType
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction GreaterEqualsLogicalFunction::withInferredStamp(Schema schema) const

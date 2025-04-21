@@ -15,7 +15,7 @@
 #include <memory>
 #include <sstream>
 #include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
@@ -56,7 +56,7 @@ LogicalFunction EqualsLogicalFunction::withStamp(std::shared_ptr<DataType> stamp
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 LogicalFunction EqualsLogicalFunction::withInferredStamp(Schema schema) const

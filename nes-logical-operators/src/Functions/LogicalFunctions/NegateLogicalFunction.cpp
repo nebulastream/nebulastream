@@ -73,7 +73,7 @@ LogicalFunction NegateLogicalFunction::withStamp(std::shared_ptr<DataType> stamp
 {
     auto copy = *this;
     copy.stamp = stamp;
-    return *this;
+    return copy;
 };
 
 std::vector<LogicalFunction> NegateLogicalFunction::getChildren() const

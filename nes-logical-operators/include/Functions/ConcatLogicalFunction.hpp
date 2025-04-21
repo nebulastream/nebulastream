@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <API/Schema.hpp>
 

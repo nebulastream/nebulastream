@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <Configurations/Descriptor.hpp>
-#include <Abstract/LogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 
