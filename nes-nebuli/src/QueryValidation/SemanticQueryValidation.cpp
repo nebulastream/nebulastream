@@ -13,12 +13,11 @@
 */
 
 #include <memory>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <Util/Common.hpp>
@@ -32,20 +31,10 @@
 
 using namespace std::string_literals;
 
-namespace NES::Optimizer
+namespace NES::LegacyOptimizer
 {
-SemanticQueryValidation::SemanticQueryValidation(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
-    : sourceCatalog(sourceCatalog)
-{
-}
 
-std::shared_ptr<SemanticQueryValidation>
-SemanticQueryValidation::create(const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
-{
-    return std::make_shared<SemanticQueryValidation>(sourceCatalog);
-}
-
-void SemanticQueryValidation::validate(const std::shared_ptr<QueryPlan>& queryPlan) const
+void SemanticQueryValidation::validate(QueryPlan& queryPlan, const Catalogs::Source::SourceCatalog& sourceCatalog) const
 {
     /// check if we have valid root operators, i.e., sinks
     sinkOperatorValidityCheck(queryPlan);
@@ -56,21 +45,36 @@ void SemanticQueryValidation::validate(const std::shared_ptr<QueryPlan>& queryPl
 
     try
     {
-        const auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
-        typeInferencePhase->performTypeInferenceSources(queryPlan->getSourceOperators<SourceNameLogicalOperator>());
-        typeInferencePhase->performTypeInferenceQuery(queryPlan);
+        TypeInferencePhase::apply(queryPlan.getOperatorByType<SourceNameLogicalOperator>(), sourceCatalog);
+        TypeInferencePhase::apply(queryPlan);
     }
     catch (std::exception& e)
     {
         std::string errorMessage = e.what();
         throw QueryInvalid(errorMessage);
     }
-
-    /// check if infer model is correctly defined
-    inferModelValidityCheck(queryPlan);
 }
 
-void SemanticQueryValidation::createExceptionForPredicate(std::string& predicateString)
+void eraseAllSubStr(std::string& mainStr, const std::string& toErase)
+{
+    size_t pos = std::string::npos;
+    while ((pos = mainStr.find(toErase)) != std::string::npos)
+    {
+        mainStr.erase(pos, toErase.length());
+    }
+}
+
+void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr)
+{
+    size_t pos = data.find(toSearch);
+    while (pos != std::string::npos)
+    {
+        data.replace(pos, toSearch.size(), replaceStr);
+        pos = data.find(toSearch, pos + replaceStr.size());
+    }
+}
+
+void createExceptionForPredicate(std::string& predicateString)
 {
     /// Removing unnecessary data from the error messages for better readability
     eraseAllSubStr(predicateString, "[INTEGER]");
@@ -87,52 +91,32 @@ void SemanticQueryValidation::createExceptionForPredicate(std::string& predicate
     throw QueryInvalid("Unsatisfiable Query due to filter condition:\n" + predicateString + "\n");
 }
 
-void SemanticQueryValidation::eraseAllSubStr(std::string& mainStr, const std::string& toErase)
-{
-    size_t pos = std::string::npos;
-    while ((pos = mainStr.find(toErase)) != std::string::npos)
-    {
-        mainStr.erase(pos, toErase.length());
-    }
-}
-
-void SemanticQueryValidation::findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr)
-{
-    size_t pos = data.find(toSearch);
-    while (pos != std::string::npos)
-    {
-        data.replace(pos, toSearch.size(), replaceStr);
-        pos = data.find(toSearch, pos + replaceStr.size());
-    }
-}
-
-void SemanticQueryValidation::logicalSourceValidityCheck(
-    const std::shared_ptr<QueryPlan>& queryPlan, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
+void SemanticQueryValidation::logicalSourceValidityCheck(const QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const
 {
     /// Getting the source operators from the query plan
-    auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
+    auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
 
     for (const auto& source : sourceOperators)
     {
         /// Making sure that all logical sources are present in the source catalog
-        if (!sourceCatalog->containsLogicalSource(source->getLogicalSourceName()))
+        if (!sourceCatalog.containsLogicalSource(source.getLogicalSourceName()))
         {
-            throw QueryInvalid("The logical source '" + source->getLogicalSourceName() + "' can not be found in the SourceCatalog\n");
+            throw QueryInvalid("The logical source '" + source.getLogicalSourceName() + "' can not be found in the SourceCatalog\n");
         }
     }
 }
 
 void SemanticQueryValidation::physicalSourceValidityCheck(
-    const std::shared_ptr<QueryPlan>& queryPlan, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
+    const QueryPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog) const
 {
     /// Identify the source operators
-    auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
+    auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
     std::vector<std::string> invalidLogicalSourceNames;
     for (auto sourceOperator : sourceOperators)
     {
-        if (sourceCatalog->getPhysicalSources(sourceOperator->getLogicalSourceName()).empty())
+        if (sourceCatalog.getPhysicalSources(sourceOperator.getLogicalSourceName()).empty())
         {
-            invalidLogicalSourceNames.emplace_back(sourceOperator->getLogicalSourceName());
+            invalidLogicalSourceNames.emplace_back(sourceOperator.getLogicalSourceName());
         }
     }
 
@@ -151,59 +135,23 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     }
 }
 
-void SemanticQueryValidation::sinkOperatorValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan)
+void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlan& queryPlan) const
 {
-    auto rootOperators = queryPlan->getRootOperators();
+    auto rootOperators = queryPlan.getRootOperators();
     /// Check if root operator exists ina query plan
     if (rootOperators.empty())
     {
-        throw QueryInvalid("Query "s + queryPlan->toString() + " does not contain any root operator");
+        throw QueryInvalid("Query "s + queryPlan.toString() + " does not contain any root operator");
     }
 
     /// Check if all root operators of type sink
     for (auto& root : rootOperators)
     {
-        if (!NES::Util::instanceOf<SinkLogicalOperator>(root))
+        if (not root.tryGet<SinkLogicalOperator>())
         {
-            throw QueryInvalid("Query "s + queryPlan->toString() + " does not contain a valid sink operator as root");
+            throw QueryInvalid("Query "s + queryPlan.toString() + " does not contain a valid sink operator as root");
         }
     }
 }
 
-void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<QueryPlan>& queryPlan)
-{
-    auto inferModelOperators = queryPlan->getOperatorByType<InferModel::LogicalInferModelOperator>();
-    if (!inferModelOperators.empty())
-    {
-        std::shared_ptr<DataType> commonStamp;
-        for (const auto& inferModelOperator : inferModelOperators)
-        {
-            for (const auto& inputField : inferModelOperator->getInputFields())
-            {
-                auto field = NES::Util::as<FieldAccessLogicalFunction>(inputField);
-                if (!NES::Util::instanceOf<Numeric>(field->getStamp()) && !NES::Util::instanceOf<Boolean>(field->getStamp())
-                    && !NES::Util::instanceOf<VariableSizedDataType>(field->getStamp()))
-                {
-                    throw QueryInvalid(
-                        "SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for infer model not supported: "
-                        + field->getStamp()->toString());
-                }
-                if (!commonStamp)
-                {
-                    commonStamp = field->getStamp();
-                }
-                else
-                {
-                    commonStamp = commonStamp->join(field->getStamp());
-                }
-            }
-        }
-        NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp->toString());
-        if (NES::Util::instanceOf<Undefined>(commonStamp))
-        {
-            throw QueryInvalid("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as "
-                               "input to infer model.");
-        }
-    }
-}
 }
