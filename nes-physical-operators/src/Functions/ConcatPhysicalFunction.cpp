@@ -15,30 +15,30 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <Execution/Functions/ExecutableFunctionConcat.hpp>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <Functions/ConcatPhysicalFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
+#include <ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/std/cstring.h>
 #include <ErrorHandling.hpp>
-#include <ExecutableFunctionRegistry.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 #include <val.hpp>
 
 namespace NES::Functions
 {
 
 ExecutableFunctionConcat::ExecutableFunctionConcat(
-    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
-    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
+    std::unique_ptr<PhysicalFunction> leftFunction, std::unique_ptr<PhysicalFunction> rightFunction)
+    : leftFunction(std::move(leftFunction)), rightFunction(std::move(rightFunction))
 {
 }
 
 VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) const
 {
-    const auto leftValue = leftExecutableFunction->execute(record, arena).cast<VariableSizedData>();
-    const auto rightValue = rightExecutableFunction->execute(record, arena).cast<VariableSizedData>();
+    const auto leftValue = leftFunction->execute(record, arena).cast<VariableSizedData>();
+    const auto rightValue = rightFunction->execute(record, arena).cast<VariableSizedData>();
 
     const auto newSize = leftValue.getSize() + rightValue.getSize();
     const auto newVarSizeDataArea = arena.allocateMemory(newSize + nautilus::val<uint64_t>(sizeof(uint32_t)));
@@ -51,8 +51,7 @@ VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) 
     return newVarSizeData;
 }
 
-ExecutableFunctionRegistryReturnType ExecutableFunctionGeneratedRegistrar::RegisterConcatExecutableFunction(
-    ExecutableFunctionRegistryArguments executableFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(NES::Functions::PhysicalFunctionRegistryArguments executableFunctionRegistryArguments)
 {
     PRECONDITION(executableFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionConcat>(
