@@ -49,9 +49,8 @@ QueryCompiler::compileQuery(const std::shared_ptr<QueryCompilationRequest>& requ
     NES_INFO("Compile Query with Nautilus");
 
     /// create new context for handling debug output
-    bool dumpToConsole = queryCompilerConfig.dumpMode == Configurations::DumpMode::CONSOLE
+    const bool dumpToConsole = queryCompilerConfig.dumpMode == Configurations::DumpMode::CONSOLE
         || queryCompilerConfig.dumpMode == Configurations::DumpMode::FILE_AND_CONSOLE;
-    dumpToConsole = true;
     const auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, queryCompilerConfig.dumpPath.getValue());
 
     NES_DEBUG("compile query with id: {}", request->getDecomposedQueryPlan()->getQueryId());
