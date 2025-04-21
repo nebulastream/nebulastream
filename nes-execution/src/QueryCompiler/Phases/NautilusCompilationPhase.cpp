@@ -23,7 +23,7 @@
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
+#include <QueryCompiler/Phases/NautilusCompilationPhase.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 
@@ -82,7 +82,7 @@ nautilus::engine::Options setNautilusOptions(const Configurations::QueryCompiler
     return options;
 }
 
-std::shared_ptr<OperatorPipeline> NautilusCompilationPhase::apply(std::shared_ptr<OperatorPipeline> pipeline) const
+std::shared_ptr<OperatorPipeline> NautilusCompilationPhase::apply(std::shared_ptr<OperatorPipeline> pipeline)
 {
     const auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
     PRECONDITION(pipelineRoots.size() == 1, "A nautilus pipeline should have a single root operator.");
