@@ -26,6 +26,7 @@
 #include <nautilus/val.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
+#include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <function.hpp>
 
@@ -119,14 +120,14 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     emitState->outputIndex = emitState->outputIndex + 1;
 }
 
-void DefaultEmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
+void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerIndex));
 }
 
-void DefaultEmitPhysicalOperator::emitRecordBuffer(
+void EmitPhysicalOperator::emitRecordBuffer(
     ExecutionContext& ctx,
     RecordBuffer& recordBuffer,
     const nautilus::val<uint64_t>& numRecords,
@@ -147,13 +148,13 @@ void DefaultEmitPhysicalOperator::emitRecordBuffer(
     }
 }
 
-DefaultEmitPhysicalOperator::DefaultEmitPhysicalOperator(
+EmitPhysicalOperator::EmitPhysicalOperator(
     OperatorHandlerId operatorHandlerIndex, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : memoryProvider(std::move(memoryProvider)), operatorHandlerIndex(operatorHandlerIndex)
 {
 }
 
-[[nodiscard]] uint64_t DefaultEmitPhysicalOperator::getMaxRecordsPerBuffer() const
+[[nodiscard]] uint64_t EmitPhysicalOperator::getMaxRecordsPerBuffer() const
 {
     return memoryProvider->getMemoryLayout()->getCapacity();
 }

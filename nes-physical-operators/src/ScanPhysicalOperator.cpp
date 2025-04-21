@@ -19,19 +19,19 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
 #include <Util/StdInt.hpp>
-#include <DefaultScanPhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
+#include <ScanPhysicalOperator.hpp>
 
 namespace NES
 {
 
-DefaultScanPhysicalOperator::DefaultScanPhysicalOperator(
+ScanPhysicalOperator::ScanPhysicalOperator(
     std::shared_ptr<TupleBufferMemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {
 }
 
-void DefaultScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
