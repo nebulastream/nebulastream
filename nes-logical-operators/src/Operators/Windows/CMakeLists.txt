@@ -10,11 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Aggregations)
+
 add_source_files(nes-logical-operators
-        LogicalWindowDescriptor.cpp
-        WindowLogicalOperator.cpp
         WindowOperator.cpp
 )
 
-add_subdirectory(Aggregations)
-add_subdirectory(Joins)
+add_plugin(WindowedAggregation LogicalOperator nes-logical-operators WindowedAggregationLogicalOperator.cpp)
+add_plugin(Join LogicalOperator nes-logical-operators JoinLogicalOperator.cpp)

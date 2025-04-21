@@ -16,34 +16,36 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES::Windowing
 {
 
-class AvgAggregationDescriptor : public WindowAggregationDescriptor
+class SumAggregationFunction : public WindowAggregationFunction
 {
 public:
-    /// Factory method to creates a avg aggregation on a particular field.
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<NodeFunction>& onField);
+    static constexpr std::string_view NAME = "Sum";
 
-    static std::shared_ptr<WindowAggregationDescriptor>
-    create(std::shared_ptr<NodeFunctionFieldAccess> onField, std::shared_ptr<NodeFunctionFieldAccess> asField);
+    virtual ~SumAggregationFunction() = default;
+
+    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
+    static std::shared_ptr<WindowAggregationFunction>
+    create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
 
-    std::shared_ptr<WindowAggregationDescriptor> copy() override;
+    std::shared_ptr<WindowAggregationFunction> clone() override;
 
     std::shared_ptr<DataType> getInputStamp() override;
     std::shared_ptr<DataType> getPartialAggregateStamp() override;
     std::shared_ptr<DataType> getFinalAggregateStamp() override;
 
-    virtual ~AvgAggregationDescriptor() = default;
+    NES::SerializableAggregationFunction serialize() const override;
 
 private:
-    explicit AvgAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
-    AvgAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
+    explicit SumAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    SumAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
 };
 }

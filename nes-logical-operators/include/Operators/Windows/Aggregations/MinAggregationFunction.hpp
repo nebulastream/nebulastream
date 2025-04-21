@@ -16,33 +16,36 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
 {
 
-class SumAggregationDescriptor : public WindowAggregationDescriptor
+class MinAggregationFunction : public WindowAggregationFunction
 {
 public:
-    virtual ~SumAggregationDescriptor() = default;
+    static constexpr std::string_view NAME = "Min";
 
-    static std::shared_ptr<WindowAggregationDescriptor> on(const std::shared_ptr<LogicalFunction>& onField);
-    static std::shared_ptr<WindowAggregationDescriptor>
+    static std::shared_ptr<WindowAggregationFunction> on(const std::shared_ptr<LogicalFunction>& onField);
+
+    static std::shared_ptr<WindowAggregationFunction>
     create(std::shared_ptr<FieldAccessLogicalFunction> onField, std::shared_ptr<FieldAccessLogicalFunction> asField);
 
     void inferStamp(const Schema& schema) override;
-
-    std::shared_ptr<WindowAggregationDescriptor> clone() override;
-
+    std::shared_ptr<WindowAggregationFunction> clone() override;
     std::shared_ptr<DataType> getInputStamp() override;
     std::shared_ptr<DataType> getPartialAggregateStamp() override;
     std::shared_ptr<DataType> getFinalAggregateStamp() override;
 
+    virtual ~MinAggregationFunction() = default;
+
+    NES::SerializableAggregationFunction serialize() const override;
+
 private:
-    explicit SumAggregationDescriptor(std::shared_ptr<FieldAccessLogicalFunction> onField);
-    SumAggregationDescriptor(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
+    explicit MinAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> onField);
+    MinAggregationFunction(std::shared_ptr<LogicalFunction> onField, std::shared_ptr<LogicalFunction> asField);
 };
 }
