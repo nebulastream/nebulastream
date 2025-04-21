@@ -25,7 +25,7 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalIngestionTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<IngestionTimeWatermarkAssignerLogicalOperator>(), "Expected a IngestionTimeWatermarkAssigner");
     auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());

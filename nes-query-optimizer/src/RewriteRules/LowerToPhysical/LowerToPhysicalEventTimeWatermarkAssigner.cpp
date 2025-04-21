@@ -24,7 +24,7 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalEventTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
     auto assigner = logicalOperator.get<EventTimeWatermarkAssignerLogicalOperator>();

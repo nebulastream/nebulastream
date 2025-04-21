@@ -17,22 +17,30 @@
 #include <memory>
 #include <vector>
 #include <Abstract/PhysicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES::Optimizer
 {
 
-struct RewriteRuleResult
+
+/// Represents the result of a rewrite rule that matched one operator to a subgraph.
+/// @Note subgraph direction: root (sink) to leaf (source)
+struct RewriteRuleResultSubgraph
 {
-    /// Top-level physical operator
-    std::shared_ptr<PhysicalOperatorWrapper> root;
-    /// Points where the following operators can attach
-    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> leafOperators;
+    using SubGraphRoot = std::shared_ptr<PhysicalOperatorWrapper>;
+    using SubGraphLeafs = std::vector<std::shared_ptr<PhysicalOperatorWrapper>>;
+
+    /// Top-level physical operator of subgraph
+    SubGraphRoot root;
+    /// Bottom-level physical operators of subgraph
+    SubGraphLeafs leafs;
 };
 
+/// Interface for rewrite rules.
+/// For now, the interface only considers lowering rules (logical operator to physical subgraph)
 struct AbstractRewriteRule
 {
-    virtual RewriteRuleResult apply(LogicalOperator logicalOperator) = 0;
+    virtual RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) = 0;
     virtual ~AbstractRewriteRule() = default;
 };
 

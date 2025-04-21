@@ -23,7 +23,7 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalSink::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<SinkLogicalOperator>(), "Expected a SinkLogicalOperator");
     auto sink = logicalOperator.get<SinkLogicalOperator>();
@@ -32,9 +32,8 @@ RewriteRuleResult LowerToPhysicalSink::apply(LogicalOperator logicalOperator)
     return {wrapper, {wrapper}};
 }
 
-std::unique_ptr<Optimizer::AbstractRewriteRule>
-RewriteRuleGeneratedRegistrar::RegisterSinkRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSinkRewriteRule(RewriteRuleRegistryArguments argument)
 {
-    return std::make_unique<NES::Optimizer::LowerToPhysicalSink>(argument.conf);
+    return std::make_unique<LowerToPhysicalSink>(argument.conf);
 }
 }

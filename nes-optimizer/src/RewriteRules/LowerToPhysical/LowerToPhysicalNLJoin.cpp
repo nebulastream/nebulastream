@@ -13,12 +13,9 @@
 */
 
 #include <memory>
-#include <utility>
 #include <Abstract/PhysicalOperator.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
-#include <Plans/Operator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -27,7 +24,7 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
     auto selection = logicalOperator.get<SelectionLogicalOperator>();

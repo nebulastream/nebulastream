@@ -21,6 +21,8 @@
 #include <Functions/FunctionProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <RewriteRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Streaming/Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
@@ -85,9 +87,9 @@ private:
 
 
 std::tuple<TimestampField, TimestampField>
-getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const Windowing::TimeBasedWindowType& windowType)
+getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, std::shared_ptr<Windowing::TimeBasedWindowType> windowType)
 {
-    if (windowType.getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
+    if (windowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
         NES_DEBUG("Skip eventime identification as we use ingestion time");
         return {TimestampField::IngestionTime(), TimestampField::IngestionTime()};
@@ -95,7 +97,7 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const Windowin
     else
     {
         /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
-        auto timeStampFieldName = windowType.getTimeCharacteristic().getField().getName();
+        auto timeStampFieldName = windowType->getTimeCharacteristic().field.getName();
         auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
         /// Lambda function for extracting the timestamp from a schema
@@ -121,76 +123,134 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const Windowin
             timeStampFieldNameWithoutSourceName);
 
         return {
-            TimestampField::EventTime(timeStampFieldNameLeft, windowType.getTimeCharacteristic().getTimeUnit()),
-            TimestampField::EventTime(timeStampFieldNameRight, windowType.getTimeCharacteristic().getTimeUnit())};
+            TimestampField::EventTime(timeStampFieldNameLeft, windowType->getTimeCharacteristic().getTimeUnit()),
+            TimestampField::EventTime(timeStampFieldNameRight, windowType->getTimeCharacteristic().getTimeUnit())};
     }
 }
 
-RewriteRuleResult LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
+void flattenAllChildrenHelper(
+    const LogicalFunction& node, std::vector<LogicalFunction>& allChildren, const LogicalFunction& excludedNode, bool allowDuplicate)
+{
+    for (const auto& currentNode : node.getChildren())
+    {
+        if (allowDuplicate)
+        {
+            allChildren.push_back(currentNode);
+            flattenAllChildrenHelper(currentNode, allChildren, excludedNode, allowDuplicate);
+        }
+        else if (currentNode != excludedNode && std::find(allChildren.begin(), allChildren.end(), currentNode) == allChildren.end())
+        {
+            allChildren.push_back(currentNode);
+            flattenAllChildrenHelper(currentNode, allChildren, excludedNode, allowDuplicate);
+        }
+    }
+}
+
+std::vector<LogicalFunction> flattenAllChildren(const LogicalFunction& current, bool withDuplicateChildren)
+{
+    std::vector<LogicalFunction> allChildren;
+    flattenAllChildrenHelper(current, allChildren, current, withDuplicateChildren);
+    return allChildren;
+}
+
+auto getJoinFieldNames(const Schema inputSchema, const LogicalFunction joinFunction)
+{
+    std::vector<std::string> joinFieldNames;
+    std::vector<std::string> fieldNamesInJoinFunction;
+    std::ranges::for_each(
+        flattenAllChildren(joinFunction, false),
+        [&fieldNamesInJoinFunction](const LogicalFunction& child)
+        {
+            if (child.tryGet<FieldAccessLogicalFunction>())
+            {
+                fieldNamesInJoinFunction.push_back(child.get<FieldAccessLogicalFunction>().getFieldName());
+            }
+        });
+
+    for (const auto& field : inputSchema)
+    {
+        if (std::ranges::find(fieldNamesInJoinFunction, field.getName()) != fieldNamesInJoinFunction.end())
+        {
+            joinFieldNames.push_back(field.getName());
+        }
+    }
+    return joinFieldNames;
+};
+
+
+RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
-
-    const auto operatorHandlerIndex = 0; // TODO this should change. In the best case we have setIndex() for all the operators.
+    PRECONDITION(logicalOperator.getInputOriginIds().size() == 2, "Expected two origin id vector");
+    PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
+    PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
 
     auto join = logicalOperator.get<JoinLogicalOperator>();
-    auto outSchema = logicalOperator.getOutputSchema();
-    auto joinFunction = ::NES::QueryCompilation::FunctionProvider::lowerFunction(join.getJoinFunction());
+    auto handlerId = getNextOperatorHandlerId();
+    /// TODO switch?
+    auto rightInputSchema = join.getInputSchemas()[0];
+    auto leftInputSchema = join.getInputSchemas()[1];
+    auto outputSchema = join.getOutputSchema();
+    auto outputOriginId = join.getOutputOriginIds()[0];
+    auto logicalJoinFunction = join.getJoinFunction();
+    auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
+    const auto pageSize = NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE;
 
-    auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
-    auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), logicalOperator.getInputSchemas()[1]);
-    auto probeMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), logicalOperator.getOutputSchema());
 
-    auto windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(&join.getWindowType());
-    auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(join, *windowType);
+    auto nested = logicalOperator.getInputOriginIds();
+    auto flat_view = nested | std::views::join;
+    std::vector inputOriginIds(flat_view.begin(), flat_view.end());
+
+    auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
+    auto leftMemoryProvider = TupleBufferMemoryProvider::create(pageSize, leftInputSchema);
+    leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(leftInputSchema, logicalJoinFunction));
+    auto rightMemoryProvider = TupleBufferMemoryProvider::create(pageSize, rightInputSchema);
+    rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
+
+    /// TODO switch
+    auto [timeStampFieldRight, timeStampFieldLeft] = getTimestampLeftAndRight(join, windowType);
 
     auto leftBuildOperator
-        = NLJBuildPhysicalOperator(leftMemoryProvider, operatorHandlerIndex, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction());
+        = NLJBuildPhysicalOperator(leftMemoryProvider, handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction());
 
-    auto rightBuildOperator = NLJBuildPhysicalOperator(
-        rightMemoryProvider, operatorHandlerIndex, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction());
+    auto rightBuildOperator
+        = NLJBuildPhysicalOperator(rightMemoryProvider, handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction());
 
-    auto leftMemoryProvider2 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), logicalOperator.getInputSchemas()[0]);
-    auto rightMemoryProvider2 = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        conf.pageSize.getValue(), logicalOperator.getInputSchemas()[1]);
-    auto joinSchema
-        = JoinSchema(logicalOperator.getInputSchemas()[0], logicalOperator.getInputSchemas()[1], logicalOperator.getOutputSchema());
+    auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator = NLJProbePhysicalOperator(
-        operatorHandlerIndex,
-        std::move(joinFunction),
+        handlerId,
+        joinFunction,
         join.getWindowStartFieldName(),
         join.getWindowEndFieldName(),
         joinSchema,
-        leftMemoryProvider2,
-        rightMemoryProvider2);
+        leftMemoryProvider,
+        rightMemoryProvider);
 
     constexpr uint64_t numberOfOriginIds = 2;
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), numberOfOriginIds);
-    auto leftMemoryProvider3
-        = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(conf.pageSize.getValue(), join.getLeftSchema());
-    auto rightMemoryProvider3
-        = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(conf.pageSize.getValue(), join.getRightSchema());
-    auto handler = NLJOperatorHandler(
-        join.getInputOriginIds()[0],
-        logicalOperator.getOutputOriginIds()[0],
-        std::move(sliceAndWindowStore),
-        leftMemoryProvider3,
-        rightMemoryProvider3);
+    auto handler = std::make_shared<NLJOperatorHandler>(
+        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), leftMemoryProvider, rightMemoryProvider);
 
-    auto probeOpWrapper
-        = std::make_shared<PhysicalOperatorWrapper>(probeOperator, logicalOperator.getOutputSchema(), logicalOperator.getOutputSchema());
-    auto rightBuildOpWrapper
-        = std::make_shared<PhysicalOperatorWrapper>(rightBuildOperator, join.getRightSchema(), logicalOperator.getOutputSchema());
-    auto leftBuildOpWrapper
-        = std::make_shared<PhysicalOperatorWrapper>(leftBuildOperator, join.getLeftSchema(), logicalOperator.getOutputSchema());
-    probeOpWrapper->children.push_back(rightBuildOpWrapper);
-    probeOpWrapper->children.push_back(leftBuildOpWrapper);
+    auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(leftBuildOperator, leftInputSchema, outputSchema);
+    leftBuildWrapper->handlerId = handlerId;
+    leftBuildWrapper->handler = handler;
+    leftBuildWrapper->isEmit = true;
 
-    return {probeOpWrapper, {rightBuildOpWrapper, leftBuildOpWrapper}};
+    auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(rightBuildOperator, rightInputSchema, outputSchema);
+    rightBuildWrapper->handlerId = handlerId;
+    rightBuildWrapper->handler = handler;
+    rightBuildWrapper->isEmit = true;
+
+    auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(probeOperator, outputSchema, outputSchema);
+    probeWrapper->handlerId = handlerId;
+    probeWrapper->handler = handler;
+    probeWrapper->isScan = true;
+
+    probeWrapper->children.push_back(leftBuildWrapper);
+    probeWrapper->children.push_back(rightBuildWrapper);
+
+    return {{probeWrapper}, {rightBuildWrapper, leftBuildWrapper}};
 };
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterJoinRewriteRule(RewriteRuleRegistryArguments argument)

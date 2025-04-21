@@ -13,17 +13,18 @@
 */
 
 #include <memory>
+#include <Abstract/PhysicalOperator.hpp>
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 #include <RewriteRuleRegistry.hpp>
-#include <SinkPhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {
 
-RewriteRuleResult LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
     auto source = logicalOperator.get<SourceDescriptorLogicalOperator>();
@@ -35,11 +36,11 @@ RewriteRuleResult LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
     auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema");
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema());
-    return {.root = wrapper, .leafOperators = {wrapper}};
+    return {wrapper, {}};
 }
 
 RewriteRuleRegistryReturnType RewriteRuleGeneratedRegistrar::RegisterSourceRewriteRule(RewriteRuleRegistryArguments argument)
 {
-    return std::make_unique<NES::Optimizer::LowerToPhysicalSource>(argument.conf);
+    return std::make_unique<LowerToPhysicalSource>(argument.conf);
 }
 }
