@@ -20,6 +20,7 @@
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
@@ -130,6 +131,11 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
 SerializableOperator SourceNameLogicalOperator::serialize() const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
+}
+
+LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterSourceNameLogicalOperator(LogicalOperatorRegistryArguments)
+{
+    throw UnsupportedOperation();
 }
 
 }

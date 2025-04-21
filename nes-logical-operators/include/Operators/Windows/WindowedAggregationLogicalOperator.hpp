@@ -78,12 +78,12 @@ private:
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation;
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<FieldAccessLogicalFunction> onKey;
-    Optimizer::OriginIdAssignerTrait originIdTrait;
+    std::string windowStartFieldName;
     std::string windowEndFieldName;
     uint64_t numberOfInputEdges = 0;
+    Optimizer::OriginIdAssignerTrait originIdTrait;
 
     /// LogicalOperatorConcept member
-    Optimizer::OriginIdAssignerTrait originIdTrait;
     std::vector<LogicalOperator> children;
     std::vector<OriginId> inputOriginIds;
     Schema inputSchema, outputSchema;
