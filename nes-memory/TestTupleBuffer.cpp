@@ -50,7 +50,7 @@ DynamicField DynamicTuple::operator[](const std::size_t fieldIndex) const
     const auto offset = memoryLayout->getFieldOffset(tupleIndex, fieldIndex);
     auto* basePointer = bufferBasePointer + offset;
     const auto& physicalType = memoryLayout->getPhysicalType(fieldIndex);
-    return DynamicField{basePointer, physicalType.clone()};
+    return DynamicField{basePointer, physicalType};
 }
 
 DynamicField DynamicTuple::operator[](std::string fieldName) const
@@ -165,7 +165,7 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
     }
     for (const auto& field : this->memoryLayout->getSchema())
     {
-        if (!other.memoryLayout->getSchema().getFieldByName(field.getName()))
+        if (!other.memoryLayout->getSchema()->getFieldByName(field.getName()))
         {
             NES_ERROR("Field with name {} is not contained in both tuples!", field.getName());
             return false;
