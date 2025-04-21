@@ -19,7 +19,9 @@
 #include <Util/Common.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -28,17 +30,15 @@ OrLogicalFunction::OrLogicalFunction(const OrLogicalFunction& other) : BinaryLog
 {
 }
 
-OrLogicalFunction::OrLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(std::move(stamp), "Or")
+OrLogicalFunction::OrLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
+    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
 }
 
-bool OrLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool OrLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<OrLogicalFunction>(rhs))
-    {
-        auto other = NES::Util::as<OrLogicalFunction>(rhs);
+    auto other = dynamic_cast<const OrLogicalFunction*>(&rhs);
+    if (other) {
         const bool simpleMatch = getLeftChild() == other->getLeftChild() and getRightChild() == other->getRightChild();
         const bool commutativeMatch = getLeftChild() == other->getRightChild() and getRightChild() == other->getLeftChild();
         return simpleMatch or commutativeMatch;
@@ -49,7 +49,7 @@ bool OrLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) 
 std::string OrLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *getLeftChild() << "||" << *getRightChild();
+    ss << getLeftChild() << "||" << getRightChild();
     return ss.str();
 }
 
@@ -59,20 +59,41 @@ void OrLogicalFunction::inferStamp(const Schema& schema)
     /// delegate stamp inference of children
     LogicalFunction::inferStamp(schema);
     /// check if children stamp is correct
-    INVARIANT(getLeftChild()->isPredicate(), "the stamp of left child must be boolean, but was: " + getLeftChild()->getStamp()->toString());
-    INVARIANT(getRightChild()->isPredicate(), "the stamp of right child must be boolean, but was: " + getRightChild()->getStamp()->toString());
+    INVARIANT(getLeftChild().isPredicate(), "the stamp of left child must be boolean, but was: " + getLeftChild().getStamp().toString());
+    INVARIANT(getRightChild().isPredicate(), "the stamp of right child must be boolean, but was: " + getRightChild().getStamp().toString());
 }
 
-std::shared_ptr<LogicalFunction> OrLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> OrLogicalFunction::clone() const
 {
-    return std::make_shared<OrLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_unique<OrLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
 }
 
 bool OrLogicalFunction::validateBeforeLowering() const
 {
-    return NES::Util::instanceOf<Boolean>(Util::as<LogicalFunction>(this->getLeftChild())->getStamp())
-        && NES::Util::instanceOf<Boolean>(Util::as<LogicalFunction>(this->getRightChild())->getStamp());
+    return dynamic_cast<Boolean*>(&getLeftChild().getStamp())
+        && dynamic_cast<Boolean*>(&getRightChild().getStamp());
 }
 
+SerializableFunction OrLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild().serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild().serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
+std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionGeneratedRegistrar::RegisterOrBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<OrLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
+}
 
 }

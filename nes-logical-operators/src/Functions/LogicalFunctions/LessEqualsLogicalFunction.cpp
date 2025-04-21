@@ -15,7 +15,9 @@
 #include <Functions/LogicalFunctions/LessEqualsLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
@@ -24,17 +26,16 @@ LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunc
 {
 }
 
-LessEqualsLogicalFunction::LessEqualsLogicalFunction(const std::shared_ptr<LogicalFunction>& left, const std::shared_ptr<LogicalFunction>& right) : BinaryLogicalFunction(DataTypeFactory::createBoolean(), "LessEquals")
+LessEqualsLogicalFunction::LessEqualsLogicalFunction(std::unique_ptr<LogicalFunction> left, std::unique_ptr<LogicalFunction> right)
+    : BinaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(left), std::move(right))
 {
-    this->setLeftChild(left);
-    this->setRightChild(right);
 }
 
-bool LessEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool LessEqualsLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<LessEqualsLogicalFunction>(rhs))
+    auto other = dynamic_cast<const LessEqualsLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto other = NES::Util::as<LessEqualsLogicalFunction>(rhs);
         return this->getLeftChild() == other->getLeftChild() && this->getRightChild() == other->getRightChild();
     }
     return false;
@@ -43,13 +44,35 @@ bool LessEqualsLogicalFunction::operator==(std::shared_ptr<LogicalFunction> cons
 std::string LessEqualsLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << *getLeftChild() << "<=" << *getRightChild();
+    ss << getLeftChild() << "<=" << getRightChild();
     return ss.str();
 }
 
-std::shared_ptr<LogicalFunction> LessEqualsLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> LessEqualsLogicalFunction::clone() const
 {
-    return std::make_shared<LessEqualsLogicalFunction>(getLeftChild()->clone(), Util::as<LogicalFunction>(getRightChild())->clone());
+    return std::make_unique<LessEqualsLogicalFunction>(getLeftChild().clone(), getRightChild().clone());
+}
+
+SerializableFunction LessEqualsLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_BinaryFunction();
+    auto* leftChild = funcDesc->mutable_leftchild();
+    leftChild->CopyFrom(getLeftChild().serialize());
+    auto* rightChild = funcDesc->mutable_rightchild();
+    rightChild->CopyFrom(getRightChild().serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
+std::unique_ptr<BinaryLogicalFunctionRegistryReturnType>
+BinaryLogicalFunctionGeneratedRegistrar::RegisterLessEqualsBinaryLogicalFunction(BinaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<LessEqualsLogicalFunction>(std::move(arguments.leftChild), std::move(arguments.rightChild));
 }
 
 }

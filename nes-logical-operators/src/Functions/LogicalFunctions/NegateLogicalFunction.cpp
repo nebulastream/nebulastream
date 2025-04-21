@@ -14,29 +14,30 @@
 
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <LogicalFunctionRegistry.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
 
-NegateLogicalFunction::NegateLogicalFunction(std::shared_ptr<LogicalFunction> const& child) : UnaryLogicalFunction(DataTypeFactory::createBoolean(), "Negate")
+NegateLogicalFunction::NegateLogicalFunction(std::unique_ptr<LogicalFunction> child)
+    : UnaryLogicalFunction(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(child))
 {
-    this->setChild(child);
 }
 
 NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other) : UnaryLogicalFunction(other)
 {
 }
 
-bool NegateLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& rhs) const
+bool NegateLogicalFunction::operator==(const LogicalFunction& rhs) const
 {
-    if (NES::Util::instanceOf<NegateLogicalFunction>(rhs))
+    auto other = dynamic_cast<const NegateLogicalFunction*>(&rhs);
+    if (other)
     {
-        auto other = NES::Util::as<NegateLogicalFunction>(rhs);
         return this->getChild() == other->getChild();
     }
     return false;
@@ -45,7 +46,7 @@ bool NegateLogicalFunction::operator==(std::shared_ptr<LogicalFunction> const& r
 std::string NegateLogicalFunction::toString() const
 {
     std::stringstream ss;
-    ss << "!" << *getChild();
+    ss << "!" << getChild();
     return ss.str();
 }
 
@@ -54,20 +55,40 @@ void NegateLogicalFunction::inferStamp(const Schema& schema)
     /// delegate stamp inference of children
     LogicalFunction::inferStamp(schema);
     /// check if children stamp is correct
-    if (!getChild()->isPredicate())
+    if (!getChild().isPredicate())
     {
         throw CannotInferSchema(
-            fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", getChild()->getStamp()->toString()));
+            fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", getChild().getStamp().toString()));
     }
 }
-std::shared_ptr<LogicalFunction> NegateLogicalFunction::clone() const
+std::unique_ptr<LogicalFunction> NegateLogicalFunction::clone() const
 {
-    return std::make_shared<NegateLogicalFunction>(Util::as<LogicalFunction>(getChild())->clone());
+    return std::make_unique<NegateLogicalFunction>(getChild().clone());
 }
 
 bool NegateLogicalFunction::validateBeforeLowering() const
 {
-    return NES::Util::instanceOf<Boolean>(Util::as<LogicalFunction>(getChild())->getStamp());
+    return dynamic_cast<Boolean*>(&getChild().getStamp());
+}
+
+SerializableFunction NegateLogicalFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    auto* funcDesc = new SerializableFunction_UnaryFunction();
+    auto* child = funcDesc->mutable_child();
+    child->CopyFrom(getChild().serialize());
+
+    DataTypeSerializationUtil::serializeDataType(
+        this->getStamp(), serializedFunction.mutable_stamp());
+
+    return serializedFunction;
+}
+
+std::unique_ptr<UnaryLogicalFunctionRegistryReturnType>
+UnaryLogicalFunctionGeneratedRegistrar::RegisterNegateUnaryLogicalFunction(UnaryLogicalFunctionRegistryArguments arguments)
+{
+    return std::make_unique<NegateLogicalFunction>(std::move(arguments.child));
 }
 
 }

@@ -19,6 +19,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include <Common/DataTypes/Undefined.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -29,12 +30,14 @@
 namespace NES
 {
 
-AvgAggregationFunction::AvgAggregationFunction(std::shared_ptr<FieldAccessLogicalFunction> field) : WindowAggregationFunction(field)
+AvgAggregationFunction::AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field)
+    : WindowAggregationFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field))
 {
     this->aggregationType = Type::Avg;
 }
-AvgAggregationFunction::AvgAggregationFunction(std::shared_ptr<LogicalFunction> field, std::shared_ptr<LogicalFunction> asField)
-    : WindowAggregationFunction(field, asField)
+
+AvgAggregationFunction::AvgAggregationFunction(std::unique_ptr<FieldAccessLogicalFunction> field, std::unique_ptr<FieldAccessLogicalFunction> asField)
+    : WindowAggregationFunction(field->getStamp().clone(), DataTypeProvider::provideDataType(LogicalType::UNDEFINED), DataTypeProvider::provideDataType(LogicalType::FLOAT64), std::move(field), std::move(asField))
 {
     this->aggregationType = Type::Avg;
 }
