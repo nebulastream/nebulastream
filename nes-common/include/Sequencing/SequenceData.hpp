@@ -22,12 +22,6 @@ namespace NES
 class SequenceData
 {
 public:
-    /**
-     * @brief Constructs
-     * @param sequenceNumber
-     * @param chunkNumber
-     * @param lastChunk
-     */
     SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk);
     explicit SequenceData();
 
@@ -40,25 +34,8 @@ public:
     }
 
     bool operator<=(const SequenceData& other) const;
-
-    /**
-     * @brief Overloading the < operator. Checks sequenceNumber, then chunkNumber, then lastChunk
-     * @param other
-     */
     bool operator<(const SequenceData& other) const;
-
-    /**
-     * @brief Overloading the == operator
-     * @param other
-     * @return True if both structs are equal
-     */
     bool operator==(const SequenceData& other) const;
-
-    /**
-     * @brief Overloading the != operator
-     * @param other
-     * @return True if both structs are NOT equal
-     */
     bool operator!=(const SequenceData& other) const;
 
     SequenceNumber::Underlying sequenceNumber;

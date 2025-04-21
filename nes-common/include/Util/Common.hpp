@@ -21,11 +21,7 @@
 
 namespace NES::Util
 {
-/**
-* @brief escapes all non text characters in a input string, such that the string could be processed as json.
-* @param s input string.
-* @return result sing.
-*/
+/// @brief escapes all non text characters in a input string, such that the string could be processed as json.
 std::string escapeJson(const std::string& str);
 
 /// Update the source names by sorting and then concatenating the source names from the sub- and query plan
