@@ -29,35 +29,20 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+
 namespace NES
 {
 
-Schema::Schema() : layoutType(MemoryLayoutType::ROW_LAYOUT) { };
-Schema::Schema(const MemoryLayoutType layoutType) : layoutType(layoutType) { };
-
-std::shared_ptr<Schema> Schema::create()
-{
-    return std::make_shared<Schema>();
-}
-std::shared_ptr<Schema> Schema::create(MemoryLayoutType layoutType)
-{
-    return std::make_shared<Schema>(layoutType);
-}
+Schema::Schema(const MemoryLayoutType layoutType) : layoutType(layoutType) {};
 
 size_t Schema::getFieldCount() const
 {
     return fields.size();
 }
 
-Schema::Schema(const std::shared_ptr<Schema>& schema, const MemoryLayoutType layoutType) : layoutType(layoutType)
+Schema::Schema(const Schema& schema, const MemoryLayoutType layoutType) : layoutType(layoutType)
 {
     copyFields(schema);
-}
-
-std::shared_ptr<Schema> Schema::copy() const
-{
-    return std::make_shared<Schema>(*this);
 }
 
 /* Return size of one row of schema in bytes. */
@@ -67,59 +52,55 @@ uint64_t Schema::getSchemaSizeInBytes() const
     const auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (const auto& field : fields)
     {
-        const auto type = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+        const auto type = physicalDataTypeFactory.getPhysicalType(field.getDataType());
         size += type->size();
     }
     return size;
 }
 
-std::shared_ptr<Schema> Schema::copyFields(const std::shared_ptr<Schema>& otherSchema)
+Schema Schema::copyFields(const Schema& otherSchema)
 {
-    for (const std::shared_ptr<AttributeField>& attribute : otherSchema->fields)
+    for (const AttributeField& attribute : otherSchema.fields)
     {
-        fields.push_back(attribute->deepCopy());
+        fields.push_back(attribute);
     }
-    return copy();
+    return *this;
 }
 
-std::shared_ptr<Schema> Schema::addField(const std::shared_ptr<AttributeField>& attribute)
+Schema Schema::addField(const AttributeField& attribute)
 {
-    if (attribute)
-    {
-        fields.push_back(attribute->deepCopy());
-    }
-    return copy();
+    fields.push_back(attribute);
+    return *this;
 }
 
-///TODO #473: investigate if we can remove this method
-std::shared_ptr<Schema> Schema::addField(const std::string& name, const BasicType& type)
+Schema Schema::addField(const std::string& name, const BasicType& type)
 {
     return addField(name, DataTypeProvider::provideBasicType(type));
 }
 
-std::shared_ptr<Schema> Schema::addField(const std::string& name, const std::shared_ptr<DataType>& data)
+Schema Schema::addField(const std::string& name, std::shared_ptr<DataType> type)
 {
-    return addField(AttributeField::create(name, data));
+    return addField(AttributeField(name, std::move(type)));
 }
 
-void Schema::removeField(const std::shared_ptr<AttributeField>& field)
+void Schema::removeField(const AttributeField& field)
 {
-    std::erase_if(fields, [&](const std::shared_ptr<AttributeField>& otherField) { return otherField->getName() == field->getName(); });
+    std::erase_if(fields, [&](const AttributeField& f) { return f.getName() == field.getName(); });
 }
 
-void Schema::replaceField(const std::string& name, const std::shared_ptr<DataType>& type)
+void Schema::replaceField(const std::string& name, std::shared_ptr<DataType> type)
 {
     for (auto& field : fields)
     {
-        if (field->getName() == name)
+        if (field.getName() == name)
         {
-            field = AttributeField::create(name, type);
+            field = AttributeField(name, std::move(type));
             return;
         }
     }
 }
 
-std::optional<std::shared_ptr<AttributeField>> Schema::getFieldByName(const std::string& fieldName) const
+std::optional<AttributeField> Schema::getFieldByName(const std::string& fieldName) const
 {
     PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
 
@@ -168,7 +149,7 @@ std::optional<std::shared_ptr<AttributeField>> Schema::getFieldByName(const std:
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
     {
         potentialMatches = potentialMatches | std::views::filter([&fieldName](const auto& field) { return field->getName() == fieldName; })
-            | std::ranges::to<std::vector>();
+            | NES::ranges::to<std::vector>();
     }
 
     /// Check how many matching fields were found and raise appropriate exception
@@ -184,7 +165,7 @@ std::optional<std::shared_ptr<AttributeField>> Schema::getFieldByName(const std:
     return std::nullopt;
 }
 
-std::shared_ptr<AttributeField> Schema::getFieldByIndex(const size_t index) const
+AttributeField Schema::getFieldByIndex(const size_t index) const
 {
     if (index < fields.size())
     {
@@ -201,8 +182,8 @@ bool Schema::operator==(const Schema& other) const
     }
     for (const auto& fieldAttribute : fields)
     {
-        auto otherFieldAttribute = other.getFieldByName(fieldAttribute->getName());
-        if (!(otherFieldAttribute && otherFieldAttribute.has_value() && fieldAttribute->isEqual(otherFieldAttribute.value())))
+        auto otherFieldAttribute = other.getFieldByName(fieldAttribute.getName());
+        if (!(otherFieldAttribute && otherFieldAttribute.has_value() && fieldAttribute.isEqual(otherFieldAttribute.value())))
         {
             return false;
         }
@@ -219,11 +200,11 @@ std::string Schema::toString(const std::string& prefix, const std::string& sep, 
     {
         if (i == fields.size())
         {
-            ss << f->toString() << suffix;
+            ss << f.toString() << suffix;
         }
         else
         {
-            ss << f->toString() << sep;
+            ss << f.toString() << sep;
         }
         i++;
     }
@@ -236,7 +217,7 @@ std::string Schema::getSourceNameQualifier() const
     {
         return "Unnamed Source";
     }
-    return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
+    return fields[0].getName().substr(0, fields[0].getName().find(ATTRIBUTE_NAME_SEPARATOR));
 }
 
 std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const
@@ -248,7 +229,7 @@ std::string Schema::getQualifierNameForSystemGeneratedFields() const
 {
     if (!fields.empty())
     {
-        return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
+        return fields[0].getName().substr(0, fields[0].getName().find(ATTRIBUTE_NAME_SEPARATOR));
     }
     NES_ERROR("Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is "
               "requested");
@@ -259,8 +240,8 @@ bool Schema::contains(const std::string& fieldName) const
 {
     for (const auto& field : this->fields)
     {
-        NES_TRACE("contain compare field={} with other={}", field->getName(), fieldName);
-        if (field->getName() == fieldName)
+        NES_TRACE("contain compare field={} with other={}", field.getName(), fieldName);
+        if (field.getName() == fieldName)
         {
             return true;
         }
@@ -289,7 +270,7 @@ std::vector<std::string> Schema::getFieldNames() const
     fieldNames.reserve(fields.size());
     for (const auto& attribute : fields)
     {
-        fieldNames.emplace_back(attribute->getName());
+        fieldNames.emplace_back(attribute.getName());
     }
     return fieldNames;
 }
@@ -299,11 +280,11 @@ bool Schema::empty() const
     return fields.empty();
 }
 
-std::shared_ptr<Schema> Schema::updateSourceName(const std::string& srcName) const
+Schema Schema::updateSourceName(const std::string& srcName)
 {
-    for (const auto& field : fields)
+    for (auto& field : fields)
     {
-        auto currName = Util::splitWithStringDelimiter<std::string>(field->getName(), ATTRIBUTE_NAME_SEPARATOR);
+        auto currName = Util::splitWithStringDelimiter<std::string>(field.getName(), ATTRIBUTE_NAME_SEPARATOR);
         std::ostringstream newName;
         newName << srcName;
         if (srcName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
@@ -311,9 +292,9 @@ std::shared_ptr<Schema> Schema::updateSourceName(const std::string& srcName) con
             newName << ATTRIBUTE_NAME_SEPARATOR;
         }
         newName << currName.back();
-        field->setName(newName.str());
+        field.setName(newName.str());
     }
-    return copy();
+    return *this;
 }
 
 }

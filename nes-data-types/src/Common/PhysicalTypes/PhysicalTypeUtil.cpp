@@ -76,9 +76,9 @@ bool isDouble(const PhysicalType& physicalType)
     return isSpecificBasicType(physicalType, BasicPhysicalType::NativeType::DOUBLE);
 }
 
-bool isVariableSizedData(const std::shared_ptr<PhysicalType>& physicalType)
+bool isVariableSizedData(const PhysicalType& physicalType)
 {
-    return NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType);
+    return dynamic_cast<const VariableSizedDataPhysicalType*>(&physicalType) != nullptr;
 }
 
 }

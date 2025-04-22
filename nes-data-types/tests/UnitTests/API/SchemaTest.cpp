@@ -285,7 +285,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
             ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
             ASSERT_EQ(*testSchema->getFieldByIndex(0)->getDataType(), *DataTypeProvider::provideBasicType(basicTypeVal));
             ASSERT_EQ(
-                testSchema->getSchemaSizeInBytes(),
+                testSchema.getSchemaSizeInBytes(),
                 defaultPhysicalTypeFactory.getPhysicalType(DataTypeProvider::provideBasicType(basicTypeVal))->size());
         }
     }
