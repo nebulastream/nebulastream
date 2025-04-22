@@ -25,27 +25,25 @@ namespace NES
 {
 
 SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName))
+    : Operator(id), UnaryLogicalOperator(id), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
 SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, const OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
+    : Operator(id), UnaryLogicalOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
 
-bool SourceNameLogicalOperator::isIdentical(const std::shared_ptr<Operator>& rhs) const
+bool SourceNameLogicalOperator::isIdentical(const Operator& rhs) const
 {
-    return equal(rhs) && NES::Util::as<SourceNameLogicalOperator>(rhs)->getId() == id;
+    return *this == rhs && dynamic_cast<const SourceNameLogicalOperator*>(&rhs)->getId() == id;
 }
 
-bool SourceNameLogicalOperator::equal(const std::shared_ptr<Operator>& rhs) const
+bool SourceNameLogicalOperator::operator==(const Operator& rhs) const
 {
-    if (Util::instanceOf<SourceNameLogicalOperator>(rhs))
+    if (auto rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs))
     {
-        const auto rhsAsSourceNameLogicalOperator = Util::as<SourceNameLogicalOperator>(rhs);
-        return this->getSchema() == rhsAsSourceNameLogicalOperator->getSchema()
-            && this->getLogicalSourceName() == rhsAsSourceNameLogicalOperator->getLogicalSourceName();
+        return this->getSchema() == rhsOperator->getSchema() && this->getLogicalSourceName() == rhsOperator->getLogicalSourceName();
     }
     return false;
 }
@@ -62,7 +60,7 @@ bool SourceNameLogicalOperator::inferSchema()
     return true;
 }
 
-std::shared_ptr<Operator> SourceNameLogicalOperator::copy()
+std::shared_ptr<Operator> SourceNameLogicalOperator::clone() const
 {
     auto copy = std::make_shared<SourceNameLogicalOperator>(logicalSourceName, id);
     copy->setInputSchema(inputSchema);

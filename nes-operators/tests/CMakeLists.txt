@@ -13,16 +13,12 @@
 # Google Testing Framework ----------------------------------------------------
 include(ExternalProject)
 
-# QueryPlanIteratorTest
-add_nes_unit_test(plan-iterator-test "UnitTests/Plans/Util/PlanIteratorTest.cpp")
-target_link_libraries(plan-iterator-test nes-client nes-operators nes-test-util)
-
 ### Query Plan Tests ###
 add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
-target_link_libraries(query-plan-tests nes-client nes-operators nes-test-util)
+target_link_libraries(query-plan-tests nes-client nes-logical-operators nes-test-util)
 
 ### Query Plan Builder Tests ###
 add_nes_unit_test(query-plan-builder-tests "UnitTests/Plans/Query/QueryPlanBuilderTest.cpp")
-target_link_libraries(query-plan-builder-tests nes-client nes-operators nes-test-util)
+target_link_libraries(query-plan-builder-tests nes-client nes-logical-operators nes-test-util)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)

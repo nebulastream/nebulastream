@@ -15,14 +15,14 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Functions/RenameLogicalFunction.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer
@@ -36,7 +36,7 @@ std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRule::
 std::shared_ptr<QueryPlan> ProjectBeforeUnionOperatorRule::apply(std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_DEBUG("Before applying ProjectBeforeUnionOperatorRule to the query plan: {}", queryPlan->toString());
-    auto unionOperators = queryPlan->getOperatorByType<LogicalUnionOperator>();
+    auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperator>();
     for (auto& unionOperator : unionOperators)
     {
         auto rightInputSchema = unionOperator->getRightInputSchema();
@@ -46,7 +46,7 @@ std::shared_ptr<QueryPlan> ProjectBeforeUnionOperatorRule::apply(std::shared_ptr
         {
             /// Construct project operator for mapping rightInputSource To leftInputSource
             auto projectOperator = constructProjectOperator(rightInputSchema, leftInputSchema);
-            auto childrenToUnionOperator = unionOperator->getChildren();
+            auto childrenToUnionOperator = unionOperator->children;
             for (auto& child : childrenToUnionOperator)
             {
                 auto childOutputSchema = NES::Util::as<LogicalOperator>(child)->getOutputSchema();
@@ -85,7 +85,7 @@ std::shared_ptr<LogicalOperator> ProjectBeforeUnionOperatorRule::constructProjec
         projectFunctions.push_back(fieldRenameFunction);
     }
     /// Create Projection operator
-    return std::make_shared<LogicalProjectionOperator>(projectFunctions, getNextOperatorId());
+    return std::make_shared<ProjectionLogicalOperator>(projectFunctions, getNextOperatorId());
 }
 
 }

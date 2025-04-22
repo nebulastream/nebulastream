@@ -16,9 +16,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <ostream>
 #include <string>
-#include <Nodes/Node.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES
 {
@@ -31,15 +30,9 @@ public:
     virtual ~QueryConsoleDumpHandler() = default;
     static std::shared_ptr<QueryConsoleDumpHandler> create(std::ostream& out);
     explicit QueryConsoleDumpHandler(std::ostream& out);
-    /**
-    * Dump the specific node and its children.
-    */
-    void dump(const std::shared_ptr<Node>& node);
 
-    /**
-    * Dump the specific node and its children with details in multiple lines.
-    */
-    void multilineDump(const std::shared_ptr<Node>& node);
+    void dump(std::shared_ptr<Operator> node);
+    void multilineDump(const std::shared_ptr<Operator>& node);
 
     /**
      * @brief Dump a query plan with a specific context and scope.
@@ -51,8 +44,8 @@ public:
 
 private:
     std::ostream& out;
-    void dumpHelper(const std::shared_ptr<Node>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
-    void multilineDumpHelper(const std::shared_ptr<Node>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
+    void dumpHelper(const std::shared_ptr<Operator>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
+    void multilineDumpHelper(const std::shared_ptr<Operator>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const;
 };
 
 }

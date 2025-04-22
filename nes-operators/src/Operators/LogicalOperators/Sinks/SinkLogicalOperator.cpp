@@ -16,8 +16,8 @@
 #include <utility>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/UnaryLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Common.hpp>
@@ -54,7 +54,7 @@ std::string SinkLogicalOperator::toString() const
 }
 bool SinkLogicalOperator::inferSchema()
 {
-    const auto result = LogicalUnaryOperator::inferSchema();
+    const auto result = UnaryLogicalOperator::inferSchema();
 
     if (result && sinkDescriptor)
     {

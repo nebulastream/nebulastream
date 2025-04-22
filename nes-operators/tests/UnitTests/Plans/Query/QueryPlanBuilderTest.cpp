@@ -17,15 +17,13 @@
 #include <vector>
 #include <API/Functions/Functions.hpp>
 #include <API/Query.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
-#include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
-#include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
+#include <Operators/LogicalOperators/RenameSourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
@@ -56,27 +54,27 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     EXPECT_EQ(queryPlan->getSourceConsumed(), "test_stream");
     ///test addRename
     queryPlan = QueryPlanBuilder::addRename("testStream", queryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<RenameSourceOperator>().size() == 1);
-    EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceOperator>()[0]->getNewSourceName(), "testStream");
+    EXPECT_TRUE(queryPlan->getOperatorByType<RenameSourceLogicalOperator>().size() == 1);
+    EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceLogicalOperator>()[0]->getNewSourceName(), "testStream");
     ///test addSelection
-    auto filterFunction = std::shared_ptr<NodeFunction>(
-        NodeFunctionEquals::create(NES::Attribute("a").getNodeFunction(), NES::Attribute("b").getNodeFunction()));
+    auto filterFunction = std::shared_ptr<LogicalFunction>(
+        EqualsBinaryLogicalFunction::create(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction()));
     queryPlan = QueryPlanBuilder::addSelection(filterFunction, queryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<LogicalSelectionOperator>().size() == 1);
-    EXPECT_EQ(queryPlan->getOperatorByType<LogicalSelectionOperator>()[0]->getPredicate(), filterFunction);
+    EXPECT_TRUE(queryPlan->getOperatorByType<SelectionLogicalOperator>().size() == 1);
+    EXPECT_EQ(queryPlan->getOperatorByType<SelectionLogicalOperator>()[0]->getPredicate(), filterFunction);
     ///test addProjection
-    std::vector<std::shared_ptr<NodeFunction>> functions;
-    functions.push_back(Attribute("id").getNodeFunction());
+    std::vector<std::shared_ptr<LogicalFunction>> functions;
+    functions.push_back(Attribute("id").getLogicalFunction());
     queryPlan = QueryPlanBuilder::addProjection(functions, queryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<LogicalProjectionOperator>().size() == 1);
-    EXPECT_EQ(queryPlan->getOperatorByType<LogicalProjectionOperator>()[0]->getFunctions(), functions);
+    EXPECT_TRUE(queryPlan->getOperatorByType<ProjectionLogicalOperator>().size() == 1);
+    EXPECT_EQ(queryPlan->getOperatorByType<ProjectionLogicalOperator>()[0]->getFunctions(), functions);
     ///test addMap
     queryPlan = QueryPlanBuilder::addMap(Attribute("b") = 1, queryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<LogicalMapOperator>().size() == 1);
+    EXPECT_TRUE(queryPlan->getOperatorByType<MapLogicalOperator>().size() == 1);
     ///test addUnion
     auto rightQueryPlan = QueryPlanBuilder::createQueryPlan("test_stream_b");
     queryPlan = QueryPlanBuilder::addUnion(queryPlan, rightQueryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<LogicalUnionOperator>().size() == 1);
+    EXPECT_TRUE(queryPlan->getOperatorByType<UnionLogicalOperator>().size() == 1);
     queryPlan = QueryPlanBuilder::addSink("print_source", queryPlan, WorkerId(0));
     EXPECT_TRUE(queryPlan->getOperatorByType<SinkLogicalOperator>().size() == 1);
 }
