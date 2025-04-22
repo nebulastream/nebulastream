@@ -269,6 +269,11 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
+std::string TestTupleBuffer::toString(const Schema& schema) const
+{
+    return toString(schema, true);
+}
+
 std::string TestTupleBuffer::toString(const Schema& schema, const bool showHeader) const
 {
     std::stringstream str;
