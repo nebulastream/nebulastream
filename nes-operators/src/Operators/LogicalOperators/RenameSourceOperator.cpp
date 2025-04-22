@@ -68,7 +68,10 @@ bool RenameSourceOperator::inferSchema()
     {
         ///Add new qualifier name to the field and update the field name
         auto newName = newQualifierName + field.name;
-        outputSchema.renameField(field.name, newName);
+        if (not(outputSchema.renameField(field.name, newName)))
+        {
+            throw CannotInferSchema("Could not rename non-existing field name: {}", field.name);
+        }
     }
     return true;
 }

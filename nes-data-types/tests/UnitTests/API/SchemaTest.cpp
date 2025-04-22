@@ -141,7 +141,7 @@ TEST_F(SchemaTest, replaceFieldTest)
 
             /// Replacing field
             const auto newDataType = getRandomFields(1_u64)[0].dataType;
-            ASSERT_NO_THROW(testSchema.replaceTypeOfField("field", newDataType));
+            EXPECT_TRUE(testSchema.replaceTypeOfField("field", newDataType));
             ASSERT_EQ(testSchema.getFieldAt(0).dataType, newDataType);
         }
     }
@@ -172,7 +172,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         auto replacingFields = getRandomFields(NUM_FIELDS);
         for (const auto& replaceField : replacingFields)
         {
-            testSchema.replaceTypeOfField(replaceField.name, replaceField.dataType);
+            EXPECT_TRUE(testSchema.replaceTypeOfField(replaceField.name, replaceField.dataType));
         }
 
         for (auto fieldCnt = 0_u64; fieldCnt < replacingFields.size(); ++fieldCnt)
