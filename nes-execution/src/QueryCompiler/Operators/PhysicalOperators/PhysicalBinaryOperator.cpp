@@ -15,15 +15,14 @@
 #include <ostream>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalBinaryOperator::PhysicalBinaryOperator(
-    OperatorId id, std::shared_ptr<Schema> leftSchema, std::shared_ptr<Schema> rightSchema, std::shared_ptr<Schema> outputSchema)
+PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id, Schema leftSchema, Schema rightSchema, Schema outputSchema)
     : Operator(id), PhysicalOperator(id), BinaryOperator(id)
 {
     BinaryOperator::setLeftInputSchema(std::move(leftSchema));

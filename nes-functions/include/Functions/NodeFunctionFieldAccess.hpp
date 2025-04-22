@@ -15,10 +15,10 @@
 #pragma once
 #include <memory>
 #include <string>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
@@ -30,14 +30,7 @@ namespace NES
 class NodeFunctionFieldAccess : public NodeFunction
 {
 public:
-    /**
-    * @brief Create typed field read.
-    */
-    static std::shared_ptr<NodeFunction> create(std::shared_ptr<DataType> stamp, std::string fieldName);
-
-    /**
-     * @brief Create untyped field read.
-     */
+    static std::shared_ptr<NodeFunction> create(DataType stamp, std::string fieldName);
     static std::shared_ptr<NodeFunction> create(std::string fieldName);
 
     bool equal(const std::shared_ptr<Node>& rhs) const override;
@@ -72,7 +65,7 @@ public:
 protected:
     explicit NodeFunctionFieldAccess(NodeFunctionFieldAccess* other);
 
-    NodeFunctionFieldAccess(std::shared_ptr<DataType> stamp, std::string fieldName);
+    NodeFunctionFieldAccess(DataType stamp, std::string fieldName);
 
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
     [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;

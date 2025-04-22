@@ -33,9 +33,6 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -291,11 +288,11 @@ ChainedHashMapRef::ChainedHashMapRef(
     /// Furthermore, there is a debate if we should support this in the future, as other systems usually have a fixed size for floats.
     for (const auto& field : nautilus::static_iterable(fieldKeys))
     {
-        if (std::dynamic_pointer_cast<Float>(field.type->type))
+        if (field.type.isFloat())
         {
             throw NotImplemented("Float32 and Float64 are not supported in the key fields for the chained hash map.");
         }
-        if (std::dynamic_pointer_cast<VariableSizedDataType>(field.type->type))
+        if (field.type.type == PhysicalType::Type::VARSIZED)
         {
             throw NotImplemented("Variable sized data types are not supported in the key fields for the chained hash map.");
         }

@@ -15,10 +15,10 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
 {
@@ -79,17 +79,17 @@ public:
     /**
      * @return the input type
      */
-    virtual std::shared_ptr<DataType> getInputStamp() = 0;
+    virtual DataType getInputStamp() = 0;
 
     /**
      * @return the partial aggregation type
      */
-    virtual std::shared_ptr<DataType> getPartialAggregateStamp() = 0;
+    virtual DataType getPartialAggregateStamp() = 0;
 
     /**
      * @return the final aggregation type
      */
-    virtual std::shared_ptr<DataType> getFinalAggregateStamp() = 0;
+    virtual DataType getFinalAggregateStamp() = 0;
 
     std::string toString() const;
 

@@ -14,8 +14,8 @@
 #include <memory>
 #include <ostream>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Nodes/Node.hpp>
@@ -23,7 +23,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -62,7 +61,7 @@ std::string NodeFunctionFieldRename::getNewFieldName() const
 std::ostream& NodeFunctionFieldRename::toDebugString(std::ostream& os) const
 {
     auto node = getOriginalField();
-    return os << fmt::format("FieldRenameFunction({} => {} : {})", *node, newFieldName, stamp->toString());
+    return os << fmt::format("FieldRenameFunction({} => {} : {})", *node, newFieldName, stamp);
 }
 
 std::ostream& NodeFunctionFieldRename::toQueryPlanString(std::ostream& os) const
@@ -80,7 +79,7 @@ void NodeFunctionFieldRename::inferStamp(const Schema& schema)
     ///Detect if user has added attribute name separator
     if (!fieldAttribute)
     {
-        throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema.toString());
+        throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema);
     }
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
@@ -96,11 +95,11 @@ void NodeFunctionFieldRename::inferStamp(const Schema& schema)
         auto newFieldAttribute = schema.getFieldByName(newFieldName);
         if (newFieldAttribute)
         {
-            throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema.toString());
+            throw FieldAlreadyExists("New field with name {} already exists in the schema: {}", newFieldName, schema);
         }
     }
     /// assign the stamp of this field access with the type of this field.
-    stamp = fieldAttribute.value()->getDataType();
+    stamp = fieldAttribute.value().dataType;
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionFieldRename::deepCopy()

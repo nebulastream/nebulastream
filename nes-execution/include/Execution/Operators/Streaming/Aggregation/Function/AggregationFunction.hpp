@@ -21,7 +21,6 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
@@ -41,8 +40,8 @@ class AggregationFunction
 {
 public:
     AggregationFunction(
-        std::shared_ptr<PhysicalType> inputType,
-        std::shared_ptr<PhysicalType> resultType,
+        PhysicalType inputType,
+        PhysicalType resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
@@ -71,8 +70,8 @@ public:
     virtual ~AggregationFunction();
 
 protected:
-    const std::shared_ptr<PhysicalType> inputType;
-    const std::shared_ptr<PhysicalType> resultType;
+    PhysicalType inputType;
+    PhysicalType resultType;
     const std::unique_ptr<Functions::Function> inputFunction;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 };

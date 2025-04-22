@@ -13,37 +13,36 @@
 */
 
 #include <memory>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Runtime::Execution::Util
 {
-std::shared_ptr<Schema> createJoinSchema(const std::shared_ptr<Schema>& leftSchema, const std::shared_ptr<Schema>& rightSchema)
+Schema createJoinSchema(Schema leftSchema, Schema rightSchema)
 {
     PRECONDITION(
-        leftSchema->getLayoutType() == rightSchema->getLayoutType(),
+        leftSchema.memoryLayoutType == rightSchema.memoryLayoutType,
         "Left and right schema do not have the same layout type (left: {} and right: {})",
-        magic_enum::enum_name(leftSchema->getLayoutType()),
-        magic_enum::enum_name(rightSchema->getLayoutType()));
-    auto retSchema = Schema::create(leftSchema->getLayoutType());
-    auto newQualifierForSystemField = leftSchema->getSourceNameQualifier() + rightSchema->getSourceNameQualifier();
+        magic_enum::enum_name(leftSchema.memoryLayoutType),
+        magic_enum::enum_name(rightSchema.memoryLayoutType));
+    auto retSchema = Schema{leftSchema.memoryLayoutType};
+    auto newQualifierForSystemField = leftSchema.getSourceNameQualifier() + rightSchema.getSourceNameQualifier();
 
-    retSchema->addField(newQualifierForSystemField + "$start", BasicType::UINT64);
-    retSchema->addField(newQualifierForSystemField + "$end", BasicType::UINT64);
+    retSchema.addField(newQualifierForSystemField + "$start", PhysicalType::Type::UINT64);
+    retSchema.addField(newQualifierForSystemField + "$end", PhysicalType::Type::UINT64);
 
-    for (const auto& fields : *leftSchema)
+    for (const auto& fields : leftSchema.getFields())
     {
-        retSchema->addField(fields->getName(), fields->getDataType());
+        retSchema.addField(fields.name, fields.dataType);
     }
 
-    for (const auto& fields : *rightSchema)
+    for (const auto& fields : rightSchema.getFields())
     {
-        retSchema->addField(fields->getName(), fields->getDataType());
+        retSchema.addField(fields.name, fields.dataType);
     }
 
     return retSchema;

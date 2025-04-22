@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -30,7 +29,7 @@ namespace NES::Windowing
 TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(TimeUnit(1))
 {
 }
-TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit)
+TimeCharacteristic::TimeCharacteristic(Type type, Schema::Field field, TimeUnit unit)
     : field(std::move(field)), type(type), unit(std::move(unit))
 {
 }
@@ -47,7 +46,7 @@ TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& fieldVa
         throw QueryInvalid(fmt::format("Query: window key has to be an FieldAccessFunction but it was a  {}", *fieldValue));
     }
     auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(fieldValue);
-    const std::shared_ptr<AttributeField> keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
+    const Schema::Field keyField = Schema::Field(fieldAccess->getFieldName(), fieldAccess->getStamp());
     return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
 }
 
@@ -59,13 +58,6 @@ std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createIngestionTime()
 TimeCharacteristic::Type TimeCharacteristic::getType() const
 {
     return type;
-}
-bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
-{
-    const auto isFieldsEqual = (this->field == nullptr and other.field == nullptr) or (this->field->isEqual(other.field));
-    const auto isTypesEqual = this->type == other.type;
-    const auto isEqual = isFieldsEqual and isTypesEqual and this->unit == other.unit;
-    return isEqual;
 }
 
 TimeUnit TimeCharacteristic::getTimeUnit() const
@@ -93,7 +85,6 @@ std::string TimeCharacteristic::getTypeAsString() const
 
 std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic)
 {
-    std::string fieldString = (timeCharacteristic.field != nullptr) ? timeCharacteristic.field->toString() : "NONE";
-    return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), fieldString);
+    return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), timeCharacteristic.field);
 }
 }

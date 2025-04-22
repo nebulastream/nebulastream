@@ -15,7 +15,7 @@
 #include <memory>
 #include <ostream>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionConcat.hpp>
@@ -23,16 +23,14 @@
 #include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES
 {
 
 bool NodeFunctionConcat::validateBeforeLowering() const
 {
-    return NES::Util::instanceOf<VariableSizedDataType>(getLeft()->getStamp())
-        and NES::Util::instanceOf<VariableSizedDataType>(getRight()->getStamp());
+    return getLeft()->getStamp().physicalType.type == PhysicalType::Type::VARSIZED
+        and getRight()->getStamp().physicalType.type == PhysicalType::Type::VARSIZED;
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionConcat::deepCopy()
@@ -54,16 +52,12 @@ void NodeFunctionConcat::inferStamp(const Schema& schema)
 {
     this->getLeft()->inferStamp(schema);
     this->getRight()->inferStamp(schema);
-    INVARIANT(
-        Util::instanceOf<VariableSizedDataType>(this->getLeft()->getStamp()),
-        "The Concat function must have children of type VariableSizedData.");
-    INVARIANT(
-        Util::instanceOf<VariableSizedDataType>(this->getRight()->getStamp()),
-        "The Concat function must have children of type VariableSizedData.");
+    INVARIANT(this->getLeft()->getStamp().isVarSized(), "The Concat function must have children of type VariableSizedData.");
+    INVARIANT(this->getLeft()->getStamp().isVarSized(), "The Concat function must have children of type VariableSizedData.");
     this->stamp = getLeft()->getStamp();
 }
 
-NodeFunctionConcat::NodeFunctionConcat(std::shared_ptr<DataType> stamp) : NodeFunctionBinary(std::move(stamp), "Concat")
+NodeFunctionConcat::NodeFunctionConcat(DataType stamp) : NodeFunctionBinary(std::move(stamp), "Concat")
 {
 }
 
@@ -77,7 +71,7 @@ NodeFunctionConcat::create(const std::shared_ptr<NodeFunction>& left, const std:
 
 std::ostream& NodeFunctionConcat::toDebugString(std::ostream& os) const
 {
-    return os << fmt::format("CONCAT({} ({}, {}))", this->stamp->toString(), *getLeft(), *getRight());
+    return os << fmt::format("CONCAT({} ({}, {}))", this->stamp, *getLeft(), *getRight());
 }
 
 }

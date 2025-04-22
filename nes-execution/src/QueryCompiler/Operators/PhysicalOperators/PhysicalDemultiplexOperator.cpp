@@ -15,23 +15,23 @@
 #include <ostream>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(OperatorId id, const std::shared_ptr<Schema>& inputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(OperatorId id, Schema inputSchema)
 {
     return std::make_shared<PhysicalDemultiplexOperator>(id, inputSchema);
 }
-std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(const std::shared_ptr<Schema>& inputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(Schema inputSchema)
 {
     return create(getNextOperatorId(), std::move(inputSchema));
 }
 
-PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, const std::shared_ptr<Schema>& inputSchema)
+PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, Schema inputSchema)
     : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema)
 {
 }

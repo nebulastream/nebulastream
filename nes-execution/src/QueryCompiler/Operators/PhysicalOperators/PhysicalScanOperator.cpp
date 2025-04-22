@@ -15,7 +15,7 @@
 #include <ostream>
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
@@ -23,16 +23,16 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalScanOperator::PhysicalScanOperator(OperatorId id, const std::shared_ptr<Schema>& outputSchema)
+PhysicalScanOperator::PhysicalScanOperator(OperatorId id, Schema outputSchema)
     : Operator(id), PhysicalUnaryOperator(id, outputSchema, outputSchema)
 {
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(const std::shared_ptr<Schema>& outputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(Schema outputSchema)
 {
     return create(getNextOperatorId(), std::move(outputSchema));
 }
-std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(OperatorId id, const std::shared_ptr<Schema>& outputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(OperatorId id, Schema outputSchema)
 {
     return std::make_shared<PhysicalScanOperator>(id, outputSchema);
 }

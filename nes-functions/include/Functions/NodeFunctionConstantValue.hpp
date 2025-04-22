@@ -16,10 +16,10 @@
 
 #include <memory>
 #include <string>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
@@ -29,7 +29,7 @@ class NodeFunctionConstantValue : public NodeFunction
 {
 public:
     ///Factory method to create a NodeFunctionConstantValue.
-    static std::shared_ptr<NodeFunction> create(const std::shared_ptr<DataType>& type, std::string value);
+    static std::shared_ptr<NodeFunction> create(DataType type, std::string value);
     ~NodeFunctionConstantValue() noexcept override = default;
 
     std::string getConstantValue() const;
@@ -49,7 +49,7 @@ protected:
     [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
 private:
-    explicit NodeFunctionConstantValue(const std::shared_ptr<DataType>& type, std::string&& value);
+    explicit NodeFunctionConstantValue(DataType type, std::string value);
     /// Value of this function
     std::string constantValue;
 };

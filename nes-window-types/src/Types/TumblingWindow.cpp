@@ -15,7 +15,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <API/AttributeField.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TumblingWindow.hpp>

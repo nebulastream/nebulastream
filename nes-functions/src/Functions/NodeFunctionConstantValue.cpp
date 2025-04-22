@@ -15,17 +15,17 @@
 #include <ostream>
 #include <string>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Nodes/Node.hpp>
 #include <fmt/format.h>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-NodeFunctionConstantValue::NodeFunctionConstantValue(const std::shared_ptr<DataType>& type, std::string&& value)
-    : NodeFunction(type, "ConstantValue"), constantValue(std::move(value))
+NodeFunctionConstantValue::NodeFunctionConstantValue(DataType type, std::string value)
+    : NodeFunction(std::move(type), "ConstantValue"), constantValue(std::move(value))
 {
 }
 
@@ -39,14 +39,14 @@ bool NodeFunctionConstantValue::equal(const std::shared_ptr<Node>& rhs) const
     if (Util::instanceOf<NodeFunctionConstantValue>(rhs))
     {
         auto otherConstantValueNode = Util::as<NodeFunctionConstantValue>(rhs);
-        return *otherConstantValueNode->stamp == *stamp && constantValue == otherConstantValueNode->constantValue;
+        return otherConstantValueNode->stamp == stamp && constantValue == otherConstantValueNode->constantValue;
     }
     return false;
 }
 
 std::ostream& NodeFunctionConstantValue::toDebugString(std::ostream& os) const
 {
-    return os << fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
+    return os << fmt::format("ConstantValue({}, {})", constantValue, stamp);
 }
 
 std::ostream& NodeFunctionConstantValue::toQueryPlanString(std::ostream& os) const
@@ -54,9 +54,9 @@ std::ostream& NodeFunctionConstantValue::toQueryPlanString(std::ostream& os) con
     return os << fmt::format("{}", constantValue);
 }
 
-std::shared_ptr<NodeFunction> NodeFunctionConstantValue::create(const std::shared_ptr<DataType>& type, std::string value)
+std::shared_ptr<NodeFunction> NodeFunctionConstantValue::create(DataType type, std::string value)
 {
-    return std::make_shared<NodeFunctionConstantValue>(NodeFunctionConstantValue(type, std::move(value)));
+    return std::make_shared<NodeFunctionConstantValue>(NodeFunctionConstantValue(std::move(type), std::move(value)));
 }
 
 std::string NodeFunctionConstantValue::getConstantValue() const

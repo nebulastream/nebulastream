@@ -15,11 +15,11 @@
 #pragma once
 #include <memory>
 #include <ostream>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Nodes/Node.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -28,7 +28,7 @@ namespace NES
 class NodeFunctionConcat : public NodeFunctionBinary
 {
 public:
-    explicit NodeFunctionConcat(std::shared_ptr<DataType> stamp);
+    explicit NodeFunctionConcat(DataType stamp);
     static std::shared_ptr<NodeFunction> create(const std::shared_ptr<NodeFunction>& left, const std::shared_ptr<NodeFunction>& right);
     ~NodeFunctionConcat() noexcept override = default;
     bool validateBeforeLowering() const override;

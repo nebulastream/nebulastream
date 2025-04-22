@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
@@ -42,8 +42,7 @@ private:
      * @param destinationSchema : the destination schema for project.
      * @return std::shared_ptr<LogicalOperator>: the project operator based on source and destination schema
      */
-    static std::shared_ptr<LogicalOperator>
-    constructProjectOperator(const std::shared_ptr<Schema>& sourceSchema, const std::shared_ptr<Schema>& destinationSchema);
+    static std::shared_ptr<LogicalOperator> constructProjectOperator(Schema sourceSchema, Schema destinationSchema);
 };
 
 }

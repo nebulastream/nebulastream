@@ -16,7 +16,7 @@
 #include <sstream>
 #include <string_view>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -56,8 +56,9 @@ struct TestNode : Operator
     std::ostream& toDebugString(std::ostream& os) const override { return os << nodeAsString; }
     /// Just implementing these so that TestNode is not virtual, we don't need any of them.
     std::shared_ptr<Operator> copy() override { return nullptr; }
-    std::shared_ptr<Schema> getOutputSchema() const override { return nullptr; }
-    void setOutputSchema(std::shared_ptr<Schema> outputSchema) override { (void)outputSchema; }
+    Schema getOutputSchema() const override { return Schema{}; }
+    void setOutputSchema(Schema) override { /* noop */ }
+    /// @Note Always returns empty vector
     std::vector<OriginId> getOutputOriginIds() const override { return {}; }
 };
 

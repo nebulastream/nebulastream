@@ -30,9 +30,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <ExecutableFunctionRegistry.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -76,68 +73,63 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<
 std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
 {
     const auto stringValue = constantFunction->getConstantValue();
-    const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());
-    if (const auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
+    const auto physicalType = constantFunction->getStamp().physicalType;
+    switch (physicalType.type)
     {
-        switch (basicType->nativeType)
-        {
-            case BasicPhysicalType::NativeType::UINT_8: {
-                auto intValue = static_cast<uint8_t>(std::stoul(stringValue));
-                return std::make_unique<ConstantUInt8ValueFunction>(intValue);
-            };
-            case BasicPhysicalType::NativeType::UINT_16: {
-                auto intValue = static_cast<uint16_t>(std::stoul(stringValue));
-                return std::make_unique<ConstantUInt16ValueFunction>(intValue);
-            };
-            case BasicPhysicalType::NativeType::UINT_32: {
-                auto intValue = static_cast<uint32_t>(std::stoul(stringValue));
-                return std::make_unique<ConstantUInt32ValueFunction>(intValue);
-            };
-            case BasicPhysicalType::NativeType::UINT_64: {
-                auto intValue = static_cast<uint64_t>(std::stoull(stringValue));
-                return std::make_unique<ConstantUInt64ValueFunction>(intValue);
-            };
-            case BasicPhysicalType::NativeType::INT_8: {
-                auto intValue = static_cast<int8_t>(std::stoi(stringValue));
-                return std::make_unique<ConstantInt8ValueFunction>(intValue);
-            };
-            case BasicPhysicalType::NativeType::INT_16: {
-                auto intValue = static_cast<int16_t>(std::stoi(stringValue));
-                return std::make_unique<ConstantInt16ValueFunction>(intValue);
-            };
-            case BasicPhysicalType::NativeType::INT_32: {
-                auto intValue = static_cast<int32_t>(std::stoi(stringValue));
-                return std::make_unique<ConstantInt32ValueFunction>(intValue);
-            };
-            case BasicPhysicalType::NativeType::INT_64: {
-                auto intValue = static_cast<int64_t>(std::stol(stringValue));
-                return std::make_unique<ConstantInt64ValueFunction>(intValue);
-            };
-            case BasicPhysicalType::NativeType::FLOAT: {
-                auto floatValue = std::stof(stringValue);
-                return std::make_unique<ConstantFloatValueFunction>(floatValue);
-            };
-            case BasicPhysicalType::NativeType::DOUBLE: {
-                auto doubleValue = std::stod(stringValue);
-                return std::make_unique<ConstantDoubleValueFunction>(doubleValue);
-            };
-            case BasicPhysicalType::NativeType::CHAR:
-                break;
-            case BasicPhysicalType::NativeType::BOOLEAN: {
-                auto boolValue = static_cast<bool>(std::stoi(stringValue)) == 1;
-                return std::make_unique<ConstantBooleanValueFunction>(boolValue);
-            };
-            default: {
-                throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", basicType->toString()));
-            }
+        case PhysicalType::Type::UINT8: {
+            auto intValue = static_cast<uint8_t>(std::stoul(stringValue));
+            return std::make_unique<ConstantUInt8ValueFunction>(intValue);
+        };
+        case PhysicalType::Type::UINT16: {
+            auto intValue = static_cast<uint16_t>(std::stoul(stringValue));
+            return std::make_unique<ConstantUInt16ValueFunction>(intValue);
+        };
+        case PhysicalType::Type::UINT32: {
+            auto intValue = static_cast<uint32_t>(std::stoul(stringValue));
+            return std::make_unique<ConstantUInt32ValueFunction>(intValue);
+        };
+        case PhysicalType::Type::UINT64: {
+            auto intValue = static_cast<uint64_t>(std::stoull(stringValue));
+            return std::make_unique<ConstantUInt64ValueFunction>(intValue);
+        };
+        case PhysicalType::Type::INT8: {
+            auto intValue = static_cast<int8_t>(std::stoi(stringValue));
+            return std::make_unique<ConstantInt8ValueFunction>(intValue);
+        };
+        case PhysicalType::Type::INT16: {
+            auto intValue = static_cast<int16_t>(std::stoi(stringValue));
+            return std::make_unique<ConstantInt16ValueFunction>(intValue);
+        };
+        case PhysicalType::Type::INT32: {
+            auto intValue = static_cast<int32_t>(std::stoi(stringValue));
+            return std::make_unique<ConstantInt32ValueFunction>(intValue);
+        };
+        case PhysicalType::Type::INT64: {
+            auto intValue = static_cast<int64_t>(std::stol(stringValue));
+            return std::make_unique<ConstantInt64ValueFunction>(intValue);
+        };
+        case PhysicalType::Type::FLOAT32: {
+            auto floatValue = std::stof(stringValue);
+            return std::make_unique<ConstantFloatValueFunction>(floatValue);
+        };
+        case PhysicalType::Type::FLOAT64: {
+            auto doubleValue = std::stod(stringValue);
+            return std::make_unique<ConstantDoubleValueFunction>(doubleValue);
+        };
+        case PhysicalType::Type::CHAR:
+            break;
+        case PhysicalType::Type::BOOLEAN: {
+            auto boolValue = static_cast<bool>(std::stoi(stringValue)) == 1;
+            return std::make_unique<ConstantBooleanValueFunction>(boolValue);
         }
+        case PhysicalType::Type::VARSIZED: {
+            return std::make_unique<ExecutableFunctionConstantValueVariableSize>(
+                reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
+        };
+        case PhysicalType::Type::UNDEFINED: {
+            throw UnknownPhysicalType(fmt::format("the UNKNOWN type is not supported"));
+        };
     }
-    else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType))
-    {
-        return std::make_unique<ExecutableFunctionConstantValueVariableSize>(
-            reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
-    }
-    throw UnknownPhysicalType(
-        fmt::format("couldn't create ConstantValueFunction for: {}, not a BasicPhysicalType.", physicalType->toString()));
+    throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", physicalType));
 }
 }

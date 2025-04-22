@@ -15,16 +15,15 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-
 namespace NES
 {
-NodeFunctionMul::NodeFunctionMul(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mul") {};
+NodeFunctionMul::NodeFunctionMul(DataType stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mul") {};
 
 NodeFunctionMul::NodeFunctionMul(NodeFunctionMul* other) : NodeFunctionArithmeticalBinary(other)
 {

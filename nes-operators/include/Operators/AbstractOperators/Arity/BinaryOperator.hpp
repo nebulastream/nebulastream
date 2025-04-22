@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Operators/Operator.hpp>
 
 namespace NES
@@ -31,39 +31,39 @@ public:
 
     /**
    * @brief get the input schema of this operator from the left side
-   * @return std::shared_ptr<Schema>
+   * @return Schema
    */
-    std::shared_ptr<Schema> getLeftInputSchema() const;
+    Schema getLeftInputSchema() const;
 
     /**
     * @brief set the input schema of this operator for the left side
      * @param inputSchema
     */
-    void setLeftInputSchema(std::shared_ptr<Schema> inputSchema);
+    void setLeftInputSchema(Schema inputSchema);
 
     /**
     * @brief get the input schema of this operator from the left side
-    * @return std::shared_ptr<Schema>
+    * @return Schema
     */
-    std::shared_ptr<Schema> getRightInputSchema() const;
+    Schema getRightInputSchema() const;
 
     /**
      * @brief set the input schema of this operator for the right side
      * @param inputSchema
     */
-    void setRightInputSchema(std::shared_ptr<Schema> inputSchema);
+    void setRightInputSchema(Schema inputSchema);
 
     /**
     * @brief get the result schema of this operator
-    * @return std::shared_ptr<Schema>
+    * @return Schema
     */
-    std::shared_ptr<Schema> getOutputSchema() const override;
+    Schema getOutputSchema() const override;
 
     /**
      * @brief set the result schema of this operator
      * @param outputSchema
     */
-    void setOutputSchema(std::shared_ptr<Schema> outputSchema) override;
+    void setOutputSchema(Schema outputSchema) override;
 
     /**
      * @brief Set the input origin ids for the left input stream.
@@ -105,10 +105,10 @@ protected:
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
     [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
-    std::shared_ptr<Schema> leftInputSchema = Schema::create();
-    std::shared_ptr<Schema> rightInputSchema = Schema::create();
-    std::shared_ptr<Schema> outputSchema = Schema::create();
-    std::vector<std::shared_ptr<Schema>> distinctSchemas;
+    Schema leftInputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    Schema rightInputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    Schema outputSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    std::vector<Schema> distinctSchemas;
     std::vector<OriginId> leftInputOriginIds;
     std::vector<OriginId> rightInputOriginIds;
 };

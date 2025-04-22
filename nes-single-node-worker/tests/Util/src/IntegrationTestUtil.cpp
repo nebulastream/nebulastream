@@ -18,8 +18,7 @@
 #include <fstream>
 #include <memory>
 #include <thread>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -37,17 +36,13 @@
 #include <IntegrationTestUtil.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::IntegrationTestUtil
 {
 
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    const std::shared_ptr<Schema>& schema,
+    Schema schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId,
     const std::string& timestampFieldName,
@@ -65,23 +60,21 @@ namespace NES::IntegrationTestUtil
         std::getline(file, line);
     }
 
-    auto getPhysicalTypes = [](const std::shared_ptr<Schema>& schema)
+    auto getPhysicalTypes = [](Schema schema)
     {
-        std::vector<std::shared_ptr<PhysicalType>> retVector;
-        DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-        for (const auto& field : *schema)
+        std::vector<PhysicalType> retVector;
+        for (const auto& field : schema.getFields())
         {
-            auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-            retVector.push_back(physicalField);
+            retVector.push_back(field.dataType.physicalType);
         }
 
         return retVector;
     };
 
-    const auto maxTuplesPerBuffer = bufferProvider.getBufferSize() / schema->getSchemaSizeInBytes();
+    const auto maxTuplesPerBuffer = bufferProvider.getBufferSize() / schema.getSizeOfSchemaInBytes();
     auto tupleCount = 0UL;
     auto tupleBuffer = bufferProvider.getBufferBlocking();
-    const auto numberOfSchemaFields = schema->getFieldCount();
+    const auto numberOfSchemaFields = schema.getNumberOfFields();
     const auto physicalTypes = getPhysicalTypes(schema);
 
     uint64_t sequenceNumber = 0;
@@ -96,7 +89,7 @@ namespace NES::IntegrationTestUtil
         {
             writeFieldValueToTupleBuffer(values[j], j, testBuffer, schema, tupleCount, bufferProvider);
         }
-        if (schema->contains(timestampFieldName))
+        if (schema.contains(timestampFieldName))
         {
             watermarkTS = std::max(watermarkTS, testBuffer[tupleCount][timestampFieldName].read<uint64_t>());
         }
@@ -134,103 +127,89 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<Schema>& schema,
+    Schema schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)
 {
-    auto dataType = schema->getFieldByIndex(schemaFieldIndex)->getDataType();
-    auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+    const auto dataType = schema.getFieldAt(schemaFieldIndex).dataType;
 
     INVARIANT(!inputString.empty(), "Input string for parsing is empty");
     /// TODO #371 replace with csv parsing library
-    try
+    switch (dataType.physicalType.type)
     {
-        if (auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
-        {
-            switch (basicPhysicalType->nativeType)
-            {
-                case NES::BasicPhysicalType::NativeType::INT_8: {
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(*Util::from_chars<int8_t>(inputString));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::INT_16: {
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int16_t>(*Util::from_chars<int16_t>(inputString));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::INT_32: {
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int32_t>(*Util::from_chars<int32_t>(inputString));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::INT_64: {
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int64_t>(*Util::from_chars<int64_t>(inputString));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UINT_8: {
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint8_t>(*Util::from_chars<uint8_t>(inputString));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UINT_16: {
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(*Util::from_chars<uint16_t>(inputString));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UINT_32: {
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint32_t>(*Util::from_chars<uint32_t>(inputString));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UINT_64: {
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint64_t>(*Util::from_chars<uint64_t>(inputString));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::FLOAT: {
-                    auto optValue = Util::from_chars<float>(Util::replaceAll(inputString, ",", "."));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<float>(*optValue);
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::DOUBLE: {
-                    auto optValue = Util::from_chars<double>(Util::replaceAll(inputString, ",", "."));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<double>(*optValue);
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::CHAR: {
-                    ///verify that only a single char was transmitted
-                    if (inputString.size() > 1)
-                    {
-                        NES_FATAL_ERROR(
-                            "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}", inputString.c_str());
-                        throw std::invalid_argument("Value " + inputString + " is not a char");
-                    }
-                    char value = inputString.at(0);
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<char>(value);
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::BOOLEAN: {
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<bool>(*Util::from_chars<bool>(inputString));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UNDEFINED:
-                    NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
-            }
+        case NES::PhysicalType::Type::INT8: {
+            tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(*Util::from_chars<int8_t>(inputString));
+            break;
         }
-        else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType))
-        {
+        case NES::PhysicalType::Type::INT16: {
+            tupleBuffer[tupleCount][schemaFieldIndex].write<int16_t>(*Util::from_chars<int16_t>(inputString));
+            break;
+        }
+        case NES::PhysicalType::Type::INT32: {
+            tupleBuffer[tupleCount][schemaFieldIndex].write<int32_t>(*Util::from_chars<int32_t>(inputString));
+            break;
+        }
+        case NES::PhysicalType::Type::INT64: {
+            tupleBuffer[tupleCount][schemaFieldIndex].write<int64_t>(*Util::from_chars<int64_t>(inputString));
+            break;
+        }
+        case NES::PhysicalType::Type::UINT8: {
+            tupleBuffer[tupleCount][schemaFieldIndex].write<uint8_t>(*Util::from_chars<uint8_t>(inputString));
+            break;
+        }
+        case NES::PhysicalType::Type::UINT16: {
+            tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(*Util::from_chars<uint16_t>(inputString));
+            break;
+        }
+        case NES::PhysicalType::Type::UINT32: {
+            tupleBuffer[tupleCount][schemaFieldIndex].write<uint32_t>(*Util::from_chars<uint32_t>(inputString));
+            break;
+        }
+        case NES::PhysicalType::Type::UINT64: {
+            tupleBuffer[tupleCount][schemaFieldIndex].write<uint64_t>(*Util::from_chars<uint64_t>(inputString));
+            break;
+        }
+        case NES::PhysicalType::Type::FLOAT32: {
+            auto optValue = Util::from_chars<float>(Util::replaceAll(inputString, ",", "."));
+            tupleBuffer[tupleCount][schemaFieldIndex].write<float>(*optValue);
+            break;
+        }
+        case NES::PhysicalType::Type::FLOAT64: {
+            auto optValue = Util::from_chars<double>(Util::replaceAll(inputString, ",", "."));
+            tupleBuffer[tupleCount][schemaFieldIndex].write<double>(*optValue);
+            break;
+        }
+        case NES::PhysicalType::Type::CHAR: {
+            ///verify that only a single char was transmitted
+            if (inputString.size() > 1)
+            {
+                NES_FATAL_ERROR(
+                    "SourceFormatIterator::mqttMessageToNESBuffer: Received non char Value for CHAR Field {}", inputString.c_str());
+                throw std::invalid_argument("Value " + inputString + " is not a char");
+            }
+            char value = inputString.at(0);
+            tupleBuffer[tupleCount][schemaFieldIndex].write<char>(value);
+            break;
+        }
+        case NES::PhysicalType::Type::BOOLEAN: {
+            tupleBuffer[tupleCount][schemaFieldIndex].write<bool>(*Util::from_chars<bool>(inputString));
+            break;
+        }
+        case NES::PhysicalType::Type::VARSIZED: {
             NES_TRACE(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
                 "to tuple buffer",
                 inputString);
             tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferProvider);
         }
-        else
-        {
+        case NES::PhysicalType::Type::UNDEFINED:
+            NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
+        default:
             throw NotImplemented();
-        }
-    }
-    catch (const std::exception& e)
-    {
-        NES_ERROR("Failed to convert inputString to desired NES data type. Error: {}", e.what());
     }
 }
 
-std::shared_ptr<Schema> loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
+Schema loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
 {
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);
