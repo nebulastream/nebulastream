@@ -76,7 +76,7 @@ endif (NOT CODE_COVERAGE)
 if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(TEST_DATA_LARGE
             NAME systest_large
-            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data ${LARGE_DATA} --groups large -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=10 --worker.queryEngine.taskQueueSize=100000 --worker.numberOfBuffersInGlobalBufferManager=200000)
+            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data ${LARGE_DATA} --groups large -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=10 --worker.queryEngine.taskQueueSize=100000 --worker.numberOfBuffersInGlobalBufferManager=300000)
     message(STATUS "Large scale tests enabled")
 endif ()
 
