@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/QueryPlan.hpp>
 #include <Util/QueryState.hpp>
 #include <SerializableQueryPlan.pb.h>
 

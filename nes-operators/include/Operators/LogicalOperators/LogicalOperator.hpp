@@ -14,75 +14,27 @@
 
 #pragma once
 
-#include <map>
-#include <set>
 #include <Operators/Operator.hpp>
-#include <Util/OperatorState.hpp>
 
 namespace NES
 {
 
-/**
- * @brief Logical operator, enables schema inference and signature computation.
- */
+/// Logical operator, enables schema inference and signature computation.
 class LogicalOperator : public virtual Operator
 {
 public:
     explicit LogicalOperator(OperatorId id);
 
-    /**
-     * @brief Infers the input origin of a logical operator.
-     * If this operator does not assign new origin ids, e.g., windowing,
-     * this function collects the origin ids from all upstream operators.
-     */
+    /// @brief Infers the input origin of a logical operator.
+    /// If this operator does not assign new origin ids, e.g., windowing,
+    /// this function collects the origin ids from all upstream operators.
     virtual void inferInputOrigins() = 0;
 
-    /**
-     * @brief Get the String based signature for the operator
-     */
-    virtual void inferStringSignature() = 0;
-
-    /**
-     * @brief Set the hash based signature for the logical operator
-     * @param signature : the signature
-     */
-    void setHashBasedSignature(std::map<size_t, std::set<std::string>> signature);
-
-    /**
-     * @brief update the hash based signature for the logical operator
-     * @param signature : the signature
-     */
-    void updateHashBasedSignature(size_t hashCode, const std::string& stringSignature);
-
-    /**
-     * @brief Get the string signature computed based on upstream operator chain
-     * @return string representing the query signature
-     */
-    std::map<size_t, std::set<std::string>> getHashBasedSignature() const;
-
-    /**
-     * @brief infers the input and out schema of this operator depending on its child.
-     * @param typeInferencePhaseContext needed for stamp inferring
-     * @return true if schema was correctly inferred
-     */
+    /// @brief infers the input and out schema of this operator depending on its child.
+    /// @param typeInferencePhaseContext needed for stamp inferring
+    /// @return true if schema was correctly inferred
     virtual bool inferSchema() = 0;
 
-    /**
-     * @brief Update state of the operator
-     * @param newOperatorState : new state of the operator
-     * @throws CannotInferSchema exception
-     */
-    void setOperatorState(OperatorState newOperatorState);
-
-    /**
-     * @brief Get the operator state
-     * @return the current state of the operator
-     */
-    OperatorState getOperatorState() const;
-
 protected:
-    std::map<size_t, std::set<std::string>> hashBasedSignature;
-    [[no_unique_address]] std::hash<std::string> hashGenerator;
-    OperatorState operatorState = OperatorState::TO_BE_PLACED;
 };
 }
