@@ -58,6 +58,7 @@ uint32_t DataType::getSizeInBytes() const
 
 std::string DataType::formattedBytesToString(const void* data) const
 {
+    PRECONDITION(data != nullptr, "Pointer to data is invalid.");
     switch (type)
     {
         case Type::INT8:
@@ -90,10 +91,10 @@ std::string DataType::formattedBytesToString(const void* data) const
             return std::string{*static_cast<const char*>(data)};
         }
         case Type::VARSIZED: {
-            if (!data)
+            if (data == nullptr)
             {
-                NES_ERROR("Pointer to variable sized data is invalid. Buffer must at least contain the length (0 if empty).");
-                return "";
+                throw CannotFormatMalformedStringValue(
+                    "Pointer to variable sized data is invalid. Buffer must at least contain the length (0 if empty).");
             }
 
             /// Read the length of the VariableSizedDataType from the first StringLengthType bytes from the buffer and adjust the data pointer.
@@ -102,8 +103,7 @@ std::string DataType::formattedBytesToString(const void* data) const
             const auto* textPointer = static_cast<const char*>(data);
             if (textPointer == nullptr)
             {
-                NES_ERROR("Pointer to VariableSizedData is invalid.");
-                return "";
+                throw CannotFormatMalformedStringValue("Pointer to VariableSizedData is invalid.");
             }
             textPointer += sizeof(StringLengthType);
             return std::string(textPointer, textLength);
@@ -111,6 +111,10 @@ std::string DataType::formattedBytesToString(const void* data) const
         case Type::UNDEFINED:
             return "invalid physical type";
     }
+}
+bool DataType::isType(const Type type) const
+{
+    return this->type == type;
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)

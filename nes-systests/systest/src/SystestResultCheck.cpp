@@ -349,11 +349,11 @@ bool operator!=(const FieldResult& left, const FieldResult& right)
     }
 
     /// Check if the value is equal by casting it to the correct type and comparing it (we allow a small delta)
-    if (left.type.isVarSized() or left.type.isChar())
+    if (left.type.isType(DataType::Type::VARSIZED) or left.type.isType(DataType::Type::CHAR))
     {
         return left.valueAsString != right.valueAsString;
     }
-    if (left.type.isBoolean())
+    if (left.type.isType(DataType::Type::BOOLEAN))
     {
         return not compareStringAsTypeWithError<bool>(left.valueAsString, right.valueAsString);
     }

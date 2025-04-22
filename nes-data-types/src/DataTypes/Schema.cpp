@@ -24,6 +24,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -50,7 +51,7 @@ Schema Schema::addField(std::string name, const DataType::Type type)
 {
     DataType dataType{type};
     sizeOfSchemaInBytes += dataType.getSizeInBytes();
-    fields.emplace_back(Field{std::move(name), std::move(dataType)});
+    fields.emplace_back(std::move(name), std::move(dataType));
     nameToField.emplace(fields.back().name, fields.size() - 1);
     return *this;
 }
