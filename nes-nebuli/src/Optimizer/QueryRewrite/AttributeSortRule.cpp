@@ -17,7 +17,7 @@
 #include <numeric>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
@@ -58,9 +58,8 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
         auto predicate = selectionOperator->getPredicate();
         auto updatedPredicate = sortAttributesInFunction(predicate);
         auto updatedFilter = std::make_shared<LogicalSelectionOperator>(updatedPredicate, getNextOperatorId());
-        updatedFilter->setInputSchema(selectionOperator->getInputSchema()->copy());
-        Util::as_if<LogicalOperator>(updatedFilter)
-            ->setOutputSchema(Util::as_if<LogicalOperator>(selectionOperator)->getOutputSchema()->copy());
+        updatedFilter->setInputSchema(selectionOperator->getInputSchema());
+        Util::as_if<LogicalOperator>(updatedFilter)->setOutputSchema(Util::as_if<LogicalOperator>(selectionOperator)->getOutputSchema());
         selectionOperator->replace(updatedFilter);
     }
 
@@ -70,8 +69,8 @@ std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> q
         auto mapFunction = mapOperator->getMapFunction();
         auto updatedMapFunction = Util::as<NodeFunctionFieldAssignment>(sortAttributesInFunction(mapFunction));
         auto updatedMap = std::make_shared<LogicalMapOperator>(updatedMapFunction, getNextOperatorId());
-        updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
-        Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
+        updatedMap->setInputSchema(mapOperator->getInputSchema());
+        Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema());
         mapOperator->replace(updatedMap);
     }
     return queryPlan;

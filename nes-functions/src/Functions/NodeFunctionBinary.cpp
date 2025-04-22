@@ -15,15 +15,15 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-NodeFunctionBinary::NodeFunctionBinary(std::shared_ptr<DataType> stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
+NodeFunctionBinary::NodeFunctionBinary(DataType stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
 {
 }
 

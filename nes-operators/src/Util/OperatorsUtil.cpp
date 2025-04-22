@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Util/OperatorsUtil.hpp>
 
 namespace Util
@@ -25,9 +25,11 @@ std::string detail::concatenateFunctionHelper(uint64_t value)
     return ss.str();
 }
 
-std::string detail::concatenateFunctionHelper(const std::shared_ptr<NES::Schema>& schema)
+std::string detail::concatenateFunctionHelper(const NES::Schema& schema)
 {
-    return schema->toString();
+    std::stringstream ss;
+    ss << schema;
+    return ss.str();
 }
 
 }

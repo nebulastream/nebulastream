@@ -15,8 +15,8 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <DataTypes/DataType.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 /**
@@ -43,7 +43,7 @@ public:
     std::shared_ptr<NodeFunction> getRight() const;
 
 protected:
-    explicit NodeFunctionBinary(std::shared_ptr<DataType> stamp, std::string name);
+    explicit NodeFunctionBinary(DataType stamp, std::string name);
     explicit NodeFunctionBinary(NodeFunctionBinary* other);
 };
 

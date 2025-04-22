@@ -79,7 +79,7 @@ bool LogicalSelectionOperator::inferSchema()
     {
         return false;
     }
-    predicate->inferStamp(*inputSchema);
+    predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate())
     {
         throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");

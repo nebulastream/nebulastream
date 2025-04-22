@@ -17,9 +17,9 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
-#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <DataTypes/Schema.hpp>
 
 namespace NES::Sinks
 {
@@ -34,7 +34,7 @@ struct SinkDescriptor : Configurations::Descriptor
     validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs);
 
     const std::string sinkType;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
     bool addTimestamp;
 
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);

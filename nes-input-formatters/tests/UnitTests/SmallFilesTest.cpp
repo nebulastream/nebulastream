@@ -19,7 +19,7 @@
 #include <ranges>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
@@ -89,7 +89,7 @@ public:
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes);
         PRECONDITION(
-            testConfig.sizeOfFormattedBuffers >= schema->getSchemaSizeInBytes(),
+            testConfig.sizeOfFormattedBuffers >= schema.getSizeOfSchemaInBytes(),
             "The formatted buffer must be large enough to hold at least one tuple.");
 
         const auto testFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / currentTestFile.fileName;
@@ -118,7 +118,7 @@ public:
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
             auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);
-            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(*schema);
+            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<Runtime::Execution::TestablePipelineTask> pipelineTasks;

@@ -16,8 +16,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -77,18 +76,18 @@ std::string EventTimeWatermarkStrategyDescriptor::toString()
     return ss.str();
 }
 
-bool EventTimeWatermarkStrategyDescriptor::inferStamp(const std::shared_ptr<Schema>& schema)
+bool EventTimeWatermarkStrategyDescriptor::inferStamp(Schema schema)
 {
     const auto fieldAccessFunction = NES::Util::as<NodeFunctionFieldAccess>(onField);
     auto fieldName = fieldAccessFunction->getFieldName();
     ///Check if the field exists in the schema
-    const auto existingField = schema->getFieldByName(fieldName);
+    const auto existingField = schema.getFieldByName(fieldName);
     if (existingField)
     {
-        fieldAccessFunction->updateFieldName(existingField.value()->getName());
+        fieldAccessFunction->updateFieldName(existingField.value().name);
         return true;
     }
-    else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+    if (fieldName == TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
     {
         return true;
     }

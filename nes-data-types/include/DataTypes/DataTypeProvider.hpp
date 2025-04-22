@@ -11,28 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
-#include <stdint.h>
+#include <memory>
+#include <optional>
+#include <string>
+#include <DataTypes/DataType.hpp>
 
-namespace NES
+namespace NES::DataTypeProvider
 {
 
-enum class BasicType : uint8_t
-{
-    INT8,
-    UINT8,
-    INT16,
-    UINT16,
-    INT32,
-    UINT32,
-    INT64,
-    FLOAT32,
-    UINT64,
-    FLOAT64,
-    BOOLEAN,
-    CHAR,
-};
+std::optional<DataType> tryProvideDataType(const std::string& type);
 
+/// @param type name of the data type (must be the exact name: INT8, INT16, CHAR, BOOLEAN, ...)
+/// Throws an UnknownPluginType, if the name does not match any type enum
+DataType provideDataType(const std::string& type);
+
+DataType provideDataType(PhysicalType::Type type);
 }

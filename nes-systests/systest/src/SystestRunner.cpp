@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/ostream.h>
@@ -46,7 +47,6 @@
 #include <SystestResultCheck.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Systest
 {
@@ -62,8 +62,8 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     SystestParser parser{};
     std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema{
         {"CHECKSUM",
-         {{DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Count"},
-          {DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Checksum"}}}};
+         {{DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "S$Count"},
+          {DataTypeProvider::provideDataType(PhysicalType::Type::UINT64), "S$Checksum"}}}};
 
     parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = testDataDir; }});
     if (!parser.loadFile(testFilePath))

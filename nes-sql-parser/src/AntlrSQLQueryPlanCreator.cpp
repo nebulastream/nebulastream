@@ -30,6 +30,8 @@
 #include <API/Windowing.hpp>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
@@ -52,8 +54,6 @@
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::Parsers
 {

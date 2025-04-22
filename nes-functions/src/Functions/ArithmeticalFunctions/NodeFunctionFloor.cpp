@@ -15,6 +15,7 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionFloor.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -22,12 +23,11 @@
 #include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-NodeFunctionFloor::NodeFunctionFloor(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Floor") {};
+NodeFunctionFloor::NodeFunctionFloor(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Floor") {};
 
 NodeFunctionFloor::NodeFunctionFloor(NodeFunctionFloor* other) : NodeFunctionArithmeticalUnary(other)
 {

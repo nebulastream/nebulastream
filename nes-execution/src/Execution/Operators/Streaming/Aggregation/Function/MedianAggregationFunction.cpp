@@ -28,14 +28,14 @@
 #include <ErrorHandling.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+
 
 namespace NES::Runtime::Execution::Aggregation
 {
 
 MedianAggregationFunction::MedianAggregationFunction(
-    std::shared_ptr<PhysicalType> inputType,
-    std::shared_ptr<PhysicalType> resultType,
+    PhysicalType inputType,
+    PhysicalType resultType,
     std::unique_ptr<Functions::Function> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
@@ -78,7 +78,7 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr = static_cast<nautilus::val<Nautilus::Interface::PagedVector*>>(aggregationState);
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(pagedVectorPtr, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
-    const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema()->getFieldNames();
+    const auto allFieldNames = memProviderPagedVector->getMemoryLayout()->getSchema().getFieldNames();
     const auto numberOfEntries = invoke(
         +[](const Nautilus::Interface::PagedVector* pagedVector)
         {
@@ -145,7 +145,8 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
     const auto medianValue1 = inputFunction->execute(medianRecord1, pipelineMemoryProvider.arena);
     const auto medianValue2 = inputFunction->execute(medianRecord2, pipelineMemoryProvider.arena);
     const Nautilus::VarVal two = nautilus::val<uint64_t>(2);
-    const auto medianValue = (medianValue1.castToType(resultType) + medianValue2.castToType(resultType)) / two.castToType(resultType);
+    const auto medianValue
+        = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
 
     /// Adding the median to the result record
     Nautilus::Record resultRecord;

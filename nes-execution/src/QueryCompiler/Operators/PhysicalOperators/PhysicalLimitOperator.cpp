@@ -15,7 +15,7 @@
 #include <memory>
 #include <ostream>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -23,14 +23,12 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalLimitOperator::PhysicalLimitOperator(
-    OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema, uint64_t limit)
+PhysicalLimitOperator::PhysicalLimitOperator(OperatorId id, Schema inputSchema, Schema outputSchema, uint64_t limit)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), limit(limit)
 {
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalLimitOperator::create(
-    OperatorId id, const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, uint64_t limit)
+std::shared_ptr<PhysicalOperator> PhysicalLimitOperator::create(OperatorId id, Schema inputSchema, Schema outputSchema, uint64_t limit)
 {
     return std::make_shared<PhysicalLimitOperator>(id, inputSchema, outputSchema, limit);
 }
@@ -40,8 +38,7 @@ uint64_t PhysicalLimitOperator::getLimit()
     return limit;
 }
 
-std::shared_ptr<PhysicalOperator>
-PhysicalLimitOperator::create(const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<Schema>& outputSchema, uint64_t limit)
+std::shared_ptr<PhysicalOperator> PhysicalLimitOperator::create(Schema inputSchema, Schema outputSchema, uint64_t limit)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), limit);
 }

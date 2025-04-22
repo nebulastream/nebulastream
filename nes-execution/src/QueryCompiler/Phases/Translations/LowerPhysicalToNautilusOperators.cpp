@@ -18,7 +18,7 @@
 #include <numeric>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/EmitOperatorHandler.hpp>
@@ -68,7 +68,6 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -174,16 +173,15 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto keyFunctionLogical = windowDefinition->getKeys();
         for (const auto& nodeFunctionKey : keyFunctionLogical)
         {
-            const DefaultPhysicalTypeFactory typeFactory;
             const auto loweredFunctionType = nodeFunctionKey->getStamp();
             keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
-            keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+            keySize += loweredFunctionType.physicalType.getSizeInBytes();
         }
         const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
         const auto entriesPerPage = queryCompilerConfig.pageSize.getValue() / entrySize;
         const auto& [fieldKeyNames, fieldValueNames] = buildOperator->getKeyAndValueFields();
         const auto& [fieldKeys, fieldValues] = Nautilus::Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
-            *buildOperator->getInputSchema(), fieldKeyNames, fieldValueNames);
+            buildOperator->getInputSchema(), fieldKeyNames, fieldValueNames);
 
         Runtime::Execution::Operators::WindowAggregationOperator windowAggregationOperator(
             std::move(aggregationFunctions),
@@ -219,10 +217,9 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         uint64_t keySize = 0;
         for (const auto& nodeFunctionKey : windowDefinition->getKeys())
         {
-            const DefaultPhysicalTypeFactory typeFactory;
             const auto loweredFunctionType = nodeFunctionKey->getStamp();
             keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
-            keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+            keySize += loweredFunctionType.physicalType.getSizeInBytes();
         }
         const auto pageSize = queryCompilerConfig.pageSize.getValue();
         const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
@@ -230,7 +227,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         const auto entriesPerPage = pageSize / entrySize;
         const auto& [fieldKeyNames, fieldValueNames] = probeOperator->getKeyAndValueFields();
         const auto& [fieldKeys, fieldValues] = Nautilus::Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
-            *probeOperator->getInputSchema(), fieldKeyNames, fieldValueNames);
+            probeOperator->getInputSchema(), fieldKeyNames, fieldValueNames);
         std::dynamic_pointer_cast<Runtime::Execution::Operators::AggregationOperatorHandler>(probeOperator->getOperatorHandler())
             ->setHashMapParams(keySize, valueSize, pageSize, numberOfBuckets);
 
@@ -338,14 +335,14 @@ LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<PhysicalOperat
 {
     auto schema = operatorNode->getOutputSchema();
     INVARIANT(
-        schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
+        schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT,
         "Currently only row layout is supported, current layout={}",
-        magic_enum::enum_name(schema->getLayoutType()));
+        magic_enum::enum_name(schema.memoryLayoutType));
     /// pass buffer size here
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
         = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
+    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema.getFieldNames());
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerEmit(
@@ -355,9 +352,9 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
 {
     auto schema = operatorNode->getOutputSchema();
     INVARIANT(
-        schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
+        schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT,
         "Currently only row layout is supported, current layout={}",
-        magic_enum::enum_name(schema->getLayoutType()));
+        magic_enum::enum_name(schema.memoryLayoutType));
     /// pass buffer size here
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider

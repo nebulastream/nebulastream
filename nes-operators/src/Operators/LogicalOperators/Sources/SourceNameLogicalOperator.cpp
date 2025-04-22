@@ -15,7 +15,7 @@
 #include <memory>
 #include <ostream>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -27,11 +27,11 @@ namespace NES
 {
 
 SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName))
+    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(Schema{})
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, const OperatorId id)
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, Schema schema, const OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
@@ -104,11 +104,11 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
 {
     return logicalSourceName;
 }
-std::shared_ptr<Schema> SourceNameLogicalOperator::getSchema() const
+Schema SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
-void SourceNameLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
+void SourceNameLogicalOperator::setSchema(Schema schema)
 {
     this->schema = std::move(schema);
 }

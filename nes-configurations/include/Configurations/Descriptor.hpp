@@ -23,6 +23,7 @@
 #include <utility>
 #include <variant>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -334,13 +335,4 @@ private:
 
 }
 
-/// Specializing the fmt ostream_formatter to accept Descriptor objects.
-/// Allows to call fmt::format("Descriptor: {}", descriptorObject); and therefore also works with our logging.
-namespace fmt
-{
-template <>
-struct formatter<NES::Configurations::Descriptor> : ostream_formatter
-{
-};
-
-}
+FMT_OSTREAM(NES::Configurations::Descriptor);

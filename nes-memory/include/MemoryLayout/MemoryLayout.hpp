@@ -18,9 +18,8 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -48,7 +47,7 @@ public:
     /// @brief Constructor for MemoryLayout.
     /// @param bufferSize A memory layout is always created for a specific buffer size.
     /// @param schema A memory layout is always created for a specific schema.
-    MemoryLayout(uint64_t bufferSize, const std::shared_ptr<Schema>& schema);
+    MemoryLayout(uint64_t bufferSize, Schema schema);
     MemoryLayout(const MemoryLayout&) = default;
 
     virtual ~MemoryLayout() = default;
@@ -69,8 +68,8 @@ public:
     [[nodiscard]] uint64_t getTupleSize() const;
     [[nodiscard]] uint64_t getBufferSize() const;
     void setBufferSize(uint64_t bufferSize);
-    [[nodiscard]] const std::shared_ptr<Schema>& getSchema() const;
-    [[nodiscard]] std::shared_ptr<PhysicalType> getPhysicalType(uint64_t fieldIndex) const;
+    [[nodiscard]] const Schema& getSchema() const;
+    [[nodiscard]] PhysicalType getPhysicalType(uint64_t fieldIndex) const;
     [[nodiscard]] uint64_t getFieldSize(uint64_t fieldIndex) const;
     [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
     void setKeyFieldNames(const std::vector<std::string>& keyFields);
@@ -80,11 +79,11 @@ public:
 
 protected:
     uint64_t bufferSize;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
     uint64_t recordSize;
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
-    std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
+    std::vector<PhysicalType> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
     std::vector<std::string> keyFieldNames;
 };

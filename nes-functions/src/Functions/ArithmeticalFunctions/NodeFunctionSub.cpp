@@ -15,18 +15,18 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-NodeFunctionSub::NodeFunctionSub(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Sub") {};
+NodeFunctionSub::NodeFunctionSub(DataType stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Sub") {};
 
 NodeFunctionSub::NodeFunctionSub(NodeFunctionSub* other) : NodeFunctionArithmeticalBinary(other)
 {
