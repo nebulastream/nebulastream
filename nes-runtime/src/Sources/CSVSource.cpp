@@ -391,7 +391,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
         generatedTuples += tupleCount;
         generatedBuffers++;
     } else {
-        NES_ERROR("here 2");
+        // NES_ERROR("here 2");
         fillBuffer(buffer);
     }
     NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
