@@ -53,9 +53,9 @@ WorkerContext::~WorkerContext() {
     statisticsFile.flush();
     statisticsFile.close();
     // storageFile.close();
-    /*if (hdfsClient) {
+    if (hdfsClient) {
         delete hdfsClient;
-    }*/
+    }
 }
 
 size_t WorkerContext::getStorageSize(Network::NesPartition nesPartitionId) {
@@ -294,7 +294,7 @@ std::vector<char> WorkerContext::getBinaryStorage(Network::NesPartition nesParti
     return binaryData;
 }
 
-/*void WorkerContext::createCheckpoint(Network::NesPartition nesPartition, Runtime::TupleBuffer& inputBuffer) {
+void WorkerContext::hdfsCreateCheckpoint(Network::NesPartition nesPartition, Runtime::TupleBuffer& inputBuffer) {
     if (!hdfsClient) {
         hdfsClient = new HDFSClient("localhost", 9000); // Example HDFS host and port
     }
@@ -309,7 +309,7 @@ std::vector<char> WorkerContext::getBinaryStorage(Network::NesPartition nesParti
 
     // Write serialized data to HDFS
     hdfsClient->writeToFile(filePath, binaryData, nesPartition.getPartitionId().getRawValue());
-}*/
+}
 
 std::vector<char> WorkerContext::serializeBuffer(NES::Runtime::TupleBuffer& buffer, const SchemaPtr& schema) {
     // Convert TupleBuffer to a binary representation
@@ -350,7 +350,7 @@ std::vector<char> WorkerContext::serializeBuffer(NES::Runtime::TupleBuffer& buff
     return binaryData;
 }
 
-/*bool WorkerContext::trimCheckpoint(Network::NesPartition nesPartition, uint64_t timestamp) {
+bool WorkerContext::hdfsTrimCheckpoint(Network::NesPartition nesPartition, uint64_t timestamp) {
     bool isTrimmed = false;
     int numEntries = 0;
     std::string path = "/user/hadoop/" + std::to_string(nesPartition.getPartitionId().getRawValue());
@@ -368,7 +368,7 @@ std::vector<char> WorkerContext::serializeBuffer(NES::Runtime::TupleBuffer& buff
         }
     }
     return isTrimmed;
-}*/
+}
 
 bool WorkerContext::releaseNetworkChannel(OperatorId id,
                                           DecomposedQueryPlanVersion,

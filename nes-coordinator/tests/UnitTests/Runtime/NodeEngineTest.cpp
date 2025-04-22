@@ -324,7 +324,9 @@ auto setupQEP(const NodeEnginePtr& engine, SharedQueryId sharedQueryId, const st
                                          engine,
                                          1,
                                          outPath,
-                                         false, FaultToleranceType::NONE);
+                                         false,
+                                         FaultToleranceType::NONE,
+                                         CheckpointStorageType::NONE);
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(INVALID_PIPELINE_ID,
@@ -459,7 +461,9 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                    engine,
                                    1,
                                    getTestResourceFolder() / "qep1.csv",
-                                   false, FaultToleranceType::NONE);
+                                   false,
+                                   FaultToleranceType::NONE,
+                                   CheckpointStorageType::NONE);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(PipelineId(0),
@@ -496,7 +500,9 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
                                    engine,
                                    1,
                                    getTestResourceFolder() / "qep2.csv",
-                                   false, FaultToleranceType::NONE);
+                                   false,
+                                   FaultToleranceType::NONE,
+                                   CheckpointStorageType::NONE);
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(PipelineId(0),
@@ -574,7 +580,9 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                    engine,
                                    1,
                                    getTestResourceFolder() / "qep1.txt",
-                                   true, FaultToleranceType::NONE);
+                                   true,
+                                   FaultToleranceType::NONE,
+                                   CheckpointStorageType::NONE);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(PipelineId(0),
@@ -611,7 +619,9 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
                                           engine,
                                           1,
                                           getTestResourceFolder() / "qep2.txt",
-                                          true, FaultToleranceType::NONE);
+                                          true,
+                                          FaultToleranceType::NONE,
+                                          CheckpointStorageType::NONE);
 
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
@@ -685,7 +695,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
                                         1,
                                         getTestResourceFolder() / "qep12.txt",
                                         false,
-                                        FaultToleranceType::NONE);
+                                        FaultToleranceType::NONE,
+                                        CheckpointStorageType::NONE);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sharedSink);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(PipelineId(1),
@@ -780,7 +791,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
                                    1,
                                    getTestResourceFolder() / "qep3.txt",
                                    true,
-                                   FaultToleranceType::NONE);
+                                   FaultToleranceType::NONE,
+                                   CheckpointStorageType::NONE);
     auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(PipelineId(0),
@@ -1052,7 +1064,8 @@ TEST_F(NodeEngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                          1,
                                          getTestResourceFolder() / "test.out",
                                          true,
-                                         FaultToleranceType::NONE);
+                                         FaultToleranceType::NONE,
+                                         CheckpointStorageType::NONE);
     // builder.addSource(source);
     // builder.addSink(sink);
     // builder.setQueryId(testQueryId);
@@ -1133,7 +1146,8 @@ TEST_F(NodeEngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                          1,
                                          getTestResourceFolder() / "test.out",
                                          true,
-                                         FaultToleranceType::NONE);
+                                         FaultToleranceType::NONE,
+                                         CheckpointStorageType::NONE);
     //builder.addSource(source);
     // builder.addSink(sink);
     //builder.setQueryId(testQueryId);

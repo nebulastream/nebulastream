@@ -38,6 +38,8 @@ class RawBufferSink : public SinkMedium {
      * @param sharedQueryId shared query plan id
      * @param decomposedQueryId decomposed query plan id
      * @param decomposedQueryVersion decomposed query plan version
+     * @param faultToleranceType fault tolerance type
+     * @param checkpointStorageType checkpoint storage type
      * @param numberOfOrigins number of origins of a given query
      */
     explicit RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
@@ -48,6 +50,7 @@ class RawBufferSink : public SinkMedium {
                            DecomposedQueryId decomposedQueryId,
                            DecomposedQueryPlanVersion decomposedQueryVersion,
                            FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                           CheckpointStorageType checkpointStorageType = CheckpointStorageType::NONE,
                            uint64_t numberOfOrigins = 1);
 
     ~RawBufferSink() override;

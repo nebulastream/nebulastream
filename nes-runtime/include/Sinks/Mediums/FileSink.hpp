@@ -36,6 +36,8 @@ class FileSink : public SinkMedium {
      * @param append True, if the stream should be appended to an existing file. If false, an existing file is first removed.
      * @param sharedQueryId ?
      * @param decomposedQueryId ?
+     * @param faultToleranceType fault tolerance type
+     * @param checkpointStorageType checkpoint storage type
      * @param numberOfOrigins number of origins of a given query
      */
     explicit FileSink(SinkFormatPtr format,
@@ -47,6 +49,7 @@ class FileSink : public SinkMedium {
                       DecomposedQueryId decomposedQueryId,
                       DecomposedQueryPlanVersion decomposedQueryVersion,
                       FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                      CheckpointStorageType checkpointStorageType = CheckpointStorageType::NONE,
                       uint64_t numberOfOrigins = 1);
 
     /**

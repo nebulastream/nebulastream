@@ -22,6 +22,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 
@@ -47,7 +48,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
                          DecomposedQueryPlanVersion version,
-                         FaultToleranceType faultToleranceType)
+                         FaultToleranceType faultToleranceType,
+                         CheckpointStorageType checkpointStorageType)
     : SinkMedium(
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
@@ -55,7 +57,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
         sharedQueryId,
         decomposedQueryId,
         decomposedQueryVersion,
-faultToleranceType,
+        faultToleranceType,
+        checkpointStorageType,
         numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
@@ -85,15 +88,21 @@ faultToleranceType,
     else if (faultToleranceType == FaultToleranceType::CH) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
-            // workerContext.createCheckpoint(nesPartition, inputBuffer);  // uses HDFS
             if ((this->bufferCount % 1000) == 0) {
-                std::vector<char> binaryStorage = workerContext.getBinaryStorage(this->nesPartition);
-                this->nodeEngine->offloadCheckpoint(this->nesPartition.getPartitionId().getRawValue(), binaryStorage);
+                if (this->checkpointStorageType == CheckpointStorageType::HDFS) {
+                    workerContext.hdfsCreateCheckpoint(this->nesPartition, inputBuffer);  // uses HDFS
+                } else if (this->checkpointStorageType == CheckpointStorageType::CRD) {
+                    std::vector<char> binaryStorage = workerContext.getBinaryStorage(this->nesPartition);
+                    this->nodeEngine->offloadCheckpoint(this->nesPartition.getPartitionId().getRawValue(), binaryStorage);
+                }
             }
         };
         deleteFromStorageCallback = [this](uint64_t timestamp, Runtime::WorkerContext& workerContext) {
-            // workerContext.trimCheckpoint(nesPartition, timestamp);  // uses HDFS
-            this->nodeEngine->rpcTrimCheckpoint(this->nesPartition.getPartitionId().getRawValue(), timestamp);
+            if (this->checkpointStorageType == CheckpointStorageType::HDFS) {
+                workerContext.hdfsTrimCheckpoint(this->nesPartition, timestamp);  // uses HDFS
+            } else if (this->checkpointStorageType == CheckpointStorageType::CRD) {
+                this->nodeEngine->rpcTrimCheckpoint(this->nesPartition.getPartitionId().getRawValue(), timestamp);
+            }
             return workerContext.trimStorage(this->nesPartition, timestamp);
         };
     }

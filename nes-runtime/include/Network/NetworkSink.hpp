@@ -21,8 +21,10 @@
 #include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <string>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace NES::Network {
 
@@ -55,7 +57,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
                          DecomposedQueryPlanVersion version,
-                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                         CheckpointStorageType checkpointStorageType = CheckpointStorageType::NONE);
 
     /**
     * @brief Writes data to the underlying output channel

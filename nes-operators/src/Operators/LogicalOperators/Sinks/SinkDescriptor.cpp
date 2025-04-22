@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace NES {
 SinkDescriptor::SinkDescriptor() : SinkDescriptor(1) {}
@@ -25,6 +26,10 @@ SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp)
 FaultToleranceType SinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
 
 void SinkDescriptor::setFaultToleranceType(FaultToleranceType faultTolerance) { faultToleranceType = faultTolerance; }
+
+CheckpointStorageType SinkDescriptor::getCheckpointStorageType() const { return checkpointStorageType; }
+
+void SinkDescriptor::setCheckpointStorageType(CheckpointStorageType checkpointStorage) { checkpointStorageType = checkpointStorage; }
 
 uint64_t SinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 

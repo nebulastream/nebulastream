@@ -45,6 +45,7 @@ class KafkaSink : public SinkMedium {
     * @param kafkaProducerTimeout timeout how long to wait until the push fails
     * @param numberOfOrigins
     * @param faultToleranceType fault tolerance type
+    * @param checkpointStorageType checkpoint storage type
     */
     KafkaSink(SinkFormatPtr format,
               Runtime::NodeEnginePtr nodeEngine,
@@ -56,7 +57,8 @@ class KafkaSink : public SinkMedium {
               DecomposedQueryPlanVersion decomposedQueryVersion,
               const uint64_t kafkaProducerTimeout = 10 * 1000,
               uint64_t numberOfOrigins = 1,
-              FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+              CheckpointStorageType checkpointStorageType = CheckpointStorageType::NONE,);
 
     ~KafkaSink() override;
 

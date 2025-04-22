@@ -17,6 +17,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEvent.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 
@@ -47,11 +48,13 @@ class ISQPAddQueryEvent : public ISQPEvent {
   public:
     static ISQPEventPtr create(const QueryPlanPtr& queryPlan,
                                Optimizer::PlacementStrategy placementStrategy,
-                               FaultToleranceType faultTolerance = FaultToleranceType::NONE);
+                               FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                               CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
     ISQPAddQueryEvent(const QueryPlanPtr& queryPlan,
                       Optimizer::PlacementStrategy placementStrategy,
-                      FaultToleranceType faultTolerance);
+                      FaultToleranceType faultTolerance,
+                      CheckpointStorageType checkpointStorage);
 
     const QueryPlanPtr& getQueryPlan() const;
 
@@ -59,10 +62,13 @@ class ISQPAddQueryEvent : public ISQPEvent {
 
     FaultToleranceType getFaultTolerance() const;
 
+    CheckpointStorageType getCheckpointStorage() const;
+
   private:
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy placementStrategy;
     FaultToleranceType faultToleranceType;
+    CheckpointStorageType checkpointStorageType;
 };
 }// namespace RequestProcessor
 }// namespace NES

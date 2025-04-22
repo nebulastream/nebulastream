@@ -188,7 +188,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
 
     FaultToleranceType getFaultToleranceType() const;
 
- void setFaultToleranceType(const FaultToleranceType faultToleranceType);
+    void setFaultToleranceType(const FaultToleranceType faultToleranceType);
 
     /**
      * @brief Get the query execution plan id

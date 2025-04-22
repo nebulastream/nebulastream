@@ -55,12 +55,14 @@
 #include <cpr/cpr.h>
 #include <string>
 #include <utility>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace NES::RequestProcessor {
 
 ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                                const Optimizer::PlacementStrategy queryPlacementStrategy,
                                FaultToleranceType faultToleranceType,
+                               CheckpointStorageType checkpointStorage,
                                const uint8_t maxRetries,
                                const z3::ContextPtr& z3Context)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
@@ -73,14 +75,16 @@ ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                           ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
-      z3Context(z3Context), queryParsingService(nullptr), faultToleranceType(faultToleranceType) {}
+      z3Context(z3Context), queryParsingService(nullptr), faultToleranceType(faultToleranceType),
+      checkpointStorage(checkpointStorage) {}
 
 ExplainRequestPtr ExplainRequest::create(const QueryPlanPtr& queryPlan,
                                          const Optimizer::PlacementStrategy queryPlacementStrategy,
                                          FaultToleranceType faultToleranceType,
+                                         CheckpointStorageType checkpointStorage,
                                          const uint8_t maxRetries,
                                          const z3::ContextPtr& z3Context) {
-    return std::make_shared<ExplainRequest>(queryPlan, queryPlacementStrategy, faultToleranceType, maxRetries, z3Context);
+    return std::make_shared<ExplainRequest>(queryPlan, queryPlacementStrategy, faultToleranceType, checkpointStorage, maxRetries, z3Context);
 }
 
 void ExplainRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
@@ -143,6 +147,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryPlan->setQueryId(queryId);
         queryPlan->setPlacementStrategy(queryPlacementStrategy);
         queryPlan->setFaultTolerance(faultToleranceType);
+        queryPlan->setCheckpointStorage(checkpointStorage);
 
         // Perform semantic validation
         semanticQueryValidation->validate(queryPlan);

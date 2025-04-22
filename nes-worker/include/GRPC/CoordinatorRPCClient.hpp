@@ -187,7 +187,7 @@ class CoordinatorRPCClient {
      * @param binaryData: storage containing tupels as binary
      * @return bool indicating success
      */
-    bool sendCheckpoint(uint64_t nesPartitionId, std::vector<char> binaryData);
+    bool sendCheckpointRpc(uint64_t nesPartitionId, std::vector<char> binaryData);
 
     /**
         * @brief method to trim checkpoints from coordinator
@@ -195,7 +195,7 @@ class CoordinatorRPCClient {
         * @param timestamp: indicates which checkpoints to trim
         * @return bool indicating success
         */
-    bool trimCheckpoint(uint64_t nesPartitionId, uint64_t timestamp);
+    bool trimCheckpointRpc(uint64_t nesPartitionId, uint64_t timestamp);
 
     /**
      * Experimental

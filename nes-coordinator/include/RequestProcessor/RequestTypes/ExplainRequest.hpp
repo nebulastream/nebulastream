@@ -18,6 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <nlohmann/json.hpp>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace z3 {
 class context;
@@ -118,12 +119,15 @@ class ExplainRequest : public AbstractUniRequest {
      * @brief Constructor
      * @param queryPlan: the query plan
      * @param queryPlacementStrategy: the placement strategy
+     * @param faultToleranceType: fault tolerance type
+     * @param checkpointStorageType: storage option if checkpointing enabled
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     ExplainRequest(const QueryPlanPtr& queryPlan,
                    const Optimizer::PlacementStrategy queryPlacementStrategy,
                    const FaultToleranceType faultToleranceType,
+                   const CheckpointStorageType checkpointStorageType,
                    const uint8_t maxRetries,
                    const z3::ContextPtr& z3Context);
 
@@ -131,12 +135,15 @@ class ExplainRequest : public AbstractUniRequest {
      * @brief creates a new AddQueryRequest object
      * @param queryPlan: the query plan
      * @param queryPlacementStrategy: the placement strategy
+     * @param faultToleranceType: fault tolerance type
+     * @param checkpointStorageType: storage option if checkpointing enabled
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
     static ExplainRequestPtr create(const QueryPlanPtr& queryPlan,
                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
                                     const FaultToleranceType faultToleranceType,
+                                    CheckpointStorageType checkpointStorage,
                                     const uint8_t maxRetries,
                                     const z3::ContextPtr& z3Context);
 
@@ -213,6 +220,7 @@ class ExplainRequest : public AbstractUniRequest {
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
     FaultToleranceType faultToleranceType;
+    CheckpointStorageType checkpointStorage;
 
     const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
 

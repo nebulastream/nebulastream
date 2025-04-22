@@ -78,9 +78,9 @@ service CoordinatorRPCService {
 
   rpc NotifySoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
 
-  rpc sendCheckpoint (CheckpointMessage) returns (CheckpointReply) {}
+  rpc sendCheckpointRpc (CheckpointMessage) returns (CheckpointReply) {}
 
-  rpc trimCheckpoint (TrimMessage) returns (TrimReply) {}
+  rpc trimCheckpointRpc (TrimMessage) returns (TrimReply) {}
 
 }
 

@@ -38,6 +38,7 @@ class StatisticSink : public SinkMedium {
                   DecomposedQueryId decomposedQueryId,
                   DecomposedQueryPlanVersion decomposedQueryVersion,
                   FaultToleranceType faultToleranceType,
+                  CheckpointStorageType checkpointStorageType,
                   uint64_t numberOfOrigins,
                   StatisticStorePtr statisticStore,
                   StatisticFormatPtr statisticSinkFormat);

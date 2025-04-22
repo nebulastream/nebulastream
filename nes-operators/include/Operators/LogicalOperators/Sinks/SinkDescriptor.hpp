@@ -19,6 +19,7 @@
 
 namespace NES {
 enum class FaultToleranceType : int8_t;
+enum class CheckpointStorageType : int8_t;
 
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
@@ -67,9 +68,9 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     bool getAddTimestamp() const;
 
     /**
- * @brief getter for fault-tolerance type
- * @return fault tolerance type
- */
+     * @brief getter for fault-tolerance type
+     * @return fault tolerance type
+     */
     FaultToleranceType getFaultToleranceType() const;
 
     /**
@@ -77,6 +78,18 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
      * @param fault tolerance type
      */
     void setFaultToleranceType(FaultToleranceType faultToleranceType);
+
+    /**
+     * @brief getter for checkpointing storage option
+     * @return storage option if checkpointing enabled
+     */
+    CheckpointStorageType getCheckpointStorageType() const;
+
+    /**
+     * @brief setter for checkpointing storage option
+     * @param storage option if checkpointing enabled
+     */
+    void setCheckpointStorageType(CheckpointStorageType checkpointStorageType);
 
     /**
     * @brief Dynamically casts the node to a NodeType
@@ -107,6 +120,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     uint64_t numberOfOrigins;
     bool addTimestamp;
     FaultToleranceType faultToleranceType;
+    CheckpointStorageType checkpointStorageType;
 };
 
 }// namespace NES

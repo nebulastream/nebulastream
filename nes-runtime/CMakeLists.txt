@@ -28,6 +28,11 @@ target_include_directories(nes-runtime PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 
+# hdfs
+find_package(libhdfs3 CONFIG REQUIRED)
+find_library(LIBHDFS3_LIBRARY hdfs3 REQUIRED)
+target_link_libraries(nes-runtime PRIVATE ${LIBHDFS3_LIBRARY})
+
 # folly
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     include(CMakeFindDependencyMacro)

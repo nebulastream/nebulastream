@@ -35,6 +35,7 @@ RawBufferSink::RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
                              DecomposedQueryId decomposedQueryId,
                              DecomposedQueryPlanVersion decomposedQueryVersion,
                              FaultToleranceType faultToleranceType,
+                             CheckpointStorageType checkpointStorageType,
                              uint64_t numberOfOrigins)
     : SinkMedium(nullptr,
                  std::move(nodeEngine),
@@ -43,6 +44,7 @@ RawBufferSink::RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
                  decomposedQueryId,
                  decomposedQueryVersion,
                  faultToleranceType,
+                 checkpointStorageType,
                  numberOfOrigins),
       filePath(filePath), append(append) {
     lastWritten = 0;

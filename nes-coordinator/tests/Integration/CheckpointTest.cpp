@@ -111,9 +111,9 @@ class CheckpointTest : public Testing::BaseIntegrationTest {
 };
 
 /*
- * @brief test if CheckpointTest backup doesn't fail
+ * @brief test if CheckpointTest backup doesn't fail with storage option coordinator
  */
-TEST_F(CheckpointTest, testCheckpointTest) {
+TEST_F(CheckpointTest, testCheckpointTestRPC) {
     NES_INFO("CheckpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
@@ -142,7 +142,62 @@ TEST_F(CheckpointTest, testCheckpointTest) {
 
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                              Optimizer::PlacementStrategy::BottomUp,
-                                                                             FaultToleranceType::CH);
+                                                                             FaultToleranceType::CH,
+                                                                             CheckpointStorageType::CRD);
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
+
+    NES_INFO("CheckpointTest: Remove query");
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("CheckpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("CheckpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("CheckpointTest: Test finished");
+}
+
+/*
+ * @brief test if CheckpointTest backup doesn't fail with storage option HDFS
+ */
+TEST_F(CheckpointTest, testCheckpointTestHDFS) {
+    NES_INFO("CheckpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("CheckpointTest: Coordinator started successfully");
+
+    //Setup Worker
+    NES_INFO("CheckpointTest: Start worker 1");
+    workerConfig->physicalSourceTypes.add(lambdaSource);
+
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("CheckpointTest: Worker1 started successfully");
+
+    auto queryCatalog = crd->getQueryCatalog();
+    auto requestHandlerService = crd->getRequestHandlerService();
+
+    std::string outputFilePath = getTestResourceFolder() / "testCheckpoint.out";
+    remove(outputFilePath.c_str());
+
+    // The query contains a watermark assignment with 50 ms allowed lateness
+    NES_INFO("CheckpointTest: Submit query");
+    auto query = Query::from("window").sink(NullOutputSinkDescriptor::create());
+
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(),
+                                                                             Optimizer::PlacementStrategy::BottomUp,
+                                                                             FaultToleranceType::CH,
+                                                                             CheckpointStorageType::HDFS);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));

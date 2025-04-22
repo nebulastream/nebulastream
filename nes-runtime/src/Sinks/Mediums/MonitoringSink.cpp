@@ -33,6 +33,7 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                                DecomposedQueryId decomposedQueryId,
                                DecomposedQueryPlanVersion decomposedQueryVersion,
                                FaultToleranceType faultToleranceType,
+                               CheckpointStorageType checkpointStorageType,
                                uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat),
                  std::move(nodeEngine),
@@ -41,6 +42,7 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                  decomposedQueryId,
                  decomposedQueryVersion,
                  faultToleranceType,
+                 checkpointStorageType,
                  numberOfOrigins),
       metricStore(metricStore), collectorType(collectorType) {
     NES_ASSERT(metricStore != nullptr, "MonitoringSink: MetricStore is null.");

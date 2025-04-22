@@ -188,7 +188,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: that is sent back from the coordinator to the worker to confirm that checkpointing was successful
      * @return bool indicating success
      */
-    Status sendCheckpoint(ServerContext*,
+    Status sendCheckpointRpc(ServerContext*,
                         const CheckpointMessage* request,
                         CheckpointReply* reply) override;
 
@@ -199,7 +199,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: that is sent back from the coordinator to the worker to confirm that triming was successful
      * @return bool indicating success
      */
-    Status trimCheckpoint(ServerContext*,
+    Status trimCheckpointRpc(ServerContext*,
                        const TrimMessage* request,
                        TrimReply* reply) override;
 

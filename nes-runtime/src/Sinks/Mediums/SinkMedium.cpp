@@ -20,6 +20,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -31,8 +32,9 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        DecomposedQueryId decomposedQueryId,
                        DecomposedQueryPlanVersion decomposedQueryVersion,
                        FaultToleranceType faultToleranceType,
+                       CheckpointStorageType checkpointStorageType,
                         Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryId, decomposedQueryVersion, faultToleranceType, 1, std::move(watermarkProcessor)) {}
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryId, decomposedQueryVersion, faultToleranceType, checkpointStorageType, 1, std::move(watermarkProcessor)) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
@@ -41,11 +43,12 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        DecomposedQueryId decomposedQueryId,
                        DecomposedQueryPlanVersion decomposedQueryVersion,
                        FaultToleranceType faultToleranceType,
+                       CheckpointStorageType checkpointStorageType,
                        uint64_t numberOfOrigins,
                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers),
       sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), decomposedQueryVersion(decomposedQueryVersion),
-       faultToleranceType(faultToleranceType), numberOfOrigins(numberOfOrigins), watermarkProcessor(std::move(watermarkProcessor)) {
+       faultToleranceType(faultToleranceType), checkpointStorageType(checkpointStorageType), numberOfOrigins(numberOfOrigins), watermarkProcessor(std::move(watermarkProcessor)) {
     schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");

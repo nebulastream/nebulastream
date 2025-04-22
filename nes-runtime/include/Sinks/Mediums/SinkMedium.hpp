@@ -20,6 +20,7 @@
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <mutex>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace NES {
 
@@ -53,6 +54,7 @@ class SinkMedium : public Runtime::Reconfigurable {
                         DecomposedQueryId decomposedQueryId,
                         DecomposedQueryPlanVersion decomposedQueryVersion,
                         FaultToleranceType faultToleranceType,
+                        CheckpointStorageType checkpointStorageType,
                         Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr);
 
     /**
@@ -65,7 +67,8 @@ class SinkMedium : public Runtime::Reconfigurable {
                         DecomposedQueryId decomposedQueryId,
                         DecomposedQueryPlanVersion decomposedQueryVersion,
                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
-                       uint64_t numberOfOrigins = 1,
+                        CheckpointStorageType checkpointStorageType = CheckpointStorageType::NONE,
+                        uint64_t numberOfOrigins = 1,
                         Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr);
 
     /**
@@ -203,6 +206,7 @@ class SinkMedium : public Runtime::Reconfigurable {
     std::function<bool(Runtime::TupleBuffer&)> duplicateDetectionCallback;
     std::function<void(uint64_t)> notifyEpochCallback;
     FaultToleranceType faultToleranceType;
+    CheckpointStorageType checkpointStorageType;
     uint64_t numberOfOrigins;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     uint64_t buffersPerEpoch;

@@ -17,6 +17,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/FaultToleranceType.hpp>
 
 namespace z3 {
@@ -124,6 +125,8 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param queryParsingService: parsing string queries
      * @param placementAmendmentHandler: the placement amendment handler
+     * @param faultToleranceType: fault tolerance type
+     * @param checkpointStorageType: storage option if checkpointing enabled
      */
     AddQueryRequest(const std::string& queryString,
                     const Optimizer::PlacementStrategy queryPlacementStrategy,
@@ -131,7 +134,8 @@ class AddQueryRequest : public AbstractUniRequest {
                     const z3::ContextPtr& z3Context,
                     const QueryParsingServicePtr& queryParsingService,
                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                    FaultToleranceType faultTolerance);
+                    FaultToleranceType faultTolerance,
+                    CheckpointStorageType checkpointStorage);
 
     /**
      * @brief Constructor
@@ -140,13 +144,16 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param placementAmendmentHandler: the placement amendment handler
+     * @param faultToleranceType: fault tolerance type
+     * @param checkpointStorageType: storage option if checkpointing enabled
      */
     AddQueryRequest(const QueryPlanPtr& queryPlan,
                     const Optimizer::PlacementStrategy queryPlacementStrategy,
                     const uint8_t maxRetries,
                     const z3::ContextPtr& z3Context,
                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                    FaultToleranceType faultTolerance);
+                    FaultToleranceType faultTolerance,
+                    CheckpointStorageType checkpointStorage);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -155,13 +162,16 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param placementAmendmentHandler: the placement amendment handler
+     * @param faultToleranceType: fault tolerance type
+     * @param checkpointStorageType: storage option if checkpointing enabled
      */
     static AddQueryRequestPtr create(const QueryPlanPtr& queryPlan,
                                      const Optimizer::PlacementStrategy queryPlacementStrategy,
                                      const uint8_t maxRetries,
                                      const z3::ContextPtr& z3Context,
                                      const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                     FaultToleranceType faultTolerance = FaultToleranceType::NONE);
+                                     FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                     CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -171,6 +181,8 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param queryParsingService: parsing string query
      * @param placementAmendmentHandler: the placement amendment handler
+     * @param faultToleranceType: fault tolerance type
+     * @param checkpointStorageType: storage option if checkpointing enabled
      */
     static AddQueryRequestPtr create(const std::string& queryPlan,
                                      const Optimizer::PlacementStrategy queryPlacementStrategy,
@@ -178,7 +190,8 @@ class AddQueryRequest : public AbstractUniRequest {
                                      const z3::ContextPtr& z3Context,
                                      const QueryParsingServicePtr& queryParsingService,
                                      const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                     FaultToleranceType faultTolerance = FaultToleranceType::NONE);
+                                     FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                     CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
   protected:
     /**
@@ -226,6 +239,7 @@ class AddQueryRequest : public AbstractUniRequest {
     QueryParsingServicePtr queryParsingService;
     Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
     FaultToleranceType faultTolerance;
+    CheckpointStorageType checkpointStorage;
 
     void markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler);
     void removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler);

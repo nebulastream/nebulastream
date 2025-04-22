@@ -28,6 +28,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                DecomposedQueryId decomposedQueryId,
                                DecomposedQueryPlanVersion decomposedQueryVersion,
                                FaultToleranceType faultToleranceType,
+                               CheckpointStorageType checkpointStorageType,
                                uint64_t numberOfOrigins)
     : SinkMedium(nullptr,
                  std::move(nodeEngine),
@@ -36,6 +37,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                  decomposedQueryId,
                  decomposedQueryVersion,
                  faultToleranceType,
+                 checkpointStorageType,
                  numberOfOrigins,
                  std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
     if (faultToleranceType == FaultToleranceType::M) {

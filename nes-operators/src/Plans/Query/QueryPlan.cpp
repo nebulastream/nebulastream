@@ -24,6 +24,7 @@
 #include <set>
 #include <stack>
 #include <utility>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace NES {
 
@@ -49,6 +50,8 @@ QueryPlan::QueryPlan(QueryId queryId, std::vector<OperatorPtr> rootOperators)
 QueryPlan::QueryPlan(QueryId queryId) : queryId(queryId) {}
 
 void QueryPlan::setFaultTolerance(FaultToleranceType faultToleranceType) { faultTolerance = faultToleranceType; }
+
+void QueryPlan::setCheckpointStorage(CheckpointStorageType checkpointStorageType) { checkpointStorage = checkpointStorageType; }
 
 std::vector<SourceLogicalOperatorPtr> QueryPlan::getSourceOperators() const {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
@@ -275,6 +278,7 @@ QueryPlanPtr QueryPlan::copy() {
     newQueryPlan->setSourceConsumed(sourceConsumed);
     newQueryPlan->setPlacementStrategy(placementStrategy);
     newQueryPlan->setFaultTolerance(faultTolerance);
+    newQueryPlan->setCheckpointStorage(checkpointStorage);
     newQueryPlan->setQueryState(currentState);
     return newQueryPlan;
 }
@@ -290,6 +294,8 @@ void QueryPlan::setPlacementStrategy(Optimizer::PlacementStrategy placementStrat
 }
 
 FaultToleranceType QueryPlan::getFaultTolerance() const { return faultTolerance; }
+
+CheckpointStorageType QueryPlan::getCheckpointStorage() const { return checkpointStorage; }
 
 std::set<OperatorPtr> QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperators,
                                                          const std::set<OperatorPtr>& upstreamOperators) {

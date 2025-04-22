@@ -228,9 +228,9 @@ class DecomposedQueryPlan {
      */
     std::string toString() const;
 
- FaultToleranceType getFaultToleranceType() const;
+    FaultToleranceType getFaultToleranceType() const;
 
- void setFaultToleranceType(const FaultToleranceType faultToleranceType);
+    void setFaultToleranceType(const FaultToleranceType faultToleranceType);
 
     /**
      * @brief Record the previous version of this plan that can be used to identfify the running instance on the worker side

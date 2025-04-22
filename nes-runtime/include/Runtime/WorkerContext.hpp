@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
 
-//#include <HDFS/HDFSClient.hpp>
+#include <HDFS/HDFSClient.hpp>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -83,8 +83,8 @@ class WorkerContext {
     std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
     /// Schemas that belong to the tuples in storage
     std::unordered_map<Network::NesPartition, SchemaPtr> schemas;
-    /*/// HDFSClient connection opened in case of fault tolerance is checkpointing
-    HDFSClient* hdfsClient = nullptr;*/
+    /// HDFSClient connection opened in case of fault tolerance is checkpointing
+    HDFSClient* hdfsClient = nullptr;
     std::ofstream statisticsFile;
     std::ofstream storageFile;
     uint64_t currentEpoch;
@@ -172,14 +172,14 @@ class WorkerContext {
       * @param timestamp timestamp
       * @return success in the case something was trimmed
       */
-    //bool trimCheckpoint(Network::NesPartition nesPartition, uint64_t timestamp);
+    bool hdfsTrimCheckpoint(Network::NesPartition nesPartition, uint64_t timestamp);
 
     /**
     * @brief This method writes a tuple to the remote storage as a checkpoint
     * @param nesPartitionId partition id
     * @param inputBuffer tuple
     */
-    //void createCheckpoint(Network::NesPartition nesPartitionId, Runtime::TupleBuffer& inputBuffer);
+    void hdfsCreateCheckpoint(Network::NesPartition nesPartitionId, Runtime::TupleBuffer& inputBuffer);
 
     /**
        * @brief This method returns the storage as binary to be used as a checkpoint

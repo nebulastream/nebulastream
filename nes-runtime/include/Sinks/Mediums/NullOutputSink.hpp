@@ -40,6 +40,7 @@ class NullOutputSink : public SinkMedium {
                             DecomposedQueryId decomposedQueryId,
                             DecomposedQueryPlanVersion decomposedQueryVersion,
                             FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                            CheckpointStorageType checkpointStorageType = CheckpointStorageType::NONE,
                             uint64_t numberOfOrigins = 1);
 
     /**

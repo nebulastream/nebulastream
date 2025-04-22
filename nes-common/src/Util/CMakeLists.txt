@@ -24,6 +24,7 @@ add_source_files(nes-common
         QueryStateHistory.cpp
         TopologyLinkInformation.cpp
         FaultToleranceType.cpp
+        CheckpointStorageType.cpp
         QueryStateSerializationUtil.cpp
 )
 add_subdirectory(Logger)

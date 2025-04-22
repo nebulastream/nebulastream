@@ -13,19 +13,22 @@
 */
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddQueryEvent.hpp>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace NES::RequestProcessor {
 
 ISQPAddQueryEvent::ISQPAddQueryEvent(const QueryPlanPtr& queryPlan,
                                      Optimizer::PlacementStrategy placementStrategy,
-                                     FaultToleranceType faultTolerance)
+                                     FaultToleranceType faultTolerance,
+                                     CheckpointStorageType checkpointStorage)
     : ISQPEvent(ISQP_ADD_QUERY_EVENT_PRIORITY), queryPlan(queryPlan), placementStrategy(placementStrategy),
-      faultToleranceType(faultTolerance) {}
+      faultToleranceType(faultTolerance), checkpointStorageType(checkpointStorage) {}
 
 ISQPEventPtr ISQPAddQueryEvent::create(const NES::QueryPlanPtr& queryPlan,
                                        Optimizer::PlacementStrategy placementStrategy,
-                                       FaultToleranceType faultTolerance) {
-    return std::make_shared<ISQPAddQueryEvent>(queryPlan, placementStrategy, faultTolerance);
+                                       FaultToleranceType faultTolerance,
+                                       CheckpointStorageType checkpointStorage) {
+    return std::make_shared<ISQPAddQueryEvent>(queryPlan, placementStrategy, faultTolerance, checkpointStorage);
 }
 
 const QueryPlanPtr& ISQPAddQueryEvent::getQueryPlan() const { return queryPlan; }
@@ -33,4 +36,6 @@ const QueryPlanPtr& ISQPAddQueryEvent::getQueryPlan() const { return queryPlan; 
 Optimizer::PlacementStrategy ISQPAddQueryEvent::getPlacementStrategy() const { return placementStrategy; }
 
 FaultToleranceType ISQPAddQueryEvent::getFaultTolerance() const { return faultToleranceType; }
+
+CheckpointStorageType ISQPAddQueryEvent::getCheckpointStorage() const { return checkpointStorageType; }
 }// namespace NES::RequestProcessor

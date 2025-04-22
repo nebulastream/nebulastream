@@ -35,6 +35,7 @@
 
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <Util/FaultToleranceType.hpp>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace NES {
 class NesCoordinator;
@@ -168,6 +169,16 @@ class QueryController : public oatpp::web::server::api::ApiController {
                     + ". Valid FaultTolerance Strategies are: 'UB', 'AS', 'CH', 'M'.";
                 return errorHandler->handleError(Status::CODE_400, errorMessage);
                 ;
+            }
+            auto checkpointStorageMode = stringToCheckpointStorageTypeMap(requestJson["checkpointStorage"].get<std::string>());
+            if (checkpointStorageMode == CheckpointStorageType::INVALID) {
+                std::string errorMessage = "Invalid Checkpoint Storage Type provided: " + toString(checkpointStorageMode)
+                    + ". Valid CheckpointStorage Options are: 'HDFS', 'SFS', 'LDB', 'CRD'.";
+                return errorHandler->handleError(Status::CODE_400, errorMessage);
+            } else if (faultToleranceMode == FaultToleranceType::CH && checkpointStorageMode == CheckpointStorageType::NONE) {
+                std::string errorMessage = "No Storage Option for Checkpointing provided: " + toString(checkpointStorageMode)
+                    + ". Valid CheckpointStorage Options are: 'HDFS', 'SFS', 'LDB', 'CRD'.";
+                return errorHandler->handleError(Status::CODE_400, errorMessage);
             }
             if (!validatePlacementStrategy(requestJson["placement"].get<std::string>())) {
                 std::string errorMessage = "Invalid Placement Strategy: " + requestJson["placement"].get<std::string>()

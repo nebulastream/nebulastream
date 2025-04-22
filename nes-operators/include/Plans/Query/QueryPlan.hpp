@@ -18,6 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
@@ -218,16 +219,28 @@ class QueryPlan {
     Optimizer::PlacementStrategy getPlacementStrategy() const;
 
     /**
- * @brief Set query fault tolerance strategy
- * @param PlacementStrategy: fault tolerance strategy
- */
+     * @brief Set query fault tolerance strategy
+     * @param faultTolerance: fault tolerance strategy
+     */
     void setFaultTolerance(FaultToleranceType faultTolerance);
 
     /**
-  * @brief Get the fault tolerance strategy for the shared query plan
-  * @return fault tolerance strategy
-  */
+     * @brief Get the fault tolerance strategy for the shared query plan
+     * @return fault tolerance strategy
+     */
     FaultToleranceType getFaultTolerance() const;
+
+    /**
+     * @brief Set query storage option if checkpointing is enabled
+     * @param checkpointStorage: storage option for checkpointing
+     */
+    void setCheckpointStorage(CheckpointStorageType checkpointStorage);
+
+    /**
+     * @brief Get the storage option (if checkpointing enabled) for the shared query plan
+     * @return storage option for checkpointing
+     */
+    CheckpointStorageType getCheckpointStorage() const;
 
     /**
      * @brief Find all operators between given set of downstream and upstream operators
@@ -303,6 +316,7 @@ class QueryPlan {
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
     FaultToleranceType faultTolerance = FaultToleranceType::NONE;
+    CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE;
 };
 }// namespace NES
 #endif// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

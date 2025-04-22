@@ -539,12 +539,14 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     auto queryPlan = addQueryEvent->getQueryPlan();
     auto queryPlacementStrategy = addQueryEvent->getPlacementStrategy();
     auto faultTolerance = addQueryEvent->getFaultTolerance();
+    auto checkpointStorage = addQueryEvent->getCheckpointStorage();
 
     // Set unique identifier and additional properties to the query
     auto queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     queryPlan->setPlacementStrategy(queryPlacementStrategy);
     queryPlan->setFaultTolerance(faultTolerance);
+    queryPlan->setCheckpointStorage(checkpointStorage);
 
     // Create a new entry in the query catalog
     queryCatalog->createQueryCatalogEntry("", queryPlan, queryPlacementStrategy, QueryState::REGISTERED);

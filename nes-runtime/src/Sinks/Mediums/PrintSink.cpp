@@ -30,13 +30,16 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      DecomposedQueryPlanVersion decomposedQueryVersion,
                      std::ostream& pOutputStream,
                      FaultToleranceType faultToleranceType,
+                     CheckpointStorageType checkpointStorageType,
                      uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
                  sharedQueryId,
                  decomposedQueryId,
-                 decomposedQueryVersion, faultToleranceType,
+                 decomposedQueryVersion,
+                 faultToleranceType,
+                 checkpointStorageType,
                  numberOfOrigins, std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       outputStream(pOutputStream) {
     if (faultToleranceType == FaultToleranceType::M) {

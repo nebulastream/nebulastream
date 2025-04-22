@@ -63,6 +63,7 @@
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <string>
 #include <utility>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace NES::RequestProcessor {
 
@@ -72,7 +73,8 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                                  const z3::ContextPtr& z3Context,
                                  const QueryParsingServicePtr& queryParsingService,
                                  const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                 FaultToleranceType faultTolerance)
+                                 FaultToleranceType faultTolerance,
+                                 CheckpointStorageType checkpointStorage)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -84,14 +86,15 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(queryParsingService), placementAmendmentHandler(placementAmendmentHandler),
-      faultTolerance(faultTolerance) {}
+      faultTolerance(faultTolerance), checkpointStorage(checkpointStorage) {}
 
 AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                                  const Optimizer::PlacementStrategy queryPlacementStrategy,
                                  const uint8_t maxRetries,
                                  const z3::ContextPtr& z3Context,
                                  const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                 FaultToleranceType faultTolerance)
+                                 FaultToleranceType faultTolerance,
+                                 CheckpointStorageType checkpointStorage)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -103,7 +106,7 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
       z3Context(z3Context), queryParsingService(nullptr), placementAmendmentHandler(placementAmendmentHandler),
-      faultTolerance(faultTolerance) {}
+      faultTolerance(faultTolerance), checkpointStorage(checkpointStorage) {}
 
 AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
                                            const Optimizer::PlacementStrategy queryPlacementStrategy,
@@ -111,14 +114,16 @@ AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
                                            const z3::ContextPtr& z3Context,
                                            const QueryParsingServicePtr& queryParsingService,
                                            const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                           FaultToleranceType faultTolerance) {
+                                           FaultToleranceType faultTolerance,
+                                           CheckpointStorageType checkpointStorage) {
     return std::make_shared<AddQueryRequest>(queryPlan,
                                              queryPlacementStrategy,
                                              maxRetries,
                                              z3Context,
                                              queryParsingService,
                                              placementAmendmentHandler,
-                                             faultTolerance);
+                                             faultTolerance,
+                                             checkpointStorage);
 }
 
 AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
@@ -126,13 +131,15 @@ AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
                                            const uint8_t maxRetries,
                                            const z3::ContextPtr& z3Context,
                                            const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                           FaultToleranceType faultTolerance) {
+                                           FaultToleranceType faultTolerance,
+                                           CheckpointStorageType checkpointStorage) {
     return std::make_shared<AddQueryRequest>(queryPlan,
                                              queryPlacementStrategy,
                                              maxRetries,
                                              z3Context,
                                              placementAmendmentHandler,
-                                             faultTolerance);
+                                             faultTolerance,
+                                             checkpointStorage);
 }
 
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
@@ -257,6 +264,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryPlan->setQueryId(queryId);
         queryPlan->setPlacementStrategy(queryPlacementStrategy);
         queryPlan->setFaultTolerance(faultTolerance);
+        queryPlan->setCheckpointStorage(checkpointStorage);
 
         // Perform semantic validation
         semanticQueryValidation->validate(queryPlan);

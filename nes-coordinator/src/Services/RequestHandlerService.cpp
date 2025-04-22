@@ -52,6 +52,7 @@
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <llvm/Support/MathExtras.h>
 #include <nlohmann/json.hpp>
+#include <Util/CheckpointStorageType.hpp>
 
 namespace NES {
 
@@ -77,7 +78,8 @@ RequestHandlerService::RequestHandlerService(Configurations::OptimizerConfigurat
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string& queryString,
                                                                const Optimizer::PlacementStrategy placementStrategy,
-                                                               FaultToleranceType faultTolerance) {
+                                                               FaultToleranceType faultTolerance,
+                                                               CheckpointStorageType checkpointStorage) {
 
     auto addRequest = RequestProcessor::AddQueryRequest::create(queryString,
                                                                 placementStrategy,
@@ -85,7 +87,8 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
                                                                 z3Context,
                                                                 queryParsingService,
                                                                 placementAmendmentHandler,
-                                                                faultTolerance);
+                                                                faultTolerance,
+                                                                checkpointStorage);
     asyncRequestExecutor->runAsync(addRequest);
     auto future = addRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::AddQueryResponse>(future.get())->queryId;
@@ -93,14 +96,16 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const QueryPlanPtr& queryPlan,
                                                                const Optimizer::PlacementStrategy placementStrategy,
-                                                               FaultToleranceType faultTolerance) {
+                                                               FaultToleranceType faultTolerance,
+                                                               CheckpointStorageType checkpointStorage) {
 
     auto addRequest = RequestProcessor::AddQueryRequest::create(queryPlan,
                                                                 placementStrategy,
                                                                 RequestProcessor::DEFAULT_RETRIES,
                                                                 z3Context,
                                                                 placementAmendmentHandler,
-                                                                faultTolerance);
+                                                                faultTolerance,
+                                                                checkpointStorage);
     asyncRequestExecutor->runAsync(addRequest);
     auto future = addRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::AddQueryResponse>(future.get())->queryId;
@@ -108,9 +113,11 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const QueryPlanPt
 
 nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
                                                                           const Optimizer::PlacementStrategy placementStrategy,
-                                                                          FaultToleranceType faultTolerance) {
+                                                                          FaultToleranceType faultTolerance,
+                                                                          CheckpointStorageType checkpointStorage
+                                                                          ) {
 
-    auto explainRequest = RequestProcessor::ExplainRequest::create(queryPlan, placementStrategy, faultTolerance, 1, z3Context);
+    auto explainRequest = RequestProcessor::ExplainRequest::create(queryPlan, placementStrategy, faultTolerance, checkpointStorage, 1, z3Context);
     asyncRequestExecutor->runAsync(explainRequest);
     auto future = explainRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::ExplainResponse>(future.get())->jsonResponse;

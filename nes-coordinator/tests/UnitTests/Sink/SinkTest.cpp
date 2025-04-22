@@ -111,7 +111,9 @@ TEST_F(SinkTest, testCSVFileSink) {
                                                   nodeEngine,
                                                   1,
                                                   path_to_csv_file,
-                                                  true, FaultToleranceType::NONE);
+                                                  true,
+                                                  FaultToleranceType::NONE,
+                                                  CheckpointStorageType::NONE);
 
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
@@ -163,7 +165,9 @@ TEST_F(SinkTest, testRawBufferSink) {
                                                               nodeEngine,
                                                               1,
                                                               path_to_migrate_file,
-                                                              true, FaultToleranceType::NONE);
+                                                              true,
+                                                              FaultToleranceType::NONE,
+                                                              CheckpointStorageType::NONE);
 
     // insert tuples to buffer
     constexpr auto expectedNumberOfTuples = 4;
@@ -223,7 +227,9 @@ TEST_F(SinkTest, testCSVPrintSink) {
                                       INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                       this->nodeEngine,
                                       1,
-                                      os, FaultToleranceType::NONE);
+                                      os,
+                                      FaultToleranceType::NONE,
+                                      CheckpointStorageType::NONE);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -277,7 +283,9 @@ TEST_F(SinkTest, testNullOutSink) {
                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                          INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                          nodeEngine,
-                                         1, FaultToleranceType::NONE);
+                                         1,
+                                         FaultToleranceType::NONE,
+                                         CheckpointStorageType::NONE);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -306,7 +314,9 @@ TEST_F(SinkTest, testCSVZMQSink) {
                                                   nodeEngine,
                                                   1,
                                                   "localhost",
-                                                  zmqPort, FaultToleranceType::NONE);
+                                                  zmqPort,
+                                                  FaultToleranceType::NONE,
+                                                  CheckpointStorageType::NONE);
     for (uint64_t i = 1; i < 3; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
@@ -373,7 +383,8 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
                                                      "localhost",
                                                      zmqPort,
                                                      false,
-                                                     FaultToleranceType::NONE);
+                                                     FaultToleranceType::NONE,
+                                                     CheckpointStorageType::NONE);
     for (uint64_t i = 1; i < 3; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j * i] = j;
@@ -424,7 +435,9 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
                                                   nodeEngine,
                                                   1,
                                                   path_to_csv_file,
-                                                  true, FaultToleranceType::NONE);
+                                                  true,
+                                                  FaultToleranceType::NONE,
+                                                  CheckpointStorageType::NONE);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -477,7 +490,9 @@ TEST_F(SinkTest, testMonitoringSink) {
                                                             1,
                                                             SharedQueryId(0),
                                                             INVALID_DECOMPOSED_QUERY_PLAN_ID,
-                                                            INVALID_DECOMPOSED_QUERY_PLAN_VERSION, FaultToleranceType::NONE,
+                                                            INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                                            FaultToleranceType::NONE,
+                                                            CheckpointStorageType::NONE,
                                                             1);
     monitoringSink->writeData(tupleBuffer, wctx);
 
@@ -489,7 +504,9 @@ TEST_F(SinkTest, testMonitoringSink) {
                                                                1,
                                                                SharedQueryId(0),
                                                                INVALID_DECOMPOSED_QUERY_PLAN_ID,
-                                                               INVALID_DECOMPOSED_QUERY_PLAN_VERSION, FaultToleranceType::NONE,
+                                                               INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
+                                                               FaultToleranceType::NONE,
+                                                               CheckpointStorageType::NONE,
                                                                1);
     monitoringSinkCpu->writeData(tupleBufferCpu, wctx);
 
