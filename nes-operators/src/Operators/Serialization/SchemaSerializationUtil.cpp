@@ -55,7 +55,7 @@ std::shared_ptr<Schema> SchemaSerializationUtil::deserializeSchema(const Seriali
 {
     /// de-serialize field from serialized schema to the schema object.
     NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");
-    auto deserializedSchema = Schema::create();
+    auto deserializedSchema = Schema::create(static_cast<Schema::MemoryLayoutType>(serializedSchema.layouttype()));
     for (const auto& serializedField : serializedSchema.fields())
     {
         const auto& fieldName = serializedField.name();

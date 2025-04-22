@@ -23,7 +23,7 @@
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
+#include <QueryCompiler/Phases/NautilusCompilationPhase.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 

@@ -56,13 +56,15 @@ private:
         size_t bufferSize,
         std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers) const;
 
-    static std::shared_ptr<Runtime::Execution::Operators::Operator>
-    lowerScan(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode, size_t bufferSize);
+    static std::shared_ptr<Runtime::Execution::Operators::Operator> lowerScan(const std::shared_ptr<Schema>& schema, size_t bufferSize);
 
     static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lowerEmit(
-        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode,
+        const std::shared_ptr<Schema>& schema,
         size_t bufferSize,
         std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers);
+
+    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerSwap(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode, size_t bufferSize);
 
     static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFilter(const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode);

@@ -15,6 +15,7 @@
 #include <memory>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+#include <QueryCompiler/Phases/MemoryLayoutSelection/MemoryLayoutSelectionPhase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
@@ -30,6 +31,8 @@ public:
     std::shared_ptr<LowerLogicalToPhysicalOperators>
     createLowerLogicalQueryPlanPhase(Configurations::QueryCompilerConfiguration queryCompilerConfig) const override;
     [[nodiscard]] std::shared_ptr<PipeliningPhase> createPipeliningPhase() const override;
+    [[nodiscard]] std::shared_ptr<MemoryLayoutSelectionPhase>
+    createMemoryLayoutSelectionPhase(Configurations::QueryCompilerConfiguration queryCompilerConfig) const override;
     [[nodiscard]] std::shared_ptr<AddScanAndEmitPhase>
     createAddScanAndEmitPhase(Configurations::QueryCompilerConfiguration queryCompilerConfig) const override;
 };

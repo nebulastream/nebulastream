@@ -11,27 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
-#include <cstdint>
-
-namespace NES::QueryCompilation::Configurations
+#include <memory>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+namespace NES::QueryCompilation
 {
 
-enum class StreamJoinStrategy : uint8_t
+class MemoryLayoutSelectionPhase
 {
-    NESTED_LOOP_JOIN
+public:
+    virtual ~MemoryLayoutSelectionPhase() = default;
+    virtual std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> pipeline) = 0;
 };
-
-
-enum class MemorySelectionPhaseType : uint8_t
-{
-    /// Sets all operators / pipelines to the same memory layout type
-    FIXED,
-
-    /// Does not change the memory layout type any operator / pipeline
-    NONE
-};
-
 }
