@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <string>
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -30,8 +31,31 @@ namespace NES
 
 uint32_t DataType::getSizeInBytes() const
 {
-    return sizeInBits / 8;
+    switch (this->type)
+    {
+        case Type::INT8:
+        case Type::UINT8:
+        case Type::BOOLEAN:
+        case Type::CHAR:
+            return 1;
+        case Type::INT16:
+        case Type::UINT16:
+            return 2;
+        case Type::INT32:
+        case Type::UINT32:
+        case Type::FLOAT32:
+        case Type::VARSIZED:
+            /// Returning '4' for VARSIZED, because we represent variable sized data with a 'uint32' index to a nested buffer, containing the varsized data
+            return 4;
+        case Type::INT64:
+        case Type::UINT64:
+        case Type::FLOAT64:
+            return 8;
+        case Type::UNDEFINED:
+            return 0;
+    }
 }
+
 std::string DataType::formattedBytesToString(const void* data) const
 {
     switch (type)
@@ -84,84 +108,84 @@ std::string DataType::formattedBytesToString(const void* data) const
             textPointer += sizeof(StringLengthType);
             return std::string(textPointer, textLength);
         }
-        default:
+        case Type::UNDEFINED:
             return "invalid physical type";
     }
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::CHAR, .sizeInBits = 8};
+    return DataType{.type = DataType::Type::CHAR};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::BOOLEAN, .sizeInBits = 8};
+    return DataType{.type = DataType::Type::BOOLEAN};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::FLOAT32, .sizeInBits = 32};
+    return DataType{.type = DataType::Type::FLOAT32};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::FLOAT64, .sizeInBits = 64};
+    return DataType{.type = DataType::Type::FLOAT64};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT8DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::INT8, .sizeInBits = 8};
+    return DataType{.type = DataType::Type::INT8};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::INT16, .sizeInBits = 16};
+    return DataType{.type = DataType::Type::INT16};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::INT32, .sizeInBits = 32};
+    return DataType{.type = DataType::Type::INT32};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::INT64, .sizeInBits = 64};
+    return DataType{.type = DataType::Type::INT64};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::UINT8, .sizeInBits = 8};
+    return DataType{.type = DataType::Type::UINT8};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT16DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::UINT16, .sizeInBits = 16};
+    return DataType{.type = DataType::Type::UINT16};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::UINT32, .sizeInBits = 32};
+    return DataType{.type = DataType::Type::UINT32};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::UINT64, .sizeInBits = 64};
+    return DataType{.type = DataType::Type::UINT64};
 }
 
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::UNDEFINED, .sizeInBits = 0};
+    return DataType{.type = DataType::Type::UNDEFINED};
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(DataTypeRegistryArguments)
 {
-    return DataType{.type = DataType::Type::VARSIZED, .sizeInBits = 32};
+    return DataType{.type = DataType::Type::VARSIZED};
 }
 
 bool DataType::isInteger() const
@@ -181,47 +205,31 @@ bool DataType::isNumeric() const
 {
     return isInteger() or isFloat();
 }
-bool DataType::isBoolean() const
-{
-    return this->type == Type::BOOLEAN;
-}
-bool DataType::isChar() const
-{
-    return this->type == Type::CHAR;
-}
-bool DataType::isVarSized() const
-{
-    return this->type == Type::VARSIZED;
-}
-bool DataType::isUndefined() const
-{
-    return this->type == Type::UNDEFINED;
-}
 
 std::optional<DataType> inferNumericDataType(const DataType& left, const DataType& right)
 {
     /// We infer the data types between two numerics by following the c++ rules. For example, anything below i32 will be casted to a i32.
     /// Unsigned and signed of the same data type will be casted to the unsigned data type.
     /// For a playground, please take a look at the godbolt link: https://godbolt.org/z/j1cTfczbh
-    constexpr int8_t sizeOfIntInBits = sizeof(int32_t) * 8;
-    constexpr int8_t sizeOfLongInBits = sizeof(int64_t) * 8;
+    constexpr int8_t sizeOfIntInBytes = sizeof(int32_t);
+    constexpr int8_t sizeOfLongInBytes = sizeof(int64_t);
 
     /// If left is a float, the result is a float or double depending on the bits of the left float
     if (left.isFloat() and right.isInteger())
     {
-        return (left.sizeInBits == sizeOfIntInBits) ? DataTypeProvider::provideDataType(DataType::Type::FLOAT32)
-                                                    : DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+        return (left.getSizeInBytes() == sizeOfIntInBytes) ? DataTypeProvider::provideDataType(DataType::Type::FLOAT32)
+                                                           : DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
     }
 
     if (left.isInteger() and right.isFloat())
     {
-        return (right.sizeInBits == sizeOfIntInBits) ? DataTypeProvider::provideDataType(DataType::Type::FLOAT32)
-                                                     : DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+        return (right.getSizeInBytes() == sizeOfIntInBytes) ? DataTypeProvider::provideDataType(DataType::Type::FLOAT32)
+                                                            : DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
     }
 
     if (right.isFloat() && left.isFloat())
     {
-        return (left.sizeInBits == sizeOfLongInBits or right.sizeInBits == sizeOfLongInBits)
+        return (left.getSizeInBytes() == sizeOfLongInBytes or right.getSizeInBytes() == sizeOfLongInBytes)
             ? DataTypeProvider::provideDataType(DataType::Type::FLOAT64)
             : DataTypeProvider::provideDataType(DataType::Type::FLOAT32);
     }
@@ -229,50 +237,47 @@ std::optional<DataType> inferNumericDataType(const DataType& left, const DataTyp
     if (right.isInteger() and left.isInteger())
     {
         /// We need to still cast here to an integer, as the lowerBound is a member of Integer and not of Numeric
-        const auto leftBits = left.sizeInBits;
-        const auto rightBits = right.sizeInBits;
-
-        if (leftBits < sizeOfIntInBits and rightBits < sizeOfIntInBits)
+        if (left.getSizeInBytes() < sizeOfIntInBytes and right.getSizeInBytes() < sizeOfIntInBytes)
         {
             return DataTypeProvider::provideDataType(DataType::Type::INT32);
         }
 
-        if (leftBits == sizeOfIntInBits and rightBits < sizeOfIntInBits)
+        if (left.getSizeInBytes() == sizeOfIntInBytes and right.getSizeInBytes() < sizeOfIntInBytes)
         {
             return (
                 left.isSignedInteger() ? DataTypeProvider::provideDataType(DataType::Type::INT32)
                                        : DataTypeProvider::provideDataType(DataType::Type::UINT32));
         }
 
-        if (leftBits < sizeOfIntInBits and rightBits == sizeOfIntInBits)
+        if (left.getSizeInBytes() < sizeOfIntInBytes and right.getSizeInBytes() == sizeOfIntInBytes)
         {
             return (
                 right.isSignedInteger() ? DataTypeProvider::provideDataType(DataType::Type::INT32)
                                         : DataTypeProvider::provideDataType(DataType::Type::UINT32));
         }
 
-        if (leftBits == sizeOfIntInBits and rightBits == sizeOfIntInBits)
+        if (left.getSizeInBytes() == sizeOfIntInBytes and right.getSizeInBytes() == sizeOfIntInBytes)
         {
             return (
                 (left.isSignedInteger() and right.isSignedInteger()) ? DataTypeProvider::provideDataType(DataType::Type::INT32)
                                                                      : DataTypeProvider::provideDataType(DataType::Type::UINT32));
         }
 
-        if (leftBits == sizeOfLongInBits and rightBits < sizeOfLongInBits)
+        if (left.getSizeInBytes() == sizeOfLongInBytes and right.getSizeInBytes() < sizeOfLongInBytes)
         {
             return (
                 left.isSignedInteger() ? DataTypeProvider::provideDataType(DataType::Type::INT64)
                                        : DataTypeProvider::provideDataType(DataType::Type::UINT64));
         }
 
-        if (leftBits < sizeOfLongInBits and rightBits == sizeOfLongInBits)
+        if (left.getSizeInBytes() < sizeOfLongInBytes and right.getSizeInBytes() == sizeOfLongInBytes)
         {
             return (
                 right.isSignedInteger() ? DataTypeProvider::provideDataType(DataType::Type::INT64)
                                         : DataTypeProvider::provideDataType(DataType::Type::UINT64));
         }
 
-        if (leftBits == sizeOfLongInBits and rightBits == sizeOfLongInBits)
+        if (left.getSizeInBytes() == sizeOfLongInBytes and right.getSizeInBytes() == sizeOfLongInBytes)
         {
             return (
                 (left.isSignedInteger() and right.isSignedInteger()) ? DataTypeProvider::provideDataType(DataType::Type::INT64)
@@ -306,6 +311,7 @@ DataType DataType::join(const DataType& otherDataType) const
         {
             return newDataType.value();
         }
+        throw DifferentFieldTypeExpected("Cannot join {} and {}", "*this", otherDataType);
     }
     if (this->type == Type::CHAR)
     {
@@ -328,7 +334,7 @@ DataType DataType::join(const DataType& otherDataType) const
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)
 {
-    return os << fmt::format("DataType(type: {}, sizeInBits: {})", magic_enum::enum_name(dataType.type), dataType.sizeInBits);
+    return os << fmt::format("DataType(type: {})", magic_enum::enum_name(dataType.type));
 }
 
 }
