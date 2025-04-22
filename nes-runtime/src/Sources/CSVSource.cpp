@@ -539,11 +539,11 @@ std::string CSVSource::getFilePath() const { return filePath; }
 const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
 
 CSVSource::~CSVSource() {
+    if (getReplayData()) {
     //    auto count = std::dynamic_pointer_cast<Network::NetworkSink>(std::get<DataSinkPtr>(getExecutableSuccessors().front()))
     //                     ->getReconnectCount();
     //    NES_DEBUG("destroying source with reconnect count {}", count);
     //    ::close(sockfd);
-    auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
-    // NES_ERROR("saved records: {}, watermark: {}", sourceInfo->records.size(), sourceInfo->records.back().back().value);
+    }
 }
 }// namespace NES
