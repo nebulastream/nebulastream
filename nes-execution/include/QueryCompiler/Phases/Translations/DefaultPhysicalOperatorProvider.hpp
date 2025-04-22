@@ -17,7 +17,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
@@ -25,11 +25,11 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-#include "QueryCompiler/Configurations/Enums/CompilationStrategy.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -38,8 +38,8 @@ struct WindowOperatorProperties
 {
     WindowOperatorProperties(
         std::shared_ptr<WindowOperator> windowOperator,
-        std::shared_ptr<Schema> windowInputSchema,
-        std::shared_ptr<Schema> windowOutputSchema,
+        Schema windowInputSchema,
+        Schema windowOutputSchema,
         std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition)
         : windowOperator(std::move(windowOperator))
         , windowInputSchema(std::move(windowInputSchema))
@@ -47,8 +47,8 @@ struct WindowOperatorProperties
         , windowDefinition(std::move(windowDefinition)) {};
 
     std::shared_ptr<WindowOperator> windowOperator;
-    std::shared_ptr<Schema> windowInputSchema;
-    std::shared_ptr<Schema> windowOutputSchema;
+    Schema windowInputSchema;
+    Schema windowOutputSchema;
     std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition;
 };
 
@@ -128,9 +128,7 @@ protected:
 
 
     std::shared_ptr<Operator> getJoinBuildInputOperator(
-        const std::shared_ptr<LogicalJoinOperator>& joinOperator,
-        const std::shared_ptr<Schema>& outputSchema,
-        std::vector<std::shared_ptr<Operator>> children);
+        const std::shared_ptr<LogicalJoinOperator>& joinOperator, Schema outputSchema, std::vector<std::shared_ptr<Operator>> children);
 
 private:
     /// Lowers the stream nested loop join

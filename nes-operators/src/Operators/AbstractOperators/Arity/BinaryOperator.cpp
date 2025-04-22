@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <ostream>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
 #include <Util/OperatorsUtil.hpp>
@@ -28,39 +28,30 @@ BinaryOperator::BinaryOperator(OperatorId id) : Operator(id)
 {
 }
 
-void BinaryOperator::setLeftInputSchema(std::shared_ptr<Schema> inputSchema)
+void BinaryOperator::setLeftInputSchema(Schema inputSchema)
 {
-    if (inputSchema)
-    {
-        this->leftInputSchema = std::move(inputSchema);
-    }
+    this->leftInputSchema = std::move(inputSchema);
 }
 
-void BinaryOperator::setRightInputSchema(std::shared_ptr<Schema> inputSchema)
+void BinaryOperator::setRightInputSchema(Schema inputSchema)
 {
-    if (inputSchema)
-    {
-        this->rightInputSchema = std::move(inputSchema);
-    }
+    this->rightInputSchema = std::move(inputSchema);
 }
-void BinaryOperator::setOutputSchema(std::shared_ptr<Schema> outputSchema)
+void BinaryOperator::setOutputSchema(Schema outputSchema)
 {
-    if (outputSchema)
-    {
-        this->outputSchema = std::move(outputSchema);
-    }
+    this->outputSchema = std::move(outputSchema);
 }
-std::shared_ptr<Schema> BinaryOperator::getLeftInputSchema() const
+Schema BinaryOperator::getLeftInputSchema() const
 {
     return leftInputSchema;
 }
 
-std::shared_ptr<Schema> BinaryOperator::getRightInputSchema() const
+Schema BinaryOperator::getRightInputSchema() const
 {
     return rightInputSchema;
 }
 
-std::shared_ptr<Schema> BinaryOperator::getOutputSchema() const
+Schema BinaryOperator::getOutputSchema() const
 {
     return outputSchema;
 }
@@ -109,9 +100,9 @@ std::ostream& BinaryOperator::toDebugString(std::ostream& os) const
                "distinctSchemas: {}\n"
                "leftInputOriginIds: {}\n"
                "rightInputOriginIds: {}",
-               leftInputSchema->toString(),
-               rightInputSchema->toString(),
-               outputSchema->toString(),
+               leftInputSchema,
+               rightInputSchema,
+               outputSchema,
                ::Util::concatenateVectorAsString(distinctSchemas),
                fmt::join(leftInputOriginIds.begin(), leftInputOriginIds.end(), ", "),
                fmt::join(rightInputOriginIds.begin(), rightInputOriginIds.end(), ", "));

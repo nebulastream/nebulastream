@@ -14,7 +14,7 @@
 
 #pragma once
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>

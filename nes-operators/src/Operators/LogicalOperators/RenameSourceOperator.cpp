@@ -14,8 +14,7 @@
 
 #include <memory>
 #include <ostream>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
@@ -65,12 +64,11 @@ bool RenameSourceOperator::inferSchema()
     }
     ///Update output schema by changing the qualifier and corresponding attribute names
     const auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (const auto& field : *outputSchema)
+    for (auto& field : outputSchema.getFields())
     {
-        ///Extract field name without qualifier
-        auto fieldName = field->getName();
         ///Add new qualifier name to the field and update the field name
-        field->setName(newQualifierName + fieldName);
+        auto newName = newQualifierName + field.name;
+        outputSchema.renameField(field.name, newName);
     }
     return true;
 }

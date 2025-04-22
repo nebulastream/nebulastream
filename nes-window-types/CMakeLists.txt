@@ -17,7 +17,7 @@ get_source(nes-window-types NES_WINDOW_SOURCE_FILES)
 
 # Add Library
 add_library(nes-window-types ${NES_WINDOW_SOURCE_FILES})
-target_link_libraries(nes-window-types PUBLIC nes-functions)
+target_link_libraries(nes-window-types PUBLIC nes-functions nes-data-types)
 target_include_directories(nes-window-types PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

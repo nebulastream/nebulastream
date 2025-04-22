@@ -14,15 +14,14 @@
 
 #include <memory>
 #include <utility>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES::Windowing
@@ -60,7 +59,7 @@ void MaxAggregationDescriptor::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
+    if (not onField->getStamp().isNumeric())
     {
         NES_FATAL_ERROR("MaxAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
@@ -88,17 +87,17 @@ std::shared_ptr<WindowAggregationDescriptor> MaxAggregationDescriptor::copy()
     return std::make_shared<MaxAggregationDescriptor>(this->onField->deepCopy(), this->asField->deepCopy());
 }
 
-std::shared_ptr<DataType> MaxAggregationDescriptor::getInputStamp()
+DataType MaxAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
 
-std::shared_ptr<DataType> MaxAggregationDescriptor::getPartialAggregateStamp()
+DataType MaxAggregationDescriptor::getPartialAggregateStamp()
 {
     return onField->getStamp();
 }
 
-std::shared_ptr<DataType> MaxAggregationDescriptor::getFinalAggregateStamp()
+DataType MaxAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();
 }

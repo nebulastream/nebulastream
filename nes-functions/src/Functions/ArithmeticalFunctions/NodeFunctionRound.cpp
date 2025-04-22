@@ -15,19 +15,20 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-NodeFunctionRound::NodeFunctionRound(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Round") {};
+NodeFunctionRound::NodeFunctionRound(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Round") {};
 
 NodeFunctionRound::NodeFunctionRound(NodeFunctionRound* other) : NodeFunctionArithmeticalUnary(other)
 {

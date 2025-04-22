@@ -28,7 +28,7 @@ class SourceNameLogicalOperator : public LogicalUnaryOperator
 {
 public:
     explicit SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, Schema schema, OperatorId id);
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -40,8 +40,8 @@ public:
     void inferInputOrigins() override;
 
     [[nodiscard]] std::string getLogicalSourceName() const;
-    [[nodiscard]] std::shared_ptr<Schema> getSchema() const;
-    void setSchema(std::shared_ptr<Schema> schema);
+    [[nodiscard]] Schema getSchema() const;
+    void setSchema(Schema schema);
 
 protected:
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
@@ -49,7 +49,7 @@ protected:
 
 private:
     std::string logicalSourceName;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
 };
 
 }

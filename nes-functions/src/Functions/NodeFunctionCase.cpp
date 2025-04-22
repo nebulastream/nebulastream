@@ -17,7 +17,8 @@
 #include <ostream>
 #include <utility>
 #include <vector>
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionCase.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
@@ -27,11 +28,10 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Undefined.hpp>
+
 namespace NES
 {
-NodeFunctionCase::NodeFunctionCase(std::shared_ptr<DataType> stamp) : NodeFunction(std::move(stamp), "Case")
+NodeFunctionCase::NodeFunctionCase(DataType stamp) : NodeFunction(std::move(stamp), "Case")
 {
 }
 
@@ -59,9 +59,9 @@ void NodeFunctionCase::inferStamp(const Schema& schema)
     auto defaultExp = getDefaultExp();
     defaultExp->inferStamp(schema);
     INVARIANT(
-        !NES::Util::instanceOf<Undefined>(defaultExp->getStamp()),
+        not defaultExp->getStamp().isUndefined(),
         "Error during stamp inference. Right type must be defined, but was: {}",
-        defaultExp->getStamp()->toString());
+        defaultExp->getStamp());
 
     for (auto elem : whenChildren)
     {
@@ -73,16 +73,16 @@ void NodeFunctionCase::inferStamp(const Schema& schema)
             *elem);
         ///all elements must have same stamp as defaultExp value
         INVARIANT(
-            *defaultExp->getStamp() == *elem->getStamp(),
+            defaultExp->getStamp() == elem->getStamp(),
             "Error during stamp inference. All elements must have same stamp as defaultExp default value, but element {} has: {}. Right "
             "was: {}",
             *elem,
-            elem->getStamp()->toString(),
-            defaultExp->getStamp()->toString());
+            elem->getStamp(),
+            defaultExp->getStamp());
     }
 
     stamp = defaultExp->getStamp();
-    NES_TRACE("NodeFunctionCase: we assigned the following stamp: {}", stamp->toString());
+    NES_TRACE("NodeFunctionCase: we assigned the following stamp: {}", stamp);
 }
 
 void NodeFunctionCase::setChildren(

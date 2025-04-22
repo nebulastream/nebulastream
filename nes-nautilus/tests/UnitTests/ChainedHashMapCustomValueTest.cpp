@@ -39,13 +39,12 @@
 #include <NautilusTestUtils.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 namespace NES::Nautilus::Interface
 {
 class ChainedHashMapCustomValueTest
     : public Testing::BaseUnitTest,
       public testing::WithParamInterface<
-          std::tuple<int, std::vector<BasicType>, std::vector<BasicType>, Nautilus::Configurations::NautilusBackend>>,
+          std::tuple<int, std::vector<PhysicalType::Type>, std::vector<PhysicalType::Type>, Nautilus::Configurations::NautilusBackend>>,
       public TestUtils::ChainedHashMapCustomValueTestUtils
 {
 public:
@@ -168,7 +167,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         const auto numberOfRecordsExact = std::distance(recordValueExactStart, recordValueExactEnd);
 
         /// Acquiring a buffer to write the values to that has the needed size
-        const auto neededBytes = memoryProviderInputBuffer->getMemoryLayout()->getSchema()->getSchemaSizeInBytes() * numberOfRecordsExact;
+        const auto neededBytes = memoryProviderInputBuffer->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes() * numberOfRecordsExact;
         auto outputBufferOpt = bufferManager->getUnpooledBuffer(neededBytes);
         if (not outputBufferOpt)
         {
@@ -181,7 +180,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         writeAllRecordsIntoOutputBuffer(
             std::addressof(buffer), keyPositionInBuffer, std::addressof(outputBuffer), bufferManager.get(), std::addressof(hashMap));
         const auto writtenBytes
-            = outputBuffer.getNumberOfTuples() * memoryProviderInputBuffer->getMemoryLayout()->getSchema()->getSchemaSizeInBytes();
+            = outputBuffer.getNumberOfTuples() * memoryProviderInputBuffer->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
         ASSERT_LE(writtenBytes, outputBuffer.getBufferSize());
         ASSERT_EQ(outputBuffer.getNumberOfTuples(), std::distance(recordValueExactStart, recordValueExactEnd));
 
@@ -212,29 +211,33 @@ INSTANTIATE_TEST_CASE_P(
         /// Running the test for 3 times for each key, value schema and backend.
         /// This entails three different random number of items, number of buckets and page size.
         ::testing::Range(0, 3),
-        ::testing::ValuesIn<std::vector<BasicType>>(
-            {{BasicType::UINT8},
-             {BasicType::INT64, BasicType::UINT64, BasicType::INT8, BasicType::INT16, BasicType::INT32},
-             {BasicType::INT64,
-              BasicType::INT32,
-              BasicType::INT16,
-              BasicType::INT8,
-              BasicType::UINT64,
-              BasicType::UINT32,
-              BasicType::UINT16,
-              BasicType::UINT8}}),
-        ::testing::ValuesIn<std::vector<BasicType>>(
-            {{BasicType::INT8},
-             {BasicType::INT64,
-              BasicType::INT32,
-              BasicType::INT16,
-              BasicType::INT8,
-              BasicType::FLOAT32,
-              BasicType::UINT64,
-              BasicType::UINT32,
-              BasicType::UINT16,
-              BasicType::UINT8,
-              BasicType::FLOAT64}}),
+        ::testing::ValuesIn<std::vector<PhysicalType::Type>>(
+            {{PhysicalType::Type::UINT8},
+             {PhysicalType::Type::INT64,
+              PhysicalType::Type::UINT64,
+              PhysicalType::Type::INT8,
+              PhysicalType::Type::INT16,
+              PhysicalType::Type::INT32},
+             {PhysicalType::Type::INT64,
+              PhysicalType::Type::INT32,
+              PhysicalType::Type::INT16,
+              PhysicalType::Type::INT8,
+              PhysicalType::Type::UINT64,
+              PhysicalType::Type::UINT32,
+              PhysicalType::Type::UINT16,
+              PhysicalType::Type::UINT8}}),
+        ::testing::ValuesIn<std::vector<PhysicalType::Type>>(
+            {{PhysicalType::Type::INT8},
+             {PhysicalType::Type::INT64,
+              PhysicalType::Type::INT32,
+              PhysicalType::Type::INT16,
+              PhysicalType::Type::INT8,
+              PhysicalType::Type::FLOAT32,
+              PhysicalType::Type::UINT64,
+              PhysicalType::Type::UINT32,
+              PhysicalType::Type::UINT16,
+              PhysicalType::Type::UINT8,
+              PhysicalType::Type::FLOAT64}}),
         ::testing::Values(Nautilus::Configurations::NautilusBackend::COMPILER, Nautilus::Configurations::NautilusBackend::INTERPRETER)),
     [](const testing::TestParamInfo<ChainedHashMapCustomValueTest::ParamType>& info)
     {

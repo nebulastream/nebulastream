@@ -39,7 +39,6 @@ namespace NES::Sinks
 ChecksumSink::ChecksumSink(const SinkDescriptor& sinkDescriptor)
     : isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILEPATH))
-    , schemaSizeInBytes(sinkDescriptor.schema->getSchemaSizeInBytes())
     , formatter(std::make_unique<CSVFormat>(sinkDescriptor.schema))
 {
 }
@@ -53,7 +52,6 @@ void ChecksumSink::start(Runtime::Execution::PipelineExecutionContext&)
         if (!std::filesystem::remove(outputFilePath.c_str(), ec))
         {
             throw CannotOpenSink("Could not remove existing output file: filePath={} ", outputFilePath);
-            isOpen = false;
         }
     }
 

@@ -17,18 +17,17 @@
 #include <string>
 #include <utility>
 
-#include <API/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 namespace NES
 {
 
-NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(std::shared_ptr<DataType> stamp, std::string name)
+NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(DataType stamp, std::string name)
     : NodeFunctionUnary(std::move(stamp), std::move(name))
 {
 }
@@ -50,11 +49,11 @@ void NodeFunctionArithmeticalUnary::inferStamp(const Schema& schema)
     child->inferStamp(schema);
 
     /// get stamp from child
-    auto child_stamp = child->getStamp();
-    if (!NES::Util::instanceOf<Numeric>(child_stamp))
+    const auto child_stamp = child->getStamp();
+    if (not child_stamp.isNumeric())
     {
         throw CannotInferSchema(
-            fmt::format("Error during stamp inference. Types need to be Numerical but child was: {}", child->getStamp()->toString()));
+            fmt::format("Error during stamp inference. Types need to be Numerical but child was: {}", child->getStamp()));
     }
 
     this->stamp = child_stamp;
@@ -82,7 +81,7 @@ bool NodeFunctionArithmeticalUnary::validateBeforeLowering() const
     {
         return false;
     }
-    return NES::Util::instanceOf<Numeric>(Util::as<NodeFunction>(this->getChildren()[0])->getStamp());
+    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp().isNumeric();
 }
 
 }

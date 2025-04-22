@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
@@ -33,8 +33,8 @@ class PhysicalStreamJoinBuildOperator : public PhysicalUnaryOperator, public Abs
 {
 public:
     PhysicalStreamJoinBuildOperator(
-        const std::shared_ptr<Schema>& inputSchema,
-        const std::shared_ptr<Schema>& outputSchema,
+        Schema inputSchema,
+        Schema outputSchema,
         const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
         Configurations::StreamJoinStrategy joinStrategy,
         const std::vector<std::string>& joinFieldNames,

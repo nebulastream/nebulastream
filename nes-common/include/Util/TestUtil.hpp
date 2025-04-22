@@ -26,7 +26,6 @@
 #include <Util/Common.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES::TestUtil
 {
@@ -76,11 +75,11 @@ inline std::string dynamicTupleToString(
     Memory::MemoryLayouts::TestTupleBuffer& buffer, const Memory::MemoryLayouts::DynamicTuple& dynamicTuple, const Schema& schema)
 {
     std::stringstream ss;
-    for (uint32_t i = 0; i < schema.getFieldCount(); ++i)
+    for (uint32_t i = 0; i < schema.getNumberOfFields(); ++i)
     {
-        const auto dataType = schema.getFieldByIndex(i)->getDataType();
+        const auto dataType = schema.getFieldAt(i).dataType;
         Memory::MemoryLayouts::DynamicField currentField = dynamicTuple.operator[](i);
-        if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
+        if (dataType.isVarSized())
         {
             const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
             const auto string = Memory::MemoryLayouts::readVarSizedData(buffer.getBuffer(), index);
@@ -88,13 +87,13 @@ inline std::string dynamicTupleToString(
         }
         else
         {
-            ss << currentField.toString() << (i == schema.getFieldCount() - 1 ? "" : ",");
+            ss << currentField.toString() << (i == schema.getNumberOfFields() - 1 ? "" : ",");
         }
     }
     return ss.str();
 }
 
-inline std::string testTupleBufferToString(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema)
+inline std::string testTupleBufferToString(const Memory::TupleBuffer& buffer, const Schema& schema)
 {
     auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
     if (testTupleBuffer.getBuffer().getNumberOfTuples() == 0)
@@ -105,7 +104,7 @@ inline std::string testTupleBufferToString(const Memory::TupleBuffer& buffer, co
     std::stringstream str;
     for (const auto tupleIterator : testTupleBuffer)
     {
-        str << dynamicTupleToString(testTupleBuffer, tupleIterator, *schema) << '\n';
+        str << dynamicTupleToString(testTupleBuffer, tupleIterator, schema) << '\n';
     }
     return str.str();
 }
@@ -147,10 +146,8 @@ void createTuple(Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer, Memory
 ///     auto testTupleBuffer = TestUtil::createTupleBufferFromTuples(schema, *bufferManager,
 ///         TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
 template <typename TupleSchema, bool containsVarSized = false, bool PrintDebug = false>
-Memory::TupleBuffer
-createTupleBufferFromTuples(std::shared_ptr<Schema> schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
+Memory::TupleBuffer createTupleBufferFromTuples(Schema schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
-    PRECONDITION(schema != nullptr, "Cannot create a test tuple buffer from a schema that is null");
     PRECONDITION(bufferManager.getAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
     auto rowLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager.getBufferSize());
     auto testTupleBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, bufferManager.getBufferBlocking());

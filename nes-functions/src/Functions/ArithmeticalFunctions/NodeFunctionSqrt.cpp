@@ -15,20 +15,20 @@
 #include <memory>
 #include <ostream>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Integer.hpp>
 
 namespace NES
 {
 
-NodeFunctionSqrt::NodeFunctionSqrt(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Sqrt") {};
+NodeFunctionSqrt::NodeFunctionSqrt(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Sqrt") {};
 
 NodeFunctionSqrt::NodeFunctionSqrt(NodeFunctionSqrt* other) : NodeFunctionArithmeticalUnary(other)
 {

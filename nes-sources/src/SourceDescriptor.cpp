@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
@@ -21,7 +21,7 @@ namespace NES::Sources
 {
 
 SourceDescriptor::SourceDescriptor(
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     std::string logicalSourceName,
     std::string sourceType,
     ParserConfig parserConfig,
@@ -36,7 +36,7 @@ SourceDescriptor::SourceDescriptor(
 
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
-    const auto schemaString = ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL");
+    const auto schemaString = fmt::format("{}", sourceDescriptor.schema);
     const auto parserConfigString = fmt::format(
         "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
         sourceDescriptor.parserConfig.parserType,

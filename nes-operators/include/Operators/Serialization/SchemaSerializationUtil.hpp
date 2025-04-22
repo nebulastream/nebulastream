@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
+#include <DataTypes/Schema.hpp>
 
 namespace NES
 {
@@ -33,17 +33,17 @@ class SchemaSerializationUtil
 public:
     /**
      * @brief Serializes a schema and all its fields to a SerializableSchema object.
-     * @param schema std::shared_ptr<Schema>.
+     * @param schema Schema.
      * @param serializedSchema The corresponding protobuff object, which is used to capture the state of the object.
      * @return the modified serializedSchema
      */
-    static std::shared_ptr<SerializableSchema> serializeSchema(const std::shared_ptr<Schema>& schema, SerializableSchema* serializedSchema);
+    static std::shared_ptr<SerializableSchema> serializeSchema(Schema schema, SerializableSchema* serializedSchema);
 
     /**
-    * @brief De-serializes the SerializableSchema and all its fields to a std::shared_ptr<Schema>
+    * @brief De-serializes the SerializableSchema and all its fields to a Schema
     * @param serializedSchema the serialized schema.
-    * @return std::shared_ptr<Schema>
+    * @return Schema
     */
-    static std::shared_ptr<Schema> deserializeSchema(const SerializableSchema& serializedSchema);
+    static Schema deserializeSchema(const SerializableSchema& serializedSchema);
 };
 }

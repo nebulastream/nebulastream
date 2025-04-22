@@ -14,17 +14,23 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <memory>
 #include <ostream>
 #include <ranges>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <vector>
+
+#include <DataTypes/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
@@ -35,7 +41,7 @@
 namespace NES
 {
 
-LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr<NodeFunction>> functions, OperatorId id)
+LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr<NodeFunction>> functions, const OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
 {
     const auto functionTypeNotSupported = [](const std::shared_ptr<NodeFunction>& function) -> bool {
@@ -75,7 +81,7 @@ bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
                 return false;
             }
         }
-        return *outputSchema == *projection->outputSchema;
+        return outputSchema == projection->outputSchema;
     }
     return false;
 };
@@ -93,9 +99,9 @@ std::string getFieldName(const NodeFunction& function)
 std::ostream& LogicalProjectionOperator::toDebugString(std::ostream& os) const
 {
     PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
-    if (not outputSchema->getFieldNames().empty())
+    if (not outputSchema.hasFields())
     {
-        return os << fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema->toString());
+        return os << fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema);
     }
     return os << fmt::format(
                "PROJECTION(opId: {}, fields: [{}])",
@@ -106,9 +112,9 @@ std::ostream& LogicalProjectionOperator::toDebugString(std::ostream& os) const
 std::ostream& LogicalProjectionOperator::toQueryPlanString(std::ostream& os) const
 {
     PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
-    if (not outputSchema->getFieldNames().empty())
+    if (not outputSchema.getFieldNames().empty())
     {
-        return os << fmt::format("PROJECTION(schema={})", outputSchema->toString());
+        return os << fmt::format("PROJECTION(schema={})", outputSchema);
     }
     return os << fmt::format(
                "PROJECTION(fields: [{}])",
@@ -117,26 +123,26 @@ std::ostream& LogicalProjectionOperator::toQueryPlanString(std::ostream& os) con
 
 bool LogicalProjectionOperator::inferSchema()
 {
-    if (!LogicalUnaryOperator::inferSchema())
+    if (not LogicalUnaryOperator::inferSchema())
     {
         return false;
     }
-    NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), *this);
-    outputSchema->clear();
+    NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema, outputSchema, *this);
+    outputSchema = Schema{outputSchema.memoryLayoutType};
     for (const auto& function : functions)
     {
         ///Infer schema of the field function
-        function->inferStamp(*inputSchema);
+        function->inferStamp(inputSchema);
 
         if (NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
         {
             const auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(function);
-            outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
+            outputSchema.addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
         else if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(function))
         {
             const auto fieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(function);
-            outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getField()->getStamp());
+            outputSchema.addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getField()->getStamp());
         }
         else
         {
@@ -178,11 +184,7 @@ void LogicalProjectionOperator::inferStringSignature()
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    std::vector<std::string> fields;
-    for (const auto& field : *outputSchema)
-    {
-        fields.push_back(field->getName());
-    }
+    std::vector<std::string> fields = outputSchema.getFieldNames();
     std::sort(fields.begin(), fields.end());
     signatureStream << "PROJECTION(";
     for (const auto& field : fields)
