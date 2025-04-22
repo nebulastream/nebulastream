@@ -266,7 +266,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
                         // NES_ERROR("sync context wait {}", context.getId());
                         preSerBarrier->wait();
                         // NES_ERROR("sync contexts synced {}", context.getId());
-                        std::call_once(serializeOnceFlag, [&context, &operatorHandler, this]() {
+                        std::call_once(serializeOnceFlag, [&operatorHandler, this]() {
                             // NES_ERROR("context {} took serialization", context.getId());
                             operatorHandler->serializeOperatorHandlerForMigration();
                             serialized = true;
