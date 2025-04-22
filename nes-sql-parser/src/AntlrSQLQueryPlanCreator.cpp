@@ -48,6 +48,7 @@
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
@@ -345,7 +346,9 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         const auto key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(context->getText()));
         helper.groupByFields.push_back(key);
     }
-    else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && !helper.isInferModelInput && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
+    else if (
+        (helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && !helper.isInferModelInput
+        && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
         /// add identifiers in select, window, where and having clauses to the function builder list
         /// if inference is in select, ignore the model input fields
@@ -471,8 +474,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         for (int i = 0; i < helper.inferModelInputModel.size(); ++i)
         {
-            queryPlan = QueryPlanBuilder::addInferModel(helper.inferModelInputModel[i],
-                helper.inferModelInputFields[i], queryPlan);
+            queryPlan = QueryPlanBuilder::addInferModel(helper.inferModelInputModel[i], helper.inferModelInputFields[i], queryPlan);
         }
     }
 
@@ -509,8 +511,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         for (int i = 0; i < helper.inferModelInputModel.size(); ++i)
         {
-            queryPlan = QueryPlanBuilder::addInferModel(helper.inferModelInputModel[i],
-                helper.inferModelAggInputFields[i], queryPlan);
+            queryPlan = QueryPlanBuilder::addInferModel(helper.inferModelInputModel[i], helper.inferModelAggInputFields[i], queryPlan);
         }
     }
 
@@ -759,8 +760,6 @@ void AntlrSQLQueryPlanCreator::exitInference(AntlrSQLParser::InferenceContext* c
     helpers.top().isInferModel = false;
     AntlrSQLHelper helper = helpers.top();
     std::string model = context->children[2]->getText();
-    model.erase(0, 1);
-    model.erase(model.size() - 1);
     helper.inferModelInputModel.push_back(model);
     poppush(helper);
     AntlrSQLBaseListener::exitInference(context);
@@ -1002,15 +1001,9 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
             break;
         default:
-            if (funcName == "concat")
+            if (auto logicalFunction = LogicalFunctionRegistry::instance().create(funcName, LogicalFunctionRegistryArguments{helper.functionBuilder}))
             {
-                INVARIANT(helper.functionBuilder.size() == 2, "Concat requires two arguments, but got {}", helper.functionBuilder.size());
-                const auto rightFunction = helper.functionBuilder.back();
-                helper.functionBuilder.pop_back();
-                const auto leftFunction = helper.functionBuilder.back();
-                helper.functionBuilder.pop_back();
-
-                parentHelper.functionBuilder.push_back(NodeFunctionConcat::create(leftFunction, rightFunction));
+                parentHelper.functionBuilder.push_back(*logicalFunction);
             }
             else
             {
@@ -1029,8 +1022,8 @@ void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::Thr
 void AntlrSQLQueryPlanCreator::enterValueExpressionDefault(AntlrSQLParser::ValueExpressionDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    if (!helper.isInferModel)
-        helper.identCountHelper++;
+    // if (!helper.isInferModel)
+    //     helper.identCountHelper++;
     poppush(helper);
     AntlrSQLBaseListener::enterValueExpressionDefault(context);
 }

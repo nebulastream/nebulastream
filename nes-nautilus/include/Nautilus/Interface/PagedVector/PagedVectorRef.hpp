@@ -42,7 +42,8 @@ public:
 
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
-    void writeRecord(const Record& record) const;
+    /// @param context
+    void writeRecord(const Record& record, Runtime::Execution::ExecutionContext& context) const;
 
     /// @brief Reads the specified fields of a record from the pagedVectorRef
     /// @param pos record position in pagedVector

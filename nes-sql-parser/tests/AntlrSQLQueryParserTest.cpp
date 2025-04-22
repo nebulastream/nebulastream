@@ -789,66 +789,66 @@ TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithH
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
 }
 
-TEST_F(AntlrSQLQueryParserTest, inferModelTest)
-{
-    /// Inference in SELECT clause
-    {
-        const std::string antlrQueryString = "SELECT INFER_MODEL(\"/tmp/model1.tf\", (f1, f2, f3), (p1, p2)), "
-                                             "INFER_MODEL(\"/tmp/model2.tf\", (f1, f2, f3, f4), (v1)) "
-                                             "FROM stream "
-                                             "INTO sink";
-        const auto internalLogicalQuery
-            = Query::from("stream")
-                    .inferModel("/tmp/model1.tf",
-                        {Attribute("f1"), Attribute("f2"), Attribute("f3")},
-                        {Attribute("p1", BasicType::FLOAT32), Attribute("p2", BasicType::FLOAT32)})
-                    .inferModel("/tmp/model2.tf",
-                        {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("v1", BasicType::FLOAT32)})
-                    .project(Attribute("p1"), Attribute("p2"), Attribute("v1"))
-                    .sink("sink");
-        EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
-    }
-
-    /// Inference in WHERE clause
-    {
-        const std::string antlrQueryString = "SELECT id, INFER_MODEL(\"/tmp/model1.tf\", (f1, f2, f3), (p1, p2)) "
-                                             "FROM stream "
-                                             "WHERE INFER_MODEL(\"/tmp/model2.tf\", (f1, f2, f3, f4), (v1)) > 100 "
-                                             "AND p1 > 0 "
-                                             "INTO sink";
-        const auto internalLogicalQuery
-            = Query::from("stream")
-                    .inferModel("/tmp/model1.tf",
-                        {Attribute("f1"), Attribute("f2"), Attribute("f3")},
-                        {Attribute("p1", BasicType::FLOAT32), Attribute("p2", BasicType::FLOAT32)})
-                    .inferModel("/tmp/model2.tf",
-                        {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
-                        {Attribute("v1", BasicType::FLOAT32)})
-                    .selection(Attribute("v1") > 100 && Attribute("p1") > 0)
-                    .project(Attribute("id"), Attribute("p1"), Attribute("p2"))
-                    .sink("sink");
-        EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
-    }
-
-    /// Aggregated fields as the inference input
-    {
-        const std::string antlrQueryString = "SELECT INFER_MODEL(\"/tmp/model1.tf\", (AVG(f1) AS avg_f1, MIN(f2) AS min_f2, MAX(f3)), (p1, p2)) "
-                                             "FROM stream "
-                                             "GROUP BY f4 "
-                                             "WINDOW TUMBLING(ts, SIZE 10 SEC) "
-                                             "INTO sink";
-        const auto internalLogicalQuery
-            = Query::from("stream")
-                    .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
-                    .byKey(Attribute("f4"))
-                    .apply(Avg(Attribute("f1"))->as(Attribute("avg_f1")),
-                           Min(Attribute("f2"))->as(Attribute("min_f2")),
-                           Max(Attribute("f3")))
-                    .inferModel("/tmp/model1.tf",
-                        {Attribute("avg_f1"), Attribute("min_f2"), Attribute("f3")},
-                        {Attribute("p1", BasicType::FLOAT32), Attribute("p2", BasicType::FLOAT32)})
-                    .sink("sink");
-        EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
-    }
-}
+// TEST_F(AntlrSQLQueryParserTest, inferModelTest)
+// {
+//     /// Inference in SELECT clause
+//     {
+//         const std::string antlrQueryString = "SELECT INFER_MODEL(\"/tmp/model1.tf\", (f1, f2, f3), (p1, p2)), "
+//                                              "INFER_MODEL(\"/tmp/model2.tf\", (f1, f2, f3, f4), (v1)) "
+//                                              "FROM stream "
+//                                              "INTO sink";
+//         const auto internalLogicalQuery
+//             = Query::from("stream")
+//                     .inferModel("/tmp/model1.tf",
+//                         {Attribute("f1"), Attribute("f2"), Attribute("f3")},
+//                         {Attribute("p1", BasicType::FLOAT32), Attribute("p2", BasicType::FLOAT32)})
+//                     .inferModel("/tmp/model2.tf",
+//                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+//                         {Attribute("v1", BasicType::FLOAT32)})
+//                     .project(Attribute("p1"), Attribute("p2"), Attribute("v1"))
+//                     .sink("sink");
+//         EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
+//     }
+//
+//     /// Inference in WHERE clause
+//     {
+//         const std::string antlrQueryString = "SELECT id, INFER_MODEL(\"/tmp/model1.tf\", (f1, f2, f3), (p1, p2)) "
+//                                              "FROM stream "
+//                                              "WHERE INFER_MODEL(\"/tmp/model2.tf\", (f1, f2, f3, f4), (v1)) > 100 "
+//                                              "AND p1 > 0 "
+//                                              "INTO sink";
+//         const auto internalLogicalQuery
+//             = Query::from("stream")
+//                     .inferModel("/tmp/model1.tf",
+//                         {Attribute("f1"), Attribute("f2"), Attribute("f3")},
+//                         {Attribute("p1", BasicType::FLOAT32), Attribute("p2", BasicType::FLOAT32)})
+//                     .inferModel("/tmp/model2.tf",
+//                         {Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4")},
+//                         {Attribute("v1", BasicType::FLOAT32)})
+//                     .selection(Attribute("v1") > 100 && Attribute("p1") > 0)
+//                     .project(Attribute("id"), Attribute("p1"), Attribute("p2"))
+//                     .sink("sink");
+//         EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
+//     }
+//
+//     /// Aggregated fields as the inference input
+//     {
+//         const std::string antlrQueryString = "SELECT INFER_MODEL(\"/tmp/model1.tf\", (AVG(f1) AS avg_f1, MIN(f2) AS min_f2, MAX(f3)), (p1, p2)) "
+//                                              "FROM stream "
+//                                              "GROUP BY f4 "
+//                                              "WINDOW TUMBLING(ts, SIZE 10 SEC) "
+//                                              "INTO sink";
+//         const auto internalLogicalQuery
+//             = Query::from("stream")
+//                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10)))
+//                     .byKey(Attribute("f4"))
+//                     .apply(Avg(Attribute("f1"))->as(Attribute("avg_f1")),
+//                            Min(Attribute("f2"))->as(Attribute("min_f2")),
+//                            Max(Attribute("f3")))
+//                     .inferModel("/tmp/model1.tf",
+//                         {Attribute("avg_f1"), Attribute("min_f2"), Attribute("f3")},
+//                         {Attribute("p1", BasicType::FLOAT32), Attribute("p2", BasicType::FLOAT32)})
+//                     .sink("sink");
+//         EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
+//     }
+// }

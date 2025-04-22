@@ -66,7 +66,10 @@ Record RowTupleBufferMemoryProvider::readRecord(
 }
 
 void RowTupleBufferMemoryProvider::writeRecord(
-    nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec) const
+    nautilus::val<uint64_t>& recordIndex,
+    const RecordBuffer& recordBuffer,
+    const Record& rec,
+    Runtime::Execution::ExecutionContext& context) const
 {
     auto tupleSize = rowMemoryLayout->getTupleSize();
     const auto bufferAddress = recordBuffer.getBuffer();
@@ -76,7 +79,7 @@ void RowTupleBufferMemoryProvider::writeRecord(
     {
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
         const auto& value = rec.read(schema->getFieldByIndex(i)->getName());
-        storeValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value);
+        storeValue(rowMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, context);
     }
 }
 

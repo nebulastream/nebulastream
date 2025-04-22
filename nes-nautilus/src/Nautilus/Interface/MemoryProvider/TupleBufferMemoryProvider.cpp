@@ -57,19 +57,38 @@ VarVal TupleBufferMemoryProvider::loadValue(
     {
         const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
         const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-        return VariableSizedData(textPtr);
+        return VariableSizedData(textPtr, true);
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
-uint32_t storeAssociatedTextValueProxy(const Memory::TupleBuffer* tupleBuffer, const int8_t* textValue)
+uint32_t storeAssociatedTextValueProxy(
+    const Memory::TupleBuffer* tupleBuffer,
+    const uint32_t size,
+    const int8_t* textValue,
+    bool ownsBuffer,
+    Memory::AbstractBufferProvider* bufferProvider)
 {
-    auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer(const_cast<int8_t*>(textValue));
-    return tupleBuffer->storeChildBuffer(textBuffer);
+    if (ownsBuffer)
+    {
+        auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer(const_cast<int8_t*>(textValue));
+        return tupleBuffer->storeChildBuffer(textBuffer);
+    }
+    else
+    {
+        auto buffer = bufferProvider->getUnpooledBuffer(size + 4);
+        *buffer.value().getBuffer<uint32_t>() = size;
+        memcpy(buffer.value().getBuffer<int8_t>() + 4, textValue + 4, size);
+        return tupleBuffer->storeChildBuffer(buffer.value());
+    }
 }
 
 VarVal TupleBufferMemoryProvider::storeValue(
-    const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value)
+    const std::shared_ptr<PhysicalType>& type,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<int8_t*>& fieldReference,
+    VarVal value,
+    Runtime::Execution::ExecutionContext& context)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -86,7 +105,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
         const auto textValue = value.cast<VariableSizedData>();
-        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
+        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getSize(), textValue.getReference(), textValue.ownsBuffer(), context.pipelineMemoryProvider.bufferProvider);
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;

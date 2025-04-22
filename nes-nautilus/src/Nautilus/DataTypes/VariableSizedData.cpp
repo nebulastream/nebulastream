@@ -23,17 +23,19 @@
 namespace NES::Nautilus
 {
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& content, const nautilus::val<uint32_t>& size)
-    : size(size), ptrToVarSized(content)
+VariableSizedData::VariableSizedData(
+    const nautilus::val<int8_t*>& content, const nautilus::val<uint32_t>& size, nautilus::val<bool> ownsBuffer)
+    : size(size), ptrToVarSized(content), ownsBuffer_(ownsBuffer)
 {
 }
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData)
-    : VariableSizedData(pointerToVarSizedData, Util::readValueFromMemRef<uint32_t>(pointerToVarSizedData))
+VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData, nautilus::val<bool> ownsBuffer)
+    : VariableSizedData(pointerToVarSizedData, Util::readValueFromMemRef<uint32_t>(pointerToVarSizedData), ownsBuffer)
 {
 }
 
-VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
+VariableSizedData::VariableSizedData(const VariableSizedData& other)
+    : size(other.size), ptrToVarSized(other.ptrToVarSized), ownsBuffer_(other.ownsBuffer_)
 {
 }
 
@@ -46,6 +48,7 @@ VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) 
 
     size = other.size;
     ptrToVarSized = other.ptrToVarSized;
+    ownsBuffer_ = other.ownsBuffer_;
     return *this;
 }
 
@@ -63,6 +66,8 @@ VariableSizedData& VariableSizedData::operator=(VariableSizedData&& other) noexc
 
     size = std::move(other.size);
     ptrToVarSized = std::move(other.ptrToVarSized);
+    ownsBuffer_ = other.ownsBuffer_;
+    other.ownsBuffer_ = false;
     return *this;
 }
 
@@ -118,6 +123,10 @@ nautilus::val<bool> VariableSizedData::operator!() const
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getReference() const
 {
     return ptrToVarSized;
+}
+nautilus::val<bool> VariableSizedData::ownsBuffer() const
+{
+    return ownsBuffer_;
 }
 
 [[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData)

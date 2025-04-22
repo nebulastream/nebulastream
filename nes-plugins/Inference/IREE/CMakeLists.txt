@@ -11,3 +11,6 @@
 # limitations under the License.
 
 add_subdirectory(src)
+
+add_plugin(iris_label LogicalFunction nes-functions IrisLabelLogicalFunction.cpp)
+add_plugin(iris_label ExecutableFunction nes-execution IrisLabelExecutableFunction.cpp)
