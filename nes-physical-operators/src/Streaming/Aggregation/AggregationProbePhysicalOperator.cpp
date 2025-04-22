@@ -138,6 +138,10 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         outputRecord.write(windowEndFieldName, windowEnd.convertToValue());
         PhysicalOperatorConcept::execute(executionCtx, outputRecord);
     }
+
+    nautilus::invoke(
+        +[](EmittedAggregationWindow* emittedAggregationWindow) { emittedAggregationWindow->finalHashMap.reset(); },
+        aggregationWindowRef);
 }
 
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(std::shared_ptr<WindowAggregation> windowAggregationOperator, const OperatorHandlerId operatorHandlerIndex, std::string windowStartFieldName, std::string windowEndFieldName)
