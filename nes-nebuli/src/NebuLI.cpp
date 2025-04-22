@@ -353,7 +353,7 @@ void addSinks(const std::shared_ptr<std::unordered_map<std::string, NES::CLI::Si
     }
 }
 
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan2(const std::string& query_string, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog, const std::unordered_map<std::string, NES::CLI::Sink>& sinks)
+std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan2(const std::string& query_string, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog, const std::shared_ptr<std::unordered_map<std::string, NES::CLI::Sink>>& sinks)
 {
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
     auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
@@ -363,7 +363,7 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan2(const std::s
 
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query_string);
 
-    validateAndSetSinkDescriptors2(*query, sinks);
+    validateAndSetSinkDescriptors2(*query, *sinks);
     semanticQueryValidation->validate(query); /// performs the first type inference
 
     logicalSourceExpansionRule->apply(query);

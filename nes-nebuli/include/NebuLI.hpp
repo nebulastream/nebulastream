@@ -71,5 +71,5 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
 QueryConfig loadConfig(std::istream& inputStream);
 void addSources(const std::shared_ptr<NES::Catalogs::Source::SourceCatalog>& sourceCatalog, const QueryConfig& config);
 void addSinks(const std::shared_ptr<std::unordered_map<std::string, NES::CLI::Sink>>& sinkCatalog, const QueryConfig& config);
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan2(const std::string& query_string, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog, const std::unordered_map<std::string, NES::CLI::Sink>& sinks);
+std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan2(const std::string& query_string, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog, const std::shared_ptr<std::unordered_map<std::string, NES::CLI::Sink>>& sinks);
 }

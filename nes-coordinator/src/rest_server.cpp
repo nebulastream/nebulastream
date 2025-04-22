@@ -40,7 +40,7 @@ void run(int port, std::shared_ptr<NES::Catalogs::Source::SourceCatalog> sourceC
     auto router = oatpp::web::server::HttpRouter::createShared();
     auto connectivityController = std::make_shared<ConnectivityController>(objectMapper);
     router->addController(connectivityController);
-    auto queryController = std::make_shared<QueryController>(objectMapper, queryCatalog);
+    auto queryController = std::make_shared<QueryController>(objectMapper, queryCatalog, sourceCatalog, sinkCatalog);
     router->addController(queryController);
     auto sourceCatalogController = std::make_shared<SourceCatalogController>(objectMapper, sourceCatalog);
     router->addController(sourceCatalogController);
