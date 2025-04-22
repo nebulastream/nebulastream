@@ -11,5 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
-        SinkLogicalOperator.cpp
+        EventTimeWatermarkStrategyDescriptor.cpp
+        IngestionTimeWatermarkStrategyDescriptor.cpp
+        WatermarkAssignerLogicalOperator.cpp
+        WatermarkStrategyDescriptor.cpp
 )

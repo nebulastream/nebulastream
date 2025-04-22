@@ -137,7 +137,7 @@ LogicalFunction FieldAssignmentLogicalFunction::withInferredDataType(const Schem
         }
     }
 
-    if (!copy.fieldAccess.getDataType() || dynamic_cast<const Undefined*>(copy.fieldAccess.getDataType().get()) != nullptr)
+    if (!copy.fieldAccess.getDataType() || dynamic_cast<const Undefined*>(copy.fieldAccess.getDataType().get()))
     {
         copy.fieldAccess = copy.fieldAccess.withDataType(copy.getAssignment().getDataType()).get<FieldAccessLogicalFunction>();
     }
