@@ -73,7 +73,7 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                            numberOfBuffersPerEpoch,
                            std::move(workerToCoreMapping)),
       taskQueue(folly::MPMCQueue<Task>(enableIncrementalPlacement ? DEFAULT_QUEUE_INITIAL_CAPACITY : INCREASED_QUEUE_INITIAL_CAPACITY)) {
-    NES_ERROR("QueryManger: queue size {}", enableIncrementalPlacement ? DEFAULT_QUEUE_INITIAL_CAPACITY : INCREASED_QUEUE_INITIAL_CAPACITY);
+    // NES_ERROR("QueryManger: queue size {}", enableIncrementalPlacement ? DEFAULT_QUEUE_INITIAL_CAPACITY : INCREASED_QUEUE_INITIAL_CAPACITY);
     NES_DEBUG("QueryManger: use dynamic mode with numThreads= {}", numThreads);
 }
 
