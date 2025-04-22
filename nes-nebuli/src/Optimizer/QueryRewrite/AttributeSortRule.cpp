@@ -18,24 +18,23 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Functions/ArithmeticalFunctions/AddBinaryLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/DivBinaryLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/MulBinaryLogicalFunction.hpp>
+#include <Functions/ArithmeticalFunctions/SubBinaryLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FieldAssignmentBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/AndBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/GreaterBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/GreaterEqualsBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/LessBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/LessEqualsBinaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/NegateUnaryLogicalFunction.hpp>
+#include <Functions/LogicalFunctions/OrBinaryLogicalFunction.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
+#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -52,26 +51,26 @@ std::shared_ptr<AttributeSortRule> AttributeSortRule::create()
 
 std::shared_ptr<QueryPlan> AttributeSortRule::apply(std::shared_ptr<QueryPlan> queryPlan)
 {
-    auto selectionOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
+    auto selectionOperators = queryPlan->getOperatorByType<SelectionLogicalOperator>();
     for (const auto& selectionOperator : selectionOperators)
     {
         auto predicate = selectionOperator->getPredicate();
         auto updatedPredicate = sortAttributesInFunction(predicate);
-        auto updatedFilter = std::make_shared<LogicalSelectionOperator>(updatedPredicate, getNextOperatorId());
-        updatedFilter->setInputSchema(selectionOperator->getInputSchema()->copy());
+        auto updatedFilter = std::make_shared<SelectionLogicalOperator>(updatedPredicate, getNextOperatorId());
+        updatedFilter->setInputSchema(selectionOperator->getInputSchema()->clone());
         Util::as_if<LogicalOperator>(updatedFilter)
-            ->setOutputSchema(Util::as_if<LogicalOperator>(selectionOperator)->getOutputSchema()->copy());
+            ->setOutputSchema(Util::as_if<LogicalOperator>(selectionOperator)->getOutputSchema()->clone());
         selectionOperator->replace(updatedFilter);
     }
 
-    auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
+    auto mapOperators = queryPlan->getOperatorByType<MapLogicalOperator>();
     for (const auto& mapOperator : mapOperators)
     {
         auto mapFunction = mapOperator->getMapFunction();
         auto updatedMapFunction = Util::as<NodeFunctionFieldAssignment>(sortAttributesInFunction(mapFunction));
-        auto updatedMap = std::make_shared<LogicalMapOperator>(updatedMapFunction, getNextOperatorId());
-        updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
-        Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
+        auto updatedMap = std::make_shared<MapLogicalOperator>(updatedMapFunction, getNextOperatorId());
+        updatedMap->setInputSchema(mapOperator->getInputSchema()->clone());
+        Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->clone());
         mapOperator->replace(updatedMap);
     }
     return queryPlan;
@@ -124,7 +123,7 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->deepCopy());
+            sortedCommutativeFields.push_back(commutativeField->clone());
         }
 
         std::ranges::sort(
