@@ -139,6 +139,10 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
         outputRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
         child->execute(executionCtx, outputRecord);
     }
+
+    nautilus::invoke(
+        +[](EmittedAggregationWindow* emittedAggregationWindow) { emittedAggregationWindow->finalHashMap.reset(); },
+        aggregationWindowRef);
 }
 
 AggregationProbe::AggregationProbe(
