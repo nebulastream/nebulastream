@@ -83,7 +83,8 @@ bool ZmqServer::start() {
     std::shared_ptr<std::promise<bool>> startPromise = std::make_shared<std::promise<bool>>();
     uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
     uint16_t numHandlerThreads = 1;
-    zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
+    int maxSockets = 10000;
+    zmqContext = std::make_shared<zmq::context_t>(numZmqThreads, maxSockets);
     // NES_ASSERT(MAX_ZMQ_SOCKET == zmqContext->get(zmq::ctxopt::max_sockets), "Cannot set max num of sockets");
     routerThread = std::make_unique<std::thread>([this, numHandlerThreads, startPromise]() {
         setThreadName("zmq-router");

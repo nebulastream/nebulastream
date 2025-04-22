@@ -83,7 +83,6 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
         enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
         statisticProbeHandler = storageHandle->getStatisticProbeHandler(requestId);
-        NES_ERROR("Handle topology events");
         // Apply all topology events
         for (const auto& event : events) {
             if (event->instanceOf<ISQPRemoveNodeEvent>()) {
@@ -128,7 +127,6 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                 event->response.set_value(std::make_shared<ISQPAddNodeResponse>(workerId, true));
             }
         }
-        NES_ERROR("Identify operators");
         // Identify affected operator placements
         for (const auto& event : events) {
             if (event->instanceOf<ISQPRemoveNodeEvent>()) {
@@ -154,7 +152,6 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         std::vector<std::future<Optimizer::Perf>> completedAmendments;
         auto deploymentPhase = DeploymentPhase::create(queryCatalog, reconnectCounter, !enableIncrementalPlacement);
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
-            NES_ERROR("call amendment for {}", sharedQueryPlan.get()->getId());
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                           globalExecutionPlan,
                                                                                           topology,
@@ -211,7 +208,6 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
     auto downstreamNodeId = removeLinkEvent->getParentNodeId();
     auto upstreamNodeId = removeLinkEvent->getChildNodeId();
 
-    NES_ERROR("handleRemoveLinkRequest");
     // Step1. Identify the impacted SQPs
     auto downstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(downstreamNodeId);
     auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
@@ -242,7 +238,6 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
         NES_INFO("Found no shared query plan that was using the removed link");
         return;
     }
-    NES_ERROR("Iterate over queries");
     //Iterate over each shared query plan id and identify the operators that need to be replaced
     for (auto impactedSharedQueryId : impactedSharedQueryIds) {
         // Step2. Mark operators for re-placements
@@ -256,7 +251,6 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
         std::set<OperatorId> upstreamOperatorIds;
         std::set<OperatorId> downstreamOperatorIds;
         if (coordinatorConfiguration->optimizer.enableIncrementalPlacement) {
-            NES_ERROR("findUpstreamAndDownstreamPinnedOperators");
             //find the pinned operators for the changelog
             auto [upstream, downstream] = NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
                                                                                                       upstreamExecutionNode,
@@ -278,7 +272,6 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
             };
         }
         //perform re-operator placement on the query plan
-        NES_ERROR("Perform ReOperatorPlacement");
         sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
     }
 }
