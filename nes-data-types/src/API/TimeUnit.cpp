@@ -13,6 +13,7 @@
 */
 
 #include <cstdint>
+#include <ostream>
 #include <string>
 #include <API/TimeUnit.hpp>
 #include <fmt/format.h>
