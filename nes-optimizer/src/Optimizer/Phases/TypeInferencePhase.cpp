@@ -37,7 +37,9 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog), std::move(udfCatalog)));
 }
 
-QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan, FaultToleranceType faultToleranceType) {
+QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan,
+                                         FaultToleranceType faultToleranceType,
+                                         CheckpointStorageType checkpointStorageType) {
 
     if (!sourceCatalog) {
         NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
@@ -50,13 +52,14 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan, FaultToleranceT
         throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
     }
 
-    performTypeInference(queryPlan->getQueryId(), sourceOperators, sinkOperators, faultToleranceType);
+    performTypeInference(queryPlan->getQueryId(), sourceOperators, sinkOperators, faultToleranceType, checkpointStorageType);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
     return queryPlan;
 }
 
 DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan,
-                                                   FaultToleranceType faultToleranceType) {
+                                                   FaultToleranceType faultToleranceType,
+                                                   CheckpointStorageType checkpointStorageType) {
 
     if (!sourceCatalog) {
         NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
@@ -73,7 +76,8 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
     performTypeInference(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryId(), QueryId),
                          sourceOperators,
                          sinkOperators,
-                         faultToleranceType);
+                         faultToleranceType,
+                         checkpointStorageType);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
     return decomposedQueryPlan;
 }
@@ -81,7 +85,8 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
 void TypeInferencePhase::performTypeInference(QueryId planId,
                                               std::vector<SourceLogicalOperatorPtr> sourceOperators,
                                               std::vector<SinkLogicalOperatorPtr> sinkOperators,
-                                              FaultToleranceType faultToleranceType) {
+                                              FaultToleranceType faultToleranceType,
+                                              CheckpointStorageType checkpointStorageType) {
 
     // first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators) {
@@ -119,6 +124,7 @@ void TypeInferencePhase::performTypeInference(QueryId planId,
     for (auto& sink : sinkOperators) {
         auto sinkDescriptor = sink->getSinkDescriptor()->as<SinkDescriptor>();
         sinkDescriptor->setFaultToleranceType(faultToleranceType);
+        sinkDescriptor->setCheckpointStorageType(checkpointStorageType);
         sink->setSinkDescriptor(sinkDescriptor);
         if (!sink->inferSchema()) {
             NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase.");

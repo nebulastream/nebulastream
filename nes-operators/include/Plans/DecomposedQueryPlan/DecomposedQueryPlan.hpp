@@ -18,6 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/QueryState.hpp>
 #include <memory>
@@ -56,7 +57,7 @@ class DecomposedQueryPlan {
      * @param workerId: the worker id
      * @return instance of Decomposed query plan
      */
-    static DecomposedQueryPlanPtr create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
+    static DecomposedQueryPlanPtr create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance = FaultToleranceType::NONE, CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -70,7 +71,8 @@ class DecomposedQueryPlan {
                                          SharedQueryId sharedQueryId,
                                          WorkerId workerId,
                                          std::vector<OperatorPtr> rootOperators,
-                                         FaultToleranceType faultTolerance = FaultToleranceType::NONE);
+                                         FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                         CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -78,7 +80,11 @@ class DecomposedQueryPlan {
      * @param sharedQueryId: the shared query id
      * @param workerId: the worker id
      */
-    explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
+    explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId,
+                                SharedQueryId sharedQueryId,
+                                WorkerId workerId,
+                                FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -90,7 +96,9 @@ class DecomposedQueryPlan {
     explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId,
                                  SharedQueryId sharedQueryId,
                                  WorkerId workerId,
-                                 std::vector<OperatorPtr> rootOperators, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
+                                 std::vector<OperatorPtr> rootOperators,
+                                 FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                 CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
     /**
      * @brief Add the operator as new root operator
@@ -232,6 +240,10 @@ class DecomposedQueryPlan {
 
     void setFaultToleranceType(const FaultToleranceType faultToleranceType);
 
+    CheckpointStorageType getCheckpointStorageType() const;
+
+    void setCheckpointStorageType(const CheckpointStorageType checkpointStorageType);
+
     /**
      * @brief Record the previous version of this plan that can be used to identfify the running instance on the worker side
      */
@@ -279,6 +291,7 @@ class DecomposedQueryPlan {
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
     std::vector<OperatorPtr> rootOperators;
     FaultToleranceType faultTolerance;
+    CheckpointStorageType checkpointStorage;
 };
 }// namespace NES
 

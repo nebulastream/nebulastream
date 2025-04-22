@@ -26,34 +26,42 @@
 namespace NES {
 
 DecomposedQueryPlanPtr
-DecomposedQueryPlan::create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance) {
-    return std::make_shared<DecomposedQueryPlan>(decomposedQueryId, sharedQueryId, workerId, faultTolerance);
+DecomposedQueryPlan::create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance, CheckpointStorageType checkpointStorage) {
+    return std::make_shared<DecomposedQueryPlan>(decomposedQueryId, sharedQueryId, workerId, faultTolerance, checkpointStorage);
 }
 
 DecomposedQueryPlanPtr DecomposedQueryPlan::create(DecomposedQueryId decomposedQueryId,
                                                    SharedQueryId sharedQueryId,
                                                    WorkerId workerId,
-                                                   std::vector<OperatorPtr> rootOperators, FaultToleranceType faultTolerance) {
-    return std::make_shared<DecomposedQueryPlan>(decomposedQueryId, sharedQueryId, workerId, rootOperators, faultTolerance);
+                                                   std::vector<OperatorPtr> rootOperators,
+                                                   FaultToleranceType faultTolerance,
+                                                   CheckpointStorageType checkpointStorage) {
+    return std::make_shared<DecomposedQueryPlan>(decomposedQueryId, sharedQueryId, workerId, rootOperators, faultTolerance, checkpointStorage);
 }
 
-DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance)
+DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultTolerance, CheckpointStorageType checkpointStorage)
     : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
-      decomposedQueryPlanVersion(INVALID_DECOMPOSED_QUERY_PLAN_VERSION), workerId(workerId), faultTolerance(faultTolerance) {}
+      decomposedQueryPlanVersion(INVALID_DECOMPOSED_QUERY_PLAN_VERSION), workerId(workerId), faultTolerance(faultTolerance), checkpointStorage(checkpointStorage) {}
 
 DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryId decomposedQueryId,
                                          SharedQueryId sharedQueryId,
                                          WorkerId workerId,
-                                         std::vector<OperatorPtr> rootOperators, FaultToleranceType faultTolerance)
+                                         std::vector<OperatorPtr> rootOperators,
+                                         FaultToleranceType faultTolerance,
+                                         CheckpointStorageType checkpointStorage)
     : sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
       decomposedQueryPlanVersion(INVALID_DECOMPOSED_QUERY_PLAN_VERSION), workerId(workerId),
-      rootOperators(std::move(rootOperators)), faultTolerance(faultTolerance) {}
+      rootOperators(std::move(rootOperators)), faultTolerance(faultTolerance), checkpointStorage(checkpointStorage) {}
 
 void DecomposedQueryPlan::addRootOperator(OperatorPtr newRootOperator) { rootOperators.emplace_back(newRootOperator); }
 
 FaultToleranceType DecomposedQueryPlan::getFaultToleranceType() const { return faultTolerance; };
 
 void DecomposedQueryPlan::setFaultToleranceType(const FaultToleranceType faultToleranceType) { faultTolerance = faultToleranceType; };
+
+CheckpointStorageType DecomposedQueryPlan::getCheckpointStorageType() const { return checkpointStorage; };
+
+void DecomposedQueryPlan::setCheckpointStorageType(const CheckpointStorageType checkpointStorageType) { checkpointStorage = checkpointStorageType; };
 
 
 bool DecomposedQueryPlan::removeAsRootOperator(OperatorId rootOperatorId) {
@@ -281,7 +289,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() {
 
     // Create the duplicated decomposed query plan
     auto copiedDecomposedQueryPlan =
-        DecomposedQueryPlan::create(decomposedQueryId, sharedQueryId, workerId, duplicateRootOperators, faultTolerance);
+        DecomposedQueryPlan::create(decomposedQueryId, sharedQueryId, workerId, duplicateRootOperators, faultTolerance, checkpointStorage);
     copiedDecomposedQueryPlan->setState(currentState);
     copiedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
     if (oldVersion) {

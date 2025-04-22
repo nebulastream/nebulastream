@@ -15,9 +15,9 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
 
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <memory>
-#include <Util/FaultToleranceType.hpp>
 
 namespace NES {
 
@@ -79,8 +79,11 @@ class TypeInferencePhase {
      * 3. If a operator contains expression, we infer the result stamp of this operators.
      * @param queryPlan the query plan
      * @param faultToleranceType fault tolerance type
+     * @param checkpointStorage storage option if checkpointing enabled
      */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan, FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+    QueryPlanPtr execute(QueryPlanPtr queryPlan,
+                        FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                        CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
     /**
      * @brief Performs type inference on the given decomposed query plan.
@@ -90,9 +93,11 @@ class TypeInferencePhase {
      * 3. If a operator contains expression, we infer the result stamp of this operators.
      * @param decomposedQueryPlan the decomposed query plan
      * @param faultToleranceType fault tolerance type
+     * @param checkpointStorage storage option if checkpointing is enabled
      */
     DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan,
-                                   FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                                   FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                                   CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
   private:
     /**
@@ -101,6 +106,7 @@ class TypeInferencePhase {
      * @param sourceOperators : the source operators
      * @param sinkOperators : the sink operators
      * @param faultToleranceType fault tolerance type
+     * @param checkpointStorage storage option if checkpointing enabled
      * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
      * @return QueryPlanPtr
      * @throws TypeInferenceException if inferring the data types into the query failed
@@ -109,7 +115,8 @@ class TypeInferencePhase {
     void performTypeInference(QueryId planId,
                               std::vector<SourceLogicalOperatorPtr> sourceOperators,
                               std::vector<SinkLogicalOperatorPtr> sinkOperators,
-                              FaultToleranceType faultToleranceType);
+                              FaultToleranceType faultToleranceType,
+                              CheckpointStorageType checkpointStorage);
 
     explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog);
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
