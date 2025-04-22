@@ -85,7 +85,7 @@ public:
     /// Note that this function does not return a field with an ambiguous field name.
     [[nodiscard]] std::optional<Field> getFieldByName(const std::string& fieldName) const;
 
-    /// @Note: Raises a 'FieldNotFound' if the index is out of bounds.
+    /// @Note: Raises a 'FieldNotFound' exception if the index is out of bounds.
     [[nodiscard]] Field getFieldAt(size_t index) const;
 
     [[nodiscard]] bool contains(const std::string& qualifiedFieldName) const;
@@ -101,7 +101,7 @@ public:
     [[nodiscard]] std::vector<std::string> getFieldNames() const;
     [[nodiscard]] const std::vector<Field>& getFields() const;
     void appendFieldsFromOtherSchema(const Schema& otherSchema);
-    void renameField(const std::string& oldFieldName, std::string_view newFieldName);
+    [[nodiscard]] bool renameField(const std::string& oldFieldName, std::string_view newFieldName);
 
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
 

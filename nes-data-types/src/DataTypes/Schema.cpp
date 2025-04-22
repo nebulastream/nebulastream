@@ -146,8 +146,7 @@ std::optional<std::string> Schema::getSourceNameQualifier() const
 {
     if (fields.empty())
     {
-        NES_ERROR("Schema::getQualifierNameForSystemGeneratedFields: a schema is not allowed to be empty when a qualifier is "
-                  "requested");
+        NES_ERROR("A schema is not allowed to be empty when a qualifier is requested");
         return std::nullopt;
     }
     return fields.front().name.substr(0, fields.front().name.find(ATTRIBUTE_NAME_SEPARATOR));
@@ -176,14 +175,16 @@ void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
     this->sizeOfSchemaInBytes += otherSchema.sizeOfSchemaInBytes;
 }
 
-void Schema::renameField(const std::string& oldFieldName, const std::string_view newFieldName)
+bool Schema::renameField(const std::string& oldFieldName, const std::string_view newFieldName)
 {
     if (auto fieldToRename = nameToField.extract(oldFieldName))
     {
         fields.at(fieldToRename.mapped()).name = newFieldName;
         fieldToRename.key() = newFieldName;
         nameToField.insert(std::move(fieldToRename));
+        return true;
     }
+    return false;
 }
 size_t Schema::getSizeOfSchemaInBytes() const
 {
