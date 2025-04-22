@@ -17,32 +17,26 @@
 #include <cstdint>
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Types/WindowType.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES::Join
 {
-/**
- * @brief Runtime definition of a join operator
- * @experimental
- */
+
 class LogicalJoinDescriptor
 {
 public:
-    /**
-     * With this enum we distinguish between options to compose two sources, in particular, we reuse Join Logic for binary CEP operators which require a Cartesian product.
-     * Thus, INNER_JOIN combines two tuples in case they share a common key attribute
-     * CARTESIAN_PRODUCT combines two tuples regardless if they share a common attribute.
-     *
-     * Example:
-     * Source1: {(key1,2),(key2,3)}
-     * Source2: {(key1,2),(key2,3)}
-     *
-     * INNER_JOIN: {(Key1,2,2), (key2,3,3)}
-     * CARTESIAN_PRODUCT: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2), (key2,3,key2,3)}
-     *
-     */
+    /// With this enum we distinguish between options to compose two sources, in particular, we reuse Join Logic for binary CEP operators which require a Cartesian product.
+    /// Thus, INNER_JOIN combines two tuples in case they share a common key attribute
+    /// CARTESIAN_PRODUCT combines two tuples regardless if they share a common attribute.
+    ///
+    /// Example:
+    /// Source1: {(key1,2),(key2,3)}
+    /// Source2: {(key1,2),(key2,3)}
+    ///
+    /// INNER_JOIN: {(Key1,2,2), (key2,3,3)}
+    /// CARTESIAN_PRODUCT: {(key1,2,key1,2),(key1,2,key2,3), (key2,3,key1,2), (key2,3,key2,3)}
     enum class JoinType : uint8_t
     {
         INNER_JOIN,
@@ -50,103 +44,46 @@ public:
     };
 
     static std::shared_ptr<LogicalJoinDescriptor> create(
-        const std::shared_ptr<NodeFunction>& joinFunction,
+        std::shared_ptr<LogicalFunction> joinFunction,
         const std::shared_ptr<Windowing::WindowType>& windowType,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
         JoinType joinType);
 
     explicit LogicalJoinDescriptor(
-        std::shared_ptr<NodeFunction> joinFunction,
+        std::shared_ptr<LogicalFunction> joinFunction,
         std::shared_ptr<Windowing::WindowType> windowType,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
         JoinType joinType,
         OriginId originId = INVALID_ORIGIN_ID);
 
-    /**
-   * @brief getter left source type
-   */
-    [[nodiscard]] std::shared_ptr<Schema> getLeftSourceType() const;
+    std::shared_ptr<Schema> getLeftSourceType() const;
+    std::shared_ptr<Schema> getRightSourceType() const;
 
-    /**
-   * @brief getter of right source type
-   */
-    [[nodiscard]] std::shared_ptr<Schema> getRightSourceType() const;
-
-    /**
-     * @brief getter/setter for window type
-    */
-    [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
-
-    /**
-     * @brief getter for on trigger action
-     * @return trigger action
-    */
+    std::shared_ptr<Windowing::WindowType> getWindowType() const;
     [[nodiscard]] JoinType getJoinType() const;
 
-    /**
-     * @brief number of input edges. Need to define a clear concept for this
-     * @experimental This is experimental API
-     * @return
-     */
     uint64_t getNumberOfInputEdgesLeft() const;
-
-    /**
-     * @brief number of input edges. Need to define a clear concept for this
-     * @return
-     */
     uint64_t getNumberOfInputEdgesRight() const;
 
-    /**
-     * @brief Update the left and right source types upon type inference
-     * @param leftSourceType the type of the left source
-     * @param rightSourceType the type of the right source
-     */
+    /// @brief Update the left and right source types upon type inference
     void updateSourceTypes(std::shared_ptr<Schema> leftSourceType, std::shared_ptr<Schema> rightSourceType);
 
-    /**
-     * @brief Update the output source type upon type inference
-     * @param outputSchema the type of the output source
-     */
-    void updateOutputDefinition(std::shared_ptr<Schema> outputSchema);
-
-    /**
-     * @brief Getter of the output source schema
-     * @return the output source schema
-     */
+    void setOutputSchema(std::shared_ptr<Schema> outputSchema);
     [[nodiscard]] std::shared_ptr<Schema> getOutputSchema() const;
 
     void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
     void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
 
-    /**
-     * @brief Getter for the origin id of this window.
-     * @return origin id
-     */
     [[nodiscard]] OriginId getOriginId() const;
-
-    /**
-     * @brief Setter for the origin id
-     * @param originId
-     */
     void setOriginId(OriginId originId);
 
-    /**
-     * @brief Getter keys
-     * @return keys
-     */
-    [[nodiscard]] std::shared_ptr<NodeFunction> getJoinFunction();
-
-    /**
-     * @brief Checks if these two are equal
-     * @param other: LogicalJoinDescriptor that we want to check if they are equal
-     * @return Boolean
-     */
+    [[nodiscard]] std::shared_ptr<LogicalFunction> getJoinFunction() const;
     bool equals(const LogicalJoinDescriptor& other) const;
 
 private:
-    std::shared_ptr<NodeFunction> joinFunction;
+    std::shared_ptr<LogicalFunction> joinFunction;
     std::shared_ptr<Schema> leftSourceType = Schema::create();
     std::shared_ptr<Schema> rightSourceType = Schema::create();
     std::shared_ptr<Schema> outputSchema = Schema::create();

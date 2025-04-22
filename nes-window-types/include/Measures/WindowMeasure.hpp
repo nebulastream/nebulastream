@@ -16,15 +16,10 @@
 #include <string>
 namespace NES::Windowing
 {
-/**
- * Defines the measure of a window, common measures are time and count.
- */
+
+/// Defines the measure of a window, common measures are time and count.
 class WindowMeasure
 {
-    /**
-     * @brief Creates a string representation
-     * @return std::string
-     */
     virtual std::string toString() const = 0;
 
 public:
