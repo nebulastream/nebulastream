@@ -98,7 +98,7 @@ void PlacementAmendmentInstance::execute() {
                 return;
             }
         }
-        NES_ERROR("Processing placement amendment request with type {}", magic_enum::enum_name(requestType));
+        // NES_ERROR("Processing placement amendment request with type {}", magic_enum::enum_name(requestType));
         // 4. Call the placement amendment phase to remove/add invalid placements
         auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
                                                                                             topology,
@@ -115,7 +115,7 @@ void PlacementAmendmentInstance::execute() {
             //Remove all queries marked for removal from shared query plan
             sharedQueryPlan->removeQueryMarkedForRemoval();
             //Deploy all newly placed deployment contexts
-            NES_ERROR("Deploy new plans");
+            // NES_ERROR("Deploy new plans");
             deploymentPhase->execute(deploymentUnit.deploymentAdditionContexts, requestType);
 
             NES_DEBUG("Incremental placement: {}", incrementalPlacement);
@@ -128,9 +128,9 @@ void PlacementAmendmentInstance::execute() {
 //                auto firstEvent = events.find(DecomposedQueryIdWithVersion(3, 2));
 //                auto secondEvent = events.find(DecomposedQueryIdWithVersion(1, 1));
 //                auto thirstEvent = events.find(DecomposedQueryIdWithVersion(2, 1));
-                NES_ERROR("computes reconfig markers, deploy markers next")
+                // NES_ERROR("computes reconfig markers, deploy markers next")
                 deploymentPhase->execute(deploymentUnit.reconfigurationMarkerUnits, reconfigurationMarker);
-                NES_ERROR("marker deployment done")
+                // NES_ERROR("marker deployment done")
             }
 
             // 6. Update the global execution plan to reflect the updated state of the decomposed query plans

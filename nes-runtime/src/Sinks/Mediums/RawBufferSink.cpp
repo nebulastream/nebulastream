@@ -84,7 +84,7 @@ void RawBufferSink::setup() {
 }
 
 void RawBufferSink::shutdown() {
-    NES_ERROR("Closing file sink, filePath={}, numberOfReceived {}, numberOfWritten {}", filePath, numberOfReceivedBuffers, numberOfWrittenBuffers);
+    // NES_ERROR("Closing file sink, filePath={}, numberOfReceived {}, numberOfWritten {}", filePath, numberOfReceivedBuffers, numberOfWrittenBuffers);
     // rename file after dumping completed
     if (isClosed) {
         return;
@@ -212,7 +212,7 @@ bool RawBufferSink::writeToTheFile(Runtime::TupleBuffer& inputBuffer) {
         shutdown();
         isClosed = true;
         auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-         NES_ERROR("finished transferring {} at {}", time, numberOfWrittenBuffers);
+         // NES_ERROR("finished transferring {} at {}", time, numberOfWrittenBuffers);
     }
     return true;
 }
@@ -262,7 +262,7 @@ bool RawBufferSink::writeBulkToFile(std::vector<Runtime::TupleBuffer>& buffers) 
         auto time = std::chrono::duration_cast<std::chrono::microseconds>(
                         std::chrono::system_clock::now().time_since_epoch()
                             ).count();
-        NES_ERROR("Finished transferring {} at {}", time, numberOfWrittenBuffers);
+        // NES_ERROR("Finished transferring {} at {}", time, numberOfWrittenBuffers);
     }
 
     return true;
