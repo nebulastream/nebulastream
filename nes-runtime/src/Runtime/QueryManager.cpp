@@ -39,6 +39,7 @@
 namespace NES::Runtime {
 
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
+static constexpr auto INCREASED_QUEUE_INITIAL_CAPACITY = 64 * 1024 * 512;
 
 AbstractQueryManager::AbstractQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
                                            std::vector<BufferManagerPtr> bufferManagers,
@@ -62,6 +63,7 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                                          uint16_t numThreads,
                                          HardwareManagerPtr hardwareManager,
                                          uint64_t numberOfBuffersPerEpoch,
+                                         bool enableIncrementalPlacement,
                                          std::vector<uint64_t> workerToCoreMapping)
     : AbstractQueryManager(std::move(queryStatusListener),
                            std::move(bufferManagers),
@@ -70,7 +72,8 @@ DynamicQueryManager::DynamicQueryManager(std::shared_ptr<AbstractQueryStatusList
                            std::move(hardwareManager),
                            numberOfBuffersPerEpoch,
                            std::move(workerToCoreMapping)),
-      taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY)) {
+      taskQueue(folly::MPMCQueue<Task>(enableIncrementalPlacement ? DEFAULT_QUEUE_INITIAL_CAPACITY : INCREASED_QUEUE_INITIAL_CAPACITY)) {
+    NES_ERROR("QueryManger: queue size {}", enableIncrementalPlacement ? DEFAULT_QUEUE_INITIAL_CAPACITY : INCREASED_QUEUE_INITIAL_CAPACITY);
     NES_DEBUG("QueryManger: use dynamic mode with numThreads= {}", numThreads);
 }
 

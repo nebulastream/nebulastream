@@ -138,6 +138,7 @@ NES::Runtime::NodeEnginePtr NodeEngineBuilder::build() {
                                                                          numOfThreads,
                                                                          hardwareManager,
                                                                          numberOfBuffersPerEpoch,
+                                                                         workerConfiguration->enableIncrementalPlacement.getValue(),
                                                                          workerToCoreMappingVec);
                     break;
                 }

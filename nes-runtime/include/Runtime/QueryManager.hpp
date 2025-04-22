@@ -558,6 +558,7 @@ class DynamicQueryManager : public AbstractQueryManager {
                                  uint16_t numThreads,
                                  HardwareManagerPtr hardwareManager,
                                  uint64_t numberOfBuffersPerEpoch,
+                                 bool enableIncrementalPlacement,
                                  std::vector<uint64_t> workerToCoreMapping = {});
 
     void destroy() override;

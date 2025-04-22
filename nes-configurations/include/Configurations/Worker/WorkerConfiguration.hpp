@@ -299,6 +299,11 @@ class WorkerConfiguration : public BaseConfiguration {
                                           "Number of tuple buffers allowed in one epoch.",
                                           {std::make_shared<NumberValidation>()}};
 
+    BoolOption enableIncrementalPlacement = {ENABLE_INCREMENTAL_PLACEMENT,
+                                             "false",
+                                             "Enable reconfiguration of running query plans. (Default: false)",
+                                             {std::make_shared<BooleanValidation>()}};
+
     /**
      * @brief Configuration queryManagerMode
      * The modus in which the query manager is running
@@ -352,7 +357,8 @@ class WorkerConfiguration : public BaseConfiguration {
 
   private:
     std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&workerId,
+        return {&enableIncrementalPlacement,
+                &workerId,
                 &localWorkerHost,
                 &coordinatorHost,
                 &rpcPort,
