@@ -88,9 +88,10 @@ std::string DataType::formattedBytesToString(const void* data) const
             return std::string{*static_cast<const char*>(data)};
         }
         case Type::VARSIZED: {
-            if (!data)
+            if (data == nullptr)
             {
-                NES_ERROR("Pointer to variable sized data is invalid. Buffer must at least contain the length (0 if empty).");
+                throw CannotFormatMalformedStringValue(
+                    "Pointer to variable sized data is invalid. Buffer must at least contain the length (0 if empty).");
                 return "";
             }
 
@@ -100,7 +101,7 @@ std::string DataType::formattedBytesToString(const void* data) const
             const auto* textPointer = static_cast<const char*>(data);
             if (textPointer == nullptr)
             {
-                NES_ERROR("Pointer to VariableSizedData is invalid.");
+                throw CannotFormatMalformedStringValue("Pointer to VariableSizedData is invalid.");
                 return "";
             }
             textPointer += sizeof(StringLengthType);
@@ -109,6 +110,10 @@ std::string DataType::formattedBytesToString(const void* data) const
         default:
             return "invalid physical type";
     }
+}
+bool DataType::isType(const Type type) const
+{
+    return this->type == type;
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)

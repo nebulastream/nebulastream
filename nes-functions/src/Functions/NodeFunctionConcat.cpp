@@ -51,8 +51,10 @@ void NodeFunctionConcat::inferStamp(const Schema& schema)
 {
     this->getLeft()->inferStamp(schema);
     this->getRight()->inferStamp(schema);
-    INVARIANT(this->getLeft()->getStamp().isVarSized(), "The Concat function must have children of type VariableSizedData.");
-    INVARIANT(this->getLeft()->getStamp().isVarSized(), "The Concat function must have children of type VariableSizedData.");
+    INVARIANT(
+        this->getLeft()->getStamp().isType(DataType::Type::VARSIZED), "The Concat function must have children of type VariableSizedData.");
+    INVARIANT(
+        this->getLeft()->getStamp().isType(DataType::Type::VARSIZED), "The Concat function must have children of type VariableSizedData.");
     this->stamp = getLeft()->getStamp();
 }
 

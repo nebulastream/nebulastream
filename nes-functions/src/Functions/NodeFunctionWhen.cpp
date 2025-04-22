@@ -51,7 +51,7 @@ void NodeFunctionWhen::inferStamp(const Schema& schema)
     right->inferStamp(schema);
 
     ///left function has to be boolean
-    if (not left->getStamp().isBoolean())
+    if (not left->getStamp().isType(DataType::Type::BOOLEAN))
     {
         throw CannotInferStamp(
             "Error during stamp inference. Left type needs to be Boolean, but Left was: {} and right was: {}",
@@ -89,7 +89,7 @@ bool NodeFunctionWhen::validateBeforeLowering() const
 {
     /// left function has to be boolean
     const auto functionLeft = this->getLeft();
-    return functionLeft->getStamp().isBoolean();
+    return functionLeft->getStamp().isType(DataType::Type::BOOLEAN);
 }
 
 }

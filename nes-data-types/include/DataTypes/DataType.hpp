@@ -107,14 +107,11 @@ struct DataType final
     DataType join(const DataType& otherDataType);
     std::string formattedBytesToString(const void* data) const;
 
+    [[nodiscard]] bool isType(Type type) const;
     [[nodiscard]] bool isInteger() const;
     [[nodiscard]] bool isSignedInteger() const;
     [[nodiscard]] bool isFloat() const;
     [[nodiscard]] bool isNumeric() const;
-    [[nodiscard]] bool isBoolean() const;
-    [[nodiscard]] bool isChar() const;
-    [[nodiscard]] bool isVarSized() const;
-    [[nodiscard]] bool isUndefined() const;
 
     Type type{Type::UNDEFINED};
 };

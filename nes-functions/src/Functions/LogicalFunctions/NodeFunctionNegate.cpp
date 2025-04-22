@@ -23,6 +23,7 @@
 #include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+
 namespace NES
 {
 
@@ -76,7 +77,7 @@ bool NodeFunctionNegate::validateBeforeLowering() const
     {
         return false;
     }
-    return Util::as<NodeFunction>(children[0])->getStamp().isBoolean();
+    return Util::as<NodeFunction>(children[0])->getStamp().isType(DataType::Type::BOOLEAN);
 }
 
 }

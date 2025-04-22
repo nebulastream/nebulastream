@@ -177,7 +177,8 @@ void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<Quer
             for (const auto& inputField : inferModelOperator->getInputFields())
             {
                 auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
-                if (not field->getStamp().isNumeric() and not field->getStamp().isBoolean() and not field->getStamp().isVarSized())
+                if (not field->getStamp().isNumeric() and not field->getStamp().isType(DataType::Type::BOOLEAN)
+                    and not field->getStamp().isType(DataType::Type::VARSIZED))
                 {
                     throw QueryInvalid(
                         "SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for infer model not supported: {}",
@@ -187,7 +188,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const std::shared_ptr<Quer
             }
         }
         NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp);
-        if (commonStamp.isUndefined())
+        if (commonStamp.isType(DataType::Type::UNDEFINED))
         {
             throw QueryInvalid("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as "
                                "input to infer model.");
