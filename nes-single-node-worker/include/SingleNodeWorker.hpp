@@ -38,7 +38,8 @@ struct PrintingStatisticListener;
 class SingleNodeWorker
 {
     std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
-    std::shared_ptr<Runtime::PrintingStatisticListener> listener;
+    std::vector<std::shared_ptr<Runtime::QueryEngineStatisticListener>> queryEngineStatisticsListener;
+    std::shared_ptr<Runtime::SystemEventListener> systemEventListener;
     std::shared_ptr<Runtime::NodeEngine> nodeEngine;
     size_t bufferSize;
 
@@ -57,12 +58,12 @@ public:
      * Registers a DecomposedQueryPlan which internally triggers the QueryCompiler and registers the executable query plan. Once
      * returned the query can be started with the QueryId. The registered Query will be in the StoppedState
      * @param plan Fully Specified LogicalQueryPlan.
-     * @return QueryId which identifies the registered Qconst uery
+     * @return QueryId which identifies the registered query
      */
     QueryId registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan);
 
     /**
-     * Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
+     * Starts the Query asynchronously and moves it into the RunningState. Query execution errors are only reported during runtime
      * of the query.
      * @param queryId identifies the registered query
      */
@@ -84,7 +85,7 @@ public:
 
     /// Complete history of query status changes.
     [[nodiscard]] std::optional<Runtime::QueryLog::Log> getQueryLog(QueryId queryId) const;
-    /// Summary sturcture for query.
+    /// Summary structure for query.
     [[nodiscard]] std::optional<Runtime::QuerySummary> getQuerySummary(QueryId queryId) const;
 };
 }
