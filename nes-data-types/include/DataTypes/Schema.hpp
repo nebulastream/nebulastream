@@ -77,7 +77,7 @@ public:
     [[nodiscard]] Schema addField(std::string name, DataType::Type type);
 
     /// Replaces the type of the field
-    void replaceTypeOfField(const std::string& name, DataType type);
+    [[nodiscard]] bool replaceTypeOfField(const std::string& name, DataType type);
 
     /// @brief Returns the attribute field based on a qualified or unqualified field name.
     /// If an unqualified field name is given (e.g., `getFieldByName("fieldName")`), the function will match attribute fields with any source name.
@@ -85,7 +85,7 @@ public:
     /// Note that this function does not return a field with an ambiguous field name.
     [[nodiscard]] std::optional<Field> getFieldByName(const std::string& fieldName) const;
 
-    /// @Note: Raises a 'FieldNotFound' if the index is out of bounds.
+    /// @Note: Raises a 'FieldNotFound' exception if the index is out of bounds.
     [[nodiscard]] Field getFieldAt(size_t index) const;
 
     [[nodiscard]] bool contains(const std::string& qualifiedFieldName) const;
@@ -101,7 +101,7 @@ public:
     [[nodiscard]] std::vector<std::string> getFieldNames() const;
     [[nodiscard]] const std::vector<Field>& getFields() const;
     void appendFieldsFromOtherSchema(const Schema& otherSchema);
-    void renameField(const std::string& oldFieldName, std::string_view newFieldName);
+    [[nodiscard]] bool renameField(const std::string& oldFieldName, std::string_view newFieldName);
 
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
 

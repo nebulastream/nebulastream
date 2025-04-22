@@ -82,7 +82,10 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
             if (!field.name.starts_with(qualifierName))
             {
                 auto newFieldName = qualifierName + field.name;
-                schema.renameField(field.name, std::move(newFieldName));
+                if (not(schema.renameField(field.name, std::move(newFieldName))))
+                {
+                    throw CannotInferSchema("Could not rename non-existing field name: {}", field.name);
+                }
             }
         }
         source->setSchema(schema);

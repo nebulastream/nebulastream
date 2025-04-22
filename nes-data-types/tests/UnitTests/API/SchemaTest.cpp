@@ -125,6 +125,35 @@ TEST_F(SchemaTest, addFieldTest)
     }
 }
 
+/// Test for the method getFieldByName that calling getFieldByName(bid$start) and getFieldByName(bidbid$start) return two different fields
+TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
+{
+    const auto field1 = Schema::Field{"bidbid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field2 = Schema::Field{"bidbid$end", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field3 = Schema::Field{"bid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field4 = Schema::Field{"auction$id", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field5 = Schema::Field{"auction$initialbid", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+
+    const auto schemaUnderTest = Schema{}
+                                     .addField("bidbid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64))
+                                     .addField("bidbid$end", DataTypeProvider::provideDataType(DataType::Type::UINT64))
+                                     .addField("bid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64))
+                                     .addField("auction$id", DataTypeProvider::provideDataType(DataType::Type::UINT64))
+                                     .addField("auction$initialbid", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+
+    const auto fieldByName1 = schemaUnderTest.getFieldByName("bidbid$start");
+    const auto fieldByName2 = schemaUnderTest.getFieldByName("end");
+    const auto fieldByName3 = schemaUnderTest.getFieldByName(field3.name);
+    const auto fieldByName4 = schemaUnderTest.getFieldByName("id");
+    const auto fieldByName5 = schemaUnderTest.getFieldByName("initialbid");
+
+    EXPECT_EQ(field1, fieldByName1.value()) << "Field 1 " << field1 << " and field by name 1 " << fieldByName1.value() << " are not equal";
+    EXPECT_EQ(field2, fieldByName2.value()) << "Field 2 " << field2 << " and field by name 2 " << fieldByName2.value() << " are not equal";
+    EXPECT_EQ(field3, fieldByName3.value()) << "Field 3 " << field3 << " and field by name 3 " << fieldByName3.value() << " are not equal";
+    EXPECT_EQ(field4, fieldByName4.value()) << "Field 4 " << field4 << " and field by name 4 " << fieldByName4.value() << " are not equal";
+    EXPECT_EQ(field5, fieldByName5.value()) << "Field 5 " << field5 << " and field by name 5 " << fieldByName5.value() << " are not equal";
+}
+
 TEST_F(SchemaTest, replaceFieldTest)
 {
     {
@@ -141,7 +170,7 @@ TEST_F(SchemaTest, replaceFieldTest)
 
             /// Replacing field
             const auto newDataType = getRandomFields(1_u64)[0].dataType;
-            ASSERT_NO_THROW(testSchema.replaceTypeOfField("field", newDataType));
+            EXPECT_TRUE(testSchema.replaceTypeOfField("field", newDataType));
             ASSERT_EQ(testSchema.getFieldAt(0).dataType, newDataType);
         }
     }
@@ -172,7 +201,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         auto replacingFields = getRandomFields(NUM_FIELDS);
         for (const auto& replaceField : replacingFields)
         {
-            testSchema.replaceTypeOfField(replaceField.name, replaceField.dataType);
+            EXPECT_TRUE(testSchema.replaceTypeOfField(replaceField.name, replaceField.dataType));
         }
 
         for (auto fieldCnt = 0_u64; fieldCnt < replacingFields.size(); ++fieldCnt)

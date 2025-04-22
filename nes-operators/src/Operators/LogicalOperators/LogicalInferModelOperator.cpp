@@ -117,13 +117,15 @@ bool LogicalInferModelOperator::inferSchema()
 
     auto inputSchema = getInputSchema();
 
-    for (auto inputField : inputFields)
+    for (const auto& inputField : inputFields)
     {
         auto inputFunction = NES::Util::as<NodeFunctionFieldAccess>(inputField);
         updateToFullyQualifiedFieldName(inputFunction);
         inputFunction->inferStamp(inputSchema);
-        auto fieldName = inputFunction->getFieldName();
-        inputSchema.replaceTypeOfField(fieldName, inputFunction->getStamp());
+        if (auto fieldName = inputFunction->getFieldName(); not(inputSchema.replaceTypeOfField(fieldName, inputFunction->getStamp())))
+        {
+            throw CannotInferSchema("Could not replace non-existing field name: {}", fieldName);
+        }
     }
 
     for (auto outputField : outputFields)
