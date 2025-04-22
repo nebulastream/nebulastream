@@ -87,7 +87,6 @@ int main(int argc, char* argv[]) {
 
      // create and fill the source catalog based on the provided YAML file
      auto sourceCatalog = std::make_shared<NES::Catalogs::Source::SourceCatalog>();
-
      std::ifstream file(filePath);
      if (!file)
      {
@@ -96,18 +95,12 @@ int main(int argc, char* argv[]) {
      auto config = NES::CLI::loadConfig(file);
      addSources(sourceCatalog, config);
 
-     for (auto const& [key, val] : sourceCatalog->getAllLogicalSourceAsString())
-     {
-        std::cout << key        // string (key)
-                  << ':'
-                  << val        // string's value
-                  << std::endl;
-     }
-
-     auto queryCatalog = std::make_shared<std::map<size_t, std::string>>();
-
+     // create and fill the sink catalog based on the provided YAML file
      auto sinkCatalog = std::make_shared<std::unordered_map<std::string, NES::CLI::Sink>>();
      addSinks(sinkCatalog, config);
+
+     // create an empty query catalog
+     auto queryCatalog = std::make_shared<std::map<size_t, std::string>>();
 
      // Register signal handler
      // sigaction() should be used in production
