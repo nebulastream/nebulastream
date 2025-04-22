@@ -30,13 +30,13 @@ public:
     explicit NodeEngineBuilder(
         const Configurations::WorkerConfiguration& workerConfiguration,
         std::shared_ptr<SystemEventListener> systemEventListener,
-        std::shared_ptr<QueryEngineStatisticListener> statisticListener);
+        std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticListener);
 
     std::unique_ptr<NodeEngine> build();
 
 private:
     const Configurations::WorkerConfiguration& workerConfiguration;
     std::shared_ptr<SystemEventListener> systemEventListener;
-    std::shared_ptr<QueryEngineStatisticListener> statisticEventListener;
+    std::vector<std::shared_ptr<QueryEngineStatisticListener>> statisticEventListener;
 };
 }

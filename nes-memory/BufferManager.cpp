@@ -268,7 +268,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
             = std::max(static_cast<const unsigned long>(alignedBufferSizePlusControlBlock), newRollingAverage * NUM_PRE_ALLOCATED_CHUNKS);
         const auto newlyAllocatedMemory = static_cast<uint8_t*>(memoryResource->allocate(newAllocationSize, DEFAULT_ALIGNMENT));
         std::memset(newlyAllocatedMemory, 0, newAllocationSize);
-        INVARIANT(ptr, "Unpooled memory allocation failed");
+        INVARIANT(newlyAllocatedMemory, "Unpooled memory allocation failed");
 
         {
             /// It might happen that in the mean time, the another thread also has created a new memory and now multiple threads want to
