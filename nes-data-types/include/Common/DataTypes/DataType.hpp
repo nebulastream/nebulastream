@@ -20,10 +20,7 @@
 namespace NES
 {
 
-
-/**
- * @brief Base data type, which is the parent class for all other data types.
- */
+//// @brief Base data type, which is the parent class for all other data types.
 class DataType
 {
 public:
@@ -40,13 +37,7 @@ public:
 
     bool operator!=(const DataType& other) const { return !(*this == other); }
 
-    /**
-     * @brief Calculates the joined data type between this data type and the other.
-     * If they have no possible joined data type, the coined type is Undefined.
-     * @param other data type
-     * @return std::shared_ptr<DataType> joined data type
-     */
-    virtual std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) = 0;
+    virtual std::shared_ptr<DataType> join(const std::shared_ptr<DataType> otherDataType) const = 0;
 
     virtual std::string toString() = 0;
 };

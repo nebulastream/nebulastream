@@ -49,7 +49,7 @@ public:
 
     uint64_t getMinimumCount() const;
 
-    bool inferStamp(const std::shared_ptr<Schema>& schema) override;
+    bool inferStamp(const Schema& schema) override;
 
     uint64_t hash() const override;
 

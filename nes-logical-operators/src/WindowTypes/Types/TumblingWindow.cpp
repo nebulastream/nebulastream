@@ -16,11 +16,11 @@
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
-#include <Types/TumblingWindow.hpp>
-#include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/TumblingWindow.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES::Windowing
 {

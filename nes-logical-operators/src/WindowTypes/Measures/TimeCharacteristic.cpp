@@ -19,6 +19,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
@@ -34,20 +35,20 @@ TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField
     : field(std::move(field)), type(type), unit(std::move(unit))
 {
 }
-std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& field)
+std::shared_ptr<TimeCharacteristic> TimeCharacteristic::createEventTime(const std::shared_ptr<LogicalFunction>& field)
 {
     return createEventTime(field, TimeUnit(1));
 }
 
 std::shared_ptr<TimeCharacteristic>
-TimeCharacteristic::createEventTime(const std::shared_ptr<NodeFunction>& fieldValue, const TimeUnit& unit)
+TimeCharacteristic::createEventTime(const std::shared_ptr<LogicalFunction>& fieldValue, const TimeUnit& unit)
 {
-    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(fieldValue))
+    if (!NES::Util::instanceOf<FieldAccessLogicalFunction>(fieldValue))
     {
         throw QueryInvalid(fmt::format("Query: window key has to be an FieldAccessFunction but it was a  {}", *fieldValue));
     }
-    auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(fieldValue);
-    const std::shared_ptr<AttributeField> keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
+    auto fieldAccess = NES::Util::as<FieldAccessLogicalFunction>(fieldValue);
+    std::shared_ptr<AttributeField> keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
     return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
 }
 
@@ -96,7 +97,7 @@ bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
     const bool equalField = (this->field == nullptr && other.field == nullptr)
         || (this->field != nullptr && other.field != nullptr && this->field->isEqual(other.field));
 
-    return this->type == other.type && equalField && this->unit.equals(other.unit);
+    return this->type == other.type && equalField && (this->unit == other.unit);
 }
 
 uint64_t TimeCharacteristic::hash() const

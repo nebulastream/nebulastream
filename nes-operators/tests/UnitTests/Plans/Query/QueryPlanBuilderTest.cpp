@@ -17,15 +17,16 @@
 #include <vector>
 #include <API/Functions/Functions.hpp>
 #include <API/Query.hpp>
-#include <Functions/LogicalFunctions/EqualsBinaryLogicalFunction.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperator.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/SelectionLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperator.hpp>
+#include <Functions/LogicalFunctions/EqualsLogicalFunction.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Plans/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
+#include "Operators/MapLogicalOperator.hpp"
+#include "Operators/ProjectionLogicalOperator.hpp"
+#include "Operators/SelectionLogicalOperator.hpp"
+#include "Operators/UnionLogicalOperator.hpp"
 
 using namespace NES;
 
@@ -53,7 +54,7 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     EXPECT_EQ(queryPlan->getSourceConsumed(), "test_stream");
     ///test addSelection
     auto filterFunction = std::shared_ptr<LogicalFunction>(
-        EqualsBinaryLogicalFunction::create(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction()));
+        std::make_shared<EqualsLogicalFunction>(NES::Attribute("a").getLogicalFunction(), NES::Attribute("b").getLogicalFunction()));
     queryPlan = QueryPlanBuilder::addSelection(filterFunction, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<SelectionLogicalOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<SelectionLogicalOperator>()[0]->getPredicate(), filterFunction);

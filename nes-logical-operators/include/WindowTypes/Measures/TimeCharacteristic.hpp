@@ -44,7 +44,8 @@ public:
     /// @param unit the time unit of the EventTime, defaults to milliseconds
     /// @param field the field from which we want to extract the time.
     /// @return std::shared_ptr<TimeCharacteristic>
-    static std::shared_ptr<TimeCharacteristic> createEventTime(std::shared_ptr<LogicalFunction> field, const TimeUnit& unit = TimeUnit(1));
+    static std::shared_ptr<TimeCharacteristic> createEventTime(const std::shared_ptr<LogicalFunction>& field, const TimeUnit& unit);
+    static std::shared_ptr<TimeCharacteristic> createEventTime(const std::shared_ptr<LogicalFunction>& field);
 
     /// @return The TimeCharacteristic type.
     [[nodiscard]] Type getType() const;
