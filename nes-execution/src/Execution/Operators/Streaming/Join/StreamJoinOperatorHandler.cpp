@@ -56,14 +56,14 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     }
 
     auto filePath = recreationFilePath.value();
-    NES_ERROR("waiting for recreation file");
+    // NES_ERROR("waiting for recreation file");
     while (!std::filesystem::exists(filePath)) {
         // NES_DEBUG("File {} does not exist yet", filePath);
         std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
     auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_ERROR("started recreating at {}", time);
-    NES_DEBUG("File {} exists. Start of recreation from file", filePath);
+    // NES_ERROR("started recreating at {}", time);
+    // NES_DEBUG("File {} exists. Start of recreation from file", filePath);
     std::ifstream fileStream(filePath, std::ios::binary | std::ios::in);
 
     if (!fileStream.is_open()) {
@@ -101,7 +101,7 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
     // reset recreation flag and delete file
     shouldBeRecreated = false;
     auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_ERROR("State finished recreating at {}", endTime);
+    // NES_ERROR("State finished recreating at {}", endTime);
     if (std::remove(recreationFilePath->c_str()) == 0) {
         NES_DEBUG("File {} was removed successfully", recreationFilePath->c_str());
     } else {
@@ -111,12 +111,12 @@ void StreamJoinOperatorHandler::recreateOperatorHandlerFromFile() {
 
 std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHandlerForMigration() {
     auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_ERROR("Started serializing at {}", startTime);
+    // NES_ERROR("Started serializing at {}", startTime);
     // get timestamp of not probed slices
     auto migrationTimestamp =
         std::min(watermarkProcessorBuild->getCurrentWatermark(), watermarkProcessorProbe->getCurrentWatermark());
-    NES_ERROR("watermark processors numbers {}, {}", watermarkProcessorBuild->getCurrentWatermark(), watermarkProcessorProbe->getCurrentWatermark());
-    NES_ERROR("serializing state from {} to {}", migrationTimestamp, UINT64_MAX);
+    // NES_ERROR("watermark processors numbers {}, {}", watermarkProcessorBuild->getCurrentWatermark(), watermarkProcessorProbe->getCurrentWatermark());
+    // NES_ERROR("serializing state from {} to {}", migrationTimestamp, UINT64_MAX);
 
     // add sizes to metadata
     auto metadata = bufferManager->getBufferBlocking();
@@ -157,7 +157,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::serializeOperatorHa
     }
     auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     stateToTransfer = mergedBuffers;
-    NES_ERROR("Finished serializing at {}", endTime);
+    // NES_ERROR("Finished serializing at {}", endTime);
     return mergedBuffers;
 }
 

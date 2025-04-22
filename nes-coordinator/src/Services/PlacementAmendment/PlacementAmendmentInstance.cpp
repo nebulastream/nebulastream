@@ -147,7 +147,7 @@ void PlacementAmendmentInstance::execute() {
                     case QueryState::MARKED_FOR_REDEPLOYMENT:
                     case QueryState::MARKED_FOR_DEPLOYMENT: {
                         if (isPlanForMigration) {
-                            NES_ERROR("Plan {}.{} is for migration", decomposedQueryId, decomposedQueryPlanVersion);
+                            // NES_ERROR("Plan {}.{} is for migration", decomposedQueryId, decomposedQueryPlanVersion);
                             globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
                                                                                 sharedQueryId,
                                                                                 decomposedQueryId,

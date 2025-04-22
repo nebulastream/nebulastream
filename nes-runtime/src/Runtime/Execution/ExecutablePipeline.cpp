@@ -260,14 +260,14 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
 
             // if this is pipeline for migration and reconfiguration is of type drain, then migration should be started
             if (event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>() && isMigrationPipeline) {
-                NES_ERROR("serializing");
+                // NES_ERROR("serializing");
                 if (!serialized) {
                     for (auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
                         // NES_ERROR("sync context wait {}", context.getId());
                         preSerBarrier->wait();
                         // NES_ERROR("sync contexts synced {}", context.getId());
                         std::call_once(serializeOnceFlag, [&context, &operatorHandler, this]() {
-                            NES_ERROR("context {} took serialization", context.getId());
+                            // NES_ERROR("context {} took serialization", context.getId());
                             operatorHandler->serializeOperatorHandlerForMigration();
                             serialized = true;
                             conditionSerialized.notify_all();
@@ -310,12 +310,12 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
 void ExecutablePipeline::sendBuffers(OperatorHandlerPtr operatorHandler, WorkerContext& context) {
     auto dataToMigrate = operatorHandler->getSerializedPortion(context.getId().getRawValue() % 4);
     auto startTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_ERROR("context {} started sending {} buffers from pipeline at {}", context.getId(), dataToMigrate.size(), startTime);
+    // NES_ERROR("context {} started sending {} buffers from pipeline at {}", context.getId(), dataToMigrate.size(), startTime);
     for (auto& buffer : dataToMigrate) {
         pipelineContext->migrateBuffer(buffer, context);
     }
     auto endTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    NES_ERROR("context {} finished sending {} buffers from pipeline at {}", context.getId(), dataToMigrate.size(), endTime);
+    // NES_ERROR("context {} finished sending {} buffers from pipeline at {}", context.getId(), dataToMigrate.size(), endTime);
 }
 
 void ExecutablePipeline::propagateReconfiguration(ReconfigurationMessage& task) {
