@@ -356,10 +356,23 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const SliceStoreMetaData& metaData)
 {
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
+    const auto watermark = metaData.timestamp;
 
-    // TODO write adaptively to file
-    const auto slicesLocked = slices.rlock();
-    for (const auto& [sliceEnd, slice] : *slicesLocked)
+    /// Choose slices to offload to external storage device
+    std::multimap<size_t, std::pair<std::shared_ptr<Slice>, FileLayout>> slicesToBeOffloaded;
+    for (const auto& [sliceEnd, slice] : *slices.rlock())
+    {
+        const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
+        const auto sliceState = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId);
+
+        // TODO predictiveWrite()
+        // basically do the opposite from predictiveRead()
+        memCtrl.setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
+        slicesToBeOffloaded.emplace(sliceState, {slice, USE_FILE_LAYOUT});
+    }
+
+    /// Write slices to disk
+    for (const auto& [slice, fileLayout] : slicesToBeOffloaded)
     {
         /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
@@ -368,17 +381,26 @@ void FileBackedTimeBasedSliceStore::updateSlices(
         /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
         if (!nljSlice->pagedVectorsCombined())
         {
-            auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, joinBuildSide);
+            auto fileWriter = memCtrl.getFileWriter(nljSlice->getSliceEnd(), threadId, joinBuildSide);
             const auto pagedVector = nljSlice->getPagedVectorRef(joinBuildSide, threadId);
-            pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, USE_FILE_LAYOUT);
-            pagedVector->truncate(USE_FILE_LAYOUT);
+            pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
+            pagedVector->truncate(fileLayout);
             // TODO force flush FileWriter?
         }
 
         nljSlice->releaseCombinePagedVectorsMutex();
     }
 
-    // TODO predictiveRead()
+    /// Predict which slices to read back from external storage device
+    const auto slicesLocked = slices.rlock();
+    for (const auto sliceEnd : sliceAssigner.getAllSliceEndTs(watermark))
+    {
+        const auto slice = *slicesLocked->find(sliceEnd)->second;
+        // TODO predictiveRead()
+        // calculate/measure how long it takes to read an average slice back from main memory
+        // based on current watermark and system throughput read all slices back that are ready for probing in the calculated amount of time
+        // read slice for given threadId only from file? or lock this slice for all threads and read all back?
+    }
 }
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(
@@ -403,8 +425,10 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         /// Only read from file if the slice was written out earlier for this build side
         if (auto fileReader = memCtrl.getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
         {
+            const auto fileLayout = memCtrl.getFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
             const auto pagedVector = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, WorkerThreadId(threadId));
-            pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, USE_FILE_LAYOUT);
+            pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout.value());
+            memCtrl.deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
         }
     }
     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;

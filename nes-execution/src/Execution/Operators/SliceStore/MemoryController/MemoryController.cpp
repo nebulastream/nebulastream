@@ -43,10 +43,13 @@ MemoryController::MemoryController(MemoryController& other)
 {
     const std::lock_guard writerLock(fileWritersMutex);
     const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard layoutLock(fileLayoutsMutex);
     const std::lock_guard otherWriterLock(other.fileWritersMutex);
     const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    const std::lock_guard otherLayoutLock(other.fileLayoutsMutex);
     fileWriters = other.fileWriters;
     freeBuffers = other.freeBuffers;
+    fileLayouts = other.fileLayouts;
 }
 
 MemoryController::MemoryController(MemoryController&& other) noexcept
@@ -61,10 +64,13 @@ MemoryController::MemoryController(MemoryController&& other) noexcept
 {
     const std::lock_guard writerLock(fileWritersMutex);
     const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard layoutLock(fileLayoutsMutex);
     const std::lock_guard otherWriterLock(other.fileWritersMutex);
     const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    const std::lock_guard otherLayoutLock(other.fileLayoutsMutex);
     fileWriters = std::move(other.fileWriters);
     freeBuffers = std::move(other.freeBuffers);
+    fileLayouts = std::move(other.fileLayouts);
 }
 
 MemoryController& MemoryController::operator=(MemoryController& other)
@@ -75,8 +81,10 @@ MemoryController& MemoryController::operator=(MemoryController& other)
     }
     const std::lock_guard writerLock(fileWritersMutex);
     const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard layoutLock(fileLayoutsMutex);
     const std::lock_guard otherWriterLock(other.fileWritersMutex);
     const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    const std::lock_guard otherLayoutLock(other.fileLayoutsMutex);
     readBuffer = other.readBuffer;
     readBufFlag = other.readBufFlag.load();
     memoryPool = other.memoryPool;
@@ -84,6 +92,7 @@ MemoryController& MemoryController::operator=(MemoryController& other)
     bufferSize = other.bufferSize;
     poolSize = other.poolSize;
     fileWriters = other.fileWriters;
+    fileLayouts = other.fileLayouts;
     workingDir = other.workingDir;
     queryId = other.queryId;
     originId = other.originId;
@@ -98,8 +107,10 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     }
     const std::lock_guard writerLock(fileWritersMutex);
     const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard layoutLock(fileLayoutsMutex);
     const std::lock_guard otherWriterLock(other.fileWritersMutex);
     const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    const std::lock_guard otherLayoutLock(other.fileLayoutsMutex);
     readBuffer = std::move(other.readBuffer);
     readBufFlag = std::move(other.readBufFlag.load());
     memoryPool = std::move(other.memoryPool);
@@ -107,6 +118,7 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
     bufferSize = std::move(other.bufferSize);
     poolSize = std::move(other.poolSize);
     fileWriters = std::move(other.fileWriters);
+    fileLayouts = std::move(other.fileLayouts);
     workingDir = std::move(other.workingDir);
     queryId = std::move(other.queryId);
     originId = std::move(other.originId);
@@ -116,10 +128,16 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
 MemoryController::~MemoryController()
 {
     // TODO investigate why destructor is never called
-    const std::lock_guard lock(fileWritersMutex);
+    const std::lock_guard writersLock(fileWritersMutex);
     for (auto it = fileWriters.begin(); it != fileWriters.end(); ++it)
     {
         removeFileSystem(it);
+    }
+
+    const std::lock_guard layoutsLock(fileLayoutsMutex);
+    for (auto it = fileLayouts.begin(); it != fileLayouts.end(); ++it)
+    {
+        fileLayouts.erase(it);
     }
 }
 
@@ -157,8 +175,48 @@ std::shared_ptr<FileReader> MemoryController::getFileReader(
     return nullptr;
 }
 
+void MemoryController::setFileLayout(
+    const SliceEnd sliceEnd,
+    const WorkerThreadId threadId,
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const FileLayout fileLayout)
+{
+    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
+
+    /// Insert or overr
+    const std::lock_guard lock(fileLayoutsMutex);
+    fileLayouts.insert_or_assign({sliceEnd, threadId, joinBuildSide}, fileLayout);
+}
+
+std::optional<FileLayout> MemoryController::getFileLayout(
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
+{
+    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
+
+    const std::lock_guard lock(fileLayoutsMutex);
+    if (const auto it = fileLayouts.find({sliceEnd, threadId, joinBuildSide}); it != fileLayouts.end())
+    {
+        return it->second;
+    }
+
+    return {};
+}
+
+void MemoryController::deleteFileLayout(
+    const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
+{
+    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
+
+    const std::lock_guard lock(fileLayoutsMutex);
+    if (const auto it = fileLayouts.find({sliceEnd, threadId, joinBuildSide}); it != fileLayouts.end())
+    {
+        fileLayouts.erase(it);
+    }
+}
+
 void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
 {
+    // TODO delete from layout map as well
     const std::lock_guard lock(fileWritersMutex);
 
     for (const auto& joinBuildSide : {QueryCompilation::JoinBuildSideType::Left, QueryCompilation::JoinBuildSideType::Right})

@@ -21,10 +21,11 @@
 namespace NES::Runtime::Execution
 {
 
+using FileWriterId = std::tuple<SliceEnd, WorkerThreadId, QueryCompilation::JoinBuildSideType>;
+
 class MemoryController
 {
 public:
-    static constexpr auto USE_PIPELINE_ID = false;
     static constexpr auto BUFFER_SIZE = 1024 * 4; // 4 KB buffer size
     static constexpr auto POOL_SIZE = 1024 * 10; // 10 K pool size
 
@@ -39,6 +40,11 @@ public:
     getFileWriter(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
     std::shared_ptr<FileReader>
     getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+
+    void
+    setFileLayout(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide, FileLayout fileLayout);
+    std::optional<FileLayout> getFileLayout(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+    void deleteFileLayout(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
 
     void deleteSliceFiles(SliceEnd sliceEnd);
 
@@ -64,9 +70,12 @@ private:
     size_t bufferSize;
     size_t poolSize;
 
-    // TODO build vector around map to structure by WorkerThreadId (use less locks)
+    // TODO build vector around maps to structure by WorkerThreadId (use less locks)
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
     std::mutex fileWritersMutex;
+
+    std::map<FileWriterId, FileLayout> fileLayouts;
+    std::mutex fileLayoutsMutex;
 
     std::filesystem::path workingDir;
     QueryId queryId;

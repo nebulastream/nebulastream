@@ -75,7 +75,7 @@ void StreamJoinBuild::close(ExecutionContext& executionCtx, RecordBuffer& record
         nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide),
         executionCtx.pipelineContext,
         executionCtx.getWorkerThreadId(),
-        executionCtx.watermarkTs);
+        executionCtx.watermarkTs); // TODO pass global watermark instead?
 
     /// Call the base class close method to ensure checkWindowsTrigger is called
     WindowOperatorBuild::close(executionCtx, recordBuffer);
