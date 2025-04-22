@@ -26,11 +26,7 @@ public:
 
     ~VariableSizedDataType() override = default;
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return true if equal types false if unequal
-     */
+
     bool operator==(const DataType& other) const override;
 
     std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;

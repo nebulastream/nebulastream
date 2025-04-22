@@ -21,26 +21,13 @@ namespace NES
 {
 class SerializableDataType;
 
-/**
- * @brief The DataTypeSerializationUtil offers functionality to serialize and de-serialize data types and value types to a
- * corresponding protobuffer object.
- */
+
+/// The DataTypeSerializationUtil offers functionality to serialize and de-serialize data types and value types to a
+/// corresponding protobuffer object.
 class DataTypeSerializationUtil
 {
 public:
-    /**
-     * @brief Serializes a data type and all its children to a SerializableDataType object.
-     * @param dataType The data type.
-     * @param serializedDataType The corresponding protobuff object, which is used to capture the state of the object.
-     * @return the modified serializedDataType
-     */
     static SerializableDataType* serializeDataType(const std::shared_ptr<DataType>& dataType, SerializableDataType* serializedDataType);
-
-    /**
-    * @brief De-serializes the SerializableDataType and all its children to a std::shared_ptr<DataType>
-    * @param serializedDataType the serialized data type.
-    * @return std::shared_ptr<DataType>
-    */
     static std::shared_ptr<DataType> deserializeDataType(const SerializableDataType& serializedDataType);
 };
 }

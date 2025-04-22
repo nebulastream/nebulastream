@@ -48,22 +48,9 @@ class WindowOperator : public LogicalUnaryOperator, public OriginIdAssignmentOpe
 public:
     WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id, OriginId originId);
     WindowOperator(std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition, OperatorId id);
-    /**
-    * @brief Gets the window definition of the window operator.
-    * @return std::shared_ptr<LogicalWindowDescriptor>
-    */
     std::shared_ptr<Windowing::LogicalWindowDescriptor> getWindowDefinition() const;
 
-    /**
-     * @brief Gets the output origin ids from this operator
-     * @return std::vector<OriginId>
-     */
     std::vector<OriginId> getOutputOriginIds() const override;
-
-    /**
-     * @brief Sets the new origin id also to the window definition
-     * @param originId
-     */
     void setOriginId(OriginId originId) override;
 
 

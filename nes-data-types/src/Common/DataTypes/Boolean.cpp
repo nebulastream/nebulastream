@@ -29,7 +29,7 @@ bool Boolean::operator==(const NES::DataType& other) const
 }
 
 
-std::shared_ptr<DataType> Boolean::join(const std::shared_ptr<DataType> otherDataType)
+std::shared_ptr<DataType> Boolean::join(const std::shared_ptr<DataType> otherDataType) const
 {
     if (NES::Util::instanceOf<Boolean>(otherDataType))
     {
