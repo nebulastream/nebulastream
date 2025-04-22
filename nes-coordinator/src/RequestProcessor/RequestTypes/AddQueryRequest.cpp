@@ -342,7 +342,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
 
         //21. Perform placement amendment and deployment of updated shared query plan
         NES_DEBUG("Performing Operator placement amendment and deployment for shared query plan");
-        auto deploymentPhase = DeploymentPhase::create(queryCatalog, 0, true);
+        // switch between baselines and our approach
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog, 0, !coordinatorConfiguration->optimizer.enableIncrementalPlacement);
         const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                       globalExecutionPlan,
                                                                                       topology,

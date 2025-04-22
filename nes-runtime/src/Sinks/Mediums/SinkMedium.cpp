@@ -129,6 +129,6 @@ void SinkMedium::setReplayData() {
     replayData = true;
 }
 
-bool SinkMedium::getReplayData() { return false; }
+bool SinkMedium::getReplayData() { return replayData; }
 
 }// namespace NES

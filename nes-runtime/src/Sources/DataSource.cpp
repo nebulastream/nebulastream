@@ -687,5 +687,5 @@ void DataSource::setReplayData() {
     replayData = true;
 }
 
-bool DataSource::getReplayData() { return false; }
+bool DataSource::getReplayData() { return replayData; }
 }// namespace NES
