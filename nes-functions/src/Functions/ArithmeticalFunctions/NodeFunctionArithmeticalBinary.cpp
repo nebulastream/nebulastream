@@ -68,7 +68,7 @@ void NodeFunctionArithmeticalBinary::inferStamp(const Schema& schema)
         right->getStamp());
 
     /// check if the common stamp is defined
-    if (commonStamp.type == DataType::Type::UNDEFINED)
+    if (commonStamp.isType(DataType::Type::UNDEFINED))
     {
         /// the common stamp was not valid -> in this case the common stamp is undefined.
         throw CannotInferSchema(fmt::format("{} is not supported by arithmetical functions", commonStamp));
