@@ -27,11 +27,6 @@
 namespace NES
 {
 
-bool NodeFunctionConcat::validateBeforeLowering() const
-{
-    return getLeft()->getStamp().type == DataType::Type::VARSIZED and getRight()->getStamp().type == DataType::Type::VARSIZED;
-}
-
 std::shared_ptr<NodeFunction> NodeFunctionConcat::deepCopy()
 {
     return create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
@@ -51,8 +46,10 @@ void NodeFunctionConcat::inferStamp(const Schema& schema)
 {
     this->getLeft()->inferStamp(schema);
     this->getRight()->inferStamp(schema);
-    INVARIANT(this->getLeft()->getStamp().isVarSized(), "The Concat function must have children of type VariableSizedData.");
-    INVARIANT(this->getLeft()->getStamp().isVarSized(), "The Concat function must have children of type VariableSizedData.");
+    INVARIANT(
+        this->getLeft()->getStamp().isType(DataType::Type::VARSIZED), "The Concat function must have children of type VariableSizedData.");
+    INVARIANT(
+        this->getLeft()->getStamp().isType(DataType::Type::VARSIZED), "The Concat function must have children of type VariableSizedData.");
     this->stamp = getLeft()->getStamp();
 }
 
@@ -71,6 +68,11 @@ NodeFunctionConcat::create(const std::shared_ptr<NodeFunction>& left, const std:
 std::ostream& NodeFunctionConcat::toDebugString(std::ostream& os) const
 {
     return os << fmt::format("CONCAT({} ({}, {}))", this->stamp, *getLeft(), *getRight());
+}
+
+bool NodeFunctionConcat::validateBeforeLowering() const
+{
+    return getLeft()->getStamp().isType(DataType::Type::VARSIZED) and getRight()->getStamp().isType(DataType::Type::VARSIZED);
 }
 
 }

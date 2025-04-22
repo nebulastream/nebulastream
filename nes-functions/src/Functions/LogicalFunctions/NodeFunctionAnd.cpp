@@ -79,8 +79,8 @@ bool NodeFunctionAnd::validateBeforeLowering() const
     {
         return false;
     }
-    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp().type == DataType::Type::BOOLEAN
-        and Util::as<NodeFunction>(this->getChildren()[1])->getStamp().type == DataType::Type::BOOLEAN;
+    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp().isType(DataType::Type::BOOLEAN)
+        and Util::as<NodeFunction>(this->getChildren()[1])->getStamp().isType(DataType::Type::BOOLEAN);
 }
 
 

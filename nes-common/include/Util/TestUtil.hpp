@@ -79,7 +79,7 @@ inline std::string dynamicTupleToString(
     {
         const auto dataType = schema.getFieldAt(i).dataType;
         Memory::MemoryLayouts::DynamicField currentField = dynamicTuple.operator[](i);
-        if (dataType.isVarSized())
+        if (dataType.isType(DataType::Type::VARSIZED))
         {
             const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
             const auto string = Memory::MemoryLayouts::readVarSizedData(buffer.getBuffer(), index);

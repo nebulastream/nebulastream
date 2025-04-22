@@ -59,7 +59,7 @@ void NodeFunctionCase::inferStamp(const Schema& schema)
     auto defaultExp = getDefaultExp();
     defaultExp->inferStamp(schema);
     INVARIANT(
-        not defaultExp->getStamp().isUndefined(),
+        not defaultExp->getStamp().isType(DataType::Type::UNDEFINED),
         "Error during stamp inference. Right type must be defined, but was: {}",
         defaultExp->getStamp());
 

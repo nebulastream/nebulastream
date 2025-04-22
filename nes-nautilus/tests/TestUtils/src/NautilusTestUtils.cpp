@@ -187,13 +187,13 @@ void NautilusTestUtils::compileFillBufferFunction(
                 const auto field = schema.getFieldAt(fieldIndex);
                 const auto physicalType = field.dataType;
                 const auto fieldName = field.name;
-                if (not field.dataType.isVarSized())
+                if (not field.dataType.isType(DataType::Type::VARSIZED))
                 {
                     const auto varValue = Nautilus::Util::createNautilusConstValue(value, physicalType.type);
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }
-                else if (field.dataType.isVarSized())
+                else if (field.dataType.isType(DataType::Type::VARSIZED))
                 {
                     const auto pointerToVarSizedData = nautilus::invoke(
                         +[](const Memory::TupleBuffer* inputBuffer, Memory::AbstractBufferProvider* bufferProviderVal, const uint64_t size)
@@ -222,7 +222,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 }
                 else
                 {
-                    throw UnsupportedOperation("Unsupported data type {}", physicalType);
+                    throw UnknownParserType("Unsupported data type {}", physicalType);
                 }
             }
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
