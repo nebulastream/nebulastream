@@ -205,7 +205,7 @@ std::pair<size_t, size_t> CSVSource::findWatermarkIndex(const std::vector<std::v
 }
 
 std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
-    NES_DEBUG("CSVSource::receiveData called on  {}", operatorId);
+    NES_ERROR("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     if (addTimeStampsAndReadOnStartup) {
         auto sourceInfo = queryManager->getTcpSourceInfo(physicalSourceName, filePath);
@@ -350,10 +350,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                               sourceInfo->records.size(),
                               sourceInfo->records.front().front().id)
                     //                        returnBuffer.setSequenceNumber(sourceInfo->records.size());
+					sentUntil = sourceInfo->records.back().back().value;
+	                watermarkIndex.first++;
                 }
-                // TODO: check this logic precisely
-                sentUntil = sourceInfo->records.back().back().value;
-                watermarkIndex.first++;
                 return returnBuffer;
             } else {
                 uint64_t valCount = 0;
