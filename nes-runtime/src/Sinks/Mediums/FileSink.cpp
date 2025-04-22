@@ -301,7 +301,7 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite,
         NES_DEBUG("write data to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
 
         for (auto bufferToWrite : buffersToWrite) {
-            NES_ERROR("new buffer came, with seq number {}", bufferToWrite.getSequenceNumber());
+            // NES_ERROR("new buffer came, with seq number {}", bufferToWrite.getSequenceNumber());
             auto* records = bufferToWrite.getBuffer<Record>();
             auto timestamp = getTimestamp();
             for (uint64_t i = 0; i < bufferToWrite.getNumberOfTuples(); ++i) {
