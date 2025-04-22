@@ -25,7 +25,6 @@
 
 namespace NES
 {
-
 SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
@@ -33,11 +32,14 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
     : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
           configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , listener(std::make_shared<Runtime::PrintingStatisticListener>(
-          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
-    , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
+    const auto printStatisticListener = std::make_shared<Runtime::PrintingStatisticListener>(
+          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
+    queryEngineStatisticsListener = {printStatisticListener};
+    systemEventListener = printStatisticListener;
+    nodeEngine = Runtime::NodeEngineBuilder(configuration.workerConfiguration, systemEventListener, queryEngineStatisticsListener).build();
+
 }
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
@@ -48,16 +50,13 @@ QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPla
 {
     try
     {
-        auto logicalQueryPlan
+        const auto logicalQueryPlan
             = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
-
-        listener->onEvent(Runtime::SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
-
-        auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
-
+        systemEventListener->onEvent(Runtime::SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
+        const auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
         return nodeEngine->registerExecutableQueryPlan(compiler->compileQuery(request));
     }
-    catch (Exception& e)
+    catch (Exception&)
     {
         tryLogCurrentException();
         return INVALID_QUERY_ID;
