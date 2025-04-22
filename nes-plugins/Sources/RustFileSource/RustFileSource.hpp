@@ -25,18 +25,18 @@ limitations under the License.
 namespace NES::Sources
 {
 
-class RustCompressionSource : public Source
+class RustFileSource : public Source
 {
 public:
-    static constexpr std::string_view NAME = "RustCompression";
+    static constexpr std::string_view NAME = "RustFile";
 
-    explicit RustCompressionSource(const SourceDescriptor& sourceDescriptor);
-    ~RustCompressionSource() override = default;
+    explicit RustFileSource(const SourceDescriptor& sourceDescriptor);
+    ~RustFileSource() override = default;
 
-    RustCompressionSource(const RustCompressionSource&) = delete;
-    RustCompressionSource& operator=(const RustCompressionSource&) = delete;
-    RustCompressionSource(RustCompressionSource&&) = delete;
-    RustCompressionSource& operator=(RustCompressionSource&&) = delete;
+    RustFileSource(const RustFileSource&) = delete;
+    RustFileSource& operator=(const RustFileSource&) = delete;
+    RustFileSource(RustFileSource&&) = delete;
+    RustFileSource& operator=(RustFileSource&&) = delete;
 
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
@@ -50,7 +50,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    rust::Box<Rust::RustCompressionSourceImpl> impl;
+    rust::Box<Rust::RustFileSourceImpl> impl;
 };
 
 struct ConfigParametersCSV
