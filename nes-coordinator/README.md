@@ -12,7 +12,13 @@ docker run \
      build-docker/nes-coordinator/nes-rest_server 8006 query.yml
 ```
 
+We can submit queries:
+
 ```
-curl 0.0.0.0:8006/query
-Hello, oatpp!
+curl -d '{"code": "SELECT * FROM csv_source WHERE id != 16 INTO csv_sink"}' -X POST http://0.0.0.0:8019/queries
+```
+
+Example result:
+```
+{"query_id":0,"status":"UNKNOWN"}
 ```
