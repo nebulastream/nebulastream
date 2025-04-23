@@ -259,16 +259,18 @@ void LogicalQueryDumpHelper::insertVerticalBranches(
 std::stringstream LogicalQueryDumpHelper::drawTree(const size_t maxWidth) const
 {
     std::stringstream asciiOutput;
-    /// TODO #685 Adjust perNodeWidth if it * numberOfNodesOnThisLayer is more than width of this layer. Maybe do that in `calculateLayers`.
+    /// TODO #685 Adjust perNodeWidth if it * numberOfNodesOnThisLayer is more than maxWidth. Maybe do that in `calculateLayers`.
     for (const auto& currentLayer : processedDag)
     {
         const size_t numberOfNodesInCurrentDepth = currentLayer.nodes.size();
         auto branchLineAbove = std::string(maxWidth, ' ');
         std::stringstream nodeLine;
-        const size_t perNodeWidth = maxWidth / numberOfNodesInCurrentDepth;
+        const size_t availableCenteringSpace = maxWidth - currentLayer.layerWidth;
+        const size_t centeringSpacePerNode = availableCenteringSpace / numberOfNodesInCurrentDepth;
         for (size_t nodeIdx = 0; const auto& currentNode : currentLayer.nodes)
         {
-            const size_t currentMiddleIndex = nodeLine.view().size() + (perNodeWidth / 2);
+            const size_t currentNodeAvailableWidth = currentNode->nodeAsString.size() + centeringSpacePerNode;
+            const size_t currentMiddleIndex = nodeLine.view().size() + (currentNodeAvailableWidth / 2);
             for (const auto parentPos : currentNode->parentPositions)
             {
                 if (currentMiddleIndex < parentPos)
@@ -294,7 +296,7 @@ std::stringstream LogicalQueryDumpHelper::drawTree(const size_t maxWidth) const
                     printAsciiBranch(BranchCase::Direct, currentMiddleIndex, branchLineAbove);
                 }
             }
-            nodeLine << fmt::format("{:^{}}", currentNode->nodeAsString, perNodeWidth);
+            nodeLine << fmt::format("{:^{}}", currentNode->nodeAsString, currentNodeAvailableWidth);
             for (const auto& child : currentNode->children)
             {
                 child->parentPositions.emplace_back(currentMiddleIndex);
@@ -346,6 +348,7 @@ std::map<char, std::string> getAsciiToUnicode()
 
 void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const size_t position, std::string& output)
 {
+    INVARIANT(position < output.size(), "Position is out of bounds.");
     switch (toPrint)
     {
         case BranchCase::ParentFirst:
@@ -492,7 +495,7 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
                     output[position] = PARENT_CHILD_MIDDLE_BRANCH;
                     break;
                 default:
-                    NES_DEBUG("No connector: unexpected input. The printed queryplan will probably be incorreclty represented.")
+                    NES_DEBUG("No connector: unexpected input. The printed queryplan will probably be incorrectly represented.")
                     break;
             }
             break;
