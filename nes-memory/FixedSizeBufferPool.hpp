@@ -24,6 +24,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <folly/MPMCQueue.h>
+#include <folly/Synchronized.h>
 
 namespace NES::Memory
 {
@@ -97,11 +98,14 @@ public:
 private:
     std::shared_ptr<BufferManager> bufferManager;
 
+    /// isDestroyed is intentionally not an atomic, because we have to prevent concurrent writes
+    /// to the exclusive buffers while destroying the fixed size buffer and returning buffers to the
+    /// owning buffer provider.
+    folly::Synchronized<bool> isDestroyed;
     folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
     [[maybe_unused]] size_t numberOfReservedBuffers;
     mutable std::mutex mutex;
     std::condition_variable cvar;
-    std::atomic<bool> isDestroyed;
 };
 
 }

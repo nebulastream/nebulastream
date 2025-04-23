@@ -31,9 +31,9 @@ namespace NES::Memory
 FixedSizeBufferPool::FixedSizeBufferPool(
     const std::shared_ptr<BufferManager>& bufferManager, std::deque<detail::MemorySegment*>& buffers, const size_t numberOfReservedBuffers)
     : bufferManager(bufferManager)
+    , isDestroyed(false)
     , exclusiveBuffers(numberOfReservedBuffers)
     , numberOfReservedBuffers(numberOfReservedBuffers)
-    , isDestroyed(false)
 {
     while (!buffers.empty())
     {
@@ -61,7 +61,11 @@ BufferManagerType FixedSizeBufferPool::getBufferManagerType() const
 
 void FixedSizeBufferPool::destroy()
 {
-    if (isDestroyed.exchange(true))
+    /// Prevent concurrent recycle calls from concurrently writing to `exclusiveBuffers`.
+    /// Once the lock is released the isDestroyed flag will be true, and all subsequent recycles will be directly recycled
+    /// to the owning BufferProvider.
+    auto isDestroyedLock = isDestroyed.wlock();
+    if (*isDestroyedLock)
     {
         /// already destroyed
         return;
@@ -78,6 +82,8 @@ void FixedSizeBufferPool::destroy()
             "Buffer should not retain a reference to its parent while not in use");
         bufferManager->recyclePooledBuffer(memSegment);
     }
+
+    *isDestroyedLock = true;
 }
 
 size_t FixedSizeBufferPool::getAvailableBuffers() const
@@ -115,8 +121,13 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking()
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 {
     INVARIANT(memSegment, "null memory segment");
-    if (isDestroyed)
+
+    /// Taking a readOnlyLock is fine, because we have to prevent concurrent `destroy` calls which attempt to empty the
+    /// `exclusiveBuffers` queue. The queue itself is threadsafe.
+    auto isDestroyedLock = isDestroyed.rlock();
+    if (*isDestroyedLock)
     {
+        isDestroyedLock.unlock();
         bufferManager->recyclePooledBuffer(memSegment);
     }
     else
