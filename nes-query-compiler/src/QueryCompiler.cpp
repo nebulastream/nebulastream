@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Phases/LowerToExecutableQueryPlanPhase.hpp>
+#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/PipeliningPhase.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <ErrorHandling.hpp>
@@ -31,7 +31,7 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     try
     {
         auto pipelinedQueryPlan = PipeliningPhase::apply(request->queryPlan);
-        return LowerToExecutableQueryPlanPhase::apply(std::move(pipelinedQueryPlan));
+        return LowerToCompiledQueryPlanPhase::apply(std::move(pipelinedQueryPlan));
     }
     catch (...)
     {
