@@ -49,7 +49,7 @@ public:
 TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
 {
     const auto* const resultFileName = "TestQueryStatus";
-    const std::string queryInputFile = fmt::format("{}.bin", "qOneSourceCSV");
+    const std::string queryInputFile = fmt::format("{}.txtpb", "qOneSourceCSV");
     const std::string queryResultFile = fmt::format("{}.csv", resultFileName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
@@ -94,7 +94,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
 {
     const auto* const resultFileName = "TestQueryStatusSimple";
     /// Todo 396: as soon as system level tests support multiple sources, we get rid of the CSV integration tests and cannot depend on this .bin anymore.
-    const std::string queryInputFile = fmt::format("{}.bin", "qTwoCSVSourcesWithFilter");
+    const std::string queryInputFile = fmt::format("{}.txtpb", "qTwoCSVSourcesWithFilter");
     const std::string queryResultFile = fmt::format("{}.csv", resultFileName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 

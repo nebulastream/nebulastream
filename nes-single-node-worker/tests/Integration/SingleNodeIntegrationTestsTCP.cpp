@@ -111,7 +111,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
     };
     const auto& [queryName, numSourcesTCP, expectedNumTuples, expectedCheckSum, numInputTuplesToProduceByTCPMockServer] = GetParam();
     const auto testSpecificResultFileName = fmt::format("{}.csv", IntegrationTestUtil::getUniqueTestIdentifier());
-    const std::string queryInputFile = fmt::format("{}.bin", queryName);
+    const std::string queryInputFile = fmt::format("{}.txtpb", queryName);
     IntegrationTestUtil::removeFile(testSpecificResultFileName);
 
     SerializableQueryPlan queryPlan;
