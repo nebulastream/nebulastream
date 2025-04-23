@@ -47,6 +47,7 @@ protected:
     static constexpr std::string_view node2 = "node2 (map)";
     static constexpr std::string_view root1 = "root1 (sink)";
     static constexpr std::string_view root2 = "root2 (sink)";
+    static constexpr std::string_view rootExtraLong = "_____________________root (sink)_____________________";
 };
 
 struct TestNode : Operator
@@ -135,6 +136,37 @@ TEST_F(LogicalQueryDumpHelperTest, printQueryMapFilterTwoSinks)
     EXPECT_EQ(helper.processedDag[3].nodes.size(), 1);
     EXPECT_EQ(helper.processedDag[3].nodes[0]->nodeAsString, leaf1);
 }
+
+/// checks for disproportionate width of one node on a layer
+/// sink long-----\
+///               +---source
+/// sink2---------/
+TEST_F(LogicalQueryDumpHelperTest, printQuerySourceTwoSinksExtraLong)
+{
+    std::stringstream ss;
+    auto helper = LogicalQueryDumpHelper(ss);
+
+    auto leafPtr = std::make_shared<TestNode>(leaf1);
+    const std::shared_ptr<Operator> leafPtrBase = std::static_pointer_cast<Operator>(leafPtr);
+    auto rootEPtr = std::make_shared<TestNode>(rootExtraLong);
+    auto rootEPtrBase = std::static_pointer_cast<Operator>(rootEPtr);
+    auto root2Ptr = std::make_shared<TestNode>(root2);
+    auto root2PtrBase = std::static_pointer_cast<Operator>(root2Ptr);
+    rootEPtrBase->addChild(leafPtrBase);
+    root2Ptr->addChild(leafPtrBase);
+
+    auto rootOperators = std::vector{rootEPtrBase, root2PtrBase};
+    helper.dump(rootOperators);
+    NES_DEBUG("Queryplan actual: {}", ss.str());
+
+    /// We rely on the `FRIEND_TEST` macro from gtest to access `processedDag`.
+    EXPECT_EQ(helper.processedDag.size(), 2);
+    EXPECT_EQ(helper.processedDag[0].nodes.size(), 2);
+    EXPECT_EQ(helper.processedDag[0].nodes[0]->nodeAsString, rootExtraLong);
+    EXPECT_EQ(helper.processedDag[0].nodes[1]->nodeAsString, root2);
+    EXPECT_EQ(helper.processedDag[1].nodes.size(), 1);
+    EXPECT_EQ(helper.processedDag[1].nodes[0]->nodeAsString, leaf1);
+}
 /// TODO #685 Add a test that forces us to add vertical branches (dummy nodes) for nodes that have to be moved to another layer while being drawn.
-/// TODO #685 Add a test that forces branches to cross (by changing the order of .
+/// TODO #685 Add a test that forces branches to cross.
 }
