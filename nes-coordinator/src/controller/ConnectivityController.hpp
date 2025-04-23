@@ -1,5 +1,4 @@
-#ifndef ConnectivityController_hpp
-#define ConnectivityController_hpp
+#pragma once
 
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/core/macro/codegen.hpp"
@@ -35,5 +34,3 @@ public:
 };
 
 #include OATPP_CODEGEN_END(ApiController) ///< End Codegen
-
-#endif /* ConnectivityController_hpp */

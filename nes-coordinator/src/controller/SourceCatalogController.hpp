@@ -1,5 +1,4 @@
-#ifndef SourceCatalogController_hpp
-#define SourceCatalogController_hpp
+#pragma once
 
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/core/macro/codegen.hpp"
@@ -37,5 +36,3 @@ private:
 };
 
 #include OATPP_CODEGEN_END(ApiController) ///< End Codegen
-
-#endif /* SourceCatalogController_hpp */
