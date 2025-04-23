@@ -83,17 +83,14 @@ endif ()
 
 
 if (NOT CODE_COVERAGE)
-    # We run all tests with some small and one large task queue size
-    # We set the number of worker threads to 8, to further stress the task queue
-    set(taskQueueSize 100 10000)
-    foreach (taskQueueSize IN LISTS taskQueueSize)
-        ExternalData_Add_Test(TEST_DATA
-                NAME systest_task_queue_size_${taskQueueSize}_interpreter
-                COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter --data ${SMALL_DATA} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryOptimizer.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
-        ExternalData_Add_Test(TEST_DATA
-                NAME systest_task_queue_size_${taskQueueSize}_compiler
-                COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler --data ${SMALL_DATA} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryOptimizer.executionMode=COMPILER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
-    endforeach ()
+    # We run all tests with constrained parameters, which limits the number of available buffers to 200 (200*4Kb) and the task queue size to 100
+    # We set the number of worker threads to 4, to further stress the task queue
+    ExternalData_Add_Test(TEST_DATA
+            NAME systest_constrained_interpreter
+            COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_interpreter --data ${SMALL_DATA} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryOptimizer.executionMode=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=200 --worker.queryEngine.taskQueueSize=100)
+    ExternalData_Add_Test(TEST_DATA
+            NAME systest_constrained_${taskQueueSize}_compiler
+            COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler --data ${SMALL_DATA} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryOptimizer.executionMode=COMPILER --worker.numberOfBuffersInGlobalBufferManager=200 --worker.queryEngine.taskQueueSize=100)
 
     ## We run all join and aggregation tests with different no. worker threads
     set(workerThreads 1 2 4 8)
