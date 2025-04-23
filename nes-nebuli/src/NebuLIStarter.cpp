@@ -151,8 +151,9 @@ public:
 
     struct QueryLog
     {
-        std::vector<std::pair<QueryStatus, uint64_t>> entries;
+        std::vector<std::pair<QueryStatus, std::chrono::system_clock::time_point>> entries;
     };
+
     QueryLog log(size_t queryId)
     {
         grpc::ClientContext context;
@@ -165,21 +166,20 @@ public:
         if (status.ok())
         {
             NES_DEBUG("QueryLog was successful.");
-            std::vector<std::pair<QueryStatus, uint64_t>> entries;
+            std::vector<std::pair<QueryStatus, std::chrono::system_clock::time_point>> entries;
             for (const auto& entry : reply.entries())
             {
-                entries.emplace_back(entry.status(), entry.time());
+                entries.emplace_back(
+                    entry.status(), std::chrono::system_clock::time_point(std::chrono::milliseconds(entry.unixtimeinms())));
             }
             return QueryLog{entries};
         }
-        else
-        {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
+        throw std::runtime_error(
+            fmt::format(
                 "Query Log failed. Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
                 status.error_details()));
-        }
     }
 };
 
@@ -212,19 +212,19 @@ int main(int argc, char** argv)
         unregisterQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
 
         ArgumentParser logQuery("log");
-    logQuery.add_argument("queryId").scan<'i', size_t>();
-    logQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+        logQuery.add_argument("queryId").scan<'i', size_t>();
+        logQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
 
-    ArgumentParser dump("dump");
-    dump.add_argument("-o", "--output").default_value("-").help("Write the DecomposedQueryPlan to file. Use - for stdout");
-    dump.add_argument("-i", "--input").default_value("-").help("Read the query description. Use - for stdin which is the default");
+        ArgumentParser dump("dump");
+        dump.add_argument("-o", "--output").default_value("-").help("Write the DecomposedQueryPlan to file. Use - for stdout");
+        dump.add_argument("-i", "--input").default_value("-").help("Read the query description. Use - for stdin which is the default");
 
         program.add_subparser(registerQuery);
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
         program.add_subparser(unregisterQuery);
         program.add_subparser(logQuery);
-    program.add_subparser(dump);
+        program.add_subparser(dump);
 
         program.parse_args(argc, argv);
 
@@ -254,21 +254,24 @@ int main(int argc, char** argv)
             return 0;
         }
 
-    if (program.is_subcommand_used("log"))
-    {
-        auto& logArgs = program.at<ArgumentParser>("log");
-        GRPCClient client(grpc::CreateChannel(logArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
-        auto queryId = logArgs.get<size_t>("queryId");
-        auto logs = client.log(queryId);
-
-        for (size_t i = 0; const auto& entry : logs.entries)
+        if (program.is_subcommand_used("log"))
         {
-            std::time_t time
-                = std::chrono::system_clock::to_time_t(std::chrono::system_clock::time_point(std::chrono::microseconds(entry.second)));
-            std::cout << i << ": " << std::asctime(std::localtime(&time)) << ": " << magic_enum::enum_name(entry.first) << '\n';
+            auto& logArgs = program.at<ArgumentParser>("log");
+            GRPCClient client(grpc::CreateChannel(logArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
+            auto queryId = logArgs.get<size_t>("queryId");
+            auto logs = client.log(queryId);
+
+            for (auto [idx, timestamp, status] : std::views::enumerate(logs.entries))
+
+                fmt::format("{} {} {}", )
+            }
+            for (size_t i = 0; const auto& entry : logs.entries)
+            {
+                 std::cout << i << ": " << std::asctime(std::localtime(&time)) << ": "
+                                                    << magic_enum::enum_name(entry.first) << '\n';
+            }
+            return 0;
         }
-        return 0;
-    }
 
         std::shared_ptr<NES::DecomposedQueryPlan> decomposedQueryPlan;
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
