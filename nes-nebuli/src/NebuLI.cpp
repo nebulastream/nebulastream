@@ -174,7 +174,7 @@ Sources::SourceDescriptor createSourceDescriptor(
 
     const auto validParserConfig = validateAndFormatParserConfig(parserConfig);
     auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
-    return sourceCatalog->createPhysicalSource(std::move(validSourceConfig), logicalSource, workerID, sourceType, validParserConfig);
+    return *sourceCatalog->createPhysicalSource(std::move(validSourceConfig), logicalSource, workerID, sourceType, validParserConfig);
 }
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)

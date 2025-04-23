@@ -81,6 +81,9 @@ public:
     friend bool operator>(const SourceDescriptor& lhs, const SourceDescriptor& rhs) { return rhs < lhs; }
     friend bool operator>=(const SourceDescriptor& lhs, const SourceDescriptor& rhs) { return !(lhs < rhs); }
 
+
+    friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor);
+
     [[nodiscard]] LogicalSource getLogicalSource() const { return logicalSource; }
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const { return logicalSource.getSchema(); }
     [[nodiscard]] std::string getSourceType() const { return sourceType; }

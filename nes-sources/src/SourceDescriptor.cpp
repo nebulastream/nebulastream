@@ -42,16 +42,15 @@ bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {
     return lhs.logicalSource == rhs.logicalSource && lhs.sourceType == rhs.sourceType;
 }
-}
-fmt::context::iterator
-fmt::formatter<NES::Sources::SourceDescriptor>::format(const NES::Sources::SourceDescriptor& sourceDescriptor, format_context& ctx) const
+
+std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
-    return format_to(
-        ctx.out(),
-        "SourceDescriptor(sourceType: {}, schema: {}, parserConfig: {{type: {}, tupleDelimiter: {}, stringDelimiter: {} }})",
-        sourceDescriptor.getSourceType(),
-        *sourceDescriptor.getSchema(),
-        sourceDescriptor.getParserConfig().parserType,
-        sourceDescriptor.getParserConfig().tupleDelimiter,
-        sourceDescriptor.getParserConfig().fieldDelimiter);
+    return out << fmt::format(
+               "SourceDescriptor(sourceType: {}, schema: {}, parserConfig: {{type: {}, tupleDelimiter: {}, stringDelimiter: {} }})",
+               sourceDescriptor.getSourceType(),
+               *sourceDescriptor.getSchema(),
+               sourceDescriptor.getParserConfig().parserType,
+               sourceDescriptor.getParserConfig().tupleDelimiter,
+               sourceDescriptor.getParserConfig().fieldDelimiter);
+}
 }

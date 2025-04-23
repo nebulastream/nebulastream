@@ -29,6 +29,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
+#include <gmock/internal/gmock-internal-utils.h>
 
 #include <ErrorHandling.hpp>
 
@@ -52,7 +53,7 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
 }
 
 
-Sources::SourceDescriptor SourceCatalog::createPhysicalSource(
+std::optional<Sources::SourceDescriptor> SourceCatalog::createPhysicalSource(
     Configurations::DescriptorConfig::Config&& descriptorConfig,
     const LogicalSource& logicalSource,
     WorkerId workerId,
@@ -60,6 +61,13 @@ Sources::SourceDescriptor SourceCatalog::createPhysicalSource(
     const Sources::ParserConfig& parserConfig)
 {
     std::unique_lock lock(catalogMutex);
+
+    const auto logicalPhysicalIter = logicalToPhysicalSourceMapping.find(logicalSource);
+    if (logicalPhysicalIter == logicalToPhysicalSourceMapping.end())
+    {
+        NES_DEBUG("Trying to create physical source for logical source \"{}\" which does not exist", logicalSource.getLogicalSourceName());
+    }
+
     NES_TRACE("SourceCatalog: trying to create new physical source of type {} on worker {}", sourceType, workerId);
     auto insertHint = idsToPhysicalSources.begin();
     if (not idsToPhysicalSources.empty())
@@ -75,6 +83,7 @@ Sources::SourceDescriptor SourceCatalog::createPhysicalSource(
     auto id = insertHint->first + 1;
     Sources::SourceDescriptor descriptor{(std::move(descriptorConfig)), id, workerId, logicalSource, sourceType, parserConfig};
     idsToPhysicalSources.emplace_hint(std::ranges::end(idsToPhysicalSources), id, descriptor);
+    logicalPhysicalIter->second.insert(descriptor);
     // physicalToLogicalSourceMappings.emplace(physicalSource, std::unordered_set<LogicalSource>{});
     NES_DEBUG(
         "SourceCatalog: successfully registered new physical source of type {} on worker {} with id {}",
@@ -213,10 +222,18 @@ bool SourceCatalog::containsLogicalSource(const LogicalSource& logicalSource) co
 }
 bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName) const
 {
-    std::unique_lock lock(catalogMutex);
+    std::unique_lock lock{catalogMutex};
     return namesToLogicalSourceMapping.contains(logicalSourceName);
 }
-
+std::optional<Sources::SourceDescriptor> SourceCatalog::getPhysicalSource(const uint64_t physicalSourceID) const
+{
+    std::unique_lock lock{catalogMutex};
+    if (const auto physicalSourceIter = idsToPhysicalSources.find(physicalSourceID); physicalSourceIter != idsToPhysicalSources.end())
+    {
+        return physicalSourceIter->second;
+    }
+    return std::nullopt;
+}
 std::set<Sources::SourceDescriptor> SourceCatalog::getPhysicalSources(const LogicalSource& logicalSource) const
 {
     std::unique_lock lock(catalogMutex);
@@ -227,58 +244,33 @@ std::set<Sources::SourceDescriptor> SourceCatalog::getPhysicalSources(const Logi
     throw UnknownSource("{}", logicalSource.getLogicalSourceName());
 }
 
-std::optional<std::set<Sources::SourceDescriptor>> SourceCatalog::getPhysicalSources(const std::string& logicalSourceName) const
+
+bool SourceCatalog::removeLogicalSource(const LogicalSource& logicalSource)
 {
     std::unique_lock lock(catalogMutex);
-    if (const auto logicalSourceIter = namesToLogicalSourceMapping.find(logicalSourceName);
-        logicalSourceIter != namesToLogicalSourceMapping.end())
-    {
-        const auto found = logicalToPhysicalSourceMapping.find(logicalSourceIter->second);
-        INVARIANT(
-            found != logicalToPhysicalSourceMapping.end(),
-            "Logical source \"{}\" registered, but no mapping to physical sources found",
-            logicalSourceName);
-        return found->second;
-    }
-    return std::nullopt;
-}
-
-bool SourceCatalog::removeLogicalSource(const std::string& logicalSourceName)
-{
-    std::unique_lock lock(catalogMutex);
-    NES_TRACE("SourceCatalog: attempting to remove logical source \"{}\"", logicalSourceName);
-
-    //
-    const auto foundLogicalSourceIter = namesToLogicalSourceMapping.find(logicalSourceName);
-    if (foundLogicalSourceIter == namesToLogicalSourceMapping.end())
-    {
-        NES_DEBUG("SourceCatalog: logical source \"{}\" already not present", logicalSourceName);
-        return false;
-    }
+    NES_TRACE("SourceCatalog: attempting to remove logical source \"{}\"", logicalSource.getLogicalSourceName());
 
     //Find all associated physical sources and remove the logical source from their associations first
-    const auto& logicalSource = foundLogicalSourceIter->second;
     const auto physicalSourcesIter = logicalToPhysicalSourceMapping.find(logicalSource);
     INVARIANT(
         physicalSourcesIter != logicalToPhysicalSourceMapping.end(),
         "Logical source \"{}\" was registered, but no entry in logicalToPhysicalSourceMappings was found",
-        logicalSourceName);
+        logicalSource.getLogicalSourceName());
     for (const auto& physicalSource : physicalSourcesIter->second)
     {
-        if (const auto erasedPhysicalSource = idsToPhysicalSources.erase(physicalSource.physicalSourceID); erasedPhysicalSource != 0)
+        if (const auto erasedPhysicalSource = idsToPhysicalSources.erase(physicalSource.physicalSourceID); erasedPhysicalSource == 0)
         {
             NES_DEBUG(
                 "Physical source {} was mapped to logical source \"{}\", but physical source did not have an entry in "
                 "idsToPhysicalSources",
                 physicalSource.getPhysicalSourceID(),
-                logicalSourceName);
-            return false;
+                logicalSource.getLogicalSourceName());
         }
     }
 
-    namesToLogicalSourceMapping.erase(logicalSourceName);
+    namesToLogicalSourceMapping.erase(logicalSource.getLogicalSourceName());
     logicalToPhysicalSourceMapping.erase(logicalSource);
-    NES_DEBUG("SourceCatalog: removed logical source \"{}\"", logicalSourceName);
+    NES_DEBUG("SourceCatalog: removed logical source \"{}\"", logicalSource.getLogicalSourceName());
     return true;
 }
 
@@ -295,7 +287,7 @@ bool SourceCatalog::removePhysicalSource(const Sources::SourceDescriptor& physic
     }
 
     const auto physicalSourcesIter = logicalToPhysicalSourceMapping.find(physicalSource.getLogicalSource());
-    if (physicalSourcesIter != logicalToPhysicalSourceMapping.end())
+    if (physicalSourcesIter == logicalToPhysicalSourceMapping.end())
     {
         NES_WARNING(
             "Did not find logical source \"{}\" when trying to remove associate physical source {}",

@@ -50,9 +50,9 @@ public:
     /// @caution this method only remove the entry from the catalog not from the topology
     /// @param logicalSourceName name of logical source to delete
     /// @return bool indicating the success of the removal
-    bool removeLogicalSource(const std::string& logicalSourceName);
+    bool removeLogicalSource(const LogicalSource& logicalSource);
 
-    Sources::SourceDescriptor createPhysicalSource(
+    std::optional<Sources::SourceDescriptor> createPhysicalSource(
         Configurations::DescriptorConfig::Config&& descriptorConfig,
         const LogicalSource& logicalSource,
         WorkerId workerId,
@@ -74,14 +74,9 @@ public:
     /// @return bool indicating if source exists
     [[nodiscard]] bool containsLogicalSource(const std::string& logicalSourceName) const;
 
-    [[nodiscard]] Sources::SourceDescriptor getPhysicalSource(uint64_t physicalSourceID) const;
-
+    [[nodiscard]] std::optional<Sources::SourceDescriptor> getPhysicalSource(uint64_t physicalSourceID) const;
 
     [[nodiscard]] std::set<Sources::SourceDescriptor> getPhysicalSources(const LogicalSource& logicalSource) const;
-    /// @brief get all physical sources for a logical source
-    /// @param logicalSourceName name of the logical source
-    /// @return vector containing source catalog entries
-    [[nodiscard]] std::optional<std::set<Sources::SourceDescriptor>> getPhysicalSources(const std::string& logicalSourceName) const;
 
     [[nodiscard]] std::unordered_set<LogicalSource> getAllLogicalSources() const;
     [[nodiscard]] std::unordered_map<LogicalSource, std::set<Sources::SourceDescriptor>> getAllSources() const;

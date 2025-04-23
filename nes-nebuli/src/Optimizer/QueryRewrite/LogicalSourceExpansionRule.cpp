@@ -88,14 +88,14 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
     {
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
         auto logicalSourceName = sourceOperator->getLogicalSourceName();
-
-        const auto physicalSourcesOpt = sourceCatalog->getPhysicalSources(logicalSourceName);
-        if (not physicalSourcesOpt.has_value())
+        auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+        if (not logicalSource.has_value())
         {
-            throw UnknownSource("{}", sourceOperator->getLogicalSourceName());
+            throw UnknownException("{}", logicalSourceName);
         }
+        const auto physicalSourcesOpt = sourceCatalog->getPhysicalSources(*logicalSource);
 
-        const auto physicalSources = *physicalSourcesOpt;
+        const auto physicalSources = physicalSourcesOpt;
         NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", physicalSources.size());
         if (physicalSources.empty())
         {

@@ -126,8 +126,12 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     std::vector<std::string> invalidLogicalSourceNames;
     for (auto sourceOperator : sourceOperators)
     {
-        if (auto physicalSourcesOpt = sourceCatalog->getPhysicalSources(sourceOperator->getLogicalSourceName());
-            not physicalSourcesOpt.has_value() || physicalSourcesOpt->empty())
+        const auto logicalSource = sourceCatalog->getLogicalSource(sourceOperator->getLogicalSourceName());
+        if (not logicalSource.has_value())
+        {
+            invalidLogicalSourceNames.emplace_back(sourceOperator->getLogicalSourceName());
+        }
+        if (auto physicalSourcesOpt = sourceCatalog->getPhysicalSources(*logicalSource); physicalSourcesOpt.empty())
         {
             invalidLogicalSourceNames.emplace_back(sourceOperator->getLogicalSourceName());
         }
