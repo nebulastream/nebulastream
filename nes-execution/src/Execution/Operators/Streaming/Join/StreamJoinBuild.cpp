@@ -17,7 +17,7 @@
 #include <utility>
 #include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -34,7 +34,11 @@ void updateSlicesProxy(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const PipelineExecutionContext* piplineContext,
     const WorkerThreadId workerThreadId,
-    const Timestamp watermarkTs)
+    const Timestamp watermarkTs,
+    const SequenceNumber sequenceNumber,
+    const ChunkNumber chunkNumber,
+    const bool lastChunk,
+    const OriginId originId)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
     PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
@@ -49,7 +53,8 @@ void updateSlicesProxy(
             memoryLayout,
             joinBuildSide,
             piplineContext->getNumberOfWorkerThreads(),
-            SliceStoreMetaData(workerThreadId, watermarkTs));
+            SliceStoreMetaData(
+                workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId)));
     }
 }
 
@@ -75,7 +80,11 @@ void StreamJoinBuild::close(ExecutionContext& executionCtx, RecordBuffer& record
         nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide),
         executionCtx.pipelineContext,
         executionCtx.getWorkerThreadId(),
-        executionCtx.watermarkTs); // TODO pass global watermark instead?
+        executionCtx.watermarkTs,
+        executionCtx.sequenceNumber,
+        executionCtx.chunkNumber,
+        executionCtx.lastChunk,
+        executionCtx.originId);
 
     /// Call the base class close method to ensure checkWindowsTrigger is called
     WindowOperatorBuild::close(executionCtx, recordBuffer);

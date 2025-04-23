@@ -22,14 +22,14 @@
 #include <vector>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/MemoryController/MemoryController.hpp>
-#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <folly/Synchronized.h>
-
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/SliceAssigner.hpp>
+#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
+#include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
 {
@@ -37,7 +37,7 @@ namespace NES::Runtime::Execution
 struct SliceStoreMetaData
 {
     WorkerThreadId threadId;
-    Timestamp timestamp;
+    BufferMetaData bufferMetaData;
 };
 
 class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
@@ -51,7 +51,8 @@ public:
         uint8_t numberOfInputOrigins,
         const std::filesystem::path& workingDir,
         QueryId queryId,
-        OriginId originId);
+        OriginId originId,
+        const std::vector<OriginId>& inputOrigins);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore& other);
@@ -92,8 +93,11 @@ private:
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
 
     /// Manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory pool used by them.
+    /// It also stores the used FileLayout for each file.
     MemoryController memCtrl;
+
     folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
+    std::shared_ptr<Operators::MultiOriginWatermarkProcessor> watermarkProcessor;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.

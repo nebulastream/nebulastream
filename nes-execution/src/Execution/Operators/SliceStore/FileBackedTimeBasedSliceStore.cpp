@@ -37,8 +37,10 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint8_t numberOfInputOrigins,
     const std::filesystem::path& workingDir,
     const QueryId queryId,
-    const OriginId originId)
+    const OriginId originId,
+    const std::vector<OriginId>& inputOrigins)
     : memCtrl(workingDir, queryId, originId)
+    , watermarkProcessor(std::make_shared<Operators::MultiOriginWatermarkProcessor>(inputOrigins))
     , sliceAssigner(windowSize, windowSlide)
     , sequenceNumber(SequenceNumber::INITIAL)
     , numberOfActiveOrigins(numberOfInputOrigins)
@@ -47,6 +49,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
     : memCtrl(other.memCtrl)
+    , watermarkProcessor(other.watermarkProcessor)
     , sliceAssigner(other.sliceAssigner)
     , sequenceNumber(other.sequenceNumber.load())
     , numberOfActiveOrigins(other.numberOfActiveOrigins.load())
@@ -62,6 +65,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
     : memCtrl(std::move(other.memCtrl))
+    , watermarkProcessor(std::move(other.watermarkProcessor))
     , sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
     , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins.load()))
@@ -86,6 +90,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     *slicesInMemoryLocked = *otherSlicesInMemoryLocked;
 
     memCtrl = other.memCtrl;
+    watermarkProcessor = other.watermarkProcessor;
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
     numberOfActiveOrigins = other.numberOfActiveOrigins.load();
@@ -103,6 +108,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     *slicesInMemoryLocked = std::move(*otherSlicesInMemoryLocked);
 
     memCtrl = std::move(other.memCtrl);
+    watermarkProcessor = std::move(other.watermarkProcessor);
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
     numberOfActiveOrigins = std::move(other.numberOfActiveOrigins.load());
@@ -356,22 +362,36 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const SliceStoreMetaData& metaData)
 {
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    const auto watermark = metaData.timestamp;
+    const auto bufMetaData = metaData.bufferMetaData;
+    const auto newGlobalWatermark
+        = watermarkProcessor->updateWatermark(bufMetaData.watermarkTs, bufMetaData.seqNumber, bufMetaData.originId);
 
-    /// Choose slices to offload to external storage device
-    std::multimap<size_t, std::pair<std::shared_ptr<Slice>, FileLayout>> slicesToBeOffloaded;
+    /// Sort slices by state size to offload larger slices first
+    std::multimap<size_t, std::shared_ptr<Slice>> sliceSizes;
     for (const auto& [sliceEnd, slice] : *slices.rlock())
     {
+        // TODO exclude all slices that have already been read back from ssd or are going to be read back below
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        const auto sliceState = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId);
-
-        // TODO predictiveWrite()
-        // basically do the opposite from predictiveRead()
-        memCtrl.setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
-        slicesToBeOffloaded.emplace(sliceState, {slice, USE_FILE_LAYOUT});
+        const auto stateSize = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId);
+        sliceSizes.insert({stateSize, slice});
     }
 
-    /// Write slices to disk
+    /// Choose the n largest slices with a state size larger than zero
+    size_t accumulatedStateSize = 0;
+    std::vector<std::pair<std::shared_ptr<Slice>, FileLayout>> slicesToBeOffloaded;
+    for (auto it = sliceSizes.rbegin(); it != sliceSizes.rend() && it->first > 0; ++it)
+    {
+        // TODO predictiveWrite()
+        // calculate/measure how long it takes to write the state size of the slice to ssd
+        // based on current watermark and system throughput calculate when the given memory limit is reached
+        // assuming throughput stays the same during runtime and this code is reached periodically, calculate how much state must be written out every time this function is called
+        accumulatedStateSize += it->first;
+
+        slicesToBeOffloaded.emplace_back(it->second, USE_FILE_LAYOUT);
+        memCtrl.setFileLayout(it->second->getSliceEnd(), threadId, joinBuildSide, USE_FILE_LAYOUT);
+    }
+
+    /// Write all selected slices to disk
     for (const auto& [slice, fileLayout] : slicesToBeOffloaded)
     {
         /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
@@ -382,7 +402,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
         if (!nljSlice->pagedVectorsCombined())
         {
             auto fileWriter = memCtrl.getFileWriter(nljSlice->getSliceEnd(), threadId, joinBuildSide);
-            const auto pagedVector = nljSlice->getPagedVectorRef(joinBuildSide, threadId);
+            auto* const pagedVector = nljSlice->getPagedVectorRef(joinBuildSide, threadId);
             pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
             pagedVector->truncate(fileLayout);
             // TODO force flush FileWriter?
@@ -392,14 +412,23 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     }
 
     /// Predict which slices to read back from external storage device
+    std::vector<std::shared_ptr<Slice>> slicesToBeReadBack;
     const auto slicesLocked = slices.rlock();
-    for (const auto sliceEnd : sliceAssigner.getAllSliceEndTs(watermark))
+    for (const auto& sliceEnd : sliceAssigner.getAllSliceEndTs(newGlobalWatermark))
     {
-        const auto slice = *slicesLocked->find(sliceEnd)->second;
+        const auto& [_, slice] = *slicesLocked->find(sliceEnd);
         // TODO predictiveRead()
         // calculate/measure how long it takes to read an average slice back from main memory
         // based on current watermark and system throughput read all slices back that are ready for probing in the calculated amount of time
         // read slice for given threadId only from file? or lock this slice for all threads and read all back?
+    }
+
+    /// Read all predicted slices back to main memory
+    for (const auto& slice : slicesToBeReadBack)
+    {
+        // TODO slices are not locked and might still be filled!!!
+        readSliceFromFiles(slice, bufferProvider, memoryLayout, QueryCompilation::JoinBuildSideType::Left, numberOfWorkerThreads);
+        readSliceFromFiles(slice, bufferProvider, memoryLayout, QueryCompilation::JoinBuildSideType::Right, numberOfWorkerThreads);
     }
 }
 

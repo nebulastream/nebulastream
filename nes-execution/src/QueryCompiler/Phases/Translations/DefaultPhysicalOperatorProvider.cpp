@@ -368,7 +368,8 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         joinOperator->getAllInputOriginIds().size(),
         queryCompilerConfig.fileBackedWorkingDir.getValue(),
         decomposedQueryPlan.getQueryId(),
-        joinOperator->getOutputOriginIds()[0]);
+        joinOperator->getOutputOriginIds()[0],
+        joinOperator->getAllInputOriginIds());
     /*std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         streamJoinConfig.windowSize,
         streamJoinConfig.windowSlide,
