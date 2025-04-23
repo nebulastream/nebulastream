@@ -76,7 +76,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesCSV)
     const auto testSpecificResultFileName = fmt::format("{}.csv", testSpecificIdentifier);
     const auto testSpecificDataFileName = fmt::format("{}_{}", testSpecificIdentifier, dataInputFile);
 
-    const std::string queryInputFile = fmt::format("{}.bin", queryName);
+    const std::string queryInputFile = fmt::format("{}.txtpb", queryName);
     IntegrationTestUtil::removeFile(testSpecificResultFileName);
 
     SerializableQueryPlan queryPlan;

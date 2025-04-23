@@ -247,11 +247,7 @@ int main(int argc, char** argv)
                 }
                 output = &file;
             }
-            if (!serialized.SerializeToOstream(output))
-            {
-                NES_FATAL_ERROR("Failed to write message to file.");
-                return -1;
-            }
+            *output << serialized.DebugString() << '\n';
 
             if (outputPath == "-")
             {

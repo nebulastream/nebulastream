@@ -34,6 +34,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/core.h>
+#include <google/protobuf/text_format.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
@@ -385,9 +386,11 @@ bool loadFile(SerializableQueryPlan& queryPlan, const std::string_view queryFile
         NES_ERROR("Query file is not available: {}/{}", SERIALIZED_QUERIES_DIR, queryFileName);
         return false;
     }
-    if (!queryPlan.ParseFromIstream(&f))
+    std::stringstream ss;
+    ss << f.rdbuf();
+    if (!google::protobuf::TextFormat::ParseFromString(ss.str(), &queryPlan))
     {
-        NES_ERROR("Could not load protobuffer file: {}/{}", SERIALIZED_QUERIES_DIR, queryFileName);
+        NES_ERROR("Could not load text protobuf file: {}/{}", SERIALIZED_QUERIES_DIR, queryFileName);
         return false;
     }
     return true;
