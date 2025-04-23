@@ -57,7 +57,7 @@ std::ostream& SourceDescriptorLogicalOperator::toDebugString(std::ostream& os) c
 
 std::ostream& SourceDescriptorLogicalOperator::toQueryPlanString(std::ostream& os) const
 {
-    return os << fmt::format("SOURCE({})", *sourceDescriptor);
+    return os << fmt::format("SOURCE({}, type: {})", sourceDescriptor->logicalSourceName, sourceDescriptor->sourceType);
 }
 
 const Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const
