@@ -22,7 +22,7 @@
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Phases/LowerToExecutableQueryPlanPhase.hpp>
+#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -32,7 +32,7 @@
 #include <Pipeline.hpp>
 #include <options.hpp>
 
-namespace NES::QueryCompilation::LowerToExecutableQueryPlanPhase
+namespace NES::QueryCompilation::LowerToCompiledQueryPlanPhase
 {
 
 namespace
@@ -112,6 +112,8 @@ Source processSource(
             executableSuccessorPipelines.emplace_back(*executableSuccessor);
         }
     }
+    /// Insert the executable pipeline into the pipelineQueryPlan at position 1 (after the source)
+    pipelineQueryPlan->removePipeline(pipeline);
 
     std::vector<std::weak_ptr<ExecutablePipeline>> inputFormatterTasks;
     inputFormatterTasks.emplace_back(executableInputFormatterPipeline);

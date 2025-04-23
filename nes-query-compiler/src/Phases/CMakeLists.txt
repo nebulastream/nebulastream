@@ -11,6 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-query-compiler
-        LowerToExecutableQueryPlanPhase.cpp
+        LowerToCompiledQueryPlanPhase.cpp
         PipeliningPhase.cpp
 )
