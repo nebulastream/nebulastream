@@ -13,8 +13,10 @@
 */
 
 #include <memory>
-#include <Util/Common.hpp>
+#include <string>
+
 #include <DataTypeRegistry.hpp>
+#include "Common/DataTypes/DataType.hpp"
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 
@@ -34,6 +36,7 @@ std::shared_ptr<DataType> Undefined::join(const std::shared_ptr<DataType> otherD
 {
     return DataTypeProvider::provideDataType(LogicalType::UNDEFINED, nullable || otherDataType->nullable);
 }
+
 std::string Undefined::toString()
 {
     return "Undefined";
@@ -43,6 +46,5 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType
 {
     return std::make_shared<Undefined>(args.nullable);
 }
-
 
 }

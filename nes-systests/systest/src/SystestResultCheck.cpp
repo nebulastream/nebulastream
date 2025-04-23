@@ -264,7 +264,10 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
                 }
 
                 /// 2. We allow commas in the result and the expected result. To ensure they are equal we remove them from both.
+                /// We replace the empty string between commas and before the first and after the last comma with [null] tags.
                 /// Additionally, we remove double spaces, as we expect a single space between the fields
+                std::ranges::for_each(queryResultLines, Util::replaceEmptyStringWithNullTag);
+                std::ranges::for_each(expectedResultLines, Util::replaceEmptyStringWithNullTag);
                 std::ranges::for_each(queryResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
                 std::ranges::for_each(expectedResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
                 std::ranges::for_each(queryResultLines, Util::removeDoubleSpaces);
@@ -345,7 +348,6 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
     return errorMessages.str();
 }
 
-
 bool operator!=(const FieldResult& left, const FieldResult& right)
 {
     /// Check if the type is equal
@@ -374,6 +376,7 @@ bool operator!=(const FieldResult& left, const FieldResult& right)
 
     throw UnknownPhysicalType("Unknown type {}", left.type->toString());
 }
+
 bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& right)
 {
     /// Check if the size is the same
@@ -386,7 +389,7 @@ bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& righ
     /// Check that all fields are the same
     return std::ranges::all_of(
         left,
-        [&right](const auto& pair) -> bool
+        [&right](const auto& pair)
         {
             const auto& [name, field] = pair;
             if (not right.contains(name))

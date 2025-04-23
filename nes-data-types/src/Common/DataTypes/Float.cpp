@@ -33,8 +33,7 @@ bool Float::operator==(const NES::DataType& other) const
 {
     if (const auto otherFloat = dynamic_cast<const Float*>(&other))
     {
-        return bits == otherFloat->bits && lowerBound == otherFloat->lowerBound && upperBound == otherFloat->upperBound
-            && nullable == other.nullable;
+        return bits == otherFloat->bits && nullable == other.nullable;
     }
     return false;
 }
@@ -43,7 +42,7 @@ std::shared_ptr<DataType> Float::join(const std::shared_ptr<DataType> otherDataT
 {
     if (NES::Util::instanceOf<Undefined>(otherDataType))
     {
-        return std::make_shared<Float>(nullable || otherDataType->nullable, bits, lowerBound, upperBound);
+        return std::make_shared<Float>(nullable || otherDataType->nullable, bits);
     }
     if (not NES::Util::instanceOf<Numeric>(otherDataType))
     {
@@ -64,12 +63,12 @@ std::string Float::toString()
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT32DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Float>(args.nullable, 32, std::numeric_limits<float>::lowest(), std::numeric_limits<float>::max());
+    return std::make_shared<Float>(args.nullable, 32);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterFLOAT64DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Float>(args.nullable, 64, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
+    return std::make_shared<Float>(args.nullable, 64);
 }
 
 }

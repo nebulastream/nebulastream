@@ -66,7 +66,6 @@ public:
 
     /**
      * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
      * @param schema
      */
     virtual void inferStamp(const Schema& schema) = 0;

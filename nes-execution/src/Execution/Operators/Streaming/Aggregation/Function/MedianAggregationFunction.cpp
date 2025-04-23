@@ -12,22 +12,24 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Streaming/Aggregation/Function/MedianAggregationFunction.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <utility>
+
+#include <nautilus/function.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
+
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/MedianAggregationFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <nautilus/function.hpp>
-#include <ErrorHandling.hpp>
-#include <val.hpp>
-#include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
@@ -38,11 +40,9 @@ MedianAggregationFunction::MedianAggregationFunction(
     std::shared_ptr<PhysicalType> resultType,
     std::unique_ptr<Functions::Function> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector,
-    const bool includeNullValues)
+    std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , memProviderPagedVector(std::move(memProviderPagedVector))
-    , includeNullValues(includeNullValues)
 {
 }
 
@@ -52,10 +52,9 @@ void MedianAggregationFunction::lift(
     const Nautilus::Record& record)
 {
     /// Reading the value from the record
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
-    if ((inputType->type->nullable && not includeNullValues) && value.isNull())
+    if (const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena); inputType->type->nullable && value.isNull())
     {
-        /// If the value is null and we are taking null values into account, we do not add the record to the state.
+        /// If the value is null, we do not add the record to the state.
         return;
     }
 

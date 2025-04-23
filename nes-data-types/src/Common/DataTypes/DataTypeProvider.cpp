@@ -14,10 +14,8 @@
 
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <string_view>
-#include <utility>
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -25,25 +23,24 @@
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::DataTypeProvider
 {
 
 bool isNullable(const std::string_view fieldName)
 {
-    return fieldName.size() > NULLABLE_POSTFIX.length()
-        && fieldName.substr(fieldName.size() - NULLABLE_POSTFIX.length()) == NULLABLE_POSTFIX;
+    return fieldName.ends_with(NULLABLE_POSTFIX);
 }
 
 std::shared_ptr<DataType> provideDataType(const std::string& type, const bool nullable)
 {
-    auto args = DataTypeRegistryArguments{.nullable = nullable};
+    const auto args = DataTypeRegistryArguments{.nullable = nullable};
     if (auto dataType = DataTypeRegistry::instance().create(type, args))
     {
-        std::shared_ptr<DataType> sharedType = std::move(dataType.value());
-        return sharedType;
+        return dataType.value();
     }
-    throw std::runtime_error("Failed to create data type of type: " + type);
+    throw UnknownDataType("Unknown data type {}", type);
 }
 
 std::shared_ptr<DataType> provideDataType(const LogicalType type, const bool nullable)

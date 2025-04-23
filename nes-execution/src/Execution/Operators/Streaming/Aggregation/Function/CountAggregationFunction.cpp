@@ -16,17 +16,18 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+
+#include <nautilus/std/cstring.h>
+#include <val.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
+
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/CountAggregationFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <nautilus/std/cstring.h>
-#include <val.hpp>
-#include <val_concepts.hpp>
-#include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
@@ -36,27 +37,24 @@ CountAggregationFunction::CountAggregationFunction(
     std::shared_ptr<PhysicalType> inputType,
     std::shared_ptr<PhysicalType> resultType,
     std::unique_ptr<Functions::Function> inputFunction,
-    Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    const bool includeNullValues)
+    Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
-    , includeNullValues(includeNullValues)
 {
 }
 
 void CountAggregationFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState,
     PipelineMemoryProvider& pipelineMemoryProvider,
-    const Nautilus::Record& record)
-{
+    const Nautilus::Record&  record) {
+
     /// Reading the value from the record
-    if (const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
-        inputType->type->nullable && not includeNullValues && value.isNull())
+    /// TODO(yschroeder97): update this after fix of COUNT(*) is fixed in #699 such that null values are taken into account
+    if (const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena); inputType->type->nullable && value.isNull())
     {
-        /// If the value is null and we are not taking null values into account, we do not update the count.
+        /// If the input type is nullable and the field null, do not update the count
         return;
+
     }
-
-
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, *resultType);

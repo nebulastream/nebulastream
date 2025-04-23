@@ -13,9 +13,12 @@
 */
 
 #include <memory>
+
+#include <magic_enum/magic_enum.hpp>
+
 #include <Util/Common.hpp>
 #include <DataTypeRegistry.hpp>
-#include <magic_enum/magic_enum.hpp>
+#include "Common/DataTypes/DataType.hpp"
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
@@ -27,7 +30,7 @@ Boolean::Boolean(const bool nullable) : DataType(nullable)
 {
 }
 
-bool Boolean::operator==(const NES::DataType& other) const
+bool Boolean::operator==(const DataType& other) const
 {
     return dynamic_cast<const Boolean*>(&other) != nullptr && nullable == other.nullable;
 }
@@ -52,6 +55,5 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(D
 {
     return std::make_shared<Boolean>(args.nullable);
 }
-
 
 }

@@ -16,14 +16,16 @@
 #include <random>
 #include <ranges>
 #include <vector>
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/StdInt.hpp>
+
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
+
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <BaseUnitTest.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
@@ -37,7 +39,7 @@ class SchemaTest : public Testing::BaseUnitTest
 public:
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("SchemaTest.log", NES::LogLevel::LOG_DEBUG);
+        Logger::setupLogging("SchemaTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("SchemaTest test class SetUpTestCase.");
     }
     static void TearDownTestCase() { NES_INFO("SchemaTest test class TearDownTestCase."); }
@@ -187,7 +189,7 @@ TEST_F(SchemaTest, removeFieldsTest)
     }
 
     ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
-    for (const auto& [idx, field]: std::views::enumerate(rndFields))
+    for (const auto& [idx, field] : std::views::enumerate(rndFields))
     {
         EXPECT_TRUE(testSchema->getFieldByIndex(idx)->isEqual(field));
         EXPECT_TRUE(testSchema->getFieldByName(field->getName()).has_value());
@@ -262,8 +264,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         }
 
         /// Replacing multiple fields with new data types
-        auto replacingFields = getRandomFields(NUM_FIELDS);
-        for (const auto& replaceField : replacingFields)
+        for (auto replacingFields = getRandomFields(NUM_FIELDS); const auto& replaceField : replacingFields)
         {
             testSchema->replaceField(replaceField->getName(), replaceField->getDataType());
         }

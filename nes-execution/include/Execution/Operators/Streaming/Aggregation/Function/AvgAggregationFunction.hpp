@@ -20,14 +20,13 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
 
-class AvgAggregationFunction : public AggregationFunction
+class AvgAggregationFunction final : public AggregationFunction
 {
 public:
     AvgAggregationFunction(
@@ -35,26 +34,28 @@ public:
         std::shared_ptr<PhysicalType> resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::shared_ptr<PhysicalType> countType,
-        bool includeNullValues);
+        std::shared_ptr<PhysicalType> countType);
+
+    ~AvgAggregationFunction() override = default;
 
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
         const Nautilus::Record& record) override;
+
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
+
     Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
-    void cleanup(nautilus::val<AggregationState*> aggregationState) override;
+
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
-    ~AvgAggregationFunction() override = default;
 
 private:
     std::shared_ptr<PhysicalType> countType;
-    bool includeNullValues;
 };
 
 }

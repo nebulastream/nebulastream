@@ -1,25 +1,32 @@
 # name: projection/Projection_Null.test
-# description: Simple projection tests with null values
+# description: Projection tests with null edge cases
 # groups: [Projection]
 
 Source stream UINT64 id UINT64 value_NULLABLE UINT64 timestamp VARSIZED text_NULLABLE
-1,1,0,sometext
-2,1,1,anothertext
-3,1,2,
-4,2,10,
-5,,19,
-6,,20,yetanothertext
-7,,21,finish
+1,,0,
+2,100,1,hello
+3,,2,
+4,200,3,world
+5,,4,
+6,300,5,
+7,400,6,!
+8,,7,
+9,,8,nullend
+10,500,9,
 
 SINK sink UINT64 stream$value_NULLABLE VARSIZED stream$text_NULLABLE
 
 # 0: [value, text]
 SELECT value_NULLABLE, text_NULLABLE FROM stream INTO sink
 ----
-1,sometext
-1,anothertext
-1,
-2,
 ,
-,yetanothertext
-,finish
+100,hello
+,
+200,world
+,
+300,
+400,!
+,
+,nullend
+500,
+

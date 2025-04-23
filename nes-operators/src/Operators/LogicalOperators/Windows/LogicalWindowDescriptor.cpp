@@ -12,14 +12,18 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
+#include <ranges>
+
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Windowing
 {
@@ -30,7 +34,11 @@ LogicalWindowDescriptor::LogicalWindowDescriptor(
     std::shared_ptr<WindowType> windowType)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(keys)
 {
-    NES_TRACE("LogicalWindowDescriptor: create new window definition");
+    if (std::ranges::any_of(keys, [](const std::shared_ptr<NodeFunctionFieldAccess>& key) { return key->getStamp()->nullable; }))
+    {
+        /// TODO(yschroeder97): Add support for nullable keys (#812), remove check afterwards
+        throw DisallowedNullField("The key field used for windowing can not be null.\n");
+    }
 }
 
 bool LogicalWindowDescriptor::isKeyed() const

@@ -62,6 +62,7 @@ EXCEPTION(UnknownExecutablePipelineProviderType, 2119, "unknown executable pipel
 EXCEPTION(UnknownCompilationBackendType, 2120, "unknown compilation backend type")
 EXCEPTION(UnsupportedOperation, 2121, "tried to execute an unsupported operation")
 EXCEPTION(UnknownParserType, 2122, "unknown parser type")
+EXCEPTION(UnknownDataType, 2123, "unknown data type")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
@@ -71,6 +72,7 @@ EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not
 EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was not found in the query description")
 EXCEPTION(OperatorNotFound, 2205, "operator not found")
 EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
+EXCEPTION(DisallowedNullField, 2207, "null field not allowed")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")

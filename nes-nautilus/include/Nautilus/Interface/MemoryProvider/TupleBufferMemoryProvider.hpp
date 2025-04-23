@@ -16,13 +16,15 @@
 
 #include <cstdint>
 #include <memory>
+
+#include <val_ptr.hpp>
+
 #include <API/Schema.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider

@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
+
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -43,7 +45,6 @@ public:
         UNDEFINED
     };
 
-
     /// Constructor for a basic physical type.
     /// @param type the data type represented by this physical type
     /// @param nativeType the native type of the nes type.
@@ -61,7 +62,6 @@ public:
     /// @param rawField a pointer to the raw value
     std::string convertRawToString(const void* rawField) const override;
 
-
     /// Converts the binary representation of this value to a string.
     /// @param rawField a pointer to the raw value
     std::string convertRawToStringWithoutFill(const void* rawField) const override;
@@ -73,6 +73,5 @@ public:
     /// Returns the number of bytes occupied by this data type.
     [[nodiscard]] uint64_t getRawSizeInBytes() const noexcept override;
 };
-
 
 }

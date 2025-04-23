@@ -15,13 +15,13 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
-
 
 namespace NES
 {

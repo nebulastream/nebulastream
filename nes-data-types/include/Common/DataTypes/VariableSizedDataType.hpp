@@ -14,23 +14,19 @@
 #pragma once
 
 #include <memory>
+
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-class VariableSizedDataType : public DataType
+class VariableSizedDataType final : public DataType
 {
 public:
-    inline VariableSizedDataType(const bool nullable) noexcept : DataType(nullable) { }
+    explicit VariableSizedDataType(const bool nullable) noexcept : DataType(nullable) { }
 
     ~VariableSizedDataType() override = default;
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return true if equal types false if unequal
-     */
     bool operator==(const DataType& other) const override;
 
     std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;

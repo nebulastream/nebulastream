@@ -16,17 +16,18 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+
+#include <nautilus/std/cstring.h>
+#include <val.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
+
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AvgAggregationFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <nautilus/std/cstring.h>
-#include <val.hpp>
-#include <val_concepts.hpp>
-#include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
@@ -37,11 +38,9 @@ AvgAggregationFunction::AvgAggregationFunction(
     std::shared_ptr<PhysicalType> resultType,
     std::unique_ptr<Functions::Function> inputFunction,
     Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<PhysicalType> countType,
-    const bool includeNullValues)
+    std::shared_ptr<PhysicalType> countType)
     : AggregationFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
     , countType(std::move(countType))
-    , includeNullValues(includeNullValues)
 {
 }
 
@@ -52,7 +51,7 @@ void AvgAggregationFunction::lift(
 {
     /// Reading the value from the record
     const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
-    if ((inputType->type->nullable && not includeNullValues) && value.isNull())
+    if (inputType->type->nullable && value.isNull())
     {
         /// If the value is null and we are taking null values into account, we do not update the average.
         return;

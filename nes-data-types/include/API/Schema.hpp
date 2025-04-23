@@ -19,13 +19,13 @@
 #include <optional>
 #include <string>
 #include <vector>
+
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-
 
 class Schema
 {
@@ -73,12 +73,10 @@ public:
     std::shared_ptr<Schema> addField(const std::shared_ptr<AttributeField>& attribute);
 
     /// @brief appends a field with a basic type to the schema and returns a copy of this schema.
-    /// @param field
     /// @return a copy of this schema.
     std::shared_ptr<Schema> addField(const std::string& name, const BasicType& type);
 
     /// @brief appends a field with a data type to the schema and returns a copy of this schema.
-    /// @param field
     /// @return a copy of this schema.
     std::shared_ptr<Schema> addField(const std::string& name, const std::shared_ptr<DataType>& data);
 
@@ -88,7 +86,6 @@ public:
 
     /// @brief Replaces a field, which is already part of the schema.
     /// @param name of the field we want to replace
-    /// @param std::shared_ptr<DataType>
     void replaceField(const std::string& name, const std::shared_ptr<DataType>& type);
 
     /// @brief Returns the attribute field based on a qualified or unqualified field name.
@@ -116,21 +113,10 @@ public:
     /// @return uint64_t
     [[nodiscard]] uint64_t getSchemaSizeInBytes() const;
 
-    /// @brief Checks if two Schemas are equal to each other.
-    /// @param schema
-    /// @return boolean
     bool operator==(const Schema& other) const;
 
-    /// @brief Checks if the field exists in the schema
-    /// @param schema
-    /// @return boolean
     bool contains(const std::string& fieldName) const;
 
-    /// @brief returns a string representation
-    /// @param prefix of the string
-    /// @param delimitor between each field
-    /// @param suffix, for the end of the string
-    /// @return schema as string
     [[nodiscard]] std::string toString(const std::string& prefix = "", const std::string& sep = " ", const std::string& suffix = "") const;
 
     /// @brief Method to return the source name qualifier, thus everything that is before $
