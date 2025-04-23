@@ -26,7 +26,7 @@ function(serialize_query_with_nebuli TARGET QUERY_NAME)
     # Run nebuli on the specified yaml query (QUERY_NAME) and output the serialized protobuf version in the build directory
     add_custom_command(
             TARGET ${TARGET} PRE_BUILD
-            COMMAND "${NEBULI_BINARY}" dump -i "${YAML_QUERIES_DIR}/${QUERY_NAME}.yaml" -o "${SERIALIZED_QUERIES_DIR}/${QUERY_NAME}.bin"
+            COMMAND "${NEBULI_BINARY}" dump -i "${YAML_QUERIES_DIR}/${QUERY_NAME}.yaml" -o "${SERIALIZED_QUERIES_DIR}/${QUERY_NAME}.txtpb"
             COMMENT "Running nes-nebuli: ${INPUT_PATH} -> ${OUTPUT_PATH}"
             VERBATIM
     )
