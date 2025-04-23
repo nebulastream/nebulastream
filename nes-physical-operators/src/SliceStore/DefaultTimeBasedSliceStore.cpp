@@ -189,10 +189,10 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
 {
     /// If this method gets called, we know that an origin has terminated.
     INVARIANT(numberOfActiveOrigins > 0, "Method should not be called if all origin have terminated.");
-    --numberOfActiveOrigins;
 
     /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows
     const auto windowsWriteLocked = windows.wlock();
+    --numberOfActiveOrigins;
 
     /// Creating a lambda to add all slices to the return map windowsToSlices
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
