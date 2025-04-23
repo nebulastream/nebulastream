@@ -76,6 +76,10 @@ public:
 
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
     friend bool operator!=(const SourceDescriptor& lhs, const SourceDescriptor& rhs) { return !(lhs == rhs); }
+    friend bool operator<(const SourceDescriptor& lhs, const SourceDescriptor& rhs) { return lhs.physicalSourceID < rhs.physicalSourceID; }
+    friend bool operator<=(const SourceDescriptor& lhs, const SourceDescriptor& rhs) { return rhs >= lhs; }
+    friend bool operator>(const SourceDescriptor& lhs, const SourceDescriptor& rhs) { return rhs < lhs; }
+    friend bool operator>=(const SourceDescriptor& lhs, const SourceDescriptor& rhs) { return !(lhs < rhs); }
 
     [[nodiscard]] LogicalSource getLogicalSource() const { return logicalSource; }
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const { return logicalSource.getSchema(); }

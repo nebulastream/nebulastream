@@ -88,7 +88,7 @@ public:
 
 
 private:
-    std::recursive_mutex catalogMutex;
+    mutable std::recursive_mutex catalogMutex;
     /// map logical source to schema
     std::unordered_map<std::string, LogicalSource> namesToLogicalSourceMapping{};
     std::map<uint64_t, Sources::SourceDescriptor> idsToPhysicalSources{};
