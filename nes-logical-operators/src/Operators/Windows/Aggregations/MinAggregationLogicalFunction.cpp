@@ -56,7 +56,7 @@ void MinAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField = onField.withInferredStamp(schema).get<FieldAccessLogicalFunction>();
-    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()), "aggregations on non numeric fields is not supported.");
+    INVARIANT(dynamic_cast<const Numeric*>(onField.getStamp().get()), "aggregations on non numeric fields is not supported, but got {}", onField.getStamp()->toString());
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = onField.getFieldName();
