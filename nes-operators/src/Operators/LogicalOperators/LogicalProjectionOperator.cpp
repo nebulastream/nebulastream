@@ -73,7 +73,7 @@ bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
                 return false;
             }
         }
-        return *outputSchema == *projection->outputSchema;
+        return outputSchema == projection->outputSchema;
     }
     return false;
 };
