@@ -53,7 +53,7 @@ SourceThread::SourceThread(
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
 
-namespace detail
+namespace
 {
 void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory::TupleBuffer& buffer)
 {
@@ -143,29 +143,44 @@ SourceImplementationTermination dataSourceThreadRoutine(
     return {SourceImplementationTermination::StopRequested};
 }
 
-struct DestroyOnExit
-{
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    ~DestroyOnExit() { bufferProvider->destroy(); }
-};
-
 void dataSourceThread(
     const std::stop_token& stopToken,
     std::promise<SourceImplementationTermination> result,
     Source* source,
     SourceReturnType::EmitFunction emit,
     OriginId originId,
-    std::optional<std::shared_ptr<Memory::AbstractBufferProvider>> bufferProvider)
+    size_t numSourceLocalBuffers,
+    std::shared_ptr<Memory::AbstractPoolProvider> bufferPoolProvider) ///NOLINT(performance-unnecessary-value-param)
 {
     threadSetup(originId);
-    if (!bufferProvider)
+
+    auto optBufferProvider = bufferPoolProvider->createFixedSizeBufferPool(numSourceLocalBuffers, stopToken);
+    if (!optBufferProvider)
     {
-        emit(originId, SourceReturnType::Error(BufferAllocationFailure()));
-        result.set_exception(std::make_exception_ptr(BufferAllocationFailure()));
+        result.set_value_at_thread_exit({SourceImplementationTermination::StopRequested});
         return;
     }
 
-    const DestroyOnExit onExit{bufferProvider.value()};
+    /// if allocation succeeds, destroy the buffer provider on exit
+    const auto& bufferProvider = *optBufferProvider;
+
+    /// Once the source thread exits we mark the buffer provider as destroyed.
+    /// The buffer provider is kept alive by its in-flight buffers, so we cannot guarantee,
+    /// that the bufferProvider is destroyed (c++ destructor) at the end of the
+    /// scope. Marking bufferProvider as destroyed will immediately move all unused
+    /// buffers back into the parent buffer provider and reroute in-flight buffers,
+    /// until all references have been destroyed.
+    struct ScopeExit
+    {
+        ScopeExit(const ScopeExit& other) = delete;
+        ScopeExit(ScopeExit&& other) noexcept = delete;
+        ScopeExit& operator=(const ScopeExit& other) = delete;
+        ScopeExit& operator=(ScopeExit&& other) noexcept = delete;
+        explicit ScopeExit(const std::shared_ptr<Memory::AbstractBufferProvider>& buffer_provider) : bufferProvider(buffer_provider) { }
+        ~ScopeExit() { bufferProvider->destroy(); }
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    } scopeExit(bufferProvider);
+
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](Memory::TupleBuffer&& buffer, bool shouldAddMetadata)
     {
@@ -178,7 +193,7 @@ void dataSourceThread(
 
     try
     {
-        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, dataEmit));
+        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, *bufferProvider, dataEmit));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{});
@@ -188,7 +203,7 @@ void dataSourceThread(
     {
         auto ingestionException = RunningRoutineFailure(e.what());
         result.set_exception_at_thread_exit(std::make_exception_ptr(ingestionException));
-        emit(originId, SourceReturnType::Error{std::move(ingestionException)});
+        emit(originId, SourceReturnType::Error{ingestionException});
     }
 }
 }
@@ -206,12 +221,13 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     this->terminationFuture = terminationPromise.get_future();
 
     std::jthread sourceThread(
-        detail::dataSourceThread,
+        dataSourceThread,
         std::move(terminationPromise),
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
-        localBufferManager->createFixedSizeBufferPool(numOfLocalBuffers));
+        numOfLocalBuffers,
+        localBufferManager);
     thread = std::move(sourceThread);
     return true;
 }

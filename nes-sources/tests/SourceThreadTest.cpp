@@ -22,6 +22,7 @@
 #include <mutex>
 #include <ranges>
 #include <source_location>
+#include <thread>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -42,6 +43,7 @@
 #include <SourceThread.hpp>
 #include <TestSource.hpp>
 
+///NOLINTBEGIN(fuchsia-default-arguments-declarations, bugprone-unchecked-optional-access)
 namespace NES
 {
 namespace
@@ -50,7 +52,7 @@ constexpr std::chrono::milliseconds DEFAULT_TIMEOUT = std::chrono::milliseconds(
 constexpr std::chrono::milliseconds DEFAULT_LONG_TIMEOUT = std::chrono::milliseconds(1000);
 constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
 constexpr size_t DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER = 23;
-constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 100;
+constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 64;
 
 }
 using namespace std::literals;
@@ -145,7 +147,7 @@ void verify_number_of_emits(
     RecordingEmitFunction& recorder, size_t numberOfEmits, std::source_location location = std::source_location::current())
 {
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_number_of_emits");
-    EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(numberOfEmits))
+    ASSERT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(numberOfEmits))
         << "Expected " << numberOfEmits << " source events to be emitted";
 
     std::vector<SequenceNumber> sequenceNumbers;
@@ -176,12 +178,56 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+        ASSERT_TRUE(control->waitUntilOpened());
     }
 
     verify_no_events(recorder);
+    EXPECT_TRUE(control->waitUntilClosed()) << "The SourceThread destructor should stop the implementation";
+    EXPECT_TRUE(control->wasDestroyed()) << "The SourceThread destructor should destroy the implementation";
+}
+
+/// Source Thread should not fail if it cannot allocate its desired number of buffers. Instead, it should reattempt until buffers
+/// are available. This test verifies that the source reattempts buffer allocation by reserving a large chunk of the available buffers
+/// before the source creation. The source should not be able to open its implementation because it attempts to allocate buffers fail.
+/// The initial reservation is released which allows the source to proceed.
+TEST_F(SourceThreadTest, ReattemptBufferAllocation)
+{
+    /// Restrict the bufferprovider to one more buffer than needed for the sources fixed size buffer.
+    auto bm = Memory::BufferManager::create(DEFAULT_BUFFER_SIZE, DEFAULT_NUMBER_OF_LOCAL_BUFFERS + 1);
+
+    /// create reservation that should prevent the source from starting
+    auto fixedSizeBufferProvider = bm->createFixedSizeBufferPool(DEFAULT_NUMBER_OF_LOCAL_BUFFERS).value();
+    EXPECT_EQ(bm->getAvailableBuffers(), 1);
+    RecordingEmitFunction recorder(*bm);
+    auto control = std::make_shared<Sources::TestSourceControl>();
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    {
+        Sources::SourceThread sourceThread(
+            INITIAL<OriginId>, bm, DEFAULT_NUMBER_OF_LOCAL_BUFFERS, std::make_unique<Sources::TestSource>(INITIAL<OriginId>, control));
+        verify_non_blocking_start(
+            sourceThread,
+            [&](const OriginId originId, Sources::SourceReturnType::SourceReturnType ret) { recorder(originId, std::move(ret)); });
+
+        /// Source should not be able to open
+        std::this_thread::sleep_for(DEFAULT_TIMEOUT);
+        ASSERT_FALSE(control->wasOpened());
+        verify_no_events(recorder);
+
+        /// Release reservation
+        fixedSizeBufferProvider->destroy();
+
+        /// Source should now be able to open
+        ASSERT_TRUE(control->waitUntilOpened());
+        wait_for_emits(recorder, 1);
+        recorder.recordedEmits.lock()->clear();
+
+        verify_non_blocking_stop(sourceThread);
+    }
+
     EXPECT_TRUE(control->wasOpened());
     EXPECT_TRUE(control->waitUntilClosed()) << "The SourceThread destructor should stop the implementation";
     EXPECT_TRUE(control->wasDestroyed()) << "The SourceThread destructor should destroy the implementation";
+    EXPECT_EQ(bm->getAvailableBuffers(), DEFAULT_NUMBER_OF_LOCAL_BUFFERS + 1) << "Not all buffers have been released by the source";
 }
 
 TEST_F(SourceThreadTest, NoOpDestruction)
@@ -302,3 +348,5 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
 }
 
 }
+
+///NOLINTEND(fuchsia-default-arguments-declarations, bugprone-unchecked-optional-access)
