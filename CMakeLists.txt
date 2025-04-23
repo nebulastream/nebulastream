@@ -27,7 +27,7 @@ option(NES_ENABLES_TESTS "Enable tests" ON)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING "Enables the inlining for the MLIR backend." OFF)
-option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" OFF)
+option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
 option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
 
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
