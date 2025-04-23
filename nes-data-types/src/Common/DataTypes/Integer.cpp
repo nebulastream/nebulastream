@@ -70,42 +70,42 @@ bool Integer::getIsSigned() const
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT8DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Integer>(args.nullable, 8, INT8_MIN, INT8_MAX);
+    return std::make_shared<Integer>(args.nullable, 8, true);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT8DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Integer>(args.nullable, 8, 0, UINT8_MAX);
+    return std::make_shared<Integer>(args.nullable, 8, false);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT16DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Integer>(args.nullable, 16, INT16_MIN, INT16_MAX);
+    return std::make_shared<Integer>(args.nullable, 16, true);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT16DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Integer>(args.nullable, 16, 0, UINT16_MAX);
+    return std::make_shared<Integer>(args.nullable, 16, false);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT32DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Integer>(args.nullable, 32, INT32_MIN, INT32_MAX);
+    return std::make_shared<Integer>(args.nullable, 32, true);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT32DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Integer>(args.nullable, 32, 0, UINT32_MAX);
+    return std::make_shared<Integer>(args.nullable, 32, false);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterINT64DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Integer>(args.nullable, 64, INT64_MIN, INT64_MAX);
+    return std::make_shared<Integer>(args.nullable, 64, true);
 }
 
 DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUINT64DataType(DataTypeRegistryArguments args)
 {
-    return std::make_shared<Integer>(args.nullable, 64, 0, UINT64_MAX);
+    return std::make_shared<Integer>(args.nullable, 64, false);
 }
 
 }

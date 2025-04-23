@@ -822,7 +822,6 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
 void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    /// A constant can not be nullable
     if (const auto valueAsNumeric = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant()))
     {
         const auto concreteValue = valueAsNumeric->number();
@@ -885,7 +884,6 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     else if (dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->constant()) != nullptr)
     {
         const auto constantText = std::string(Util::trimCharacters(context->getText(), '\"'));
-
 
         const auto dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
         auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(dataType, constantText));

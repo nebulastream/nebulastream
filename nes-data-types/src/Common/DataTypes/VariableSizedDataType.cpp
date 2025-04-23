@@ -12,16 +12,19 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <Util/Common.hpp>
-#include <DataTypeRegistry.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+
+#include <memory>
+#include <string>
+
+#include <DataTypeRegistry.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
 
-bool VariableSizedDataType::operator==(const NES::DataType& other) const
+bool VariableSizedDataType::operator==(const DataType& other) const
 {
     return dynamic_cast<const VariableSizedDataType*>(&other) != nullptr && nullable == other.nullable;
 }

@@ -16,18 +16,19 @@
 
 #include <cstddef>
 #include <memory>
+
+#include <val_concepts.hpp>
+
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <val_concepts.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
 
-class MinAggregationFunction : public AggregationFunction
+class MinAggregationFunction final : public AggregationFunction
 {
 public:
     MinAggregationFunction(
@@ -35,18 +36,24 @@ public:
         std::shared_ptr<PhysicalType> resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
+
+    ~MinAggregationFunction() override = default;
+
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
         const Nautilus::Record& record) override;
+
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
         PipelineMemoryProvider& pipelineMemoryProvider) override;
+
     Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
+
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
-    ~MinAggregationFunction() override = default;
 };
 
 }

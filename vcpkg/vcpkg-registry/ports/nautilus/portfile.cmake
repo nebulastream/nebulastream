@@ -7,7 +7,6 @@ vcpkg_from_github(
 		0001_fixes_clang_tidy.patch
 		0002_cache_mangled_names.patch
 		0003_increase_tracing_performance.patch
-		0004_wip_null.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

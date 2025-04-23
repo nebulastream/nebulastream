@@ -16,13 +16,15 @@
 
 #include <memory>
 #include <variant>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Util/Logger/Logger.hpp>
+
 #include <nautilus/std/ostream.h>
 #include <nautilus/std/sstream.h>
 #include <nautilus/std/string.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -263,7 +265,10 @@ public:
 
 protected:
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    VarVal(const detail::var_val_t t, nautilus::val<bool> null, const bool nullable = true) : value(std::move(t)), null(std::move(null)), nullable(nullable) { }
+    VarVal(const detail::var_val_t t, nautilus::val<bool> null, const bool nullable = true)
+        : value(std::move(t)), null(std::move(null)), nullable(nullable)
+    {
+    }
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     VarVal(const detail::var_val_t t) : value(std::move(t)), null(false), nullable(false) { }
 

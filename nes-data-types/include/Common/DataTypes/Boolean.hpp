@@ -15,19 +15,18 @@
 #pragma once
 
 #include <memory>
+
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
-
-/// The boolean type can have two states: true, and false.
 class Boolean final : public DataType
 {
 public:
-    Boolean(const bool nullable);
+    explicit Boolean(bool nullable);
     ~Boolean() override = default;
     bool operator==(const DataType& other) const override;
 
-    /// Calculates the joined data type between this data type and the other. If they have no possible joined data type, the coined type is Undefined.
     std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;
     std::string toString() override;
 };

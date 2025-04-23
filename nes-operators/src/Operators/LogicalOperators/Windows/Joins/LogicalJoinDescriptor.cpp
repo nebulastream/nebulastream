@@ -56,6 +56,12 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(
         (this->joinType == JoinType::INNER_JOIN || this->joinType == JoinType::CARTESIAN_PRODUCT),
         "Invalid join type expected Inner join or cartesian product, but got: {}",
         magic_enum::enum_name(this->joinType));
+
+    /// TODO(yschroeder97): Add support for null fields as keys in #812, then remove this check
+    if (this->joinFunction->getStamp()->nullable)
+    {
+        throw DisallowedNullField("The key field used for the join can not be null.\n");
+    }
 }
 
 std::shared_ptr<LogicalJoinDescriptor> LogicalJoinDescriptor::create(

@@ -14,8 +14,12 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <string>
+
 #include <Common/DataTypes/Numeric.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -30,11 +34,10 @@ class Float final : public Numeric
 public:
     /**
      * @brief Constructs a new Float type.
+     * @param nullable whether the type is nullable
      * @param bits the number of bits in which this type is represented.
-     * @param lowerBound the lower bound, which is contained in that float.
-     * @param upperBound the upper bound, which is contained in that float.
      */
-    explicit Float(int8_t bits) noexcept : Numeric(bits) { }
+    explicit Float(const bool nullable, const int8_t bits) noexcept : Numeric(nullable, bits) { }
 
     ~Float() override = default;
 
@@ -44,7 +47,7 @@ public:
     * @brief Calculates the joined data type between this data type and the other.
     * If they have no possible joined data type, the coined type is Undefined.
     * Floats, we can join with all numeric data types.
-    * @param other data type
+    * @param otherDataType data type
     * @return std::shared_ptr<DataType> joined data type
     */
     std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;

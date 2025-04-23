@@ -49,7 +49,6 @@ void Scan::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) cons
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
-        const auto view = std::string_view(reinterpret_cast<char*>(recordBuffer.getBuffer().value), 20);
         auto record = memoryProvider->readRecord(projections, recordBuffer, i);
         child->execute(executionCtx, record);
     }

@@ -1,0 +1,56 @@
+# name: join/JoinNull.test
+# description: Test join operator with null values
+# groups: [WindowOperators, Join]
+
+# Source definitions
+Source stream UINT64 id UINT64 value_NULLABLE UINT64 timestamp
+0,,0
+0,5,200
+1,,500
+1,3,700
+1,1,999
+0,7,1000
+1,9,1500
+0,,2100
+
+Source stream2 UINT64 id2 UINT64 value2_NULLABLE UINT64 timestamp
+0,0,100
+0,2,300
+1,,800
+1,6,900
+0,8,998
+0,10,1300
+1,,1800
+1,12,2500
+
+SINK sink UINT64 streamstream2$start UINT64 streamstream2$end UINT64 stream$id UINT64 stream$value_NULLABLE UINT64 stream$timestamp UINT64 stream2$id2 UINT64 stream2$value2_NULLABLE UINT64 stream2$timestamp
+
+# Query 1 - Join two streams
+SELECT *
+FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
+ON (id = id2)
+WINDOW TUMBLING (timestamp, size 1 sec)
+INTO sink;
+----
+0,1000,0,,0,0,0,100
+0,1000,0,,0,0,2,300
+0,1000,0,,0,0,8,998
+0,1000,0,5,200,0,0,100
+0,1000,0,5,200,0,2,300
+0,1000,0,5,200,0,8,998
+0,1000,1,,500,1,,800
+0,1000,1,,500,1,6,900
+0,1000,1,3,700,1,,800
+0,1000,1,3,700,1,6,900
+0,1000,1,1,999,1,,800
+0,1000,1,1,999,1,6,900
+1000,2000,0,7,1000,0,10,1300
+1000,2000,1,9,1500,1,,1800
+
+# Query 2
+SELECT *
+FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2)
+ON (value_NULLABLE = value2_NULLABLE)
+WINDOW TUMBLING (timestamp, size 1 sec)
+INTO sink;
+----

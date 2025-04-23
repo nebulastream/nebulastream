@@ -16,6 +16,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <nautilus/function.hpp>
+#include <nautilus/val_ptr.hpp>
+#include <val.hpp>
+
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -29,9 +34,6 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <nautilus/function.hpp>
-#include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -55,14 +57,22 @@ VarVal TupleBufferMemoryProvider::loadValue(
     }
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
-        const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
-        const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
         if (type->type->nullable)
         {
             const auto memRefNull = fieldReference + nautilus::val<uint64_t>(sizeof(uint32_t));
-            const auto null = Nautilus::Util::readValueFromMemRef<bool>(memRefNull);
-            return {VariableSizedData(textPtr), null};
+            if (const auto null = Nautilus::Util::readValueFromMemRef<bool>(memRefNull))
+            {
+                /// Field is nullable and null flag is true
+                return {VariableSizedData(fieldReference), true};
+            }
+            /// Field is nullable, but null flag is set to false
+            /// Retrieve child index from field ref, load the child buffer and return the text value
+            const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
+            const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
+            return {VariableSizedData(textPtr), false};
         }
+        const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
+        const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
         return {VariableSizedData(textPtr)};
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
@@ -91,15 +101,23 @@ VarVal TupleBufferMemoryProvider::storeValue(
 
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
-        const auto textValue = value.getRawValueAs<VariableSizedData>();
-        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
-        auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
-        *fieldReferenceCastedU32 = childIndex;
+        /// If the field is nullable, check if it actually null
+        /// If it is, there is no associated text value in a child buffer
+        /// In this case, we do not want to
         if (type->type->nullable)
         {
             const auto memRefNull = fieldReference + nautilus::val<uint64_t>(sizeof(uint32_t));
             *static_cast<nautilus::val<bool*>>(memRefNull) = value.isNull();
+            if (value.isNull())
+            {
+                return value;
+            }
         }
+
+        const auto textValue = value.getRawValueAs<VariableSizedData>();
+        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
+        auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
+        *fieldReferenceCastedU32 = childIndex;
         return value;
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());

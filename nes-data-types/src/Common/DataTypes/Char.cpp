@@ -13,20 +13,23 @@
 */
 
 #include <memory>
+
+#include <magic_enum/magic_enum.hpp>
+
 #include <Util/Common.hpp>
 #include <DataTypeRegistry.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
+
 Char::Char(const bool nullable) : DataType(nullable)
 {
 }
 
-bool Char::operator==(const NES::DataType& other) const
+bool Char::operator==(const DataType& other) const
 {
     return dynamic_cast<const Char*>(&other) != nullptr && nullable == other.nullable;
 }

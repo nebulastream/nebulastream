@@ -16,17 +16,18 @@
 #include <memory>
 #include <type_traits>
 #include <typeinfo>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+
 #include <fmt/format.h>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-
 
 namespace NES::Nautilus
 {
@@ -165,7 +166,8 @@ VarVal VarVal::castToType(const std::shared_ptr<PhysicalType>& type) const
 
 VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalType& type)
 {
-    try {
+    try
+    {
         const auto basicType = dynamic_cast<const BasicPhysicalType&>(type);
         /// Depending on the type, we have to read a boolean after the memRef that stores the null value
         nautilus::val<bool> null = false;
@@ -178,43 +180,44 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
         {
             case BasicPhysicalType::NativeType::BOOLEAN: {
                 return {Util::readValueFromMemRef<bool>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::INT_8: {
                 return {Util::readValueFromMemRef<int8_t>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::INT_16: {
                 return {Util::readValueFromMemRef<int16_t>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::INT_32: {
                 return {Util::readValueFromMemRef<int32_t>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::INT_64: {
                 return {Util::readValueFromMemRef<int64_t>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::UINT_8: {
                 return {Util::readValueFromMemRef<uint8_t>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::UINT_16: {
                 return {Util::readValueFromMemRef<uint16_t>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::UINT_32: {
                 return {Util::readValueFromMemRef<uint32_t>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::UINT_64: {
                 return {Util::readValueFromMemRef<uint64_t>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::FLOAT: {
                 return {Util::readValueFromMemRef<float>(memRef), null, type.type->nullable};
-            };
+            }
             case BasicPhysicalType::NativeType::DOUBLE: {
                 return {Util::readValueFromMemRef<double>(memRef), null, type.type->nullable};
-            };
+            }
             default: {
                 throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", type.toString()));
-            };
+            }
         }
     }
-    catch (const std::bad_cast&) {
+    catch (const std::bad_cast&)
+    {
         throw UnsupportedOperation(fmt::format("Type: {} is not a basic type", type.toString()));
     }
 }
@@ -225,27 +228,23 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
         [&os, varVal]<typename T>(T& value) -> nautilus::val<std::ostream>&
         {
             /// If the T is of type uint8_t or int8_t, we want to convert it to an integer to print it as an integer and not as a char
-            using Tremoved = std::remove_cvref_t<T>;
+            using RemovedT = std::remove_cvref_t<T>;
             const auto nullString = varVal.null ? " (null)" : "";
             if constexpr (
-                std::is_same_v<Tremoved, nautilus::val<uint8_t>> || std::is_same_v<Tremoved, nautilus::val<int8_t>>
-                || std::is_same_v<Tremoved, nautilus::val<unsigned char>> || std::is_same_v<Tremoved, nautilus::val<char>>)
+                std::is_same_v<RemovedT, nautilus::val<uint8_t>> || std::is_same_v<RemovedT, nautilus::val<int8_t>>
+                || std::is_same_v<RemovedT, nautilus::val<unsigned char>> || std::is_same_v<RemovedT, nautilus::val<char>>)
             {
                 return os.operator<<(static_cast<nautilus::val<int>>(value)) << nullString;
             }
-            else if constexpr (requires(typename T::basic_type type) { os << (nautilus::val<typename T::basic_type>(type)); })
+            if constexpr (requires(typename T::basic_type type) { os << (nautilus::val<typename T::basic_type>(type)); })
             {
                 return os.operator<<(nautilus::val<typename T::basic_type>(value)) << nullString;
             }
-            else if constexpr (requires { operator<<(os, value); })
+            if constexpr (requires { operator<<(os, value); })
             {
                 return operator<<(os, value) << nullString;
             }
-            else
-            {
-                throw UnsupportedOperation();
-                return os;
-            }
+            throw UnsupportedOperation();
         },
         varVal.value);
 }

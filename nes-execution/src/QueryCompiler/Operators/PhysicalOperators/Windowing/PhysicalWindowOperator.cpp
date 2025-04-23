@@ -142,8 +142,6 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
         {
             const auto aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
 
-            /// TODO #699 As long as we do not support count(*) and avg(*), we always do not include null values
-            constexpr bool includeNullValues = false;
             switch (descriptor->getType())
             {
                 case Windowing::WindowAggregationDescriptor::Type::Avg: {
@@ -154,8 +152,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                         physicalFinalType,
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier,
-                        countType,
-                        includeNullValues));
+                        countType));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Sum: {
@@ -168,8 +165,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                         physicalInputType,
                         physicalFinalType,
                         std::move(aggregationInputExpression),
-                        aggregationResultFieldIdentifier,
-                        includeNullValues));
+                        aggregationResultFieldIdentifier));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Max: {
@@ -191,8 +187,7 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                         physicalFinalType,
                         std::move(aggregationInputExpression),
                         aggregationResultFieldIdentifier,
-                        memoryProvider,
-                        includeNullValues));
+                        memoryProvider));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::None: {

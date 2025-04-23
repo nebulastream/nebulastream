@@ -26,7 +26,6 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
-
 namespace NES::Windowing
 {
 
@@ -35,6 +34,7 @@ AvgAggregationDescriptor::AvgAggregationDescriptor(const std::shared_ptr<NodeFun
 {
     this->aggregationType = Type::Avg;
 }
+
 AvgAggregationDescriptor::AvgAggregationDescriptor(const std::shared_ptr<NodeFunction>& field, const std::shared_ptr<NodeFunction>& asField)
     : WindowAggregationDescriptor(field, asField)
 {
@@ -61,28 +61,27 @@ void AvgAggregationDescriptor::inferStamp(const Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
+    if (!NES::Util::instanceOf<Numeric>(getInputStamp()))
     {
         NES_FATAL_ERROR("AvgAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
 
     /// As we are performing essentially a sum and a count, we need to cast the sum to either uint64_t, int64_t or double to avoid overflow
-    if (const auto integerDataType = NES::Util::as_if<Integer>(onField->getStamp()); integerDataType)
+    if (const auto integerDataType = NES::Util::as_if<Integer>(getInputStamp()); integerDataType)
     {
         if (integerDataType->getIsSigned())
         {
-            onField->setStamp(DataTypeProvider::provideDataType(LogicalType::INT64));
+            onField->setStamp(DataTypeProvider::provideDataType(LogicalType::INT64, integerDataType->nullable));
         }
         else
         {
-            onField->setStamp(DataTypeProvider::provideDataType(LogicalType::UINT64));
+            onField->setStamp(DataTypeProvider::provideDataType(LogicalType::UINT64, integerDataType->nullable));
         }
     }
     else
     {
-        onField->setStamp(DataTypeProvider::provideDataType(LogicalType::FLOAT64));
+        onField->setStamp(DataTypeProvider::provideDataType(LogicalType::FLOAT64, getInputStamp()->nullable));
     }
-
 
     ///Set fully qualified name for the as Field
     const auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
@@ -111,9 +110,10 @@ std::shared_ptr<DataType> AvgAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
+
 std::shared_ptr<DataType> AvgAggregationDescriptor::getFinalAggregateStamp()
 {
-    return DataTypeProvider::provideDataType(LogicalType::FLOAT64);
+    return DataTypeProvider::provideDataType(LogicalType::FLOAT64, asField->getStamp()->nullable);
 }
 
 }

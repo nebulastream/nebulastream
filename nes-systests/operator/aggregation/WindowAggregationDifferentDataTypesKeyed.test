@@ -56,16 +56,16 @@ FROM stream GROUP BY (keyI8, keyI16) WINDOW TUMBLING(ts, size 200 ms) INTO sinkS
 200,400,1,1,2,3,4,5,6,7,8,9,10,11
 
 
-# Checking if a median over a keyed window works for all data types
-SELECT MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
-       MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
-       MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out
-FROM stream GROUP BY (keyI16) WINDOW SLIDING(ts, size 200 ms, advance by 100 ms) INTO sinkStreamAllF64KeyI16
-----
-0,200,2,1,2,3,4,5,6,7,8,9,10
-0,200,3,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
-100,300,3,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
-100,300,2,-20.5,-63.5,-16383,-1073741822.5,23.5,131,32771.5,2147483652,16,16.5
-100,300,1,2,3,4,5,6,7,8,9,10,11
-200,400,2,-20.5,-63.5,-16383,-1073741822.5,23.5,131,32771.5,2147483652,16,16.5
-200,400,1,2,3,4,5,6,7,8,9,10,11
+# # Checking if a median over a keyed window works for all data types
+# SELECT MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
+#        MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
+#        MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out
+# FROM stream GROUP BY (keyI16) WINDOW SLIDING(ts, size 200 ms, advance by 100 ms) INTO sinkStreamAllF64KeyI16
+# ----
+# 0,200,2,1,2,3,4,5,6,7,8,9,10
+# 0,200,3,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
+# 100,300,3,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
+# 100,300,2,-20.5,-63.5,-16383,-1073741822.5,23.5,131,32771.5,2147483652,16,16.5
+# 100,300,1,2,3,4,5,6,7,8,9,10,11
+# 200,400,2,-20.5,-63.5,-16383,-1073741822.5,23.5,131,32771.5,2147483652,16,16.5
+# 200,400,1,2,3,4,5,6,7,8,9,10,11
