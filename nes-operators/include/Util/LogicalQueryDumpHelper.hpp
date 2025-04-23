@@ -52,6 +52,7 @@ public:
 private:
     FRIEND_TEST(LogicalQueryDumpHelperTest, printQuerySourceFilterMapSink);
     FRIEND_TEST(LogicalQueryDumpHelperTest, printQueryMapFilterTwoSinks);
+    FRIEND_TEST(LogicalQueryDumpHelperTest, printQuerySourceTwoSinksExtraLong);
     std::ostream& out;
 
     struct PrintNode;
@@ -67,15 +68,12 @@ private:
         bool verticalBranch;
         OperatorId id;
     };
-
     /// Holds information on each node of that layer in the dag and its cumulative width.
     struct Layer
     {
         std::vector<std::shared_ptr<PrintNode>> nodes;
-        /// TODO #685 If this member is still not used after closing this issue, remove it.
         size_t layerWidth;
     };
-
     std::vector<Layer> processedDag;
     struct QueueItem
     {
