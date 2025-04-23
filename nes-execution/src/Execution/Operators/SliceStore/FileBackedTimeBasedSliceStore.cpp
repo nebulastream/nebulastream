@@ -45,6 +45,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     , sequenceNumber(SequenceNumber::INITIAL)
     , numberOfActiveOrigins(numberOfInputOrigins)
 {
+    //measureReadAndWriteExecution();
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
@@ -382,9 +383,6 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     for (auto it = sliceSizes.rbegin(); it != sliceSizes.rend() && it->first > 0; ++it)
     {
         // TODO predictiveWrite()
-        // calculate/measure how long it takes to write the state size of the slice to ssd
-        // based on current watermark and system throughput calculate when the given memory limit is reached
-        // assuming throughput stays the same during runtime and this code is reached periodically, calculate how much state must be written out every time this function is called
         accumulatedStateSize += it->first;
 
         slicesToBeOffloaded.emplace_back(it->second, USE_FILE_LAYOUT);
@@ -418,9 +416,6 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     {
         const auto& [_, slice] = *slicesLocked->find(sliceEnd);
         // TODO predictiveRead()
-        // calculate/measure how long it takes to read an average slice back from main memory
-        // based on current watermark and system throughput read all slices back that are ready for probing in the calculated amount of time
-        // read slice for given threadId only from file? or lock this slice for all threads and read all back?
     }
 
     /// Read all predicted slices back to main memory

@@ -81,6 +81,8 @@ public:
         uint64_t numberOfWorkerThreads,
         const SliceStoreMetaData& metaData);
 
+    //void measureReadAndWriteExecution();
+
 private:
     void readSliceFromFiles(
         const std::shared_ptr<Slice>& slice,
