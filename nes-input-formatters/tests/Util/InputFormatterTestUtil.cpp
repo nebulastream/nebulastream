@@ -158,11 +158,15 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), -1);
 }
 
-std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> createInputFormatterTask(const Schema& schema)
+std::shared_ptr<InputFormatters::InputFormatterTaskPipeline>
+createInputFormatterTask(const Schema& schema, std::string formatterType, const bool hasSpanningTuples)
 {
     const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", "|"}};
-    auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+        {"type", std::move(formatterType)},
+        {"tupleDelimiter", "\n"},
+        {"fieldDelimiter", "|"},
+        {"hasSpanningTuples", (hasSpanningTuples) ? "true" : "false"}};
+    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
 
     return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
 }

@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -37,6 +38,9 @@
 #include <SequenceShredder.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Util/Common.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 
 namespace NES::InputFormatters
@@ -80,11 +84,18 @@ public:
 
     explicit InputFormatterTask(
         const OriginId originId,
-        std::unique_ptr<InputFormatter<FieldAccessFunctionType, FormatterType::UsesInternalFormat>> inputFormatter,
+        std::unique_ptr<InputFormatter<FieldAccessFunctionType, FormatterType::UsesNativeFormat>> inputFormatter,
         const Schema& schema,
         const Sources::ParserConfig& parserConfig)
         : originId(originId), inputFormatter(std::move(inputFormatter))
     {
+        const auto schemaContainsVarSized = std::ranges::any_of(
+            schema.getFieldNames(),
+            [&schema](const auto& fieldName)
+            { return Util::instanceOf<VariableSizedDataType>(schema.getFieldByName(fieldName).value()->getDataType()); });
+        PRECONDITION(
+            not(FormatterType::UsesNativeFormat and schemaContainsVarSized and HasSpanningTuple),
+            "Not supporting variable sized data for the internal format with spanning tuples.");
         /// Only if we need to resolve spanning tuples, we need the SequenceShredder
         this->sequenceShredder = (HasSpanningTuple) ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr;
         this->tupleMetaData.sizeOfTupleInBytes = schema.getSchemaSizeInBytes();
@@ -96,6 +107,7 @@ public:
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
         /// field number, load the correct function for parsing from the vector.
+        size_t priorFieldOffset = 0;
         for (const std::shared_ptr<AttributeField>& field : schema)
         {
             const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -110,7 +122,9 @@ public:
             {
                 this->parseFunctions.emplace_back(RawInputDataParser::getBasicStringParseFunction());
             }
-            tupleMetaData.fieldSizesInBytes.emplace_back(physicalType->size());
+            this->tupleMetaData.fieldSizesInBytes.emplace_back(physicalType->size());
+            this->tupleMetaData.fieldOffsetsInBytes.emplace_back() = priorFieldOffset + physicalType->size();
+            priorFieldOffset = this->tupleMetaData.fieldOffsetsInBytes.back();
         }
     }
     ~InputFormatterTask() = default;
@@ -135,13 +149,13 @@ public:
     }
 
     void executeTask(const Memory::TupleBuffer&, Runtime::Execution::PipelineExecutionContext&)
-    requires(not(FormatterType::UsesInternalFormat) and not(HasSpanningTuple))
+    requires(not(FormatterType::UsesNativeFormat) and not(HasSpanningTuple))
     {
         throw NotImplemented("The InputFormatterTask does not explicitly support non-internal formats without spanning tuples yet.");
     }
 
     void executeTask(const Memory::TupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pec)
-    requires(FormatterType::UsesInternalFormat and not(HasSpanningTuple))
+    requires(FormatterType::UsesNativeFormat and not(HasSpanningTuple))
     {
         /// If the format has fixed size tuple and no spanning tuples (give the assumption that tuples are aligned with the start of the buffers)
         /// the InputFormatterTask does not need to do anything.
@@ -160,7 +174,7 @@ public:
     }
 
     void executeTask(const Memory::TupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pec)
-    requires(FormatterType::UsesInternalFormat and HasSpanningTuple)
+    requires(FormatterType::UsesNativeFormat and HasSpanningTuple)
     {
         /// Check if the current sequence number is in the range of the ring buffer of the sequence shredder.
         /// If not (should very rarely be the case), we put the task back.
@@ -276,7 +290,7 @@ public:
     }
 
     void executeTask(const Memory::TupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pec)
-    requires(not(FormatterType::UsesInternalFormat) and HasSpanningTuple)
+    requires(not(FormatterType::UsesNativeFormat) and HasSpanningTuple)
     {
         /// Check if the current sequence number is in the range of the ring buffer of the sequence shredder.
         /// If not (should very rarely be the case), we put the task back.
@@ -325,7 +339,7 @@ public:
 
 private:
     OriginId originId;
-    std::unique_ptr<InputFormatter<FieldAccessFunctionType, FormatterType::UsesInternalFormat>>
+    std::unique_ptr<InputFormatter<FieldAccessFunctionType, FormatterType::UsesNativeFormat>>
         inputFormatter; /// unique_ptr, because InputFormatter is abstract class
     std::unique_ptr<SequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
     std::vector<RawInputDataParser::ParseFunctionSignature> parseFunctions;

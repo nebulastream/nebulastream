@@ -25,7 +25,7 @@
 namespace NES::InputFormatters
 {
 
-class CSVInputFormatter final : public InputFormatter<FieldOffsets, /* IsInternalFormat */ false>
+class CSVInputFormatter final : public InputFormatter<FieldOffsets, /* IsNativeFormat */ false>
 {
 public:
     explicit CSVInputFormatter(Sources::ParserConfig config, size_t numberOfFieldsInSchema);

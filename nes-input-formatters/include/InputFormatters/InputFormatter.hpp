@@ -29,8 +29,9 @@ struct TupleMetaData
 {
     std::string tupleDelimiter;
     std::string fieldDelimiter;
-    size_t sizeOfTupleInBytes;
+    size_t sizeOfTupleInBytes{};
     std::vector<size_t> fieldSizesInBytes;
+    std::vector<size_t> fieldOffsetsInBytes;
 };
 
 struct BufferData
@@ -62,11 +63,11 @@ struct BufferData
 /// The offsets allow the InputFormatterTask to parse only the fields that it needs to for the particular query.
 /// @Note All InputFormatter implementations must be thread-safe. NebulaStream's query engine concurrently executes InputFormatterTasks.
 ///       Thus, the InputFormatterTask calls the interface functions of the InputFormatter concurrently.
-template <typename FieldAccessFunctionType, bool IsInternalFormat>
+template <typename FieldAccessFunctionType, bool IsNativeFormat>
 class InputFormatter
 {
 public:
-    static constexpr bool UsesInternalFormat = IsInternalFormat;
+    static constexpr bool UsesNativeFormat = IsNativeFormat;
     InputFormatter() = default;
     virtual ~InputFormatter() = default;
 
