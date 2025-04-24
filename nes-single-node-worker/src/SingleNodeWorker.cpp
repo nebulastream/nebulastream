@@ -34,7 +34,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
     : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
           configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , listener(std::make_shared<Runtime::PrintingStatisticListener>(
-          fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", std::chrono::system_clock::now(), ::getpid())))
+          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
     , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
