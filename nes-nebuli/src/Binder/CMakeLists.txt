@@ -10,6 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Optimizer)
-add_subdirectory(QueryValidation)
-add_subdirectory(Binder)
+add_source_files(nes-binder
+        SQLStatementBinder.cpp
+)

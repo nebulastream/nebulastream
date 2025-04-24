@@ -42,7 +42,27 @@ DISABLE_WARNING(-Wunused-parameter)
 
 singleStatement: statement ';'* EOF;
 
-statement: query;
+statement: query | createStatement | dropStatement | showStatement;
+
+createStatement: CREATE createDefinition;
+createDefinition: createSourceDefinition | createSinkDefinition;
+createSourceDefinition: SOURCE sourceName=identifier schemaDefinition fromQuery?;
+createSinkDefinition: SINK sinkName=identifier schemaDefinition;
+
+schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
+columnDefinition: IDENTIFIER typeDefinition;
+
+typeDefinition: DATA_TYPE;
+
+fromQuery: AS query;
+
+dropStatement: DROP dropSubject;
+dropSubject: dropQuery | dropSource;
+dropQuery: QUERY id=IDENTIFIER;
+dropSource: SOURCE name=IDENTIFIER;
+
+showStatement: SHOW DB_OBJECT_TYPE (FORMAT format=('TEXT' | 'JSON'))?;
+
 
 query : queryTerm queryOrganization;
 
@@ -489,6 +509,36 @@ UNRECOGNIZED
     : .
     ;
 
+DB_OBJECT_TYPE : SOURCES | QUERIES;
+
+SOURCES: 'SOURCES' | 'sources';
+QUERIES: 'QUERIES' | 'queries';
+
+
+DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE | CUSTOM_TYPE;
+
+INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
+INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
+INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
+TINY_INT_TYPE: 'TINYINT';
+SMALL_INT_TYPE: 'SMALLINT';
+NORMAL_INT_TYPE: 'INT' | 'INTEGER';
+BIG_INT_TYPE: 'BIGINT';
+FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
+CHAR_TYPE: 'CHAR';
+VARSIZED_TYPE: 'VARSIZED';
+BOOLEAN_TYPE: 'BOOLEAN';
+CUSTOM_TYPE: IDENTIFIER;
+
+UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED';
+
+
+
+SHOW : 'SHOW';
+FORMAT : 'FORMAT';
+CREATE : 'CREATE';
+SOURCE : 'SOURCE';
+SINK : 'SINK';
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
 

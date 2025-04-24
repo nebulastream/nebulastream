@@ -73,6 +73,7 @@ EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not
 EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was not found in the query description")
 EXCEPTION(OperatorNotFound, 2205, "operator not found")
 EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
+EXCEPTION(InvalidStatement, 2207, "invalid statement")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
