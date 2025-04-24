@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <sstream>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/Operator.hpp>
+
+#include <API/Schema.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 
 namespace NES
@@ -27,7 +28,7 @@ PhysicalSource::PhysicalSource(std::string logicalSourceName, Sources::SourceDes
 
 std::shared_ptr<PhysicalSource> PhysicalSource::create(Sources::SourceDescriptor&& sourceDescriptor)
 {
-    const auto logicalSourceName = sourceDescriptor.logicalSourceName;
+    const auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
     return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, std::move(sourceDescriptor)));
 }
 
@@ -49,10 +50,10 @@ std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescripto
     auto copyOfConfig = sourceDescriptor.config;
     return std::make_unique<Sources::SourceDescriptor>(
         std::move(schema),
-        sourceDescriptor.logicalSourceName,
-        sourceDescriptor.sourceType,
-        sourceDescriptor.numberOfBuffersInSourceLocalBufferPool,
-        sourceDescriptor.parserConfig,
+        sourceDescriptor.getLogicalSourceName(),
+        sourceDescriptor.getSourceType(),
+        sourceDescriptor.getNumberOfBuffersInSourceLocalBufferPool(),
+        sourceDescriptor.getParserConfig(),
         std::move(copyOfConfig));
 }
 }

@@ -104,8 +104,7 @@ std::ostream& CSVInputFormatter::toString(std::ostream& os) const
                "CSVInputFormatter(tupleDelimiter: {}, fieldDelimiter: {})", this->config.tupleDelimiter, this->config.fieldDelimiter);
 }
 
-InputFormatterRegistryReturnType
-InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(const InputFormatterRegistryArguments& arguments)
+InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments arguments)
 {
     return std::make_unique<CSVInputFormatter>(arguments);
 }

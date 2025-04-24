@@ -57,7 +57,7 @@ std::ostream& SourceDescriptorLogicalOperator::toDebugString(std::ostream& os) c
 
 std::ostream& SourceDescriptorLogicalOperator::toQueryPlanString(std::ostream& os) const
 {
-    return os << fmt::format("SOURCE({}, type: {})", sourceDescriptor->logicalSourceName, sourceDescriptor->sourceType);
+    return os << fmt::format("SOURCE({}, type: {})", sourceDescriptor->getLogicalSourceName(), sourceDescriptor->getSourceType());
 }
 
 const Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const
@@ -72,8 +72,8 @@ std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getS
 
 bool SourceDescriptorLogicalOperator::inferSchema()
 {
-    inputSchema = sourceDescriptor->schema;
-    outputSchema = sourceDescriptor->schema;
+    inputSchema = sourceDescriptor->getSchema();
+    outputSchema = sourceDescriptor->getSchema();
     return true;
 }
 

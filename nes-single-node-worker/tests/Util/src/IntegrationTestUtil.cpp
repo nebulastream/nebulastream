@@ -462,17 +462,17 @@ void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQu
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == "File")
+            if (sourceDescriptor.getSourceType() == "File")
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
                 Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
                 configUpdated.at("filePath") = newInputFileName;
                 auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
-                    sourceDescriptor.schema,
-                    sourceDescriptor.logicalSourceName,
-                    sourceDescriptor.sourceType,
-                    sourceDescriptor.numberOfBuffersInSourceLocalBufferPool,
-                    sourceDescriptor.parserConfig,
+                    sourceDescriptor.getSchema(),
+                    sourceDescriptor.getLogicalSourceName(),
+                    sourceDescriptor.getSourceType(),
+                    sourceDescriptor.getNumberOfBuffersInSourceLocalBufferPool(),
+                    sourceDescriptor.getParserConfig(),
                     std::move(configUpdated));
 
                 const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
@@ -500,7 +500,7 @@ void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPla
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == "TCP")
+            if (sourceDescriptor.getSourceType() == "TCP")
             {
                 if (sourceNumber == queryPlanTCPSourceCounter)
                 {
@@ -508,11 +508,11 @@ void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPla
                     Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
                     configUpdated.at("socketPort") = static_cast<uint32_t>(mockTcpServerPort);
                     auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
-                        sourceDescriptor.schema,
-                        sourceDescriptor.logicalSourceName,
-                        sourceDescriptor.sourceType,
-                        sourceDescriptor.numberOfBuffersInSourceLocalBufferPool,
-                        sourceDescriptor.parserConfig,
+                        sourceDescriptor.getSchema(),
+                        sourceDescriptor.getLogicalSourceName(),
+                        sourceDescriptor.getSourceType(),
+                        sourceDescriptor.getNumberOfBuffersInSourceLocalBufferPool(),
+                        sourceDescriptor.getParserConfig(),
                         std::move(configUpdated));
 
                     const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(

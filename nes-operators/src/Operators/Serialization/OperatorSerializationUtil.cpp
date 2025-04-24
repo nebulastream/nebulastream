@@ -944,16 +944,16 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     const auto serializedSourceDescriptor
         = SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor().New(); /// cleaned up by protobuf
 
-    SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, serializedSourceDescriptor->mutable_sourceschema());
-    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.logicalSourceName);
-    serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
-    serializedSourceDescriptor->set_numberofbuffersinsourcelocalbufferpool(sourceDescriptor.numberOfBuffersInSourceLocalBufferPool);
+    SchemaSerializationUtil::serializeSchema(sourceDescriptor.getSchema(), serializedSourceDescriptor->mutable_sourceschema());
+    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.getLogicalSourceName());
+    serializedSourceDescriptor->set_sourcetype(sourceDescriptor.getSourceType());
+    serializedSourceDescriptor->set_numberofbuffersinsourcelocalbufferpool(sourceDescriptor.getNumberOfBuffersInSourceLocalBufferPool());
 
     /// Serialize parser config.
     auto* const serializedParserConfig = ParserConfig().New();
-    serializedParserConfig->set_type(sourceDescriptor.parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(sourceDescriptor.parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(sourceDescriptor.parserConfig.fieldDelimiter);
+    serializedParserConfig->set_type(sourceDescriptor.getParserConfig().parserType);
+    serializedParserConfig->set_tupledelimiter(sourceDescriptor.getParserConfig().tupleDelimiter);
+    serializedParserConfig->set_fielddelimiter(sourceDescriptor.getParserConfig().fieldDelimiter);
     serializedSourceDescriptor->set_allocated_parserconfig(serializedParserConfig);
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.

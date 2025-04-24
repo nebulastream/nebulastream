@@ -14,12 +14,15 @@
 
 #pragma once
 
+#include <memory>
 #include <ostream>
 #include <string>
+
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Sources
@@ -32,8 +35,9 @@ struct ParserConfig
     std::string fieldDelimiter;
 };
 
-struct SourceDescriptor : public Configurations::Descriptor
+class SourceDescriptor : public Configurations::Descriptor
 {
+public:
     /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
     /// Given an invalid value, the NodeEngine takes its configured value. Otherwise the source-specific configuration takes priority.
     static constexpr int INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL = -1;
@@ -46,14 +50,21 @@ struct SourceDescriptor : public Configurations::Descriptor
         int numberOfBuffersInSourceLocalBufferPool,
         ParserConfig parserConfig,
         Configurations::DescriptorConfig::Config&& config);
-
     ~SourceDescriptor() = default;
-    const std::shared_ptr<Schema> schema;
-    const std::string logicalSourceName;
-    const std::string sourceType;
-    const int numberOfBuffersInSourceLocalBufferPool;
-    /// is const data member, because 'SourceDescriptor' should be immutable and 'const' communicates more clearly then private+getter
-    const ParserConfig parserConfig;
+
+    std::shared_ptr<Schema> getSchema() const { return this->schema; }
+    [[nodiscard]] std::string getLogicalSourceName() const { return this->logicalSourceName; }
+    [[nodiscard]] std::string getSourceType() const { return this->sourceType; }
+    [[nodiscard]] ParserConfig getParserConfig() const { return this->parserConfig; }
+    [[nodiscard]] int getNumberOfBuffersInSourceLocalBufferPool() const { return this->numberOfBuffersInSourceLocalBufferPool; }
+
+private:
+    /// The below members should remain immutable, i.e., there should be no setters or other functions that change the members
+    std::shared_ptr<Schema> schema;
+    std::string logicalSourceName;
+    std::string sourceType;
+    int numberOfBuffersInSourceLocalBufferPool;
+    ParserConfig parserConfig;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
@@ -61,12 +72,4 @@ struct SourceDescriptor : public Configurations::Descriptor
 
 }
 
-/// Specializing the fmt ostream_formatter to accept SourceDescriptor objects.
-/// Allows to call fmt::format("SourceDescriptor: {}", SourceDescriptorObject); and therefore also works with our logging.
-namespace fmt
-{
-template <>
-struct formatter<NES::Sources::SourceDescriptor> : ostream_formatter
-{
-};
-}
+FMT_OSTREAM(NES::Sources::SourceDescriptor);
