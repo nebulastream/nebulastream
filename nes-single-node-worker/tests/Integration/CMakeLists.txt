@@ -79,3 +79,18 @@ target_link_libraries(
         Boost::asio
         nes-single-node-worker-test-util
 )
+
+add_nes_unit_test(single-node-integration-tests-generator SingleNodeIntegrationTestsGenerator.cpp ../../src/GrpcService.cpp ../../src/SingleNodeWorker.cpp)
+target_include_directories(single-node-integration-tests-generator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include/ ${CMAKE_CURRENT_SOURCE_DIR}/../Util/include/)
+target_link_libraries(
+        single-node-integration-tests-generator
+        nes-grpc
+        nes-runtime
+        nes-execution
+        nes-single-node-worker-test-util
+)
+
+serialize_query_with_nebuli(single-node-integration-tests-generator "qOneCSVSourceAndOneTCPSourceWithFilter")
+serialize_query_with_nebuli(single-node-integration-tests-generator "qOneGeneratorSource")
+serialize_query_with_nebuli(single-node-integration-tests-generator "qOneGeneratorSourceStopAll")
+serialize_query_with_nebuli(single-node-integration-tests-generator "qOneGeneratorSourceStopOne")
