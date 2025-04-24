@@ -125,7 +125,7 @@ QueryPlanBuilder::addInferModel(std::string const& model,
     std::vector<std::shared_ptr<NodeFunction>> const& outputFields,
     std::shared_ptr<QueryPlan> queryPlan)
 {
-    NES_TRACE("QueryPlanBuilder: add map inferModel to query plan");
+    NES_TRACE("QueryPlanBuilder: add inferModel to query plan");
     const std::shared_ptr<Operator> op = std::make_shared<NES::InferModel::LogicalInferModelOperator>(
         model, inputFields, outputFields, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);

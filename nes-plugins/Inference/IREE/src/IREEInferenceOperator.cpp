@@ -56,11 +56,11 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
         nautilus::invoke(addValueToModel<float>, nautilus::val<int>(i), value.cast<nautilus::val<float>>(), inferModelHandler);
     }
 
-    nautilus::invoke(applyModel, inferModelHandler);
+    invoke(applyModel, inferModelHandler);
 
     for (int i = 0; i < outputFieldNames.size(); i++)
     {
-        VarVal result = VarVal(nautilus::invoke(getValueFromModel, nautilus::val<int>(i), inferModelHandler));
+        auto result = VarVal(invoke(getValueFromModel, nautilus::val<int>(i), inferModelHandler));
         record.write(outputFieldNames.at(i), result);
     }
 

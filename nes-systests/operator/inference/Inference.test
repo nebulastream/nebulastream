@@ -3,10 +3,12 @@
 # groups: [Inference]
 
 # Source definitions
-SourceCSV iris FLOAT32 f1 FLOAT32 f2 FLOAT32 f3 FLOAT32 f4 TESTDATA/iris.csv
-SourceCSV inspections FLOAT32 f1 FLOAT32 f2 FLOAT32 f3 FLOAT32 f4 FLOAT32 f5 TESTDATA/inspections.csv
+SourceCSV iris FLOAT64 f1 FLOAT64 f2 FLOAT64 f3 FLOAT64 f4 TESTDATA/iris.csv
+SourceCSV irisTs FLOAT64 f1 FLOAT64 f2 FLOAT64 f3 FLOAT64 f4 UINT64 f5 UINT64 ts TESTDATA/irisTs.csv
+SourceCSV inspections FLOAT64 f1 FLOAT64 f2 FLOAT64 f3 FLOAT64 f4 FLOAT64 f5 TESTDATA/inspections.csv
 
 SINK irisSink FLOAT32 iris$p1 FLOAT32 iris$p2 FLOAT32 iris$p3
+SINK irisTsSink UINT64 irisTs$start UINT64 irisTs$end UINT64 irisTs$f5 FLOAT64 irisTs$f1 FLOAT64 irisTs$f2 FLOAT64 irisTs$f3 FLOAT64 irisTs$f4 FLOAT32 irisTs$p1 FLOAT32 irisTs$p2 FLOAT32 irisTs$p3
 SINK inspectionsSink FLOAT32 inspections$v1
 SINK commonSink FLOAT32 inspections$v1 FLOAT32 inspections$p1 FLOAT32 inspections$p2 FLOAT32 inspections$p3
 
@@ -35,3 +37,14 @@ FROM inspections
 INTO commonSink
 ----
 18.940191 1.0 0.0 0.0
+
+# Inference on the aggregated fields
+SELECT INFER_MODEL("/home/gaturchenko/CLionProjects/nebulastream-public/nes-plugins/Inference/IREE/models/model_iris.mlir", (AVG(f1), MIN(f2), MAX(f3), MEDIAN(f4)), (p1, p2, p3))
+FROM irisTs
+GROUP BY f5
+WINDOW TUMBLING(ts, size 100 ms)
+INTO irisTsSink
+----
+0 100 2 6.588 2.2 6.9 2.0 0.003474 0.23856 0.757966
+0 100 1 5.936 2.0 5.1 1.3 0.017789 0.303835 0.678376
+0 100 0 5.006 2.3 1.9 0.2 0.697994 0.172025 0.129981
