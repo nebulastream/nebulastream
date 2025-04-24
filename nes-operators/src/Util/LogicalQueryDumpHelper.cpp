@@ -349,56 +349,56 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
     switch (toPrint)
     {
         case BranchCase::ParentFirst:
-            switch (output[position])
+            switch (output.at(position))
             {
                 default:
                 case ' ':
-                    output[position] = PARENT_FIRST_BRANCH;
+                    output.at(position) = PARENT_FIRST_BRANCH;
                     break;
                 case NO_CONNECTOR_BRANCH:
-                    output[position] = PARENT_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_MIDDLE_BRANCH;
                     break;
                 case ONLY_CONNECTOR:
                 case CHILD_FIRST_BRANCH:
-                    output[position] = PARENT_CHILD_FIRST_BRANCH;
+                    output.at(position) = PARENT_CHILD_FIRST_BRANCH;
                     break;
                 case CHILD_MIDDLE_BRANCH:
-                    output[position] = PARENT_CHILD_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_CHILD_MIDDLE_BRANCH;
                     break;
                 case CHILD_LAST_BRANCH:
-                    output[position] = PARENT_CHILD_LAST_BRANCH;
+                    output.at(position) = PARENT_CHILD_LAST_BRANCH;
                     break;
                 case PARENT_FIRST_BRANCH:
                 case PARENT_MIDDLE_BRANCH:
                     /// What we want is already there
                     break;
                 case PARENT_LAST_BRANCH:
-                    output[position] = PARENT_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_MIDDLE_BRANCH;
                     break;
             }
             break;
         case BranchCase::ParentLast:
-            switch (output[position])
+            switch (output.at(position))
             {
                 default:
                 case ' ':
-                    output[position] = PARENT_LAST_BRANCH;
+                    output.at(position) = PARENT_LAST_BRANCH;
                     break;
                 case NO_CONNECTOR_BRANCH:
-                    output[position] = PARENT_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_MIDDLE_BRANCH;
                     break;
                 case CHILD_FIRST_BRANCH:
-                    output[position] = PARENT_CHILD_FIRST_BRANCH;
+                    output.at(position) = PARENT_CHILD_FIRST_BRANCH;
                     break;
                 case CHILD_MIDDLE_BRANCH:
-                    output[position] = PARENT_CHILD_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_CHILD_MIDDLE_BRANCH;
                     break;
                 case ONLY_CONNECTOR:
                 case CHILD_LAST_BRANCH:
-                    output[position] = PARENT_CHILD_LAST_BRANCH;
+                    output.at(position) = PARENT_CHILD_LAST_BRANCH;
                     break;
                 case PARENT_FIRST_BRANCH:
-                    output[position] = PARENT_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_MIDDLE_BRANCH;
                     break;
                 case PARENT_MIDDLE_BRANCH:
                 case PARENT_LAST_BRANCH:
@@ -407,67 +407,67 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
             }
             break;
         case BranchCase::ChildFirst:
-            switch (output[position])
+            switch (output.at(position))
             {
                 default:
                 case ' ':
-                    output[position] = CHILD_FIRST_BRANCH;
+                    output.at(position) = CHILD_FIRST_BRANCH;
                     break;
                 case NO_CONNECTOR_BRANCH:
-                    output[position] = CHILD_MIDDLE_BRANCH;
+                    output.at(position) = CHILD_MIDDLE_BRANCH;
                     break;
                 case PARENT_FIRST_BRANCH:
-                    output[position] = PARENT_CHILD_FIRST_BRANCH;
+                    output.at(position) = PARENT_CHILD_FIRST_BRANCH;
                     break;
                 case PARENT_MIDDLE_BRANCH:
-                    output[position] = PARENT_CHILD_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_CHILD_MIDDLE_BRANCH;
                     break;
                 case PARENT_LAST_BRANCH:
-                    output[position] = PARENT_CHILD_LAST_BRANCH;
+                    output.at(position) = PARENT_CHILD_LAST_BRANCH;
                     break;
                 case CHILD_LAST_BRANCH:
-                    output[position] = CHILD_MIDDLE_BRANCH;
+                    output.at(position) = CHILD_MIDDLE_BRANCH;
                     break;
             }
             break;
         case BranchCase::ChildLast:
-            switch (output[position])
+            switch (output.at(position))
             {
                 default:
                 case ' ':
-                    output[position] = CHILD_LAST_BRANCH;
+                    output.at(position) = CHILD_LAST_BRANCH;
                     break;
                 case NO_CONNECTOR_BRANCH:
-                    output[position] = CHILD_MIDDLE_BRANCH;
+                    output.at(position) = CHILD_MIDDLE_BRANCH;
                     break;
                 case PARENT_FIRST_BRANCH:
-                    output[position] = PARENT_CHILD_FIRST_BRANCH;
+                    output.at(position) = PARENT_CHILD_FIRST_BRANCH;
                     break;
                 case PARENT_MIDDLE_BRANCH:
-                    output[position] = PARENT_CHILD_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_CHILD_MIDDLE_BRANCH;
                     break;
                 case PARENT_LAST_BRANCH:
-                    output[position] = PARENT_CHILD_LAST_BRANCH;
+                    output.at(position) = PARENT_CHILD_LAST_BRANCH;
                     break;
                 case CHILD_FIRST_BRANCH:
-                    output[position] = CHILD_MIDDLE_BRANCH;
+                    output.at(position) = CHILD_MIDDLE_BRANCH;
                     break;
             }
             break;
         case BranchCase::Direct:
-            switch (output[position])
+            switch (output.at(position))
             {
                 case ' ':
-                    output[position] = ONLY_CONNECTOR;
+                    output.at(position) = ONLY_CONNECTOR;
                     break;
                 case PARENT_FIRST_BRANCH:
-                    output[position] = PARENT_CHILD_FIRST_BRANCH;
+                    output.at(position) = PARENT_CHILD_FIRST_BRANCH;
                     break;
                 case PARENT_MIDDLE_BRANCH:
-                    output[position] = PARENT_CHILD_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_CHILD_MIDDLE_BRANCH;
                     break;
                 case PARENT_LAST_BRANCH:
-                    output[position] = PARENT_CHILD_LAST_BRANCH;
+                    output.at(position) = PARENT_CHILD_LAST_BRANCH;
                     break;
                 default:
                     NES_DEBUG("Direct only child: unexpected input. The printed queryplan will probably be incorrectly represented.")
@@ -475,21 +475,21 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
             }
             break;
         case BranchCase::NoConnector:
-            switch (output[position])
+            switch (output.at(position))
             {
                 case ' ':
-                    output[position] = NO_CONNECTOR_BRANCH;
+                    output.at(position) = NO_CONNECTOR_BRANCH;
                     break;
                 case PARENT_FIRST_BRANCH:
                 case PARENT_LAST_BRANCH:
-                    output[position] = PARENT_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_MIDDLE_BRANCH;
                     break;
                 case CHILD_FIRST_BRANCH:
                 case CHILD_LAST_BRANCH:
-                    output[position] = CHILD_MIDDLE_BRANCH;
+                    output.at(position) = CHILD_MIDDLE_BRANCH;
                     break;
                 case ONLY_CONNECTOR:
-                    output[position] = PARENT_CHILD_MIDDLE_BRANCH;
+                    output.at(position) = PARENT_CHILD_MIDDLE_BRANCH;
                     break;
                 default:
                     NES_DEBUG("No connector: unexpected input. The printed queryplan will probably be incorreclty represented.")
