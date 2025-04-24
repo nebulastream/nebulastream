@@ -49,12 +49,14 @@ public:
     [[nodiscard]] uint64_t getTotalNumberOfEntries() const override;
     [[nodiscard]] uint64_t getNumberOfPages() const override;
 
+    [[nodiscard]] uint64_t getNumberOfTuplesOnDisk() const;
+
 private:
     /// Appends a new page to the keyPages vector if the last page is full.
     void appendKeyPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
 
-    void writePayloadAndKeysToSeparateFiles(
-        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter) const;
+    void
+    writePayloadAndKeysToSeparateFiles(const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter);
 
     void writePayloadOnlyToFile(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
@@ -69,6 +71,8 @@ private:
     /// As we allow tuples to be partially written to disk, i.e. only key field data is kept in memory, the remaining data subsequently has
     /// a different schema/memory layout and must therefore be stored separately from any new incoming tuples.
     std::vector<Memory::TupleBuffer> keyPages;
+
+    uint64_t numTuplesOnDisk = 0;
 };
 
 }

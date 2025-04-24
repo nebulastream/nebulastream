@@ -63,6 +63,7 @@ void FileBackedPagedVector::writeToFile(
         case Runtime::Execution::NO_SEPARATION: {
             for (const auto& page : pages)
             {
+                numTuplesOnDisk += page.getNumberOfTuples();
                 fileWriter.write(page.getBuffer(), page.getNumberOfTuples() * memoryLayout->getTupleSize());
             }
             break;
@@ -98,11 +99,15 @@ void FileBackedPagedVector::readFromFile(
         memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
         "NLJSlice does not currently support any memory layout other than row layout");*/
 
+    numTuplesOnDisk = 0;
     switch (fileLayout)
     {
         /// Read all tuples consecutivley from file
-        case Runtime::Execution::NO_SEPARATION_KEEP_KEYS:
+        case Runtime::Execution::NO_SEPARATION_KEEP_KEYS: {
+            keyPages.clear();
+        }
         case Runtime::Execution::NO_SEPARATION: {
+            // TODO just append new page disregarding the number of tuples on the last page?
             appendPageIfFull(bufferProvider, memoryLayout);
             auto& lastPage = pages.back();
             auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
@@ -168,6 +173,11 @@ uint64_t FileBackedPagedVector::getNumberOfPages() const
     return pages.size() + keyPages.size();
 }
 
+uint64_t FileBackedPagedVector::getNumberOfTuplesOnDisk() const
+{
+    return numTuplesOnDisk;
+}
+
 void FileBackedPagedVector::appendKeyPageIfFull(
     Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
 {
@@ -190,7 +200,7 @@ void FileBackedPagedVector::appendKeyPageIfFull(
 }
 
 void FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter) const
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter)
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
     const auto keyFieldsOnlyMemoryLayout
@@ -204,6 +214,7 @@ void FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
 
     for (const auto& page : pages)
     {
+        numTuplesOnDisk += page.getNumberOfTuples();
         const auto* pagePtr = page.getBuffer();
         for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {
@@ -235,6 +246,7 @@ void FileBackedPagedVector::writePayloadOnlyToFile(
 
     for (const auto& page : pages)
     {
+        numTuplesOnDisk += page.getNumberOfTuples();
         const auto* pagePtr = page.getBuffer();
         for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
         {

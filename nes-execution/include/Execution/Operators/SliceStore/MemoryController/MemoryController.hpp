@@ -26,10 +26,7 @@ using FileWriterId = std::tuple<SliceEnd, WorkerThreadId, QueryCompilation::Join
 class MemoryController
 {
 public:
-    static constexpr auto BUFFER_SIZE = 1024 * 4; // 4 KB buffer size
-    static constexpr auto POOL_SIZE = 1024 * 10; // 10 K pool size
-
-    MemoryController(const std::filesystem::path& workingDir, QueryId queryId, OriginId originId);
+    MemoryController(size_t bufferSize, size_t poolSize, const std::filesystem::path& workingDir, QueryId queryId, OriginId originId);
     MemoryController(MemoryController& other);
     MemoryController(MemoryController&& other) noexcept;
     MemoryController& operator=(MemoryController& other);

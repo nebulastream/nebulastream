@@ -29,6 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
+#include <Util/Timer.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
@@ -44,15 +45,16 @@ class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
     static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
+    static constexpr auto USE_BUFFER_SIZE = 1024 * 4; // 4 KB buffer size
+    static constexpr auto USE_POOL_SIZE = 1024 * 10; // 10 K pool size
 
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,
         uint64_t windowSlide,
-        uint8_t numberOfInputOrigins,
+        const std::vector<OriginId>& inputOrigins,
         const std::filesystem::path& workingDir,
         QueryId queryId,
-        OriginId originId,
-        const std::vector<OriginId>& inputOrigins);
+        OriginId originId);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore& other);
@@ -81,8 +83,6 @@ public:
         uint64_t numberOfWorkerThreads,
         const SliceStoreMetaData& metaData);
 
-    //void measureReadAndWriteExecution();
-
 private:
     void readSliceFromFiles(
         const std::shared_ptr<Slice>& slice,
@@ -91,15 +91,21 @@ private:
         QueryCompilation::JoinBuildSideType joinBuildSide,
         uint64_t numberOfWorkerThreads);
 
+    void measureReadAndWriteExecTimes(const std::vector<size_t>& dataSizes, const std::vector<FileLayout>& fileLayouts);
+
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
 
-    /// Manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory pool used by them.
-    /// It also stores the used FileLayout for each file.
+    /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
+    /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory.
     MemoryController memCtrl;
-
     folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
+
+    /// This internal watermark processor is used to predict when a slice should be written out or read back during the build phase.
+    /// The maps hold the execution times needed to write or read data of certain data sizes which is also used for predictions.
     std::shared_ptr<Operators::MultiOriginWatermarkProcessor> watermarkProcessor;
+    std::map<size_t, double> writeExecTimes;
+    std::map<size_t, double> readExecTimes;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.

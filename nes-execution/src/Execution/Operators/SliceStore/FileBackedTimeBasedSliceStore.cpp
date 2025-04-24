@@ -34,23 +34,24 @@ namespace NES::Runtime::Execution
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize,
     const uint64_t windowSlide,
-    const uint8_t numberOfInputOrigins,
+    const std::vector<OriginId>& inputOrigins,
     const std::filesystem::path& workingDir,
     const QueryId queryId,
-    const OriginId originId,
-    const std::vector<OriginId>& inputOrigins)
-    : memCtrl(workingDir, queryId, originId)
+    const OriginId originId)
+    : memCtrl(USE_BUFFER_SIZE, USE_POOL_SIZE, workingDir, queryId, originId)
     , watermarkProcessor(std::make_shared<Operators::MultiOriginWatermarkProcessor>(inputOrigins))
     , sliceAssigner(windowSize, windowSlide)
     , sequenceNumber(SequenceNumber::INITIAL)
-    , numberOfActiveOrigins(numberOfInputOrigins)
+    , numberOfActiveOrigins(inputOrigins.size())
 {
-    //measureReadAndWriteExecution();
+    measureReadAndWriteExecTimes({}, {});
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
     : memCtrl(other.memCtrl)
     , watermarkProcessor(other.watermarkProcessor)
+    , writeExecTimes(other.writeExecTimes)
+    , readExecTimes(other.readExecTimes)
     , sliceAssigner(other.sliceAssigner)
     , sequenceNumber(other.sequenceNumber.load())
     , numberOfActiveOrigins(other.numberOfActiveOrigins.load())
@@ -67,6 +68,8 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
     : memCtrl(std::move(other.memCtrl))
     , watermarkProcessor(std::move(other.watermarkProcessor))
+    , writeExecTimes(std::move(other.writeExecTimes))
+    , readExecTimes(std::move(other.readExecTimes))
     , sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
     , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins.load()))
@@ -92,6 +95,8 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 
     memCtrl = other.memCtrl;
     watermarkProcessor = other.watermarkProcessor;
+    writeExecTimes = other.writeExecTimes;
+    readExecTimes = other.readExecTimes;
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
     numberOfActiveOrigins = other.numberOfActiveOrigins.load();
@@ -110,6 +115,8 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 
     memCtrl = std::move(other.memCtrl);
     watermarkProcessor = std::move(other.watermarkProcessor);
+    writeExecTimes = std::move(other.writeExecTimes);
+    readExecTimes = std::move(other.readExecTimes);
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
     numberOfActiveOrigins = std::move(other.numberOfActiveOrigins.load());
@@ -373,14 +380,17 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     {
         // TODO exclude all slices that have already been read back from ssd or are going to be read back below
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        const auto stateSize = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId);
-        sliceSizes.insert({stateSize, slice});
+        if (const auto stateSize = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId); stateSize > 0)
+        {
+            sliceSizes.insert({stateSize, slice});
+        }
     }
 
     /// Choose the n largest slices with a state size larger than zero
     size_t accumulatedStateSize = 0;
     std::vector<std::pair<std::shared_ptr<Slice>, FileLayout>> slicesToBeOffloaded;
-    for (auto it = sliceSizes.rbegin(); it != sliceSizes.rend() && it->first > 0; ++it)
+    slicesToBeOffloaded.reserve(sliceSizes.size());
+    for (auto it = sliceSizes.rbegin(); it != sliceSizes.rend(); ++it)
     {
         // TODO predictiveWrite()
         accumulatedStateSize += it->first;
@@ -456,6 +466,39 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         }
     }
     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
+}
+
+void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(
+    const std::vector<size_t>& dataSizes, const std::vector<FileLayout>& fileLayouts)
+{
+    for (const auto dataSize : dataSizes)
+    {
+        for (const auto fileLayout : fileLayouts)
+        {
+            std::vector<char> data(dataSize);
+            for (size_t i = 0; i < dataSize; ++i)
+            {
+                data[i] = static_cast<char>(rand() % 256);
+            }
+
+            Timer<> timer("ReadAndWriteTimer");
+            timer.start();
+
+            const auto fileWriter = memCtrl.getFileWriter(
+                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
+            fileWriter->write(data.data(), dataSize);
+            timer.snapshot("write execution");
+
+            const auto fileReader = memCtrl.getFileReader(
+                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
+            fileReader->read(data.data(), dataSize);
+            timer.snapshot("read execution");
+
+            auto snapshots = timer.getSnapshots();
+            writeExecTimes.emplace(dataSize, snapshots[0].getPrintTime());
+            readExecTimes.emplace(dataSize, snapshots[1].getPrintTime());
+        }
+    }
 }
 
 }
