@@ -34,6 +34,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/LogicalQueryDumpHelper.hpp>
 #include <fmt/format.h>
+#include "ErrorHandling.hpp"
 
 namespace NES
 {
@@ -354,7 +355,6 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
         case BranchCase::ParentFirst:
             switch (output[position])
             {
-                default:
                 case ' ':
                     output[position] = PARENT_FIRST_BRANCH;
                     break;
@@ -362,6 +362,7 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
                     output[position] = PARENT_MIDDLE_BRANCH;
                     break;
                 case ONLY_CONNECTOR:
+                    [[fallthrough]];
                 case CHILD_FIRST_BRANCH:
                     output[position] = PARENT_CHILD_FIRST_BRANCH;
                     break;
@@ -372,18 +373,20 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
                     output[position] = PARENT_CHILD_LAST_BRANCH;
                     break;
                 case PARENT_FIRST_BRANCH:
+                    [[fallthrough]];
                 case PARENT_MIDDLE_BRANCH:
                     /// What we want is already there
                     break;
                 case PARENT_LAST_BRANCH:
                     output[position] = PARENT_MIDDLE_BRANCH;
                     break;
+                default:
+                    break;
             }
             break;
         case BranchCase::ParentLast:
             switch (output[position])
             {
-                default:
                 case ' ':
                     output[position] = PARENT_LAST_BRANCH;
                     break;
@@ -397,6 +400,7 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
                     output[position] = PARENT_CHILD_MIDDLE_BRANCH;
                     break;
                 case ONLY_CONNECTOR:
+                    [[fallthrough]];
                 case CHILD_LAST_BRANCH:
                     output[position] = PARENT_CHILD_LAST_BRANCH;
                     break;
@@ -404,15 +408,17 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
                     output[position] = PARENT_MIDDLE_BRANCH;
                     break;
                 case PARENT_MIDDLE_BRANCH:
+                    [[fallthrough]];
                 case PARENT_LAST_BRANCH:
                     /// What we want is already there
+                    break;
+                default:
                     break;
             }
             break;
         case BranchCase::ChildFirst:
             switch (output[position])
             {
-                default:
                 case ' ':
                     output[position] = CHILD_FIRST_BRANCH;
                     break;
@@ -431,12 +437,13 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
                 case CHILD_LAST_BRANCH:
                     output[position] = CHILD_MIDDLE_BRANCH;
                     break;
+                default:
+                    break;
             }
             break;
         case BranchCase::ChildLast:
             switch (output[position])
             {
-                default:
                 case ' ':
                     output[position] = CHILD_LAST_BRANCH;
                     break;
@@ -454,6 +461,8 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
                     break;
                 case CHILD_FIRST_BRANCH:
                     output[position] = CHILD_MIDDLE_BRANCH;
+                    break;
+                default:
                     break;
             }
             break;
@@ -484,10 +493,12 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
                     output[position] = NO_CONNECTOR_BRANCH;
                     break;
                 case PARENT_FIRST_BRANCH:
+                    [[fallthrough]];
                 case PARENT_LAST_BRANCH:
                     output[position] = PARENT_MIDDLE_BRANCH;
                     break;
                 case CHILD_FIRST_BRANCH:
+                    [[fallthrough]];
                 case CHILD_LAST_BRANCH:
                     output[position] = CHILD_MIDDLE_BRANCH;
                     break;
@@ -495,12 +506,12 @@ void LogicalQueryDumpHelper::printAsciiBranch(const BranchCase toPrint, const si
                     output[position] = PARENT_CHILD_MIDDLE_BRANCH;
                     break;
                 default:
-                    NES_DEBUG("No connector: unexpected input. The printed queryplan will probably be incorrectly represented.")
+                    NES_DEBUG("No connector: unexpected input. The printed query plan will probably be incorrectly represented.")
                     break;
             }
             break;
         default:
-            NES_ERROR("unreachable.")
+            NES_ERROR("BranchCase is unreachable.")
             break;
     }
 }
