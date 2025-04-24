@@ -11,8 +11,7 @@ ARG ROOTLESS=false
 
 # Installing perf from source as the version in the ubuntu repository might not use the same kernel version as the host
 # Also the perf version in the ubuntu repository might not be compatible with the host kernel version
-RUN apt install -y \
-    linux-tools-common \
+RUN apt update && apt install -y \
     python3\
     python3-dev\
     libdw-dev\
@@ -22,9 +21,9 @@ RUN apt install -y \
     git\
     pkg-config\
     libelf-dev\
-    libtraceevent-dev
+    linux-tools-common \
+    linux-tools-`uname -r`
 
-RUN apt install -y linux-tools-6.8.0-1027-azure
 
 RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
     (delgroup ubuntu || true) && \
