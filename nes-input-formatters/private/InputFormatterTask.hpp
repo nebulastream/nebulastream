@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -116,13 +117,13 @@ void processTuple(
 /// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
 /// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
 /// Lastly, formats the full spanning tuple.
-template <typename FieldAccessFunctionType>
+template <typename FieldAccessFunctionType, bool IsFormattingRequired>
 void processSpanningTuple(
     const std::span<const StagedBuffer> stagedBuffersSpan,
     Memory::AbstractBufferProvider& bufferProvider,
     Memory::TupleBuffer& formattedBuffer,
     const TupleMetaData& tupleMetaData,
-    const InputFormatIndexer<FieldAccessFunctionType>& inputFormatIndexer,
+    const InputFormatIndexer<FieldAccessFunctionType, IsFormattingRequired>& inputFormatIndexer,
     const std::vector<RawInputDataParser::ParseFunctionSignature>& parseFunctions)
 {
     INVARIANT(stagedBuffersSpan.size() >= 2, "A spanning tuple must span across at least two buffers");
@@ -174,7 +175,7 @@ public:
     static constexpr bool hasSpanningTuple() { return HasSpanningTuple; }
     explicit InputFormatterTask(
         const OriginId originId,
-        std::unique_ptr<InputFormatIndexer<FieldAccessFunctionType>> inputFormatIndexer,
+        std::unique_ptr<InputFormatIndexer<FieldAccessFunctionType, FormatterType::IsFormattingRequired>> inputFormatIndexer,
         const Schema& schema,
         const ParserConfig& parserConfig)
         : originId(originId), inputFormatIndexer(std::move(inputFormatIndexer))
@@ -190,6 +191,7 @@ public:
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
         /// field number, load the correct function for parsing from the vector.
+        size_t priorFieldOffset = 0;
         for (const auto& field : schema.getFields())
         {
             /// Store the size of the field in bytes (for offset calculations).
@@ -202,7 +204,9 @@ public:
             {
                 this->parseFunctions.emplace_back(RawInputDataParser::getBasicTypeParseFunction(field.dataType.type));
             }
-            tupleMetaData.fieldSizesInBytes.emplace_back(field.dataType.getSizeInBytes());
+            this->tupleMetaData.fieldSizesInBytes.emplace_back(field.dataType.getSizeInBytes());
+            this->tupleMetaData.fieldOffsetsInBytes.emplace_back() = priorFieldOffset + field.dataType.getSizeInBytes();
+            priorFieldOffset = this->tupleMetaData.fieldOffsetsInBytes.back();
         }
     }
     ~InputFormatterTask() = default;
@@ -226,32 +230,34 @@ public:
         }
     }
 
-    void executeTask(const Memory::TupleBuffer&, PipelineExecutionContext&)
-    requires(not(HasSpanningTuple))
+    /// Not supported (yet):
+    /// requires(FormatterType::IsFormattingRequired and not(HasSpanningTuple))
+    ///     - non-native formats without spanning tuples, since it is hard to guarantee that (mostly) text based data does not span buffers
+    /// requires(not(FormatterType::IsFormattingRequired) and HasSpanningTuple)
+    ///     - native format with spanning tuples, since it is hard to guarantee that we always read in full buffers and if we don't we need
+    ///       a mechanism to determine the offsets of the fields in the individual buffers asynchronously
+    void executeTask(const RawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
+    requires(not(FormatterType::IsFormattingRequired) and not(HasSpanningTuple))
     {
-        throw NotImplemented("The InputFormatterTask does not explicitly support non-internal formats without spanning tuples yet.");
-    }
-
-    /// @Note: throws CannotAccessBuffer exception if the copy is out of bounds of the formatted buffer
-    static void
-    copyWithBoundsCheck(const std::string_view rawBufferBytes, Memory::TupleBuffer formattedBuffer, const size_t formattedBufferOffset)
-    {
-        if (formattedBufferOffset + rawBufferBytes.size() >= formattedBuffer.getBufferSize())
-        {
-            throw CannotAccessBuffer(
-                "Tried to copy {} to a formatted buffer of size {} bytes, starting at offset {}",
-                rawBufferBytes.size(),
-                formattedBuffer.getBufferSize(),
-                rawBufferBytes.size());
-        }
-        std::memcpy(
-            formattedBuffer.getBuffer() + formattedBufferOffset, ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            rawBufferBytes.data(),
-            rawBufferBytes.size());
+        /// If the format has fixed size tuple and no spanning tuples (give the assumption that tuples are aligned with the start of the buffers)
+        /// the InputFormatterTask does not need to do anything.
+        /// @Note: with a Nautilus implementation, we can skip the proxy function call that triggers formatting/indexing during tracing,
+        /// leading to generated code that immediately operates on the data.
+        const auto [div, mod] = std::lldiv(static_cast<long long>(rawBuffer.getNumberOfTuples()), this->tupleMetaData.sizeOfTupleInBytes);
+        PRECONDITION(
+            mod == 0,
+            "Raw buffer contained {} bytes, which is not a multiple of the tuple size {} bytes.",
+            rawBuffer.getNumberOfBytes(),
+            this->tupleMetaData.sizeOfTupleInBytes);
+        /// @Note: We assume that '.getNumberOfBytes()' ALWAYS returns the number of bytes at this point (set by source)
+        const auto numberOfTuplesInFormattedBuffer = rawBuffer.getNumberOfBytes() / this->tupleMetaData.sizeOfTupleInBytes;
+        rawBuffer.setNumberOfTuples(numberOfTuplesInFormattedBuffer);
+        /// The 'rawBuffer' is already formatted, so we can use it without any formatting.
+        rawBuffer.emit(pec, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 
     void executeTask(const RawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
-    requires(HasSpanningTuple)
+    requires(FormatterType::IsFormattingRequired and HasSpanningTuple)
     {
         /// Check if the current sequence number is in the range of the ring buffer of the sequence shredder.
         /// If not (should very rarely be the case), we put the task back.
@@ -292,7 +298,8 @@ public:
 
 private:
     OriginId originId;
-    std::unique_ptr<InputFormatIndexer<FieldAccessFunctionType>> inputFormatIndexer; /// unique_ptr, because InputFormatIndexer is abstract class
+    std::unique_ptr<InputFormatIndexer<FieldAccessFunctionType, FormatterType::IsFormattingRequired>>
+        inputFormatIndexer; /// unique_ptr, because InputFormatIndexer is abstract class
     std::unique_ptr<SequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
     std::vector<RawInputDataParser::ParseFunctionSignature> parseFunctions;
     TupleMetaData tupleMetaData;

@@ -17,12 +17,15 @@
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <memory>
 #include <ranges>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
@@ -41,7 +44,7 @@
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
-
+/// NOLINTBEGIN(readability-magic-numbers)
 namespace NES
 {
 class SmallFilesTest : public Testing::BaseUnitTest
@@ -64,6 +67,17 @@ class SmallFilesTest : public Testing::BaseUnitTest
         {"Spacecraft_Telemetry", /// generated
          TestFile{
              .fileName = "Spacecraft_Telemetry_1000_Lines.csv",
+             .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}},
+        {"TwoIntegerColumns_binary", TestFile{.fileName = "TwoIntegerColumns_20_Lines_binary.bin", .schemaFieldTypes = {INT32, INT32}}},
+        {"Bimbo_1_1000_binary",
+         TestFile{
+             .fileName = "Bimbo_1_1000_Lines_binary.bin",
+             .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
+        {"Food_1_binary",
+         TestFile{.fileName = "Food_1_1000_Lines_binary.bin", .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
+        {"Spacecraft_Telemetry_binary", /// generated
+         TestFile{
+             .fileName = "Spacecraft_Telemetry_1000_Lines_binary.bin",
              .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
     SourceCatalog sourceCatalog;
 
@@ -80,11 +94,14 @@ public:
     struct TestConfig
     {
         std::string testFileName;
+        std::string formatterType;
+        bool hasSpanningTuples;
         size_t numberOfIterations;
         size_t numberOfThreads;
         size_t sizeOfRawBuffers;
         size_t sizeOfFormattedBuffers;
     };
+
     void runTest(const TestConfig& testConfig)
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
@@ -93,10 +110,10 @@ public:
             testConfig.sizeOfFormattedBuffers >= schema.getSizeOfSchemaInBytes(),
             "The formatted buffer must be large enough to hold at least one tuple.");
 
-        const auto testFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / currentTestFile.fileName;
-        const auto fileSizeInBytes = std::filesystem::file_size(testFilePath);
-        const auto numberOfExpectedRawBuffers = (fileSizeInBytes / testConfig.sizeOfRawBuffers)
-            + static_cast<unsigned long>(fileSizeInBytes % testConfig.sizeOfRawBuffers != 0);
+        const auto testFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.formatterType / currentTestFile.fileName;
+        const auto fileSizeInBytes = file_size(testFilePath);
+        const auto numberOfExpectedRawBuffers
+            = (fileSizeInBytes / testConfig.sizeOfRawBuffers) + static_cast<uint64_t>(fileSizeInBytes % testConfig.sizeOfRawBuffers != 0);
         /// TODO #774: Sources sometimes need an extra buffer (reason currently unknown)
         const auto numberOfRequiredSourceBuffers = static_cast<uint16_t>(numberOfExpectedRawBuffers + 1);
 
@@ -119,7 +136,7 @@ public:
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
             auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);
-            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
+            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema, testConfig.formatterType);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<TestPipelineTask> pipelineTasks;
@@ -157,20 +174,41 @@ public:
                     return left.getSequenceNumber() < right.getSequenceNumber();
                 });
 
-            auto resultFilePath
-                = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / (std::string("result_") + currentTestFile.fileName);
-            std::ofstream out(resultFilePath);
-            for (const auto& buffer : resultBufferVec | std::views::take(resultBufferVec.size() - 1))
+            auto resultFilePath = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / testConfig.formatterType
+                / (std::string("result_") + currentTestFile.fileName);
+            if (testConfig.formatterType == "Native")
             {
-                auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-                actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
-                const auto currentBufferAsString
-                    = actualResultTestBuffer.toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
-                out << currentBufferAsString;
+                const auto sizeOfTuplesInBytes = schema.getSizeOfSchemaInBytes();
+                bool append = false;
+                for (const auto& buffer : resultBufferVec)
+                {
+                    const auto numberOfBytesInBuffer = sizeOfTuplesInBytes * buffer.getNumberOfTuples();
+                    const std::span byteSpan(buffer.getBuffer<const char>(), numberOfBytesInBuffer);
+                    writeBinaryToFile(byteSpan, resultFilePath, append);
+                    append = true;
+                }
             }
-            out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
-                       .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
-            out.close();
+            else if (testConfig.formatterType == "CSV")
+            {
+                bool append = false;
+                for (const auto& buffer : resultBufferVec | std::views::take(resultBufferVec.size() - 1))
+                {
+                    auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+                    actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+                    const auto currentBufferAsString = actualResultTestBuffer.toString(
+                        schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
+                    writeBinaryToFile(currentBufferAsString, resultFilePath, append);
+                    append = true;
+                }
+                const auto lastBufferAsString
+                    = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
+                          .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE);
+                writeBinaryToFile(lastBufferAsString, resultFilePath, append);
+            }
+            else
+            {
+                throw NotImplemented("Unsupported formatter type: {}", testConfig.formatterType);
+            }
             ASSERT_TRUE(InputFormatterTestUtil::compareFiles(testFilePath, resultFilePath));
             resultBuffers->clear();
             resultBufferVec.clear();
@@ -179,13 +217,14 @@ public:
     }
 };
 
-
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
     runTest(TestConfig{
         .testFileName = "TwoIntegerColumns",
+        .formatterType = "CSV",
+        .hasSpanningTuples = true,
         .numberOfIterations = 1,
-        .numberOfThreads = 1,
+        .numberOfThreads = 8,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 4096});
 }
@@ -194,7 +233,9 @@ TEST_F(SmallFilesTest, testBimboData)
 {
     runTest(TestConfig{
         .testFileName = "Bimbo_1_1000",
-        .numberOfIterations = 1,
+        .formatterType = "CSV",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 10,
         .numberOfThreads = 8,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 4096});
@@ -203,17 +244,42 @@ TEST_F(SmallFilesTest, testBimboData)
 TEST_F(SmallFilesTest, testFoodData)
 {
     runTest(TestConfig{
-        .testFileName = "Food_1", .numberOfIterations = 1, .numberOfThreads = 8, .sizeOfRawBuffers = 16, .sizeOfFormattedBuffers = 4096});
+        .testFileName = "Food_1",
+        .formatterType = "CSV",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 4096});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
 {
     runTest(
         {.testFileName = "Spacecraft_Telemetry",
+         .formatterType = "CSV",
+         .hasSpanningTuples = true,
          .numberOfIterations = 1,
          .numberOfThreads = 8,
          .sizeOfRawBuffers = 16,
          .sizeOfFormattedBuffers = 4096});
 }
 
+
+/// Simple test that confirms that we forward already formatted buffers without spanning tuples correctly
+TEST_F(SmallFilesTest, testTwoIntegerColumnsNoSpanningBinary)
+{
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumns_binary",
+        .formatterType = "Native",
+        .hasSpanningTuples = false,
+        /// Only one iteration possible, because the InputFormatterTask replaces the number of bytes with the number of tuples in a
+        /// raw tuple buffer when the tuple buffer is in 'Native' format and has no spanning tuples
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096,
+        .sizeOfFormattedBuffers = 4096});
 }
+
+}
+/// NOLINTEND(readability-magic-numbers)

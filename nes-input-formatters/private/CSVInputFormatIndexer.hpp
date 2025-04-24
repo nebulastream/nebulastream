@@ -26,7 +26,7 @@
 namespace NES::InputFormatters
 {
 
-class CSVInputFormatIndexer final : public InputFormatIndexer<FieldOffsets>
+class CSVInputFormatIndexer final : public InputFormatIndexer<FieldOffsets, /* IsFormattingRequired */ true>
 {
 public:
     explicit CSVInputFormatIndexer(ParserConfig config, size_t numberOfFieldsInSchema);

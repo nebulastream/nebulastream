@@ -29,8 +29,9 @@ struct TupleMetaData
 {
     std::string tupleDelimiter;
     std::string fieldDelimiter;
-    size_t sizeOfTupleInBytes;
+    size_t sizeOfTupleInBytes{};
     std::vector<size_t> fieldSizesInBytes;
+    std::vector<size_t> fieldOffsetsInBytes;
 };
 
 /// Implements format-specific (CSV, JSON, Protobuf, etc.) indexing of raw buffers.
@@ -38,10 +39,11 @@ struct TupleMetaData
 /// The offsets allow the InputFormatIndexerTask to parse only the fields that it needs to for the particular query.
 /// @Note All InputFormatIndexer implementations must be thread-safe. NebulaStream's query engine concurrently executes InputFormatIndexerTasks.
 ///       Thus, the InputFormatIndexerTask calls the interface functions of the InputFormatIndexer concurrently.
-template <typename FieldAccessFunctionType>
+template <typename FieldAccessFunctionType, bool RequiresFormatting>
 class InputFormatIndexer
 {
 public:
+    static constexpr bool IsFormattingRequired = RequiresFormatting;
     InputFormatIndexer() = default;
     virtual ~InputFormatIndexer() = default;
 
