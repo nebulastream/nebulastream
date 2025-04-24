@@ -22,6 +22,7 @@
 #include <Plans/Utils/PlanIterator.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <Util/CompilerConstants.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryStateSerializationUtil.hpp>
@@ -53,9 +54,12 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     for (const auto& rootOperator : rootOperators) {
         auto rootOperatorId = rootOperator->getId();
         serializableDecomposedQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
-        if (rootOperator->instanceOf<SinkLogicalOperator>())
+        if (rootOperator->instanceOf<SinkLogicalOperator>()) {
             serializableDecomposedQueryPlan->set_faulttolerance(
                 static_cast<uint64_t>(rootOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->getFaultToleranceType()));
+            serializableDecomposedQueryPlan->set_checkpointstorage(
+                static_cast<uint64_t>(rootOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->getCheckpointStorageType()));
+        }
     }
 
     //Serialize the sub query plan and query plan id
@@ -72,6 +76,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     std::vector<OperatorPtr> rootOperators;
     std::map<uint64_t, OperatorPtr> operatorIdToOperatorMap;
     auto faultTolerance = serializableDecomposedQueryPlan->faulttolerance();
+    auto checkpointStorage = serializableDecomposedQueryPlan->checkpointstorage();
     //Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap()) {
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
@@ -80,9 +85,12 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
         const auto& operatorId = OperatorId(serializedOperator.operatorid());
         deserializedOperator->setId(operatorId);
         operatorIdToOperatorMap[serializedOperator.operatorid()] = deserializedOperator;
-        if (deserializedOperator->instanceOf<SinkLogicalOperator>())
+        if (deserializedOperator->instanceOf<SinkLogicalOperator>()) {
             deserializedOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->setFaultToleranceType(
                 static_cast<FaultToleranceType>(serializableDecomposedQueryPlan->faulttolerance()));
+            deserializedOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->setCheckpointStorageType(
+                static_cast<CheckpointStorageType>(serializableDecomposedQueryPlan->checkpointstorage()));
+        }
     }
 
     //Add deserialized children
@@ -106,7 +114,8 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     SharedQueryId sharedQueryId = SharedQueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators, FaultToleranceType(faultTolerance));
+        DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators,
+                                    FaultToleranceType(faultTolerance), CheckpointStorageType(checkpointStorage));
     decomposedQueryPlan->setVersion(decomposableQueryPlanVersion);
     if (serializableDecomposedQueryPlan->has_state()) {
         auto state = QueryStateSerializationUtil::deserializeQueryState(serializableDecomposedQueryPlan->state());

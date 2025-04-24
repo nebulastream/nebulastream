@@ -20,6 +20,8 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <chrono>
 #include <string>
+#include <Util/CheckpointStorageType.hpp>
+#include <Util/FaultToleranceType.hpp>
 
 namespace NES::Network {
 
@@ -44,7 +46,9 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                     uint32_t retryTimes,
                                     DecomposedQueryPlanVersion version,
                                     uint64_t numberOfOrigins,
-                                    OperatorId uniqueId);
+                                    OperatorId uniqueId,
+                                    FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                    CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE);
 
     /**
      * @brief returns the string representation of the network sink
@@ -84,6 +88,18 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     uint8_t getRetryTimes() const;
 
     /**
+     * @brief getter for fault tolerance
+     * @return fault tolerance
+     */
+    FaultToleranceType getFaultTolerance() const;
+
+    /**
+     * @brief getter for storage option if checkpointing enabled
+     * @return storage option
+     */
+    CheckpointStorageType getCheckpointStorage() const;
+
+    /**
      * @brief getter for the sinks version
      * @return the version
      */
@@ -102,7 +118,9 @@ class NetworkSinkDescriptor : public SinkDescriptor {
                                    uint32_t retryTimes,
                                    DecomposedQueryPlanVersion version,
                                    uint64_t numberOfOrigins,
-                                   OperatorId uniqueId);
+                                   OperatorId uniqueId,
+                                   FaultToleranceType faultTolerance,
+                                   CheckpointStorageType checkpointStorage);
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
@@ -110,6 +128,8 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     uint32_t retryTimes;
     DecomposedQueryPlanVersion version;
     OperatorId uniqueNetworkSinkId;
+    FaultToleranceType faultTolerance;
+    CheckpointStorageType checkpointStorage;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;

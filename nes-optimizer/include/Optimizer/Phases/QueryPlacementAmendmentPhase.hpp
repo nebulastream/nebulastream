@@ -18,6 +18,7 @@
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <memory>
@@ -254,6 +255,8 @@ class QueryPlacementAmendmentPhase {
      * @param downstreamOperators: downstream operators
      * @param nextDecomposedQueryPlanVersion: next decomposed query plan version
      * @param deploymentContexts: map containing deployment contexts for newly added placements
+     * @param faultTolerance: fault tolerance type
+     * @param checkpointStorage: storage option if checkpointing is enabled
      */
     void handlePlacementAddition(PlacementStrategy placementStrategy,
                                  SharedQueryId sharedQueryId,
@@ -261,7 +264,8 @@ class QueryPlacementAmendmentPhase {
                                  const std::set<LogicalOperatorPtr>& downstreamOperators,
                                  DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
                                  std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
-                                 FaultToleranceType faultTolerance);
+                                 FaultToleranceType faultTolerance,
+                                 CheckpointStorageType checkpointStorage);
 
     /**
      * @brief Method to identify the location where reconfiguration marker needs to be pushed.
@@ -282,6 +286,8 @@ class QueryPlacementAmendmentPhase {
      * @param sharedQueryId: id of the shared query plan
      * @param nextDecomposedQueryPlanVersion: next decomposed query plan version
      * @param deploymentContexts: map containing deployment contexts
+     * @param faultTolerance: fault tolerance type
+     * @param checkpointStorage: storage option if checkpointing is enabled
      */
     void handleMigrationPlacement(
         Optimizer::PlacementStrategy placementStrategy,
@@ -291,7 +297,8 @@ class QueryPlacementAmendmentPhase {
         SharedQueryId sharedQueryId,
         DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
         std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
-        FaultToleranceType faultTolerance);
+        FaultToleranceType faultTolerance,
+        CheckpointStorageType checkpointStorage);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

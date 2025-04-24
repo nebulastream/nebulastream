@@ -80,6 +80,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
     auto queryPlan = sharedQueryPlan->getQueryPlan();
     auto placementStrategy = sharedQueryPlan->getPlacementStrategy();
     auto faultToleranceType = sharedQueryPlan->getFaultToleranceType();
+    auto checkpointStorageType = sharedQueryPlan->getCheckpointStorageType();
     NES_DEBUG("QueryPlacementAmendmentPhase: Perform query placement for query plan\n{}", queryPlan->toString());
 
     // Get current time stamp
@@ -155,7 +156,8 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                         changeLogEntry->downstreamOperators,
                                         nextDecomposedQueryPlanVersion,
                                         deploymentContexts,
-                                        faultToleranceType);
+                                        faultToleranceType,
+                                        checkpointStorageType);
 
                 // get new location of migrating stateful operator
                 std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>> migratingOperatorToProperties;
@@ -199,7 +201,8 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                          sharedQueryId,
                                          nextDecomposedQueryPlanVersion,
                                          deploymentContexts,
-                                         faultToleranceType);
+                                         faultToleranceType,
+                                         checkpointStorageType);
             } catch (std::exception& ex) {
                 NES_ERROR("Failed to process change log. Marking shared query plan as partially processed and recording the "
                           "failed changelog for further processing. {}",
@@ -260,7 +263,8 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                     pinnedDownStreamOperators,
                                     nextDecomposedQueryPlanVersion,
                                     placementAdditionDeploymentContexts,
-                                    faultToleranceType);
+                                    faultToleranceType,
+                                    checkpointStorageType);
 
             // Collect all deployment contexts returned by placement removal strategy
             for (const auto& [_, deploymentContext] : placementAdditionDeploymentContexts) {
@@ -292,7 +296,8 @@ void QueryPlacementAmendmentPhase::handleMigrationPlacement(
     SharedQueryId sharedQueryId,
     DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
     std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
-    FaultToleranceType faultTolerance) {
+    FaultToleranceType faultTolerance,
+    CheckpointStorageType checkpointStorage) {
 
     // go over operators that needs to be migrated
     for (const auto& [migratingOperatorId, migratingOperatorProperties] : migratingOperatorToProperties) {
@@ -318,7 +323,9 @@ void QueryPlacementAmendmentPhase::handleMigrationPlacement(
         auto placementResults = strategy->updateGlobalExecutionPlan(sharedQueryId,
                                                                     {fakeMigrationSourceOperator},
                                                                     {migrateSinkOperator},
-                                                                    nextDecomposedQueryPlanVersion);
+                                                                    nextDecomposedQueryPlanVersion,
+                                                                    faultTolerance,
+                                                                    checkpointStorage);
 
         // save new contexts
         for (auto& [decomposedQueryPlanId, deploymentContext] : placementResults.deploymentContexts) {
@@ -521,7 +528,8 @@ void QueryPlacementAmendmentPhase::handlePlacementAddition(Optimizer::PlacementS
                                                            const std::set<LogicalOperatorPtr>& downstreamOperators,
                                                            DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
                                                            std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
-                                                           FaultToleranceType faultTolerance) {
+                                                           FaultToleranceType faultTolerance,
+                                                           CheckpointStorageType checkpointStorage) {
 
     //1. Fetch all upstream pinned operators that are not removed
     std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
@@ -549,7 +557,9 @@ void QueryPlacementAmendmentPhase::handlePlacementAddition(Optimizer::PlacementS
         auto placementAdditionResults = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
                                                                                              pinnedUpstreamOperators,
                                                                                              pinnedDownStreamOperators,
-                                                                                             nextDecomposedQueryPlanVersion);
+                                                                                             nextDecomposedQueryPlanVersion,
+                                                                                             faultTolerance,
+                                                                                             checkpointStorage);
 
         now = std::chrono::system_clock::now();
         now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);

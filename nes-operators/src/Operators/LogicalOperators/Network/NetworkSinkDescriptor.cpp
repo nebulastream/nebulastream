@@ -24,9 +24,11 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(const NodeLocation& nodeLocation,
                                              uint32_t retryTimes,
                                              DecomposedQueryPlanVersion version,
                                              uint64_t numberOfOrigins,
-                                             OperatorId uniqueId)
+                                             OperatorId uniqueId,
+                                             FaultToleranceType faultTolerance,
+                                             CheckpointStorageType checkpointStorage)
     : SinkDescriptor(numberOfOrigins), nodeLocation(nodeLocation), nesPartition(nesPartition), waitTime(waitTime),
-      retryTimes(retryTimes), version(version), uniqueNetworkSinkId(uniqueId) {}
+      retryTimes(retryTimes), version(version), uniqueNetworkSinkId(uniqueId), faultTolerance(faultTolerance), checkpointStorage(checkpointStorage) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(const NodeLocation& nodeLocation,
                                                 const NesPartition& nesPartition,
@@ -34,9 +36,11 @@ SinkDescriptorPtr NetworkSinkDescriptor::create(const NodeLocation& nodeLocation
                                                 uint32_t retryTimes,
                                                 DecomposedQueryPlanVersion version,
                                                 uint64_t numberOfOrigins,
-                                                OperatorId uniqueId) {
+                                                OperatorId uniqueId,
+                                                FaultToleranceType faultTolerance,
+                                                CheckpointStorageType checkpointStorage) {
     return std::make_shared<NetworkSinkDescriptor>(
-        NetworkSinkDescriptor(nodeLocation, nesPartition, waitTime, retryTimes, version, numberOfOrigins, uniqueId));
+        NetworkSinkDescriptor(nodeLocation, nesPartition, waitTime, retryTimes, version, numberOfOrigins, uniqueId, faultTolerance, checkpointStorage));
 }
 
 bool NetworkSinkDescriptor::equal(SinkDescriptorPtr const& other) {
@@ -67,4 +71,8 @@ uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 uint16_t NetworkSinkDescriptor::getVersion() const { return version; }
 
 OperatorId NetworkSinkDescriptor::getUniqueId() const { return uniqueNetworkSinkId; }
+
+FaultToleranceType NetworkSinkDescriptor::getFaultTolerance() const { return faultTolerance; };
+
+CheckpointStorageType NetworkSinkDescriptor::getCheckpointStorage() const { return checkpointStorage; }
 }// namespace NES::Network

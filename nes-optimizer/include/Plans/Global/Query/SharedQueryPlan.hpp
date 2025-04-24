@@ -16,6 +16,7 @@
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 
 #include <Identifiers/Identifiers.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/FaultToleranceType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/SharedQueryPlanStatus.hpp>
@@ -243,7 +244,9 @@ class SharedQueryPlan {
 
     [[nodiscard]] FaultToleranceType getFaultToleranceType() const;
 
- void performRemovalOfOperators(const std::set<OperatorId>& upstreamOperatorIds,
+    [[nodiscard]] CheckpointStorageType getCheckpointStorageType() const;
+
+    void performRemovalOfOperators(const std::set<OperatorId>& upstreamOperatorIds,
                                                 const std::set<OperatorId>& downstreamOperatorIds);
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
@@ -288,6 +291,7 @@ class SharedQueryPlan {
     Optimizer::PlacementStrategy placementStrategy;
     Optimizer::ChangeLogPtr changeLog;
     FaultToleranceType faultToleranceType;
+    CheckpointStorageType checkpointStorageType;
 };
 }// namespace NES
 

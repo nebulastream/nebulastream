@@ -39,7 +39,9 @@ class IFCOPStrategy : public BasePlacementAdditionStrategy {
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                       const std::set<LogicalOperatorPtr>& pinnedUpStreamNodes,
                                                       const std::set<LogicalOperatorPtr>& pinnedDownStreamNodes,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
+                                                      DecomposedQueryPlanVersion querySubPlanVersion,
+                                                      FaultToleranceType faultTolerance,
+                                                      CheckpointStorageType checkpointStorage) override;
 
   private:
     IFCOPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,

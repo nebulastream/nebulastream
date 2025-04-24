@@ -45,7 +45,9 @@ BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecution
 PlacementAdditionResult BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                     const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                                     const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                                    DecomposedQueryPlanVersion querySubPlanVersion) {
+                                                                    DecomposedQueryPlanVersion querySubPlanVersion,
+                                                                    FaultToleranceType faultTolerance,
+                                                                    CheckpointStorageType checkpointStorage) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
 
@@ -67,7 +69,7 @@ PlacementAdditionResult BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryI
         addNetworkOperators(computedQuerySubPlans);
         NES_DEBUG("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
         // 6. update execution nodes
-        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion, faultTolerance, checkpointStorage);
     } catch (std::exception& ex) {
         NES_ERROR("Exception occurred during bottom up placement: {}", ex.what());
         throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());

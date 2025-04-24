@@ -90,7 +90,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
             if ((this->bufferCount % 1000) == 0) {
                 if (this->checkpointStorageType == CheckpointStorageType::HDFS) {
-                    workerContext.hdfsCreateCheckpoint(this->nesPartition, inputBuffer);  // uses HDFS
+                      workerContext.hdfsCreateCheckpoint(this->nesPartition, inputBuffer);
                 } else if (this->checkpointStorageType == CheckpointStorageType::CRD) {
                     std::vector<char> binaryStorage = workerContext.getBinaryStorage(this->nesPartition);
                     this->nodeEngine->offloadCheckpoint(this->nesPartition.getPartitionId().getRawValue(), binaryStorage);
@@ -99,7 +99,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
         };
         deleteFromStorageCallback = [this](uint64_t timestamp, Runtime::WorkerContext& workerContext) {
             if (this->checkpointStorageType == CheckpointStorageType::HDFS) {
-                workerContext.hdfsTrimCheckpoint(this->nesPartition, timestamp);  // uses HDFS
+                workerContext.hdfsTrimCheckpoint(this->nesPartition, timestamp);
             } else if (this->checkpointStorageType == CheckpointStorageType::CRD) {
                 this->nodeEngine->rpcTrimCheckpoint(this->nesPartition.getPartitionId().getRawValue(), timestamp);
             }

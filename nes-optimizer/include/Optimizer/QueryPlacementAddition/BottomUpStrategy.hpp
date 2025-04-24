@@ -43,7 +43,9 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                       const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                       const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
+                                                      DecomposedQueryPlanVersion querySubPlanVersion,
+                                                      FaultToleranceType faultTolerance,
+                                                      CheckpointStorageType checkpointStorage) override;
 
     explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                               const TopologyPtr& topology,

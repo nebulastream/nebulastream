@@ -56,6 +56,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     //Set the placement strategy used
     placementStrategy = queryPlan->getPlacementStrategy();
     faultToleranceType = queryPlan->getFaultTolerance();
+    checkpointStorageType = queryPlan->getCheckpointStorage();
     //Initialize change log
     changeLog = Optimizer::ChangeLog::create();
 
@@ -541,6 +542,9 @@ void SharedQueryPlan::setStatus(SharedQueryPlanStatus newStatus) { this->sharedQ
 Optimizer::PlacementStrategy SharedQueryPlan::getPlacementStrategy() const { return placementStrategy; }
 
 FaultToleranceType SharedQueryPlan::getFaultToleranceType() const { return faultToleranceType; }
+
+CheckpointStorageType SharedQueryPlan::getCheckpointStorageType() const { return checkpointStorageType; }
+
 
 void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
     changeLog->updateProcessedChangeLogTimestamp(timestamp);

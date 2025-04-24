@@ -20,6 +20,8 @@
 #include <Operators/Operator.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Util/CopiedPinnedOperators.hpp>
+#include <Util/FaultToleranceType.hpp>
+#include <Util/CheckpointStorageType.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <chrono>
 #include <folly/Synchronized.h>
@@ -116,12 +118,16 @@ class BasePlacementAdditionStrategy {
      * @param pinnedUpStreamOperators: pinned upstream operators
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @param querySubPlanVersion: the new version of the updated query sub plans
+     * @param faultTolerance fault tolerance type
+     * @param checkpointStorage storage option if checkpointing enabled
      * @return vector of deployment contexts
      */
     virtual PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                               const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                               const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                              DecomposedQueryPlanVersion querySubPlanVersion) = 0;
+                                                              DecomposedQueryPlanVersion querySubPlanVersion,
+                                                              FaultToleranceType faultTolerance = FaultToleranceType::NONE,
+                                                              CheckpointStorageType checkpointStorage = CheckpointStorageType::NONE) = 0;
 
   protected:
     /**
@@ -154,11 +160,15 @@ class BasePlacementAdditionStrategy {
      * @param sharedQueryId: the shared query plan id
      * @param computedSubQueryPlans: the computed query sub plans
      * @param decomposedQueryPlanVersion: the version of the query sub plan
+     * @param faultTolerance fault tolerance type
+     * @param checkpointStorage storage option if checkpointing enabled
      * @return vector of deployment contexts
      */
     PlacementAdditionResult updateExecutionNodes(SharedQueryId sharedQueryId,
                                                  ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion);
+                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                                 FaultToleranceType faultTolerance,
+                                                 CheckpointStorageType checkpointStorage);
 
     /**
      * @brief Get the Topology node with the input id

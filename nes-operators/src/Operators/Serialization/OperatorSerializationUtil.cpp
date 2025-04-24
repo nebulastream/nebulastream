@@ -1492,6 +1492,8 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
         serializedSinkDescriptor.set_version(networkSinkDescriptor->getVersion());
         serializedSinkDescriptor.set_uniquenetworksinkdescriptorid(networkSinkDescriptor->getUniqueId().getRawValue());
+        serializedSinkDescriptor.set_faulttolerance(toString(networkSinkDescriptor->getFaultToleranceType()));
+        serializedSinkDescriptor.set_checkpointstorage(toString(networkSinkDescriptor->getCheckpointStorage()));
         //pack to output
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
@@ -1627,6 +1629,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         Network::NodeLocation nodeLocation{WorkerId(serializedSinkDescriptor.nodelocation().nodeid()),
                                            serializedSinkDescriptor.nodelocation().hostname(),
                                            serializedSinkDescriptor.nodelocation().port()};
+        FaultToleranceType faultTolerance = stringToFaultToleranceTypeMap(serializedSinkDescriptor.faulttolerance());
+        CheckpointStorageType checkpointStorage = stringToCheckpointStorageTypeMap(serializedSinkDescriptor.checkpointstorage());
         auto waitTime = std::chrono::milliseconds(serializedSinkDescriptor.waittime());
         return Network::NetworkSinkDescriptor::create(nodeLocation,
                                                       nesPartition,
@@ -1634,7 +1638,9 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
                                                       serializedSinkDescriptor.retrytimes(),
                                                       serializedSinkDescriptor.version(),
                                                       deserializedNumberOfOrigins,
-                                                      OperatorId(serializedSinkDescriptor.uniquenetworksinkdescriptorid()));
+                                                      OperatorId(serializedSinkDescriptor.uniquenetworksinkdescriptorid()),
+                                                      faultTolerance,
+                                                      checkpointStorage);
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>()) {
         // de-serialize file sink descriptor
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();

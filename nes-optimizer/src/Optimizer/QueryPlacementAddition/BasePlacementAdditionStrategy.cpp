@@ -730,7 +730,9 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 PlacementAdditionResult
 BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                     ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion) {
+                                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                                    FaultToleranceType faultTolerance,
+                                                    CheckpointStorageType checkpointStorage) {
 
     std::unordered_map<DecomposedQueryId, DeploymentContextPtr> deploymentContexts;
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
@@ -885,8 +887,10 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
 
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
                         updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
-                        updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
+                        updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan, faultTolerance, checkpointStorage);
                         updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
+                        updatedDecomposedQueryPlan->setFaultToleranceType(faultTolerance);
+                        updatedDecomposedQueryPlan->setCheckpointStorageType(checkpointStorage);
                         //Add decomposed query plan to the global execution plan
                         globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
@@ -954,7 +958,9 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                     SINK_RETRIES,
                                                     decomposedQueryPlanVersion,
                                                     newNetworkSinkDescriptor->getNumberOfOrigins(),
-                                                    newId);
+                                                    newId,
+                                                    faultTolerance,
+                                                    checkpointStorage);
                                                 sinkOperator->setSinkDescriptor(mergedNetworkSinkDescriptor);
                                                 sinkOperator->setId(getNextOperatorId());
                                             }
@@ -992,9 +998,11 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
                         //todo #5158: check if the plan was actually changed and omit redeploymentif not
                         updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
-                        updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
+                        updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan, faultTolerance, checkpointStorage);
                         updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
                         updatedDecomposedQueryPlan->setDecomposedQueryPlanId(PlanIdGenerator::getNextDecomposedQueryPlanId());
+                        updatedDecomposedQueryPlan->setFaultToleranceType(faultTolerance);
+                        updatedDecomposedQueryPlan->setCheckpointStorageType(checkpointStorage);
                         globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
@@ -1009,9 +1017,11 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                            "pinned upstream or downstream operator.");
                     }
                 } else {
-                    auto updatedDecomposedQueryPlan = typeInferencePhase->execute(computedDecomposedQueryPlan);
+                    auto updatedDecomposedQueryPlan = typeInferencePhase->execute(computedDecomposedQueryPlan, faultTolerance, checkpointStorage);
                     updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
                     updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
+                    updatedDecomposedQueryPlan->setFaultToleranceType(faultTolerance);
+                    updatedDecomposedQueryPlan->setCheckpointStorageType(checkpointStorage);
                     globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                     // 1.6. Update state and properties of all operators placed on the execution node
                     markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);

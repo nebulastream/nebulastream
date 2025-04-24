@@ -54,7 +54,9 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                       const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                       const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
+                                                      DecomposedQueryPlanVersion querySubPlanVersion,
+                                                      FaultToleranceType faultTolerance,
+                                                      CheckpointStorageType checkpointStorage) override;
 
   private:
     explicit ElegantPlacementStrategy(const std::string& serviceURL,
