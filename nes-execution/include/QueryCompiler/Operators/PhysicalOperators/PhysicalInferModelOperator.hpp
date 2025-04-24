@@ -56,7 +56,8 @@ public:
     const std::vector<std::shared_ptr<NodeFunction>>& getOutputFields() const;
 
 protected:
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
     const std::string model;
     const std::vector<std::shared_ptr<NodeFunction>> inputFields;
