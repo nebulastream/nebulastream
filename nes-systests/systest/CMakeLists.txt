@@ -107,7 +107,6 @@ if (NOT CODE_COVERAGE)
                 COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_join --data ${SMALL_DATA}
                 --
                 --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
-
         ExternalData_Add_Test(TEST_DATA
                 NAME systest_agg_${workerThreads}_interpreter
                 COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_aggregation --data ${SMALL_DATA}
