@@ -66,15 +66,15 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto logicalSourceName = source->getLogicalSourceName();
-        Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
         if (!sourceCatalog->containsLogicalSource(logicalSourceName))
         {
             NES_ERROR("Source name: {} not registered.", logicalSourceName);
             throw LogicalSourceNotFoundInQueryDescription(fmt::format("Logical source not registered. Source Name: {}", logicalSourceName));
         }
-        auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
-        schema.assignToFields(originalSchema);
-        schema.memoryLayoutType = originalSchema.memoryLayoutType;
+        auto originalSchema = sourceCatalog->getLogicalSource(logicalSourceName)->getSchema();
+        schema.assignToFields(*originalSchema);
+        schema.memoryLayoutType = originalSchema->memoryLayoutType;
         auto qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
         for (auto& field : schema.getFields())

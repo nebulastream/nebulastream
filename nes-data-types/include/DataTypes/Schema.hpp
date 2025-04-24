@@ -68,6 +68,10 @@ public:
     explicit Schema(MemoryLayoutType memoryLayoutType);
     ~Schema() = default;
 
+    Schema(const Schema& other) = default;
+    Schema(Schema&& other) noexcept = default;
+    Schema& operator=(const Schema& other) = default;
+    Schema& operator=(Schema&& other) noexcept = default;
     bool operator==(const Schema& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
@@ -114,7 +118,7 @@ private:
     /// their corresponding indexes in the 'fields' vector. Thus, the below three members are private to prevent accidental manipulation.
     std::vector<Field> fields{};
     size_t sizeOfSchemaInBytes{0};
-    std::unordered_map<std::string, size_t> nameToField{};
+    std::unordered_map<std::string, size_t> nameToField;
 };
 
 }

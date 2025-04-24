@@ -40,7 +40,7 @@ struct Source
     /// The Source representation in the `CompiledQueryPlan` is still an abstract source representation. During Query Instantiation
     /// the descriptor and originId are instantiated into concrete source implementation.
     OriginId originId;
-    std::shared_ptr<Sources::SourceDescriptor> descriptor;
+    Sources::SourceDescriptor descriptor;
 
     /// Sources do not have any predecessors
     std::vector<std::weak_ptr<ExecutablePipeline>> successors;

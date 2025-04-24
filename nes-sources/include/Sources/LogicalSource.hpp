@@ -14,34 +14,53 @@
 
 #pragma once
 
+#include <cstdint>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <DataTypes/Schema.hpp>
+
 namespace NES
 {
+class OperatorSerializationUtil;
+namespace Catalogs::Source
+{
+class SourceCatalog;
+}
 /**
  * @brief The LogicalSource wraps the source name and the schema.
  */
 class LogicalSource
 {
-public:
-    static std::shared_ptr<LogicalSource> create(const std::string& logicalSourceName, Schema schema);
+    friend Catalogs::Source::SourceCatalog;
+    friend OperatorSerializationUtil;
+    explicit LogicalSource(std::string logicalSourceName, const std::shared_ptr<Schema>& schema);
 
+public:
     /**
      * @brief Gets the logical source name
      */
-    std::string getLogicalSourceName();
+    [[nodiscard]] std::string getLogicalSourceName() const;
 
     /**
      * @brief Gets the schema
      */
-    Schema getSchema();
+    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+
+    friend bool operator==(const LogicalSource& lhs, const LogicalSource& rhs);
+    friend bool operator!=(const LogicalSource& lhs, const LogicalSource& rhs);
 
 private:
-    LogicalSource(std::string logicalSourceName, Schema schema);
-
     std::string logicalSourceName;
-    Schema schema;
+    std::shared_ptr<Schema> schema;
 };
+
+
 }
+
+template <>
+struct std::hash<NES::LogicalSource>
+{
+    uint64_t operator()(const NES::LogicalSource& logicalSource) const noexcept;
+};
