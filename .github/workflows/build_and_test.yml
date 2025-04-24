@@ -30,7 +30,7 @@ jobs:
   clean-build-and-test-linux:
     # Ensures that the build works from a clean build directory.
     name: "Clean build and tests"
-    needs: [get-resources]
+    needs: [ get-resources ]
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
       env:
@@ -56,10 +56,19 @@ jobs:
         run: cmake --build build -j ${{needs.get-resources.outputs.number_of_jobs}} -- -k 0
       - name: Run Tests
         run: ctest --test-dir build -j ${{needs.get-resources.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600
+      - uses: actions/upload-artifact@v4
+        # Upload all log and stat files if any of the tests has failed.
+        name: Upload Test Logs on Failure
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
+          path: |
+            build/**/*.log
+            build/**/*.stats
 
   build-and-test-linux:
     name: "Build and tests: ${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.build_type}}"
-    needs: [get-resources]
+    needs: [ get-resources ]
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
       volumes:
@@ -88,6 +97,15 @@ jobs:
       - name: Run Tests
         # timeout of 600 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
         run: ctest --test-dir build -j ${{needs.get-resources.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 600
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        # Upload all log and stats files if any of the tests has failed.
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.build_type }}
+          path: |
+            build/**/*.log
+            build/**/*.stats
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && !github.event.act }}
