@@ -44,7 +44,7 @@ TEST_F(SpecificSequenceTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
     using namespace InputFormatterTestUtil;
     using enum TestDataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
-    runTest<TestTuple>(TestConfig<TestTuple>{
+    runTest<TestTuple, true>(TestConfig<TestTuple>{
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .bufferSize = 16,
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},

@@ -139,11 +139,15 @@ void EmitPhysicalOperator::emitRecordBuffer(
     const nautilus::val<uint64_t>& numRecords,
     const nautilus::val<bool>& potentialLastChunk) const
 {
+    const auto tupleSize = memoryProvider->getMemoryLayout()->getSchema().getSizeOfSchemaInBytes();
+    const auto usedMemorySize = numRecords * tupleSize;
+
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setCreationTs(ctx.currentTs);
+    recordBuffer.setUsedMemorySize(usedMemorySize);
 
     /// Chunk Logic. Order matters.
     /// A worker thread will clean up the sequence state for the current sequence number if its told it is the last

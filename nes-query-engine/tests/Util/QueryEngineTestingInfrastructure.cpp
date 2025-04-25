@@ -303,36 +303,39 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<Q
                 queryRunning.emplace(id, std::make_unique<std::promise<void>>());
                 EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Running, ::testing::_))
                     .Times(1)
-                    .WillOnce(::testing::Invoke(
-                        [this](auto id, auto, auto)
-                        {
-                            queryRunning.at(id)->set_value();
-                            return true;
-                        }));
+                    .WillOnce(
+                        ::testing::Invoke(
+                            [this](auto id, auto, auto)
+                            {
+                                queryRunning.at(id)->set_value();
+                                return true;
+                            }));
                 break;
             case QueryStatus::Stopped:
                 ASSERT_TRUE(queryTermination.try_emplace(id, std::make_unique<std::promise<void>>()).second)
                     << "Registered multiple query terminations";
                 EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Stopped, ::testing::_))
                     .Times(1)
-                    .WillOnce(::testing::Invoke(
-                        [this](auto id, auto, auto)
-                        {
-                            queryTermination.at(id)->set_value();
-                            return true;
-                        }));
+                    .WillOnce(
+                        ::testing::Invoke(
+                            [this](auto id, auto, auto)
+                            {
+                                queryTermination.at(id)->set_value();
+                                return true;
+                            }));
                 break;
             case QueryStatus::Failed:
                 ASSERT_TRUE(queryTermination.try_emplace(id, std::make_unique<std::promise<void>>()).second)
                     << "Registered multiple query terminations";
                 EXPECT_CALL(*status, logQueryFailure(id, ::testing::_, ::testing::_))
                     .Times(1)
-                    .WillOnce(::testing::Invoke(
-                        [this](const auto& id, const auto&, auto)
-                        {
-                            queryTermination.at(id)->set_value();
-                            return true;
-                        }));
+                    .WillOnce(
+                        ::testing::Invoke(
+                            [this](const auto& id, const auto&, auto)
+                            {
+                                queryTermination.at(id)->set_value();
+                                return true;
+                            }));
                 break;
         }
     }
@@ -355,7 +358,8 @@ void TestingHarness::start()
     }
     QueryEngineConfiguration configuration{};
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
-    qm = std::make_unique<NES::QueryEngine>(configuration, this->statListener, this->status, this->bm);
+    qm = std::make_unique<NES::QueryEngine>(
+        configuration, std::vector<std::shared_ptr<QueryEngineStatisticListener>>{this->statListener}, this->status, this->bm);
 }
 void TestingHarness::startQuery(std::unique_ptr<ExecutableQueryPlan> query) const
 {

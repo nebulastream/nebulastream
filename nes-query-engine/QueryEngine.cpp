@@ -457,9 +457,17 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                 {
                     std::ranges::for_each(
                         pool.statistic,
-                        [&](auto& listener) {
-                            listener->onEvent(
-                                TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
+                        [&](auto& listener)
+                        {
+                            listener->onEvent(TaskEmit{
+                                id,
+                                task.queryId,
+                                pipeline->id,
+                                pipeline->id,
+                                taskId,
+                                tupleBuffer.getNumberOfTuples(),
+                                tupleBuffer.getUsedMemorySize(),
+                                pec.formattingTask});
                         });
                     return pool.emitWork(task.queryId, pipeline, tupleBuffer, {}, {}, continuationPolicy);
                 }
@@ -470,34 +478,39 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                     {
                         std::ranges::for_each(
                             pool.statistic,
-                            [&](auto& listener) {
-                                listener->onEvent(
-                                    TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
+                            [&](auto& listener)
+                            {
+                                listener->onEvent(TaskEmit{
+                                    id,
+                                    task.queryId,
+                                    pipeline->id,
+                                    successor->id,
+                                    taskId,
+                                    tupleBuffer.getNumberOfTuples(),
+                                    tupleBuffer.getUsedMemorySize(),
+                                    pec.formattingTask});
                             });
                         return pool.emitWork(task.queryId, successor, tupleBuffer, {}, {}, continuationPolicy);
                     });
             });
         std::ranges::for_each(
             pool.statistic,
-            [&](auto& listener) {
-                listener->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
+            [&](auto& listener)
+            {
+                listener->onEvent(TaskExecutionStart{
+                    WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples(), task.buf.getUsedMemorySize()});
             });
         pipeline->stage->execute(task.buf, pec);
         std::ranges::for_each(
             pool.statistic,
-            [&](auto& listener) {
-                listener->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
-            });
+            [&](auto& listener) { listener->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId}); });
         return true;
     }
 
     ENGINE_LOG_WARNING(
         "Task {} for Query {}-{} is expired. Tuples: {}", taskId, task.queryId, task.pipelineId, task.buf.getNumberOfTuples());
     std::ranges::for_each(
-        pool.statistic,
-        [&](auto& listener) {
-            listener->onEvent(TaskExpired{WorkerThread::id, task.queryId, task.pipelineId, taskId});
-        });
+        pool.statistic, [&](auto& listener) { listener->onEvent(TaskExpired{WorkerThread::id, task.queryId, task.pipelineId, taskId}); });
     return false;
 }
 
@@ -529,9 +542,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
         pipeline->stage->start(pec);
         std::ranges::for_each(
             pool.statistic,
-            [&](auto& listener) {
-                listener->onEvent(PipelineStart{WorkerThread::id, startPipeline.queryId, pipeline->id});
-            });
+            [&](auto& listener) { listener->onEvent(PipelineStart{WorkerThread::id, startPipeline.queryId, pipeline->id}); });
         return true;
     }
 
@@ -609,9 +620,8 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipelineTa
     stopPipelineTask.pipeline->stage->stop(pec);
     std::ranges::for_each(
         pool.statistic,
-        [&](auto& listener) {
-            listener->onEvent(PipelineStop{WorkerThread::id, stopPipelineTask.queryId, stopPipelineTask.pipeline->id});
-        });
+        [&](auto& listener)
+        { listener->onEvent(PipelineStop{WorkerThread::id, stopPipelineTask.queryId, stopPipelineTask.pipeline->id}); });
     return true;
 }
 

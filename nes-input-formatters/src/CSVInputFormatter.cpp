@@ -239,7 +239,11 @@ public:
     [[nodiscard]] uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
     NES::Memory::TupleBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
     void setCurrentTupleStartrawTB(const size_t newCurrentTupleStartrawTB) { this->currentTupleStartrawTB = newCurrentTupleStartrawTB; }
-    void setNumberOfTuplesInTBFormatted() { this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted); }
+    void setNumberOfTuplesInTBFormatted()
+    {
+        this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted);
+        this->tupleBufferFormatted.setUsedMemorySize(numTuplesInTBFormatted * tupleSizeInBytes);
+    }
     uint64_t getNumTuplesInTBFormatted() { return numTuplesInTBFormatted; }
     const std::string& getTupleDelimiter() { return this->tupleDelimiter; }
 
@@ -523,6 +527,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         }
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(progressTracker.getNumTuplesInTBFormatted());
+        finalFormattedBuffer.setUsedMemorySize(finalFormattedBuffer.getNumberOfTuples() * schema.getSizeOfSchemaInBytes());
         finalFormattedBuffer.setLastChunk(true);
 
         pipelineExecutionContext.emitBuffer(finalFormattedBuffer, NES::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
@@ -548,6 +553,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         processPartialTuple(0, buffersToFormat.size() - 1, buffersToFormat, progressTracker, pipelineExecutionContext);
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
+        finalFormattedBuffer.setUsedMemorySize(finalFormattedBuffer.getNumberOfTuples() * schema.getSizeOfSchemaInBytes());
         finalFormattedBuffer.setLastChunk(true);
         pipelineExecutionContext.emitBuffer(finalFormattedBuffer, NES::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
@@ -628,6 +634,7 @@ void CSVInputFormatter::flushFinalTuple(
     {
         auto finalFormattedBuffer = progressTracker.getTupleBufferFormatted();
         finalFormattedBuffer.setNumberOfTuples(finalFormattedBuffer.getNumberOfTuples() + 1);
+        finalFormattedBuffer.setUsedMemorySize(progressTracker.getNumTuplesInTBFormatted() * schema.getSizeOfSchemaInBytes());
         finalFormattedBuffer.setLastChunk(true);
         pipelineExecutionContext.emitBuffer(finalFormattedBuffer, NES::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }

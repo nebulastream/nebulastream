@@ -129,7 +129,18 @@ Timestamp TupleBuffer::getWatermark() const noexcept
 {
     return controlBlock->getWatermark();
 }
-void TupleBuffer::setWatermark(const Timestamp value) noexcept
+uint64_t TupleBuffer::getUsedMemorySize() const noexcept
+{
+    INVARIANT(controlBlock != nullptr, "Control block must NOT be null!");
+    return controlBlock->getUsedMemorySize();
+}
+void TupleBuffer::setUsedMemorySize(uint64_t usedMemorySize) const noexcept
+{
+    INVARIANT(controlBlock != nullptr, "Control block must NOT be null!");
+    INVARIANT(usedMemorySize <= size, "Total size of tuple buffer {} must be larger than the usedMemorySize {}", size, usedMemorySize);
+    controlBlock->setUsedMemorySize(usedMemorySize);
+}
+void TupleBuffer::setWatermark(const Timestamp value) const noexcept
 {
     controlBlock->setWatermark(value);
 }
@@ -137,7 +148,7 @@ Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
 {
     return controlBlock->getCreationTimestamp();
 }
-void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) noexcept
+void TupleBuffer::setSequenceNumber(const SequenceNumber sequenceNumber) const noexcept
 {
     controlBlock->setSequenceNumber(sequenceNumber);
 }
@@ -151,11 +162,11 @@ SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
 {
     return controlBlock->getSequenceNumber();
 }
-void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) noexcept
+void TupleBuffer::setChunkNumber(const ChunkNumber chunkNumber) const noexcept
 {
     controlBlock->setChunkNumber(chunkNumber);
 }
-void TupleBuffer::setLastChunk(const bool isLastChunk) noexcept
+void TupleBuffer::setLastChunk(const bool isLastChunk) const noexcept
 {
     controlBlock->setLastChunk(isLastChunk);
 }
@@ -163,11 +174,11 @@ bool TupleBuffer::isLastChunk() const noexcept
 {
     return controlBlock->isLastChunk();
 }
-void TupleBuffer::setCreationTimestampInMS(const Timestamp value) noexcept
+void TupleBuffer::setCreationTimestampInMS(const Timestamp value) const noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }
-void TupleBuffer::setOriginId(const OriginId id) noexcept
+void TupleBuffer::setOriginId(const OriginId id) const noexcept
 {
     controlBlock->setOriginId(id);
 }
