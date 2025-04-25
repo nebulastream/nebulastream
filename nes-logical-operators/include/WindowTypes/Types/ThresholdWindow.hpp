@@ -39,7 +39,6 @@ public:
     [[nodiscard]] const LogicalFunction getPredicate() const;
     [[nodiscard]] uint64_t getMinimumCount() const;
     [[nodiscard]] bool inferStamp(const Schema& schema) override;
-    [[nodiscard]] uint64_t hash() const override;
 
 private:
     LogicalFunction predicate;

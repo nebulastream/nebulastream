@@ -96,10 +96,4 @@ bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
 
     return this->type == other.type && equalField && (this->unit == other.unit);
 }
-
-uint64_t TimeCharacteristic::hash() const
-{
-    std::string fieldString = (timeCharacteristic.field != nullptr) ? timeCharacteristic.field->toString() : "NONE";
-    return os << fmt::format("TimeCharacteristic(type: {}, field: {})", timeCharacteristic.getTypeAsString(), fieldString);
-}
 }

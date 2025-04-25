@@ -91,9 +91,9 @@ LogicalFunction AndLogicalFunction::withInferredStamp(Schema schema) const
     }
     /// check if children stamp is correct
     INVARIANT(
-        *left.getStamp().get() == Boolean(), "the stamp of left child must be boolean, but was: " + left.getStamp().get()->toString());
+        *left.getStamp().get() == Boolean(), "the stamp of left child must be boolean, but was: {}", left.getStamp().get()->toString());
     INVARIANT(
-        *left.getStamp().get() == Boolean(), "the stamp of right child must be boolean, but was: " + right.getStamp().get()->toString());
+        *left.getStamp().get() == Boolean(), "the stamp of right child must be boolean, but was: {}", right.getStamp().get()->toString());
     return this->withChildren(newChildren);
 }
 
