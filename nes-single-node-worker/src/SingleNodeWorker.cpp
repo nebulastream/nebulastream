@@ -22,6 +22,7 @@
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorker.hpp>
 #include <StatisticPrinter.hpp>
+#include <ThroughputListener.hpp>
 
 namespace NES
 {
@@ -34,9 +35,18 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
           configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
+
+    constexpr auto timeIntervalInMilliSeconds = 1000;
+    // todo have here a CallBackStruct instead of the four variables
+    auto callback = [](const QueryId& queryId, const Runtime::Timestamp& windowStart, const Runtime::Timestamp& windowEnd, double throughputPerSecond)
+    {
+        std::cout << fmt::format("Throughput for queryId {} in window {}-{} is {} tup/s", queryId, windowStart, windowEnd, throughputPerSecond) << std::endl;
+    };
+    const auto throughputListener = std::make_shared<Runtime::ThroughputListener>(timeIntervalInMilliSeconds, callback);
+
     const auto printStatisticListener = std::make_shared<Runtime::PrintingStatisticListener>(
-          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
-    queryEngineStatisticsListener = {printStatisticListener};
+          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
+    queryEngineStatisticsListener = {printStatisticListener, throughputListener};
     systemEventListener = printStatisticListener;
     nodeEngine = Runtime::NodeEngineBuilder(configuration.workerConfiguration, systemEventListener, queryEngineStatisticsListener).build();
 
