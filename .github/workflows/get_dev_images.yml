@@ -163,7 +163,7 @@ jobs:
     name: "Merge Dev Images"
     needs: [ build-dev-images, detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
-    runs-on: [ self-hosted, linux, Build ]
+    runs-on: [ self-hosted, linux, Build, x64 ]
     steps:
       - uses: actions/checkout@v4
         with:
