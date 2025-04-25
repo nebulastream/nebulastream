@@ -93,10 +93,6 @@ public:
         return matchingOperators;
     }
 
-    /// Currently used to flip the plan (source -> sink) after parsing
-    /// Once we have refactored the parser we can remove this function.
-    std::unique_ptr<LogicalPlan> flip() const;
-
     /// Get all the leaf operators in the query plan (leaf operator is the one without any child)
     /// @note: in certain stages the source operators might not be Leaf operators
     std::vector<LogicalOperator> getLeafOperators() const;
