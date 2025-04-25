@@ -53,5 +53,7 @@ public:
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
     virtual std::vector<std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
     virtual void setOperatorHandlers(std::vector<std::shared_ptr<OperatorHandler>>&) = 0;
+
+    bool formattingTask = false;
 };
 }

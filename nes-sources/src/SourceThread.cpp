@@ -123,7 +123,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
 
         if (numReadBytes != 0)
         {
-            emptyBuffer.setNumberOfTuples(numReadBytes);
+            emptyBuffer.setUsedMemorySize(numReadBytes);
             emit(emptyBuffer, true);
         }
 

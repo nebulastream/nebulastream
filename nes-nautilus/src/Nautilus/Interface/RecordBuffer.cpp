@@ -58,6 +58,11 @@ void RecordBuffer::setOriginId(const nautilus::val<OriginId>& originId)
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setOriginId, tupleBufferRef, originId);
 }
 
+void RecordBuffer::setUsedMemorySize(const nautilus::val<uint64_t>& usedMemorySize)
+{
+    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setUsedMemorySize, tupleBufferRef, usedMemorySize);
+}
+
 void RecordBuffer::setSequenceNumber(const nautilus::val<SequenceNumber>& seqNumber)
 {
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setSequenceNumber, tupleBufferRef, seqNumber);
