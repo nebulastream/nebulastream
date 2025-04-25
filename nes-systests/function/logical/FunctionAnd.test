@@ -13,10 +13,10 @@ SINK sink8Booleans BOOLEAN stream$a BOOLEAN stream$b BOOLEAN stream$c BOOLEAN st
 
 # Check if the and operator works for no nested functions
 SELECT
-    (i8 == 2) and (i16 == 2) AS a,
-    (i32 == 2) and (i64 == 1) AS b,
-    (u8 == 2) and (i64 == 2) AS c,
-    (u8 == 2) and (u16 == 2) AS d
+    (i8 == INT32(2)) and (i16 == INT32(2)) AS a,
+    (i32 == INT32(2)) and (i64 == INT32(1)) AS b,
+    (u8 == INT32(2)) and (i64 == INT32(2)) AS c,
+    (u8 == INT32(2)) and (u16 == INT32(2)) AS d
 FROM stream INTO sink4Booleans
 ----
 0,0,0,1
@@ -24,28 +24,28 @@ FROM stream INTO sink4Booleans
 
 # Check if the and operator works for simple nested functions
 SELECT
-    (i8 == 1) and ((i16 == 1) and (i32 == 1)) AS a,
-    (i32 == 1) and ((i64 == 1) and (u8 == 2)) AS b,
-    (u8 == 2) and ((u16 == 1) and (u32 == 2)) AS c,
-    (u8 == 2) and ((u16 == 1) and (u32 == 2)) AS d,
-    (i8 == 1) and not ((i16 == 1) and (i32 == 1)) AS e,
-    (i32 == 1) and not ((i64 == 1) and (u8 == 2)) AS f,
-    (u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS g,
-    (u8 == 2) and not ((u16 == 1) and (i32 == 2)) AS h
+    (i8 == INT32(1)) and ((i16 == INT32(1)) and (i32 == INT32(1))) AS a,
+    (i32 == INT32(1)) and ((i64 == INT32(1)) and (u8 == INT32(2))) AS b,
+    (u8 == INT32(2)) and ((u16 == INT32(1)) and (u32 == INT32(2))) AS c,
+    (u8 == INT32(2)) and ((u16 == INT32(1)) and (u32 == INT32(2))) AS d,
+    (i8 == INT32(1)) and not ((i16 == INT32(1)) and (i32 == INT32(1))) AS e,
+    (i32 == INT32(1)) and not ((i64 == INT32(1)) and (u8 == INT32(2))) AS f,
+    (u8 == INT32(2)) and not ((u16 == INT32(1)) and (u32 == INT32(2))) AS g,
+    (u8 == INT32(2)) and not ((u16 == INT32(1)) and (i32 == INT32(2))) AS h
 FROM stream INTO sink8Booleans
 ----
 1,1,0,0,0,0,1,1
 
 # Check if the and operator works together with comparison functions
 SELECT
-    (i8 == 1) and (i16 < 2) AS a,
-    (i32 == 1) and (i64 > 0) AS b,
-    (u8 == 2) and (u16 <= 2) AS c,
-    (u8 == 2) and (u16 >= 2) AS d,
-    (i8 == 1) and not (i16 == 1) AS e,
-    (i32 == 1) and not (i64 == 1) AS f,
-    (u8 == 2) and not (u16 == 1) AS g,
-    (u8 == 2) and not (u16 == 2) AS h
+    (i8 == INT32(1)) and (i16 < INT32(2)) AS a,
+    (i32 == INT32(1)) and (i64 > INT32(0)) AS b,
+    (u8 == INT32(2)) and (u16 <= INT32(2)) AS c,
+    (u8 == INT32(2)) and (u16 >= INT32(2)) AS d,
+    (i8 == INT32(1)) and not (i16 == INT32(1)) AS e,
+    (i32 == INT32(1)) and not (i64 == INT32(1)) AS f,
+    (u8 == INT32(2)) and not (u16 == INT32(1)) AS g,
+    (u8 == INT32(2)) and not (u16 == INT32(2)) AS h
 FROM stream INTO sink8Booleans
 ----
 1,1,1,1,0,0,1,0
@@ -53,14 +53,14 @@ FROM stream INTO sink8Booleans
 
 # Check if the and operator works together with comparison functions and nested functions
 SELECT
-    (i8 == 1) and ((i16 < 2) and (i32 == 1)) AS a,
-    (i32 == 1) and ((i64 > 0) and (u8 == 2)) AS b,
-    (u8 == 2) and ((u16 <= 2) and (u32 == 2)) AS c,
-    (u8 == 2) and ((u16 >= 2) and (u32 == 2)) AS d,
-    (i8 == 1) and not ((i16 == 1) and (i32 == 1)) AS e,
-    (i32 == 1) and not ((i64 == 1) and (u8 == 2)) AS f,
-    (u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS g,
-    (u8 == 2) and not ((u16 == 1) and (i32 == 2)) AS h
+    (i8 == INT32(1)) and ((i16 < INT32(2)) and (i32 == INT32(1))) AS a,
+    (i32 == INT32(1)) and ((i64 > INT32(0)) and (u8 == INT32(2))) AS b,
+    (u8 == INT32(2)) and ((u16 <= INT32(2)) and (u32 == INT32(2))) AS c,
+    (u8 == INT32(2)) and ((u16 >= INT32(2)) and (u32 == INT32(2))) AS d,
+    (i8 == INT32(1)) and not ((i16 == INT32(1)) and (i32 == INT32(1))) AS e,
+    (i32 == INT32(1)) and not ((i64 == INT32(1)) and (u8 == INT32(2))) AS f,
+    (u8 == INT32(2)) and not ((u16 == INT32(1)) and (u32 == INT32(2))) AS g,
+    (u8 == INT32(2)) and not ((u16 == INT32(1)) and (i32 == INT32(2))) AS h
 FROM stream INTO sink8Booleans
 ----
 1,1,1,1,0,0,1,1

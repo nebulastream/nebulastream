@@ -61,18 +61,19 @@ public:
     bool isWindow = false;
     bool isArithmeticBinary = false;
     bool isJoinRelation = false;
-    bool isFunctionCall = false;
     bool isSimpleCondition = true;
     bool isTimeBasedWindow = true;
     bool isSetOperation = false;
     bool isGroupBy = false;
     bool hasMultipleAttributes = false;
+    bool isInFunctionCall() const { return not functionBuilder.empty(); }
+    bool isInAggFunction() const { return not windowAggs.empty(); }
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>> windowAggs;
-    std::vector<std::shared_ptr<NodeFunction>> projections;
     std::vector<std::shared_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
+    std::vector<std::string> constantBuilder;
     std::vector<std::shared_ptr<NodeFunction>> functionBuilder;
     std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> mapBuilder;
     std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByFields;
@@ -94,7 +95,6 @@ public:
     size_t timeUnit; ///anonymous token enum in AntlrSQLLexer.h
     size_t timeUnitAdvanceBy;
     std::optional<int> minimumCount;
-    int identCountHelper = 0;
     int implicitMapCountHelper = 0;
 
     /// Inference helpers
@@ -114,7 +114,7 @@ public:
     [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getProjectionFields() const;
     void addWhereClause(const std::shared_ptr<NodeFunction>& expressionNode);
     void addHavingClause(const std::shared_ptr<NodeFunction>& expressionNode);
-    void addProjectionField(const std::shared_ptr<NodeFunction>& expressionNode);
+    void addProjectionField(const std::shared_ptr<NodeFunctionFieldAccess>& expressionNode);
     [[nodiscard]] static std::shared_ptr<Windowing::WindowType> getWindowType();
     void setSource(std::string sourceName);
     const std::string getSource() const;
