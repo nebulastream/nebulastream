@@ -28,6 +28,18 @@ enum class JoinBuildSideType : uint8_t
     Left
 };
 
+struct WindowMetaData
+{
+    WindowMetaData(std::string windowStartFieldName, std::string windowEndFieldName)
+        : windowStartFieldName(std::move(windowStartFieldName)), windowEndFieldName(std::move(windowEndFieldName))
+    {
+    }
+    WindowMetaData() = default;
+
+    std::string windowStartFieldName;
+    std::string windowEndFieldName;
+};
+
 /// Stores the information of a window. The start, end, and the identifier
 struct WindowInfo
 {

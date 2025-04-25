@@ -56,72 +56,39 @@ NLJSlice* getNLJSliceRefProxy(OperatorHandler* ptrOpHandler, const Timestamp tim
 }
 
 NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
-    std::shared_ptr<TupleBufferMemoryProvider> memoryProvider,
-    const OperatorHandlerId operatorHandlerIndex,
+    OperatorHandlerId operatorHandlerIndex,
     const JoinBuildSideType joinBuildSide,
-    std::unique_ptr<TimeFunction> timeFunction)
-    : StreamJoinBuildPhysicalOperator(std::move(memoryProvider), operatorHandlerIndex, joinBuildSide, std::move(timeFunction))
+    std::unique_ptr<TimeFunction> timeFunction,
+    std::shared_ptr<TupleBufferMemoryProvider> memoryProvider)
+    : StreamJoinBuildPhysicalOperator(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider)
 {
-}
-
-void NLJBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    WindowBuildPhysicalOperator::open(executionCtx, recordBuffer);
-
-    auto opHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    auto sliceReference = invoke(getNLJSliceRefProxy, opHandlerMemRef, recordBuffer.getWatermarkTs());
-    auto sliceStart = invoke(getNLJSliceStartProxy, sliceReference);
-    auto sliceEnd = invoke(getNLJSliceEndProxy, sliceReference);
-    const auto pagedVectorReference
-        = invoke(getNLJPagedVectorProxy, sliceReference, executionCtx.getWorkerThreadId(), nautilus::val<JoinBuildSideType>(joinBuildSide));
-
-
-    auto localJoinState
-        = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, sliceReference, sliceStart, sliceEnd, pagedVectorReference);
-
-    /// Store the local state
-    executionCtx.setLocalOperatorState(id, std::move(localJoinState));
 }
 
 void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
-    /// Get the current join state that stores the slice / pagedVector that we have to insert the tuple into
+    /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto* localJoinState = getLocalJoinState(executionCtx, timestamp);
+    const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    const auto sliceReference = invoke(
+        +[](OperatorHandler* ptrOpHandler, const Timestamp timestamp)
+        {
+            PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+            const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
+            const auto createFunction = opHandler->getCreateNewSlicesFunction();
+            return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
+        },
+        operatorHandlerRef,
+        timestamp);
+    const auto nljPagedVectorMemRef = invoke(
+        getNLJPagedVectorProxy,
+        sliceReference,
+        executionCtx.getWorkerThreadId(),
+        nautilus::val<JoinBuildSideType>(joinBuildSide));
+
 
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(
-        localJoinState->nljPagedVectorMemRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+        nljPagedVectorMemRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
     pagedVectorRef.writeRecord(record);
-}
-
-NLJBuildPhysicalOperator::LocalNestedLoopJoinState*
-NLJBuildPhysicalOperator::getLocalJoinState(ExecutionContext& executionCtx, const nautilus::val<Timestamp>& timestamp) const
-{
-    auto* localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(executionCtx.getLocalState(id));
-    const auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
-
-    if (!(localJoinState->sliceStart <= timestamp && timestamp < localJoinState->sliceEnd))
-    {
-        /// Get the slice for the current timestamp
-        updateLocalJoinState(localJoinState, operatorHandlerMemRef, executionCtx, timestamp);
-    }
-    return localJoinState;
-}
-
-void NLJBuildPhysicalOperator::updateLocalJoinState(
-    LocalNestedLoopJoinState* localJoinState,
-    const nautilus::val<NLJOperatorHandler*>& operatorHandlerRef,
-    const ExecutionContext& executionCtx,
-    const nautilus::val<Timestamp>& timestamp) const
-{
-    localJoinState->sliceReference = invoke(getNLJSliceRefProxy, operatorHandlerRef, timestamp);
-    localJoinState->sliceStart = invoke(getNLJSliceStartProxy, localJoinState->sliceReference);
-    localJoinState->sliceEnd = invoke(getNLJSliceEndProxy, localJoinState->sliceReference);
-    localJoinState->nljPagedVectorMemRef = invoke(
-        getNLJPagedVectorProxy,
-        localJoinState->sliceReference,
-        executionCtx.getWorkerThreadId(),
-        nautilus::val<JoinBuildSideType>(joinBuildSide));
 }
 }

@@ -24,10 +24,10 @@ namespace NES
 
 /// Is the general probe operator for window operators. It is responsible for emitting slices and windows to the second phase (probe).
 /// It is part of the first phase (build) that builds up the state of the window operator.
-class WindowBuildPhysicalOperator : public PhysicalOperatorConcept
+class WindowOperatorBuildPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
-    explicit WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerIndex, std::shared_ptr<TimeFunction> timeFunction);
+    explicit WindowOperatorBuildPhysicalOperator(OperatorHandlerId operatorHandlerIndex, std::shared_ptr<TimeFunction> timeFunction);
 
     /// This setup function can be called in a multithreaded environment. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
@@ -42,6 +42,7 @@ public:
 
     /// Emits/Flushes all slices and windows, as the query will be terminated
     void terminate(ExecutionContext& executionCtx) const override;
+
     std::optional<PhysicalOperator> getChild() const override { return child; }
     void setChild(PhysicalOperator child) override { this->child = child; }
 

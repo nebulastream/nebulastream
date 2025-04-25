@@ -34,7 +34,7 @@
 namespace NES
 {
 NLJOperatorHandler::NLJOperatorHandler(
-    std::vector<OriginId>& inputOrigins,
+    const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
@@ -59,9 +59,8 @@ std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> NLJOper
 void NLJOperatorHandler::emitSliceIdsToProbe(
     Slice& sliceLeft,
     Slice& sliceRight,
-    const WindowInfoAndSequenceNumber& windowInfoAndSeqNumber,
-    const ChunkNumber& chunkNumber,
-    const bool isLastChunk,
+    const WindowInfo& windowInfo,
+    const SequenceData& sequenceData,
     PipelineExecutionContext* pipelineCtx)
 {
     auto& nljSliceLeft = dynamic_cast<NLJSlice&>(sliceLeft);
@@ -69,40 +68,43 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
 
     nljSliceLeft.combinePagedVectors();
     nljSliceRight.combinePagedVectors();
+    const auto totalNumberOfTuples = nljSliceLeft.getNumberOfTuplesLeft() + nljSliceRight.getNumberOfTuplesRight();
 
     auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
-    tupleBuffer.setNumberOfTuples(1);
 
     /// As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
     /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
     tupleBuffer.setOriginId(outputOriginId);
-    tupleBuffer.setSequenceNumber(windowInfoAndSeqNumber.sequenceNumber);
-    tupleBuffer.setChunkNumber(chunkNumber);
-    tupleBuffer.setLastChunk(isLastChunk);
-    tupleBuffer.setWatermark(Timestamp(std::min(sliceLeft.getSliceStart().getRawValue(), sliceRight.getSliceStart().getRawValue())));
+    tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
+    tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
+    tupleBuffer.setLastChunk(sequenceData.lastChunk);
+    tupleBuffer.setWatermark(windowInfo.windowStart);
+    tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
 
     auto* bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTrigger>();
     bufferMemory->leftSliceEnd = sliceLeft.getSliceEnd();
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
-    bufferMemory->windowInfo = windowInfoAndSeqNumber.windowInfo;
+    bufferMemory->windowInfo = windowInfo;
 
+    /// Dispatching the buffer to the probe operator via the task queue.
     pipelineCtx->emitBuffer(tupleBuffer);
-    NES_DEBUG(
+
+    NES_TRACE(
         "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",
         bufferMemory->leftSliceEnd,
         bufferMemory->rightSliceEnd,
         tupleBuffer.getWatermark(),
-        tupleBuffer.getSequenceNumber(),
+        tupleBuffer.getSequenceDataAsString(),
         tupleBuffer.getOriginId(),
         nljSliceLeft.getNumberOfTuplesLeft(),
         nljSliceRight.getNumberOfTuplesRight(),
-        windowInfoAndSeqNumber.windowInfo.windowStart,
-        windowInfoAndSeqNumber.windowInfo.windowEnd);
+        windowInfo.windowStart,
+        windowInfo.windowEnd);
 }
 
-Nautilus::Interface::PagedVector*
-getNLJPagedVectorProxy(const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
+Nautilus::Interface::PagedVector* getNLJPagedVectorProxy(
+    const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
     switch (joinBuildSide)

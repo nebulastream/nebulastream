@@ -31,10 +31,10 @@ class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 {
 public:
     NLJProbePhysicalOperator(
-        const OperatorHandlerId operatorHandlerIndex,
+        OperatorHandlerId operatorHandlerIndex,
         Functions::PhysicalFunction joinFunction,
-        const std::string windowStartFieldName,
-        const std::string windowEndFieldName,
+        std::string windowStartFieldName,
+        std::string windowEndFieldName,
         const JoinSchema& joinSchema,
         std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
         std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider);
@@ -42,10 +42,9 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
     std::optional<PhysicalOperator> getChild() const override { return child; }
-    void setChild(struct PhysicalOperator child) override { this->child = child; }
+    void setChild(PhysicalOperator child) override { this->child = child; }
 
-private:
-    std::optional<PhysicalOperator> child;
+protected:
     std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider;
     std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider;
 };
