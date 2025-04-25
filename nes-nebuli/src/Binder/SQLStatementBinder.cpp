@@ -19,7 +19,7 @@
 #include <tuple>
 #include <Binder/SQLStatementBinder.hpp>
 #include <sys/stat.h>
-#include <Common/DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
@@ -41,25 +41,28 @@ Statement SQLStatementBinder::bind(AntlrSQLParser::StatementContext* statementAS
     {
         throw NotImplemented("Cannot parse query here yet");
     }
-    if (auto* const createSourceAST = statementAST->createSourceStatement(); createSourceAST != nullptr)
+    if (auto* const createAST = statementAST->createStatement(); createAST != nullptr)
     {
-        auto statement = CreateSourceStatement{};
-        auto& [sourceName, columns] = statement;
-
-        sourceName = createSourceAST->sourceName->getText();
-
-        for (auto* const column : createSourceAST->sourceDefinition()->columnDefinition())
+        if (auto* const sourceDefAST = createAST->createDefinition()->createSourceDefinition(); sourceDefAST != nullptr)
         {
-            if (auto dataType = DataTypeProvider::tryProvideDataType(column->type->getText()))
+            auto statement = CreateSourceStatement{};
+            auto& [sourceName, columns] = statement;
+
+            sourceName = sourceDefAST->sourceName->getText();
+
+            for (auto* const column : sourceDefAST->schemaDefinition())
             {
-                columns.emplace_back(std::pair{column->IDENTIFIER()->getText(), *dataType});
+                if (auto dataType = DataTypeProvider::tryProvideDataType(column->type->getText()))
+                {
+                    columns.emplace_back(std::pair{column->IDENTIFIER()->getText(), *dataType});
+                }
+                else
+                {
+                    throw UnknownType(column->type->getText());
+                }
             }
-            else
-            {
-                throw UnknownType(column->type->getText());
-            }
+            return statement;
         }
-        return statement;
     }
     if (auto* const dropAst = statementAST->dropStatement(); dropAst != nullptr)
     {
