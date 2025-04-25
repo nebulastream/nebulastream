@@ -159,13 +159,26 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStatisticStoreReadOperator>(operatorNode))
     {
-        auto statisticStoreReader = std::make_shared<Runtime::Execution::Operators::StatisticStoreReader>(operatorHandlers.size() - 1);
+        const auto readOperator = NES::Util::as<PhysicalOperators::PhysicalStatisticStoreReadOperator>(operatorNode);
+        auto statisticStoreReader = std::make_shared<Runtime::Execution::Operators::StatisticStoreReader>(
+            operatorHandlers.size() - 1,
+            readOperator->hashFieldName,
+            readOperator->startTsFieldName,
+            readOperator->endTsFieldName,
+            readOperator->dataFieldName);
         parentOperator->setChild(statisticStoreReader);
         return statisticStoreReader;
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStatisticStoreWriteOperator>(operatorNode))
     {
-        auto statisticStoreWriter = std::make_shared<Runtime::Execution::Operators::StatisticStoreWriter>(operatorHandlers.size() - 1);
+        const auto writeOperator = NES::Util::as<PhysicalOperators::PhysicalStatisticStoreWriteOperator>(operatorNode);
+        auto statisticStoreWriter = std::make_shared<Runtime::Execution::Operators::StatisticStoreWriter>(
+            operatorHandlers.size() - 1,
+            writeOperator->hashFieldName,
+            writeOperator->typeFieldName,
+            writeOperator->startTsFieldName,
+            writeOperator->endTsFieldName,
+            writeOperator->dataFieldName);
         parentOperator->setChild(statisticStoreWriter);
         return statisticStoreWriter;
     }

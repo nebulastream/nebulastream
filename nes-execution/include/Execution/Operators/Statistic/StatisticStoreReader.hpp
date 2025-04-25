@@ -22,13 +22,22 @@ namespace NES::Runtime::Execution::Operators
 class StatisticStoreReader final : public ExecutableOperator
 {
 public:
-    explicit StatisticStoreReader(uint64_t operatorHandlerIndex);
+    explicit StatisticStoreReader(
+        uint64_t operatorHandlerIndex,
+        const std::string& hashFieldName,
+        const std::string& startTsFieldName,
+        const std::string& endTsFieldName,
+        const std::string& dataFieldName);
 
     /// Gets the single statistic for given metadata from the StatisticStore and writes it to the record
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 
 private:
     const uint64_t operatorHandlerIndex;
+    const std::string hashFieldName;
+    const std::string startTsFieldName;
+    const std::string endTsFieldName;
+    const std::string dataFieldName;
 };
 
 }

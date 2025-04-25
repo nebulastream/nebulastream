@@ -19,8 +19,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-// TODO(nikla44): what if I don't want to get a single statistic but all in the given bounds? -> adapt execute()
-
+/// For now, we cannot call getAllStatistics() from StatisticStore as we can only pass one value back to Nautilus
 int8_t* getStatisticFromStoreProxy(
     OperatorHandler* ptrOpHandler, const StatisticHash hash, const Timestamp::Underlying startTs, const Timestamp::Underlying endTs)
 {
@@ -37,20 +36,29 @@ int8_t* getStatisticFromStoreProxy(
     return nullptr;
 }
 
-StatisticStoreReader::StatisticStoreReader(const uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex)
+StatisticStoreReader::StatisticStoreReader(
+    const uint64_t operatorHandlerIndex,
+    const std::string& hashFieldName,
+    const std::string& startTsFieldName,
+    const std::string& endTsFieldName,
+    const std::string& dataFieldName)
+    : operatorHandlerIndex(operatorHandlerIndex)
+    , hashFieldName(hashFieldName)
+    , startTsFieldName(startTsFieldName)
+    , endTsFieldName(endTsFieldName)
+    , dataFieldName(dataFieldName)
 {
 }
 
 void StatisticStoreReader::execute(ExecutionContext& executionCtx, Record& record) const
 {
-    /// Insert statistic into store
-    // TODO(nikla44): should recordFieldIdentifiers be hardcoded? What about the statisticType field?
+    /// Read statistic from store
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    const auto statisticHash = record.read("hash").cast<nautilus::val<StatisticHash>>();
-    const auto startTs = record.read("startTs").cast<nautilus::val<Timestamp::Underlying>>();
-    const auto endTs = record.read("endTs").cast<nautilus::val<Timestamp::Underlying>>();
+    const auto statisticHash = record.read(hashFieldName).cast<nautilus::val<StatisticHash>>();
+    const auto startTs = record.read(startTsFieldName).cast<nautilus::val<Timestamp::Underlying>>();
+    const auto endTs = record.read(endTsFieldName).cast<nautilus::val<Timestamp::Underlying>>();
     const auto statisticData = invoke(getStatisticFromStoreProxy, operatorHandlerMemRef, statisticHash, startTs, endTs);
-    record.write("data", VariableSizedData(statisticData));
+    record.write(dataFieldName, VariableSizedData(statisticData));
 }
 
 }

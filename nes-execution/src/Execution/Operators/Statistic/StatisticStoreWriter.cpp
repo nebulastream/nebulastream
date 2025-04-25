@@ -43,20 +43,31 @@ void insertStatisticIntoStoreProxy(
     statisticStore->insertStatistic(hash, statistic);
 }
 
-StatisticStoreWriter::StatisticStoreWriter(const uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex)
+StatisticStoreWriter::StatisticStoreWriter(
+    const uint64_t operatorHandlerIndex,
+    const std::string& hashFieldName,
+    const std::string& typeFieldName,
+    const std::string& startTsFieldName,
+    const std::string& endTsFieldName,
+    const std::string& dataFieldName)
+    : operatorHandlerIndex(operatorHandlerIndex)
+    , hashFieldName(hashFieldName)
+    , typeFieldName(typeFieldName)
+    , startTsFieldName(startTsFieldName)
+    , endTsFieldName(endTsFieldName)
+    , dataFieldName(dataFieldName)
 {
 }
 
 void StatisticStoreWriter::execute(ExecutionContext& executionCtx, Record& record) const
 {
     /// Insert statistic into store
-    // TODO(nikla44): should recordFieldIdentifiers be hardcoded?
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    const auto statisticHash = record.read("hash").cast<nautilus::val<StatisticHash>>();
-    const auto statisticType = record.read("type").cast<nautilus::val<std::underlying_type_t<StatisticType>>>();
-    const auto startTs = record.read("startTs").cast<nautilus::val<Timestamp::Underlying>>();
-    const auto endTs = record.read("endTs").cast<nautilus::val<Timestamp::Underlying>>();
-    const auto statisticData = record.read("data").cast<VariableSizedData>().getReference();
+    const auto statisticHash = record.read(hashFieldName).cast<nautilus::val<StatisticHash>>();
+    const auto statisticType = record.read(typeFieldName).cast<nautilus::val<std::underlying_type_t<StatisticType>>>();
+    const auto startTs = record.read(startTsFieldName).cast<nautilus::val<Timestamp::Underlying>>();
+    const auto endTs = record.read(endTsFieldName).cast<nautilus::val<Timestamp::Underlying>>();
+    const auto statisticData = record.read(dataFieldName).cast<VariableSizedData>().getReference();
     invoke(insertStatisticIntoStoreProxy, operatorHandlerMemRef, statisticHash, statisticType, startTs, endTs, statisticData);
 }
 

@@ -31,6 +31,11 @@ public:
 
     std::shared_ptr<Operator> copy() override;
 
+    const std::string hashFieldName = "hash";
+    const std::string startTsFieldName = "startTs";
+    const std::string endTsFieldName = "endTs";
+    const std::string dataFieldName = "data";
+
 protected:
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
     [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;

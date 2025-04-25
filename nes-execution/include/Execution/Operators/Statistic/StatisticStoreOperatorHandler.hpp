@@ -32,6 +32,7 @@ public:
     [[nodiscard]] std::shared_ptr<AbstractStatisticStore> getStatisticStore() const;
 
 private:
+    /// StatisticStoreManager outlives this OperatorHandler and is implemented as a singleton instance
     StatisticStoreManager& statisticStoreManager;
 };
 
