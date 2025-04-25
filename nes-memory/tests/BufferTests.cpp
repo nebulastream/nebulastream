@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -55,7 +56,7 @@ TEST(BufferTest, MultipleFixedSizeBuffers)
         fixed->destroy();
     }
 
-    EXPECT_EQ(global->createFixedSizeBufferPool(10), std::nullopt);
+    EXPECT_EQ(global->createFixedSizeBufferPool(10, std::chrono::seconds(0)), std::nullopt);
     EXPECT_TRUE(global->createFixedSizeBufferPool(9).has_value());
     inFlight.clear();
     EXPECT_TRUE(global->createFixedSizeBufferPool(10).has_value());
