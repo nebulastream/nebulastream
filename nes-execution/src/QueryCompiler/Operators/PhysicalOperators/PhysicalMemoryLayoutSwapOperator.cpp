@@ -39,13 +39,10 @@ std::shared_ptr<PhysicalOperator> PhysicalMemoryLayoutSwapOperator::create(
     return std::make_shared<PhysicalMemoryLayoutSwapOperator>(id, inputSchema, outputSchema);
 }
 
-std::string PhysicalMemoryLayoutSwapOperator::toString() const
+std::ostream& PhysicalMemoryLayoutSwapOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalSwapOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+    os << "PhysicalSwapOperator:\n";
+    return PhysicalUnaryOperator::toDebugString(os);
 }
 
 std::shared_ptr<Operator> PhysicalMemoryLayoutSwapOperator::copy()
