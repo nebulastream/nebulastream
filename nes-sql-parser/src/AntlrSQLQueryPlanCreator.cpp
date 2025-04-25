@@ -386,9 +386,6 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     else if (helper.isInferModelInput)
     {
-        if (helper.isFunctionCall)
-            helper.functionBuilder.push_back(Attribute(context->getText()));
-        else
             helper.inferModelInputs.push_back(Attribute(context->getText()));
     }
     else if (helper.isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
@@ -919,7 +916,9 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
 
     if (helper.isInferModelInput)
     {
-        parentHelper.inferModelAggInputs.push_back(helper.functionBuilder.back());
+        parentHelper.inferModelAggInputs.push_back(helper.inferModelInputs.back());
+        helper.functionBuilder.push_back(helper.inferModelInputs.back());
+        helper.inferModelInputs.pop_back();
     }
 
     switch (tokenType) /// TODO #619: improve this switch case
