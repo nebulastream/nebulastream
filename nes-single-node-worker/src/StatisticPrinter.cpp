@@ -59,23 +59,26 @@ void threadRoutine(
                 [&](TaskExecutionStart taskStartEvent)
                 {
                     file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {}\n",
+                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started. Number of Tuples: {} Bytes in TupleBuffer: {}\n",
                         taskStartEvent.timestamp,
                         taskStartEvent.taskId,
                         taskStartEvent.pipelineId,
                         taskStartEvent.queryId,
-                        taskStartEvent.numberOfTuples);
+                        taskStartEvent.numberOfTuples,
+                        taskStartEvent.bytesInTupleBuffer);
                 },
                 [&](TaskEmit emitEvent)
                 {
                     file << fmt::format(
-                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {}\n",
+                        "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} to Pipeline {} of Query {}. Number of Tuples: {} Bytes in "
+                        "TupleBuffer: {}\n",
                         emitEvent.timestamp,
                         emitEvent.taskId,
                         emitEvent.fromPipeline,
                         emitEvent.toPipeline,
                         emitEvent.queryId,
-                        emitEvent.numberOfTuples);
+                        emitEvent.numberOfTuples,
+                        emitEvent.bytesInTupleBuffer);
                 },
                 [&](TaskExecutionComplete taskStopEvent)
                 {
