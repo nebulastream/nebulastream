@@ -13,5 +13,4 @@
 add_source_files(nes-logical-operators
         TimeCharacteristic.cpp
         TimeMeasure.cpp
-        TimeUnit.cpp
-)
+ )

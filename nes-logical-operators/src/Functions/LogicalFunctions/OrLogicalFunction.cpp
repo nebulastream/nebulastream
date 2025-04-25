@@ -17,6 +17,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
 #include <Util/Common.hpp>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -93,9 +94,9 @@ LogicalFunction OrLogicalFunction::withInferredStamp(Schema schema) const
     }
     /// check if children stamp is correct
     INVARIANT(
-        *left.getStamp().get() == Boolean(), "the stamp of left child must be boolean, but was: " + left.getStamp().get()->toString());
+        *left.getStamp().get() == Boolean(), "the stamp of left child must be boolean, but was: {}", left.getStamp().get()->toString());
     INVARIANT(
-        *right.getStamp().get() == Boolean(), "the stamp of right child must be boolean, but was: " + right.getStamp().get()->toString());
+        *right.getStamp().get() == Boolean(), "the stamp of right child must be boolean, but was: {}", right.getStamp().get()->toString());
     return this->withChildren(children);
 }
 
