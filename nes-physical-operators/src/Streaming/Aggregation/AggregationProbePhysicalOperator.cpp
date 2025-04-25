@@ -102,7 +102,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                     const nautilus::val<Interface::AbstractHashMapEntry*>& entryOnInsert)
                 {
                     /// If the entry for the provided key has not been seen by this hash map / worker thread, we need
-                    /// to create a new one and initialize the aggregation states. After that, we can combine the aggregation states.
+                        /// to create a new one and initialize the aggregation states. After that, we can combine the aggregation states.
                     const Interface::ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnInsert, fieldKeys, fieldValues);
                     auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
@@ -138,19 +138,13 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         outputRecord.write(windowEndFieldName, windowEnd.convertToValue());
         PhysicalOperatorConcept::execute(executionCtx, outputRecord);
     }
-
-    nautilus::invoke(
-        +[](EmittedAggregationWindow* emittedAggregationWindow) { emittedAggregationWindow->finalHashMap.reset(); }, aggregationWindowRef);
 }
 
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(
     std::shared_ptr<WindowAggregation> windowAggregationOperator,
-    const OperatorHandlerId operatorHandlerIndex,
+    OperatorHandlerId operatorHandlerIndex,
     std::string windowStartFieldName,
-    std::string windowEndFieldName)
-    : WindowAggregation(windowAggregationOperator)
-    , WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName)
-{
+    std::string windowEndFieldName) : WindowAggregation(windowAggregationOperator)
+    , WindowProbePhysicalOperator(operatorHandlerIndex, windowStartFieldName, windowEndFieldName){
 }
-
 }

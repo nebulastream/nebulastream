@@ -57,12 +57,12 @@ void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionCont
 }
 
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerIndex, std::shared_ptr<TimeFunction> timeFunction)
+WindowOperatorBuildPhysicalOperator::WindowOperatorBuildPhysicalOperator(OperatorHandlerId operatorHandlerIndex, std::shared_ptr<TimeFunction> timeFunction)
     : operatorHandlerIndex(operatorHandlerIndex), timeFunction(std::move(timeFunction))
 {
 }
 
-void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
+void WindowOperatorBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
 {
     /// Update the watermark for the nlj operator and trigger slices
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -77,13 +77,13 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         executionCtx.originId);
 }
 
-void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void WindowOperatorBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// Initializing the time function
     timeFunction->open(executionCtx, recordBuffer);
 }
 
-void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+void WindowOperatorBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     invoke(triggerAllWindowsProxy, operatorHandlerMemRef, executionCtx.pipelineContext);

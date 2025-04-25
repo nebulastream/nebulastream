@@ -33,8 +33,8 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
-    , leftMemoryProvider(std::move(leftMemoryProvider))
-    , rightMemoryProvider(std::move(rightMemoryProvider))
+    , leftMemoryProvider(leftMemoryProvider)
+    , rightMemoryProvider(rightMemoryProvider)
 {
 }
 
@@ -52,7 +52,8 @@ void StreamJoinOperatorHandler::triggerSlices(
             for (const auto& sliceRight : allSlices)
             {
                 const bool isLastChunk = chunkNumber == (allSlices.size() * allSlices.size());
-                emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo, ChunkNumber(chunkNumber), isLastChunk, pipelineCtx);
+                const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
+                emitSliceIdsToProbe(*sliceLeft, *sliceRight, windowInfo.windowInfo, sequenceData, pipelineCtx);
                 ++chunkNumber;
             }
         }

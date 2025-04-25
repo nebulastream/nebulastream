@@ -33,9 +33,9 @@ class WindowAggregation
 public:
     WindowAggregation(
         std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions,
-        std::shared_ptr<Nautilus::Interface::HashFunction> hashFunction,
-        std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys,
-        std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues,
+        std::shared_ptr<Interface::HashFunction> hashFunction,
+        std::vector<FieldOffsets> fieldKeys,
+        std::vector<FieldOffsets> fieldValues,
         const uint64_t entriesPerPage,
         const uint64_t entrySize)
         : aggregationFunctions(std::move(aggregationFunctions))
@@ -67,9 +67,9 @@ public:
 protected:
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
     std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
-    std::shared_ptr<Nautilus::Interface::HashFunction> hashFunction;
-    std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys;
-    std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues;
+    std::shared_ptr<Interface::HashFunction> hashFunction;
+    std::vector<FieldOffsets> fieldKeys;
+    std::vector<FieldOffsets> fieldValues;
     uint64_t entriesPerPage;
     uint64_t entrySize;
 };

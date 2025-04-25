@@ -26,7 +26,7 @@
 namespace NES
 {
 
-class AggregationBuildPhysicalOperator final : public WindowAggregation, public WindowBuildPhysicalOperator
+class AggregationBuildPhysicalOperator final : public WindowAggregation, public WindowOperatorBuildPhysicalOperator
 {
 public:
     AggregationBuildPhysicalOperator(

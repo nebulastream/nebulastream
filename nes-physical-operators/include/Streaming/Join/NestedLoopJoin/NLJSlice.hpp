@@ -27,6 +27,7 @@ namespace NES
 {
 
 /// This class represents a single slice for the NestedLoopJoin. It stores all tuples for the left and right stream.
+/// This class represents a single slice for the NestedLoopJoin. It stores all tuples for the left and right stream.
 class NLJSlice final : public Slice
 {
 public:
@@ -46,5 +47,6 @@ public:
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> rightPagedVectors;
+    std::mutex combinePagedVectorsMutex;
 };
 }

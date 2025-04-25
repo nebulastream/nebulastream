@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Streaming/Aggregation/WindowAggregation.hpp>
@@ -33,8 +34,7 @@ public:
         std::string windowEndFieldName);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     std::optional<PhysicalOperator> getChild() const override { return child; }
-    void setChild(struct PhysicalOperator child) override { this->child = child; }
-
+    void setChild(PhysicalOperator child) override { this->child = child; }
 private:
     std::optional<PhysicalOperator> child;
 };

@@ -69,7 +69,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     {
         const auto& [fieldIdentifier, type, fieldOffset] = fieldKeys[i];
         const auto& function = keyFunctions[i];
-        const auto value = function->execute(record, ctx.pipelineMemoryProvider.arena);
+        const auto value = function.execute(record, ctx.pipelineMemoryProvider.arena);
         record.write(fieldIdentifier, value);
     }
 
@@ -107,7 +107,7 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     std::vector<Functions::PhysicalFunction> keyFunctions,
     std::shared_ptr<WindowAggregation> windowAggregationOperator)
     : WindowAggregation(std::move(windowAggregationOperator))
-    , WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
+    , WindowOperatorBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
     , keyFunctions(std::move(keyFunctions))
 {
 }

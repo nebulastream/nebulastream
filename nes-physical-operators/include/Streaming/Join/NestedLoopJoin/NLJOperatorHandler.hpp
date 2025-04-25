@@ -45,7 +45,7 @@ class NLJOperatorHandler final : public StreamJoinOperatorHandler
 public:
     static constexpr int64_t windowSizeRollingAverage = 10;
     NLJOperatorHandler(
-        std::vector<OriginId>& inputOrigins,
+        const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider,
@@ -57,13 +57,9 @@ private:
     void emitSliceIdsToProbe(
         Slice& sliceLeft,
         Slice& sliceRight,
-        const WindowInfoAndSequenceNumber& windowInfoAndSeqNumber,
-        const ChunkNumber& chunkNumber,
-        bool isLastChunk,
+        const WindowInfo& windowInfo,
+        const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
-
-    /// We store as a pair the average number of tuples left/right and the number of samples left/right
-    folly::Synchronized<std::pair<int64_t, int64_t>> averageNumberOfTuplesLeft, averageNumberOfTuplesRight;
 };
 
 /// Proxy function that returns the pointer to the correct PagedVector
