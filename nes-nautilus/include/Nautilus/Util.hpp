@@ -102,11 +102,13 @@ static VarVal createNautilusConstValue(T value, DataType::Type physicalType)
             return Nautilus::VarVal(nautilus::val<float>(value));
         case DataType::Type::FLOAT64:
             return Nautilus::VarVal(nautilus::val<double>(value));
-        default: {
-            throw NotImplemented("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
-        }
+        case DataType::Type::BOOLEAN:
+        case DataType::Type::CHAR:
+        case DataType::Type::VARSIZED:
+        case DataType::Type::UNDEFINED:
+            throw UnsupportedDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(physicalType));
     }
-    throw NotImplemented("Physical Type: type {} is not a BasicPhysicalType", magic_enum::enum_name(physicalType));
+    std::unreachable();
 }
 
 }
