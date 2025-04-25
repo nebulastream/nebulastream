@@ -21,6 +21,7 @@
 #include <string>
 #include <type_traits>
 #include <variant>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -165,7 +166,7 @@ public:
 
     std::string readVarSized(std::variant<const uint64_t, const std::string> field);
 
-    [[nodiscard]] std::string toString(Schema schema) const;
+    [[nodiscard]] std::string toString(const Schema& schema) const;
 
     /// Compares if the values of both tuples are equal.
     /// @note This means that the underlying memory layout CAN BE different
@@ -228,7 +229,7 @@ public:
     };
     explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer);
 
-    static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, Schema schema);
+    static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema);
 
     /// Gets the number of tuples a tuple buffer with this memory layout could occupy.
     [[nodiscard]] uint64_t getCapacity() const;
@@ -288,8 +289,8 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
-    std::string toString(Schema schema) const;
-    std::string toString(Schema schema, PrintMode printMode) const;
+    [[nodiscard]] std::string toString(const Schema& schema) const;
+    [[nodiscard]] std::string toString(const Schema& schema, const PrintMode printMode) const;
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  

@@ -15,6 +15,7 @@
 #include <ostream>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
@@ -49,8 +50,8 @@ namespace NES::QueryCompilation::PhysicalOperators
 
 PhysicalWindowOperator::PhysicalWindowOperator(
     const OperatorId id,
-    Schema inputSchema,
-    Schema outputSchema,
+    const Schema& inputSchema,
+    const Schema& outputSchema,
     std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler)
     : Operator(id)

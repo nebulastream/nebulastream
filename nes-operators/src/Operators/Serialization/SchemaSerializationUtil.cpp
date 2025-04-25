@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <memory>
-#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>

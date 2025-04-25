@@ -38,8 +38,8 @@ class PhysicalWindowOperator : public PhysicalUnaryOperator
 public:
     PhysicalWindowOperator(
         OperatorId id,
-        Schema inputSchema,
-        Schema outputSchema,
+        const Schema& inputSchema,
+        const Schema& outputSchema,
         std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition,
         std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler);
     const std::shared_ptr<Windowing::LogicalWindowDescriptor>& getWindowDefinition() const;

@@ -44,6 +44,7 @@
 #include <val.hpp>
 #include <val_ptr.hpp>
 
+#include <DataTypes/DataType.hpp>
 #include <PagedVectorTestUtils.hpp>
 
 namespace NES::Nautilus::Interface

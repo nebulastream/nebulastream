@@ -103,13 +103,13 @@ public:
      * @param leftSourceType the type of the left source
      * @param rightSourceType the type of the right source
      */
-    void updateSourceTypes(Schema leftSourceType, Schema rightSourceType);
+    void updateSourceTypes(const Schema& leftSourceType, const Schema& rightSourceType);
 
     /**
      * @brief Update the output source type upon type inference
      * @param outputSchema the type of the output source
      */
-    void updateOutputDefinition(Schema outputSchema);
+    void updateOutputDefinition(const Schema& outputSchema);
 
     /**
      * @brief Getter of the output source schema

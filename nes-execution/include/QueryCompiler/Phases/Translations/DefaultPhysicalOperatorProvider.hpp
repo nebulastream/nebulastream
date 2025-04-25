@@ -38,8 +38,8 @@ struct WindowOperatorProperties
 {
     WindowOperatorProperties(
         std::shared_ptr<WindowOperator> windowOperator,
-        Schema windowInputSchema,
-        Schema windowOutputSchema,
+        const Schema& windowInputSchema,
+        const Schema& windowOutputSchema,
         std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition)
         : windowOperator(std::move(windowOperator))
         , windowInputSchema(std::move(windowInputSchema))
@@ -128,7 +128,9 @@ protected:
 
 
     std::shared_ptr<Operator> getJoinBuildInputOperator(
-        const std::shared_ptr<LogicalJoinOperator>& joinOperator, Schema outputSchema, std::vector<std::shared_ptr<Operator>> children);
+        const std::shared_ptr<LogicalJoinOperator>& joinOperator,
+        const Schema& outputSchema,
+        std::vector<std::shared_ptr<Operator>> children);
 
 private:
     /// Lowers the stream nested loop join

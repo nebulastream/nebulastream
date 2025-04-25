@@ -25,7 +25,10 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalThresholdWindowOperator::PhysicalThresholdWindowOperator(
-    OperatorId id, Schema inputSchema, Schema outputSchema, std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition)
+    OperatorId id,
+    const Schema& inputSchema,
+    const Schema& outputSchema,
+    std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition)
     : Operator(id)
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
     , windowDefinition(std::move(windowDefinition))
@@ -33,7 +36,7 @@ PhysicalThresholdWindowOperator::PhysicalThresholdWindowOperator(
 }
 
 std::shared_ptr<PhysicalThresholdWindowOperator> PhysicalThresholdWindowOperator::create(
-    Schema inputSchema, Schema outputSchema, const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition)
+    const Schema& inputSchema, const Schema& outputSchema, const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition)
 {
     return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
 }

@@ -29,10 +29,12 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalSelectionOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalSelectionOperator(OperatorId id, Schema inputSchema, Schema outputSchema, std::shared_ptr<NodeFunction> predicate);
+    PhysicalSelectionOperator(
+        OperatorId id, const Schema& inputSchema, const Schema& outputSchema, std::shared_ptr<NodeFunction> predicate);
     static std::shared_ptr<PhysicalOperator>
-    create(OperatorId id, Schema inputSchema, Schema outputSchema, const std::shared_ptr<NodeFunction>& function);
-    static std::shared_ptr<PhysicalOperator> create(Schema inputSchema, Schema outputSchema, const std::shared_ptr<NodeFunction>& function);
+    create(OperatorId id, const Schema& inputSchema, const Schema& outputSchema, const std::shared_ptr<NodeFunction>& function);
+    static std::shared_ptr<PhysicalOperator>
+    create(const Schema& inputSchema, const Schema& outputSchema, const std::shared_ptr<NodeFunction>& function);
     std::shared_ptr<Operator> copy() override;
     std::shared_ptr<NodeFunction> getPredicate();
 

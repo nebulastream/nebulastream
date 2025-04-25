@@ -21,7 +21,7 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, Schema inputSchema, Schema outputSchema)
+PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, const Schema& inputSchema, const Schema& outputSchema)
     : Operator(id), PhysicalOperator(id), UnaryOperator(id)
 {
     UnaryOperator::setInputSchema(std::move(inputSchema));

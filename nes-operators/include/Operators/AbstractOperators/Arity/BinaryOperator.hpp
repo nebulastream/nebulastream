@@ -39,7 +39,7 @@ public:
     * @brief set the input schema of this operator for the left side
      * @param inputSchema
     */
-    void setLeftInputSchema(Schema inputSchema);
+    void setLeftInputSchema(const Schema& inputSchema);
 
     /**
     * @brief get the input schema of this operator from the left side
@@ -51,7 +51,7 @@ public:
      * @brief set the input schema of this operator for the right side
      * @param inputSchema
     */
-    void setRightInputSchema(Schema inputSchema);
+    void setRightInputSchema(const Schema& inputSchema);
 
     /**
     * @brief get the result schema of this operator

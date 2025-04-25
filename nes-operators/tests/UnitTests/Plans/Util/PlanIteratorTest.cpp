@@ -15,6 +15,7 @@
 #include <memory>
 #include <vector>
 #include <API/QueryAPI.hpp>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>

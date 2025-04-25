@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>

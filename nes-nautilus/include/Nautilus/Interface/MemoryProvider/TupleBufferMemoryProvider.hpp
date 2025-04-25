@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -34,7 +35,7 @@ class TupleBufferMemoryProvider
 public:
     virtual ~TupleBufferMemoryProvider();
 
-    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, Schema schema);
+    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const Schema& schema);
 
     virtual std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() = 0;
 

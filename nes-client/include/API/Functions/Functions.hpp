@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 

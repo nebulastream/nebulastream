@@ -16,6 +16,7 @@
 #include <utility>
 #include <API/Functions/Functions.hpp>
 #include <API/Windowing.hpp>
+#include <DataTypes/DataType.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>

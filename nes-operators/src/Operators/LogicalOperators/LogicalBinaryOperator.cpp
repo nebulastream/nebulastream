@@ -48,7 +48,9 @@ bool LogicalBinaryOperator::inferSchema()
     {
         auto childOutputSchema = NES::Util::as<Operator>(child)->getOutputSchema();
         auto found = std::find_if(
-            distinctSchemas.begin(), distinctSchemas.end(), [&](Schema distinctSchema) { return (childOutputSchema == distinctSchema); });
+            distinctSchemas.begin(),
+            distinctSchemas.end(),
+            [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
         if (found == distinctSchemas.end())
         {
             distinctSchemas.push_back(childOutputSchema);

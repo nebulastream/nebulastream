@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -46,7 +47,7 @@ public:
         friend std::ostream& operator<<(std::ostream& os, const Field& field);
         bool operator==(const Field&) const = default;
 
-        std::string name{};
+        std::string name;
         DataType dataType{};
     };
 
@@ -111,9 +112,9 @@ public:
 private:
     /// Manipulating fields requires us to update the size of the schema (in bytes) and the 'nameToFieldMap', which maps names of fields to
     /// their corresponding indexes in the 'fields' vector. Thus, the below three members are private to prevent accidental manipulation.
-    std::vector<Field> fields{};
+    std::vector<Field> fields;
     size_t sizeOfSchemaInBytes{0};
-    std::unordered_map<std::string, size_t> nameToField{};
+    std::unordered_map<std::string, size_t> nameToField;
 };
 
 }

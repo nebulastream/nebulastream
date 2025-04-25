@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -96,14 +97,14 @@ bool TupleBufferMemoryProvider::includesField(
 
 TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 
-std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(const uint64_t bufferSize, Schema schema)
+std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(const uint64_t bufferSize, const Schema& schema)
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(std::move(schema), bufferSize);
         return std::make_unique<RowTupleBufferMemoryProvider>(rowMemoryLayout);
     }
-    else if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
         return std::make_unique<ColumnTupleBufferMemoryProvider>(columnMemoryLayout);

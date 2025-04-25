@@ -34,7 +34,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/LogicalQueryDumpHelper.hpp>
 #include <fmt/format.h>
-#include "ErrorHandling.hpp"
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

@@ -35,20 +35,20 @@ public:
      * @param id operator id
      * @param outputSchema output schema
      */
-    PhysicalScanOperator(OperatorId id, Schema outputSchema);
+    PhysicalScanOperator(OperatorId id, const Schema& outputSchema);
 
     /**
      * @brief Creates for the physical scan operator
      * @param id operator id
      * @param outputSchema output schema
      */
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, Schema outputSchema);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const Schema& outputSchema);
 
     /**
      * @brief Constructor for the physical scan operator
      * @param outputSchema output schema
      */
-    static std::shared_ptr<PhysicalOperator> create(Schema outputSchema);
+    static std::shared_ptr<PhysicalOperator> create(const Schema& outputSchema);
     std::shared_ptr<Operator> copy() override;
 
 protected:

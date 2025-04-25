@@ -215,7 +215,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const std::shared_ptr<Log
 }
 
 std::shared_ptr<Operator> DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
-    const std::shared_ptr<LogicalJoinOperator>& joinOperator, Schema outputSchema, std::vector<std::shared_ptr<Operator>> children)
+    const std::shared_ptr<LogicalJoinOperator>& joinOperator, const Schema& outputSchema, std::vector<std::shared_ptr<Operator>> children)
 {
     PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", *joinOperator);
 
@@ -241,7 +241,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
     const auto& joinDefinition = joinOperator->getJoinDefinition();
 
-    auto getJoinFieldNames = [](Schema inputSchema, const std::shared_ptr<NodeFunction>& joinFunction)
+    auto getJoinFieldNames = [](const Schema& inputSchema, const std::shared_ptr<NodeFunction>& joinFunction)
     {
         std::vector<std::string> joinFieldNames;
         std::vector<std::string> fieldNamesInJoinFunction;
@@ -297,7 +297,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
             break;
     }
 
-    auto createBuildOperator = [&](Schema inputSchema,
+    auto createBuildOperator = [&](const Schema& inputSchema,
                                    const std::vector<std::string>& joinFieldNames,
                                    JoinBuildSideType buildSideType,
                                    const TimestampField& timeStampField)

@@ -13,15 +13,14 @@
 */
 
 #include <cstdint>
-#include <memory>
 #include <optional>
+#include <ostream>
 #include <string>
-#include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>
@@ -81,7 +80,7 @@ std::string DataType::formattedBytesToString(const void* data) const
         case Type::FLOAT64:
             return Util::formatFloat(*static_cast<const double*>(data));
         case Type::BOOLEAN:
-            return std::to_string(*static_cast<const bool*>(data));
+            return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
         case Type::CHAR: {
             if (getSizeInBytes() != 1)
             {

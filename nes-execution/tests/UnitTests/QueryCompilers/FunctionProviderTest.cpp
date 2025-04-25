@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>

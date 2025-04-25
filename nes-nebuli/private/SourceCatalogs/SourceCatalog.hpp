@@ -41,7 +41,7 @@ public:
     /// @param logicalSourceName logical source name
     /// @param schema of logical source as object
     /// @return bool indicating if insert was successful
-    bool addLogicalSource(const std::string& logicalSourceName, Schema schema);
+    bool addLogicalSource(const std::string& logicalSourceName, const Schema& schema);
 
     /// @brief method to delete a logical source
     /// @caution this method only remove the entry from the catalog not from the topology
@@ -117,7 +117,7 @@ public:
     /// @param logicalSourceName logical source name
     /// @param schema of logical source as object
     /// @return bool indicating if update was successful
-    bool updateLogicalSource(const std::string& logicalSourceName, Schema schema);
+    bool updateLogicalSource(const std::string& logicalSourceName, const Schema& schema);
 
 private:
     /// @brief test if logical source with this name exists

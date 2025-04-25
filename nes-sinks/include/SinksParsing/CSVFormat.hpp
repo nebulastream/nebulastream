@@ -39,7 +39,7 @@ public:
         std::vector<DataType> physicalTypes;
     };
 
-    explicit CSVFormat(Schema schema);
+    explicit CSVFormat(const Schema& schema);
     virtual ~CSVFormat() noexcept = default;
 
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.

@@ -33,8 +33,8 @@ class PhysicalStreamJoinBuildOperator : public PhysicalUnaryOperator, public Abs
 {
 public:
     PhysicalStreamJoinBuildOperator(
-        Schema inputSchema,
-        Schema outputSchema,
+        const Schema& inputSchema,
+        const Schema& outputSchema,
         const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
         Configurations::StreamJoinStrategy joinStrategy,
         const std::vector<std::string>& joinFieldNames,

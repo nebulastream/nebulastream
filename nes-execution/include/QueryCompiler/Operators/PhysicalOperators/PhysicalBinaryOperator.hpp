@@ -28,7 +28,7 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator
 {
 protected:
-    PhysicalBinaryOperator(OperatorId id, Schema leftSchema, Schema rightSchema, Schema outputSchema);
+    PhysicalBinaryOperator(OperatorId id, const Schema& leftSchema, const Schema& rightSchema, const Schema& outputSchema);
 
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 };

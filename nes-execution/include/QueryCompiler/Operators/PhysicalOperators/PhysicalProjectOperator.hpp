@@ -30,11 +30,12 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalProjectOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalProjectOperator(OperatorId id, Schema inputSchema, Schema outputSchema, std::vector<std::shared_ptr<NodeFunction>> functions);
+    PhysicalProjectOperator(
+        OperatorId id, const Schema& inputSchema, const Schema& outputSchema, std::vector<std::shared_ptr<NodeFunction>> functions);
+    static std::shared_ptr<PhysicalOperator> create(
+        OperatorId id, const Schema& inputSchema, const Schema& outputSchema, const std::vector<std::shared_ptr<NodeFunction>>& functions);
     static std::shared_ptr<PhysicalOperator>
-    create(OperatorId id, Schema inputSchema, Schema outputSchema, const std::vector<std::shared_ptr<NodeFunction>>& functions);
-    static std::shared_ptr<PhysicalOperator>
-    create(Schema inputSchema, Schema outputSchema, const std::vector<std::shared_ptr<NodeFunction>>& functions);
+    create(const Schema& inputSchema, const Schema& outputSchema, const std::vector<std::shared_ptr<NodeFunction>>& functions);
     /**
      * @brief returns the list of fields that remain in the output schema.
      * @return  std::vector<std::shared_ptr<NodeFunction>>

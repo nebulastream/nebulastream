@@ -28,18 +28,18 @@ BinaryOperator::BinaryOperator(OperatorId id) : Operator(id)
 {
 }
 
-void BinaryOperator::setLeftInputSchema(Schema inputSchema)
+void BinaryOperator::setLeftInputSchema(const Schema& inputSchema)
 {
-    this->leftInputSchema = std::move(inputSchema);
+    this->leftInputSchema = inputSchema;
 }
 
-void BinaryOperator::setRightInputSchema(Schema inputSchema)
+void BinaryOperator::setRightInputSchema(const Schema& inputSchema)
 {
-    this->rightInputSchema = std::move(inputSchema);
+    this->rightInputSchema = inputSchema;
 }
 void BinaryOperator::setOutputSchema(Schema outputSchema)
 {
-    this->outputSchema = std::move(outputSchema);
+    this->outputSchema = outputSchema;
 }
 Schema BinaryOperator::getLeftInputSchema() const
 {

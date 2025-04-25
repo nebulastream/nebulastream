@@ -18,6 +18,7 @@
 #include <vector>
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionCase.hpp>

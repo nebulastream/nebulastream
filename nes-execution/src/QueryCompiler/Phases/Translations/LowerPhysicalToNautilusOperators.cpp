@@ -67,6 +67,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation

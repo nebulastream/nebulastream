@@ -25,6 +25,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

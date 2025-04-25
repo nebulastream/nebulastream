@@ -15,6 +15,8 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
@@ -115,12 +117,12 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(Schema schema) const
+std::string DynamicTuple::toString(const Schema& schema) const
 {
     std::stringstream ss;
     for (uint32_t i = 0; i < schema.getNumberOfFields(); ++i)
     {
-        const auto fieldEnding = (i < schema.getNumberOfFields() - 1) ? "|" : "";
+        const auto* const fieldEnding = (i < schema.getNumberOfFields() - 1) ? "|" : "";
         const auto dataType = schema.getFieldAt(i).dataType;
         DynamicField currentField = this->operator[](i);
         if (dataType.isType(DataType::Type::VARSIZED))
@@ -268,12 +270,12 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(Schema schema) const
+std::string TestTupleBuffer::toString(const Schema& schema) const
 {
     return toString(schema, PrintMode::SHOW_HEADER_END_IN_NEWLINE);
 }
 
-std::string TestTupleBuffer::toString(Schema schema, const PrintMode printMode) const
+std::string TestTupleBuffer::toString(const Schema& schema, const PrintMode printMode) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
@@ -370,14 +372,14 @@ std::shared_ptr<MemoryLayout> TestTupleBuffer::getMemoryLayout() const
     return memoryLayout;
 }
 
-TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, Schema schema)
+TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema)
 {
     if (schema.memoryLayoutType == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         const auto memoryLayout = RowLayout::create(schema, buffer.getBufferSize());
         return TestTupleBuffer(memoryLayout, buffer);
     }
-    else if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    if (schema.memoryLayoutType == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         const auto memoryLayout = ColumnLayout::create(schema, buffer.getBufferSize());
         return TestTupleBuffer(memoryLayout, buffer);

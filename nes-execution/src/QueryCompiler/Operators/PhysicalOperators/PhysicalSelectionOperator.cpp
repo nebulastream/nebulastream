@@ -25,13 +25,13 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalSelectionOperator::PhysicalSelectionOperator(
-    OperatorId id, Schema inputSchema, Schema outputSchema, std::shared_ptr<NodeFunction> predicate)
+    OperatorId id, const Schema& inputSchema, const Schema& outputSchema, std::shared_ptr<NodeFunction> predicate)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), predicate(std::move(predicate))
 {
 }
 
-std::shared_ptr<PhysicalOperator>
-PhysicalSelectionOperator::create(OperatorId id, Schema inputSchema, Schema outputSchema, const std::shared_ptr<NodeFunction>& function)
+std::shared_ptr<PhysicalOperator> PhysicalSelectionOperator::create(
+    OperatorId id, const Schema& inputSchema, const Schema& outputSchema, const std::shared_ptr<NodeFunction>& function)
 {
     return std::make_shared<PhysicalSelectionOperator>(id, inputSchema, outputSchema, function);
 }
@@ -42,7 +42,7 @@ std::shared_ptr<NodeFunction> PhysicalSelectionOperator::getPredicate()
 }
 
 std::shared_ptr<PhysicalOperator>
-PhysicalSelectionOperator::create(Schema inputSchema, Schema outputSchema, const std::shared_ptr<NodeFunction>& function)
+PhysicalSelectionOperator::create(const Schema& inputSchema, const Schema& outputSchema, const std::shared_ptr<NodeFunction>& function)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(function));
 }

@@ -20,10 +20,13 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
+
 namespace NES
 {
 
@@ -49,14 +52,14 @@ void NodeFunctionArithmeticalUnary::inferStamp(const Schema& schema)
     child->inferStamp(schema);
 
     /// get stamp from child
-    const auto child_stamp = child->getStamp();
-    if (not child_stamp.isNumeric())
+    const auto childStamp = child->getStamp();
+    if (not childStamp.isNumeric())
     {
         throw CannotInferSchema(
             fmt::format("Error during stamp inference. Types need to be Numerical but child was: {}", child->getStamp()));
     }
 
-    this->stamp = child_stamp;
+    this->stamp = childStamp;
     NES_TRACE("We assigned the following stamp: {}", *this);
 }
 

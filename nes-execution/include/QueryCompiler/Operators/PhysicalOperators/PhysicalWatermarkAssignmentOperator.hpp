@@ -29,17 +29,17 @@ class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator
 public:
     PhysicalWatermarkAssignmentOperator(
         OperatorId id,
-        Schema inputSchema,
-        Schema outputSchema,
+        const Schema& inputSchema,
+        const Schema& outputSchema,
         std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor);
     static std::shared_ptr<PhysicalOperator> create(
         OperatorId id,
-        Schema inputSchema,
-        Schema outputSchema,
+        const Schema& inputSchema,
+        const Schema& outputSchema,
         const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
     static std::shared_ptr<PhysicalOperator> create(
-        Schema inputSchema,
-        Schema outputSchema,
+        const Schema& inputSchema,
+        const Schema& outputSchema,
         const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
     std::shared_ptr<Operator> copy() override;
 

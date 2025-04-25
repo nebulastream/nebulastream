@@ -27,7 +27,7 @@
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-
+#include <ErrorHandling.hpp>
 
 namespace NES::InferModel
 {

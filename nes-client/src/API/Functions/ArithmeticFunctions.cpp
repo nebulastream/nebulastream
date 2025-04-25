@@ -17,6 +17,7 @@
 
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>

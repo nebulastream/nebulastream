@@ -39,10 +39,13 @@ public:
      * @param operatorHandler pointer to the operator handler of the threshold window (of type ThresholdWindowOperatorHandler)
      */
     PhysicalThresholdWindowOperator(
-        OperatorId id, Schema inputSchema, Schema outputSchema, std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition);
+        OperatorId id,
+        const Schema& inputSchema,
+        const Schema& outputSchema,
+        std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition);
 
-    static std::shared_ptr<PhysicalThresholdWindowOperator>
-    create(Schema inputSchema, Schema outputSchema, const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition);
+    static std::shared_ptr<PhysicalThresholdWindowOperator> create(
+        const Schema& inputSchema, const Schema& outputSchema, const std::shared_ptr<Windowing::LogicalWindowDescriptor>& windowDefinition);
 
     std::shared_ptr<Windowing::LogicalWindowDescriptor> getWindowDefinition();
 

@@ -42,7 +42,7 @@ public:
      * @brief set the input schema of this operator
      * @param inputSchema
     */
-    void setInputSchema(Schema inputSchema);
+    void setInputSchema(const Schema& inputSchema);
 
     /**
     * @brief get the result schema of this operator

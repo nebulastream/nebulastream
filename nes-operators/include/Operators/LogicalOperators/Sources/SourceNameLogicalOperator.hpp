@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <DataTypes/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
@@ -28,7 +29,7 @@ class SourceNameLogicalOperator : public LogicalUnaryOperator
 {
 public:
     explicit SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, Schema schema, OperatorId id);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema, OperatorId id);
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -41,7 +42,7 @@ public:
 
     [[nodiscard]] std::string getLogicalSourceName() const;
     [[nodiscard]] Schema getSchema() const;
-    void setSchema(Schema schema);
+    void setSchema(const Schema& schema);
 
 protected:
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;

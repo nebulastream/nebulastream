@@ -16,6 +16,7 @@
 #include <ostream>
 #include <ranges>
 #include <sstream>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Identifiers/Identifiers.hpp>

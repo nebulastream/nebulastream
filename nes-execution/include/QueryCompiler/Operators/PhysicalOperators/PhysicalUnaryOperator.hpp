@@ -28,7 +28,7 @@ class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator
 {
     /// only other Physical-/UnaryOperators should construct a PhysicalUnaryOperator.
 protected:
-    PhysicalUnaryOperator(OperatorId id, Schema inputSchema, Schema outputSchema);
+    PhysicalUnaryOperator(OperatorId id, const Schema& inputSchema, const Schema& outputSchema);
 
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 

@@ -35,10 +35,11 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalUnionOperator : public PhysicalBinaryOperator
 {
 public:
-    PhysicalUnionOperator(OperatorId id, Schema leftSchema, Schema rightSchema, Schema outputSchema);
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, Schema leftSchema, Schema rightSchema, Schema outputSchema);
-    static std::shared_ptr<PhysicalOperator> create(OperatorId id, Schema schema);
-    static std::shared_ptr<PhysicalOperator> create(Schema schema);
+    PhysicalUnionOperator(OperatorId id, const Schema& leftSchema, const Schema& rightSchema, const Schema& outputSchema);
+    static std::shared_ptr<PhysicalOperator>
+    create(OperatorId id, const Schema& leftSchema, const Schema& rightSchema, const Schema& outputSchema);
+    static std::shared_ptr<PhysicalOperator> create(OperatorId id, const Schema& schema);
+    static std::shared_ptr<PhysicalOperator> create(const Schema& schema);
     std::shared_ptr<Operator> copy() override;
 
 protected:

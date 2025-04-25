@@ -77,7 +77,7 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
         schema.memoryLayoutType = originalSchema.memoryLayoutType;
         auto qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
-        for (auto& field : schema.getFields())
+        for (const auto& field : schema.getFields())
         {
             if (!field.name.starts_with(qualifierName))
             {

@@ -26,8 +26,8 @@ namespace NES::QueryCompilation::PhysicalOperators
 
 PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     OperatorId id,
-    Schema inputSchema,
-    Schema outputSchema,
+    const Schema& inputSchema,
+    const Schema& outputSchema,
     std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor)
     : Operator(id)
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
@@ -37,8 +37,8 @@ PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
 
 std::shared_ptr<PhysicalOperator> PhysicalWatermarkAssignmentOperator::create(
     OperatorId id,
-    Schema inputSchema,
-    Schema outputSchema,
+    const Schema& inputSchema,
+    const Schema& outputSchema,
     const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor)
 {
     return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, inputSchema, outputSchema, watermarkStrategyDescriptor);
@@ -50,7 +50,9 @@ std::shared_ptr<Windowing::WatermarkStrategyDescriptor> PhysicalWatermarkAssignm
 }
 
 std::shared_ptr<PhysicalOperator> PhysicalWatermarkAssignmentOperator::create(
-    Schema inputSchema, Schema outputSchema, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor)
+    const Schema& inputSchema,
+    const Schema& outputSchema,
+    const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
 }

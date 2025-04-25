@@ -21,12 +21,13 @@
 namespace NES
 {
 
-std::shared_ptr<LogicalSource> LogicalSource::create(const std::string& logicalSourceName, Schema schema)
+std::shared_ptr<LogicalSource> LogicalSource::create(const std::string& logicalSourceName, const Schema& schema)
 {
     return std::make_shared<LogicalSource>(LogicalSource(std::move(logicalSourceName), std::move(schema)));
 }
 
-LogicalSource::LogicalSource(std::string logicalSourceName, Schema schema) : logicalSourceName(std::move(logicalSourceName)), schema(schema)
+LogicalSource::LogicalSource(std::string logicalSourceName, const Schema& schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(schema)
 {
 }
 

@@ -99,15 +99,15 @@ uint64_t LogicalJoinDescriptor::getNumberOfInputEdgesRight() const
     return numberOfInputEdgesRight;
 }
 
-void LogicalJoinDescriptor::updateSourceTypes(Schema leftSourceType, Schema rightSourceType)
+void LogicalJoinDescriptor::updateSourceTypes(const Schema& leftSourceType, const Schema& rightSourceType)
 {
-    this->leftSourceType = std::move(leftSourceType);
-    this->rightSourceType = std::move(rightSourceType);
+    this->leftSourceType = leftSourceType;
+    this->rightSourceType = rightSourceType;
 }
 
-void LogicalJoinDescriptor::updateOutputDefinition(Schema outputSchema)
+void LogicalJoinDescriptor::updateOutputDefinition(const Schema& outputSchema)
 {
-    this->outputSchema = std::move(outputSchema);
+    this->outputSchema = outputSchema;
 }
 
 Schema LogicalJoinDescriptor::getOutputSchema() const

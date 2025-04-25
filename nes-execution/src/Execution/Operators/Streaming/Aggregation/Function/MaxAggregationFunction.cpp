@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>

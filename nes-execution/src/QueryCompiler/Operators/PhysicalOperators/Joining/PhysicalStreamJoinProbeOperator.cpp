@@ -31,9 +31,9 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
-    Schema leftSchema,
-    Schema rightSchema,
-    Schema outputSchema,
+    const Schema& leftSchema,
+    const Schema& rightSchema,
+    const Schema& outputSchema,
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
     const Configurations::StreamJoinStrategy joinStrategy,
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,

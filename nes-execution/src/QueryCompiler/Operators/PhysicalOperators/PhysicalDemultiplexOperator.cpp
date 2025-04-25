@@ -22,16 +22,16 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(OperatorId id, Schema inputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(OperatorId id, const Schema& inputSchema)
 {
     return std::make_shared<PhysicalDemultiplexOperator>(id, inputSchema);
 }
-std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(Schema inputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalDemultiplexOperator::create(const Schema& inputSchema)
 {
     return create(getNextOperatorId(), std::move(inputSchema));
 }
 
-PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, Schema inputSchema)
+PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, const Schema& inputSchema)
     : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema)
 {
 }

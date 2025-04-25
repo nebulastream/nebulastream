@@ -14,7 +14,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <DataTypes/Schema.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>

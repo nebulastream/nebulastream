@@ -16,6 +16,7 @@
 #include <ostream>
 #include <unordered_set>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunction.hpp>

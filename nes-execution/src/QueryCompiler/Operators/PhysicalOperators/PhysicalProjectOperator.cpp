@@ -26,19 +26,19 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalProjectOperator::PhysicalProjectOperator(
-    OperatorId id, Schema inputSchema, Schema outputSchema, std::vector<std::shared_ptr<NodeFunction>> functions)
+    OperatorId id, const Schema& inputSchema, const Schema& outputSchema, std::vector<std::shared_ptr<NodeFunction>> functions)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), functions(std::move(functions))
 {
 }
 
 std::shared_ptr<PhysicalOperator> PhysicalProjectOperator::create(
-    OperatorId id, Schema inputSchema, Schema outputSchema, const std::vector<std::shared_ptr<NodeFunction>>& functions)
+    OperatorId id, const Schema& inputSchema, const Schema& outputSchema, const std::vector<std::shared_ptr<NodeFunction>>& functions)
 {
     return std::make_shared<PhysicalProjectOperator>(id, inputSchema, outputSchema, functions);
 }
 
-std::shared_ptr<PhysicalOperator>
-PhysicalProjectOperator::create(Schema inputSchema, Schema outputSchema, const std::vector<std::shared_ptr<NodeFunction>>& functions)
+std::shared_ptr<PhysicalOperator> PhysicalProjectOperator::create(
+    const Schema& inputSchema, const Schema& outputSchema, const std::vector<std::shared_ptr<NodeFunction>>& functions)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(functions));
 }

@@ -27,14 +27,14 @@ UnaryOperator::UnaryOperator(OperatorId id) : Operator(id)
 {
 }
 
-void UnaryOperator::setInputSchema(Schema inputSchema)
+void UnaryOperator::setInputSchema(const Schema& inputSchema)
 {
-    this->inputSchema = std::move(inputSchema);
+    this->inputSchema = inputSchema;
 }
 
 void UnaryOperator::setOutputSchema(Schema outputSchema)
 {
-    this->outputSchema = std::move(outputSchema);
+    this->outputSchema = outputSchema;
 }
 
 Schema UnaryOperator::getInputSchema() const

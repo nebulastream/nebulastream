@@ -14,9 +14,10 @@
 
 #pragma once
 
-#include <memory>
+#include <cstdint>
 #include <ostream>
 #include <string>
+#include <type_traits>
 #include <Util/Logger/Formatter.hpp>
 
 namespace NES
@@ -43,7 +44,7 @@ struct DataType final
     };
 
     template <class T>
-    bool isSameDataType() const
+    [[nodiscard]] bool isSameDataType() const
     {
         if (this->type == Type::VARSIZED && std::is_same_v<std::remove_cvref_t<T>, std::uint32_t>)
         {
@@ -103,11 +104,11 @@ struct DataType final
     bool operator!=(const DataType& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const DataType& dataType);
 
-    uint32_t getSizeInBytes() const;
+    [[nodiscard]] uint32_t getSizeInBytes() const;
 
     /// Determines common data type for this and other data type. Returns @Type::UNDEFINED if it cannot find a common type.
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'
-    DataType join(const DataType& otherDataType) const;
+    [[nodiscard]] DataType join(const DataType& otherDataType) const;
     std::string formattedBytesToString(const void* data) const;
 
     [[nodiscard]] bool isType(Type type) const;

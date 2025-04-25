@@ -16,23 +16,25 @@
 #include <utility>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, Schema inputSchema)
-    : Operator(id), PhysicalUnaryOperator(id, inputSchema, std::move(inputSchema))
+PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, const Schema& inputSchema)
+    : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema)
 {
 }
 
-std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(Schema inputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(const Schema& inputSchema)
 {
-    return create(getNextOperatorId(), std::move(inputSchema));
+    return create(getNextOperatorId(), inputSchema);
 }
-std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(OperatorId id, Schema inputSchema)
+std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(OperatorId id, const Schema& inputSchema)
 {
-    return std::make_shared<PhysicalEmitOperator>(id, std::move(inputSchema));
+    return std::make_shared<PhysicalEmitOperator>(id, inputSchema);
 }
 
 std::ostream& PhysicalEmitOperator::toDebugString(std::ostream& os) const

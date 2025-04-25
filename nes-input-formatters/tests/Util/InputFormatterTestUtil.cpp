@@ -18,7 +18,9 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
@@ -131,7 +133,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
     const std::string& filePath,
-    Schema schema,
+    const Schema& schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
     const int numberOfLocalBuffersInSource)
 {

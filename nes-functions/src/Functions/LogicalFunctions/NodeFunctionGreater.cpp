@@ -14,12 +14,10 @@
 
 #include <memory>
 #include <ostream>
-#include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES

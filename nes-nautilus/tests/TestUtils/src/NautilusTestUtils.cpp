@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -156,7 +157,7 @@ Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType:
     for (const auto& [typeIdx, type] : views::enumerate(basicTypes))
     {
         const auto nameOfField = Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset));
-        schema.addField(std::move(nameOfField), type);
+        schema.addField(nameOfField, type);
     }
     return schema;
 }

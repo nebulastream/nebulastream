@@ -18,6 +18,7 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 
@@ -47,7 +48,7 @@ public:
     /// @brief Constructor for MemoryLayout.
     /// @param bufferSize A memory layout is always created for a specific buffer size.
     /// @param schema A memory layout is always created for a specific schema.
-    MemoryLayout(uint64_t bufferSize, Schema schema);
+    MemoryLayout(uint64_t bufferSize, const Schema& schema);
     MemoryLayout(const MemoryLayout&) = default;
 
     virtual ~MemoryLayout() = default;

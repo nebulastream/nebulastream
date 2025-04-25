@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <string>
+#include <DataTypes/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES
@@ -28,7 +29,7 @@ public:
 
     const std::string& getLogicalSourceName() const;
 
-    std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(Schema schema);
+    std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(const Schema& schema);
 
     std::string toString();
 

@@ -14,10 +14,15 @@
 
 #include <memory>
 #include <ostream>
+#include <string>
 #include <utility>
+
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -27,12 +32,12 @@ namespace NES
 {
 
 SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(Schema{})
+    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, Schema schema, const OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema, const OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(schema)
 {
 }
 
@@ -108,7 +113,7 @@ Schema SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
-void SourceNameLogicalOperator::setSchema(Schema schema)
+void SourceNameLogicalOperator::setSchema(const Schema& schema)
 {
     this->schema = std::move(schema);
 }

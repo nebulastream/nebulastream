@@ -37,9 +37,9 @@ class PhysicalStreamJoinProbeOperator : public PhysicalBinaryOperator, public Ab
 {
 public:
     PhysicalStreamJoinProbeOperator(
-        Schema leftSchema,
-        Schema rightSchema,
-        Schema outputSchema,
+        const Schema& leftSchema,
+        const Schema& rightSchema,
+        const Schema& outputSchema,
         const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
         Configurations::StreamJoinStrategy joinStrategy,
         std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction,

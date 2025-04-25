@@ -17,7 +17,6 @@
 #include <numeric>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
@@ -35,10 +34,12 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 

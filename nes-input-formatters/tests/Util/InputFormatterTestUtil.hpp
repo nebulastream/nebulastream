@@ -25,6 +25,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -94,7 +95,10 @@ getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers);
 Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
-    const std::string& filePath, Schema schema, std::shared_ptr<Memory::BufferManager> sourceBufferPool, int numberOfLocalBuffersInSource);
+    const std::string& filePath,
+    const Schema& schema,
+    std::shared_ptr<Memory::BufferManager> sourceBufferPool,
+    int numberOfLocalBuffersInSource);
 
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema);
 

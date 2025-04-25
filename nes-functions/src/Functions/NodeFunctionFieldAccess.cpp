@@ -14,6 +14,7 @@
 #include <format>
 #include <memory>
 #include <ostream>
+#include <string>
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
@@ -22,6 +23,7 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES

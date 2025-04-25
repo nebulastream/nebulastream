@@ -161,7 +161,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
-    Schema schema,
+    const Schema& schema,
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {

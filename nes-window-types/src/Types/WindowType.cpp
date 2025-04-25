@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <DataTypes/Schema.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 
 namespace NES::Windowing

@@ -21,6 +21,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 
 
 namespace NES
@@ -64,7 +65,7 @@ bool RenameSourceOperator::inferSchema()
     }
     ///Update output schema by changing the qualifier and corresponding attribute names
     const auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (auto& field : outputSchema.getFields())
+    for (const auto& field : outputSchema.getFields())
     {
         ///Add new qualifier name to the field and update the field name
         auto newName = newQualifierName + field.name;

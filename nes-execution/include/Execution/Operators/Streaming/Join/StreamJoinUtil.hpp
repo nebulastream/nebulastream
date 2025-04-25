@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution
 /// This stores the left, right and output schema for a binary join
 struct JoinSchema
 {
-    JoinSchema(Schema leftSchema, Schema rightSchema, Schema joinSchema)
+    JoinSchema(const Schema& leftSchema, const Schema& rightSchema, const Schema& joinSchema)
         : leftSchema(leftSchema), rightSchema(rightSchema), joinSchema(joinSchema)
     {
     }

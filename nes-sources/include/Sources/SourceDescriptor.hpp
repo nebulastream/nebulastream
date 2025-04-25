@@ -36,7 +36,7 @@ struct SourceDescriptor : public Configurations::Descriptor
 {
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
-        Schema schema,
+        const Schema& schema,
         std::string logicalSourceName,
         std::string sourceType,
         ParserConfig parserConfig,

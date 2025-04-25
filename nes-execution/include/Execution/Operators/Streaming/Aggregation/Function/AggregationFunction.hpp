@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <DataTypes/DataType.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/Interface/Record.hpp>

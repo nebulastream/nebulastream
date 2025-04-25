@@ -23,6 +23,7 @@
 #include <sstream>
 #include <tuple>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
