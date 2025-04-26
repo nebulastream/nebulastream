@@ -209,4 +209,9 @@ bool LogicalPlan::operator==(const LogicalPlan& otherPlan) const
     return true;
 }
 
+std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan)
+{
+    return os <<  plan.toString();
+}
+
 }
