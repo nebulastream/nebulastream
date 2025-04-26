@@ -97,6 +97,7 @@ public:
     std::unordered_set<LogicalOperator> getAllOperators() const;
 
     [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
+    friend std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan);
 
     std::vector<LogicalOperator> rootOperators{};
     QueryId queryId = INVALID_QUERY_ID;
