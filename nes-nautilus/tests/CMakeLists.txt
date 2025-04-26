@@ -27,3 +27,10 @@ target_link_libraries(chained-hashmap-unit-tests nes-nautilus-test-util)
 
 add_nes_unit_test(chained-hashmap-unit-tests-custom-value "UnitTests/ChainedHashMapCustomValueTest.cpp")
 target_link_libraries(chained-hashmap-unit-tests-custom-value nes-nautilus-test-util)
+
+add_nes_unit_test(physical-type-test UnitTests/PhysicalTypeTest.cpp)
+find_package(spdlog CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(nautilus CONFIG REQUIRED)
+target_link_libraries(physical-type-test data-type-physical nautilus::nautilus)
+target_include_directories(physical-type-test PRIVATE ../include)

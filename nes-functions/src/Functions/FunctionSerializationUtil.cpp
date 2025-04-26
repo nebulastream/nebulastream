@@ -40,19 +40,19 @@ void FunctionSerializationUtil::serializeExpression(const ExpressionValue& nodeF
         serializeExpression(child, serializedFunction->mutable_children()->Add());
     }
 
-    if (auto constantExpr = nodeFunction.as<ConstantExpression>())
+    if (const auto* constantExpr = nodeFunction.as<ConstantExpression>())
     {
         SerializableFunction_ConstantExpression constantExpression{};
         constantExpression.set_value(constantExpr->getConstantValue());
         serializedFunction->mutable_details()->PackFrom(constantExpression);
     }
-    else if (auto functionExpression = nodeFunction.as<FunctionExpression>())
+    else if (const auto* functionExpression = nodeFunction.as<FunctionExpression>())
     {
         SerializableFunction_FunctionExpression function_expression{};
         function_expression.set_functionname(functionExpression->getFunctionName());
         serializedFunction->mutable_details()->PackFrom(function_expression);
     }
-    else if (auto fieldAccessExpression = nodeFunction.as<FieldAccessExpression>())
+    else if (const auto* fieldAccessExpression = nodeFunction.as<FieldAccessExpression>())
     {
         SerializableFunction_FunctionFieldAccess fieldAccess{};
         SchemaSerializationUtil::serializeSchemaIdentifier(fieldAccessExpression->getFieldName(), *fieldAccess.mutable_field());
@@ -100,8 +100,8 @@ ExpressionValue FunctionSerializationUtil::deserializeExpression(const Serializa
     {
         SerializableFunction_FunctionFieldAccess function_assignment{};
         serializedFunction.details().UnpackTo(&function_assignment);
-        auto expression = std::make_shared<FieldAccessExpression>(
-            SchemaSerializationUtil::deserializeSchemaIdentifier(function_assignment.field()));
+        auto expression
+            = std::make_shared<FieldAccessExpression>(SchemaSerializationUtil::deserializeSchemaIdentifier(function_assignment.field()));
         expression->stamp = stamp;
         return {COW<Expression>(std::move(expression)), std::move(children)};
     }

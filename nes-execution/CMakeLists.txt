@@ -25,7 +25,7 @@ get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
 # Add Library
 add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
 # link libraries (nes-input-formatters: create an InputFormatterTask in LowerToExecutableQueryPlanPhase)
-target_link_libraries(nes-execution PUBLIC nes-nautilus PRIVATE nes-input-formatters)
+target_link_libraries(nes-execution PUBLIC nes-nautilus data-type-physical PRIVATE nes-input-formatters)
 target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

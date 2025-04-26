@@ -10,10 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(MEMORY_LAYOUT_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/ColumnLayout.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/MemoryLayoutTupleBuffer.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/RowLayout.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/MemoryLayout.cpp
-        CACHE INTERNAL "Memory Layout Source Files"
+add_source_files(nes-execution
+        ColumnLayout.cpp
+        MemoryLayoutTupleBuffer.cpp
+        RowLayout.cpp
+        MemoryLayout.cpp
 )
