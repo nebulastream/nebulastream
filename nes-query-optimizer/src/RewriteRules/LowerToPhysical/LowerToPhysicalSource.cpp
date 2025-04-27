@@ -20,6 +20,8 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include <SourcePhysicalOperator.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Optimizer
 {

@@ -36,7 +36,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
           fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", std::chrono::system_clock::now(), ::getpid())))
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
-    , optimizer(std::make_unique<Optimizer::QueryOptimizer>())
+    , optimizer(std::make_unique<Optimizer::QueryOptimizer>(configuration.workerConfiguration.queryOptimizer))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
 {
 }

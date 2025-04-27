@@ -74,12 +74,9 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
     return loweringResultSubgraph.root;
 }
 
-PhysicalPlan apply(LogicalPlan queryPlan)
+PhysicalPlan apply(LogicalPlan queryPlan, NES::Configurations::QueryOptimizerConfiguration conf)
 {
-    // TODO read the optimizer conf
-    NES::Configurations::QueryOptimizerConfiguration conf{};
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
-
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
     for (const auto& logicalRoot : queryPlan.rootOperators)
     {

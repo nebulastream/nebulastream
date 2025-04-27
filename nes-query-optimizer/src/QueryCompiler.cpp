@@ -23,7 +23,7 @@ PhysicalPlan QueryOptimizer::optimize(LogicalPlan plan)
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
     /// For now, we just lower to physical operators in a pure function.
-    auto physicalPlan = LowerToPhysicalOperators::apply(plan);
+    auto physicalPlan = LowerToPhysicalOperators::apply(plan,  conf);
     auto flippedPlan = flip(physicalPlan);
     return flippedPlan;
 }

@@ -213,7 +213,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     }
     const auto entrySize = sizeof(Interface::ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = NES::Configurations::DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES;
-    const auto pageSize = NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE;
+    const auto pageSize = conf.pageSize.getValue();
     const auto entriesPerPage = pageSize / entrySize;
 
     const auto& [fieldKeyNames, fieldValueNames] = getKeyAndValueFields(aggregation);
