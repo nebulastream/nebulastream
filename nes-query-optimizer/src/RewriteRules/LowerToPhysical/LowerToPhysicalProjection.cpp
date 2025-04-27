@@ -50,7 +50,9 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
 
     emitWrapper->children.emplace_back(scanWrapper);
 
-    return {emitWrapper, {scanWrapper}};
+    /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
+    std::vector leafs(projectionLogicalOperator.getChildren().size(), scanWrapper);
+    return {.root=emitWrapper, .leafs={scanWrapper}};
 }
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterProjectionRewriteRule(RewriteRuleRegistryArguments argument)

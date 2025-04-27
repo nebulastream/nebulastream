@@ -21,6 +21,9 @@
 #include <ErrorHandling.hpp>
 #include <PhysicalPlan.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <PhysicalOperator.hpp>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
@@ -83,7 +86,7 @@ PhysicalPlan apply(LogicalPlan queryPlan, NES::Configurations::QueryOptimizerCon
         newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
     }
 
-    INVARIANT(newRootOperators.size() >= 1, "Plan must have at least one root operator");
+    INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");
     auto physicalPlan = PhysicalPlan(queryPlan.queryId, std::move(newRootOperators));
     return physicalPlan;
 }
