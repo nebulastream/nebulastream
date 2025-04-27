@@ -112,6 +112,64 @@ bool LogicalPlan::replaceOperator(const LogicalOperator& target, LogicalOperator
     return replaced;
 }
 
+bool replaceOperatorExactHelper(LogicalOperator& current,
+                                             const LogicalOperator& target,
+                                             const LogicalOperator& replacement)
+{
+    if (current.getId() == target.getId()) {
+        current = replacement;
+        return true;
+    }
+    bool replaced = false;
+    auto children = current.getChildren();
+    for (auto& child : children) {
+        if (replaceOperatorExactHelper(child, target, replacement)) {
+            replaced = true;
+        }
+    }
+    if (replaced) {
+        current = current.withChildren(std::move(children));
+    }
+    return replaced;
+}
+
+
+bool LogicalPlan::replaceOperatorExact(const LogicalOperator& target,
+                                       LogicalOperator replacement)
+{
+    bool replaced = false;
+    for (auto& root : rootOperators) {
+        if (root.getId() == target.getId()) {
+            root      = std::move(replacement);
+            replaced  = true;
+        } else if (replaceOperatorExactHelper(root, target, replacement)) {
+            replaced = true;
+        }
+    }
+    return replaced;
+}
+
+
+void getParentsHelper(const LogicalOperator& current, const LogicalOperator& target, std::vector<LogicalOperator>& parents)
+{
+    for (const auto& child : current.getChildren()) {
+        if (child.getId() == target.getId()) {
+            parents.push_back(current);
+        }
+        getParentsHelper(child, target, parents);
+    }
+}
+
+std::vector<LogicalOperator> LogicalPlan::getParents(const LogicalOperator& target) const
+{
+    std::vector<LogicalOperator> parents;
+    for (const auto& root : rootOperators) {
+        getParentsHelper(root, target, parents);
+    }
+    return parents;
+}
+
+
 std::string LogicalPlan::toString() const
 {
     std::stringstream ss;

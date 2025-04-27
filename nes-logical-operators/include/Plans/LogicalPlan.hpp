@@ -43,7 +43,13 @@ public:
 
     [[nodiscard]] std::string toString() const;
 
+    /// Replace `target` with `replacement`, keeping target's children
     bool replaceOperator(const LogicalOperator& target, LogicalOperator replacement);
+
+    /// Replace `target` with `replacement`, keeping the children that are already inside `replacement`
+    bool replaceOperatorExact(const LogicalOperator& target, LogicalOperator replacement);
+
+    [[nodiscard]] std::vector<LogicalOperator> getParents(const LogicalOperator& target) const;
 
     template <class T>
     std::vector<T> getOperatorByType() const
