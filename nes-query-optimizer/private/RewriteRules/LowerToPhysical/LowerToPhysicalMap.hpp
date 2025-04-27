@@ -14,22 +14,18 @@
 
 #pragma once
 
-#include <memory>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Functions/FunctionProvider.hpp>
-#include <Operators/MapLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
-#include <MapPhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {
 
 struct LowerToPhysicalMap : AbstractRewriteRule
 {
-    LowerToPhysicalMap(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
+    explicit LowerToPhysicalMap(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
     RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
-    const NES::Configurations::QueryOptimizerConfiguration& conf;
+    NES::Configurations::QueryOptimizerConfiguration conf;
 };
 
 }
