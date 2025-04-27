@@ -21,12 +21,13 @@
 #include <Nautilus/NautilusBackend.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
-#include <SingleNodeWorkerRPCService.pb.h>
 
 
 namespace NES::Testing
@@ -55,7 +56,7 @@ public:
         Logger::setupLogging("SingleNodeIntegrationTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup SingleNodeIntegrationTest test class.");
     }
-
+    Catalogs::Source::SourceCatalog sourceCatalog{};
     const std::string idFieldName = "default_source$id";
     const std::string dataInputFile = "oneToThirtyOneDoubleColumn.csv";
 };
@@ -84,7 +85,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesCSV)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
-    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName, sourceCatalog);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::COMPILER;

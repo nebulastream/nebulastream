@@ -51,7 +51,6 @@ public:
         DataType dataType{};
     };
 
-    /// TODO #764: move qualified field logic in central place and improve
     struct QualifiedFieldName
     {
         explicit QualifiedFieldName(std::string streamName, std::string fieldName)
@@ -72,6 +71,11 @@ public:
     ~Schema() = default;
 
     [[nodiscard]] bool operator==(const Schema& other) const = default;
+
+    Schema(const Schema& other) = default;
+    Schema(Schema&& other) noexcept = default;
+    Schema& operator=(const Schema& other) = default;
+    Schema& operator=(Schema&& other) noexcept = default;
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
     Schema addField(std::string name, const DataType& dataType);

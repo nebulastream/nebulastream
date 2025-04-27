@@ -25,12 +25,14 @@
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/FileSink.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
+
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -412,7 +414,7 @@ void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, c
     if (descriptor.sinkType == Sinks::FileSink::NAME)
     {
         const auto deserializedOutputSchema = SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
-        auto configCopy = descriptor.config;
+        auto configCopy = descriptor.getConfig();
         configCopy.at(Sinks::ConfigParametersFile::FILEPATH) = filePathNew;
         auto sinkDescriptorUpdated
             = std::make_unique<Sinks::SinkDescriptor>(descriptor.sinkType, std::move(configCopy), descriptor.addTimestamp);
@@ -431,7 +433,8 @@ void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, c
     }
 }
 
-void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName)
+void replaceInputFileInFileSources(
+    SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName, Catalogs::Source::SourceCatalog& sourceCatalog)
 {
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
@@ -439,19 +442,26 @@ void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQu
         if (value.details().Is<SerializableOperator_SourceDescriptorLogicalOperator>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            const auto sourceDescriptor
-                = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == "File")
+            const auto sourceDescriptor = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptor();
+            if (sourceDescriptor.getSourceType() == "File")
             {
-                /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
-                Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
+                ///Copy out the old config map
+                Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.getConfig();
                 configUpdated.at("filePath") = newInputFileName;
-                auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
-                    sourceDescriptor.schema,
-                    sourceDescriptor.logicalSourceName,
-                    sourceDescriptor.sourceType,
-                    sourceDescriptor.parserConfig,
-                    std::move(configUpdated));
+                auto logicalSource = sourceDescriptor.getLogicalSource();
+                if (not sourceCatalog.containsLogicalSource(logicalSource))
+                {
+                    logicalSource = sourceCatalog.addLogicalSource(newInputFileName, *sourceDescriptor.getSchema()).value();
+                }
+                auto sourceDescriptorUpdated = sourceCatalog
+                                                   .addPhysicalSource(
+                                                       std::move(configUpdated),
+                                                       logicalSource,
+                                                       INITIAL<WorkerId>,
+                                                       sourceDescriptor.getSourceType(),
+                                                       sourceDescriptor.getParserConfig())
+                                                   .value();
+
 
                 const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
                     std::move(sourceDescriptorUpdated),
@@ -467,7 +477,11 @@ void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQu
     }
 }
 
-void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
+void replacePortInTCPSources(
+    SerializableDecomposedQueryPlan& decomposedQueryPlan,
+    const uint16_t mockTcpServerPort,
+    const int sourceNumber,
+    Catalogs::Source::SourceCatalog& sourceCatalog)
 {
     int queryPlanTCPSourceCounter = 0;
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
@@ -476,21 +490,29 @@ void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPla
         if (value.details().Is<SerializableOperator_SourceDescriptorLogicalOperator>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            const auto sourceDescriptor
-                = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == "TCP")
+            const auto sourceDescriptor = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptor();
+            if (sourceDescriptor.getSourceType() == "TCP")
             {
                 if (sourceNumber == queryPlanTCPSourceCounter)
                 {
-                    /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct port.
-                    Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
+                    //Copy out the old config map
+                    Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.getConfig();
                     configUpdated.at("socketPort") = static_cast<uint32_t>(mockTcpServerPort);
-                    auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
-                        sourceDescriptor.schema,
-                        sourceDescriptor.logicalSourceName,
-                        sourceDescriptor.sourceType,
-                        sourceDescriptor.parserConfig,
-                        std::move(configUpdated));
+                    auto logicalSource = sourceDescriptor.getLogicalSource();
+                    if (not sourceCatalog.containsLogicalSource(logicalSource))
+                    {
+                        logicalSource
+                            = sourceCatalog.addLogicalSource(logicalSource.getLogicalSourceName(), *logicalSource.getSchema()).value();
+                    }
+                    auto sourceDescriptorUpdated = sourceCatalog
+                                                       .addPhysicalSource(
+                                                           std::move(configUpdated),
+                                                           logicalSource,
+                                                           INITIAL<WorkerId>,
+                                                           sourceDescriptor.getSourceType(),
+                                                           sourceDescriptor.getParserConfig())
+                                                       .value();
+
 
                     const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
                         std::move(sourceDescriptorUpdated),

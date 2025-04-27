@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <Plans/Query/QueryPlan.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 namespace NES
 {
 

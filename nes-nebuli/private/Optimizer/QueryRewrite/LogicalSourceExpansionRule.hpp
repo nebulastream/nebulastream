@@ -20,7 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 
 
 namespace NES::Optimizer

@@ -46,7 +46,7 @@ public:
     /// Note: This method will not deserialize its children
     static std::shared_ptr<LogicalOperator> deserializeOperator(SerializableOperator serializedOperator);
 
-    static void serializeSourceOperator(SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
+    static void serializeSourceOperator(const SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
 
     static std::shared_ptr<LogicalUnaryOperator>
     deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
@@ -68,7 +68,7 @@ public:
     static void serializeSourceDescriptor(
         const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
 
-    static std::unique_ptr<Sources::SourceDescriptor>
+    static Sources::SourceDescriptor
     deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
 
     static void serializeSinkDescriptor(

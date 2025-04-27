@@ -24,6 +24,7 @@
 #include <gtest/gtest-assertion-result.h>
 #include <GrpcService.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
+#include "Sources/LogicalSource.hpp"
 
 
 namespace NES::IntegrationTestUtil
@@ -102,14 +103,14 @@ bool loadFile(
 /// Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
 bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName);
 
-void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName);
+void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName, Catalogs::Source::SourceCatalog& sourceCatalog);
 
 /// Iterates over a decomposed query plan and replaces all CSV sink file paths to ensure expected behavior.
 void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& filePathNew);
 
 /// @brief Iterates over a decomposed query plan and replaces all sockets with the a free port generated for the mocked tcp server.
 void replacePortInTCPSources(
-    SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber);
+    SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber, Catalogs::Source::SourceCatalog& sourceCatalog);
 
 std::string getUniqueTestIdentifier();
 

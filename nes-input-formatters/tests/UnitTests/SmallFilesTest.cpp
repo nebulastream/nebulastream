@@ -24,6 +24,7 @@
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceValidationProvider.hpp>
@@ -106,8 +107,9 @@ public:
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
         std::shared_ptr<Memory::BufferManager> sourceBufferPool
             = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
+        Catalogs::Source::SourceCatalog sourceCatalog{};
         const auto fileSource
-            = InputFormatterTestUtil::createFileSource(testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
+            = InputFormatterTestUtil::createFileSource(sourceCatalog, testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         InputFormatterTestUtil::waitForSource(rawBuffers, numberOfExpectedRawBuffers);
         ASSERT_EQ(rawBuffers.size(), numberOfExpectedRawBuffers);
