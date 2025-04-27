@@ -109,25 +109,31 @@ bool WindowedAggregationLogicalOperator::operator==(const LogicalOperatorConcept
 LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
-    PRECONDITION(inputSchemas.size() == 1, "WindowAggregation should have only one input");
-    const auto& inputSchema = inputSchemas[0];
+    INVARIANT(!inputSchemas.empty(), "WindowAggregation should have at least one input");
+    
+    const auto& firstSchema = inputSchemas[0];
+    for (const auto& schema : inputSchemas) {
+        if (schema != firstSchema) {
+            throw CannotInferSchema("All input schemas must be equal for WindowAggregation operator");
+        }
+    }
 
     // Infer type of aggregation.
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> newFunctions;
     for (const auto& agg : getWindowAggregation())
     {
-        agg->inferStamp(inputSchema);
+        agg->inferStamp(firstSchema);
         newFunctions.push_back(agg);
     }
     copy.windowAggregation = newFunctions;
 
-    copy.windowType->inferStamp(inputSchema);
-    copy.inputSchema = inputSchema;
+    copy.windowType->inferStamp(firstSchema);
+    copy.inputSchema = firstSchema;
     copy.outputSchema.clear();
 
     if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(&getWindowType()))
     {
-        const auto& sourceName = inputSchema.getQualifierNameForSystemGeneratedFields();
+        const auto& sourceName = firstSchema.getQualifierNameForSystemGeneratedFields();
         const auto& newQualifierForSystemField = sourceName;
 
         copy.windowStartFieldName = newQualifierForSystemField + "$start";
@@ -154,7 +160,7 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
         auto newKeys = std::vector<FieldAccessLogicalFunction>();
         for (auto& key : keys)
         {
-            auto newKey = key.withInferredStamp(inputSchema).get<FieldAccessLogicalFunction>();
+            auto newKey = key.withInferredStamp(firstSchema).get<FieldAccessLogicalFunction>();
             newKeys.push_back(newKey);
             copy.outputSchema.addField(AttributeField(newKey.getFieldName(), newKey.getStamp()));
         }

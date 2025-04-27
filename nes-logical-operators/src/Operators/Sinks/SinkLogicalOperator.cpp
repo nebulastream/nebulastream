@@ -72,11 +72,18 @@ std::string_view SinkLogicalOperator::getName() const noexcept
 LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
-    INVARIANT(inputSchemas.size() == 1, "Sink should have only one input");
-    const auto& inputSchema = inputSchemas[0];
-    copy.sinkDescriptor->schema = inputSchema;
-    copy.inputSchema = inputSchema;
-    copy.outputSchema = inputSchema;
+    INVARIANT(!inputSchemas.empty(), "Sink should have at least one input");
+    
+    const auto& firstSchema = inputSchemas[0];
+    for (const auto& schema : inputSchemas) {
+        if (schema != firstSchema) {
+            throw CannotInferSchema("All input schemas must be equal for Sink operator");
+        }
+    }
+    
+    copy.sinkDescriptor->schema = firstSchema;
+    copy.inputSchema = firstSchema;
+    copy.outputSchema = firstSchema;
     return copy;
 }
 

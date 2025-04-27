@@ -95,17 +95,23 @@ std::string ProjectionLogicalOperator::toString() const
 
 LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
-    PRECONDITION(inputSchemas.size() == 1, "Projection should have one input");
-    const auto& inputSchema = inputSchemas[0];
+    INVARIANT(!inputSchemas.empty(), "Projection should have at least one input");
+    
+    const auto& firstSchema = inputSchemas[0];
+    for (const auto& schema : inputSchemas) {
+        if (schema != firstSchema) {
+            throw CannotInferSchema("All input schemas must be equal for Projection operator");
+        }
+    }
 
     auto copy = *this;
-    copy.inputSchema = inputSchema;
+    copy.inputSchema = firstSchema;
     copy.outputSchema.clear();
 
     std::vector<LogicalFunction> newFunctions;
     for (auto& function : functions)
     {
-        auto func = function.withInferredStamp(inputSchema);
+        auto func = function.withInferredStamp(firstSchema);
 
         if (func.tryGet<FieldAccessLogicalFunction>())
         {
@@ -115,7 +121,7 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema
         }
         else if (func.tryGet<FieldAssignmentLogicalFunction>())
         {
-            const auto& fieldAssignment = func.withInferredStamp(inputSchema).get<FieldAssignmentLogicalFunction>();
+            const auto& fieldAssignment = func.withInferredStamp(firstSchema).get<FieldAssignmentLogicalFunction>();
             copy.outputSchema.addField(fieldAssignment.getField().getFieldName(), fieldAssignment.getField().getStamp());
             newFunctions.emplace_back(fieldAssignment);
         }
