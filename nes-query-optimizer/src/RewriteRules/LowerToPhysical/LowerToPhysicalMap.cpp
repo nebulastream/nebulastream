@@ -33,7 +33,10 @@ RewriteRuleResultSubgraph LowerToPhysicalMap::apply(LogicalOperator logicalOpera
     auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
-    return {wrapper, {wrapper}};
+
+    /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
+    std::vector leafes(logicalOperator.getChildren().size(), wrapper);
+    return {wrapper, {leafes}};
 }
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)

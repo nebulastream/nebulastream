@@ -22,6 +22,7 @@
 #include <RewriteRuleRegistry.hpp>
 #include <SourcePhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
+#include <Operators/LogicalOperator.hpp>
 
 namespace NES::Optimizer
 {

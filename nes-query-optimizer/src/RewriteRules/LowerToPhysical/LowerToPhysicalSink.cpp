@@ -29,7 +29,10 @@ RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOper
     auto sink = logicalOperator.get<SinkLogicalOperator>();
     auto physicalOperator = SinkPhysicalOperator(sink.sinkDescriptor);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema());
-    return {wrapper, {wrapper}};
+
+    /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
+    std::vector leafes(logicalOperator.getChildren().size(), wrapper);
+    return {wrapper, {leafes}};
 }
 
 std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSinkRewriteRule(RewriteRuleRegistryArguments argument)
