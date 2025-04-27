@@ -21,10 +21,8 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalFunctionRegistry.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
-#include <SerializableSchema.pb.h>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 
@@ -64,15 +62,22 @@ std::string SelectionLogicalOperator::toString() const
 LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
-    INVARIANT(inputSchemas.size() == 1, "Selection should have one input");
-    const auto& inputSchema = inputSchemas[0];
-    copy.predicate = predicate.withInferredStamp(inputSchema);
+    INVARIANT(!inputSchemas.empty(), "Selection should have at least one input");
+    
+    const auto& firstSchema = inputSchemas[0];
+    for (const auto& schema : inputSchemas) {
+        if (schema != firstSchema) {
+            throw CannotInferSchema("All input schemas must be equal for Selection operator");
+        }
+    }
+    
+    copy.predicate = predicate.withInferredStamp(firstSchema);
     if (*copy.predicate.getStamp().get() != Boolean())
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
     }
-    copy.inputSchema = inputSchema;
-    copy.outputSchema = inputSchema;
+    copy.inputSchema = firstSchema;
+    copy.outputSchema = firstSchema;
     return copy;
 }
 
@@ -110,7 +115,6 @@ std::vector<OriginId> SelectionLogicalOperator::getOutputOriginIds() const
 
 LogicalOperator SelectionLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    PRECONDITION(ids.size() == 1, "Selection should have only one input");
     auto copy = *this;
     copy.inputOriginIds = ids[0];
     return copy;
