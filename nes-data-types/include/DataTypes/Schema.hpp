@@ -50,7 +50,6 @@ public:
         DataType dataType{};
     };
 
-    /// TODO #764: move qualified field logic in central place and improve
     struct QualifiedFieldName
     {
         explicit QualifiedFieldName(std::string streamName, std::string fieldName)
@@ -71,10 +70,15 @@ public:
     ~Schema() = default;
 
     [[nodiscard]] bool operator==(const Schema& other) const = default;
+
+    Schema(const Schema& other) = default;
+    Schema(Schema&& other) noexcept = default;
+    Schema& operator=(const Schema& other) = default;
+    Schema& operator=(Schema&& other) noexcept = default;
     friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
-    [[nodiscard]] Schema addField(std::string name, const DataType& dataType);
-    [[nodiscard]] Schema addField(std::string name, DataType::Type type);
+    Schema addField(std::string name, const DataType& dataType);
+    Schema addField(std::string name, DataType::Type type);
 
     /// Replaces the type of the field
     [[nodiscard]] bool replaceTypeOfField(const std::string& name, DataType type);
@@ -113,7 +117,7 @@ private:
     /// their corresponding indexes in the 'fields' vector. Thus, the below three members are private to prevent accidental manipulation.
     std::vector<Field> fields{};
     size_t sizeOfSchemaInBytes{0};
-    std::unordered_map<std::string, size_t> nameToField{};
+    std::unordered_map<std::string, size_t> nameToField;
 };
 
 }

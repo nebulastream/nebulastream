@@ -16,9 +16,11 @@
 #include <thread>
 #include <vector>
 #include <Nautilus/NautilusBackend.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -40,6 +42,7 @@ public:
         Logger::setupLogging("SingleNodeIntegrationTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup SingleNodeIntegrationTest test class.");
     }
+    Catalogs::Source::SourceCatalog sourceCatalog{};
     const std::string dataInputFile = "oneToThirtyOneDoubleColumn.csv";
 };
 
@@ -58,7 +61,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", resultFileName));
-    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName, sourceCatalog);
 
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
@@ -102,7 +105,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", resultFileName));
-    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName, sourceCatalog);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::INTERPRETER;

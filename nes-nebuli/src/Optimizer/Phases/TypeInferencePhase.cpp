@@ -19,7 +19,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -66,15 +66,14 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto logicalSourceName = source->getLogicalSourceName();
-        Schema schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-        if (!sourceCatalog->containsLogicalSource(logicalSourceName))
+        auto const logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+        if (!logicalSource.has_value())
         {
             NES_ERROR("Source name: {} not registered.", logicalSourceName);
             throw LogicalSourceNotFoundInQueryDescription(fmt::format("Logical source not registered. Source Name: {}", logicalSourceName));
         }
-        const auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
-        schema = originalSchema;
-        schema.memoryLayoutType = originalSchema.memoryLayoutType;
+        auto originalSchema = logicalSource->getSchema();
+        Schema schema {*originalSchema};
         auto qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
         for (auto& field : schema.getFields())

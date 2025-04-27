@@ -20,6 +20,7 @@
 #include <vector>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
@@ -130,6 +131,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 }
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
+    Catalogs::Source::SourceCatalog& sourceCatalog,
     const std::string& filePath,
     Schema schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
@@ -137,11 +139,10 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{{"filePath", filePath}};
     auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
+    const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", std::move(schema));
+    const auto sourceDescriptor = sourceCatalog.addPhysicalSource(std::move(validatedSourceConfiguration), logicalSource.value(), INITIAL<WorkerId>, "File", Sources::ParserConfig{});
 
-    const auto sourceDescriptor = Sources::SourceDescriptor(
-        std::move(schema), "TestSource", "File", Sources::ParserConfig{}, std::move(validatedSourceConfiguration));
-
-    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), numberOfLocalBuffersInSource);
+    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), numberOfLocalBuffersInSource);
 }
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
 {

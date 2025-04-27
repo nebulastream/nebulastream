@@ -29,6 +29,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
@@ -38,9 +39,8 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <SourceCatalogs/PhysicalSource.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
-#include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
@@ -160,10 +160,11 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 }
 
 Sources::SourceDescriptor createSourceDescriptor(
-    std::string logicalSourceName,
-    Schema schema,
+    const NES::LogicalSource& logicalSource,
+    const WorkerId workerID,
     const std::unordered_map<std::string, std::string>& parserConfig,
-    std::unordered_map<std::string, std::string> sourceConfiguration)
+    std::unordered_map<std::string, std::string> sourceConfiguration,
+    const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
 {
     PRECONDITION(
         sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG),
@@ -171,10 +172,9 @@ Sources::SourceDescriptor createSourceDescriptor(
     auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
     NES_DEBUG("Source type is: {}", sourceType);
 
-    auto validParserConfig = validateAndFormatParserConfig(parserConfig);
+    const auto validParserConfig = validateAndFormatParserConfig(parserConfig);
     auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
-    return Sources::SourceDescriptor(
-        std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
+    return sourceCatalog->addPhysicalSource(std::move(validSourceConfig), logicalSource, workerID, sourceType, validParserConfig).value();
 }
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
@@ -220,13 +220,7 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
     {
         auto sourceDescriptor = createSourceDescriptor(
-            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
-        sourceCatalog->addPhysicalSource(
-            logicalSourceName,
-            Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceDescriptor)),
-                sourceCatalog->getLogicalSource(logicalSourceName),
-                INITIAL<WorkerId>));
+            sourceCatalog->getLogicalSource(logicalSourceName).value(), INITIAL<WorkerId>, parserConfig, std::move(sourceConfig), sourceCatalog);
     }
 
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
