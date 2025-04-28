@@ -85,7 +85,7 @@ struct TestConfig
     using TupleSchema = TupleSchemaTemplate;
 };
 
-std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataTypes);
+Schema createSchema(const std::vector<TestDataTypes>& testDataTypes);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
@@ -95,7 +95,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
     const std::string& filePath,
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
     int numberOfLocalBuffersInSource);
 
@@ -107,7 +107,7 @@ void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, s
 /// Compares two files and returns true if they are equal on a byte level.
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
 
-Runtime::Execution::TestablePipelineTask createInputFormatterTask(
+TestablePipelineTask createInputFormatterTask(
     SequenceNumber sequenceNumber,
     WorkerThreadId workerThreadId,
     Memory::TupleBuffer taskBuffer,
@@ -119,8 +119,8 @@ struct TestHandle
     TestConfig<TupleSchemaTemplate> testConfig;
     std::shared_ptr<Memory::BufferManager> testBufferManager;
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers;
-    std::shared_ptr<Schema> schema;
-    std::unique_ptr<Runtime::Execution::SingleThreadedTestTaskQueue> testTaskQueue;
+    Schema schema;
+    std::unique_ptr<SingleThreadedTestTaskQueue> testTaskQueue;
     std::vector<TaskPackage> inputBuffers;
     std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors;
 
@@ -131,7 +131,6 @@ struct TestHandle
         resultBuffers->clear();
         testTaskQueue.reset();
         testBufferManager->destroy();
-        schema->clear();
     }
 };
 
@@ -170,7 +169,7 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
                         testHandle.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE));
             }
             isValid &= TestUtil::checkIfBuffersAreEqual(
-                actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema->getSchemaSizeInBytes());
+                actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema.getSchemaSizeInBytes());
             ++bufferIndex;
         }
         ++taskIndex;
@@ -201,27 +200,27 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
         = Memory::BufferManager::create(testConfig.bufferSize, 2 * testConfig.numRequiredBuffers);
     std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers
         = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(1);
-    std::shared_ptr<Schema> schema = createSchema(testConfig.testSchema);
+    Schema schema = createSchema(testConfig.testSchema);
     return {
         testConfig,
         testBufferManager,
         resultBuffers,
         std::move(schema),
-        std::make_unique<Runtime::Execution::SingleThreadedTestTaskQueue>(testBufferManager, resultBuffers),
+        std::make_unique<SingleThreadedTestTaskQueue>(testBufferManager, resultBuffers),
         {},
         {}};
 }
 
 template <typename TupleSchemaTemplate>
-std::vector<Runtime::Execution::TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
+std::vector<TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
         testHandle.testConfig.parserConfig.parserType,
-        *testHandle.schema,
+        testHandle.schema,
         testHandle.testConfig.parserConfig.tupleDelimiter,
         testHandle.testConfig.parserConfig.fieldDelimiter);
     const auto inputFormatterTask = std::make_shared<InputFormatters::InputFormatterTask>(OriginId(1), std::move(inputFormatter));
-    std::vector<Runtime::Execution::TestablePipelineTask> tasks;
+    std::vector<TestablePipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {

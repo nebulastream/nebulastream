@@ -233,7 +233,7 @@ public:
         NO_HEADER_END_IN_NEWLINE,
         NO_HEADER_END_WITHOUT_NEWLINE,
     };
-    explicit TestTupleBuffer(std::unique_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
+    explicit TestTupleBuffer(std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
 
     static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema);
 

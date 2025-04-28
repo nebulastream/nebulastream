@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <nlohmann/json.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -295,7 +296,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                 if (runningQuery)
                 {
                     const auto queryStatus = worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus;
-                    if (queryStatus == QueryStatus::Stopped or queryStatus == Runtime::Execution::QueryStatus::Failed)
+                    if (queryStatus == QueryStatus::Stopped or queryStatus == QueryStatus::Failed)
                     {
                         worker.unregisterQuery(QueryId(runningQuery->queryId));
                         runningQuery->queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
@@ -415,7 +416,7 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
     return failedQueries;
 }
 
-Runtime::QuerySummary waitForQueryTermination(SingleNodeWorker& worker, QueryId queryId)
+QuerySummary waitForQueryTermination(SingleNodeWorker& worker, QueryId queryId)
 {
     while (true)
     {
@@ -423,7 +424,7 @@ Runtime::QuerySummary waitForQueryTermination(SingleNodeWorker& worker, QueryId 
         const auto summary = worker.getQuerySummary(queryId);
         if (summary)
         {
-            if (summary->currentStatus == Runtime::Execution::QueryStatus::Stopped)
+            if (summary->currentStatus == QueryStatus::Stopped)
             {
                 return *summary;
             }

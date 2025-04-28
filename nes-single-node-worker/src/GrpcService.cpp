@@ -16,7 +16,6 @@
 #include <string>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Plans/QueryPlan.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -105,7 +104,7 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
-    auto terminationType = static_cast<Runtime::QueryTerminationType>(request->terminationtype());
+    auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
     CPPTRACE_TRY
     {
         delegate.stopQuery(queryId, terminationType);
@@ -130,7 +129,7 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
         auto summary = delegate.getQuerySummary(queryId);
         if (summary.has_value())
         {
-            reply->set_status(QueryStatus(summary->currentStatus));
+            reply->set_status(::QueryStatus(summary->currentStatus));
             for (const auto& [start, running, stop, error] : summary->runs)
             {
                 auto* const replyRun = reply->add_runs();
@@ -181,7 +180,7 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
             for (const auto& entry : *log)
             {
                 QueryLogEntry logEntry;
-                logEntry.set_status((QueryStatus)entry.state);
+                logEntry.set_status((::QueryStatus)entry.state);
                 logEntry.set_unixtimeinms(
                     std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
                 if (entry.exception.has_value())

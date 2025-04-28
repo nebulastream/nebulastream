@@ -24,7 +24,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <TestTaskQueue.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 bool TestPipelineExecutionContext::emitBuffer(const NES::Memory::TupleBuffer& resultBuffer, const ContinuationPolicy continuationPolicy)
 {
@@ -58,7 +58,7 @@ NES::Memory::TupleBuffer TestPipelineExecutionContext::allocateTupleBuffer()
     throw NES::BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
 }
 
-void TestablePipelineStage::execute(const NES::Memory::TupleBuffer& tupleBuffer, NES::Runtime::Execution::PipelineExecutionContext& pec)
+void TestablePipelineStage::execute(const NES::Memory::TupleBuffer& tupleBuffer, NES::PipelineExecutionContext& pec)
 {
     for (const auto& [_, taskFunction] : taskSteps)
     {

@@ -129,7 +129,7 @@ std::string DynamicTuple::toString(const Schema& schema) const
     for (uint32_t i = 0; i < schema.getFieldCount(); ++i)
     {
         const auto fieldEnding = (i < schema.getFieldCount() - 1) ? "|" : "";
-        const auto dataType = schema.getFieldByIndex(i)->getDataType();
+        const auto dataType = schema.getFieldByIndex(i).getDataType();
         DynamicField currentField = this->operator[](i);
         if (nullptr != dynamic_cast<const VariableSizedDataType*>(dataType.get()))
         {
@@ -280,13 +280,12 @@ TestTupleBuffer::TupleIterator TestTupleBuffer::end() const
     return TupleIterator(*this, getNumberOfTuples());
 }
 
-std::string TestTupleBuffer::toString(const Schema& schema)
+std::string TestTupleBuffer::toString(const Schema& schema) const
 {
-    constexpr auto showHeader = true;
-    return toString(schema, showHeader);
+    return toString(schema, PrintMode::SHOW_HEADER_END_IN_NEWLINE);
 }
 
-std::string TestTupleBuffer::toString(const Schema& schema, const bool showHeader)
+std::string TestTupleBuffer::toString(const Schema& schema, PrintMode printMode) const
 {
     std::stringstream str;
     std::vector<uint32_t> physicalSizes;
@@ -295,14 +294,15 @@ std::string TestTupleBuffer::toString(const Schema& schema, const bool showHeade
     for (const auto& field : schema)
     {
         auto physicalType = physicalDataTypeFactory.getPhysicalType(field.getDataType());
-        physicalSizes.push_back(physicalType->size());
+        auto size = physicalType->size();
+        physicalSizes.push_back(size);
         types.push_back(std::move(physicalType));
         NES_TRACE(
             "TestTupleBuffer: {} {} {} {}",
             std::string("Field Size "),
             field.toString(),
             std::string(": "),
-            std::to_string(physicalType->size()));
+            std::to_string(size));
     }
 
     if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::SHOW_HEADER_END_WITHOUT_NEWLINE)
@@ -322,8 +322,8 @@ std::string TestTupleBuffer::toString(const Schema& schema, const bool showHeade
     ++tupleIterator;
     while (tupleIterator != this->end())
     {
-        str << "|";
-        DynamicTuple dynamicTuple = (it);
+        str << std::endl;
+        DynamicTuple dynamicTuple = (*tupleIterator);
         str << dynamicTuple.toString(schema);
         ++tupleIterator;
     }

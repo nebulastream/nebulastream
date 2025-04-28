@@ -72,7 +72,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
     auto reply = IntegrationTestUtil::querySummary(queryId, uut);
-    EXPECT_EQ(reply.status(), QueryStatus::Stopped);
+    EXPECT_EQ(reply.status(), Stopped);
     EXPECT_EQ(reply.runs().size(), 1);
     EXPECT_FALSE(reply.runs().at(0).has_error());
 

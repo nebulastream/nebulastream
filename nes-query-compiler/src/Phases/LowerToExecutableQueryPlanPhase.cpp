@@ -18,6 +18,8 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Phases/LowerToExecutableQueryPlanPhase.hpp>
@@ -91,8 +93,19 @@ Source processSource(
     /// Convert logical source descriptor to actual source descriptor
     const auto sourceOperator = pipeline->rootOperator.get<SourcePhysicalOperator>();
 
-    std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
-    for (const auto& successor : pipeline->successorPipelines)
+    std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
+    auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
+        sourceOperator.getDescriptor()->parserConfig.parserType,
+        sourceOperator.getDescriptor()->schema,
+        sourceOperator.getDescriptor()->parserConfig.tupleDelimiter,
+        sourceOperator.getDescriptor()->parserConfig.fieldDelimiter);
+    auto inputFormatterTask
+        = std::make_unique<InputFormatters::InputFormatterTask>(sourceOperator.getOriginId(), std::move(inputFormatter));
+
+    auto executableInputFormatterPipeline = ExecutablePipeline::create(
+    pipeline->pipelineId, std::move(inputFormatterTask), executableSuccessorPipelines);
+
+     for (const auto& successor : pipeline->successorPipelines)
     {
         if (auto executableSuccessor = processSuccessor(sourceOperator.getOriginId(), successor, pipelineQueryPlan, loweringContext))
         {
@@ -100,7 +113,10 @@ Source processSource(
         }
     }
 
-    loweringContext.sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.getDescriptor(), executableSuccessorPipelines);
+    std::vector<std::weak_ptr<ExecutablePipeline>> inputFormatterTasks;
+    inputFormatterTasks.emplace_back(executableInputFormatterPipeline);
+
+    loweringContext.sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.getDescriptor(), inputFormatterTasks);
     return loweringContext.sources.back();
 }
 
