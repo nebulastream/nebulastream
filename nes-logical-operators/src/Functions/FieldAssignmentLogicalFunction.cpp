@@ -41,12 +41,22 @@ bool FieldAssignmentLogicalFunction::operator==(const LogicalFunctionConcept& rh
 {
     if (const auto* other = dynamic_cast<const FieldAssignmentLogicalFunction*>(&rhs))
     {
-        /// a field assignment function has always two children.
-        const bool fieldsMatch = getField() == other->getField();
-        const bool assignmentsMatch = getAssignment() == other->getAssignment();
-        return fieldsMatch and assignmentsMatch;
+        return *this == *other;
     }
     return false;
+}
+
+bool operator==(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs)
+{
+    /// a field assignment function has always two children.
+    const bool fieldsMatch = lhs.fieldAccess == rhs.fieldAccess;
+    const bool assignmentsMatch = lhs.logicalFunction == rhs.logicalFunction;
+    return fieldsMatch and assignmentsMatch;
+}
+
+bool operator!=(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs)
+{
+    return !(lhs == rhs);
 }
 
 std::string FieldAssignmentLogicalFunction::toString() const

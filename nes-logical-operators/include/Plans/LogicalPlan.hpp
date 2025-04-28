@@ -26,7 +26,6 @@
 namespace NES
 {
 
-
 /// The query plan encapsulates a set of operators and provides a set of utility functions.
 class LogicalPlan
 {
@@ -34,8 +33,6 @@ public:
     LogicalPlan() = default;
     explicit LogicalPlan(LogicalOperator rootOperator);
     explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
-    static std::unique_ptr<LogicalPlan> create(LogicalOperator rootOperator);
-    static std::unique_ptr<LogicalPlan> create(QueryId queryId, std::vector<LogicalOperator> rootOperators);
 
     LogicalPlan(const LogicalPlan& other);
     LogicalPlan(LogicalPlan&& other);
@@ -99,14 +96,9 @@ public:
 
     std::unordered_set<LogicalOperator> getAllOperators() const;
 
-    void setQueryId(QueryId queryId);
-    [[nodiscard]] QueryId getQueryId() const;
-
     [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
 
     std::vector<LogicalOperator> rootOperators{};
-
-private:
     QueryId queryId = INVALID_QUERY_ID;
 };
 }

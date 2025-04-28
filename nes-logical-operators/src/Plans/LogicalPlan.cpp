@@ -51,16 +51,6 @@ LogicalPlan& LogicalPlan::operator=(LogicalPlan&& other)
     return *this;
 }
 
-std::unique_ptr<LogicalPlan> LogicalPlan::create(LogicalOperator rootOperator)
-{
-    return std::make_unique<LogicalPlan>(std::move(rootOperator));
-}
-
-std::unique_ptr<LogicalPlan> LogicalPlan::create(QueryId queryId, std::vector<LogicalOperator> rootOperators)
-{
-    return std::make_unique<LogicalPlan>(std::move(queryId), std::move(rootOperators));
-}
-
 LogicalPlan::LogicalPlan(LogicalOperator rootOperator) : queryId(INVALID_QUERY_ID)
 {
     rootOperators.push_back(std::move(rootOperator));
@@ -175,16 +165,6 @@ std::unordered_set<LogicalOperator> LogicalPlan::getAllOperators() const
         }
     }
     return visitedOperators;
-}
-
-QueryId LogicalPlan::getQueryId() const
-{
-    return queryId;
-}
-
-void LogicalPlan::setQueryId(QueryId queryId)
-{
-    this->queryId = queryId;
 }
 
 bool LogicalPlan::operator==(const LogicalPlan& otherPlan) const

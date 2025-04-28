@@ -37,7 +37,7 @@ ThresholdWindow::ThresholdWindow(LogicalFunction predicate, uint64_t minCount)
 {
 }
 
-bool ThresholdWindow::operator==(const WindowType& otherWindowType)
+bool ThresholdWindow::operator==(const WindowType& otherWindowType) const
 {
     if (auto other = dynamic_cast<const ThresholdWindow*>(&otherWindowType))
     {

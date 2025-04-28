@@ -32,7 +32,7 @@ public:
 
     std::string toString() const override;
 
-    bool operator==(const WindowType& otherWindowType) override;
+    bool operator==(const WindowType& otherWindowType) const override;
 
 private:
     SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);

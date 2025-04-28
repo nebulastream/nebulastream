@@ -46,7 +46,7 @@ std::string TumblingWindow::toString() const
     return ss.str();
 }
 
-bool TumblingWindow::operator==(const WindowType& otherWindowType)
+bool TumblingWindow::operator==(const WindowType& otherWindowType) const
 {
     if (auto other = dynamic_cast<const TumblingWindow*>(&otherWindowType))
     {

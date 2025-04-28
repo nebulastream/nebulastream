@@ -142,8 +142,10 @@ std::string SinkLogicalOperator::getSinkName() const
 SerializableOperator SinkLogicalOperator::serialize() const
 {
     SerializableOperator_SinkLogicalOperator proto;
-    INVARIANT(sinkDescriptor, "Sink descriptor should not be null");
-    proto.mutable_sinkdescriptor()->CopyFrom(sinkDescriptor->serialize());
+    if (sinkDescriptor)
+    {
+        proto.mutable_sinkdescriptor()->CopyFrom(sinkDescriptor->serialize());
+    }
 
     SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());

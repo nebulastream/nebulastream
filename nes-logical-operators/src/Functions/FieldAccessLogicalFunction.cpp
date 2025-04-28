@@ -31,17 +31,25 @@ FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType> stamp, std::string fieldName)
     : fieldName(std::move(fieldName)), stamp(stamp) {};
 
-
 bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const FieldAccessLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const FieldAccessLogicalFunction*>(&rhs))
     {
-        bool fieldNamesMatch = other->fieldName == fieldName;
-        const bool stampsMatch = *other->stamp == *stamp;
-        return fieldNamesMatch and stampsMatch;
+        return *this == *other;
     }
     return false;
+}
+
+bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs)
+{
+    bool fieldNamesMatch = rhs.fieldName == lhs.fieldName;
+    const bool stampsMatch = *rhs.stamp == *lhs.stamp;
+    return fieldNamesMatch and stampsMatch;
+}
+
+bool operator!=(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs)
+{
+    return !(lhs == rhs);
 }
 
 std::string FieldAccessLogicalFunction::getFieldName() const
