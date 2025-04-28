@@ -28,9 +28,9 @@ bool VariableSizedDataType::operator==(const NES::DataType& other) const
 }
 
 /// A VariableSizedData type cannot be joined with another type.
-std::shared_ptr<DataType> VariableSizedDataType::join(const DataType&) const
+std::shared_ptr<DataType> VariableSizedDataType::join(const DataType& otherDataType) const
 {
-    if (not Util::instanceOf<VariableSizedDataType>(otherDataType))
+    if (not dynamic_cast<const VariableSizedDataType*>(&otherDataType))
     {
         throw DifferentFieldTypeExpected("Cannot join a VARSIZED datatype with a non-VARSIZED datatype.");
     }

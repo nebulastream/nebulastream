@@ -118,11 +118,11 @@ std::optional<AttributeField> Schema::getFieldByName(const std::string& fieldNam
     /// Fieldname is not qualified, we need to check for ambiguous field names.
     /// Iterates over all fields and checks if the field name matches the input field name without any qualifier.
     /// This means that if either the fieldName or the field name in the schema contains a qualifier, everything before the qualifier is ignored.
-    std::vector<std::shared_ptr<AttributeField>> potentialMatches;
-    for (const auto& field : fields)
+    std::vector<AttributeField> potentialMatches;
+    for (auto& field : fields)
     {
         /// Removing potential qualifiers from the field name and the input field name
-        const auto fieldWithoutQualifier = field->getName().substr(field->getName().find(ATTRIBUTE_NAME_SEPARATOR) + 1);
+        const auto fieldWithoutQualifier = field.getName().substr(field.getName().find(ATTRIBUTE_NAME_SEPARATOR) + 1);
         const auto fieldNameWithoutQualifier = fieldName.substr(fieldName.find(ATTRIBUTE_NAME_SEPARATOR) + 1);
 
         if (fieldWithoutQualifier == fieldNameWithoutQualifier)
@@ -148,7 +148,7 @@ std::optional<AttributeField> Schema::getFieldByName(const std::string& fieldNam
     /// Otherwise, we return the first field and log a warning.
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
     {
-        potentialMatches = potentialMatches | std::views::filter([&fieldName](const auto& field) { return field->getName() == fieldName; })
+        potentialMatches = potentialMatches | std::views::filter([&fieldName](const auto& field) { return field.getName() == fieldName; })
             | NES::ranges::to<std::vector>();
     }
 
