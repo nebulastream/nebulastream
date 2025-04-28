@@ -51,8 +51,10 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const JoinLogicalOperator*>(&rhs))
     {
-        return *getWindowType() == *rhsOperator->getWindowType() and getJoinFunction() == rhsOperator->getJoinFunction()
-            and getOutputSchema() == rhsOperator->outputSchema and getRightSchema() == rhsOperator->getRightSchema()
+        return *getWindowType() == *rhsOperator->getWindowType()
+            and getJoinFunction() == rhsOperator->getJoinFunction()
+            and getOutputSchema() == rhsOperator->outputSchema
+            and getRightSchema() == rhsOperator->getRightSchema()
             and getLeftSchema() == rhsOperator->getLeftSchema();
     }
     return false;
@@ -249,7 +251,32 @@ SerializableOperator JoinLogicalOperator::serialize() const
         *traitSetProto->add_traits() = trait.serialize();
     }
 
-    WindowInfos windowInfo;
+    for (auto const& inputSchema : getInputSchemas()) {
+        auto* schProto = proto.add_input_schemas();
+        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
+    }
+
+    for (auto const& originList : getInputOriginIds()) {
+        auto* olist = proto.add_input_origin_lists();
+        for (auto originId : originList) {
+            olist->add_origin_ids(originId.getRawValue());
+        }
+    }
+
+    for (auto outId : getOutputOriginIds()) {
+        proto.add_output_origin_ids(outId.getRawValue());
+    }
+
+    auto* outSch = proto.mutable_output_schema();
+    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
+
+    SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
+    for (const auto& child : getChildren()) {
+        serializableOperator.add_children_ids(child.getId().getRawValue());
+    }
+
+   WindowInfos windowInfo;
     if (auto timeBasedWindow = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType)) {
         auto timeChar = timeBasedWindow->getTimeCharacteristic();
         auto* timeCharProto = new WindowInfos_TimeCharacteristic();
@@ -277,48 +304,23 @@ SerializableOperator JoinLogicalOperator::serialize() const
     serializedFunction->CopyFrom(getJoinFunction().serialize());
     NES::Configurations::DescriptorConfig::ConfigType functionList = list;
 
-    (*proto.mutable_config())[ConfigParameters::JOIN_FUNCTION] = Configurations::descriptorConfigTypeToProto(functionList);
-    (*proto.mutable_config())[ConfigParameters::JOIN_TYPE] = Configurations::descriptorConfigTypeToProto(Configurations::EnumWrapper(joinType));
-    (*proto.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfo);
-    (*proto.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME] = Configurations::descriptorConfigTypeToProto(windowStartFieldName);
-    (*proto.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME] = Configurations::descriptorConfigTypeToProto(windowEndFieldName);
-
-    for (auto const& inputSchema : getInputSchemas()) {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
-    }
-
-    for (auto const& originList : getInputOriginIds()) {
-        auto* olist = proto.add_input_origin_lists();
-        for (auto originId : originList) {
-            olist->add_origin_ids(originId.getRawValue());
-        }
-    }
-
-    for (auto outId : getOutputOriginIds()) {
-        proto.add_output_origin_ids(outId.getRawValue());
-    }
-
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
-
-    SerializableOperator serializableOperator;
-    serializableOperator.set_operator_id(id.getRawValue());
-    for (const auto& child : getChildren()) {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
+    (*serializableOperator.mutable_config())[ConfigParameters::JOIN_FUNCTION] = Configurations::descriptorConfigTypeToProto(functionList);
+    (*serializableOperator.mutable_config())[ConfigParameters::JOIN_TYPE] = Configurations::descriptorConfigTypeToProto(Configurations::EnumWrapper(joinType));
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfo);
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME] = Configurations::descriptorConfigTypeToProto(windowStartFieldName);
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME] = Configurations::descriptorConfigTypeToProto(windowEndFieldName);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
 }
 
-LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOperatorRegistryArguments config)
+LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    auto functionVariant = config.config[JoinLogicalOperator::ConfigParameters::JOIN_FUNCTION];
-    auto joinTypeVariant = config.config[JoinLogicalOperator::ConfigParameters::JOIN_TYPE];
-    auto windowInfoVariant = config.config[JoinLogicalOperator::ConfigParameters::WINDOW_INFOS];
-    auto windowStartVariant = config.config[JoinLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
-    auto windowEndVariant = config.config[JoinLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
+    auto functionVariant = arguments.config[JoinLogicalOperator::ConfigParameters::JOIN_FUNCTION];
+    auto joinTypeVariant = arguments.config[JoinLogicalOperator::ConfigParameters::JOIN_TYPE];
+    auto windowInfoVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_INFOS];
+    auto windowStartVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
+    auto windowEndVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
 
     if (std::holds_alternative<NES::FunctionList>(functionVariant) and std::holds_alternative<Configurations::EnumWrapper>(joinTypeVariant)
         and std::holds_alternative<std::string>(windowStartVariant) and std::holds_alternative<std::string>(windowEndVariant))
@@ -330,27 +332,38 @@ LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoi
 
         INVARIANT(functions.size() == 1, "Expected exactly one function");
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-        INVARIANT(function.tryGet<FieldAssignmentLogicalFunction>(), "Expected a field assignment function, got: {}", function.toString());
 
         std::shared_ptr<Windowing::WindowType> windowType;
         if (std::holds_alternative<WindowInfos>(windowInfoVariant)) {
             auto windowInfoProto = std::get<WindowInfos>(windowInfoVariant);
             if (windowInfoProto.has_tumbling_window()) {
-                auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
+                auto timeCharProto = windowInfoProto.tumbling_window().time_characteristic();
+                auto timeChar = Windowing::TimeCharacteristic::createEventTime(
+                    FieldAccessLogicalFunction(timeCharProto.field()),
+                    Windowing::TimeUnit(timeCharProto.multiplier()));
                 windowType = std::make_shared<Windowing::TumblingWindow>(timeChar,
                                                                         Windowing::TimeMeasure(windowInfoProto.tumbling_window().size()));
             } else if (windowInfoProto.has_sliding_window()) {
-                auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
+                auto timeCharProto = windowInfoProto.sliding_window().time_characteristic();
+                auto timeChar = Windowing::TimeCharacteristic::createEventTime(
+                    FieldAccessLogicalFunction(timeCharProto.field()),
+                    Windowing::TimeUnit(timeCharProto.multiplier()));
                 windowType = Windowing::SlidingWindow::of(timeChar,
-                                                                       Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
-                                                                       Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
+                                                       Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
+                                                       Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
             }
         }
         if (!windowType) {
             throw UnknownLogicalOperator();
         }
 
-        return JoinLogicalOperator(function, windowType, joinType.asEnum<JoinLogicalOperator::JoinType>().value());
+        auto logicalOperator = JoinLogicalOperator(function, windowType, joinType.asEnum<JoinLogicalOperator::JoinType>().value());
+        if (auto& id = arguments.id) {
+            logicalOperator.id = *id;
+        }
+        return logicalOperator.withInferredSchema(arguments.inputSchemas)
+            .withInputOriginIds(arguments.inputOriginIds)
+            .withOutputOriginIds(arguments.outputOriginIds);
     }
     throw UnknownLogicalOperator();
 }

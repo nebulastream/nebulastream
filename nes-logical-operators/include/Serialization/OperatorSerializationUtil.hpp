@@ -33,8 +33,6 @@ public:
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
     static LogicalOperator deserializeOperator(SerializableOperator serializedOperator);
-    static LogicalOperator deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
-    static LogicalOperator deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
     static std::unique_ptr<Sources::SourceDescriptor>
     deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor);
     static std::unique_ptr<Sinks::SinkDescriptor>

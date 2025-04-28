@@ -100,7 +100,7 @@ std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() cons
 LogicalOperator SourceDescriptorLogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
     PRECONDITION(ids.size() == 1, "Source should have one input");
-    PRECONDITION(ids[0].size() == 1, "Source should have one originId");
+    PRECONDITION(ids[0].size() == 1, "Source should have one originId, but has {}", ids[0].size());
     auto copy = *this;
     copy.inputOriginIds = ids[0];
     return copy;
@@ -131,8 +131,8 @@ Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorR
 [[nodiscard]] SerializableOperator SourceDescriptorLogicalOperator::serialize() const
 {
     SerializableOperator_SourceDescriptorLogicalOperator proto;
-    INVARIANT(inputOriginIds.size() == 1, "Expected one input originId, got '{}' instead", inputOriginIds.size());
-    proto.set_sourceoriginid(inputOriginIds[0].getRawValue());
+    INVARIANT(outputOriginIds.size() == 1, "Expected one output originId, got '{}' instead", outputOriginIds.size());
+    proto.set_sourceoriginid(outputOriginIds[0].getRawValue());
     proto.mutable_sourcedescriptor()->CopyFrom(sourceDescriptor->serialize());
 
     SerializableOperator serializableOperator;

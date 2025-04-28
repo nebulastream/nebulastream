@@ -145,9 +145,14 @@ SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() 
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments)
+LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    return IngestionTimeWatermarkAssignerLogicalOperator();
-}
+    auto logicalOperator = IngestionTimeWatermarkAssignerLogicalOperator();
+    if (auto& id = arguments.id) {
+        logicalOperator.id = *id;
+    }
+    return logicalOperator.withInferredSchema(arguments.inputSchemas)
+        .withInputOriginIds(arguments.inputOriginIds)
+        .withOutputOriginIds(arguments.outputOriginIds);}
 
 }

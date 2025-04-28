@@ -16,7 +16,7 @@
 
 #include <atomic>
 #include <string_view>
-#include <variant>
+#include <string>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -92,6 +92,7 @@ struct LogicalOperatorConcept
     [[nodiscard]] virtual LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const = 0;
 
     /// Unique identifier for this operator
+    /// Currently not const to allow serialization.
     OperatorId id = INVALID_OPERATOR_ID;
 };
 

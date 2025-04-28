@@ -77,6 +77,32 @@ struct LogicalFunctionConcept
     [[nodiscard]] virtual bool operator==(const LogicalFunctionConcept& rhs) const = 0;
 };
 
+/// @brief Null implementation of the LogicalFunctionConcept.
+///
+/// This class serves as a placeholder or default implementation of a logical function.
+/// All operations in this class are undefined and will trigger a runtime precondition failure
+/// if invoked. It is intended solely as a safe default for data structures such as hashmaps
+/// or error state and should not be used for actual logical function implementations.
+class NullLogicalFunction : public LogicalFunctionConcept
+{
+public:
+    NullLogicalFunction();
+    [[nodiscard]] std::string toString() const override;
+
+    [[nodiscard]] std::shared_ptr<DataType> getStamp() const override;
+    [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType>) const override;
+    [[nodiscard]] LogicalFunction withInferredStamp(Schema Schema) const override;
+
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
+    [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction>) const override;
+
+    [[nodiscard]] std::string getType() const override;
+    [[nodiscard]] SerializableFunction serialize() const override;
+
+    [[nodiscard]] bool operator==(const NullLogicalFunction&) const;
+    [[nodiscard]] bool operator==(const LogicalFunctionConcept&) const override;
+};
+
 /// A type-erased wrapper for logical functions.
 /// This class provides type erasure for logical functions, allowing them to be stored
 /// and manipulated without knowing their concrete type. It uses the PIMPL pattern
@@ -96,8 +122,11 @@ struct LogicalFunction
     {
     }
 
+    /// Constructs a NullLogicalFunction
+    LogicalFunction();
+
     LogicalFunction(const LogicalFunction& other);
-    LogicalFunction(LogicalFunction&&) noexcept;
+    LogicalFunction(LogicalFunction&&) noexcept = default;
 
     /// Attempts to get the underlying function as type T.
     /// @tparam T The type to try to get the function as.

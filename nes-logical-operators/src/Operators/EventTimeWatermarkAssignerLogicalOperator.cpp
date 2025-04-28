@@ -133,14 +133,6 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
         *traitSetProto->add_traits() = trait.serialize();
     }
 
-    FunctionList funcList;
-    *funcList.add_functions() = onField.serialize();
-    Configurations::DescriptorConfig::ConfigType funcVariant = std::move(funcList);
-    (*proto.mutable_config())[ConfigParameters::FUNCTION] = descriptorConfigTypeToProto(funcVariant);
-
-    Configurations::DescriptorConfig::ConfigType timeVariant = unit.getMillisecondsConversionMultiplier();
-    (*proto.mutable_config())[ConfigParameters::TIME_MS] = descriptorConfigTypeToProto(timeVariant);
-
     for (auto const& inputSchema : getInputSchemas()) {
         auto* schProto = proto.add_input_schemas();
         SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
@@ -166,15 +158,23 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
         serializableOperator.add_children_ids(child.getId().getRawValue());
     }
 
+    FunctionList funcList;
+    *funcList.add_functions() = onField.serialize();
+    Configurations::DescriptorConfig::ConfigType funcVariant = std::move(funcList);
+    (*serializableOperator.mutable_config())[ConfigParameters::FUNCTION] = descriptorConfigTypeToProto(funcVariant);
+
+    Configurations::DescriptorConfig::ConfigType timeVariant = unit.getMillisecondsConversionMultiplier();
+    (*serializableOperator.mutable_config())[ConfigParameters::TIME_MS] = descriptorConfigTypeToProto(timeVariant);
+
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments config)
+LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    auto timeVariant = config.config[EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::TIME_MS];
-    auto functionVariant = config.config[EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::FUNCTION];
+    auto timeVariant = arguments.config[EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::TIME_MS];
+    auto functionVariant = arguments.config[EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::FUNCTION];
 
     if (std::holds_alternative<uint64_t>(timeVariant) and std::holds_alternative<FunctionList>(functionVariant)) {
         const auto functions = std::get<FunctionList>(functionVariant).functions();
@@ -183,8 +183,13 @@ LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOper
         INVARIANT(functions.size() == 1, "Expected exactly one function");
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
 
-        return EventTimeWatermarkAssignerLogicalOperator(function, time);
-    }
+        auto logicalOperator = EventTimeWatermarkAssignerLogicalOperator(function, time);
+        if (auto& id = arguments.id) {
+            logicalOperator.id = *id;
+        }
+        return logicalOperator.withInferredSchema(arguments.inputSchemas)
+            .withInputOriginIds(arguments.inputOriginIds)
+            .withOutputOriginIds(arguments.outputOriginIds);    }
     throw UnknownLogicalOperator();
 }
 }
