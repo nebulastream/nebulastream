@@ -62,10 +62,6 @@ Source processSource(
     const std::shared_ptr<Pipeline>& pipeline,
     const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
     LoweringContext& loweringContext);
-Source processSource(
-    const std::shared_ptr<Pipeline>& pipeline,
-    const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
-    LoweringContext& loweringContext);
 
 Successor processSuccessor(
     const Predecessor& predecessor,
@@ -105,20 +101,23 @@ Source processSource(
     auto executableInputFormatterPipeline = ExecutablePipeline::create(
     pipeline->pipelineId, std::move(inputFormatterTask), executableSuccessorPipelines);
 
-     for (const auto& successor : pipeline->successorPipelines)
+    for (const auto& successor : pipeline->getSuccessors())
     {
-        if (auto executableSuccessor = processSuccessor(sourceOperator.getOriginId(), successor, pipelineQueryPlan, loweringContext))
+        if (auto executableSuccessor = processSuccessor(executableInputFormatterPipeline, successor, pipelineQueryPlan, loweringContext))
         {
-            executableSuccessorPipelines.emplace_back(*executableSuccessor);
+            executableInputFormatterPipeline->successors.emplace_back(*executableSuccessor);
         }
     }
+
     /// Insert the executable pipeline into the pipelineQueryPlan at position 1 (after the source)
     pipelineQueryPlan->removePipeline(pipeline);
 
     std::vector<std::weak_ptr<ExecutablePipeline>> inputFormatterTasks;
+
+    loweringContext.pipelineToExecutableMap.emplace(getNextPipelineId(), executableInputFormatterPipeline);
     inputFormatterTasks.emplace_back(executableInputFormatterPipeline);
 
-    loweringContext.sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.getDescriptor(), inputFormatterTasks);
+    loweringContext.sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.getDescriptor(), std::move(inputFormatterTasks));
     return loweringContext.sources.back();
 }
 
@@ -164,7 +163,7 @@ std::shared_ptr<ExecutablePipeline> processOperatorPipeline(
     }
     auto executablePipeline = ExecutablePipeline::create(PipelineId(pipeline->pipelineId), getStage(pipeline), {});
 
-    for (const auto& successor : pipeline->successorPipelines)
+    for (const auto& successor : pipeline->getSuccessors())
     {
         if (auto executableSuccessor = processSuccessor(executablePipeline, successor, pipelineQueryPlan, loweringContext))
         {

@@ -34,11 +34,11 @@ std::string operatorChainToString(const NES::PhysicalOperator& op, int indent = 
     return oss.str();
 }
 
-PipelineId getNextPipelineId()
-{
-    static std::atomic_uint64_t id = NES::INITIAL_PIPELINE_ID.getRawValue();
-    return PipelineId(id++);
+std::atomic_uint64_t nextId{ INITIAL_PIPELINE_ID.getRawValue() };
 }
+
+PipelineId getNextPipelineId() {
+    return PipelineId(nextId++);
 }
 
 Pipeline::Pipeline(PhysicalOperator op) : rootOperator(std::move(op)), pipelineId(getNextPipelineId())

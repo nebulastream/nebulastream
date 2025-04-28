@@ -24,9 +24,11 @@
 namespace NES
 {
 
+PipelineId getNextPipelineId();
+
 /// @brief Defines a single pipeline, which contains of a query plan of operators.
 /// Each pipeline can have N successor and predecessor pipelines.
-struct Pipeline
+struct Pipeline : public std::enable_shared_from_this<Pipeline>
 {
     Pipeline(PhysicalOperator op);
     Pipeline(SourcePhysicalOperator op);
@@ -52,9 +54,71 @@ struct Pipeline
     ProviderType providerType = ProviderType::Interpreter;
     PhysicalOperator rootOperator;
     const PipelineId pipelineId;
-
-    std::vector<std::shared_ptr<Pipeline>> successorPipelines;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
+
+    void addSuccessor(const std::shared_ptr<Pipeline>& pipeline)
+    {
+        if (pipeline)
+        {
+            pipeline->predecessorPipelines.emplace_back(weak_from_this());
+            this->successorPipelines.emplace_back(pipeline);
+        }
+    }
+
+
+    void removePredecessor(const std::shared_ptr<Pipeline>& pipeline)
+    {
+        for (auto iter = predecessorPipelines.begin(); iter != predecessorPipelines.end(); ++iter)
+        {
+            if (iter->lock().get() == pipeline.get())
+            {
+                predecessorPipelines.erase(iter);
+                return;
+            }
+        }
+    }
+
+    const std::vector<std::shared_ptr<Pipeline>>& getSuccessors() const
+    {
+        return successorPipelines;
+    }
+
+    void clearSuccessors() {
+        for (const auto& succ : successorPipelines)
+        {
+            succ->removePredecessor(shared_from_this());
+        }
+        successorPipelines.clear();
+    }
+
+    void clearPredecessors()
+    {
+        for (const auto& pre : predecessorPipelines)
+        {
+            if (const auto prePipeline = pre.lock())
+            {
+                prePipeline->removeSuccessor(shared_from_this());
+            }
+        }
+        predecessorPipelines.clear();
+    }
+
+
+    void removeSuccessor(const std::shared_ptr<Pipeline>& pipeline)
+    {
+        for (auto iter = successorPipelines.begin(); iter != successorPipelines.end(); ++iter)
+        {
+            if (iter->get() == pipeline.get())
+            {
+                successorPipelines.erase(iter);
+                return;
+            }
+        }
+    }
+
+private:
+    std::vector<std::shared_ptr<Pipeline>> successorPipelines;
+    std::vector<std::weak_ptr<Pipeline>> predecessorPipelines;
 };
 
 }

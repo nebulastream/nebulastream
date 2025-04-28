@@ -84,7 +84,7 @@ void buildPipelineRecursive(
     {
         // Instead of doing nothing, make sure the existing pipeline is linked as a successor.
         // (Optionally, you may wish to check to avoid duplicate insertions.)
-        currentPipeline->successorPipelines.push_back(it->second);
+        currentPipeline->addSuccessor(it->second);
         return;
     }
 
@@ -103,8 +103,8 @@ void buildPipelineRecursive(
             newPipeline->operatorHandlers.emplace(opWrapper->handlerId.value(), opWrapper->handler.value());
         }
         pipelineMap[opId] = newPipeline;
-        currentPipeline->successorPipelines.push_back(newPipeline);
-        auto newPipelinePtr = currentPipeline->successorPipelines.back();
+        currentPipeline->addSuccessor(newPipeline);
+        auto newPipelinePtr = currentPipeline->getSuccessors().back();
         for (const auto& child : opWrapper->children)
         {
             buildPipelineRecursive(child, opWrapper, newPipelinePtr, pipelineMap);
@@ -138,8 +138,8 @@ void buildPipelineRecursive(
             addDefaultEmit(currentPipeline, *prevOpWrapper);
         }
         auto newPipeline = std::make_shared<Pipeline>(*sink);
-        currentPipeline->successorPipelines.push_back(newPipeline);
-        auto newPipelinePtr = currentPipeline->successorPipelines.back();
+        currentPipeline->addSuccessor(newPipeline);
+        auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
         for (const auto& child : opWrapper->children)
         {
@@ -156,8 +156,8 @@ void buildPipelineRecursive(
             addDefaultEmit(currentPipeline, *opWrapper);
         }
         auto newPipeline = std::make_shared<Pipeline>(opWrapper->physicalOperator);
-        currentPipeline->successorPipelines.push_back(newPipeline);
-        auto newPipelinePtr = currentPipeline->successorPipelines.back();
+        currentPipeline->addSuccessor(newPipeline);
+        auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
 
         addDefaultScan(newPipelinePtr, *opWrapper);
@@ -214,8 +214,8 @@ std::shared_ptr<PipelinedQueryPlan> apply(PhysicalPlan physicalPlan)
         }
     }
 
-    NES_DEBUG("Constructed pipeline plan with {} root pipelines.", pipelinedPlan->pipelines.size());
     std::cout << pipelinedPlan->toString() << "\n";
+    NES_DEBUG("Constructed pipeline plan with {} root pipelines.", pipelinedPlan->pipelines.size());
     return pipelinedPlan;
 }
 }
