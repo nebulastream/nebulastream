@@ -32,6 +32,7 @@
     "boost-asio",
     "boost-system",
     "boost-filesystem",
+    "boost-process",
     "cpptrace",
     "fmt",
     "folly",
