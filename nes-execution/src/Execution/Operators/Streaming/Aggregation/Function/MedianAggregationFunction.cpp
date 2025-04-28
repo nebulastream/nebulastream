@@ -166,6 +166,18 @@ void MedianAggregationFunction::reset(const nautilus::val<AggregationState*> agg
         aggregationState);
 }
 
+void MedianAggregationFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
+{
+    nautilus::invoke(
+        +[](AggregationState* pagedVectorMemArea) -> void
+        {
+            /// Calls the destructor of the PagedVector
+            auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            pagedVector->~PagedVector();
+        },
+        aggregationState);
+}
+
 size_t MedianAggregationFunction::getSizeOfStateInBytes() const
 {
     return sizeof(Nautilus::Interface::PagedVector);

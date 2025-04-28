@@ -95,6 +95,10 @@ void CountAggregationFunction::reset(const nautilus::val<AggregationState*> aggr
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
 }
 
+void CountAggregationFunction::cleanup(nautilus::val<AggregationState*>)
+{
+}
+
 size_t CountAggregationFunction::getSizeOfStateInBytes() const
 {
     return inputType->size();
