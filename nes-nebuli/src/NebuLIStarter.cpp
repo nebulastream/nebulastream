@@ -13,7 +13,7 @@
 */
 
 #include <fstream>
-#include <Plans/QueryPlan.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>

@@ -17,9 +17,6 @@
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Plans/QueryPlan.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
-#include <SinkPhysicalOperator.hpp>
 
 namespace NES::Optimizer
 {

@@ -15,8 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <Plans/QueryPlan.hpp>
-#include "PhysicalPlan.hpp"
+#include <Plans/LogicalPlan.hpp>
+#include <PhysicalPlan.hpp>
 
 namespace NES::Optimizer
 {
@@ -26,7 +26,7 @@ class QueryOptimizer final
 public:
     explicit QueryOptimizer() = default;
     /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] std::unique_ptr<PhysicalPlan> optimize(QueryPlan plan);
+    [[nodiscard]] std::unique_ptr<PhysicalPlan> optimize(LogicalPlan plan);
 };
 
 }

@@ -15,6 +15,7 @@
 #include <exception>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>

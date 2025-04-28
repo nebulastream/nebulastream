@@ -27,10 +27,10 @@ class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
 {
     std::stack<AntlrSQLHelper> helpers;
     std::vector<std::string> sinkNames;
-    std::stack<QueryPlan> queryPlans;
+    std::stack<LogicalPlan> queryPlans;
 
 public:
-    [[nodiscard]] QueryPlan getQueryPlan() const;
+    [[nodiscard]] LogicalPlan getQueryPlan() const;
     void poppush(const AntlrSQLHelper& helper);
 
     /// Parsing listener methods (enter/exit pairs)

@@ -24,7 +24,7 @@ GRPCClient::GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCS
 {
 }
 
-size_t GRPCClient::registerQuery(const NES::QueryPlan& queryPlan) const
+size_t GRPCClient::registerQuery(const NES::LogicalPlan& queryPlan) const
 {
     grpc::ClientContext context;
     RegisterQueryReply reply;

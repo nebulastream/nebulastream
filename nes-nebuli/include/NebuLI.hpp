@@ -20,7 +20,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <Plans/QueryPlan.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
