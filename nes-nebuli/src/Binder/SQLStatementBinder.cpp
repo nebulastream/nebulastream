@@ -70,11 +70,10 @@ Statement SQLStatementBinder::bind(AntlrSQLParser::StatementContext* statementAS
         {
             if (const auto sourceName = dropSourceAst->name->getText(); sourceCatalog->containsLogicalSource(sourceName))
             {
-                return DropSourceStatement{sourceCatalog->getLogicalSource(sourceName)};
+                return DropSourceStatement{sourceCatalog->getLogicalSource(sourceName).value()};
             }
             else
             {
-                //TODO How can I retrieve physical sources from catalogs?
                 throw UnknownSourceType(sourceName);
             }
         }

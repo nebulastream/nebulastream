@@ -18,7 +18,7 @@
 #include <variant>
 #include <AntlrSQLParser.h>
 #include <Plans/Query/QueryPlan.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <folly/stub/logging.h>
 
 
@@ -36,7 +36,7 @@ struct CreateSourceStatement
 
 struct DropSourceStatement
 {
-    std::variant<std::shared_ptr<LogicalSource>, std::shared_ptr<PhysicalSource>> source;
+    std::variant<LogicalSource, Sources::SourceDescriptor> source;
 };
 
 struct DropQueryStatement

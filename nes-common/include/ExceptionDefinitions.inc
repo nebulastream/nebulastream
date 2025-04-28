@@ -64,6 +64,7 @@ EXCEPTION(UnsupportedOperation, 2121, "tried to execute an unsupported operation
 EXCEPTION(UnsupportedDataType, 2121, "unsupported data type")
 EXCEPTION(UnknownParserType, 2122, "unknown parser type")
 EXCEPTION(UnregisteredSource, 2123, "unregistered source")
+EXCEPTION(UnknownType, 2124, "unknown type")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
