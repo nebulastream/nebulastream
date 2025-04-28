@@ -16,12 +16,13 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
 #include <deque>
-#include <unordered_map>
 #include <memory>
 #include <memory_resource>
 #include <mutex>
 #include <optional>
+#include <unordered_map>
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
