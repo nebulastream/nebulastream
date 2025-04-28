@@ -34,6 +34,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <RewriteRuleRegistry.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Optimizer
 {
@@ -188,14 +189,14 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
 
     auto join = logicalOperator.get<JoinLogicalOperator>();
     auto handlerId = getNextOperatorHandlerId();
-    /// TODO switch?
+
     auto rightInputSchema = join.getInputSchemas()[0];
     auto leftInputSchema = join.getInputSchemas()[1];
     auto outputSchema = join.getOutputSchema();
     auto outputOriginId = join.getOutputOriginIds()[0];
     auto logicalJoinFunction = join.getJoinFunction();
     auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(join.getWindowType());
-    const auto pageSize = NES::Configurations::DEFAULT_PAGED_VECTOR_SIZE;
+    const auto pageSize = conf.pageSize.getValue();
 
 
     auto nested = logicalOperator.getInputOriginIds();
@@ -208,7 +209,6 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto rightMemoryProvider = TupleBufferMemoryProvider::create(pageSize, rightInputSchema);
     rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
-    /// TODO switch
     auto [timeStampFieldRight, timeStampFieldLeft] = getTimestampLeftAndRight(join, windowType);
 
     auto leftBuildOperator
