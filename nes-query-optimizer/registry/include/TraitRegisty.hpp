@@ -15,13 +15,13 @@
 #pragma once
 
 #include <string>
-#include <TraitSets/Trait.hpp>
+#include <Traits/Trait.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::Optimizer
 {
 
-using TraitRegistryReturnType = NES::Optimizer::AbstractTrait;
+using TraitRegistryReturnType = TraitConcept;
 struct TraitRegistryArguments
 {
 };

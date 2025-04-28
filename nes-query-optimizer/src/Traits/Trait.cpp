@@ -1,5 +1,5 @@
 /*
-    Licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -12,22 +12,32 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <string>
-#include <vector>
+#include <memory>
+#include <ostream>
 #include <Traits/Trait.hpp>
 
 namespace NES::Optimizer
 {
 
-/// Marks an operator as creator of new origin ids
-struct OriginIdAssignerTrait final : TraitConcept
+Trait::Trait(const Trait& other) : self(other.self->clone()) { }
+
+Trait::Trait(Trait&&) noexcept = default;
+
+Trait& Trait::operator=(const Trait& other)
 {
-    bool operator==(const TraitConcept& other) const override;
-    [[nodiscard]] std::string toString() const;
-    [[nodiscard]] const std::type_info& getType() const override;
-    [[nodiscard]] SerializableTrait serialize() const override;
-};
+    if (this != &other)
+    {
+        self = other.self->clone();
+    }
+    return *this;
+}
+
+const std::type_info& Trait::getType() const {
+    return self->getType();
+}
+
+SerializableTrait Trait::serialize() const {
+    return self->serialize();
+}
 
 }

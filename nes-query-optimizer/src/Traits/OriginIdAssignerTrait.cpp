@@ -37,4 +37,11 @@ const std::type_info& OriginIdAssignerTrait::getType() const
 {
     return typeid(this);
 }
+
+SerializableTrait OriginIdAssignerTrait::serialize() const
+{
+    SerializableTrait trait;
+    trait.set_trait_type(getType().name());
+    return trait;
+}
 }

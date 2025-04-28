@@ -29,7 +29,7 @@ size_t GRPCClient::registerQuery(const NES::LogicalPlan& queryPlan) const
     grpc::ClientContext context;
     RegisterQueryReply reply;
     RegisterQueryRequest request;
-    NES::QueryPlanSerializationUtil::serializeQueryPlan(queryPlan, request.mutable_queryplan());
+    request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(queryPlan));
     auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
     {

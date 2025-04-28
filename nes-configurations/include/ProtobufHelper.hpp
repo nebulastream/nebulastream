@@ -28,6 +28,18 @@ inline std::ostream& operator<<(std::ostream& os, const FunctionList& list)
     return os;
 }
 
+inline std::ostream& operator<<(std::ostream& os, const AggregationFunctionList& list)
+{
+    os << list.DebugString();
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const WindowInfos& infos)
+{
+    os << infos.DebugString();
+    return os;
+}
+
 inline std::ostream& operator<<(std::ostream& os, const SerializableFunction& func)
 {
     os << func.DebugString();
@@ -35,6 +47,18 @@ inline std::ostream& operator<<(std::ostream& os, const SerializableFunction& fu
 }
 
 inline bool operator==(const FunctionList& lhs, const FunctionList& rhs)
+{
+    /// Compare by serializing to string.
+    return lhs.SerializeAsString() == rhs.SerializeAsString();
+}
+
+inline bool operator==(const AggregationFunctionList& lhs, const AggregationFunctionList& rhs)
+{
+    /// Compare by serializing to string.
+    return lhs.SerializeAsString() == rhs.SerializeAsString();
+}
+
+inline bool operator==(const WindowInfos& lhs, const WindowInfos& rhs)
 {
     /// Compare by serializing to string.
     return lhs.SerializeAsString() == rhs.SerializeAsString();

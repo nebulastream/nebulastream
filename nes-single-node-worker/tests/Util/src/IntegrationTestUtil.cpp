@@ -232,10 +232,10 @@ void writeFieldValueToTupleBuffer(
 Schema loadSinkSchema(SerializableQueryPlan& queryPlan)
 {
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
-    const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);
-    auto& rootOperator = queryPlan.mutable_operatormap()->at(rootOperatorId);
+    const auto rootoperator_id = queryPlan.mutable_rootoperatorids()->at(0);
+    auto& rootOperator = queryPlan.mutable_operatormap()->at(rootoperator_id);
     EXPECT_TRUE(rootOperator.has_sink()) << "Redirection expects the single root operator to be a sink operator";
-    return SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
+    return SchemaSerializationUtil::deserializeSchema(rootOperator.sink().sinkdescriptor().sinkschema());
 }
 
 QueryId registerQueryPlan(const SerializableQueryPlan& queryPlan, GRPCServer& uut)
@@ -421,15 +421,15 @@ bool loadFile(SerializableQueryPlan& queryPlan, const std::string_view queryFile
 void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::string& filePathNew)
 {
     EXPECT_EQ(decomposedQueryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
-    const auto rootOperatorId = decomposedQueryPlan.mutable_rootoperatorids()->at(0);
-    auto& rootOperator = decomposedQueryPlan.mutable_operatormap()->at(rootOperatorId);
+    const auto rootoperator_id = decomposedQueryPlan.mutable_rootoperatorids()->at(0);
+    auto& rootOperator = decomposedQueryPlan.mutable_operatormap()->at(rootoperator_id);
 
     EXPECT_TRUE(rootOperator.has_sink()) << "Redirection expects the single root operator to be a sink operator";
     const auto deserializedSinkOperator = OperatorSerializationUtil::deserializeOperator(rootOperator).get<SinkLogicalOperator>();
     auto descriptor = deserializedSinkOperator.sinkDescriptor;
     if (descriptor->sinkType == Sinks::FileSink::NAME)
     {
-        const auto deserializedOutputSchema = SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
+        const auto deserializedOutputSchema = SchemaSerializationUtil::deserializeSchema(rootOperator.sink().sinkdescriptor().sinkschema());
         auto configCopy = descriptor->config;
         configCopy.at(Sinks::ConfigParametersFile::FILEPATH) = filePathNew;
         auto sinkDescriptorUpdated
@@ -441,8 +441,8 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
         auto serializedOperator = sinkLogicalOperatorUpdated.serialize();
 
         /// Reconfigure the original operator id, and childrenIds because deserialization/serialization changes them.
-        serializedOperator.set_operatorid(rootOperator.operatorid());
-        *serializedOperator.mutable_childrenids() = rootOperator.childrenids();
+        serializedOperator.set_operator_id(rootOperator.operator_id());
+        *serializedOperator.mutable_children_ids() = rootOperator.children_ids();
 
         swap(rootOperator, serializedOperator);
     }
@@ -473,7 +473,7 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
                 auto serializedOperator = sourceDescriptorLogicalOperatorUpdated.serialize();
 
                 /// Reconfigure the original operator id, because deserialization/serialization changes them.
-                serializedOperator.set_operatorid(value.operatorid());
+                serializedOperator.set_operator_id(value.operator_id());
                 swap(value, serializedOperator);
             }
         }
@@ -508,7 +508,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
                     auto serializedOperator = sourceDescriptorLogicalOperatorUpdated.serialize();
 
                     /// Reconfigure the original operator id, because deserialization/serialization changes them.
-                    serializedOperator.set_operatorid(value.operatorid());
+                    serializedOperator.set_operator_id(value.operator_id());
                     swap(value, serializedOperator);
                     break;
                 }
