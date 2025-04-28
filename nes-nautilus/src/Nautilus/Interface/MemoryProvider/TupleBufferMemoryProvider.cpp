@@ -98,11 +98,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
     {
         const auto textValue = value.cast<VariableSizedData>();
         const auto childIndex = invoke(
-            storeAssociatedTextValueProxy,
-            recordBuffer.getReference(),
-            bufferProvider,
-            textValue.getReference(),
-            textValue.getTotalSize());
+            storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;
