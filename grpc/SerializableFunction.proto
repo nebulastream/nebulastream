@@ -16,6 +16,34 @@ syntax = "proto3";
 import "SerializableDataType.proto";
 package NES;
 
+message WindowInfos {
+    message TimeCharacteristic {
+        enum Type {
+            EventTime = 0;
+            IngestionTime = 1;
+        }
+        Type type = 1;
+        optional string field = 2;
+        uint64 multiplier = 3;
+    }
+
+    message TumblingWindow {
+        TimeCharacteristic time_characteristic = 1;
+        uint64 size = 2;
+    }
+
+    message SlidingWindow {
+        TimeCharacteristic time_characteristic = 1;
+        uint64 size = 2;
+        uint64 slide = 3;
+    }
+
+    oneof window_type {
+        TumblingWindow tumbling_window = 1;
+        SlidingWindow sliding_window = 2;
+    }
+}
+
 message SerializableFunction {
     repeated SerializableFunction children = 1;
     string functionType = 2;
@@ -45,13 +73,16 @@ message SerializableVariantDescriptor {
   oneof value {
     int32 int_value = 1;
     uint32 uint_value = 2;
-    bool bool_value = 3;
-    fixed32 char_value = 4;  // Represents a single byte (0-255). We need a fixed32 as protobuf does only support fixed32/fixed64.
-    float float_value = 5;
-    double double_value = 6;
-    string string_value = 7;
-    SerializableEnumWrapper enum_value = 8;
-    FunctionList function_list = 9;
-    AggregationFunctionList aggregation_function_list = 10;
+    int64 long_value = 3;
+    uint64 ulong_value = 4;
+    bool bool_value = 5;
+    fixed32 char_value = 6;  // Represents a single byte (0-255). We need a fixed32 as protobuf does only support fixed32/fixed64.
+    float float_value = 7;
+    double double_value = 8;
+    string string_value = 9;
+    SerializableEnumWrapper enum_value = 10;
+    FunctionList function_list = 11;
+    AggregationFunctionList aggregation_function_list = 12;
+    WindowInfos window_infos = 13;
   }
 }

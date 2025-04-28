@@ -15,6 +15,7 @@
 syntax = "proto3";
 import "SerializableFunction.proto";
 import "SerializableSchema.proto";
+import "SerializableTrait.proto";
 package NES;
 
 message ParserConfig {
@@ -23,60 +24,55 @@ message ParserConfig {
   string fieldDelimiter = 3;
 };
 
-message SerializableOperator {
+message SerializableSinkDescriptor
+{
+  SerializableSchema sinkSchema = 1;
+  string sinkType = 2;
+  bool addTimestamp = 3;
+  map<string, SerializableVariantDescriptor> config = 4;
+}
 
-message SourceDescriptorLogicalOperator {
-  message SourceDescriptor {
-    SerializableSchema sourceSchema = 1;
-    string logicalSourceName = 2;
-    string sourceType = 3;
-    int32 numberOfBuffersInSourceLocalBufferPool = 4;
-    ParserConfig parserConfig = 5;
-    map<string, SerializableVariantDescriptor> config = 6;
+message SerializableSourceDescriptor
+{
+  SerializableSchema sourceSchema = 1;
+  string logicalSourceName = 2;
+  string sourceType = 3;
+  int32 numberOfBuffersInSourceLocalBufferPool = 4;
+  ParserConfig parserConfig = 5;
+  map<string, SerializableVariantDescriptor> config = 6;
+}
+
+message SerializableOperator
+{
+  message SourceDescriptorLogicalOperator
+  {
+    uint64 sourceOriginId = 1;
+    SerializableSourceDescriptor sourceDescriptor = 2;
   }
 
-  uint64 sourceOriginId = 1;
-  SourceDescriptor sourceDescriptor = 2;
-}
-
-message SinkLogicalOperator {
-  message SerializableSinkDescriptor {
-    SerializableSchema sinkSchema = 1;
-    string sinkType = 2;
-    bool addTimestamp = 3;
-    map<string, SerializableVariantDescriptor> config = 4;
+  message SinkLogicalOperator
+  {
+    SerializableSinkDescriptor sinkDescriptor = 1;
   }
 
-  SerializableSinkDescriptor sinkDescriptor = 1;
-}
+  message LogicalOperator {
+    string operator_type = 1;
+    TraitSet trait_set = 2;
+    SerializableSchema output_schema = 3;
+    repeated SerializableSchema input_schemas = 4;
+    message OriginList {
+        repeated int64 origin_ids = 1;
+    }
+    repeated OriginList input_origin_lists = 5;
+    repeated int64 output_origin_ids = 6;
+  }
 
-message UnaryLogicalOperator {
-  SerializableSchema inputSchema = 1;
-  repeated uint64 originIds = 2;
-}
-
-message BinaryLogicalOperator {
-  SerializableSchema leftInputSchema = 1;
-  SerializableSchema rightInputSchema = 2;
-  repeated uint64 leftOriginIds = 3;
-  repeated uint64 rightOriginIds = 4;
-}
-
-message LogicalOperator {
+  int64 operator_id = 1;
+  repeated int64 children_ids = 2;
+  map<string, SerializableVariantDescriptor> config = 3;
   oneof value {
-    UnaryLogicalOperator unaryOperator = 1;
-    BinaryLogicalOperator binaryOperator = 2;
+    SourceDescriptorLogicalOperator source = 4;
+    SinkLogicalOperator sink = 5;
+    LogicalOperator operator = 6;
   }
-    string operatorType = 3;
-    map<string, SerializableVariantDescriptor> config = 4;
-}
-
-  oneof value {
-    SourceDescriptorLogicalOperator source = 1;
-    SinkLogicalOperator sink = 2;
-    LogicalOperator operator = 3;
-  }
-  uint64 operatorid = 4;
-  repeated uint64 childrenIds = 5;
-  SerializableSchema outputSchema = 6;
 }
