@@ -203,7 +203,7 @@ void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config
         "NebulaStream currently only supports a single sink per query, but the query contains: {}",
         sinkOperators.size());
     PRECONDITION(not config.sinks.empty(), "Expects at least one sink in the query config!");
-    if (const auto sink = config.sinks.find(sinkOperators.at(0).getSinkName()); sink != config.sinks.end())
+    if (const auto sink = config.sinks.find(sinkOperators.at(0).sinkName); sink != config.sinks.end())
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
         auto copy = sinkOperators.at(0);
@@ -214,7 +214,7 @@ void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config
     {
         throw UnknownSinkType(
             "Sinkname {} not specified in the configuration {}",
-            sinkOperators.front().getSinkName(),
+            sinkOperators.front().sinkName,
             fmt::join(std::views::keys(config.sinks), ","));
     }
 }
