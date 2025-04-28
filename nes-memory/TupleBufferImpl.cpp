@@ -55,8 +55,7 @@ MemorySegment::MemorySegment(
     INVARIANT(this->controlBlock, "invalid control block");
 }
 
-MemorySegment::MemorySegment(
-    uint8_t* ptr, const uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
+MemorySegment::MemorySegment(uint8_t* ptr, const uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
     : ptr(ptr), size(size)
 {
     INVARIANT(this->ptr, "invalid pointer");
