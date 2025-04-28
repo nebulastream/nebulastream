@@ -39,7 +39,7 @@ public:
         grpc::ClientContext context;
         RegisterQueryReply reply;
         RegisterQueryRequest request;
-        NES::QueryPlanSerializationUtil::serializeQueryPlan(plan, request.mutable_queryplan());
+        request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(plan));
         auto status = stub->RegisterQuery(&context, request, &reply);
         if (status.ok())
         {
@@ -221,8 +221,7 @@ int main(int argc, char** argv)
         }
 
         std::string output;
-        NES::SerializableQueryPlan serialized;
-        NES::QueryPlanSerializationUtil::serializeQueryPlan(*queryPlan, &serialized);
+        auto serialized = NES::QueryPlanSerializationUtil::serializeQueryPlan(*queryPlan);
         google::protobuf::TextFormat::PrintToString(serialized, &output);
         NES_INFO("GRPC QueryPlan: {}", output);
         if (program.is_subcommand_used("dump"))

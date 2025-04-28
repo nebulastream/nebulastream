@@ -20,6 +20,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <SinkValidationRegistry.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 
 namespace NES::Sinks
 {
@@ -53,7 +54,22 @@ std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor
 
 bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 {
-    return lhs.sinkType == rhs.sinkType && lhs.config == rhs.config;
+    return lhs.sinkType == rhs.sinkType && lhs.config == rhs.config && lhs.addTimestamp == rhs.addTimestamp && lhs.schema == rhs.schema;
+}
+
+SerializableSinkDescriptor SinkDescriptor::serialize() const
+{
+    SerializableSinkDescriptor serializedSinkDescriptor;
+    SchemaSerializationUtil::serializeSchema(std::move(schema), serializedSinkDescriptor.mutable_sinkschema());
+    serializedSinkDescriptor.set_sinktype(sinkType);
+    serializedSinkDescriptor.set_addtimestamp(addTimestamp);
+    /// Iterate over SinkDescriptor config and serialize all key-value pairs.
+    for (const auto& [key, value] : config)
+    {
+        auto* kv = serializedSinkDescriptor.mutable_config();
+        kv->emplace(key, descriptorConfigTypeToProto(value));
+    }
+    return serializedSinkDescriptor;
 }
 
 }

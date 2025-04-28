@@ -48,7 +48,7 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
 
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
 {
-    auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(&request->queryplan());
+    auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
     CPPTRACE_TRY
     {
         auto queryId = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));

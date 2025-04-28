@@ -37,6 +37,10 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurati
                 protoVar.set_int_value(arg);
             else if constexpr (std::is_same_v<U, uint32_t>)
                 protoVar.set_uint_value(arg);
+            else if constexpr (std::is_same_v<U, int64_t>)
+                protoVar.set_long_value(arg);
+            else if constexpr (std::is_same_v<U, uint64_t>)
+                protoVar.set_ulong_value(arg);
             else if constexpr (std::is_same_v<U, bool>)
                 protoVar.set_bool_value(arg);
             else if constexpr (std::is_same_v<U, char>)
@@ -59,6 +63,18 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurati
                 funcList->CopyFrom(arg);
                 protoVar.set_allocated_function_list(funcList);
             }
+            else if constexpr (std::is_same_v<U, NES::AggregationFunctionList>)
+            {
+                NES::AggregationFunctionList* aggregationFunctionList = arg.New();
+                aggregationFunctionList->CopyFrom(arg);
+                protoVar.set_allocated_aggregation_function_list(aggregationFunctionList);
+            }
+            else if constexpr (std::is_same_v<U, NES::WindowInfos>)
+            {
+                NES::WindowInfos* funcList = arg.New();
+                funcList->CopyFrom(arg);
+                protoVar.set_allocated_window_infos(funcList);
+            }
             else
                 static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
         },
@@ -74,6 +90,10 @@ Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const S
             return proto_var.int_value();
         case SerializableVariantDescriptor::kUintValue:
             return proto_var.uint_value();
+        case SerializableVariantDescriptor::kLongValue:
+            return proto_var.long_value();
+        case SerializableVariantDescriptor::kUlongValue:
+            return proto_var.ulong_value();
         case SerializableVariantDescriptor::kBoolValue:
             return proto_var.bool_value();
         case SerializableVariantDescriptor::kCharValue:
@@ -86,6 +106,12 @@ Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const S
             return proto_var.string_value();
         case SerializableVariantDescriptor::kEnumValue:
             return Configurations::EnumWrapper(proto_var.enum_value().value());
+        case SerializableVariantDescriptor::kFunctionList:
+            return proto_var.function_list();
+        case SerializableVariantDescriptor::kAggregationFunctionList:
+            return proto_var.aggregation_function_list();
+        case SerializableVariantDescriptor::kWindowInfos:
+            return proto_var.window_infos();
         default:
             std::string protoVarAsJson;
             /// Log proto variable as json, in exception, if possible.

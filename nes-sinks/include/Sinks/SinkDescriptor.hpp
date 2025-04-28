@@ -35,6 +35,8 @@ struct SinkDescriptor final : NES::Configurations::Descriptor
     static NES::Configurations::DescriptorConfig::Config
     validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs);
 
+    [[nodiscard]] SerializableSinkDescriptor serialize() const;
+
     const std::string sinkType;
     Schema schema;
     bool addTimestamp;

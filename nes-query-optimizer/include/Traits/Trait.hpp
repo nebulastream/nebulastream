@@ -17,13 +17,8 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
-#include <set>
 #include <ErrorHandling.hpp>
-
-namespace NES
-{
-struct LogicalOperator;
-}
+#include <SerializableTrait.pb.h>
 
 namespace NES::Optimizer
 {
@@ -32,20 +27,19 @@ struct TraitConcept
 {
     virtual ~TraitConcept() = default;
     [[nodiscard]] virtual const std::type_info& getType() const = 0;
+    [[nodiscard]] virtual SerializableTrait serialize() const = 0;
     virtual bool operator==(const TraitConcept& other) const = 0;
 };
 
 struct Trait
 {
-public:
     template <typename T>
     Trait(const T& op) : self(std::make_unique<Model<T>>(op))
     {
     }
 
-    Trait(const Trait& other) : self(other.self->clone()) { }
-
-    Trait(Trait&&) noexcept = default;
+    Trait(const Trait& other);
+    Trait(Trait&&) noexcept;
 
     template <typename T>
     [[nodiscard]] std::optional<T> tryGet() const
@@ -67,16 +61,9 @@ public:
         throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
 
-    Trait& operator=(const Trait& other)
-    {
-        if (this != &other)
-        {
-            self = other.self->clone();
-        }
-        return *this;
-    }
-
-    [[nodiscard]] const std::type_info& getType() const { return self->getType(); }
+    Trait& operator=(const Trait& other);
+    [[nodiscard]] const std::type_info& getType() const;
+    [[nodiscard]] SerializableTrait serialize() const;
 
 private:
     struct Concept : TraitConcept
@@ -106,12 +93,13 @@ private:
         {
             if (auto p = dynamic_cast<const Model*>(&other))
             {
-                return data == p->data;
+                return data.operator==(p->data);
             }
             return false;
         }
 
         [[nodiscard]] const std::type_info& getType() const override { return data.getType(); }
+        [[nodiscard]] SerializableTrait serialize() const override { return data.serialize(); }
     };
 
     std::unique_ptr<Concept> self;
