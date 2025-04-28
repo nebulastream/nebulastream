@@ -153,11 +153,6 @@ SerializableOperator MapLogicalOperator::serialize() const
         *traitSetProto->add_traits() = trait.serialize();
     }
 
-    FunctionList funcList;
-    *funcList.add_functions() = getMapFunction().serialize();
-    (*proto.mutable_config())["mapFunction"] =
-        Configurations::descriptorConfigTypeToProto(funcList);
-
     const auto inputs      = getInputSchemas();
     const auto originLists = getInputOriginIds();
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -183,6 +178,11 @@ SerializableOperator MapLogicalOperator::serialize() const
         serializableOperator.add_children_ids(child.getId().getRawValue());
     }
 
+    FunctionList funcList;
+    *funcList.add_functions() = getMapFunction().serialize();
+    (*serializableOperator.mutable_config())["mapFunction"] =
+        Configurations::descriptorConfigTypeToProto(funcList);
+
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
 }
@@ -193,9 +193,9 @@ NES::Configurations::DescriptorConfig::Config MapLogicalOperator::validateAndFor
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterMapLogicalOperator(NES::LogicalOperatorRegistryArguments config)
+LogicalOperatorGeneratedRegistrar::RegisterMapLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    auto functionVariant = config.config[MapLogicalOperator::ConfigParameters::MAP_FUNCTION_NAME];
+    auto functionVariant = arguments.config[MapLogicalOperator::ConfigParameters::MAP_FUNCTION_NAME];
     if (std::holds_alternative<NES::FunctionList>(functionVariant))
     {
         const auto functions = std::get<FunctionList>(functionVariant).functions();
@@ -203,8 +203,14 @@ LogicalOperatorGeneratedRegistrar::RegisterMapLogicalOperator(NES::LogicalOperat
         INVARIANT(functions.size() == 1, "Expected exactly one function");
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
         INVARIANT(function.tryGet<FieldAssignmentLogicalFunction>(), "Expected a field assignment function, got: {}", function.toString());
-        return MapLogicalOperator(function.get<FieldAssignmentLogicalFunction>());
-    }
+
+        auto logicalOperator = MapLogicalOperator(function.get<FieldAssignmentLogicalFunction>());
+        if (auto& id = arguments.id) {
+            logicalOperator.id = *id;
+        }
+        return logicalOperator.withInferredSchema(arguments.inputSchemas)
+            .withInputOriginIds(arguments.inputOriginIds)
+            .withOutputOriginIds(arguments.outputOriginIds);    }
     throw UnknownLogicalOperator();
 }
 

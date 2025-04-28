@@ -12,16 +12,14 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <string_view>
 #include <utility>
-#include <variant>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
-#include <Serialization/OperatorSerializationUtil.hpp>
+#include <SerializableOperator.pb.h>
+#include <Configurations/Descriptor.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 
 namespace NES
 {
@@ -30,12 +28,17 @@ SinkLogicalOperator::SinkLogicalOperator(std::string sinkName) : sinkName(std::m
 
 bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (const auto rhsOperator = dynamic_cast<const SinkLogicalOperator*>(&rhs))
+    if (auto rhsOperator = dynamic_cast<const SinkLogicalOperator*>(&rhs))
     {
-        return this->sinkName == rhsOperator->sinkName and *this->sinkDescriptor == *rhsOperator->sinkDescriptor;
+        if (this->sinkDescriptor == nullptr or rhsOperator->sinkDescriptor == nullptr) {
+            return this->sinkName == rhsOperator->sinkName
+                && this->sinkDescriptor == rhsOperator->sinkDescriptor;
+        }
+        return this->sinkName == rhsOperator->sinkName
+            && *this->sinkDescriptor == *rhsOperator->sinkDescriptor;
     }
     return false;
-};
+}
 
 std::string SinkLogicalOperator::toString() const
 {
@@ -134,11 +137,6 @@ void SinkLogicalOperator::setOutputSchema(Schema schema)
     outputSchema = std::move(schema);
 }
 
-std::string SinkLogicalOperator::getSinkName() const
-{
-    return sinkName;
-}
-
 SerializableOperator SinkLogicalOperator::serialize() const
 {
     SerializableOperator_SinkLogicalOperator proto;
@@ -148,7 +146,14 @@ SerializableOperator SinkLogicalOperator::serialize() const
     }
 
     SerializableOperator serializableOperator;
+    Configurations::DescriptorConfig::ConfigType timeVariant = sinkName;
+    (*serializableOperator.mutable_config())[ConfigParameters::SINK_NAME] = descriptorConfigTypeToProto(timeVariant);
+
     serializableOperator.set_operator_id(id.getRawValue());
+    for (auto& child : getChildren())
+    {
+        serializableOperator.add_children_ids(child.getId().getRawValue());
+    }
 
     serializableOperator.mutable_sink()->CopyFrom(proto);
     return serializableOperator;

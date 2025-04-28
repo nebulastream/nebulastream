@@ -289,12 +289,18 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
     auto* outSch = proto.mutable_output_schema();
     SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
 
+    SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
+    for (const auto& child : getChildren()) {
+        serializableOperator.add_children_ids(child.getId().getRawValue());
+    }
+
     // Serialize window aggregations
     AggregationFunctionList aggList;
     for (const auto& agg : getWindowAggregation()) {
         *aggList.add_functions() = agg->serialize();
     }
-    (*proto.mutable_config())[ConfigParameters::WINDOW_AGGREGATIONS] = 
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_AGGREGATIONS] =
         Configurations::descriptorConfigTypeToProto(aggList);
 
     // Serialize keys if present
@@ -303,11 +309,11 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
         for (const auto& key : getKeys()) {
             *keyList.add_functions() = key.serialize();
         }
-        (*proto.mutable_config())[ConfigParameters::WINDOW_KEYS] = 
+        (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_KEYS] =
             Configurations::descriptorConfigTypeToProto(keyList);
     }
 
-    // Serialize window info
+   // Serialize window info
     WindowInfos windowInfoProto;
     if (auto timeBasedWindow = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType)) {
         if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(timeBasedWindow)) {
@@ -328,32 +334,26 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
             sliding->set_allocated_time_characteristic(timeCharProto);
         }
     }
-    (*proto.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfoProto);
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfoProto);
 
     // Serialize window field names
-    (*proto.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME] = 
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME] =
         Configurations::descriptorConfigTypeToProto(windowStartFieldName);
-    (*proto.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME] = 
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME] =
         Configurations::descriptorConfigTypeToProto(windowEndFieldName);
-
-    SerializableOperator serializableOperator;
-    serializableOperator.set_operator_id(id.getRawValue());
-    for (const auto& child : getChildren()) {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(LogicalOperatorRegistryArguments config)
+LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    auto aggregationsVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_AGGREGATIONS];
-    auto keysVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_KEYS];
-    auto windowInfoVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_INFOS];
-    auto windowStartVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
-    auto windowEndVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
+    auto aggregationsVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_AGGREGATIONS];
+    auto keysVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_KEYS];
+    auto windowInfoVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_INFOS];
+    auto windowStartVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
+    auto windowEndVariant = arguments.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
 
     // Get window aggregations
     if (!std::holds_alternative<AggregationFunctionList>(aggregationsVariant)) {
@@ -398,7 +398,12 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
         throw UnknownLogicalOperator();
     }
 
-    return WindowedAggregationLogicalOperator(keys, windowAggregations, windowType);
-}
+    auto logicalOperator = WindowedAggregationLogicalOperator(keys, windowAggregations, windowType);
+    if (auto& id = arguments.id) {
+        logicalOperator.id = *id;
+    }
+    return logicalOperator.withInferredSchema(arguments.inputSchemas)
+        .withInputOriginIds(arguments.inputOriginIds)
+        .withOutputOriginIds(arguments.outputOriginIds);}
 
 }

@@ -30,7 +30,7 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     SinkLogicalOperator(std::string sinkName);
 
     /// Operator specific member
-    [[nodiscard]] std::string getSinkName() const;
+    std::string sinkName;
     std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
 
     /// currently only use for testing purposes in IntegrationTestUtil
@@ -58,10 +58,21 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
+    /// Serialization
+    struct ConfigParameters
+    {
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> SINK_NAME{
+            "SinkName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(SINK_NAME, config);
+            }};
+
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(SINK_NAME);
+    };
+
 private:
     /// Operator specific member
     static constexpr std::string_view NAME = "Sink";
-    std::string sinkName;
 
     /// LogicalOperatorConcept member
     std::vector<LogicalOperator> children;

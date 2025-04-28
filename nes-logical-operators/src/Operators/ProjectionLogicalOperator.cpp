@@ -192,13 +192,6 @@ SerializableOperator ProjectionLogicalOperator::serialize() const {
         *traitSetProto->add_traits() = trait.serialize();
     }
 
-    FunctionList funcList;
-    for (const auto& fn : getFunctions()) {
-        *funcList.add_functions() = fn.serialize();
-    }
-    (*proto.mutable_config())[ConfigParameters::PROJECTION_FUNCTION_NAME] =
-        Configurations::descriptorConfigTypeToProto(funcList);
-
     const auto inputs      = getInputSchemas();
     const auto originLists = getInputOriginIds();
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -224,14 +217,21 @@ SerializableOperator ProjectionLogicalOperator::serialize() const {
         serializableOperator.add_children_ids(child.getId().getRawValue());
     }
 
+    FunctionList funcList;
+    for (const auto& fn : getFunctions()) {
+        *funcList.add_functions() = fn.serialize();
+    }
+    (*serializableOperator.mutable_config())[ConfigParameters::PROJECTION_FUNCTION_NAME] =
+        Configurations::descriptorConfigTypeToProto(funcList);
+
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
+LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    auto functionVariant = config.config[ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME];
+    auto functionVariant = arguments.config[ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME];
 
     if (std::holds_alternative<NES::FunctionList>(functionVariant))
     {
@@ -243,8 +243,14 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(NES::Logica
         {
             functionVec.emplace_back(FunctionSerializationUtil::deserializeFunction(function));
         }
-        return ProjectionLogicalOperator(functionVec);
-    }
+
+        auto logicalOperator = ProjectionLogicalOperator(functionVec);
+        if (auto& id = arguments.id) {
+            logicalOperator.id = *id;
+        }
+        return logicalOperator.withInferredSchema(arguments.inputSchemas)
+            .withInputOriginIds(arguments.inputOriginIds)
+            .withOutputOriginIds(arguments.outputOriginIds);    }
     throw UnknownLogicalOperator();
 }
 

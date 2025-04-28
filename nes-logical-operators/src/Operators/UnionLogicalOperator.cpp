@@ -200,9 +200,14 @@ SerializableOperator UnionLogicalOperator::serialize() const
     return serializableOperator;
 }
 
-LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments)
+LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    return UnionLogicalOperator();
-}
+    auto logicalOperator = UnionLogicalOperator();
+    if (auto& id = arguments.id) {
+        logicalOperator.id = *id;
+    }
+    return logicalOperator.withInferredSchema(arguments.inputSchemas)
+        .withInputOriginIds(arguments.inputOriginIds)
+        .withOutputOriginIds(arguments.outputOriginIds);}
 
 }

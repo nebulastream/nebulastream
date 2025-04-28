@@ -138,12 +138,6 @@ SerializableOperator SelectionLogicalOperator::serialize() const
         *traitSetProto->add_traits() = trait.serialize();
     }
 
-    FunctionList funcList;
-    auto* serializedFunction = funcList.add_functions();
-    serializedFunction->CopyFrom(getPredicate().serialize());
-    (*proto.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] =
-    Configurations::descriptorConfigTypeToProto(funcList);
-
     auto inputs     = getInputSchemas();
     auto originLists = getInputOriginIds();
     for (size_t i = 0; i < inputs.size(); ++i) {
@@ -169,21 +163,33 @@ SerializableOperator SelectionLogicalOperator::serialize() const
         serializableOperator.add_children_ids(child.getId().getRawValue());
     }
 
+    FunctionList funcList;
+    auto* serializedFunction = funcList.add_functions();
+    serializedFunction->CopyFrom(getPredicate().serialize());
+    (*serializableOperator.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] =
+    Configurations::descriptorConfigTypeToProto(funcList);
+
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
+LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
-    auto functionVariant = config.config[SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME];
+    auto functionVariant = arguments.config[SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME];
     if (std::holds_alternative<NES::FunctionList>(functionVariant))
     {
         const auto functions = std::get<FunctionList>(functionVariant).functions();
 
         INVARIANT(functions.size() == 1, "Expected exactly one function");
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-        return SelectionLogicalOperator(function);
+        auto logicalOperator = SelectionLogicalOperator(function);
+        if (auto& id = arguments.id) {
+            logicalOperator.id = *id;
+        }
+        return logicalOperator.withInferredSchema(arguments.inputSchemas)
+            .withInputOriginIds(arguments.inputOriginIds)
+            .withOutputOriginIds(arguments.outputOriginIds);
     }
     throw UnknownLogicalOperator();
 }

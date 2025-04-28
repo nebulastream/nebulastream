@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
-#include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <Sources/SourceDescriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Operators/LogicalOperator.hpp>
 
@@ -29,48 +31,78 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(SerializableOpera
 {
     if (serializedOperator.has_source())
     {
-        const auto& sourceDescriptor = serializedOperator.source();
-        return deserializeSourceOperator(sourceDescriptor);
+        const auto& serializedSource = serializedOperator.source();
+        auto sourceDescriptor = deserializeSourceDescriptor(serializedSource.sourcedescriptor());
+        auto sourceOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
+        sourceOperator.id = OperatorId(serializedOperator.operator_id());
+        return sourceOperator.withOutputOriginIds({{OriginId(serializedSource.sourceoriginid())}});
     }
-    else if (serializedOperator.has_sink())
+
+    if (serializedOperator.has_sink())
     {
         const auto& sink = serializedOperator.sink();
-        return deserializeSinkOperator(sink);
-    }
-    else if (serializedOperator.has_operator_())
-    {
+        const auto& serializedSinkDescriptor = sink.sinkdescriptor();
         NES::Configurations::DescriptorConfig::Config config;
-        for (const auto& [key, value] : serializedOperator.operator_().config())
+        for (const auto& [key, value] : serializedOperator.config())
         {
             config[key] = NES::Configurations::protoToDescriptorConfigType(value);
         }
-        auto registryArgument = NES::LogicalOperatorRegistryArguments(config);
+        auto sinkName = config[SinkLogicalOperator::ConfigParameters::SINK_NAME];
+        INVARIANT(std::holds_alternative<std::string>(sinkName), "Expected a string");
+
+        auto sinkOperator = SinkLogicalOperator();
+        sinkOperator.id = OperatorId(serializedOperator.operator_id());
+        sinkOperator.sinkName = std::get<std::string>(sinkName);
+        sinkOperator.sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
+        return sinkOperator;
+    }
+
+    if (serializedOperator.has_operator_())
+    {
+        NES::Configurations::DescriptorConfig::Config config;
+        for (const auto& [key, value] : serializedOperator.config())
+        {
+            config[key] = NES::Configurations::protoToDescriptorConfigType(value);
+        }
+
+        auto registryArgument = NES::LogicalOperatorRegistryArguments{
+            OperatorId(serializedOperator.operator_id()),
+            {}, /// inputOriginIds - will be populated from operator_().input_origin_lists
+            {}, /// outputOriginIds - will be populated from operator_().output_origin_ids
+            {}, /// inputSchemas - will be populated from operator_().input_schema
+            Schema(), /// outputSchema - will be populated from operator_().output_schema
+            config};
+
+        for (const auto& originList : serializedOperator.operator_().input_origin_lists()) {
+            std::vector<OriginId> ids;
+            for (const auto& id : originList.origin_ids()) {
+                ids.emplace_back(id);
+            }
+            registryArgument.inputOriginIds.push_back(ids);
+        }
+
+        std::vector<OriginId> outputIds;
+        for (const auto& id : serializedOperator.operator_().output_origin_ids()) {
+            outputIds.emplace_back(id);
+        }
+        registryArgument.outputOriginIds = outputIds;
+
+        if (!serializedOperator.operator_().input_schemas().empty()) {
+            registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().input_schemas(0)));
+        }
+
+        if (serializedOperator.operator_().has_output_schema()) {
+            registryArgument.outputSchema = SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().output_schema());
+        }
 
         if (auto logicalOperator = LogicalOperatorRegistry::instance().create(serializedOperator.operator_().operator_type(), registryArgument);
             logicalOperator.has_value())
         {
             return logicalOperator.value();
         }
-        throw CannotDeserialize("could not de-serialize this serialized operator: {}", serializedOperator.DebugString());
     }
+
     throw CannotDeserialize("could not de-serialize this serialized operator: {}", serializedOperator.DebugString());
-}
-
-LogicalOperator
-OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& serializedSource)
-{
-    auto sourceDescriptor = deserializeSourceDescriptor(serializedSource.sourcedescriptor());
-    auto logicalOperator = SourceDescriptorLogicalOperator(std::move(sourceDescriptor));
-    return logicalOperator.withInputOriginIds({{OriginId(serializedSource.sourceoriginid())}});
-}
-
-LogicalOperator OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
-{
-    const auto& serializedSinkDescriptor = sinkDetails.sinkdescriptor();
-    auto sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
-    auto sinkOperator = SinkLogicalOperator();
-    sinkOperator.sinkDescriptor = std::move(sinkDescriptor);
-    return sinkOperator;
 }
 
 std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializeSourceDescriptor(
