@@ -16,7 +16,7 @@
 #include <chrono>
 #include <memory>
 #include <optional>
-#include <Plans/QueryPlan.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>

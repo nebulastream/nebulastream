@@ -45,8 +45,9 @@
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
-#include <Plans/QueryPlan.hpp>
-#include <Plans/QueryPlanBuilder.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Plans/LogicalPlanBuilder.hpp>
 #include <Util/Common.hpp>
 #include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -62,7 +63,7 @@
 
 namespace NES::Parsers
 {
-std::string queryPlanToString(const std::shared_ptr<QueryPlan>& queryPlan)
+std::string queryPlanToString(const std::shared_ptr<LogicalPlan>& queryPlan)
 {
     const std::regex regex1("  ");
     const std::regex regex2("[0-9]");
@@ -71,10 +72,10 @@ std::string queryPlanToString(const std::shared_ptr<QueryPlan>& queryPlan)
     return queryPlanStr;
 }
 
-QueryPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
+LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
     /// Todo #421: support multiple sinks
-    return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
+    return LogicalPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
 }
 
 Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
@@ -437,7 +438,7 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
 void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    QueryPlan queryPlan;
+    LogicalPlan queryPlan;
 
     if (!helper.queryPlans.empty())
     {
@@ -445,27 +446,27 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     }
     else
     {
-        queryPlan = QueryPlanBuilder::createQueryPlan(helper.getSource());
+        queryPlan = LogicalPlanBuilder::createLogicalPlan(helper.getSource());
     }
     for (auto whereExpr = helper.getWhereClauses().rbegin(); whereExpr != helper.getWhereClauses().rend(); ++whereExpr)
     {
-        queryPlan = QueryPlanBuilder::addSelection(std::move(*whereExpr), queryPlan);
+        queryPlan = LogicalPlanBuilder::addSelection(std::move(*whereExpr), queryPlan);
     }
 
     for (auto& mapExpr : helper.mapBuilder)
     {
-        queryPlan = QueryPlanBuilder::addMap(mapExpr, queryPlan);
+        queryPlan = LogicalPlanBuilder::addMap(mapExpr, queryPlan);
     }
     /// We handle projections AFTER map functions, because:
     /// SELECT (id * 3) as new_id FROM ...
     ///     we project on new_id, but new_id is the result of an function, so we need to execute the function before projecting.
     if (!helper.getProjectionFields().empty() && helper.windowType == nullptr)
     {
-        queryPlan = QueryPlanBuilder::addProjection(std::move(helper.getProjectionFields()), queryPlan);
+        queryPlan = LogicalPlanBuilder::addProjection(std::move(helper.getProjectionFields()), queryPlan);
     }
     if (not helper.windowAggs.empty())
     {
-        queryPlan = QueryPlanBuilder::addWindowAggregation(
+        queryPlan = LogicalPlanBuilder::addWindowAggregation(
             queryPlan, std::move(helper.windowType), std::move(helper.windowAggs), std::move(helper.groupByFields));
     }
 
@@ -473,7 +474,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         for (auto havingExpr = helper.getHavingClauses().rbegin(); havingExpr != helper.getHavingClauses().rend(); ++havingExpr)
         {
-            queryPlan = QueryPlanBuilder::addSelection(std::move(*havingExpr), queryPlan);
+            queryPlan = LogicalPlanBuilder::addSelection(std::move(*havingExpr), queryPlan);
         }
     }
     helpers.pop();
@@ -764,7 +765,7 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     auto& rightQueryPlan = helper.queryPlans[1];
     helper.queryPlans.clear();
 
-    auto queryPlan = QueryPlanBuilder::addJoin(
+    auto queryPlan = LogicalPlanBuilder::addJoin(
         leftQueryPlan, rightQueryPlan, helper.joinFunction.value(), std::move(helper.windowType), std::move(helper.joinType));
     if (not helpers.empty())
     {
@@ -953,7 +954,7 @@ void AntlrSQLQueryPlanCreator::exitSetOperation(AntlrSQLParser::SetOperationCont
     queryPlans.pop();
     const auto leftQuery = queryPlans.top();
     queryPlans.pop();
-    const auto queryPlan = QueryPlanBuilder::addUnion(leftQuery, rightQuery);
+    const auto queryPlan = LogicalPlanBuilder::addUnion(leftQuery, rightQuery);
     if (!helpers.empty())
     {
         /// we are in a subquery

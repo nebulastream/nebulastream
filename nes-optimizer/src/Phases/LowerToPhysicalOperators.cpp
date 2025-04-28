@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Plans/QueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalPlan.hpp>
