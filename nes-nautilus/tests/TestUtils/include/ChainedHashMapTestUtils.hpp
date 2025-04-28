@@ -101,7 +101,7 @@ public:
     /// Compiles a function that writes all keys and values to bufferOutput.
     /// To iterate over all key and values, we use the entry iterator. We assume that the bufferOutput is large enough to hold all values.
     /// We are using our EntryIterator of the chained hash map.
-    [[nodiscard]] nautilus::engine::CallableFunction<void, Memory::TupleBuffer*, Interface::HashMap*>
+    [[nodiscard]] nautilus::engine::CallableFunction<void, Memory::TupleBuffer*, Interface::HashMap*, Memory::AbstractBufferProvider*>
     compileFindAndWriteToOutputBufferWithEntryIterator() const;
 
 
