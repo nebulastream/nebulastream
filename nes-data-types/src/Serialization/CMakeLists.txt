@@ -12,4 +12,5 @@
 
 add_source_files(nes-data-types
         DataTypeSerializationUtil.cpp
+        SchemaSerializationUtil.cpp
 )

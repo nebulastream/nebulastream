@@ -21,9 +21,6 @@ namespace NES
 {
 class SerializableSchema;
 
-/// TODO SchemaSerializationUtil should be converted to namespace
-/// TODO serializeSchema should return nothing
-
 /**
  * @brief The SchemaSerializationUtil offers functionality to serialize and de-serialize schemas to the
  * corresponding protobuffer object.
