@@ -156,7 +156,7 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
         }
         copy.onKey = newKeys;
     }
-    for (const auto& agg : getWindowAggregation())
+    for (const auto& agg : copy.windowAggregation)
     {
         copy.outputSchema.addField(AttributeField(agg->asField.getFieldName(), agg->asField.getStamp()));
     }
