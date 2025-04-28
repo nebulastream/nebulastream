@@ -10,11 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(NestedLoopJoin)
-
 add_source_files(nes-physical-operators
-        StreamJoinOperatorHandler.cpp
-        StreamJoinUtil.cpp
-        StreamJoinProbePhysicalOperator.cpp
-        StreamJoinBuildPhysicalOperator.cpp
-)
+        WindowBasedOperatorHandler.cpp
+        WindowBuildPhysicalOperator.cpp
+        WindowProbePhysicalOperator.cpp)
+
+add_subdirectory(Aggregation)
+add_subdirectory(Join)

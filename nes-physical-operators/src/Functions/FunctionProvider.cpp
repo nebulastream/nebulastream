@@ -27,12 +27,13 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
+#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
 
 namespace NES::QueryCompilation
 {
 using namespace Functions;
 
-QPhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
+PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
 {
     /// 1. Recursively lower the children of the function node.
     std::vector<PhysicalFunction> childFunction;

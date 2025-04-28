@@ -12,14 +12,15 @@
 
 add_source_files(nes-physical-operators
         PhysicalPlan.cpp
+        PhysicalOperator.cpp
+        EmitOperatorHandler.cpp
         MapPhysicalOperator.cpp
         SelectionPhysicalOperator.cpp
-        PhysicalOperator.cpp
         EmitPhysicalOperator.cpp
-        EmitOperatorHandler.cpp
         ScanPhysicalOperator.cpp)
 
 add_subdirectory(Watermark)
 add_subdirectory(Streaming)
 add_subdirectory(SliceStore)
 add_subdirectory(Functions)
+
