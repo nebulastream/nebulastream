@@ -52,8 +52,8 @@ std::string AttributeField::toString() const
 
 bool AttributeField::isEqual(const AttributeField& attr) const
 {
-    const bool equalDataType = (this->dataType == nullptr && attr.dataType == nullptr)
-        || (this->dataType != nullptr && attr.dataType != nullptr && *this->dataType == *attr.dataType);
+    const bool equalDataType = (this->dataType == nullptr and attr.dataType == nullptr)
+        or (*this->dataType == *attr.dataType);
     return (attr.name == name) && equalDataType;
 }
 
