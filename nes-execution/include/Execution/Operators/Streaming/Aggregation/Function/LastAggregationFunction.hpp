@@ -19,26 +19,25 @@
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <val_concepts.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
 
-class SumAggregationFunction : public AggregationFunction
+class LastAggregationFunction : public AggregationFunction
 {
 public:
-    SumAggregationFunction(
+    LastAggregationFunction(
         std::shared_ptr<PhysicalType> inputType,
         std::shared_ptr<PhysicalType> resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
-    void lift(
-        const nautilus::val<AggregationState*>& aggregationState,
-        ExecutionContext& pipelineMemoryProvider,
-        const Nautilus::Record& record) override;
+    void lift(const nautilus::val<AggregationState*>& aggregationState, ExecutionContext& executionContext, const Nautilus::Record& record) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
         nautilus::val<AggregationState*> aggregationState2,
@@ -46,7 +45,9 @@ public:
     Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
-    ~SumAggregationFunction() override = default;
+    ~LastAggregationFunction() override = default;
+
+    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 
 }

@@ -42,7 +42,7 @@ CountAggregationFunction::CountAggregationFunction(
 }
 
 void CountAggregationFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider&, const Nautilus::Record&)
+    const nautilus::val<AggregationState*>& aggregationState, ExecutionContext&, const Nautilus::Record&)
 {
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);

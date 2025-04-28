@@ -36,7 +36,8 @@ public:
         Min,
         Sum,
         Median,
-        None
+        None,
+        Last
     };
 
     /**

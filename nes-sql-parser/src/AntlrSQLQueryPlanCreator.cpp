@@ -843,6 +843,9 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         case AntlrSQLLexer::SUM:
             parentHelper.windowAggs.push_back(API::Sum(helper.functionBuilder.back())->aggregation);
             break;
+        case AntlrSQLLexer::LAST:
+            parentHelper.windowAggs.push_back(API::Last(helper.functionBuilder.back())->aggregation);
+            break;
         case AntlrSQLLexer::MEDIAN:
             parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
             break;

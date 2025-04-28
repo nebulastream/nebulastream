@@ -1,0 +1,64 @@
+# name: window/Alignment.test
+# description: Test window aggregations over different data types
+# groups: [Aggregation, WindowOperators]
+
+Source slow_stream VARSIZED text UINT64 ts
+Hello,9
+World,19
+This,29
+Is,39
+Some,49
+Text,59
+
+Source fast_stream VARSIZED text UINT64 ts
+H,2
+e,4
+l,6
+l,8
+o,10
+W,12
+o,14
+r,16
+l,18
+d,20
+T,22
+h,24
+i,26
+s,29
+I,35
+I,40
+S,42
+o,44
+m,46
+e,48
+T,50
+e,54
+x,56
+t,80
+
+
+SINK alignmentStream UINT64 fast_streamslow_stream$start UINT64 fast_streamslow_stream$end VARSIZED fast_stream$fast_text VARSIZED slow_stream$slow_text
+
+SELECT start, end, fast_text, slow_text
+FROM (
+    SELECT *
+    FROM(
+        SELECT fast_text, end as ts, ots FROM(
+            SELECT LAST(text) as fast_text, LAST(ts) as ots
+            FROM fast_stream WINDOW TUMBLING(ts, size 10 ms)
+        ))
+        INNER JOIN
+        (
+            SELECT LAST(text) as slow_text, LAST(ts) as ots
+            FROM slow_stream WINDOW TUMBLING(ts, size 10 ms)
+        )
+        ON ts = end WINDOW TUMBLING (ots, size 10 ms)
+)
+INTO alignmentStream;
+----
+0,10,l,Hello
+10,20,l,World
+20,30,s,This
+30,40,I,Is
+40,50,e,Some
+50,60,x,Text

@@ -41,16 +41,14 @@ SumAggregationFunction::SumAggregationFunction(
 }
 
 void SumAggregationFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Nautilus::Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, ExecutionContext& executionContext, const Nautilus::Record& record)
 {
     /// Reading the old sum from the aggregation state.
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType);
 
     /// Updating the sum and count with the new value
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    const auto value = inputFunction->execute(record, executionContext.pipelineMemoryProvider.arena);
     const auto newSum = sum + value;
 
     /// Writing the new sum and count back to the aggregation state

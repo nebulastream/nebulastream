@@ -22,6 +22,7 @@
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/LastAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
@@ -64,6 +65,11 @@ std::shared_ptr<API::WindowAggregation> Max(const FunctionItem& onField)
 std::shared_ptr<API::WindowAggregation> Count(const FunctionItem& onField)
 {
     return std::make_shared<API::WindowAggregation>(Windowing::CountAggregationDescriptor::on(onField.getNodeFunction()));
+}
+
+std::shared_ptr<API::WindowAggregation> Last(const FunctionItem& onField)
+{
+    return std::make_shared<API::WindowAggregation>(Windowing::LastAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
 std::shared_ptr<API::WindowAggregation> Median(const FunctionItem& onField)

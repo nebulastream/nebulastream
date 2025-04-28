@@ -42,6 +42,7 @@ std::shared_ptr<API::WindowAggregation> Max(const FunctionItem& onField);
 std::shared_ptr<API::WindowAggregation> Count(const FunctionItem& onField);
 std::shared_ptr<API::WindowAggregation> Median(const FunctionItem& onField);
 std::shared_ptr<API::WindowAggregation> Avg(const FunctionItem& onField);
+std::shared_ptr<API::WindowAggregation> Last(const FunctionItem& onField);
 std::shared_ptr<Windowing::TimeCharacteristic> EventTime(const FunctionItem& onField);
 std::shared_ptr<Windowing::TimeCharacteristic> EventTime(const FunctionItem& onField, const Windowing::TimeUnit& unit);
 std::shared_ptr<Windowing::TimeCharacteristic> IngestionTime();

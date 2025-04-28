@@ -95,7 +95,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {
-        aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
+        aggFunction->lift(state, ctx, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }

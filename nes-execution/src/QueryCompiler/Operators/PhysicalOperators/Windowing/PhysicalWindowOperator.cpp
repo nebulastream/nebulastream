@@ -20,6 +20,7 @@
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AvgAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/CountAggregationFunction.hpp>
+#include <Execution/Operators/Streaming/Aggregation/Function/LastAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MaxAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MedianAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MinAggregationFunction.hpp>
@@ -174,6 +175,14 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                 case Windowing::WindowAggregationDescriptor::Type::Min: {
                     aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::MinAggregationFunction>(
                         physicalInputType, physicalFinalType, std::move(aggregationInputExpression), aggregationResultFieldIdentifier));
+                    break;
+                }
+                case Windowing::WindowAggregationDescriptor::Type::Last: {
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::LastAggregationFunction>(
+                        physicalInputType,
+                        physicalFinalType,
+                        std::move(aggregationInputExpression),
+                        aggregationResultFieldIdentifier));
                     break;
                 }
                 case Windowing::WindowAggregationDescriptor::Type::Median: {

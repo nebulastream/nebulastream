@@ -39,7 +39,7 @@ public:
 
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
-        PipelineMemoryProvider& pipelineMemoryProvider,
+        ExecutionContext& pipelineMemoryProvider,
         const Nautilus::Record& record) override;
     void combine(
         nautilus::val<AggregationState*> aggregationState1,
