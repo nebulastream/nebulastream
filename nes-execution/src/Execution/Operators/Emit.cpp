@@ -117,7 +117,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
      * emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
      * to the brim, i.e., have no more space left.
      */
-    memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record);
+    memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     emitState->outputIndex = emitState->outputIndex + 1;
 }
 
