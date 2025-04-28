@@ -14,6 +14,8 @@
 
 #include <API/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
+#include <SerializableOperator.pb.h>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 
@@ -56,4 +58,26 @@ bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
     return lhs.schema == rhs.schema && lhs.sourceType == rhs.sourceType && lhs.config == rhs.config;
 }
 
+SerializableSourceDescriptor SourceDescriptor::serialize() const
+{
+    SerializableSourceDescriptor serializableSourceDescriptor;
+    SchemaSerializationUtil::serializeSchema(schema, serializableSourceDescriptor.mutable_sourceschema());
+    serializableSourceDescriptor.set_logicalsourcename(logicalSourceName);
+    serializableSourceDescriptor.set_sourcetype(sourceType);
+
+    /// Serialize parser config.
+    auto* const serializedParserConfig = NES::ParserConfig().New();
+    serializedParserConfig->set_type(parserConfig.parserType);
+    serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
+    serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);
+    serializableSourceDescriptor.set_allocated_parserconfig(serializedParserConfig);
+
+    /// Iterate over SourceDescriptor config and serialize all key-value pairs.
+    for (const auto& [key, value] : config)
+    {
+        auto* kv = serializableSourceDescriptor.mutable_config();
+        kv->emplace(key, Configurations::descriptorConfigTypeToProto(value));
+    }
+    return serializableSourceDescriptor;
+}
 }
