@@ -55,12 +55,12 @@ public:
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
-    /// @param context
+    /// @param bufferProvider
     virtual void writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        Runtime::Execution::ExecutionContext& context) const = 0;
+        nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const = 0;
 
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
@@ -77,7 +77,7 @@ protected:
         const RecordBuffer& recordBuffer,
         const nautilus::val<int8_t*>& fieldReference,
         VarVal value,
-        Runtime::Execution::ExecutionContext& context);
+        nautilus::val<Memory::AbstractBufferProvider*> bufferProvider);
 
     [[nodiscard]] static bool
     includesField(const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex);

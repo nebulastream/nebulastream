@@ -88,7 +88,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
-    Runtime::Execution::ExecutionContext& context)
+    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -105,7 +105,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
         const auto textValue = value.cast<VariableSizedData>();
-        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getSize(), textValue.getReference(), textValue.ownsBuffer(), context.pipelineMemoryProvider.bufferProvider);
+        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getSize(), textValue.getReference(), textValue.ownsBuffer(), bufferProvider);
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;

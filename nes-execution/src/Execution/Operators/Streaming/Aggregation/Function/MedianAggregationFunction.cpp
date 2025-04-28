@@ -54,7 +54,7 @@ void MedianAggregationFunction::lift(
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(memArea, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
     Execution::ExecutionContext ctx(nullptr, nullptr);
     ctx.pipelineMemoryProvider = pipelineMemoryProvider;
-    pagedVectorRef.writeRecord(record, ctx);
+    pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
 }
 
 void MedianAggregationFunction::combine(

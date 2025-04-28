@@ -62,7 +62,7 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, false)};
         EXPECT_EQ(varSizedData.cast<VariableSizedData>().getSize(), sizeInBytes);
         EXPECT_TRUE(
             std::memcmp(
@@ -91,7 +91,7 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
     constexpr auto sizeInBytes = 1024;
     auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
     const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-    const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
+    const VarVal varSizedData{VariableSizedData(ptrToVariableSized, false)};
 
     /// Test, if we can copy the variable sized data object by copy operator=
     const VarVal copiedVarSizedData = varSizedData;
@@ -117,7 +117,7 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, false)};
 
         /// Test, if we can move the variable sized data object by move operator=
         const VarVal movedVarSizedData = std::move(varSizedData);
@@ -133,7 +133,7 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, false)};
 
         /// Test, if we can move the variable sized data object by move constructor
         const VarVal movedVarSizedData(std::move(varSizedData));
@@ -152,7 +152,7 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData = VarVal(VariableSizedData(ptrToVariableSized));
+        const VarVal varSizedData = VarVal(VariableSizedData(ptrToVariableSized, false));
 
         /// Test, if we can move the variable sized data object by move operator=
         const VarVal movedVarSizedData = std::move(varSizedData);
@@ -168,7 +168,7 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, false)};
 
         /// Test, if we can move the variable sized data object by move constructor
         const VarVal movedVarSizedData(std::move(varSizedData));
@@ -188,7 +188,7 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         constexpr auto sizeInBytes = 1024;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, false)};
 
         const VarVal copiedVarSizedData = varSizedData;
         EXPECT_TRUE(copiedVarSizedData.cast<VariableSizedData>() == varSizedData.cast<VariableSizedData>());
@@ -203,8 +203,8 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         auto variableSizedDataDouble = createVariableSizedRandomData(sizeInBytes + sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const nautilus::val<int8_t*> ptrToVariableSizedDouble(variableSizedDataDouble.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
-        const VarVal varSizedDataDouble{VariableSizedData(ptrToVariableSizedDouble)};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, false)};
+        const VarVal varSizedDataDouble{VariableSizedData(ptrToVariableSizedDouble, false)};
         EXPECT_FALSE(varSizedData.cast<VariableSizedData>() == varSizedDataDouble.cast<VariableSizedData>());
         EXPECT_TRUE(varSizedData.cast<VariableSizedData>() != varSizedDataDouble.cast<VariableSizedData>());
     }
@@ -223,8 +223,8 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         auto otherVariableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const nautilus::val<int8_t*> ptrToOtherVariableSized(otherVariableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
-        const VarVal otherVarSizedData{VariableSizedData(ptrToOtherVariableSized)};
+        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, false)};
+        const VarVal otherVarSizedData{VariableSizedData(ptrToOtherVariableSized, false)};
 
         const bool isEqual = variableSizedData == otherVariableSizedData;
         EXPECT_EQ(isEqual, varSizedData.cast<VariableSizedData>() == otherVarSizedData.cast<VariableSizedData>());
@@ -244,7 +244,7 @@ TEST_F(VariableSizedDataTest, ostreamTest)
     constexpr auto sizeInBytes = 1024;
     auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
     const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-    const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
+    const VarVal varSizedData{VariableSizedData(ptrToVariableSized, false)};
 
     /// Comparing the output of the ostream operator with the expected output
     std::stringstream expectedOutput;
