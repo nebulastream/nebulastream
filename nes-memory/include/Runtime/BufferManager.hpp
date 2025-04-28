@@ -65,25 +65,6 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
         explicit Private() = default;
     };
 
-private:
-    class UnpooledBufferHolder
-    {
-    public:
-        std::unique_ptr<detail::MemorySegment> segment;
-        uint32_t size{0};
-        bool free{false};
-
-        UnpooledBufferHolder();
-
-        explicit UnpooledBufferHolder(uint32_t size);
-
-        UnpooledBufferHolder(std::unique_ptr<detail::MemorySegment>&& mem, uint32_t size);
-
-        void markFree();
-
-        friend bool operator<(const UnpooledBufferHolder& lhs, const UnpooledBufferHolder& rhs) { return lhs.size < rhs.size; }
-    };
-
     static constexpr auto DEFAULT_BUFFER_SIZE = 8 * 1024;
     static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
     static constexpr auto DEFAULT_ALIGNMENT = 64;
@@ -181,7 +162,7 @@ private:
 
     folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
     std::atomic<size_t> numOfAvailableBuffers;
-    std::map<uint8_t*, UnpooledBufferHolder> unpooledBuffers;
+    std::map<uint8_t*, std::unique_ptr<detail::MemorySegment>> unpooledBuffers;
 
     mutable std::recursive_mutex availableBuffersMutex;
     std::condition_variable_any availableBuffersCvar;

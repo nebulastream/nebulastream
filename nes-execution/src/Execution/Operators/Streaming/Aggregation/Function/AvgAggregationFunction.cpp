@@ -110,6 +110,10 @@ void AvgAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
 }
 
+void AvgAggregationFunction::cleanup(nautilus::val<AggregationState*>)
+{
+}
+
 size_t AvgAggregationFunction::getSizeOfStateInBytes() const
 {
     /// Size of the sum value + size of the count value

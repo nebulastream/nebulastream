@@ -45,7 +45,7 @@ public:
     const std::shared_ptr<Windowing::LogicalWindowDescriptor>& getWindowDefinition() const;
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> getOperatorHandler() const;
     std::unique_ptr<Runtime::Execution::Operators::TimeFunction> getTimeFunction() const;
-    std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
+    std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
     getAggregationFunctions(const Configurations::QueryCompilerConfiguration& options) const;
     std::pair<std::vector<Nautilus::Record::RecordFieldIdentifier>, std::vector<Nautilus::Record::RecordFieldIdentifier>>
     getKeyAndValueFields() const;

@@ -97,6 +97,10 @@ void SumAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
 }
 
+void SumAggregationFunction::cleanup(nautilus::val<AggregationState*>)
+{
+}
+
 size_t SumAggregationFunction::getSizeOfStateInBytes() const
 {
     return inputType->size();

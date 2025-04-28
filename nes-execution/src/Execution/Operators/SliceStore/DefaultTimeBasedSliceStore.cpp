@@ -25,7 +25,6 @@
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
 #include <Util/Locks.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
@@ -40,9 +39,7 @@ DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(
 }
 
 DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const DefaultTimeBasedSliceStore& other)
-    : sliceAssigner(other.sliceAssigner)
-    , sequenceNumber(other.sequenceNumber.load())
-    , numberOfActiveOrigins(other.numberOfActiveOrigins.load())
+    : sliceAssigner(other.sliceAssigner), sequenceNumber(other.sequenceNumber.load()), numberOfActiveOrigins(other.numberOfActiveOrigins)
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
@@ -53,7 +50,7 @@ DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const DefaultTimeBasedSli
 DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(DefaultTimeBasedSliceStore&& other) noexcept
     : sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
-    , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins.load()))
+    , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins))
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
@@ -70,7 +67,7 @@ DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(const DefaultT
 
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
-    numberOfActiveOrigins = other.numberOfActiveOrigins.load();
+    numberOfActiveOrigins = other.numberOfActiveOrigins;
     return *this;
 }
 
@@ -83,7 +80,7 @@ DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(DefaultTimeBas
 
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
-    numberOfActiveOrigins = std::move(other.numberOfActiveOrigins.load());
+    numberOfActiveOrigins = std::move(other.numberOfActiveOrigins);
     return *this;
 }
 
@@ -190,10 +187,15 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
 {
     /// If this method gets called, we know that an origin has terminated.
     INVARIANT(numberOfActiveOrigins > 0, "Method should not be called if all origin have terminated.");
-    --numberOfActiveOrigins;
 
     /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows
     const auto windowsWriteLocked = windows.wlock();
+
+    /// This call needs to be done after we have acquired the lock for the windows.
+    /// The reason is that between this call and the call to acquire the lock for the windows, another thread might have
+    /// reduced the number of active origins further, leading to problems in the switch statement below.
+    --numberOfActiveOrigins;
+
 
     /// Creating a lambda to add all slices to the return map windowsToSlices
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
@@ -222,7 +224,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
                     NES_TRACE(
                         "Waiting on termination for window end {} and number of origins terminated {}",
                         windowInfo.windowEnd,
-                        numberOfActiveOrigins.load());
+                        numberOfActiveOrigins);
                     break;
                 }
                 addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
@@ -233,7 +235,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
                 NES_TRACE(
                     "Checking if all origins have terminated for window with window end {} and number of origins terminated {}",
                     windowInfo.windowEnd,
-                    numberOfActiveOrigins.load());
+                    numberOfActiveOrigins);
                 if (numberOfActiveOrigins > 0)
                 {
                     continue;
@@ -286,7 +288,7 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
         if (sliceEnd + sliceAssigner.getWindowSize() < newGlobalWaterMark)
         {
             NES_TRACE("Deleting slice with sliceEnd {} as it is not used anymore", sliceEnd);
-            slicesWriteLocked->erase(slicesLockedIt++);
+            slicesLockedIt = slicesWriteLocked->erase(slicesLockedIt++);
         }
         else
         {
