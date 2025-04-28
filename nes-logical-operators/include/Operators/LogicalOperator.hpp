@@ -38,6 +38,10 @@ inline OperatorId getNextLogicalOperatorId()
 }
 }
 
+/// Concept defining the interface for all logical operators in the query plan.
+/// This concept defines the common interface that all logical operators must implement.
+/// Logical operators represent operations in the query plan and are used during query
+/// planning and optimization.
 struct LogicalOperatorConcept
 {
     virtual ~LogicalOperatorConcept() = default;
@@ -45,28 +49,59 @@ struct LogicalOperatorConcept
     explicit LogicalOperatorConcept();
     explicit LogicalOperatorConcept(OperatorId existingId);
 
+    /// Returns a string representation of the operator
     [[nodiscard]] virtual std::string toString() const = 0;
+    
+    /// Returns the children operators of this operator
     [[nodiscard]] virtual std::vector<struct LogicalOperator> getChildren() const = 0;
+    
+    /// Creates a new operator with the given children
     [[nodiscard]] virtual LogicalOperator withChildren(std::vector<struct LogicalOperator>) const = 0;
 
+    /// Compares this operator with another for equality
     [[nodiscard]] virtual bool operator==(struct LogicalOperatorConcept const& rhs) const = 0;
 
-    /// Used to during planning and optimization for rule resolution
+    /// Returns the name of the operator, used during planning and optimization
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
+    
+    /// Serializes the operator to a protobuf message
     [[nodiscard]] virtual SerializableOperator serialize() const = 0;
+    
+    /// Returns the trait set of the operator
     [[nodiscard]] virtual Optimizer::TraitSet getTraitSet() const = 0;
 
+    /// Returns the input schemas of the operator
     [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
+    
+    /// Returns the output schema of the operator
     [[nodiscard]] virtual Schema getOutputSchema() const = 0;
 
+    /// Returns the input origin IDs of the operator
     [[nodiscard]] virtual std::vector<std::vector<OriginId>> getInputOriginIds() const = 0;
+    
+    /// Returns the output origin IDs of the operator
     [[nodiscard]] virtual std::vector<OriginId> getOutputOriginIds() const = 0;
+    
+    /// Creates a new operator with the given input origin IDs
     [[nodiscard]] virtual LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>>) const = 0;
+    
+    /// Creates a new operator with the given output origin IDs
     [[nodiscard]] virtual LogicalOperator withOutputOriginIds(std::vector<OriginId>) const = 0;
+    
+    /// Creates a new operator with inferred schema based on input schemas
     [[nodiscard]] virtual LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const = 0;
 
+    /// Unique identifier for this operator
     OperatorId id = INVALID_OPERATOR_ID;
 };
+
+/// A type-erased wrapper for logical operators.
+/// This class provides type erasure for logical operators, allowing them to be stored
+/// and manipulated without knowing their concrete type. It uses the PIMPL pattern
+/// to store the actual operator implementation.
+/// @tparam T The type of the logical operator. Must inherit from LogicalOperatorConcept.
+template<typename T>
+concept IsLogicalOperator = std::is_base_of_v<LogicalOperatorConcept, std::remove_cv_t<std::remove_reference_t<T>>>;
 
 /// Enables default construction of LogicalOperator.
 /// Necessary to enable more ergonomic usage in e.g. unordered maps etc.
@@ -92,7 +127,10 @@ public:
 /// Id is preserved during copy
 struct LogicalOperator
 {
-    template <typename T>
+    /// Constructs a LogicalOperator from a concrete operator type.
+    /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
+    /// @param op The operator to wrap.
+    template <IsLogicalOperator T>
     LogicalOperator(const T& op) : self(std::make_unique<Model<T>>(op, op.id))
     {
     }
@@ -100,6 +138,9 @@ struct LogicalOperator
     LogicalOperator();
     LogicalOperator(const LogicalOperator& other);
 
+    /// Attempts to get the underlying operator as type T.
+    /// @tparam T The type to try to get the operator as.
+    /// @return std::optional<T> The operator if it is of type T, nullopt otherwise.
     template <typename T>
     [[nodiscard]] std::optional<T> tryGet() const
     {
@@ -110,6 +151,10 @@ struct LogicalOperator
         return std::nullopt;
     }
 
+    /// Gets the underlying operator as type T.
+    /// @tparam T The type to get the operator as.
+    /// @return const T The operator.
+    /// @throw InvalidDynamicCast If the operator is not of type T.
     template <typename T>
     [[nodiscard]] const T get() const
     {

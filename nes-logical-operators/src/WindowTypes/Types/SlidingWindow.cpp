@@ -54,7 +54,7 @@ std::string SlidingWindow::toString() const
     return ss.str();
 }
 
-bool SlidingWindow::operator==(const WindowType& otherWindowType)
+bool SlidingWindow::operator==(const WindowType& otherWindowType) const
 {
     if (auto otherSlidingWindow = dynamic_cast<const SlidingWindow*>(&otherWindowType))
     {

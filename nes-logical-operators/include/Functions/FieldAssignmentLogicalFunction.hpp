@@ -44,6 +44,9 @@ public:
     [[nodiscard]] std::string getType() const override;
     [[nodiscard]] std::string toString() const override;
 
+    friend bool operator==(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs);
+    friend bool operator!=(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs);
+
 private:
     std::shared_ptr<DataType> stamp;
     FieldAccessLogicalFunction fieldAccess;

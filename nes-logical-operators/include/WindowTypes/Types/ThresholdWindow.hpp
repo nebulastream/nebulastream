@@ -30,7 +30,7 @@ public:
     ThresholdWindow(LogicalFunction predicate, uint64_t minCount);
 
     [[nodiscard]] std::string toString() const override;
-    [[nodiscard]] bool operator==(const WindowType& otherWindowType) override;
+    [[nodiscard]] bool operator==(const WindowType& otherWindowType) const override;
 
     /// @brief return the content-based Subwindow Type, i.e., THRESHOLDWINDOW
     /// @return enum content-based Subwindow Type

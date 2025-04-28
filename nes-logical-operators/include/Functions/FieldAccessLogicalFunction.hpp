@@ -14,8 +14,13 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <string_view>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <SerializableFunction.pb.h>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -36,6 +41,8 @@ public:
     [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+    friend bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs);
+    friend bool operator!=(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs);
 
     [[nodiscard]] std::shared_ptr<DataType> getStamp() const override;
     [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override;
