@@ -33,7 +33,7 @@ public:
         EventTime
     };
     explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, AttributeField field, TimeUnit unit);
+    TimeCharacteristic(Type type, std::shared_ptr<AttributeField> field, TimeUnit unit);
 
     /// @brief Factory to create a time characteristic for ingestion time window
     /// @param unit the time unit of the ingestion time
@@ -51,16 +51,16 @@ public:
     [[nodiscard]] Type getType() const;
 
     [[nodiscard]] bool operator==(const TimeCharacteristic& other) const;
+    friend std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic);
 
     [[nodiscard]] uint64_t hash() const;
 
-    [[nodiscard]] std::string toString() const;
     [[nodiscard]] std::string getTypeAsString() const;
     [[nodiscard]] TimeUnit getTimeUnit() const;
 
     void setTimeUnit(const TimeUnit& unit);
 
-    AttributeField field;
+    std::shared_ptr<AttributeField> field;
 
 private:
     Type type;

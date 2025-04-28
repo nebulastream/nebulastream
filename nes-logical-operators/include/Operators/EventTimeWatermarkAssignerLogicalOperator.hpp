@@ -17,6 +17,7 @@
 #include <API/TimeUnit.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES
 {
@@ -26,6 +27,9 @@ class EventTimeWatermarkAssignerLogicalOperator : public LogicalOperatorConcept
 public:
     EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, Windowing::TimeUnit unit);
 
+    /// Operator specific member
+    LogicalFunction onField;
+    Windowing::TimeUnit unit;
 
     /// LogicalOperatorConcept member
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
@@ -49,8 +53,22 @@ public:
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
-    LogicalFunction onField;
-    Windowing::TimeUnit unit;
+    /// Serialization
+    static NES::Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    struct ConfigParameters
+    {
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
+            "TimeMs", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(TIME_MS, config);
+            }};
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<FunctionList> FUNCTION{
+            "Function", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(FUNCTION, config);
+            }};
+
+        static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+            = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(TIME_MS, FUNCTION);
+    };
 
 private:
     /// Operator specific member

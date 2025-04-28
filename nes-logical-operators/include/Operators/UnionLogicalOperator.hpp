@@ -26,9 +26,6 @@ class UnionLogicalOperator : public LogicalOperatorConcept
 public:
     explicit UnionLogicalOperator();
 
-    /// Operator specific member
-    void inferInputOrigins();
-
     /// LogicalOperatorConcept member
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
@@ -51,7 +48,6 @@ public:
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
-
 private:
     /// Operator specific member
     static constexpr std::string_view NAME = "Union";
@@ -61,15 +57,6 @@ private:
     Schema leftInputSchema, rightInputSchema, outputSchema;
     std::vector<std::vector<OriginId>> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
-
-    /// Serialization
-    static NES::Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
-
-    struct ConfigParameters
-    {
-        static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-            = Configurations::DescriptorConfig::createConfigParameterContainerMap();
-    };
 };
 
 

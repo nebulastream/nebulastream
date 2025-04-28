@@ -98,7 +98,7 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
                 break;
             case Windowing::TimeCharacteristic::Type::EventTime:
                 queryPlan.promoteOperatorToRoot(EventTimeWatermarkAssignerLogicalOperator(
-                    FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.getName()),
+                    FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field->getName()),
                     timeBasedWindowType->getTimeCharacteristic().getTimeUnit()));
                 break;
         }
@@ -174,7 +174,7 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     ///TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     ///TODO(Ventura?>Steffen) can we know this at this query submission time?
     leftLogicalPlan = addBinaryOperatorAndUpdateSource(
-        JoinLogicalOperator(joinFunction, std::move(windowType), 1, 1, joinType), leftLogicalPlan, rightLogicalPlan);
+        JoinLogicalOperator(joinFunction, std::move(windowType), joinType), leftLogicalPlan, rightLogicalPlan);
     return leftLogicalPlan;
 }
 
@@ -199,7 +199,7 @@ LogicalPlan LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPl
         }
         if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::EventTime)
         {
-            auto logicalFunction = FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.getName());
+            auto logicalFunction = FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field->getName());
             auto assigner
                 = EventTimeWatermarkAssignerLogicalOperator(logicalFunction, timeBasedWindowType->getTimeCharacteristic().getTimeUnit());
             queryPlan.promoteOperatorToRoot(assigner);

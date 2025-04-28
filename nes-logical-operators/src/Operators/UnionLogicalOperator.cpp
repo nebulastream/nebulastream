@@ -161,52 +161,48 @@ std::vector<LogicalOperator> UnionLogicalOperator::getChildren() const
     return children;
 }
 
-NES::Configurations::DescriptorConfig::Config UnionLogicalOperator::validateAndFormat(std::unordered_map<std::string, std::string> config)
+SerializableOperator UnionLogicalOperator::serialize() const
 {
-    return NES::Configurations::DescriptorConfig::validateAndFormat<UnionLogicalOperator::ConfigParameters>(std::move(config), NAME);
+    SerializableOperator_LogicalOperator proto;
+
+    proto.set_operator_type(NAME);
+    auto* traitSetProto = proto.mutable_trait_set();
+    for (auto const& trait : getTraitSet()) {
+        *traitSetProto->add_traits() = trait.serialize();
+    }
+
+    for (auto const& inputSchema : getInputSchemas()) {
+        auto* schProto = proto.add_input_schemas();
+        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
+    }
+
+    for (auto const& originList : getInputOriginIds()) {
+        auto* olist = proto.add_input_origin_lists();
+        for (auto originId : originList) {
+            olist->add_origin_ids(originId.getRawValue());
+        }
+    }
+
+    for (auto outId : getOutputOriginIds()) {
+        proto.add_output_origin_ids(outId.getRawValue());
+    }
+
+    auto* outSch = proto.mutable_output_schema();
+    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
+
+    SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
+    for (auto& child : getChildren()) {
+        serializableOperator.add_children_ids(child.getId().getRawValue());
+    }
+
+    serializableOperator.mutable_operator_()->CopyFrom(proto);
+    return serializableOperator;
 }
 
 LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
-    /// nothing to da as this operator has no members
     return UnionLogicalOperator();
-}
-
-SerializableOperator UnionLogicalOperator::serialize() const
-{
-    SerializableOperator serializedOperator;
-
-    auto* opDesc = new SerializableOperator_LogicalOperator();
-    opDesc->set_operatortype(NAME);
-    serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(this->getChildren()[0].getId().getRawValue());
-
-    auto* binaryOpDesc = new SerializableOperator_BinaryLogicalOperator();
-    auto* rightInputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], rightInputSchema);
-    binaryOpDesc->set_allocated_rightinputschema(rightInputSchema);
-
-    auto* leftInputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[1], leftInputSchema);
-    binaryOpDesc->set_allocated_leftinputschema(leftInputSchema);
-
-    for (const auto& originId : getInputOriginIds()[0])
-    {
-        binaryOpDesc->add_leftoriginids(originId.getRawValue());
-    }
-    for (const auto& originId : getInputOriginIds()[1])
-    {
-        binaryOpDesc->add_rightoriginids(originId.getRawValue());
-    }
-
-    opDesc->set_allocated_binaryoperator(binaryOpDesc);
-
-    auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
-    serializedOperator.set_allocated_outputschema(outputSchema);
-    serializedOperator.set_allocated_operator_(opDesc);
-
-    return serializedOperator;
 }
 
 }

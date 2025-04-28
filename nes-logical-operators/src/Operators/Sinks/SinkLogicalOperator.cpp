@@ -15,20 +15,24 @@
 #include <memory>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
+#include <Serialization/OperatorSerializationUtil.hpp>
 
 namespace NES
 {
+
+SinkLogicalOperator::SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) {};
 
 bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const SinkLogicalOperator*>(&rhs))
     {
-        return this->sinkName == rhsOperator->sinkName and this->sinkDescriptor == rhsOperator->sinkDescriptor;
+        return this->sinkName == rhsOperator->sinkName and *this->sinkDescriptor == *rhsOperator->sinkDescriptor;
     }
     return false;
 };
@@ -36,8 +40,15 @@ bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 std::string SinkLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
-    ss << sinkDescriptor;
+    ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: [", id, sinkName);
+    if (sinkDescriptor) {
+        ss << "type=" << sinkDescriptor->sinkType 
+           << ", addTimestamp=" << sinkDescriptor->addTimestamp
+           << ", schema=" << sinkDescriptor->schema.toString()
+           << "]";
+    } else {
+        ss << "]";
+    }
     if (!inputOriginIds.empty())
     {
         ss << ", input originId:" << inputOriginIds[0];
@@ -130,29 +141,15 @@ std::string SinkLogicalOperator::getSinkName() const
 
 SerializableOperator SinkLogicalOperator::serialize() const
 {
-    SerializableOperator serializedOperator;
+    SerializableOperator_SinkLogicalOperator proto;
+    INVARIANT(sinkDescriptor, "Sink descriptor should not be null");
+    proto.mutable_sinkdescriptor()->CopyFrom(sinkDescriptor->serialize());
 
-    const auto serializedSink = new SerializableOperator_SinkLogicalOperator();
+    SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
 
-    const auto serializedSinkDescriptor = new SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor();
-    SchemaSerializationUtil::serializeSchema(std::move(this->outputSchema), serializedSinkDescriptor->mutable_sinkschema());
-    serializedSinkDescriptor->set_sinktype(sinkDescriptor->sinkType);
-    serializedSinkDescriptor->set_addtimestamp(sinkDescriptor->addTimestamp);
-    /// Iterate over SinkDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : sinkDescriptor->config)
-    {
-        auto* kv = serializedSinkDescriptor->mutable_config();
-        kv->emplace(key, descriptorConfigTypeToProto(value));
-    }
-    serializedSink->set_allocated_sinkdescriptor(serializedSinkDescriptor);
-
-    serializedOperator.set_allocated_sink(serializedSink);
-    return serializedOperator;
-}
-
-LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterSinkLogicalOperator(LogicalOperatorRegistryArguments)
-{
-    throw UnsupportedOperation();
+    serializableOperator.mutable_sink()->CopyFrom(proto);
+    return serializableOperator;
 }
 
 }

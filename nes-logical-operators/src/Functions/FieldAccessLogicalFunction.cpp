@@ -58,7 +58,10 @@ LogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName)
 
 std::string FieldAccessLogicalFunction::toString() const
 {
-    return std::format("FieldAccessLogicalFunction( {} [ {} ])", fieldName, stamp->toString());
+    if (stamp) {
+        return std::format("FieldAccessLogicalFunction( {} [ {} ])", fieldName, stamp->toString());
+    }
+    return std::format("FieldAccessLogicalFunction( {} )", fieldName);
 }
 
 LogicalFunction FieldAccessLogicalFunction::withInferredStamp(Schema schema) const
@@ -106,10 +109,10 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
     serializedFunction.set_functiontype(NAME);
 
     NES::Configurations::DescriptorConfig::ConfigType configVariant = getFieldName();
-    SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
+    SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
     (*serializedFunction.mutable_config())["FieldName"] = variantDescriptor;
 
-    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+    DataTypeSerializationUtil::serializeDataType(stamp, serializedFunction.mutable_stamp());
 
     return serializedFunction;
 }

@@ -60,7 +60,7 @@ public:
     struct ConfigParameters
     {
         static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> MAP_FUNCTION_NAME{
-            "mapFunctionName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+            "mapFunction", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
                 return NES::Configurations::DescriptorConfig::tryGet(MAP_FUNCTION_NAME, config);
             }};
 

@@ -16,9 +16,12 @@
 
 #include <Functions/LogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 
 namespace NES::FunctionSerializationUtil
 {
 /// Note: corresponding serialization is implemented as member function of each function
 LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction);
+std::shared_ptr<WindowAggregationLogicalFunction> deserializeWindowAggregationFunction(
+    const SerializableAggregationFunction& serializedFunction);
 }

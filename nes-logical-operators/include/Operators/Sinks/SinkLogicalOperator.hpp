@@ -27,11 +27,10 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     /// During deserialization, we don't need to know/use the name of the sink anymore.
     SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
-    SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) {};
+    SinkLogicalOperator(std::string sinkName);
 
     /// Operator specific member
     [[nodiscard]] std::string getSinkName() const;
-    virtual void inferInputOrigins() {};
     std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
 
     /// currently only use for testing purposes in IntegrationTestUtil
@@ -58,7 +57,6 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
-
 
 private:
     /// Operator specific member

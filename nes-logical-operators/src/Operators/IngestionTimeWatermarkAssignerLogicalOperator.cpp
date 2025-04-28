@@ -40,10 +40,7 @@ std::string IngestionTimeWatermarkAssignerLogicalOperator::toString() const
 
 bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (const auto rhsOperator = dynamic_cast<const IngestionTimeWatermarkAssignerLogicalOperator*>(&rhs))
-    {
-    }
-    return false;
+    return dynamic_cast<const IngestionTimeWatermarkAssignerLogicalOperator*>(&rhs);
 }
 
 LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
@@ -110,39 +107,47 @@ std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getC
 
 SerializableOperator IngestionTimeWatermarkAssignerLogicalOperator::serialize() const
 {
-    SerializableOperator serializedOperator;
+    SerializableOperator_LogicalOperator proto;
 
-    auto* opDesc = new SerializableOperator_LogicalOperator();
-    opDesc->set_operatortype(NAME);
-    serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
-
-    auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
-    auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
-    unaryOpDesc->set_allocated_inputschema(inputSchema);
-
-    for (const auto& originId : getInputOriginIds()[0])
-    {
-        unaryOpDesc->add_originids(originId.getRawValue());
+    proto.set_operator_type(NAME);
+    auto* traitSetProto = proto.mutable_trait_set();
+    for (auto const& trait : getTraitSet()) {
+        *traitSetProto->add_traits() = trait.serialize();
     }
 
-    opDesc->set_allocated_unaryoperator(unaryOpDesc);
+    for (auto const& inputSchema : getInputSchemas()) {
+        auto* schProto = proto.add_input_schemas();
+        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
+    }
 
-    auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->outputSchema, outputSchema);
-    serializedOperator.set_allocated_outputschema(outputSchema);
-    serializedOperator.set_allocated_operator_(opDesc);
+    for (auto const& originList : getInputOriginIds()) {
+        auto* olist = proto.add_input_origin_lists();
+        for (auto originId : originList) {
+            olist->add_origin_ids(originId.getRawValue());
+        }
+    }
 
-    return serializedOperator;
+    for (auto outId : getOutputOriginIds()) {
+        proto.add_output_origin_ids(outId.getRawValue());
+    }
+
+    auto* outSch = proto.mutable_output_schema();
+    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
+
+    SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
+    for (auto& child : getChildren()) {
+        serializableOperator.add_children_ids(child.getId().getRawValue());
+    }
+
+    serializableOperator.mutable_operator_()->CopyFrom(proto);
+    return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(NES::LogicalOperatorRegistryArguments)
 {
-    // TODO
-    throw UnknownLogicalOperator();
+    return IngestionTimeWatermarkAssignerLogicalOperator();
 }
-
 
 }

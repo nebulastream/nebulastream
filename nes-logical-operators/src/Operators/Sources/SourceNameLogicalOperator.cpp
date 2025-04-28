@@ -133,9 +133,4 @@ SerializableOperator SourceNameLogicalOperator::serialize() const
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
 }
 
-LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterSourceNameLogicalOperator(LogicalOperatorRegistryArguments)
-{
-    throw UnsupportedOperation();
-}
-
 }
