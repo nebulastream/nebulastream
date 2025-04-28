@@ -435,7 +435,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
         auto sinkDescriptorUpdated
             = std::make_unique<Sinks::SinkDescriptor>(descriptor->sinkType, std::move(configCopy), descriptor->addTimestamp);
         sinkDescriptorUpdated->schema = deserializedOutputSchema;
-        auto sinkLogicalOperatorUpdated = SinkLogicalOperator(deserializedSinkOperator.getSinkName());
+        auto sinkLogicalOperatorUpdated = SinkLogicalOperator(deserializedSinkOperator.sinkName);
         sinkLogicalOperatorUpdated.sinkDescriptor = std::move(sinkDescriptorUpdated);
         sinkLogicalOperatorUpdated.setOutputSchema(deserializedOutputSchema);
         auto serializedOperator = sinkLogicalOperatorUpdated.serialize();
@@ -469,7 +469,8 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
                     sourceDescriptor->parserConfig,
                     std::move(configUpdated));
 
-                auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdated));
+                auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdated))
+                    .withOutputOriginIds(deserializedSourceOperator.getOutputOriginIds());
                 auto serializedOperator = sourceDescriptorLogicalOperatorUpdated.serialize();
 
                 /// Reconfigure the original operator id, because deserialization/serialization changes them.
@@ -505,7 +506,8 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
                         std::move(configUpdated));
 
                     auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdated));
-                    auto serializedOperator = sourceDescriptorLogicalOperatorUpdated.serialize();
+                    auto serializedOperator =   sourceDescriptorLogicalOperatorUpdated
+                        .withOutputOriginIds(deserializedSourceOperator.getOutputOriginIds()).serialize();
 
                     /// Reconfigure the original operator id, because deserialization/serialization changes them.
                     serializedOperator.set_operator_id(value.operator_id());

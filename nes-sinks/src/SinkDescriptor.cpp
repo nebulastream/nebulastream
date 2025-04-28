@@ -50,7 +50,7 @@ std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor
 
 bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 {
-    return lhs.sinkType == rhs.sinkType && lhs.config == rhs.config && lhs.addTimestamp == rhs.addTimestamp && lhs.schema == rhs.schema;
+    return lhs.sinkType == rhs.sinkType and lhs.config == rhs.config and lhs.addTimestamp == rhs.addTimestamp and lhs.schema == rhs.schema;
 }
 
 SerializableSinkDescriptor SinkDescriptor::serialize() const
