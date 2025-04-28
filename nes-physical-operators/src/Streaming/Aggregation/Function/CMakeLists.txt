@@ -11,8 +11,11 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        NLJBuildPhysicalOperator.cpp
-        NLJProbePhysicalOperator.cpp
-        NLJOperatorHandler.cpp
-        NLJSlice.cpp
+        AvgAggregationFunction.cpp
+        AggregationFunction.cpp
+        CountAggregationFunction.cpp
+        MaxAggregationFunction.cpp
+        MinAggregationFunction.cpp
+        MedianAggregationFunction.cpp
+        SumAggregationFunction.cpp
 )
