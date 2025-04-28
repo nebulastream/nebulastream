@@ -15,16 +15,11 @@
 #pragma once
 
 #include <memory>
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/MapLogicalOperator.hpp>
-#include <Operators/ProjectionLogicalOperator.hpp>
-#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
@@ -38,14 +33,13 @@ public:
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
     static LogicalOperator deserializeOperator(SerializableOperator serializedOperator);
-    static LogicalOperator deserializeLogicalOperator(const SerializableOperator_LogicalOperator& serializedOperator);
     static LogicalOperator deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
     static LogicalOperator deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
     static std::unique_ptr<Sources::SourceDescriptor>
-    deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
+    deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor);
     static std::unique_ptr<Sinks::SinkDescriptor>
-    deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
+    deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor);
     static std::shared_ptr<WindowAggregationLogicalFunction> deserializeWindowAggregationFunction(
-        const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableWindowAggregationFunction);
+        const SerializableAggregationFunction& serializedFunction);
 };
 }

@@ -72,6 +72,50 @@ public:
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
+    /// Serialization
+ struct ConfigParameters
+ {
+     static inline const NES::Configurations::DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
+         "TimeMs", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+             return NES::Configurations::DescriptorConfig::tryGet(TIME_MS, config);
+         }};
+
+     static inline const NES::Configurations::DescriptorConfig::ConfigParameter<AggregationFunctionList> WINDOW_AGGREGATIONS{
+         "windowAggregations", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+             return NES::Configurations::DescriptorConfig::tryGet(WINDOW_AGGREGATIONS, config);
+         }};
+
+     static inline const NES::Configurations::DescriptorConfig::ConfigParameter<FunctionList> WINDOW_KEYS{
+         "windowKeys", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+             return NES::Configurations::DescriptorConfig::tryGet(WINDOW_KEYS, config);
+         }};
+
+     static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> WINDOW_START_FIELD_NAME{
+         "windowStartFieldName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+             return NES::Configurations::DescriptorConfig::tryGet(WINDOW_START_FIELD_NAME, config);
+         }};
+
+     static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> WINDOW_END_FIELD_NAME{
+         "windowEndFieldName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+             return NES::Configurations::DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config);
+         }};
+
+     static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> WINDOW_INFOS{
+         "windowInfos", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+             return NES::Configurations::DescriptorConfig::tryGet(WINDOW_INFOS, config);
+         }};
+
+     static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+         = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(
+             TIME_MS,
+             WINDOW_AGGREGATIONS,
+             WINDOW_INFOS,
+             WINDOW_KEYS,
+             WINDOW_START_FIELD_NAME,
+             WINDOW_END_FIELD_NAME
+         );
+ };
+
 private:
     /// Operator specific member
     static constexpr std::string_view NAME = "WindowedAggregation";
@@ -80,7 +124,6 @@ private:
     std::vector<FieldAccessLogicalFunction> onKey;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
-    uint64_t numberOfInputEdges = 0;
     Optimizer::OriginIdAssignerTrait originIdTrait;
 
     /// LogicalOperatorConcept member

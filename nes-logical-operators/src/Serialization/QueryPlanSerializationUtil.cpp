@@ -22,65 +22,55 @@
 namespace NES
 {
 
-void QueryPlanSerializationUtil::serializeQueryPlan(
-    const LogicalPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated)
+SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
-    NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", queryPlan.toString());
-    auto rootOperators = queryPlan.rootOperators;
+    INVARIANT(queryPlan.rootOperators.size() == 1, "Query plan should currently have only one root operator");
+    auto rootOperator = queryPlan.rootOperators[0];
 
+    SerializableQueryPlan serializableQueryPlan;
     ///Serialize Query Plan operators
-    auto& serializedOperatorMap = *serializableQueryPlan->mutable_operatormap();
-    /*for (auto itr = BFSRange<LogicalOperator>(queryPlan))
+    auto& serializedOperatorMap = *serializableQueryPlan.mutable_operatormap();
+    for (auto itr : BFSRange(rootOperator))
     {
-        auto visitingOp = NES::Util::as<LogicalOperator>(*itr);
-        if (serializedOperatorMap.find(visitingOp->id.getRawValue()) != serializedOperatorMap.end())
+        if (serializedOperatorMap.find(itr.getId().getRawValue()) != serializedOperatorMap.end())
         {
             /// skip rest of the steps as the operator is already serialized
             continue;
         }
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
-        SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
-        serializedOperatorMap[visitingOp->id.getRawValue()] = serializeOperator;
-    }*/
+        SerializableOperator serializeOperator = itr.serialize();
+        serializedOperatorMap[itr.getId().getRawValue()] = serializeOperator;
+    }
 
     ///Serialize the root operator ids
-    for (const auto& rootOperator : rootOperators)
-    {
-        auto rootOperatorId = rootOperator.getId();
-        serializableQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
-    }
-
-    if (!isClientOriginated)
-    {
-        ///Serialize the sub query plan and query plan id
-        NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
-        serializableQueryPlan->set_queryid(queryPlan.getQueryId().getRawValue());
-    }
+    auto rootOperatorId = rootOperator.getId();
+    serializableQueryPlan.add_rootoperatorids(rootOperatorId.getRawValue());
+    return serializableQueryPlan;
 }
 
-LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan)
+LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan)
 {
     std::vector<LogicalOperator> rootOperators;
     std::map<uint64_t, LogicalOperator> operatorIdToOperatorMap;
 
     ///Deserialize all operators in the operator map
-    for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap())
+    for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan.operatormap())
     {
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
         operatorIdToOperatorMap.emplace(
-            serializedOperator.operatorid(), OperatorSerializationUtil::deserializeOperator(serializedOperator));
+            serializedOperator.operator_id(), OperatorSerializationUtil::deserializeOperator(serializedOperator));
     }
 
     ///Add deserialized children
-    for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan->operatormap())
+    for (const auto& operatorIdAndSerializedOperator : serializedQueryPlan.operatormap())
     {
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
-        for (auto childId : serializedOperator.childrenids())
+        for (auto childId : serializedOperator.children_ids())
         {
             auto child = operatorIdToOperatorMap.find(childId);
             if (child != operatorIdToOperatorMap.end())
             {
-                auto it = operatorIdToOperatorMap.find(serializedOperator.operatorid());
+                auto it = operatorIdToOperatorMap.find(serializedOperator.operator_id());
                 if (it != operatorIdToOperatorMap.end())
                 {
                     it->second = it->second.withChildren({child->second});
@@ -90,7 +80,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     }
 
     ///add root operators
-    for (auto rootOperatorId : serializedQueryPlan->rootoperatorids())
+    for (auto rootOperatorId : serializedQueryPlan.rootoperatorids())
     {
         auto root = operatorIdToOperatorMap.find(rootOperatorId);
         if (root != operatorIdToOperatorMap.end())
@@ -101,10 +91,9 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
 
     ///set properties of the query plan
     QueryId queryId = INVALID_QUERY_ID;
-
-    if (serializedQueryPlan->has_queryid())
+    if (serializedQueryPlan.has_queryid())
     {
-        queryId = QueryId(serializedQueryPlan->queryid());
+        queryId = QueryId(serializedQueryPlan.queryid());
     }
 
     return LogicalPlan(queryId, std::move(rootOperators));

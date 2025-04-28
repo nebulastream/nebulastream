@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -40,8 +41,6 @@ public:
     explicit JoinLogicalOperator(
         LogicalFunction joinFunction,
         std::shared_ptr<Windowing::WindowType> windowType,
-        uint64_t numberOfInputEdgesLeft,
-        uint64_t numberOfInputEdgesRight,
         JoinType joinType);
 
     /// Operator specific member
@@ -77,13 +76,15 @@ public:
 
 
     /// Serialization
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string> config);
-
     struct ConfigParameters
     {
         static inline const NES::Configurations::DescriptorConfig::ConfigParameter<NES::Configurations::EnumWrapper, JoinType> JOIN_TYPE{
             "joinType", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(JOIN_TYPE, config);
+            }};
+
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<NES::Configurations::EnumWrapper, FunctionList> JOIN_FUNCTION{
+            "joinFunctionName", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
                 return NES::Configurations::DescriptorConfig::tryGet(JOIN_TYPE, config);
             }};
 
@@ -97,18 +98,21 @@ public:
                 return NES::Configurations::DescriptorConfig::tryGet(WINDOW_END_FIELD_NAME, config);
             }};
 
+        static inline const NES::Configurations::DescriptorConfig::ConfigParameter<WindowInfos> WINDOW_INFOS{
+            "windowInfo", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+                return NES::Configurations::DescriptorConfig::tryGet(WINDOW_INFOS, config);
+            }};
+
         static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
             = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(
-                JOIN_TYPE, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
+                JOIN_TYPE, JOIN_FUNCTION, WINDOW_INFOS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
     };
 
 private:
     /// Operator specific member
     static constexpr std::string_view NAME = "Join";
     LogicalFunction joinFunction;
-    Schema leftInputSchema, rightInputSchema, outputSchema;
     std::shared_ptr<Windowing::WindowType> windowType;
-    uint64_t numberOfInputEdgesLeft, numberOfInputEdgesRight;
     std::string windowStartFieldName, windowEndFieldName;
     JoinType joinType;
     Optimizer::OriginIdAssignerTrait originIdTrait;
@@ -117,5 +121,6 @@ private:
     std::vector<LogicalOperator> children;
     std::vector<std::vector<OriginId>> inputOriginIds;
     std::vector<OriginId> outputOriginIds;
+    Schema leftInputSchema, rightInputSchema, outputSchema;
 };
 }

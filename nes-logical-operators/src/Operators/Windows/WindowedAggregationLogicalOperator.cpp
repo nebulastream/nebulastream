@@ -29,9 +29,13 @@
 #include <WindowTypes/Types/ContentBasedWindowType.hpp>
 #include <WindowTypes/Types/ThresholdWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include <WindowTypes/Types/SlidingWindow.hpp>
+#include <WindowTypes/Types/TumblingWindow.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <Common/DataTypes/BasicTypes.hpp>
+#include <Configurations/Descriptor.hpp>
+#include <Serialization/FunctionSerializationUtil.hpp>
 
 namespace NES
 {
@@ -92,7 +96,7 @@ bool WindowedAggregationLogicalOperator::operator==(const LogicalOperatorConcept
 
         for (uint64_t i = 0; i < this->getWindowAggregation().size(); i++)
         {
-            if (this->getWindowAggregation()[i] != rhsOperator->getWindowAggregation()[i])
+            if (*(getWindowAggregation()[i]) != (rhsOperator->getWindowAggregation()[i]))
             {
                 return false;
             }
@@ -258,39 +262,143 @@ std::vector<FieldAccessLogicalFunction> WindowedAggregationLogicalOperator::getK
 
 SerializableOperator WindowedAggregationLogicalOperator::serialize() const
 {
-    SerializableOperator serializedOperator;
+    SerializableOperator_LogicalOperator proto;
 
-    auto* opDesc = new SerializableOperator_LogicalOperator();
-    opDesc->set_operatortype(NAME);
-    serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
-
-    auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
-    auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
-    unaryOpDesc->set_allocated_inputschema(inputSchema);
-
-    auto ids = this->getInputOriginIds()[0];
-    for (const auto& originId : ids)
-    {
-        unaryOpDesc->add_originids(originId.getRawValue());
+    proto.set_operator_type(NAME);
+    auto* traitSetProto = proto.mutable_trait_set();
+    for (auto const& trait : getTraitSet()) {
+        *traitSetProto->add_traits() = trait.serialize();
     }
 
-    opDesc->set_allocated_unaryoperator(unaryOpDesc);
-    auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getOutputSchema(), outputSchema);
-    serializedOperator.set_allocated_outputschema(outputSchema);
-    serializedOperator.set_allocated_operator_(opDesc);
+    const auto inputs      = getInputSchemas();
+    const auto originLists = getInputOriginIds();
+    for (size_t i = 0; i < inputs.size(); ++i) {
+        auto* inSch = proto.add_input_schemas();
+        SchemaSerializationUtil::serializeSchema(inputs[i], inSch);
 
-    return serializedOperator;
+        auto* olist = proto.add_input_origin_lists();
+        for (auto originId : originLists[i]) {
+            olist->add_origin_ids(originId.getRawValue());
+        }
+    }
+
+    for (auto outId : getOutputOriginIds()) {
+        proto.add_output_origin_ids(outId.getRawValue());
+    }
+
+    auto* outSch = proto.mutable_output_schema();
+    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
+
+    // Serialize window aggregations
+    AggregationFunctionList aggList;
+    for (const auto& agg : getWindowAggregation()) {
+        *aggList.add_functions() = agg->serialize();
+    }
+    (*proto.mutable_config())[ConfigParameters::WINDOW_AGGREGATIONS] = 
+        Configurations::descriptorConfigTypeToProto(aggList);
+
+    // Serialize keys if present
+    if (isKeyed()) {
+        FunctionList keyList;
+        for (const auto& key : getKeys()) {
+            *keyList.add_functions() = key.serialize();
+        }
+        (*proto.mutable_config())[ConfigParameters::WINDOW_KEYS] = 
+            Configurations::descriptorConfigTypeToProto(keyList);
+    }
+
+    // Serialize window info
+    WindowInfos windowInfoProto;
+    if (auto timeBasedWindow = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType)) {
+        if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(timeBasedWindow)) {
+            auto* tumbling = windowInfoProto.mutable_tumbling_window();
+            tumbling->set_size(tumblingWindow->getSize().getTime());
+        } else if (auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(timeBasedWindow)) {
+            auto* sliding = windowInfoProto.mutable_sliding_window();
+            sliding->set_size(slidingWindow->getSize().getTime());
+            sliding->set_slide(slidingWindow->getSlide().getTime());
+            auto timeChar = slidingWindow->getTimeCharacteristic();
+            auto* timeCharProto = new WindowInfos_TimeCharacteristic();
+            timeCharProto->set_type(WindowInfos_TimeCharacteristic_Type_EventTime);
+            if (timeChar.field)
+            {
+                timeCharProto->set_field(timeChar.field->getName());
+            }
+            timeCharProto->set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
+            sliding->set_allocated_time_characteristic(timeCharProto);
+        }
+    }
+    (*proto.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfoProto);
+
+    // Serialize window field names
+    (*proto.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME] = 
+        Configurations::descriptorConfigTypeToProto(windowStartFieldName);
+    (*proto.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME] = 
+        Configurations::descriptorConfigTypeToProto(windowEndFieldName);
+
+    SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
+    for (const auto& child : getChildren()) {
+        serializableOperator.add_children_ids(child.getId().getRawValue());
+    }
+
+    serializableOperator.mutable_operator_()->CopyFrom(proto);
+    return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(NES::LogicalOperatorRegistryArguments)
+LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(LogicalOperatorRegistryArguments config)
 {
-    /// TODO
-    //return WindowedAggregationLogicalOperator();
-    throw UnsupportedOperation();
+    auto aggregationsVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_AGGREGATIONS];
+    auto keysVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_KEYS];
+    auto windowInfoVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_INFOS];
+    auto windowStartVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME];
+    auto windowEndVariant = config.config[WindowedAggregationLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME];
+
+    // Get window aggregations
+    if (!std::holds_alternative<AggregationFunctionList>(aggregationsVariant)) {
+        throw UnknownLogicalOperator();
+    }
+    auto aggregations = std::get<AggregationFunctionList>(aggregationsVariant).functions();
+    std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregations;
+    for (const auto& agg : aggregations) {
+        auto function = FunctionSerializationUtil::deserializeWindowAggregationFunction(agg);
+        windowAggregations.push_back(function);
+    }
+
+    // Get keys if present
+    std::vector<FieldAccessLogicalFunction> keys;
+    if (std::holds_alternative<FunctionList>(keysVariant)) {
+        auto keyFunctions = std::get<FunctionList>(keysVariant).functions();
+        for (const auto& key : keyFunctions) {
+            auto function = FunctionSerializationUtil::deserializeFunction(key);
+            if (auto fieldAccess = function.tryGet<FieldAccessLogicalFunction>()) {
+                keys.push_back(fieldAccess.value());
+            } else {
+                throw UnknownLogicalOperator();
+            }
+        }
+    }
+
+    std::shared_ptr<Windowing::WindowType> windowType;
+    if (std::holds_alternative<WindowInfos>(windowInfoVariant)) {
+        auto windowInfoProto = std::get<WindowInfos>(windowInfoVariant);
+        if (windowInfoProto.has_tumbling_window()) {
+            auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
+            windowType = std::make_shared<Windowing::TumblingWindow>(timeChar,
+                                                                    Windowing::TimeMeasure(windowInfoProto.tumbling_window().size()));
+        } else if (windowInfoProto.has_sliding_window()) {
+            auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
+            windowType = Windowing::SlidingWindow::of(timeChar,
+                                                                   Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
+                                                                   Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
+        }
+    }
+    if (!windowType) {
+        throw UnknownLogicalOperator();
+    }
+
+    return WindowedAggregationLogicalOperator(keys, windowAggregations, windowType);
 }
 
 }

@@ -26,6 +26,7 @@
 #include <SerializableOperator.pb.h>
 #include <SerializableSchema.pb.h>
 #include <Common/DataTypes/Boolean.hpp>
+#include <Serialization/FunctionSerializationUtil.hpp>
 
 namespace NES
 {
@@ -127,67 +128,63 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
+SerializableOperator SelectionLogicalOperator::serialize() const
+{
+    SerializableOperator_LogicalOperator proto;
+
+    proto.set_operator_type(NAME);
+    auto* traitSetProto = proto.mutable_trait_set();
+    for (auto const& trait : getTraitSet()) {
+        *traitSetProto->add_traits() = trait.serialize();
+    }
+
+    FunctionList funcList;
+    auto* serializedFunction = funcList.add_functions();
+    serializedFunction->CopyFrom(getPredicate().serialize());
+    (*proto.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] =
+    Configurations::descriptorConfigTypeToProto(funcList);
+
+    auto inputs     = getInputSchemas();
+    auto originLists = getInputOriginIds();
+    for (size_t i = 0; i < inputs.size(); ++i) {
+        auto* schProto = proto.add_input_schemas();
+        SchemaSerializationUtil::serializeSchema(inputs[i], schProto);
+
+        auto* olist = proto.add_input_origin_lists();
+        for (auto originId : originLists[i]) {
+            olist->add_origin_ids(originId.getRawValue());
+        }
+    }
+
+    for (auto outId : getOutputOriginIds()) {
+        proto.add_output_origin_ids(outId.getRawValue());
+    }
+
+    auto* outSch = proto.mutable_output_schema();
+    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
+
+    SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
+    for (auto& child : getChildren()) {
+        serializableOperator.add_children_ids(child.getId().getRawValue());
+    }
+
+    serializableOperator.mutable_operator_()->CopyFrom(proto);
+    return serializableOperator;
+}
+
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(NES::LogicalOperatorRegistryArguments config)
 {
     auto functionVariant = config.config[SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME];
     if (std::holds_alternative<NES::FunctionList>(functionVariant))
     {
-        const auto& functionList = std::get<NES::FunctionList>(functionVariant);
-        const auto& functions = functionList.functions();
+        const auto functions = std::get<FunctionList>(functionVariant).functions();
+
         INVARIANT(functions.size() == 1, "Expected exactly one function");
-
-        auto functionType = functions[0].functiontype();
-        NES::Configurations::DescriptorConfig::Config functionDescriptorConfig{};
-        for (const auto& [key, value] : functions[0].config())
-        {
-            functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
-        }
-
-        if (auto function
-            = LogicalFunctionRegistry::instance().create(functionType, LogicalFunctionRegistryArguments(functionDescriptorConfig)))
-        {
-            throw UnknownLogicalOperator();
-            //return SelectionLogicalOperator(function.value());
-        }
-        throw UnknownLogicalOperator();
+        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
+        return SelectionLogicalOperator(function);
     }
     throw UnknownLogicalOperator();
-}
-
-SerializableOperator SelectionLogicalOperator::serialize() const
-{
-    SerializableOperator serializedOperator;
-
-    auto* opDesc = new SerializableOperator_LogicalOperator();
-    opDesc->set_operatortype(NAME);
-    serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(children[0].getId().getRawValue());
-
-    NES::FunctionList list;
-    auto* serializedFunction = list.add_functions();
-    serializedFunction->CopyFrom(getPredicate().serialize());
-
-    NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
-    SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
-    (*opDesc->mutable_config())["selectionFunctionName"] = variantDescriptor;
-
-    auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
-    auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
-    unaryOpDesc->set_allocated_inputschema(inputSchema);
-
-    for (const auto& originId : this->getInputOriginIds()[0])
-    {
-        unaryOpDesc->add_originids(originId.getRawValue());
-    }
-
-    opDesc->set_allocated_unaryoperator(unaryOpDesc);
-    auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->outputSchema, outputSchema);
-    serializedOperator.set_allocated_outputschema(outputSchema);
-    serializedOperator.set_allocated_operator_(opDesc);
-
-    return serializedOperator;
 }
 }

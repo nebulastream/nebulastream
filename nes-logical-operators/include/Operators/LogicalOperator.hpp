@@ -27,7 +27,6 @@
 
 namespace NES
 {
-class SerializableOperator;
 
 /// only used in this header, thus the anonymous namespace
 namespace

@@ -23,9 +23,7 @@ namespace NES
 class QueryPlanSerializationUtil
 {
 public:
-    static void
-    serializeQueryPlan(const LogicalPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated = false);
-
-    static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
+    static SerializableQueryPlan serializeQueryPlan(const LogicalPlan& queryPlan);
+    static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan);
 };
 }

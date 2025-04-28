@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
+#include <variant>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
@@ -22,6 +24,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
+#include <Serialization/FunctionSerializationUtil.hpp>
 
 namespace NES
 {
@@ -39,7 +44,7 @@ std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() const noex
 std::string EventTimeWatermarkAssignerLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "EVENTTIMEWATERMARKASSIGNER(" << id << ")";
+    ss << "EVENTTIMEWATERMARKASSIGNER(" << onField.toString() << ", " << unit.getMillisecondsConversionMultiplier() << ")";
     return ss.str();
 }
 
@@ -119,51 +124,67 @@ std::vector<LogicalOperator> EventTimeWatermarkAssignerLogicalOperator::getChild
     return children;
 }
 
-// TODO
-SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() const
-{
-    SerializableOperator serializedOperator;
+SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() const {
+    SerializableOperator_LogicalOperator proto;
 
-    auto* opDesc = new SerializableOperator_LogicalOperator();
-    opDesc->set_operatortype(NAME);
-    serializedOperator.set_operatorid(this->id.getRawValue());
-    serializedOperator.add_childrenids(getChildren()[0].getId().getRawValue());
-
-    NES::FunctionList list;
-    auto* serializedFunction = list.add_functions();
-    serializedFunction->CopyFrom(onField.serialize());
-
-    NES::Configurations::DescriptorConfig::ConfigType configVariant = list;
-    SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
-    (*opDesc->mutable_config())["functionList"] = variantDescriptor;
-
-    auto* unaryOpDesc = new SerializableOperator_UnaryLogicalOperator();
-
-
-    auto* inputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->getInputSchemas()[0], inputSchema);
-    unaryOpDesc->set_allocated_inputschema(inputSchema);
-
-    for (const auto& originId : this->getInputOriginIds()[0])
-    {
-        unaryOpDesc->add_originids(originId.getRawValue());
+    proto.set_operator_type(NAME);
+    auto* traitSetProto = proto.mutable_trait_set();
+    for (auto const& trait : getTraitSet()) {
+        *traitSetProto->add_traits() = trait.serialize();
     }
 
-    opDesc->set_allocated_unaryoperator(unaryOpDesc);
+    FunctionList funcList;
+    *funcList.add_functions() = onField.serialize();
+    Configurations::DescriptorConfig::ConfigType funcVariant = std::move(funcList);
+    (*proto.mutable_config())[ConfigParameters::FUNCTION] = descriptorConfigTypeToProto(funcVariant);
 
-    auto* outputSchema = new SerializableSchema();
-    SchemaSerializationUtil::serializeSchema(this->outputSchema, outputSchema);
-    serializedOperator.set_allocated_outputschema(outputSchema);
-    serializedOperator.set_allocated_operator_(opDesc);
+    Configurations::DescriptorConfig::ConfigType timeVariant = unit.getMillisecondsConversionMultiplier();
+    (*proto.mutable_config())[ConfigParameters::TIME_MS] = descriptorConfigTypeToProto(timeVariant);
 
-    return serializedOperator;
+    for (auto const& inputSchema : getInputSchemas()) {
+        auto* schProto = proto.add_input_schemas();
+        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
+    }
+
+    for (auto const& originList : getInputOriginIds()) {
+        auto* olist = proto.add_input_origin_lists();
+        for (auto originId : originList) {
+            olist->add_origin_ids(originId.getRawValue());
+        }
+    }
+
+    for (auto outId : getOutputOriginIds()) {
+        proto.add_output_origin_ids(outId.getRawValue());
+    }
+
+    auto* outSch = proto.mutable_output_schema();
+    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
+
+    SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
+    for (auto& child : getChildren()) {
+        serializableOperator.add_children_ids(child.getId().getRawValue());
+    }
+
+    serializableOperator.mutable_operator_()->CopyFrom(proto);
+    return serializableOperator;
 }
 
 LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments)
+LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments config)
 {
-    // TODO
-    ///return EventTimeWatermarkAssignerLogicalOperator();
-    throw UnsupportedOperation();
+    auto timeVariant = config.config[EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::TIME_MS];
+    auto functionVariant = config.config[EventTimeWatermarkAssignerLogicalOperator::ConfigParameters::FUNCTION];
+
+    if (std::holds_alternative<uint64_t>(timeVariant) and std::holds_alternative<FunctionList>(functionVariant)) {
+        const auto functions = std::get<FunctionList>(functionVariant).functions();
+        const auto time = Windowing::TimeUnit(std::get<uint64_t>(timeVariant));
+
+        INVARIANT(functions.size() == 1, "Expected exactly one function");
+        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
+
+        return EventTimeWatermarkAssignerLogicalOperator(function, time);
+    }
+    throw UnknownLogicalOperator();
 }
 }

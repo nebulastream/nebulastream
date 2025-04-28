@@ -21,6 +21,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
+#include "Configurations/Descriptor.hpp"
 
 namespace NES
 {
@@ -43,7 +44,7 @@ bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& r
 {
     if (const auto rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs))
     {
-        return getSourceDescriptor() == rhsOperator->getSourceDescriptor();
+        return *getSourceDescriptor() == *rhsOperator->getSourceDescriptor();
     }
     return false;
 }
@@ -51,8 +52,7 @@ bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& r
 std::string SourceDescriptorLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ", descriptor address:" << sourceDescriptor;
-    ss << ", schema: " << sourceDescriptor->schema.toString();
+    ss << "SOURCE(opId: " << id << ", descriptor:" << *sourceDescriptor;
     if (!inputOriginIds.empty())
     {
         ss << ", originId:" << inputOriginIds[0];
@@ -130,39 +130,16 @@ Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorR
 
 [[nodiscard]] SerializableOperator SourceDescriptorLogicalOperator::serialize() const
 {
-    SerializableOperator serializedOperator;
+    SerializableOperator_SourceDescriptorLogicalOperator proto;
+    INVARIANT(inputOriginIds.size() == 1, "Expected one input originId, got '{}' instead", inputOriginIds.size());
+    proto.set_sourceoriginid(inputOriginIds[0].getRawValue());
+    proto.mutable_sourcedescriptor()->CopyFrom(sourceDescriptor->serialize());
 
-    const auto serializedSource = new SerializableOperator_SourceDescriptorLogicalOperator();
+    SerializableOperator serializableOperator;
+    serializableOperator.set_operator_id(id.getRawValue());
 
-    const auto serializedSourceDescriptor = new SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor();
-
-    SchemaSerializationUtil::serializeSchema(sourceDescriptor->schema, serializedSourceDescriptor->mutable_sourceschema());
-    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor->logicalSourceName);
-    serializedSourceDescriptor->set_sourcetype(sourceDescriptor->sourceType);
-
-    /// Serialize parser config.
-    auto* const serializedParserConfig = ParserConfig().New();
-    serializedParserConfig->set_type(sourceDescriptor->parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(sourceDescriptor->parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(sourceDescriptor->parserConfig.fieldDelimiter);
-    serializedSourceDescriptor->set_allocated_parserconfig(serializedParserConfig);
-
-    /// Iterate over SourceDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : sourceDescriptor->config)
-    {
-        auto* kv = serializedSourceDescriptor->mutable_config();
-        kv->emplace(key, descriptorConfigTypeToProto(value));
-    }
-    serializedSource->set_allocated_sourcedescriptor(serializedSourceDescriptor);
-    serializedOperator.set_allocated_source(serializedSource);
-
-    return serializedOperator;
-}
-
-LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterSourceDescriptorLogicalOperator(LogicalOperatorRegistryArguments)
-{
-    throw UnsupportedOperation();
+    serializableOperator.mutable_source()->CopyFrom(proto);
+    return serializableOperator;
 }
 
 }
