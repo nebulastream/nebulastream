@@ -30,3 +30,8 @@ that contains the end of a test query "----"
 - Press Shift+F10 / Shift+F9 to rerun / debug the last test
 - To configure the program arguments, simply edit them in the "systest" configuration
 - NOTE: changes in "systest_plugin" are temporary and will be overwritten
+
+### Troubleshooting
+- If there is no 'systest' configuration in your run/debug configurations, even after the CMake project has been reloaded, 
+you might need to resolve any potential conflicts that lead to CLion not generating the Run/Debug configurations from the target. 
+If that does not work, you may need to create the configuration manually, especially if the configuration was deleted.

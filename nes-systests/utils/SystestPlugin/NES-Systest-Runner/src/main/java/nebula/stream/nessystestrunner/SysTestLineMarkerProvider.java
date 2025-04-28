@@ -3,9 +3,11 @@ package nebula.stream.nessystestrunner;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.ui.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -17,9 +19,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.cidr.cpp.cmake.model.CMakeConfiguration;
+import com.jetbrains.cidr.cpp.cmake.model.CMakeTarget;
 import com.jetbrains.cidr.cpp.cmake.workspace.CMakeProfileInfo;
 import com.jetbrains.cidr.cpp.cmake.workspace.CMakeWorkspace;
+import com.jetbrains.cidr.cpp.cmake.workspace.CMakeWorkspaceListener;
 import com.jetbrains.cidr.cpp.execution.*;
 import com.jetbrains.cidr.cpp.toolchains.CPPEnvironment;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSet;
@@ -29,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -45,6 +51,7 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
     @Nullable
     @Override
     public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
+
         return null;
     }
 
@@ -86,7 +93,7 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
                     firstLineRange,
                     AllIcons.Actions.RunAll,
                     psiElement -> "Run All System Tests in " + file.getVirtualFile().getName(),
-                    (e, elt) -> { runSysTest(elt.getProject(), false, file, 0); },
+                    (e, elt) -> { startRunSysTest(elt.getProject(), false, file, 0); },
                     GutterIconRenderer.Alignment.CENTER
             );
             result.add(firstLineMarkerInfo);
@@ -116,7 +123,7 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
                     lineTextRange,
                     AllIcons.Actions.Execute,
                     psiElement -> "Run System Test " + currentSystestIndex,
-                    (e, elt) -> { runSysTest(elt.getProject(), false, file, currentSystestIndex); },
+                    (e, elt) -> { startRunSysTest(elt.getProject(), false, file, currentSystestIndex); },
                     GutterIconRenderer.Alignment.CENTER
             );
             result.add(lineMarkerInfo);
@@ -127,7 +134,7 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
                     lineTextRange,
                     AllIcons.Actions.StartDebugger,
                     psiElement -> "Debug System Test " + currentSystestIndex,
-                    (e, elt) -> { runSysTest(elt.getProject(), true, file, currentSystestIndex); },
+                    (e, elt) -> { startRunSysTest(elt.getProject(), true, file, currentSystestIndex); },
                     GutterIconRenderer.Alignment.LEFT
             );
             result.add(lineMarkerInfoDebug);
@@ -139,7 +146,7 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
     /// This function is called when the systest Gutter Icon is clicked.
     /// It finds the "systest" configuration, makes a "systest_plugin" copy and modifies the program arguments
     /// Then run/debug the plugin configuration
-    public static void runSysTest(Project project, boolean runDebugger, PsiFile file, int testIndex) {
+    public static void startRunSysTest(Project project, boolean runDebugger, PsiFile file, int testIndex) {
 
         /// Save File to ensure recent changes apply to System Test run
         saveFile(file);
@@ -161,13 +168,6 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
         var content = contentFactory.createContent(consoleView.getComponent(), "Command Output", false);
         toolWindow.getContentManager().addContent(content);
 
-        /// If index is specified, only run that single test
-        String testPath = file.getVirtualFile().getPath();
-        String testIndexSuffix = "";
-        if(testIndex > 0){
-            testIndexSuffix = ":" + String.format("%02d", testIndex);
-        }
-
         try {
             /// Find the "systest" Run/Debug configuration
             RunManager runManager = RunManager.getInstance(project);
@@ -180,71 +180,42 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
 
             if(runnerAndConfigurationSettings == null){
                 toolWindow.activate(null);
-                consoleView.print("Could not find the 'systest' Run/Debug configuration.", ConsoleViewContentType.ERROR_OUTPUT);
+                consoleView.print("Could not find the 'systest' Run/Debug configuration. Reloading CMake... \n", ConsoleViewContentType.ERROR_OUTPUT);
                 toolWindow.show(null);
-                return;
-            }
-            CMakeAppRunConfiguration cMakeAppRunConfigurationExisting = (CMakeAppRunConfiguration) runnerAndConfigurationSettings.getConfiguration();
 
-            /// Check if systest_plugin configuration already exists and reuse
-            RunnerAndConfigurationSettings pluginConfigSettings = runManager
-                    .getAllSettings()
-                    .stream()
-                    .filter(confsettings -> "systest_plugin".equals(confsettings.getName()))
-                    .findFirst()
-                    .orElse(null);
+                CMakeWorkspace cMakeWorkspace = CMakeWorkspace.getInstance(project);
 
-            if(pluginConfigSettings == null){
-                /// Create systest_plugin configuration
-                CMakeAppRunConfigurationType configurationType = CMakeAppRunConfigurationType.getInstance();
-                pluginConfigSettings = runManager.createConfiguration(
-                        "systest_plugin", configurationType.getFactory()
-                );
-                runManager.addConfiguration(pluginConfigSettings);
-            }
+                MessageBusConnection connection = project.getMessageBus().connect();
 
-            /// Get the currently selected CMake profile and environment
-            CMakeWorkspace cMakeWorkspace = CMakeWorkspace.getInstance(project);
-            ExecutionTarget executionTarget = ExecutionTargetManager.getInstance(project).findTarget(cMakeAppRunConfigurationExisting);
-            CMakeConfiguration cMakeConfiguration = cMakeAppRunConfigurationExisting.getBuildAndRunConfigurations(executionTarget).getRunConfiguration();
-            CMakeProfileInfo activeProfile = cMakeWorkspace.getProfileInfoFor(cMakeConfiguration);
-            CPPEnvironment cppEnvironment = activeProfile.getEnvironment();
+                connection.subscribe(CMakeWorkspaceListener.TOPIC, new CMakeWorkspaceListener() {
+                    @Override
+                    public void reloadingFinished(boolean canceled) {
+                        if (canceled) {
+                            consoleView.print("CMake Reload canceled. \n", ConsoleViewContentType.ERROR_OUTPUT);
+                        }
+                        RunnerAndConfigurationSettings runnerAndConfigurationSettings = runManager
+                                .getAllSettings()
+                                .stream()
+                                .filter(confsettings -> "systest".equals(confsettings.getName()))
+                                .findFirst()
+                                .orElse(null);
+                        if(runnerAndConfigurationSettings == null){
+                            consoleView.print("Could not find 'systest' configuration after CMake reload. \n " +
+                                    "Please ensure that CMake can create the Run/Debug Configuration from the 'systest' target " +
+                                    "or create the configuration manually if it is missing.", ConsoleViewContentType.ERROR_OUTPUT);
+                            return;
+                        }
 
-            /// Get the correct test path from the environment
-            String executablePath = cppEnvironment.toEnvPath(testPath);
-            String Parameters = "-t " + executablePath + testIndexSuffix;
+                        runSysTest(project, runDebugger, runnerAndConfigurationSettings, file, testIndex);
+                        connection.disconnect();
+                    }
+                });
 
-            /// Filter out old test path in parameters, if it exists; plugin path takes priority
-            String existingParameters = cMakeAppRunConfigurationExisting.getProgramParameters();
-            String cleanedOldParameters = "";
-            if(existingParameters != null){
-                String tPattern = "-t\\s+\\S+";
-                cleanedOldParameters = existingParameters.replaceAll(tPattern, "").trim();
-                tPattern = "--testLocation\\s+\\S+";
-                cleanedOldParameters = cleanedOldParameters.replaceAll(tPattern, "").trim();
-            }
-
-            /// Change program parameters of plugin configuration
-            CMakeAppRunConfiguration cMakeAppRunConfigurationPlugin = (CMakeAppRunConfiguration)  pluginConfigSettings.getConfiguration();
-            cMakeAppRunConfigurationPlugin.setTargetAndConfigurationData(cMakeAppRunConfigurationExisting.getTargetAndConfigurationData());
-            cMakeAppRunConfigurationPlugin.setExecutableData(cMakeAppRunConfigurationExisting.getExecutableData());
-            cMakeAppRunConfigurationPlugin.setProgramParameters(Parameters + " " + cleanedOldParameters);
-            pluginConfigSettings.setTemporary(false);
-            cMakeAppRunConfigurationPlugin.setExplicitBuildTargetName(cMakeAppRunConfigurationExisting.getExplicitBuildTargetName());
-            runManager.setSelectedConfiguration(pluginConfigSettings);
-
-            /// Run/Debug the plugin configuration
-            if(runDebugger){
-                ProgramRunnerUtil.executeConfiguration(
-                        pluginConfigSettings,
-                        DefaultDebugExecutor.getDebugExecutorInstance()
-                );
+                /// trigger cmake reload
+                CMakeWorkspace.getInstance(project).scheduleReload(true);
             }
             else{
-                ProgramRunnerUtil.executeConfiguration(
-                        pluginConfigSettings,
-                        DefaultRunExecutor.getRunExecutorInstance()
-                );
+                runSysTest(project, runDebugger, runnerAndConfigurationSettings, file, testIndex);
             }
         }
         catch(Exception e) {
@@ -254,6 +225,89 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
                 consoleView.print(element.toString() + "\n", ConsoleViewContentType.ERROR_OUTPUT);
             }
             toolWindow.show(null);
+        }
+    }
+    public static void runSysTest(
+            Project project,
+            boolean runDebugger,
+            RunnerAndConfigurationSettings runnerAndConfigurationSettings,
+            PsiFile file,
+            int testIndex
+            ) {
+        RunManager runManager = RunManager.getInstance(project);
+        CMakeAppRunConfiguration cMakeAppRunConfigurationExisting = (CMakeAppRunConfiguration) runnerAndConfigurationSettings.getConfiguration();
+
+        /// Check if 'systest_plugin' configuration already exists and reuse
+        RunnerAndConfigurationSettings pluginConfigSettings = runManager
+                .getAllSettings()
+                .stream()
+                .filter(confsettings -> "systest_plugin".equals(confsettings.getName()))
+                .findFirst()
+                .orElse(null);
+
+        if(pluginConfigSettings == null){
+            /// Create systest_plugin configuration
+            CMakeAppRunConfigurationType configurationType = CMakeAppRunConfigurationType.getInstance();
+            pluginConfigSettings = runManager.createConfiguration(
+                    "systest_plugin", configurationType.getFactory()
+            );
+            runManager.addConfiguration(pluginConfigSettings);
+        }
+
+        /// Get the currently selected CMake profile and environment
+        CMakeWorkspace cMakeWorkspace = CMakeWorkspace.getInstance(project);
+        ExecutionTarget executionTarget = ExecutionTargetManager.getInstance(project).findTarget(cMakeAppRunConfigurationExisting);
+        CMakeConfiguration cMakeConfiguration = cMakeAppRunConfigurationExisting.getBuildAndRunConfigurations(executionTarget).getRunConfiguration();
+        CMakeProfileInfo activeProfile = null;
+        try {
+            activeProfile = cMakeWorkspace.getProfileInfoFor(cMakeConfiguration);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        CPPEnvironment cppEnvironment = activeProfile.getEnvironment();
+
+        /// If index is specified, only run that single test
+        String testPath = file.getVirtualFile().getPath();
+        String testIndexSuffix = "";
+        if(testIndex > 0){
+            testIndexSuffix = ":" + String.format("%02d", testIndex);
+        }
+
+        /// Get the correct test path from the environment
+        String executablePath = cppEnvironment.toEnvPath(testPath);
+        String Parameters = "-t " + executablePath + testIndexSuffix;
+
+        /// Filter out old test path in parameters, if it exists; plugin path takes priority
+        String existingParameters = cMakeAppRunConfigurationExisting.getProgramParameters();
+        String cleanedOldParameters = "";
+        if(existingParameters != null){
+            String tPattern = "-t\\s+\\S+";
+            cleanedOldParameters = existingParameters.replaceAll(tPattern, "").trim();
+            tPattern = "--testLocation\\s+\\S+";
+            cleanedOldParameters = cleanedOldParameters.replaceAll(tPattern, "").trim();
+        }
+
+        /// Change program parameters of plugin configuration
+        CMakeAppRunConfiguration cMakeAppRunConfigurationPlugin = (CMakeAppRunConfiguration)  pluginConfigSettings.getConfiguration();
+        cMakeAppRunConfigurationPlugin.setTargetAndConfigurationData(cMakeAppRunConfigurationExisting.getTargetAndConfigurationData());
+        cMakeAppRunConfigurationPlugin.setExecutableData(cMakeAppRunConfigurationExisting.getExecutableData());
+        cMakeAppRunConfigurationPlugin.setProgramParameters(Parameters + " " + cleanedOldParameters);
+        pluginConfigSettings.setTemporary(false);
+        cMakeAppRunConfigurationPlugin.setExplicitBuildTargetName(cMakeAppRunConfigurationExisting.getExplicitBuildTargetName());
+        runManager.setSelectedConfiguration(pluginConfigSettings);
+
+        /// Run/Debug the plugin configuration
+        if(runDebugger){
+            ProgramRunnerUtil.executeConfiguration(
+                    pluginConfigSettings,
+                    DefaultDebugExecutor.getDebugExecutorInstance()
+            );
+        }
+        else{
+            ProgramRunnerUtil.executeConfiguration(
+                    pluginConfigSettings,
+                    DefaultRunExecutor.getRunExecutorInstance()
+            );
         }
     }
 
