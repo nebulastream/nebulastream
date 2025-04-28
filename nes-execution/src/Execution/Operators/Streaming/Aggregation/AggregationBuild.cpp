@@ -141,8 +141,7 @@ std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMa
                     hashMap.get(), copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
                 for (const auto entry : hashMapRef)
                 {
-                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
-                    auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
+                    auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entry.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
                     {
                         aggFunction->cleanup(state);

@@ -420,9 +420,9 @@ nautilus::val<bool> ChainedHashMapRef::EntryIterator::operator!=(const EntryIter
     return not(*this == other);
 }
 
-nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::EntryIterator::operator*() const
+ChainedHashMapRef::ChainedEntryRef ChainedHashMapRef::EntryIterator::operator*() const
 {
-    return currentEntry.entryRef;
+    return currentEntry;
 }
 
 }

@@ -87,7 +87,7 @@ public:
         EntryIterator& operator++();
         nautilus::val<bool> operator==(const EntryIterator& other) const;
         nautilus::val<bool> operator!=(const EntryIterator& other) const;
-        nautilus::val<ChainedHashMapEntry*> operator*() const;
+        ChainedHashMapRef::ChainedEntryRef operator*() const;
 
     private:
         nautilus::val<HashMap*> hashMapRef;

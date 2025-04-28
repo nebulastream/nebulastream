@@ -233,9 +233,8 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
             {
                 /// Writing the read value from the chained hash map into the buffer.
                 Record outputRecord;
-                const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
-                const auto keyRecord = entryRef.getKey();
-                const auto valueRecord = entryRef.getValue();
+                const auto keyRecord = entry.getKey();
+                const auto valueRecord = entry.getValue();
                 outputRecord.reassignFields(keyRecord);
                 outputRecord.reassignFields(valueRecord);
                 memoryProviderInputBuffer->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
