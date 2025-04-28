@@ -207,21 +207,21 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
                 outputRecord.reassignFields(valueRecord);
 
                 RecordBuffer recordBufferOutput(outputBufferForValues);
-                memoryProviderInputBuffer->writeRecord(i, recordBufferOutput, outputRecord);
+                memoryProviderInputBuffer->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
                 recordBufferOutput.setNumRecords(i + 1);
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
-nautilus::engine::CallableFunction<void, Memory::TupleBuffer*, Interface::HashMap*>
+nautilus::engine::CallableFunction<void, Memory::TupleBuffer*, Interface::HashMap*, Memory::AbstractBufferProvider*>
 ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
-        [this](nautilus::val<Memory::TupleBuffer*> bufferOutput, nautilus::val<Interface::HashMap*> hashMapVal)
+        [this](nautilus::val<Memory::TupleBuffer*> bufferOutput, nautilus::val<Interface::HashMap*> hashMapVal, nautilus::val<Memory::AbstractBufferProvider*> bufferProvider)
         {
             const Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             RecordBuffer recordBufferOutput(bufferOutput);
@@ -235,7 +235,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
                 const auto valueRecord = entryRef.getValue();
                 outputRecord.reassignFields(keyRecord);
                 outputRecord.reassignFields(valueRecord);
-                memoryProviderInputBuffer->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord);
+                memoryProviderInputBuffer->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
                 outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
                 recordBufferOutput.setNumRecords(outputBufferIndex);
             }
@@ -368,7 +368,7 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
 
     /// We are calling the function to find all entries and write them to the output buffer.
     auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBufferWithEntryIterator();
-    findAndWriteToOutputBuffer(std::addressof(bufferOutput), std::addressof(hashMap));
+    findAndWriteToOutputBuffer(std::addressof(bufferOutput), std::addressof(hashMap), bufferManager.get());
 
     /// Checking if the number of items are equal to the number of items in the exact map.
     ASSERT_EQ(bufferOutput.getNumberOfTuples(), exactMap.size());

@@ -235,7 +235,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 }
             }
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
-            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record);
+            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record, bufferProvider);
             recordBuffer.setNumRecords(i + 1);
         }
     };

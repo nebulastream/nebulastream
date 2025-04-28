@@ -74,7 +74,7 @@ nautilus::engine::
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
                 auto recordValue = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferValue, idxValues);
-                pagedVectorRef.writeRecord(recordValue);
+                pagedVectorRef.writeRecord(recordValue, bufferManagerVal);
             }
         }));
 }
@@ -108,7 +108,7 @@ nautilus::engine::
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
             {
                 const auto record = *it;
-                memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record);
+                memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
                 recordBufferIndex = recordBufferIndex + 1;
                 recordBufferOutput.setNumRecords(recordBufferIndex);
             }

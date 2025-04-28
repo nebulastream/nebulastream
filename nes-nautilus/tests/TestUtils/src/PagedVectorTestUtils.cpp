@@ -65,7 +65,7 @@ void runStoreTest(
             for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
             {
                 const auto record = memoryProviderInputBuffer->readRecord(projections, recordBuffer, i);
-                pagedVectorRef.writeRecord(record);
+                pagedVectorRef.writeRecord(record, bufferProviderVal);
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)
@@ -128,7 +128,7 @@ void runRetrieveTest(
             for (auto it = pagedVectorRef.begin(projections); it != pagedVectorRef.end(projections); ++it)
             {
                 auto record = *it;
-                memoryProviderActualBuffer->writeRecord(numberOfTuples, recordBuffer, record);
+                memoryProviderActualBuffer->writeRecord(numberOfTuples, recordBuffer, record, bufferProviderVal);
                 numberOfTuples = numberOfTuples + 1;
                 recordBuffer.setNumRecords(numberOfTuples);
             }
