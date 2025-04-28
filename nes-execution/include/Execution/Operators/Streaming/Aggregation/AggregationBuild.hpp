@@ -36,6 +36,9 @@ public:
         WindowAggregationOperator windowAggregationOperator);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
+    /// Method that gets called, once an aggregation slice gets destroyed.
+    [[nodiscard]] std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> getStateCleanupFunction() const;
+
 private:
     const std::vector<std::unique_ptr<Functions::Function>> keyFunctions;
 };

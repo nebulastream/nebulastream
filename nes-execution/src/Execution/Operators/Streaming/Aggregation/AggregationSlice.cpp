@@ -41,6 +41,15 @@ AggregationSlice::AggregationSlice(
     }
 }
 
+AggregationSlice::~AggregationSlice()
+{
+    PRECONDITION(
+        cleanupFunction != nullptr,
+        "The cleanup function should be set before the slice is destroyed. Have you called setCleanupFunction?");
+    cleanupFunction(hashMaps);
+    hashMaps.clear();
+}
+
 Nautilus::Interface::HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % hashMaps.size();
@@ -60,6 +69,18 @@ uint64_t AggregationSlice::getNumberOfTuples() const
         hashMaps.end(),
         0,
         [](uint64_t runningSum, const auto& hashMap) { return runningSum + hashMap->getNumberOfTuples(); });
+}
+
+void AggregationSlice::setCleanupFunction(
+    const std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)>& cleanupFunction)
+{
+    if (this->cleanupFunction == nullptr)
+    {
+        INVARIANT(
+            cleanupFunction != nullptr,
+            "The cleanup function should not be null. Have you passed a null function to setCleanupFunction?");
+        this->cleanupFunction = std::move(cleanupFunction);
+    }
 }
 
 }

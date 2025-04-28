@@ -96,6 +96,10 @@ void MaxAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
     max.writeToMemory(memAreaMax);
 }
 
+void MaxAggregationFunction::cleanup(nautilus::val<AggregationState*>)
+{
+}
+
 size_t MaxAggregationFunction::getSizeOfStateInBytes() const
 {
     return inputType->size();

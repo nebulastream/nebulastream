@@ -32,7 +32,7 @@ class WindowAggregationOperator
 {
 public:
     WindowAggregationOperator(
-        std::vector<std::unique_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
         std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys,
         std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues,
@@ -64,7 +64,8 @@ public:
 
 protected:
     /// It is fine that these are not nautilus types, because they are only used in the tracing and not in the actual execution
-    std::vector<std::unique_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
+    /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getStateCleanupFunction()
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction;
     std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldKeys;
     std::vector<Nautilus::Interface::MemoryProvider::FieldOffsets> fieldValues;
