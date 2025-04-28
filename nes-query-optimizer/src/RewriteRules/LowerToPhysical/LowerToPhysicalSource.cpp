@@ -30,11 +30,11 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     auto source = logicalOperator.get<SourceDescriptorLogicalOperator>();
 
     auto outputOriginIds = source.getOutputOriginIds();
-    PRECONDITION(outputOriginIds.size() == 1, "SourceDescriptorLogicalOperator should have exactly one origin id");
+    PRECONDITION(outputOriginIds.size() == 1, "SourceDescriptorLogicalOperator should have exactly one origin id, but has {}", outputOriginIds.size());
     auto physicalOperator = SourcePhysicalOperator(source.getSourceDescriptor(), outputOriginIds[0]);
 
     auto inputSchemas = logicalOperator.getInputSchemas();
-    PRECONDITION(inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema");
+    PRECONDITION(inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema());
     return {wrapper, {}};
 }

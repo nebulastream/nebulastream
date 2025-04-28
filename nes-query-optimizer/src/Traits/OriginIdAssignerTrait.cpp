@@ -21,11 +21,10 @@ namespace NES::Optimizer
 
 bool OriginIdAssignerTrait::operator==(const TraitConcept& other) const
 {
-    if (dynamic_cast<const OriginIdAssignerTrait*>(&other))
-    {
-        return true;
+    if (typeid(other) != typeid(*this)) {
+        return false;
     }
-    return false;
+    return true;
 }
 
 std::string OriginIdAssignerTrait::toString() const

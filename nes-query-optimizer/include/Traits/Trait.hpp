@@ -23,17 +23,42 @@
 namespace NES::Optimizer
 {
 
+/// Concept defining the interface for all traits in the query optimizer.
+/// Traits are used to annotate logical operators with additional properties
+/// that can be used during query optimization.
 struct TraitConcept
 {
     virtual ~TraitConcept() = default;
+    
+    /// Returns the type information of this trait.
+    /// @return const std::type_info& The type information of this trait.
     [[nodiscard]] virtual const std::type_info& getType() const = 0;
+    
+    /// Serializes this trait to a protobuf message.
+    /// @return SerializableTrait The serialized trait.
     [[nodiscard]] virtual SerializableTrait serialize() const = 0;
+    
+    /// Compares this trait with another trait for equality.
+    /// @param other The trait to compare with.
+    /// @return bool True if the traits are equal, false otherwise.
     virtual bool operator==(const TraitConcept& other) const = 0;
 };
 
+/// A type-erased wrapper for traits.
+/// This class provides type erasure for traits, allowing them to be stored
+/// and manipulated without knowing their concrete type. It uses the PIMPL pattern
+/// to store the actual trait implementation.
+/// @tparam T The type of the trait. Must inherit from TraitConcept.
+template<typename T>
+concept IsTrait = std::is_base_of_v<TraitConcept, std::remove_cv_t<std::remove_reference_t<T>>>;
+
+/// Type-erased trait that can be used to annotate logical operators.
 struct Trait
 {
-    template <typename T>
+    /// Constructs a Trait from a concrete trait type.
+    /// @tparam T The type of the trait. Must satisfy IsTrait concept.
+    /// @param op The trait to wrap.
+    template <IsTrait T>
     Trait(const T& op) : self(std::make_unique<Model<T>>(op))
     {
     }
@@ -41,6 +66,9 @@ struct Trait
     Trait(const Trait& other);
     Trait(Trait&&) noexcept;
 
+    /// Attempts to get the underlying trait as type T.
+    /// @tparam T The type to try to get the trait as.
+    /// @return std::optional<T> The trait if it is of type T, nullopt otherwise.
     template <typename T>
     [[nodiscard]] std::optional<T> tryGet() const
     {
@@ -51,6 +79,10 @@ struct Trait
         return std::nullopt;
     }
 
+    /// Gets the underlying trait as type T.
+    /// @tparam T The type to get the trait as.
+    /// @return const T The trait.
+    /// @throw InvalidDynamicCast If the trait is not of type T.
     template <typename T>
     [[nodiscard]] const T get() const
     {
@@ -62,7 +94,13 @@ struct Trait
     }
 
     Trait& operator=(const Trait& other);
+    
+    /// Returns the type information of this trait.
+    /// @return const std::type_info& The type information of this trait.
     [[nodiscard]] const std::type_info& getType() const;
+    
+    /// Serializes this trait to a protobuf message.
+    /// @return SerializableTrait The serialized trait.
     [[nodiscard]] SerializableTrait serialize() const;
 
 private:
@@ -84,7 +122,7 @@ private:
         {
             if (auto p = dynamic_cast<const Model*>(&other))
             {
-                return data == p->data;
+                return data.operator==(p->data);
             }
             return false;
         }
@@ -108,6 +146,10 @@ private:
 using TraitSet = std::vector<Trait>;
 }
 
+/// Checks if a trait set contains a trait of type T.
+/// @tparam T The type of trait to check for.
+/// @param traitSet The trait set to check.
+/// @return bool True if the trait set contains a trait of type T, false otherwise.
 template <typename T>
 bool hasTrait(const NES::Optimizer::TraitSet& traitSet)
 {
@@ -121,6 +163,10 @@ bool hasTrait(const NES::Optimizer::TraitSet& traitSet)
     return false;
 }
 
+/// Checks if a trait set contains all of the specified trait types.
+/// @tparam TraitTypes The types of traits to check for.
+/// @param traitSet The trait set to check.
+/// @return bool True if the trait set contains all of the specified trait types, false otherwise.
 template <typename... TraitTypes>
 bool hasTraits(const NES::Optimizer::TraitSet& traitSet)
 {
