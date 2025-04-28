@@ -48,7 +48,7 @@ public:
         Memory::TupleBuffer,
         BaseTask::onComplete,
         BaseTask::onFailure,
-        Execution::PipelineExecutionContext::ContinuationPolicy continuationPolicy)
+        PipelineExecutionContext::ContinuationPolicy continuationPolicy)
         = 0;
     virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, BaseTask::onComplete, BaseTask::onFailure) = 0;
     virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure) = 0;

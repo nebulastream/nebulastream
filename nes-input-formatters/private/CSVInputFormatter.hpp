@@ -61,7 +61,7 @@ public:
 
     void parseTupleBufferRaw(
         const Memory::TupleBuffer& rawTB,
-        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        PipelineExecutionContext& pipelineExecutionContext,
         size_t numBytesInRawTB,
         SequenceShredder& sequenceShredder) override;
 
@@ -69,7 +69,7 @@ public:
     /// since the stop call of the InputFormatterTask (pipeline) triggers the flush call.
     void flushFinalTuple(
         OriginId originId,
-        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        PipelineExecutionContext& pipelineExecutionContext,
         SequenceShredder& sequenceShredder) override;
 
     size_t getSizeOfTupleDelimiter() override;
@@ -89,7 +89,7 @@ private:
         const size_t partialTupleEndIdx,
         const std::vector<SequenceShredder::StagedBuffer>& buffersToFormat,
         ProgressTracker& progressTracker,
-        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext);
+        PipelineExecutionContext& pipelineExecutionContext);
 };
 
 }

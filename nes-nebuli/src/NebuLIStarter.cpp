@@ -222,7 +222,7 @@ int main(int argc, char** argv)
 
         std::string output;
         NES::SerializableQueryPlan serialized;
-        NES::QueryPlanSerializationUtil::serializeDecomposedQueryPlan(*queryPlan, &serialized);
+        NES::QueryPlanSerializationUtil::serializeQueryPlan(*queryPlan, &serialized);
         google::protobuf::TextFormat::PrintToString(serialized, &output);
         NES_INFO("GRPC QueryPlan: {}", output);
         if (program.is_subcommand_used("dump"))

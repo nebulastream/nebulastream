@@ -233,7 +233,7 @@ public:
         Memory::TupleBuffer buffer,
         BaseTask::onComplete complete,
         BaseTask::onFailure failure,
-        const Execution::PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
+        const PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
     {
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
@@ -255,12 +255,12 @@ public:
         /// WorkerThread
         switch (continuationPolicy)
         {
-            case Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
+            case PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
                 addTaskOrDoItInPlace(std::move(task));
                 return true;
 
-            case Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT:
-            case Execution::PipelineExecutionContext::ContinuationPolicy::NEVER:
+            case PipelineExecutionContext::ContinuationPolicy::REPEAT:
+            case PipelineExecutionContext::ContinuationPolicy::NEVER:
                 if (not internalTaskQueue.tryWriteUntil(
                         std::chrono::high_resolution_clock::now() + std::chrono::seconds(1), std::move(task)))
                 {
@@ -453,7 +453,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
-                if (continuationPolicy == Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT)
+                if (continuationPolicy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
                 {
                     pool.statistic->onEvent(
                         TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
@@ -852,7 +852,7 @@ void QueryCatalog::start(
 
     if (state->transition([&](Reserved&&) { return Starting{std::move(runningQueryPlan)}; }))
     {
-        listener->logQueryStatusChange(queryId, Execution::QueryStatus::Started, startTimestamp);
+        listener->logQueryStatusChange(queryId, QueryStatus::Started, startTimestamp);
     }
     else
     {

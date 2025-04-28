@@ -212,10 +212,10 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto [timeStampFieldRight, timeStampFieldLeft] = getTimestampLeftAndRight(join, windowType);
 
     auto leftBuildOperator
-        = NLJBuildPhysicalOperator(leftMemoryProvider, handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction());
+        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftMemoryProvider);
 
     auto rightBuildOperator
-        = NLJBuildPhysicalOperator(rightMemoryProvider, handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction());
+        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightMemoryProvider);
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator = NLJProbePhysicalOperator(

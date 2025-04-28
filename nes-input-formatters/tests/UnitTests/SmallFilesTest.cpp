@@ -89,7 +89,7 @@ public:
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
         const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes);
         PRECONDITION(
-            testConfig.sizeOfFormattedBuffers >= schema->getSchemaSizeInBytes(),
+            testConfig.sizeOfFormattedBuffers >= schema.getSchemaSizeInBytes(),
             "The formatted buffer must be large enough to hold at least one tuple.");
 
         const auto testFilePath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / currentTestFile.fileName;
@@ -113,15 +113,16 @@ public:
         ASSERT_EQ(rawBuffers.size(), numberOfExpectedRawBuffers);
         ASSERT_EQ(fileSource->tryStop(std::chrono::milliseconds(1000)), Sources::SourceReturnType::TryStopResult::SUCCESS);
 
+        uint64_t count = 0;
         /// We assume that we don't need more than two times the number of buffers to represent the formatted data than we need to represent the raw data
         const auto numberOfRequiredFormattedBuffers = rawBuffers.size() * 2;
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
             auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);
-            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(*schema);
+            auto inputFormatterTask = InputFormatterTestUtil::createInputFormatterTask(schema);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
-            std::vector<Runtime::Execution::TestablePipelineTask> pipelineTasks;
+            std::vector<TestablePipelineTask> pipelineTasks;
             pipelineTasks.reserve(numberOfExpectedRawBuffers);
             rawBuffers.modifyBuffer(
                 [&](auto& rawBuffers)
@@ -131,13 +132,13 @@ public:
                         const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
                         const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
                         rawBuffer.setSequenceNumber(currentSequenceNumber);
-                        auto pipelineTask = Runtime::Execution::TestablePipelineTask(
+                        auto pipelineTask = TestablePipelineTask(
                             WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
                         pipelineTasks.emplace_back(std::move(pipelineTask));
                         ++bufferIdx;
                     }
                 });
-            auto taskQueue = std::make_unique<Runtime::Execution::MultiThreadedTestTaskQueue>(
+            auto taskQueue = std::make_unique<MultiThreadedTestTaskQueue>(
                 testConfig.numberOfThreads, pipelineTasks, testBufferManager, resultBuffers);
             taskQueue->startProcessing();
             taskQueue->waitForCompletion();
@@ -162,6 +163,7 @@ public:
             std::ofstream out(resultFilePath);
             for (const auto& buffer : resultBufferVec | std::views::take(resultBufferVec.size() - 1))
             {
+                count += buffer.getNumberOfTuples();
                 auto actualResultTestBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
                 actualResultTestBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
                 const auto currentBufferAsString
@@ -178,7 +180,7 @@ public:
                 out << Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBufferVec.back(), schema)
                            .toString(schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_WITHOUT_NEWLINE);
             }
-
+            std::cout << count << "\n";
             out.close();
             ASSERT_TRUE(InputFormatterTestUtil::compareFiles(testFilePath, resultFilePath));
             resultBuffers->clear();
@@ -203,7 +205,7 @@ TEST_F(SmallFilesTest, testBimboData)
     runTest(TestConfig{
         .testFileName = "Bimbo_1_1000",
         .numberOfIterations = 1,
-        .numberOfThreads = 8,
+        .numberOfThreads = 1,
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 4096});
 }

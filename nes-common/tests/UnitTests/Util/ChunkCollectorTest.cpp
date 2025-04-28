@@ -76,12 +76,12 @@ TEST(CheckChunkCollector, MultipleTimesLastChunkSet)
     SKIP_IF_TSAN();
 
     ChunkCollector sequence;
-    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Runtime::Timestamp(2)), std::nullopt);
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false},Timestamp(2)), std::nullopt);
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Runtime::Timestamp(12)),
-        SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(12)));
+        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(12)),
+        SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(12)));
     EXPECT_DEATH_DEBUG(
-        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 2), true}, Runtime::Timestamp(12)), "");
+        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 2), true}, Timestamp(12)), "");
 }
 
 TEST(ChunkCollectorTest, DifferentSequenceNumbers)

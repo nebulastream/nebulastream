@@ -32,13 +32,13 @@ InputFormatterTask::InputFormatterTask(const OriginId originId, std::unique_ptr<
 {
 }
 InputFormatterTask::~InputFormatterTask() = default;
-void InputFormatterTask::stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
+void InputFormatterTask::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     inputFormatter->flushFinalTuple(originId, pipelineExecutionContext, *sequenceShredder);
 }
 
 void InputFormatterTask::execute(
-    const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
+    const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
     inputFormatter->parseTupleBufferRaw(
         inputTupleBuffer, pipelineExecutionContext, inputTupleBuffer.getNumberOfTuples(), *sequenceShredder);

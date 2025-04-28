@@ -28,6 +28,7 @@
 #include <PipelinedQueryPlan.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {

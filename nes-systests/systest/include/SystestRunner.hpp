@@ -24,6 +24,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace NES::Systest
 {

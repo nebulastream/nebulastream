@@ -46,6 +46,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 
 namespace YAML
 {
@@ -196,12 +197,13 @@ Sources::SourceDescriptor createSourceDescriptor(
 
 void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config)
 {
+    auto sinkOperators = query.getOperatorByType<SinkLogicalOperator>();
     PRECONDITION(
         sinkOperators.size() == 1,
         "NebulaStream currently only supports a single sink per query, but the query contains: {}",
-        query.getSinkOperators().size());
+        sinkOperators.size());
     PRECONDITION(not config.sinks.empty(), "Expects at least one sink in the query config!");
-    if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
+    if (const auto sink = config.sinks.find(sinkOperators.at(0).getSinkName()); sink != config.sinks.end())
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
         auto copy = sinkOperators.at(0);
@@ -247,11 +249,7 @@ std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& co
                 INITIAL<WorkerId>));
     }
 
-    auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
-    auto queryplan = std::move(query).flip();
-    auto logicalSourceExpansionRule = LegacyOptimizer::LogicalSourceExpansionRule::create(sourceCatalog);
-    auto typeInference = LegacyOptimizer::TypeInferencePhase::create(sourceCatalog);
-    auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase::create();
+    auto queryplan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
 
     validateAndSetSinkDescriptors(queryplan, config);
     LegacyOptimizer::TypeInferencePhase::apply(queryplan, *sourceCatalog);
