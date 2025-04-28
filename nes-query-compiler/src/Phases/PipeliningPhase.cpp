@@ -77,13 +77,11 @@ void buildPipelineRecursive(
     OperatorPipelineMap& pipelineMap,
     bool forceNewPipeline = false)
 {
-    OperatorId opId = opWrapper->physicalOperator.getId();
-
     /// Check if we have already see the operator
+    OperatorId opId = opWrapper->physicalOperator.getId();
     if (auto it = pipelineMap.find(opId); it != pipelineMap.end())
     {
-        // Instead of doing nothing, make sure the existing pipeline is linked as a successor.
-        // (Optionally, you may wish to check to avoid duplicate insertions.)
+        // We make sure the existing pipeline is linked as a successor.
         currentPipeline->addSuccessor(it->second);
         return;
     }
@@ -194,7 +192,6 @@ void buildPipelineRecursive(
 }
 
 std::shared_ptr<PipelinedQueryPlan> apply(PhysicalPlan physicalPlan)
-
 {
     auto pipelinedPlan = std::make_shared<PipelinedQueryPlan>(physicalPlan.queryId);
 
@@ -202,9 +199,8 @@ std::shared_ptr<PipelinedQueryPlan> apply(PhysicalPlan physicalPlan)
 
     for (const auto& rootWrapper : physicalPlan.rootOperators)
     {
-        OperatorId opId = rootWrapper->physicalOperator.getId();
-
         auto rootPipeline = std::make_shared<Pipeline>(rootWrapper->physicalOperator);
+        OperatorId opId = rootWrapper->physicalOperator.getId();
         pipelineMap[opId] = rootPipeline;
         pipelinedPlan->pipelines.push_back(rootPipeline);
 
@@ -214,7 +210,6 @@ std::shared_ptr<PipelinedQueryPlan> apply(PhysicalPlan physicalPlan)
         }
     }
 
-    std::cout << pipelinedPlan->toString() << "\n";
     NES_DEBUG("Constructed pipeline plan with {} root pipelines.", pipelinedPlan->pipelines.size());
     return pipelinedPlan;
 }
