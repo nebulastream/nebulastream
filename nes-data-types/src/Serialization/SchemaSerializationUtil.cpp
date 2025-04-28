@@ -36,12 +36,10 @@ SerializableSchema SchemaSerializationUtil::serializeSchema(const Schema& schema
     if (schema.getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_ROW_LAYOUT);
-        NES_DEBUG("SchemaSerializationUtil:: serialize schema Row Layout");
     }
     else if (schema.getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_COL_LAYOUT);
-        NES_DEBUG("SchemaSerializationUtil:: serialize schema Column Layout");
     }
 
     return SerializableSchema(*serializedSchema);
@@ -64,12 +62,10 @@ Schema SchemaSerializationUtil::deserializeSchema(const SerializableSchema& seri
     {
         case SerializableSchema_MemoryLayoutType_ROW_LAYOUT: {
             deserializedSchema.setLayoutType(Schema::MemoryLayoutType::ROW_LAYOUT);
-            NES_DEBUG("SchemaSerializationUtil:: deserialized row Layout");
             break;
         }
         case SerializableSchema_MemoryLayoutType_COL_LAYOUT: {
             deserializedSchema.setLayoutType(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
-            NES_DEBUG("SchemaSerializationUtil:: deserialized columnar Layout");
             break;
         }
         default: {
