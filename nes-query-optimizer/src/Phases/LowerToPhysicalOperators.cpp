@@ -88,7 +88,6 @@ PhysicalPlan apply(LogicalPlan queryPlan)
 
     INVARIANT(newRootOperators.size() >= 1, "Plan must have at least one root operator");
     auto physicalPlan = PhysicalPlan(queryPlan.getQueryId(), std::move(newRootOperators));
-    std::cout << physicalPlan.toString() << "\n";
     return physicalPlan;
 }
 }
