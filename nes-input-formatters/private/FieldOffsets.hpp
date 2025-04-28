@@ -16,7 +16,9 @@
 
 #include <cstddef>
 #include <functional>
+#include <span>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -31,16 +33,30 @@ namespace NES::InputFormatters
 class FieldOffsets final : public FieldAccessFunction<FieldOffsets>
 {
     friend FieldAccessFunction;
-    static constexpr size_t NUMBER_OF_RESERVED_FIELDS = 2; /// layout: [numberOfTuples | indexToChildBuffer | filedOffsets ...]
+    static constexpr size_t NUMBER_OF_RESERVED_FIELDS = 1; /// layout: [numberOfTuples | fieldOffsets ...]
     static constexpr size_t NUMBER_OF_RESERVED_BYTES = NUMBER_OF_RESERVED_FIELDS * sizeof(FieldOffsetsType);
     static constexpr size_t OFFSET_OF_TOTAL_NUMBER_OF_TUPLES = 0;
-    static constexpr size_t OFFSET_OF_INDEX_TO_CHILD_BUFFER = 1;
 
     /// FieldAccessFunction (CRTP) interface functions
     [[nodiscard]] FieldOffsetsType applyGetOffsetOfFirstTupleDelimiter() const;
     [[nodiscard]] FieldOffsetsType applyGetOffsetOfLastTupleDelimiter() const;
     [[nodiscard]] size_t applyGetTotalNumberOfTuples() const;
     [[nodiscard]] std::string_view applyReadFieldAt(std::string_view bufferView, size_t tupleIdx, size_t fieldIdx) const;
+
+    class FieldOffsetsBuffer
+    {
+    public:
+        explicit FieldOffsetsBuffer(Memory::TupleBuffer tupleBuffer)
+            : tupleBuffer(std::move(tupleBuffer))
+            , fieldOffsetSpan(this->tupleBuffer.getBuffer<FieldOffsetsType>(), this->tupleBuffer.getBufferSize()) { };
+        ~FieldOffsetsBuffer() = default;
+
+        [[nodiscard]] FieldOffsetsType& operator[](const size_t tupleIdx) const { return fieldOffsetSpan[tupleIdx]; }
+
+    private:
+        Memory::TupleBuffer tupleBuffer;
+        std::span<FieldOffsetsType> fieldOffsetSpan;
+    };
 
 public:
     explicit FieldOffsets(Memory::AbstractBufferProvider& bufferProvider) : bufferProvider(bufferProvider) { };
@@ -71,9 +87,9 @@ private:
     size_t totalNumberOfTuples{};
     FieldOffsetsType offsetOfFirstTuple{};
     FieldOffsetsType offsetOfLastTuple{};
-    std::vector<Memory::TupleBuffer> offsetBuffers;
-    /// The InputFormatterTask (IFT) guarantees that the reference to AbstractBufferProvider (ABP) outlives this FieldOffsets instance
-    /// (the IFT constructs and deconstructs the FieldOffsets instance in its 'execute' function, which gets an ABP as an argument)
+    std::vector<FieldOffsetsBuffer> offsetBuffers;
+    /// The InputFormatterTask guarantees that the reference to AbstractBufferProvider (ABP) outlives this FieldOffsets instance, since the
+    /// InputFormatterTask constructs and deconstructs the FieldOffsets instance in its 'execute' function, which gets the ABP as an argument
     Memory::AbstractBufferProvider& bufferProvider; ///NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
     /// Sets the metadata for the current buffer, uses the buffer provider to get a new buffer.

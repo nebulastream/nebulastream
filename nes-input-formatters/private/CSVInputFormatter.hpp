@@ -18,9 +18,9 @@
 #include <ostream>
 
 #include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <FieldOffsets.hpp>
-#include <InputFormatterRegistry.hpp>
 
 namespace NES::InputFormatters
 {
@@ -36,7 +36,8 @@ public:
     CSVInputFormatter(CSVInputFormatter&&) = delete;
     CSVInputFormatter& operator=(CSVInputFormatter&&) = delete;
 
-    void setupFieldAccessFunctionForBuffer(FieldOffsets& fieldOffsets, const BufferData& bufferData, const TupleMetaData&) const override;
+    void
+    setupFieldAccessFunctionForBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

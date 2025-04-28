@@ -45,8 +45,8 @@ ParseFunctionSignature getBasicStringParseFunction()
             inputString.data(),
             valueLength);
         const auto indexToChildBuffer = tupleBufferFormatted.storeChildBuffer(childBufferVal);
-        auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>(
-            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         *childBufferIndexPointer = indexToChildBuffer;
     };
 }

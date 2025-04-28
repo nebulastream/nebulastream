@@ -24,6 +24,7 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include <API/Schema.hpp>

@@ -24,6 +24,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -48,18 +49,20 @@ SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter, const size
     , numberOfBitmaps(initialNumBitmaps)
     , numberOfBitmapsModulo(initialNumBitmaps - 1)
     , resizeRequestCount(0)
-    , stagedBuffers(std::vector<StagedBuffer>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
+    , stagedBuffers({})
     , stagedBufferUses(std::vector<int8_t>(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT))
 {
+    this->stagedBuffers.reserve(numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT);
+    for (size_t i = 0; i < (numberOfBitmaps << BITMAP_SIZE_BIT_SHIFT); ++i)
+    {
+        this->stagedBuffers.emplace_back();
+    }
+
     this->tupleDelimiterBitmaps.shrink_to_fit();
     this->seenAndUsedBitmaps.shrink_to_fit();
 
     this->tupleDelimiterBitmaps[0] |= static_cast<SequenceNumberType>(1);
-    this->stagedBuffers[0]
-        = {.buffer = NES::Memory::TupleBuffer{},
-           .sizeOfBufferInBytes = sizeOfTupleDelimiter,
-           .offsetOfFirstTupleDelimiter = 0,
-           .offsetOfLastTupleDelimiter = 0};
+    this->stagedBuffers[0] = StagedBuffer{RawTupleBuffer{}, sizeOfTupleDelimiter, 0, 0};
     this->stagedBufferUses[0] = 1;
 }
 
@@ -108,7 +111,8 @@ void SequenceShredder::validateState() noexcept
             auto largestActiveSequenceNumber = SequenceNumber::INVALID;
             std::vector<CriticalSequenceNumberEntry> criticalSequenceNumbers;
             std::vector<SequenceNumberType> openSequenceNumbers;
-            for (size_t sequenceNumberOffset = 0; sequenceNumberOffset < this->stagedBuffers.size(); ++sequenceNumberOffset)
+            /// Skipping the invalid sequence number '0' (which the SequenceShredder uses for a dummy buffer)
+            for (size_t sequenceNumberOffset = 1; sequenceNumberOffset < this->stagedBuffers.size(); ++sequenceNumberOffset)
             {
                 const auto runningSequenceNumber = firstSequenceNumberInRange + sequenceNumberOffset;
                 const auto offsetToTail = sequenceNumberOffset / SIZE_OF_BITMAP_IN_BITS;
@@ -122,13 +126,14 @@ void SequenceShredder::validateState() noexcept
 
                 const auto stagedBufferIdx = runningSequenceNumber % this->stagedBuffers.size();
                 const auto isUsed = this->stagedBufferUses[stagedBufferIdx] != 0;
-                const auto isNull = this->stagedBuffers[stagedBufferIdx].buffer.getBuffer() == nullptr;
+                const auto isNull = not(this->stagedBuffers[stagedBufferIdx].isValidRawBuffer());
                 const auto isInValidNotUsedState = not(isUsed) and isNull;
                 const auto isInValidUsedState = isUsed and not(isNull) and (isSeenAndUsedBitmapSet or isTupleDelimiterBitmapSet);
                 auto sequenceNumberIsOutOfRange = false;
                 if (not(isNull))
                 {
-                    const auto sequenceNumberOfBuffer = this->stagedBuffers[stagedBufferIdx].buffer.getSequenceNumber().getRawValue();
+                    const auto sequenceNumberOfBuffer
+                        = this->stagedBuffers[stagedBufferIdx].getRawTupleBuffer().getSequenceNumber().getRawValue();
                     sequenceNumberIsOutOfRange
                         = sequenceNumberOfBuffer < firstSequenceNumberInRange or sequenceNumberOfBuffer > lastSequenceNumberInRange;
                 }
@@ -195,14 +200,14 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
     Snapshot snapshot;
     bool needToCheckForWrappingToLower = false;
     bool needToCheckForWrappingToHigher = false;
-    SequenceNumberType sequenceNumberBufferPosition{};
     SequenceNumberType sequenceNumberBitmapIndex{};
     /// protect: read(tail,numberOfBitmapsModulo), read(tupleDelimiterBitmaps, seenAndUsedBitmaps)
     {
+        SequenceNumberType sequenceNumberBufferPosition{};
         const std::scoped_lock lock(this->readWriteMutex);
         sequenceNumberBufferPosition = sequenceNumber & (this->stagedBuffers.size() - 1);
         /// The SequenceShredder takes ownership of the staged buffer and returns it, once its uses reaches '0'
-        this->stagedBuffers[sequenceNumberBufferPosition] = stagedBufferOfSequenceNumber;
+        this->stagedBuffers[sequenceNumberBufferPosition] = stagedBufferOfSequenceNumber; ///NOLINT(performance-unnecessary-value-param)
         sequenceNumberBitmapIndex
             = sequenceNumberBitmapCount & this->numberOfBitmapsModulo; /// Needs protection because numBitsModule is variable
 
@@ -322,7 +327,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             break;
         }
         case WrappingMode::CHECK_WRAPPING_TO_LOWER_AND_HIGHER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
+            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
             const auto [spanningTupleStart, isStartValid]
                 = tryToFindLowerWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
             if (spanningTupleStart or HasTupleDelimiter)
@@ -349,7 +354,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
         /// stagedBuffers vector might not contain stagedBufferOfSequenceNumber anymore, in that case, the SequenceShredder returns the
         /// original 'stagedBufferOfSequenceNumber'
         return checkSpanningTupleWithTupleDelimiter(
-            spanningTuple, sequenceNumber, numberOfBitmapsModuloSnapshot, std::move(stagedBufferOfSequenceNumber));
+            spanningTuple, sequenceNumber, numberOfBitmapsModuloSnapshot, stagedBufferOfSequenceNumber);
     }
     else
     {
@@ -617,8 +622,8 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
         {
             const auto adjustedSpanningTupleIndex = sequenceNumber & stagedBufferSizeModulo;
             /// Check if the corresponding staged buffer, if not null, still has the same sequence number
-            const auto sequenceShredderStillOwnsBuffer = stagedBuffers[adjustedSpanningTupleIndex].buffer.getBuffer() != nullptr
-                and (stagedBuffers[adjustedSpanningTupleIndex].buffer.getSequenceNumber().getRawValue() == sequenceNumber);
+            const auto sequenceShredderStillOwnsBuffer = stagedBuffers[adjustedSpanningTupleIndex].isValidRawBuffer()
+                and (stagedBuffers[adjustedSpanningTupleIndex].getRawTupleBuffer().getSequenceNumber().getRawValue() == sequenceNumber);
             /// If the sequence shredder still owns the 'stagedBufferOfSequenceNumber', return its ownerhip
             if (sequenceShredderStillOwnsBuffer)
             {

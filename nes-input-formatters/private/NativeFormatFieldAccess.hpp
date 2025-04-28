@@ -34,31 +34,33 @@ public:
     explicit NativeFormatFieldAccess(Memory::AbstractBufferProvider&) { };
     ~NativeFormatFieldAccess() = default;
 
-    void startSetup(const BufferData& bufferData, const TupleMetaData& tupleMetaData)
+    void startSetup(const RawTupleBuffer& rawBuffer, const TupleMetaData& tupleMetaData)
     {
         /// Chunk numbers make it impossible to statelessly calculate the offsets of tuples, since we don't know into
         /// how many chunk numbers prior sequence numbers were split.
         /// If we determine the need to support chunk numbers, we should add metadata to buffers, e.g., storing the
         /// offset to the first tuple delimiter. The metadata could be part of the control block, or part of a header
         /// of the data buffer.
-        PRECONDITION(bufferData.chunkNumber == ChunkNumber::INITIAL, "The NativeFormatFieldAccess does not support chunk numbers yet.");
+        PRECONDITION(
+            rawBuffer.getChunkNumber().getRawValue() == ChunkNumber::INITIAL,
+            "The NativeFormatFieldAccess does not support chunk numbers yet.");
         this->tupleMetaData = tupleMetaData;
         if constexpr (HasSpanningTuples)
         {
             /// Calculate the overhang of the last tuple of the prior buffer into the current buffer, which is the
             /// offset of the first tuple in the current buffer
-            const size_t bytesHeldByPriorBuffers = (bufferData.sequenceNumber - 1) * bufferData.sizeOfBufferInBytes;
+            const size_t bytesHeldByPriorBuffers = (rawBuffer.getSequenceNumber().getRawValue() - 1) * rawBuffer.getBufferSize();
             const size_t overhang = (tupleMetaData.sizeOfTupleInBytes - (bytesHeldByPriorBuffers % tupleMetaData.sizeOfTupleInBytes))
                 % tupleMetaData.sizeOfTupleInBytes;
             this->offsetOfFirstTuple = overhang;
 
-            this->totalNumberOfTuples = (bufferData.sizeOfBufferInBytes - overhang) / tupleMetaData.sizeOfTupleInBytes;
+            this->totalNumberOfTuples = (rawBuffer.getBufferSize() - overhang) / tupleMetaData.sizeOfTupleInBytes;
             this->offsetOfLastTuple = this->offsetOfFirstTuple + (totalNumberOfTuples * tupleMetaData.sizeOfTupleInBytes);
         }
         else
         {
             this->offsetOfFirstTuple = 0;
-            this->totalNumberOfTuples = bufferData.sizeOfBufferInBytes / tupleMetaData.sizeOfTupleInBytes;
+            this->totalNumberOfTuples = rawBuffer.getBufferSize() / tupleMetaData.sizeOfTupleInBytes;
             this->offsetOfLastTuple = totalNumberOfTuples * tupleMetaData.sizeOfTupleInBytes;
         }
         this->offsetOfCurrentTuple = this->offsetOfFirstTuple;

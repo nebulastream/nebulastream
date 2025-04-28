@@ -72,12 +72,12 @@ CSVInputFormatter::CSVInputFormatter(Sources::ParserConfig config, const size_t 
 }
 
 void CSVInputFormatter::setupFieldAccessFunctionForBuffer(
-    FieldOffsets& fieldOffsets, const BufferData& bufferData, const TupleMetaData&) const
+    FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const
 {
     fieldOffsets.startSetup(numberOfFieldsInSchema, this->config.fieldDelimiter.size());
 
     const auto sizeOfTupleDelimiter = this->config.tupleDelimiter.size();
-    const auto offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(bufferData.bufferView.find(this->config.tupleDelimiter));
+    const auto offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(rawBuffer.getBufferView().find(this->config.tupleDelimiter));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTupleDelimiter' to a value larger than the buffer size to tell
     /// the InputFormatterTask that there was no tuple delimiter in the buffer and return
@@ -89,14 +89,14 @@ void CSVInputFormatter::setupFieldAccessFunctionForBuffer(
 
     /// If the buffer contains at least one delimiter, check if it contains more and index all tuples between the tuple delimiters
     auto startIdxOfNextTuple = offsetOfFirstTupleDelimiter + sizeOfTupleDelimiter;
-    size_t endIdxOfNextTuple = bufferData.bufferView.find(this->config.tupleDelimiter, startIdxOfNextTuple);
+    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(this->config.tupleDelimiter, startIdxOfNextTuple);
 
     while (endIdxOfNextTuple != std::string::npos)
     {
         /// Get a string_view for the next tuple, by using the start and the size of the next tuple
         INVARIANT(startIdxOfNextTuple <= endIdxOfNextTuple, "The start index of a tuple cannot be larger than the end index.");
         const auto sizeOfNextTuple = endIdxOfNextTuple - startIdxOfNextTuple;
-        const auto nextTuple = std::string_view(bufferData.bufferView.begin() + startIdxOfNextTuple, sizeOfNextTuple);
+        const auto nextTuple = std::string_view(rawBuffer.getBufferView().begin() + startIdxOfNextTuple, sizeOfNextTuple);
 
         /// Determine the offsets to the individual fields of the next tuple, including the start of the first and the end of the last field
         setupFieldAccessFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, this->config, this->numberOfFieldsInSchema);
@@ -104,7 +104,7 @@ void CSVInputFormatter::setupFieldAccessFunctionForBuffer(
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
         startIdxOfNextTuple = endIdxOfNextTuple + sizeOfTupleDelimiter;
-        endIdxOfNextTuple = bufferData.bufferView.find(this->config.tupleDelimiter, startIdxOfNextTuple);
+        endIdxOfNextTuple = rawBuffer.getBufferView().find(this->config.tupleDelimiter, startIdxOfNextTuple);
     }
     /// Since 'endIdxOfNextTuple == std::string::npos', we use the startIdx to determine the offset of the last tuple
     const auto offsetOfLastTupleDelimiter = static_cast<FieldOffsetsType>(startIdxOfNextTuple - sizeOfTupleDelimiter);

@@ -15,9 +15,10 @@
 #pragma once
 
 #include <ostream>
+#include <fmt/format.h>
 
 #include <InputFormatters/InputFormatter.hpp>
-#include <fmt/format.h>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <NativeFormatFieldAccess.hpp>
 
 namespace NES::InputFormatters
@@ -37,10 +38,10 @@ public:
 
     void setupFieldAccessFunctionForBuffer(
         NativeFormatFieldAccess<HasSpanningTuples>& fieldAccessFunction,
-        const BufferData& bufferData,
+        const RawTupleBuffer& rawBuffer,
         const TupleMetaData& tupleMetadata) const override
     {
-        fieldAccessFunction.startSetup(bufferData, tupleMetadata);
+        fieldAccessFunction.startSetup(rawBuffer, tupleMetadata);
     }
 
     [[nodiscard]] std::ostream& toString(std::ostream& os) const override { return os << fmt::format("NativeInputFormatter()"); }

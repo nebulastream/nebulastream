@@ -23,10 +23,12 @@
 #include <memory>
 #include <mutex>
 #include <ostream>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 
@@ -118,10 +120,54 @@ namespace NES::InputFormatters
 
 struct StagedBuffer
 {
-    Memory::TupleBuffer buffer;
-    size_t sizeOfBufferInBytes;
-    uint32_t offsetOfFirstTupleDelimiter;
-    uint32_t offsetOfLastTupleDelimiter;
+private:
+    friend class SequenceShredder;
+
+public:
+    StagedBuffer() = default;
+    StagedBuffer(
+        RawTupleBuffer rawTupleBuffer,
+        const size_t sizeOfBufferInBytes,
+        const uint32_t offsetOfFirstTupleDelimiter,
+        const uint32_t offsetOfLastTupleDelimiter)
+        : rawBuffer(std::move(rawTupleBuffer))
+        , sizeOfBufferInBytes(sizeOfBufferInBytes)
+        , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)
+        , offsetOfLastTupleDelimiter(offsetOfLastTupleDelimiter) { };
+
+    StagedBuffer(StagedBuffer&& other) noexcept = default;
+    StagedBuffer& operator=(StagedBuffer&& other) noexcept = default;
+    StagedBuffer(const StagedBuffer& other) = default;
+    StagedBuffer& operator=(const StagedBuffer& other) = default;
+
+    [[nodiscard]] std::string_view getBufferView() const { return rawBuffer.getBufferView(); }
+    /// Returns the _first_ bytes of a staged buffer that were not processed by another thread yet.
+    /// Typically, these are the bytes of a spanning tuple that _ends_ in the staged buffer.
+    [[nodiscard]] std::string_view getLeadingBytes() const { return rawBuffer.getBufferView().substr(0, offsetOfFirstTupleDelimiter); }
+
+    /// Returns the _last_ bytes of a staged buffer that were not processed by another thread yet.
+    /// Typically, these are the bytes of spanning tuple that _starts_ in the staged buffer.
+    [[nodiscard]] std::string_view getTrailingBytes(const size_t sizeOfTupleDelimiter) const
+    {
+        const auto sizeOfTrailingSpanningTuple = sizeOfBufferInBytes - (offsetOfLastTupleDelimiter + sizeOfTupleDelimiter);
+        const auto startOfTrailingSpanningTuple = (not isValidRawBuffer()) ? 0 : offsetOfLastTupleDelimiter + sizeOfTupleDelimiter;
+        return rawBuffer.getBufferView().substr(startOfTrailingSpanningTuple, sizeOfTrailingSpanningTuple);
+    }
+
+    [[nodiscard]] size_t getSizeOfBufferInBytes() const { return this->sizeOfBufferInBytes; }
+
+    [[nodiscard]] const RawTupleBuffer& getRawTupleBuffer() const { return rawBuffer; }
+
+    [[nodiscard]] bool isValidRawBuffer() const { return rawBuffer.getRawBuffer().getBuffer() != nullptr; }
+
+    void setSpanningTuple(const std::string_view spanningTuple) { rawBuffer.setSpanningTuple(spanningTuple); }
+
+
+protected:
+    RawTupleBuffer rawBuffer;
+    size_t sizeOfBufferInBytes{};
+    uint32_t offsetOfFirstTupleDelimiter{};
+    uint32_t offsetOfLastTupleDelimiter{};
 };
 
 /// The SequenceShredder's main job is to find spanning tuples (during concurrent processing of raw input buffers).

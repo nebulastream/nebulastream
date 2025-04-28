@@ -30,7 +30,7 @@
 /// tuple delimiters in the buffers that belong to the sequence numbers.
 /// Uses multiple threads that call the SequenceShredder to determine spanning tuples. Each thread randomly (seeded) determines whether its current
 /// request has a tuple delimiter or not, calls the 'processSequenceNumber' function of the SequenceShredder and tracks the resulting spanning tuples.
-/// We check whether the range of all produces sequence numbers matches the expected range.
+/// We   check whether the range of all produces sequence numbers matches the expected range.
 class StreamingMultiThreaderAutomatedSequenceShredderTest : public ::testing::Test
 {
 private:
@@ -122,19 +122,16 @@ public:
                 {
                 }
 
-                const auto dummyStagedBuffer = NES::InputFormatters::StagedBuffer{
-                    .buffer = NES::Memory::TupleBuffer{},
-                    .sizeOfBufferInBytes = threadLocalSequenceNumber,
-                    .offsetOfFirstTupleDelimiter = 0,
-                    .offsetOfLastTupleDelimiter = 0};
+                const auto dummyStagedBuffer
+                    = NES::InputFormatters::StagedBuffer{NES::InputFormatters::RawTupleBuffer{}, threadLocalSequenceNumber, 0, 0};
                 if (tupleDelimiter)
                 {
                     const auto stagedBuffers
                         = sequenceShredder.processSequenceNumber<true>(dummyStagedBuffer, threadLocalSequenceNumber).stagedBuffers;
                     if (stagedBuffers.size() > 1)
                     {
-                        const auto spanStart = stagedBuffers.front().sizeOfBufferInBytes;
-                        const auto spanEnd = stagedBuffers.back().sizeOfBufferInBytes;
+                        const auto spanStart = stagedBuffers.front().getSizeOfBufferInBytes();
+                        const auto spanEnd = stagedBuffers.back().getSizeOfBufferInBytes();
                         const auto localCheckSum = spanEnd - spanStart;
                         threadLocalCheckSum.at(threadIdx) += localCheckSum;
                     }
@@ -145,8 +142,8 @@ public:
                         = sequenceShredder.processSequenceNumber<false>(dummyStagedBuffer, threadLocalSequenceNumber).stagedBuffers;
                     if (stagedBuffers.size() > 1)
                     {
-                        const auto spanStart = stagedBuffers.front().sizeOfBufferInBytes;
-                        const auto spanEnd = stagedBuffers.back().sizeOfBufferInBytes;
+                        const auto spanStart = stagedBuffers.front().getSizeOfBufferInBytes();
+                        const auto spanEnd = stagedBuffers.back().getSizeOfBufferInBytes();
                         const auto localCheckSum = spanEnd - spanStart;
                         threadLocalCheckSum.at(threadIdx) += localCheckSum;
                     }

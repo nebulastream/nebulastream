@@ -19,8 +19,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 
 namespace NES::InputFormatters
 {
@@ -32,30 +32,6 @@ struct TupleMetaData
     size_t sizeOfTupleInBytes{};
     std::vector<size_t> fieldSizesInBytes;
     std::vector<size_t> fieldOffsetsInBytes;
-};
-
-struct BufferData
-{
-    std::string_view bufferView;
-    size_t sizeOfBufferInBytes;
-    SequenceNumber::Underlying sequenceNumber;
-    ChunkNumber::Underlying chunkNumber;
-
-    explicit BufferData(const Memory::TupleBuffer& rawBuffer)
-        : bufferView(rawBuffer.getBuffer<char>(), rawBuffer.getNumberOfTuples())
-        , sizeOfBufferInBytes(rawBuffer.getBufferSize())
-        , sequenceNumber(rawBuffer.getSequenceNumber().getRawValue())
-        , chunkNumber(rawBuffer.getChunkNumber().getRawValue())
-    {
-    }
-
-    explicit BufferData(const std::string_view spanningTuple, const Memory::TupleBuffer& startBufferOfSpanningTuple)
-        : bufferView(spanningTuple)
-        , sizeOfBufferInBytes(startBufferOfSpanningTuple.getBufferSize())
-        , sequenceNumber(startBufferOfSpanningTuple.getSequenceNumber().getRawValue())
-        , chunkNumber(startBufferOfSpanningTuple.getChunkNumber().getRawValue())
-    {
-    }
 };
 
 /// Implements format-specific (CSV, JSON, Protobuf, etc.) indexing of raw buffers.
@@ -81,7 +57,7 @@ public:
     /// @return the bytes-offset to the first and last tuple delimiter (we use these offsets to construct tuples that span buffers (see SequenceShredder))
     /// @Note Must be thread-safe (see description of class)
     virtual void setupFieldAccessFunctionForBuffer(
-        FieldAccessFunctionType& fieldAccessFunction, const BufferData& bufferData, const TupleMetaData& tupleMetadata) const
+        FieldAccessFunctionType& fieldAccessFunction, const RawTupleBuffer& rawBuffer, const TupleMetaData& tupleMetadata) const
         = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatter& inputFormatter) { return inputFormatter.toString(os); }

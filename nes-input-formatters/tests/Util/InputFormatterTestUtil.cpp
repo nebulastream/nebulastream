@@ -30,6 +30,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>

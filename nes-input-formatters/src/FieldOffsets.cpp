@@ -17,6 +17,7 @@
 #include <string_view>
 #include <utility>
 
+#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
@@ -77,9 +78,9 @@ std::string_view FieldOffsets::applyReadFieldAt(const std::string_view bufferVie
     const auto tuplesAlreadyInCurrentBuffer = tupleIdx - numTuplesInPriorBuffers;
     const auto fieldOffset = (tuplesAlreadyInCurrentBuffer * (numberOfFieldsInSchema + 1)) + fieldIdx;
 
-    const auto startOfField = targetBuffer.getBuffer<FieldOffsetsType>()[NUMBER_OF_RESERVED_FIELDS + fieldOffset];
+    const auto startOfField = targetBuffer[NUMBER_OF_RESERVED_FIELDS + fieldOffset];
     /// There are 'numberOfFieldsInSchema + 1' offsets for each tuple, so it is safe to use 'fieldIdx + 1'
-    const auto endOfField = targetBuffer.getBuffer<FieldOffsetsType>()[NUMBER_OF_RESERVED_FIELDS + fieldOffset + 1];
+    const auto endOfField = targetBuffer[NUMBER_OF_RESERVED_FIELDS + fieldOffset + 1];
     /// The last field does not end in a tuple delimiter, so we can't deduct
     const auto sizeOfField
         = (fieldIdx != numberOfFieldsInSchema - 1) ? endOfField - startOfField - this->sizeOfFieldDelimiter : endOfField - startOfField;
@@ -98,7 +99,7 @@ void FieldOffsets::writeOffsetsOfNextTuple()
 
 void FieldOffsets::writeOffsetAt(const FieldOffsetsType offset, const FieldOffsetsType idx)
 {
-    *(this->offsetBuffers.back().getBuffer<FieldOffsetsType>() + currentIndex + idx) = offset;
+    this->offsetBuffers.back()[currentIndex + idx] = offset;
 }
 
 template <bool ContainsOffsets>
@@ -125,8 +126,7 @@ void FieldOffsets::finishSetup(const FieldOffsetsType offsetToFirstTuple, const 
 
         this->currentIndex = NUMBER_OF_RESERVED_FIELDS;
         /// Set the first buffer as the current buffer. Adjusts the number of tuples of the first buffer. Determines if there is a child buffer.
-        --this->offsetBuffers.front()
-              .getBuffer<FieldOffsetsType>()[OFFSET_OF_TOTAL_NUMBER_OF_TUPLES]; ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        --this->offsetBuffers.front()[OFFSET_OF_TOTAL_NUMBER_OF_TUPLES];
     }
 }
 
@@ -136,8 +136,6 @@ template void FieldOffsets::finishSetup<true>(FieldOffsetsType offsetToFirstTupl
 
 void FieldOffsets::allocateNewChildBuffer()
 {
-    auto newBuffer = bufferProvider.getBufferBlocking();
-    const auto indexOfNewBuffer = this->offsetBuffers.back().storeChildBuffer(newBuffer);
     INVARIANT(
         (currentIndex - NUMBER_OF_RESERVED_FIELDS) % (numberOfFieldsInSchema + 1) == 0,
         "Number of indexes {} must be a multiple of number of fields in tuple {}",
@@ -146,16 +144,13 @@ void FieldOffsets::allocateNewChildBuffer()
 
     setNumberOfRawTuples(maxNumberOfTuplesInFormattedBuffer);
     totalNumberOfTuples += maxNumberOfTuplesInFormattedBuffer;
-    this->offsetBuffers.back().getBuffer<FieldOffsetsType>()[OFFSET_OF_INDEX_TO_CHILD_BUFFER] = indexOfNewBuffer;
-    this->offsetBuffers.emplace_back(this->offsetBuffers.back().loadChildBuffer(indexOfNewBuffer));
+    this->offsetBuffers.emplace_back(bufferProvider.getBufferBlocking());
     this->currentIndex = NUMBER_OF_RESERVED_FIELDS;
 }
 
 void FieldOffsets::setNumberOfRawTuples(const FieldOffsetsType numberOfTuples)
 {
-    this->offsetBuffers.back()
-        .getBuffer<FieldOffsetsType>()[OFFSET_OF_TOTAL_NUMBER_OF_TUPLES] ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        = numberOfTuples + 1;
+    this->offsetBuffers.back()[OFFSET_OF_TOTAL_NUMBER_OF_TUPLES] = numberOfTuples + 1;
 }
 
 

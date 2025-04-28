@@ -14,11 +14,16 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <ostream>
+#include <span>
+#include <string_view>
 #include <type_traits>
+#include <utility>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -31,12 +36,62 @@ namespace NES::InputFormatters
 
 using FieldOffsetsType = uint32_t;
 
+class RawTupleBuffer
+{
+    template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
+    friend class InputFormatterTask;
+    friend struct StagedBuffer;
+
+public:
+    RawTupleBuffer() = default;
+    ~RawTupleBuffer() = default;
+    explicit RawTupleBuffer(Memory::TupleBuffer tupleBuffer)
+        : rawBuffer(std::move(tupleBuffer))
+        , bufferView(rawBuffer.getBuffer<const char>(), rawBuffer.getNumberOfTuples())
+        , numberOfBytes(rawBuffer.getNumberOfTuples()) { };
+
+    RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
+    RawTupleBuffer& operator=(RawTupleBuffer&& other) noexcept = default;
+    RawTupleBuffer(const RawTupleBuffer& other) = default;
+    RawTupleBuffer& operator=(const RawTupleBuffer& other) = default;
+
+    [[nodiscard]] size_t getNumberOfBytes() const noexcept { return numberOfBytes; }
+    [[nodiscard]] size_t getBufferSize() const noexcept { return rawBuffer.getBufferSize(); }
+    [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept { return rawBuffer.getSequenceNumber(); }
+    [[nodiscard]] ChunkNumber getChunkNumber() const noexcept { return rawBuffer.getChunkNumber(); }
+    [[nodiscard]] OriginId getOriginId() const noexcept { return rawBuffer.getOriginId(); }
+    [[nodiscard]] std::string_view getBufferView() const noexcept { return bufferView; }
+
+protected:
+    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept { return rawBuffer.getNumberOfTuples(); }
+    void setNumberOfTuples(const uint64_t numberOfTuples) const noexcept { rawBuffer.setNumberOfTuples(numberOfTuples); }
+    /// Allows to emit the underlying buffer without exposing it to the outside
+    void emit(
+        Runtime::Execution::PipelineExecutionContext& pec,
+        const Runtime::Execution::PipelineExecutionContext::ContinuationPolicy continuationPolicy) const
+    {
+        pec.emitBuffer(rawBuffer, continuationPolicy);
+    }
+    [[nodiscard]] const Memory::TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
+
+    void setSpanningTuple(const std::string_view spanningTuple)
+    {
+        this->bufferView = spanningTuple;
+        this->numberOfBytes = spanningTuple.size();
+    }
+
+private:
+    Memory::TupleBuffer rawBuffer;
+    std::string_view bufferView;
+    uint64_t numberOfBytes{};
+};
+
 /// Type-erased wrapper around InputFormatterTask
 class InputFormatterTaskPipeline final : public Runtime::Execution::ExecutablePipelineStage
 {
 public:
     template <typename T>
-    requires(!std::same_as<std::decay_t<T>, InputFormatterTaskPipeline>)
+    requires(not std::same_as<std::decay_t<T>, InputFormatterTaskPipeline>)
     explicit InputFormatterTaskPipeline(T&& inputFormatterTask)
         : inputFormatterTask(std::make_shared<InputFormatterTaskModel<T>>(std::forward<T>(inputFormatterTask)))
     {
@@ -61,7 +116,7 @@ public:
             return;
         }
 
-        this->inputFormatterTask->executeTask(rawBuffer, pec);
+        this->inputFormatterTask->executeTask(RawTupleBuffer(rawBuffer), pec);
     }
 
     std::ostream& toString(std::ostream& os) const override { return this->inputFormatterTask->toString(os); }
@@ -72,7 +127,7 @@ public:
         virtual ~InputFormatterTaskConcept() = default;
         virtual void startTask() = 0;
         virtual void stopTask() = 0;
-        virtual void executeTask(const Memory::TupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pec) = 0;
+        virtual void executeTask(const RawTupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pec) = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
@@ -83,7 +138,7 @@ public:
         explicit InputFormatterTaskModel(T&& inputFormatterTask) : InputFormatterTask(std::move(inputFormatterTask)) { }
         void startTask() override { InputFormatterTask.startTask(); }
         void stopTask() override { InputFormatterTask.stopTask(); }
-        void executeTask(const Memory::TupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pec) override
+        void executeTask(const RawTupleBuffer& rawBuffer, Runtime::Execution::PipelineExecutionContext& pec) override
         {
             InputFormatterTask.executeTask(rawBuffer, pec);
         }
