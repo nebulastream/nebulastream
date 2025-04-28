@@ -221,7 +221,10 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
-        [this](nautilus::val<Memory::TupleBuffer*> bufferOutput, nautilus::val<Interface::HashMap*> hashMapVal, nautilus::val<Memory::AbstractBufferProvider*> bufferProvider)
+        [this](
+            nautilus::val<Memory::TupleBuffer*> bufferOutput,
+            nautilus::val<Interface::HashMap*> hashMapVal,
+            nautilus::val<Memory::AbstractBufferProvider*> bufferProvider)
         {
             const Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             RecordBuffer recordBufferOutput(bufferOutput);

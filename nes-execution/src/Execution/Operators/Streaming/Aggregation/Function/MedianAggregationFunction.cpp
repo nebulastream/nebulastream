@@ -172,7 +172,8 @@ void MedianAggregationFunction::cleanup(nautilus::val<AggregationState*> aggrega
         +[](AggregationState* pagedVectorMemArea) -> void
         {
             /// Calls the destructor of the PagedVector
-            auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(
+                pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             pagedVector->~PagedVector();
         },
         aggregationState);

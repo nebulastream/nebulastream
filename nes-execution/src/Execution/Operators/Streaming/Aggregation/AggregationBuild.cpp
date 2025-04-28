@@ -49,17 +49,19 @@ Interface::HashMap* getHashMapProxy(
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
     /// If a new aggregation slice is created, we need to set the cleanup function for the aggregation states
-    auto wrappedCreateFunction([createFunction = operatorHandler->getCreateNewSlicesFunction(), buildOperator](const SliceStart sliceStart, const SliceEnd sliceEnd)
-    {
-        const auto createdSlices = createFunction(sliceStart, sliceEnd);
-        for (const auto& slice : createdSlices)
+    auto wrappedCreateFunction(
+        [createFunction = operatorHandler->getCreateNewSlicesFunction(),
+         buildOperator](const SliceStart sliceStart, const SliceEnd sliceEnd)
         {
-            const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
-            INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-        aggregationSlice->setCleanupFunction(buildOperator->getStateCleanupFunction());
-        }
-        return createdSlices;
-    });
+            const auto createdSlices = createFunction(sliceStart, sliceEnd);
+            for (const auto& slice : createdSlices)
+            {
+                const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
+                INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
+                aggregationSlice->setCleanupFunction(buildOperator->getStateCleanupFunction());
+            }
+            return createdSlices;
+        });
 
     const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, wrappedCreateFunction);
     INVARIANT(
@@ -125,7 +127,6 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
 
 std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> AggregationBuild::getStateCleanupFunction() const
 {
-
     return [copyOfFieldKeys = fieldKeys,
             copyOfFieldValues = fieldValues,
             copyOfAggregationFunctions = aggregationFunctions,
@@ -137,7 +138,8 @@ std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMa
         {
             {
                 /// Using here the .get() is fine, as we are not moving the hashMap pointer.
-                const Interface::ChainedHashMapRef hashMapRef(hashMap.get(), copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                const Interface::ChainedHashMapRef hashMapRef(
+                    hashMap.get(), copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
                 for (const auto entry : hashMapRef)
                 {
                     const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
