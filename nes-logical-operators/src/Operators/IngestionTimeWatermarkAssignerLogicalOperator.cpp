@@ -17,6 +17,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
+
+#include "LogicalOperatorRegistry.hpp"
 
 namespace NES
 {

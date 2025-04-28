@@ -14,8 +14,8 @@
 
 #include <memory>
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>

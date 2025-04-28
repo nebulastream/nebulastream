@@ -13,11 +13,8 @@
 */
 
 #include <memory>
-#include <span>
 #include <string>
-#include <utility>
 #include <API/Schema.hpp>
-#include <Abstract/LogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>

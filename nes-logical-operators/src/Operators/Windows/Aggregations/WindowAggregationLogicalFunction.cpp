@@ -39,25 +39,12 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     std::shared_ptr<DataType> inputStamp,
     std::shared_ptr<DataType> partialAggregateStamp,
     std::shared_ptr<DataType> finalAggregateStamp,
-    FieldAccessLogicalFunction onField)
-    : inputStamp(std::move(inputStamp))
-    , partialAggregateStamp(std::move(partialAggregateStamp))
-    , finalAggregateStamp(std::move(finalAggregateStamp))
-    , onField(onField)
-    , onField(onField)
-{
-}
-
-WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
-    std::unique_ptr<DataType> inputStamp,
-    std::unique_ptr<DataType> partialAggregateStamp,
-    std::unique_ptr<DataType> finalAggregateStamp,
     FieldAccessLogicalFunction onField,
     FieldAccessLogicalFunction asField)
     : inputStamp(std::move(inputStamp))
     , partialAggregateStamp(std::move(partialAggregateStamp))
     , finalAggregateStamp(std::move(finalAggregateStamp))
-    , onField(std::move(onField))
+    , onField(onField)
     , asField(asField)
 {
 }
