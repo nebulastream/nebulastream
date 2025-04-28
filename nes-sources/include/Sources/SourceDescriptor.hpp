@@ -56,6 +56,7 @@ struct SourceDescriptor final : public NES::Configurations::Descriptor
     /// is const data member, because 'SourceDescriptor' should be immutable and 'const' communicates more clearly then private+getter
     const ParserConfig parserConfig;
 
+    [[nodiscard]] SerializableSourceDescriptor serialize() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
