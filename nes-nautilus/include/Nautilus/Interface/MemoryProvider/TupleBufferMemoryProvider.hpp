@@ -55,7 +55,12 @@ public:
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
     /// @param context: ExecutionContext to be used for the write operation
-    virtual void writeRecord(nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const = 0;
+    virtual void writeRecord(
+        nautilus::val<uint64_t>& recordIndex,
+        const RecordBuffer& recordBuffer,
+        const Record& rec,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+        = 0;
 
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference

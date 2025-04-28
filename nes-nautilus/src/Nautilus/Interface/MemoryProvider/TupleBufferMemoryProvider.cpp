@@ -40,11 +40,25 @@
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
+namespace
+{
+uint32_t storeAssociatedTextValueProxy(
+    const Memory::TupleBuffer* tupleBuffer,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const int8_t* textValue,
+    const uint32_t totalVariableSize)
+{
+    auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize);
+    INVARIANT(buffer.has_value(), "Cannot allocate unpooled buffer of size {}", totalVariableSize);
+    std::memcpy(buffer.value().getBuffer<int8_t>(), textValue, totalVariableSize);
+    return tupleBuffer->storeChildBuffer(buffer.value());
+}
 
 const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
 {
     auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
     return childBuffer.getBuffer<uint8_t>();
+}
 }
 
 VarVal TupleBufferMemoryProvider::loadValue(
@@ -63,17 +77,6 @@ VarVal TupleBufferMemoryProvider::loadValue(
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
-uint32_t storeAssociatedTextValueProxy(
-    const Memory::TupleBuffer* tupleBuffer,
-    Memory::AbstractBufferProvider* bufferProvider,
-    const int8_t* textValue,
-    const uint32_t totalVariableSize)
-{
-    auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize);
-    INVARIANT(buffer.has_value(), "Cannot allocate unpooled buffer of size {}", totalVariableSize);
-    std::memcpy(buffer.value().getBuffer<int8_t>(), textValue, totalVariableSize);
-    return tupleBuffer->storeChildBuffer(buffer.value());
-}
 
 VarVal TupleBufferMemoryProvider::storeValue(
     const std::shared_ptr<PhysicalType>& type,
@@ -98,11 +101,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
     {
         const auto textValue = value.cast<VariableSizedData>();
         const auto childIndex = invoke(
-            storeAssociatedTextValueProxy,
-            recordBuffer.getReference(),
-            bufferProvider,
-            textValue.getReference(),
-            textValue.getTotalSize());
+            storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;

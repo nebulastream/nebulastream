@@ -23,8 +23,7 @@
 namespace NES::Nautilus
 {
 
-VariableSizedData::VariableSizedData(
-    const nautilus::val<int8_t*>& content, const nautilus::val<uint32_t>& size)
+VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& content, const nautilus::val<uint32_t>& size)
     : size(size), ptrToVarSized(content)
 {
 }
@@ -34,8 +33,7 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarS
 {
 }
 
-VariableSizedData::VariableSizedData(const VariableSizedData& other)
-    : size(other.size), ptrToVarSized(other.ptrToVarSized)
+VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
 {
 }
 
