@@ -21,6 +21,7 @@
 #include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
+#include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <fmt/format.h>
