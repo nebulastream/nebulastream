@@ -42,8 +42,8 @@ public:
 
     /// Emits/Flushes all slices and windows, as the query will be terminated
     void terminate(ExecutionContext& executionCtx) const override;
+    std::optional<PhysicalOperator> getChild() const override { return child; }
     void setChild(PhysicalOperator child) override { this->child = child; }
-    void setChild(struct PhysicalOperator child) override { this->child = child; }
 
 protected:
     std::optional<PhysicalOperator> child;
