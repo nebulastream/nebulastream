@@ -44,7 +44,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     , sequenceNumber(SequenceNumber::INITIAL)
     , numberOfActiveOrigins(inputOrigins.size())
 {
-    measureReadAndWriteExecTimes({}, {});
+    measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
@@ -180,8 +180,8 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     }
 
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Left}, false});
-    slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Right}, false});
+    slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Left}, true});
+    slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Right}, true});
 
     return {newSlice};
 }
@@ -374,34 +374,29 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const auto newGlobalWatermark
         = watermarkProcessor->updateWatermark(bufMetaData.watermarkTs, bufMetaData.seqNumber, bufMetaData.originId);
 
-    /// Sort slices by state size to offload larger slices first
-    std::multimap<size_t, std::shared_ptr<Slice>> sliceSizes;
-    for (const auto& [sliceEnd, slice] : *slices.rlock())
+    /// Sort slices by state size to offload larger slices first and choose which ones can be efficiently written to external storage
+    std::multimap<size_t, std::pair<std::shared_ptr<Slice>, FileLayout>> slicesToBeOffloadedBySize;
+    //for (const auto& [sliceEnd, slice] : *slices.rlock())
+    for (const auto& [sliceEnd, slice] : *windows.rlock())
     {
+        const auto nextWindowTrigger = Predictor.predict(windowEnd, newGlobalWatermark);
+
         // TODO exclude all slices that have already been read back from ssd or are going to be read back below
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
         if (const auto stateSize = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId); stateSize > 0)
         {
-            sliceSizes.insert({stateSize, slice});
+            memCtrl.setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
+            slicesToBeOffloadedBySize.emplace(stateSize, std::make_pair(slice, USE_FILE_LAYOUT));
         }
     }
 
-    /// Choose the n largest slices with a state size larger than zero
-    size_t accumulatedStateSize = 0;
-    std::vector<std::pair<std::shared_ptr<Slice>, FileLayout>> slicesToBeOffloaded;
-    slicesToBeOffloaded.reserve(sliceSizes.size());
-    for (auto it = sliceSizes.rbegin(); it != sliceSizes.rend(); ++it)
+    /// Write all selected slices to disk, beginning with the largest ones
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
+    for (auto it = slicesToBeOffloadedBySize.rbegin(); it != slicesToBeOffloadedBySize.rend(); ++it)
     {
-        // TODO predictiveWrite()
-        accumulatedStateSize += it->first;
+        const auto& [slice, fileLayout] = it->second;
+        const auto sliceEnd = slice->getSliceEnd();
 
-        slicesToBeOffloaded.emplace_back(it->second, USE_FILE_LAYOUT);
-        memCtrl.setFileLayout(it->second->getSliceEnd(), threadId, joinBuildSide, USE_FILE_LAYOUT);
-    }
-
-    /// Write all selected slices to disk
-    for (const auto& [slice, fileLayout] : slicesToBeOffloaded)
-    {
         /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
         nljSlice->acquireCombinePagedVectorsMutex();
@@ -409,7 +404,8 @@ void FileBackedTimeBasedSliceStore::updateSlices(
         /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
         if (!nljSlice->pagedVectorsCombined())
         {
-            auto fileWriter = memCtrl.getFileWriter(nljSlice->getSliceEnd(), threadId, joinBuildSide);
+            (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = false;
+            auto fileWriter = memCtrl.getFileWriter(sliceEnd, threadId, joinBuildSide);
             auto* const pagedVector = nljSlice->getPagedVectorRef(joinBuildSide, threadId);
             pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
             pagedVector->truncate(fileLayout);
@@ -419,6 +415,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
         nljSlice->releaseCombinePagedVectorsMutex();
     }
 
+    /*
     /// Predict which slices to read back from external storage device
     std::vector<std::shared_ptr<Slice>> slicesToBeReadBack;
     const auto slicesLocked = slices.rlock();
@@ -435,6 +432,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
         readSliceFromFiles(slice, bufferProvider, memoryLayout, QueryCompilation::JoinBuildSideType::Left, numberOfWorkerThreads);
         readSliceFromFiles(slice, bufferProvider, memoryLayout, QueryCompilation::JoinBuildSideType::Right, numberOfWorkerThreads);
     }
+    */
 }
 
 void FileBackedTimeBasedSliceStore::readSliceFromFiles(
@@ -468,37 +466,61 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
 }
 
-void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(
-    const std::vector<size_t>& dataSizes, const std::vector<FileLayout>& fileLayouts)
+void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::vector<size_t>& dataSizes)
 {
     for (const auto dataSize : dataSizes)
     {
-        for (const auto fileLayout : fileLayouts)
+        std::vector<char> data(dataSize);
+        for (size_t i = 0; i < dataSize; ++i)
         {
-            std::vector<char> data(dataSize);
-            for (size_t i = 0; i < dataSize; ++i)
-            {
-                data[i] = static_cast<char>(rand() % 256);
-            }
-
-            Timer<> timer("ReadAndWriteTimer");
-            timer.start();
-
-            const auto fileWriter = memCtrl.getFileWriter(
-                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
-            fileWriter->write(data.data(), dataSize);
-            timer.snapshot("write execution");
-
-            const auto fileReader = memCtrl.getFileReader(
-                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
-            fileReader->read(data.data(), dataSize);
-            timer.snapshot("read execution");
-
-            auto snapshots = timer.getSnapshots();
-            writeExecTimes.emplace(dataSize, snapshots[0].getPrintTime());
-            readExecTimes.emplace(dataSize, snapshots[1].getPrintTime());
+            //data[i] = static_cast<char>(rand() % 256);
+            data[i] = static_cast<char>(i);
         }
+
+        Timer timer("ReadAndWriteTimer");
+        timer.start();
+
+        const auto fileWriter = memCtrl.getFileWriter(
+            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
+        fileWriter->write(data.data(), dataSize);
+        timer.snapshot("write execution");
+
+        const auto fileReader = memCtrl.getFileReader(
+            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
+        fileReader->read(data.data(), dataSize);
+        timer.snapshot("read execution");
+
+        auto snapshots = timer.getSnapshots();
+        writeExecTimes.emplace(dataSize, snapshots[0].getPrintTime());
+        readExecTimes.emplace(dataSize, snapshots[1].getPrintTime());
+        std::cout << "ExecTimes for " << dataSize << " Bytes: WriteExec: " << snapshots[0].getPrintTime()
+                  << "ms ReadExec: " << snapshots[1].getPrintTime() << "ms\n";
     }
+}
+
+std::pair<double, double> FileBackedTimeBasedSliceStore::getReadAndWriteExecTimesForDataSize(const size_t dataSize)
+{
+    size_t closestKey = std::numeric_limits<size_t>::max();
+    size_t minDifference = std::numeric_limits<size_t>::max();
+    bool foundClosest = false;
+
+    for (const auto& size : USE_TEST_DATA_SIZES)
+    {
+        const size_t difference = std::abs(static_cast<long long>(size) - static_cast<long long>(dataSize));
+        if (difference < minDifference)
+        {
+            minDifference = difference;
+            closestKey = size;
+        }
+        else if (foundClosest)
+        {
+            // If the difference starts increasing, we have found the closest key as test data sizes are sorted
+            break;
+        }
+        foundClosest = true;
+    }
+
+    return {readExecTimes[closestKey], writeExecTimes[closestKey]};
 }
 
 }

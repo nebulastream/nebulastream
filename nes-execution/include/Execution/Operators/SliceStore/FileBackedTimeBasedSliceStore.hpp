@@ -44,6 +44,8 @@ struct SliceStoreMetaData
 class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
+    //static constexpr std::vector<size_t> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576, 134217728, 536870912, 1073741824, 2147483648};
+    static constexpr std::vector<size_t> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576};
     static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
     static constexpr auto USE_BUFFER_SIZE = 1024 * 4; // 4 KB buffer size
     static constexpr auto USE_POOL_SIZE = 1024 * 10; // 10 K pool size
@@ -91,7 +93,8 @@ private:
         QueryCompilation::JoinBuildSideType joinBuildSide,
         uint64_t numberOfWorkerThreads);
 
-    void measureReadAndWriteExecTimes(const std::vector<size_t>& dataSizes, const std::vector<FileLayout>& fileLayouts);
+    void measureReadAndWriteExecTimes(const std::vector<size_t>& dataSizes);
+    std::pair<double, double> getReadAndWriteExecTimesForDataSize(size_t dataSize);
 
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
