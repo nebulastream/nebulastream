@@ -11,6 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
-        LogicalPlanBuilder.cpp
         LogicalPlan.cpp
+        LogicalPlanBuilder.cpp
 )
