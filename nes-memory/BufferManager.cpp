@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
@@ -94,23 +95,6 @@ void BufferManager::destroy()
         allBuffers.clear();
 
         availableBuffers = decltype(availableBuffers)();
-        for (auto& holder : unpooledBuffers)
-        {
-            if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0)
-            {
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-                if (holder.segment)
-                {
-                    holder.segment->controlBlock->dumpOwningThreadInfo();
-                }
-#endif
-                INVARIANT(
-                    false,
-                    "Deletion of unpooled buffer invoked on used memory segment size={} refcnt={}",
-                    holder.size,
-                    holder.segment->controlBlock->getReferenceCount());
-            }
-        }
         unpooledBuffers.clear();
         NES_DEBUG("Shutting down Buffer Manager completed");
         memoryResource->deallocate(basePointer, allocatedAreaSize);
@@ -235,53 +219,25 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(const std::chrono
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferSize)
 {
-    std::unique_lock lock(unpooledBuffersMutex);
-    UnpooledBufferHolder probe(bufferSize);
-    auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
-    if (candidate != unpooledBuffers.end())
-    {
-        /// it points to a segment of size at least bufferSize;
-        for (auto it = candidate; it != unpooledBuffers.end(); ++it)
-        {
-            if (it->size == bufferSize)
-            {
-                if (it->free)
-                {
-                    auto* memSegment = it->segment.get();
-                    it->free = false;
-                    if (memSegment->controlBlock->prepare(shared_from_this()))
-                    {
-                        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-                    }
-                    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-    /// we could not find a buffer, allocate it
     /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
     auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT));
     INVARIANT(ptr, "Unpooled memory allocation failed");
-    NES_TRACE(
-        "Ptr: {} alignedBufferSize: {} alignedBufferSizePlusControlBlock: {} controlBlockSize: {}",
-        reinterpret_cast<uintptr_t>(ptr),
-        alignedBufferSize,
-        alignedBufferSizePlusControlBlock,
-        controlBlockSize);
+
     auto memSegment = std::make_unique<detail::MemorySegment>(
         ptr + controlBlockSize,
         alignedBufferSize,
-        [](detail::MemorySegment* segment, BufferRecycler* recycler) { recycler->recycleUnpooledBuffer(segment); },
-        ptr);
+        [this, ptr, alignedBufferSizePlusControlBlock](detail::MemorySegment* memorySegment, BufferRecycler*)
+        {
+            const std::unique_lock lock(unpooledBuffersMutex);
+            memoryResource->deallocate(ptr, alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT);
+            memorySegment->size = 0;
+        });
     auto* leakedMemSegment = memSegment.get();
-    unpooledBuffers.emplace_back(std::move(memSegment), alignedBufferSize);
+    const std::unique_lock lock(unpooledBuffersMutex);
+    unpooledBuffers[ptr] = std::move(memSegment);
     if (leakedMemSegment->controlBlock->prepare(shared_from_this()))
     {
         return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
@@ -298,33 +254,9 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
     numOfAvailableBuffers.fetch_add(1);
 }
 
-void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment)
+void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*)
 {
-    const std::unique_lock lock(unpooledBuffersMutex);
-    INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
-    const UnpooledBufferHolder probe(segment->getSize());
-    INVARIANT(
-        segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
-
-    const auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
-    if (candidate != unpooledBuffers.end())
-    {
-        for (auto it = candidate; it != unpooledBuffers.end(); ++it)
-        {
-            if (it->size == probe.size)
-            {
-                if (it->segment->ptr == segment->ptr)
-                {
-                    it->markFree();
-                    return;
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
+    INVARIANT(false, "This method should not be called!");
 }
 
 size_t BufferManager::getBufferSize() const
@@ -358,27 +290,6 @@ size_t BufferManager::getAvailableBuffersInFixedSizePools() const
 BufferManagerType BufferManager::getBufferManagerType() const
 {
     return BufferManagerType::GLOBAL;
-}
-
-BufferManager::UnpooledBufferHolder::UnpooledBufferHolder()
-{
-    segment.reset();
-}
-
-BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(const uint32_t bufferSize) : size(bufferSize), free(false)
-{
-    segment.reset();
-}
-
-BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(std::unique_ptr<detail::MemorySegment>&& mem, const uint32_t size)
-    : segment(std::move(mem)), size(size), free(false)
-{
-    /// nop
-}
-
-void BufferManager::UnpooledBufferHolder::markFree()
-{
-    free = true;
 }
 
 std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers)

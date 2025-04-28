@@ -15,11 +15,11 @@
 #include <cstdint>
 #include <memory>
 #include <numeric>
-#include <SliceStore/Slice.hpp>
-#include <Streaming/Aggregation/AggregationSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <SliceStore/Slice.hpp>
+#include <Streaming/Aggregation/AggregationSlice.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -41,6 +41,13 @@ AggregationSlice::AggregationSlice(
     }
 }
 
+AggregationSlice::~AggregationSlice()
+{
+    INVARIANT(cleanupFunction != nullptr, "The cleanup function should be set before the slice is destroyed. Have you called setCleanupFunction?");
+    cleanupFunction(hashMaps);
+    hashMaps.clear();
+}
+
 Nautilus::Interface::HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % hashMaps.size();
@@ -60,6 +67,12 @@ uint64_t AggregationSlice::getNumberOfTuples() const
         hashMaps.end(),
         0,
         [](uint64_t runningSum, const auto& hashMap) { return runningSum + hashMap->getNumberOfTuples(); });
+}
+
+void AggregationSlice::setCleanupFunction(
+    std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> newCleanupFunction)
+{
+    cleanupFunction = std::move(newCleanupFunction);
 }
 
 }

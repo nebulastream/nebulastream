@@ -76,7 +76,7 @@ private:
 
     /// Depending, if we have one or two input origins, we have to treat the slices differently
     /// For example, in getAllNonTriggeredSlices(), we have to wait until both origins have called this method to ensure correctness
-    uint8_t numberOfInputOrigins;
+    uint8_t numberOfActiveOrigins;
 };
 
 }

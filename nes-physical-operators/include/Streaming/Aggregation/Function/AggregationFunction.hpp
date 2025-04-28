@@ -65,6 +65,9 @@ public:
     /// Resets the aggregation state to its initial state. For a sum, this would be 0, for a min aggregation, this would be the maximum possible value, etc.
     virtual void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) = 0;
 
+    /// Destroys the aggregation state. This is used to free up memory when the aggregation state is no longer needed.
+    virtual void cleanup(nautilus::val<AggregationState*> aggregationState) = 0;
+
     /// Returns the size of the aggregation state in bytes
     [[nodiscard]] virtual size_t getSizeOfStateInBytes() const = 0;
 

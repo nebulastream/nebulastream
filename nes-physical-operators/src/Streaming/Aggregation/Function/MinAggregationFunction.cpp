@@ -97,6 +97,10 @@ void MinAggregationFunction::reset(const nautilus::val<AggregationState*> aggreg
     min.writeToMemory(memAreaMin);
 }
 
+void MinAggregationFunction::cleanup(nautilus::val<AggregationState*>)
+{
+}
+
 size_t MinAggregationFunction::getSizeOfStateInBytes() const
 {
     return inputType->size();

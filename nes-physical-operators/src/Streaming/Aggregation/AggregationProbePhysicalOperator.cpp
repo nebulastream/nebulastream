@@ -139,8 +139,13 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         PhysicalOperatorConcept::execute(executionCtx, outputRecord);
     }
 
+    /// As we are creating a new hash map for the probe operator, we have to reset/destroy the final hash map of the emitted aggregation window
     nautilus::invoke(
-        +[](EmittedAggregationWindow* emittedAggregationWindow) { emittedAggregationWindow->finalHashMap.reset(); },
+        +[](EmittedAggregationWindow* emittedAggregationWindow)
+        {
+            NES_INFO("Resetting final hash map of emitted aggregation window start at {} and end at {}", emittedAggregationWindow->windowInfo.windowStart, emittedAggregationWindow->windowInfo.windowEnd);
+            emittedAggregationWindow->finalHashMap.reset();
+        },
         aggregationWindowRef);
 }
 

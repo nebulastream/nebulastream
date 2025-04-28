@@ -38,19 +38,25 @@
 namespace NES
 {
 
-Interface::HashMap*
-getHashMapProxy(const AggregationOperatorHandler* operatorHandler, const Timestamp timestamp, const WorkerThreadId workerThreadId)
+Interface::HashMap* getHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const AggregationBuildPhysicalOperator* buildOperator)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
+    PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
     const auto createFunction = operatorHandler->getCreateNewSlicesFunction();
     const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction);
     INVARIANT(
         hashMap.size() == 1,
-        "We expect exactly one slice for the given timestamp during the AggregationBuildPhysicalOperator, as we currently solely support slicing");
+        "We expect exactly one slice for the given timestamp during the AggregationBuildPhysicalOperator, as we currently solely support "
+        "slicing");
 
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
+    aggregationSlice->setCleanupFunction(buildOperator->getStateCleanupFunction());
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuildPhysicalOperator");
     return aggregationSlice->getHashMapPtr(workerThreadId);
 }
@@ -60,7 +66,8 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 {
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(getHashMapProxy, ctx.getGlobalOperatorHandler(operatorHandlerIndex), timestamp, ctx.getWorkerThreadId());
+    const auto hashMapPtr
+        = invoke(getHashMapProxy, ctx.getGlobalOperatorHandler(operatorHandlerIndex), timestamp, ctx.getWorkerThreadId(), nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
     /// Calling the key functions to add/update the keys to the record
@@ -96,6 +103,31 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
+}
+
+std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> AggregationBuildPhysicalOperator::getStateCleanupFunction() const
+{
+    return [fieldKeys = this->fieldKeys, fieldValues = this->fieldValues, entriesPerPage = this->entriesPerPage, entrySize = this->entrySize, aggregationFunctions = this->aggregationFunctions](const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>& hashMaps)
+    {
+        for (const auto& hashMap : hashMaps)
+        {
+            if (hashMap->getNumberOfTuples() > 0)
+            {
+                /// Using here the .get() is fine, as we are not moving the hashMap pointer.
+                Interface::ChainedHashMapRef hashMapRef(hashMap.get(), fieldKeys, fieldValues, entriesPerPage, entrySize);
+                for (const auto entry : hashMapRef)
+                {
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, fieldKeys, fieldValues);
+                    auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+                    for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
+                    {
+                        aggFunction->cleanup(state);
+                        state = state + aggFunction->getSizeOfStateInBytes();
+                    }
+                }
+            }
+        }
+    };
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(

@@ -26,6 +26,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Locks.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 
@@ -33,12 +34,14 @@ namespace NES
 {
 DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(
     const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins)
-    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfInputOrigins(numberOfInputOrigins)
+    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfActiveOrigins(numberOfInputOrigins)
 {
 }
 
 DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const DefaultTimeBasedSliceStore& other)
-    : sliceAssigner(other.sliceAssigner), sequenceNumber(other.sequenceNumber.load()), numberOfInputOrigins(other.numberOfInputOrigins)
+    : sliceAssigner(other.sliceAssigner)
+    , sequenceNumber(other.sequenceNumber.load())
+    , numberOfActiveOrigins(other.numberOfActiveOrigins)
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
@@ -49,7 +52,7 @@ DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const DefaultTimeBasedSli
 DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(DefaultTimeBasedSliceStore&& other) noexcept
     : sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
-    , numberOfInputOrigins(std::move(other.numberOfInputOrigins))
+    , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins))
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
@@ -66,7 +69,7 @@ DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(const DefaultT
 
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
-    numberOfInputOrigins = other.numberOfInputOrigins;
+    numberOfActiveOrigins = other.numberOfActiveOrigins;
     return *this;
 }
 
@@ -79,7 +82,7 @@ DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(DefaultTimeBas
 
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
-    numberOfInputOrigins = std::move(other.numberOfInputOrigins);
+    numberOfActiveOrigins = std::move(other.numberOfActiveOrigins);
     return *this;
 }
 
@@ -133,6 +136,8 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
     for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
     {
         auto& [windowSlices, windowState] = (*windowsWriteLocked)[windowInfo];
+        INVARIANT(
+            windowState != WindowInfoState::EMITTED_TO_PROBE, "We should not add slices to a window that has already been triggered.");
         windowState = WindowInfoState::WINDOW_FILLING;
         windowSlices.emplace_back(newSlice);
     }
@@ -141,7 +146,7 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
 }
 
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-DefaultTimeBasedSliceStore::getTriggerableWindowSlices(Timestamp globalWatermark)
+DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
 {
     /// We are iterating over all windows and check if they can be triggered
     /// A window can be triggered if both sides have been filled and the window end is smaller than the new global watermark
@@ -149,29 +154,29 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(Timestamp globalWatermark
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
     for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
     {
-        if (windowInfo.windowEnd > globalWatermark)
+        if (windowInfo.windowEnd >= globalWatermark)
         {
             /// As the windows are sorted (due to std::map), we can break here as we will not find any windows with a smaller window end
             break;
         }
         if (windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
-            /// This window can not be triggered yet or has already been triggered
+            /// This window has already been triggered
             continue;
         }
 
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
+        /// As the windows are sorted, we can simply increment the sequence number here.
+        const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            /// As the windows are sorted, we can simply increment the sequence number here.
-            const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
             windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
         }
     }
     return windowsToSlices;
 }
 
-std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(SliceEnd sliceEnd)
+std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(const SliceEnd sliceEnd)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {
@@ -182,8 +187,27 @@ std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySlic
 
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> DefaultTimeBasedSliceStore::getAllNonTriggeredSlices()
 {
+    /// If this method gets called, we know that an origin has terminated.
+    INVARIANT(numberOfActiveOrigins > 0, "Method should not be called if all origin have terminated.");
+
+    /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows
     const auto windowsWriteLocked = windows.wlock();
+    --numberOfActiveOrigins;
+
+
+    /// Creating a lambda to add all slices to the return map windowsToSlices
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
+    auto addAllSlicesToReturnMap = [&windowsToSlices, this](const WindowInfo& windowInfo, SlicesAndState& windowSlicesAndState)
+    {
+        const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
+        for (auto& slice : windowSlicesAndState.windowSlices)
+        {
+            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
+        }
+        windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
+    };
+
+    /// We are iterating over all windows and check if they can be triggered
     for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
     {
         switch (windowSlicesAndState.windowState)
@@ -191,20 +215,31 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
             case WindowInfoState::EMITTED_TO_PROBE:
                 continue;
             case WindowInfoState::WINDOW_FILLING: {
-                if (numberOfInputOrigins == 2)
+                /// If we are waiting on more than one origin to terminate, we can not trigger the window yet
+                if (numberOfActiveOrigins > 0)
                 {
-                    windowSlicesAndState.windowState = WindowInfoState::ONCE_SEEN_DURING_TERMINATION;
+                    windowSlicesAndState.windowState = WindowInfoState::WAITING_ON_TERMINATION;
+                    NES_TRACE(
+                        "Waiting on termination for window end {} and number of origins terminated {}",
+                        windowInfo.windowEnd,
+                        numberOfActiveOrigins);
+                    break;
+                }
+                addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
+                break;
+            }
+            case WindowInfoState::WAITING_ON_TERMINATION: {
+                /// Checking if all origins have terminated (i.e., the number of origins terminated is 0, as we will decrement it during fetch_sub)
+                NES_TRACE(
+                    "Checking if all origins have terminated for window with window end {} and number of origins terminated {}",
+                    windowInfo.windowEnd,
+                    numberOfActiveOrigins);
+                if (numberOfActiveOrigins > 0)
+                {
                     continue;
                 }
-            }
-            case WindowInfoState::ONCE_SEEN_DURING_TERMINATION: {
-                windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
-                for (auto& slice : windowSlicesAndState.windowSlices)
-                {
-                    /// As the windows are sorted, we can simply increment the sequence number here.
-                    const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
-                    windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
-                }
+                addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
+                break;
             }
         }
     }
@@ -222,14 +257,16 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
     }
     auto& [slicesWriteLocked, windowsWriteLocked] = *lockedSlicesAndWindows;
 
-    /// 1. We iterate over all windows and set their state to CAN_BE_DELETED if they can be deleted
+    NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
+
+    /// 1. We iterate over all windows and erase them if they can be deleted
     /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.
     for (auto windowsLockedIt = windowsWriteLocked->cbegin(); windowsLockedIt != windowsWriteLocked->cend();)
     {
         const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
-        if (windowInfo.windowEnd <= newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
+        if (windowInfo.windowEnd < newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
         {
-            windowsWriteLocked->erase(windowsLockedIt++);
+            windowsLockedIt = windowsWriteLocked->erase(windowsLockedIt);
         }
         else if (windowInfo.windowEnd > newGlobalWaterMark)
         {
@@ -243,13 +280,13 @@ void DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp 
     }
 
     /// 2. We gather all slices if they are not used in any window that has not been triggered/can not be deleted yet
-    const std::vector<SliceEnd> slicesToDelete;
     for (auto slicesLockedIt = slicesWriteLocked->cbegin(); slicesLockedIt != slicesWriteLocked->cend();)
     {
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
-        if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
+        if (sliceEnd + sliceAssigner.getWindowSize() < newGlobalWaterMark)
         {
-            slicesWriteLocked->erase(slicesLockedIt++);
+            NES_TRACE("Deleting slice with sliceEnd {} as it is not used anymore", sliceEnd);
+            slicesLockedIt = slicesWriteLocked->erase(slicesLockedIt++);
         }
         else
         {

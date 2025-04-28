@@ -19,9 +19,10 @@
 #include <memory>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
+#include <Streaming/Aggregation/AggregationOperatorHandler.hpp>
+#include <Streaming/Aggregation/WindowAggregation.hpp>
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <Streaming/Aggregation/WindowAggregation.hpp>
 
 namespace NES
 {
@@ -38,11 +39,12 @@ public:
 
     std::optional<PhysicalOperator> getChild() const override { return child; }
     void setChild(PhysicalOperator child) override { this->child = child; }
+    std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> getStateCleanupFunction() const;
+
 
 private:
     std::optional<PhysicalOperator> child;
     const std::vector<Functions::PhysicalFunction> keyFunctions;
-
 };
 
 }
