@@ -49,6 +49,7 @@ protected:
         std::shared_ptr<DataType> finalAggregateStamp,
         FieldAccessLogicalFunction onField,
         FieldAccessLogicalFunction asField);
+
     explicit WindowAggregationLogicalFunction(
         std::shared_ptr<DataType> inputStamp,
         std::shared_ptr<DataType> partialAggregateStamp,
