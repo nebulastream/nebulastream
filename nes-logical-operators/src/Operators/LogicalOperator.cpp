@@ -49,7 +49,7 @@ LogicalOperator NullLogicalOperator::withChildren(std::vector<NES::LogicalOperat
 
 bool NullLogicalOperator::operator==(const NES::LogicalOperatorConcept&) const
 {
-    return false;
+    PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
 }
 
 std::string_view NullLogicalOperator::getName() const noexcept

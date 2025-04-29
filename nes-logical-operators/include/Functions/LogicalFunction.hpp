@@ -209,28 +209,18 @@ private:
     {
         T data;
         explicit Model(T d) : data(std::move(d)) { }
-
         [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::unique_ptr<Concept>(new Model<T>(data)); }
-
         [[nodiscard]] std::string toString() const override { return data.toString(); }
-
         [[nodiscard]] std::vector<LogicalFunction> getChildren() const override { return data.getChildren(); }
-
         [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override
         {
             return data.withChildren(children);
         }
-
         [[nodiscard]] SerializableFunction serialize() const override { return data.serialize(); }
-
         [[nodiscard]] std::string getType() const override { return data.getType(); }
-
         [[nodiscard]] std::shared_ptr<DataType> getStamp() const override { return data.getStamp(); }
-
         [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const override { return data.withInferredStamp(schema); }
-
         [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override { return data.withStamp(stamp); }
-
         [[nodiscard]] bool operator==(const LogicalFunctionConcept& other) const override
         {
             if (auto p = dynamic_cast<const Model<T>*>(&other))
@@ -239,7 +229,6 @@ private:
             }
             return false;
         }
-
         [[nodiscard]] bool equals(const Concept& other) const override
         {
             if (auto p = dynamic_cast<const Model*>(&other))

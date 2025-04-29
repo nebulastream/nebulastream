@@ -52,7 +52,6 @@ std::string UnionLogicalOperator::toString() const
 
 LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
-    INVARIANT(inputSchemas.size() == 2, "Union should have two inputs");
     const auto& leftInputSchema = inputSchemas[0];
     const auto& rightInputSchema = inputSchemas[1];
 

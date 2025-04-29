@@ -83,7 +83,7 @@ public:
     /// Note that this function does not return a field with an ambiguous field name.
     //
     /// @param fieldName: Name of the attribute field that should be returned.
-    /// @return std::optional<std::shared_ptr<AttributeField> > The attribute field if found, otherwise an empty optional.
+    /// @return std::optional<std::shared_ptr<AttributeField>> The attribute field if found, otherwise an empty optional.
     std::optional<AttributeField> getFieldByName(const std::string& fieldName) const;
 
     /// @brief Finds a attribute field by index in the schema
