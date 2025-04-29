@@ -28,12 +28,18 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
+#include <Operators/SliceStore/Slice.hpp>
+#include <Operators/Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
+#include <Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
+#include <Watermark/TimeFunction.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutionContext.hpp>
 #include <function.hpp>
 #include <val_ptr.hpp>
 

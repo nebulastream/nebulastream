@@ -15,14 +15,14 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
-#include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Scan.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
+#include <Plans/ExecutableOperator.hpp>
 #include <Util/StdInt.hpp>
+#include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
+#include <Scan.hpp>
 
 namespace NES
 {
