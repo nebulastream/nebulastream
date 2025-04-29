@@ -1,5 +1,5 @@
 query: |
-  SELECT * FROM tcp_source WHERE id != 16 INTO csv_sink
+  SELECT * FROM tcp_source WHERE id != INT32(16) INTO csv_sink
 sink:
   name: csv_sink
   type: File
