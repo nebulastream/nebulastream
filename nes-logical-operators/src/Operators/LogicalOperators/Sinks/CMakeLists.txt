@@ -10,10 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-logical-operators
-        DecomposedQueryPlan.cpp
-        QueryPlan.cpp
-        QueryPlanBuilder.cpp
-        PipelineQueryPlan.cpp
-        OperatorPipeline.cpp
+add_source_files(nes-physical-operators
+        NLJBuildPhysicalOperator.cpp
+        NLJProbePhysicalOperator.cpp
+        NLJOperatorHandler.cpp
+        NLJSlice.cpp
 )

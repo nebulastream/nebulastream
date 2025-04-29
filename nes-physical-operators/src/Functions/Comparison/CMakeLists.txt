@@ -10,11 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        AggregationBuild.cpp
-        AggregationProbe.cpp
-        AggregationOperatorHandler.cpp
-        AggregationSlice.cpp
-)
-
-add_subdirectory(Function)
+add_plugin(Greater PhysicalFunction nes-physical-operators GreaterPhysicalFunction.cpp)
+add_plugin(GreaterEquals PhysicalFunction nes-physical-operators GreaterEqualsPhysicalFunction.cpp)
+add_plugin(Less PhysicalFunction nes-physical-operators LessPhysicalFunction.cpp)
+add_plugin(LessEquals PhysicalFunction nes-physical-operators LessEqualsPhysicalFunction.cpp)

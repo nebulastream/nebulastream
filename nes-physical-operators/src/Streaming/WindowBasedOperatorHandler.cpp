@@ -16,14 +16,10 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
-#include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Util/Execution.hpp>
+#include <Streaming/WindowBasedOperatorHandler.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
 

@@ -18,4 +18,6 @@ add_source_files(nes-physical-operators
         Scan.cpp)
 
 add_subdirectory(Watermark)
+add_subdirectory(Streaming)
+add_subdirectory(SliceStore)
 add_subdirectory(Functions)

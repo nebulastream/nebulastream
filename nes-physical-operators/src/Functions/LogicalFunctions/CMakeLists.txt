@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(And ExecutableFunction nes-execution ExecutableFunctionAnd.cpp)
-add_plugin(Equals ExecutableFunction nes-execution ExecutableFunctionEquals.cpp)
-add_plugin(Negate ExecutableFunction nes-execution ExecutableFunctionNegate.cpp)
-add_plugin(Or ExecutableFunction nes-execution ExecutableFunctionOr.cpp)
+add_plugin(And PhysicalFunction nes-physical-operators AndPhysicalFunction.cpp)
+add_plugin(Equals PhysicalFunction nes-physical-operators EqualsPhysicalFunction.cpp)
+add_plugin(Negate PhysicalFunction nes-physical-operators NegatePhysicalFunction.cpp)
+add_plugin(Or PhysicalFunction nes-physical-operators OrPhysicalFunction.cpp)

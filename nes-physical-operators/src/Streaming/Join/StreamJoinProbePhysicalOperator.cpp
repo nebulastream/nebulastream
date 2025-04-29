@@ -14,27 +14,15 @@
 
 #include <cstdint>
 #include <memory>
-#include <vector>
-
 #include <utility>
-#include <Execution/Functions/PhysicalFunction.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
+#include <vector>
+#include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
-#include <Operators/Streaming/Join/StreamJoinProbe.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Streaming/Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
+#include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
-#include <ErrorHandling.hpp>
-#include <ExecutionContext.hpp>
-#include <function.hpp>
 #include <static.hpp>
 
 namespace NES
