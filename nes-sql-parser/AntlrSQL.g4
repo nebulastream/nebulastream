@@ -58,10 +58,12 @@ fromQuery: AS query;
 
 dropStatement: DROP dropSubject;
 dropSubject: dropQuery | dropSource;
-dropQuery: QUERY id=IDENTIFIER;
-dropSource: SOURCE name=IDENTIFIER;
+dropQuery: QUERY id=INTEGER_VALUE;
+dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
+dropLogicalSourceSubject: LOGICAL SOURCE name=IDENTIFIER;
+dropPhysicalSourceSubject: PHYSICAL SOURCE id=INTEGER_VALUE;
 
-showStatement: SHOW DB_OBJECT_TYPE (FORMAT format=('TEXT' | 'JSON'))?;
+showStatement: SHOW dbObjectType (FORMAT format=('TEXT' | 'JSON'))?;
 
 
 query : queryTerm queryOrganization;
@@ -478,7 +480,7 @@ FLOAT_LITERAL
     ;
 
 IDENTIFIER
-    : (LETTER | DIGIT | '_')+
+    : LETTER (LETTER | DIGIT | '_')*
     ;
 
 fragment DECIMAL_DIGITS
@@ -509,9 +511,9 @@ UNRECOGNIZED
     : .
     ;
 
-DB_OBJECT_TYPE : SOURCES | QUERIES;
+dbObjectType : SOURCES | QUERIES;
 
-SOURCES: 'SOURCES' | 'sources';
+SOURCES: (LOGICAL | PHYSICAL) ('SOURCES' | 'sources');
 QUERIES: 'QUERIES' | 'queries';
 
 
@@ -538,6 +540,8 @@ SHOW : 'SHOW';
 FORMAT : 'FORMAT';
 CREATE : 'CREATE';
 SOURCE : 'SOURCE';
+LOGICAL: 'LOGICAL';
+PHYSICAL: 'PHYSICAL';
 SINK : 'SINK';
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
