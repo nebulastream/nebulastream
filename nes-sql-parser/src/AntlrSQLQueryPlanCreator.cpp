@@ -53,7 +53,6 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
-#include <WindowTypes/Types/ThresholdWindow.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -583,23 +582,6 @@ void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowCo
     }
     poppush(helper);
     AntlrSQLBaseListener::exitSlidingWindow(context);
-}
-
-void AntlrSQLQueryPlanCreator::exitThresholdBasedWindow(AntlrSQLParser::ThresholdBasedWindowContext* context)
-{
-    AntlrSQLHelper helper = helpers.top();
-    if (helper.minimumCount.has_value())
-    {
-        helper.windowType
-            = std::make_shared<Windowing::ThresholdWindow>(std::move(helper.functionBuilder.back()), helper.minimumCount.value());
-    }
-    else
-    {
-        helper.windowType = std::make_shared<Windowing::ThresholdWindow>(std::move(helper.functionBuilder.back()));
-    }
-    //helper.isTimeBasedWindow = false;
-    poppush(helper);
-    AntlrSQLBaseListener::exitThresholdBasedWindow(context);
 }
 
 void AntlrSQLQueryPlanCreator::enterNamedExpression(AntlrSQLParser::NamedExpressionContext* context)

@@ -76,7 +76,6 @@ public:
     void exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context) override;
     void exitLogicalNot(AntlrSQLParser::LogicalNotContext* context) override;
     void exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context) override;
-    void exitThresholdBasedWindow(AntlrSQLParser::ThresholdBasedWindowContext* context) override;
     void exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context) override;
     void enterValueExpressionDefault(AntlrSQLParser::ValueExpressionDefaultContext* context) override;
     void exitSetOperation(AntlrSQLParser::SetOperationContext* context) override;
