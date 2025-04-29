@@ -98,14 +98,14 @@ NES::SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() 
     NES::SerializableAggregationFunction serializedAggregationFunction;
     serializedAggregationFunction.set_type(NAME);
 
-    auto* onFieldFuc = new SerializableFunction();
-    onFieldFuc->CopyFrom(onField.serialize());
+    auto onFieldFuc = SerializableFunction();
+    onFieldFuc.CopyFrom(onField.serialize());
 
-    auto* asFieldFuc = new SerializableFunction();
-    asFieldFuc->CopyFrom(asField.serialize());
+    auto asFieldFuc = SerializableFunction();
+    asFieldFuc.CopyFrom(asField.serialize());
 
-    serializedAggregationFunction.set_allocated_as_field(asFieldFuc);
-    serializedAggregationFunction.set_allocated_on_field(onFieldFuc);
+    serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
+    serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
     return serializedAggregationFunction;
 }
 
