@@ -14,19 +14,17 @@
 
 #pragma once
 #include <cstdint>
-#include <WindowTypes/Measures/WindowMeasure.hpp>
 namespace NES::Windowing
 {
-
 /// A time based window measure.
-class TimeMeasure : public WindowMeasure
+class TimeMeasure
 {
 public:
     explicit TimeMeasure(uint64_t milliseconds);
 
     [[nodiscard]] uint64_t getTime() const;
 
-    std::string toString() const override;
+    std::string toString() const;
 
     bool operator<(const TimeMeasure& other) const;
     bool operator<=(const TimeMeasure& other) const;
