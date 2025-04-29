@@ -24,8 +24,16 @@
 namespace NES
 {
 
-/// Requires that T contains a function getChildren()
+/// Requires a function getChildren()
 template <typename T>
+concept HasChildren = requires(T t) {
+    { t.getChildren() } -> std::ranges::range;
+};
+
+/// Defines a Breadth-first iterator on classes defining `getChildren()`
+/// Example usage:
+/// for (auto i : BFSRange(ClassWithChildren))
+template <HasChildren T>
 class BFSIterator
 {
 public:
