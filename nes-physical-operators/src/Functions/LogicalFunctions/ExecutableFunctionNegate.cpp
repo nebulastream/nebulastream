@@ -12,9 +12,9 @@
     limitations under the License.
 */
 #include <memory>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Functions/Function.hpp>
+#include <Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>

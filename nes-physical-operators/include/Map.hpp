@@ -13,8 +13,8 @@
 */
 #pragma once
 #include <memory>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Functions/Function.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {

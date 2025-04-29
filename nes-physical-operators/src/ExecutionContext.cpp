@@ -12,10 +12,6 @@
     limitations under the License.
 */
 
-#include <cstddef>
-#include <cstdint>
-#include <memory>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
@@ -28,6 +24,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutionContext.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES

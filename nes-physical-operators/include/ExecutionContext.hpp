@@ -31,6 +31,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>

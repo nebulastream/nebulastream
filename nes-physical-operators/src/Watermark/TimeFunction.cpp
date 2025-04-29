@@ -14,13 +14,11 @@
 
 #include <cstdint>
 #include <utility>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Functions/Function.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <val.hpp>
+#include <Watermark/TimeFunction.hpp>
+#include <ExecutionContext.hpp>
 
 namespace NES
 {

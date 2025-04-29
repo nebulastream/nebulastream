@@ -15,10 +15,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/EmitOperatorHandler.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/OperatorState.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
@@ -28,6 +24,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/val.hpp>
+#include <Emit.hpp>
+#include <EmitOperatorHandler.hpp>
+#include <ExecutionContext.hpp>
+#include <OperatorState.hpp>
 #include <function.hpp>
 
 namespace NES

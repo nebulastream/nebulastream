@@ -17,8 +17,9 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 namespace NES::QueryCompilation
+#include <Functions/Function.hpp>
+#include <PhysicalOperator.hpp>
 {
-
 /**
  * @brief Pipelining phase to transform a query plan into a plan of pipelines.
  */
