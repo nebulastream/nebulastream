@@ -40,18 +40,17 @@ nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record&
     const auto ts = this->timestampFunction->execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
     const auto tsInMs = nautilus::val<Timestamp>(ts * timeMultiplier);
-    ctx.currentTs = tsInMs;
     return tsInMs;
 }
 
 void IngestionTimeFunction::open(ExecutionContext& ctx, RecordBuffer& buffer)
 {
-    ctx.currentTs = buffer.getCreatingTs();
+    ctx.bufferCreationTs = buffer.getCreatingTs();
 }
 
 nautilus::val<Timestamp> IngestionTimeFunction::getTs(ExecutionContext& ctx, Record&)
 {
-    return ctx.currentTs;
+    return ctx.bufferCreationTs;
 }
 
 }

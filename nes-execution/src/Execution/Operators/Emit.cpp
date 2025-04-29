@@ -140,7 +140,7 @@ void Emit::emitRecordBuffer(
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerIndex));
     recordBuffer.setLastChunk(isLastChunk);
-    recordBuffer.setCreationTs(ctx.currentTs);
+    recordBuffer.setCreationTs(ctx.bufferCreationTs);
     ctx.emitBuffer(recordBuffer);
 
     if (isLastChunk == true)

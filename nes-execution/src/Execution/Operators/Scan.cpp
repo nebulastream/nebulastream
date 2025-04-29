@@ -39,7 +39,7 @@ void Scan::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) cons
     /// initialize global state variables to keep track of the watermark ts and the origin id
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.originId = recordBuffer.getOriginId();
-    executionCtx.currentTs = recordBuffer.getCreatingTs();
+    executionCtx.bufferCreationTs = recordBuffer.getCreatingTs();
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
