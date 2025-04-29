@@ -24,7 +24,7 @@
 #include <ErrorHandling.hpp>
 
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 /// Stores members that are needed for both phases of the aggregation, build and probe

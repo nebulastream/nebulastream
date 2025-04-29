@@ -19,16 +19,17 @@
 #include <map>
 #include <memory>
 #include <vector>
-#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-
-#include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/SliceStore/Slice.hpp>
+#include <Operators/SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
+#include <Watermark/MultiOriginWatermarkProcessor.hpp>
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 /// This is the base class for all window-based operator handlers, e.g., join and aggregation.
 /// It assumes that they have a build and a probe phase.
