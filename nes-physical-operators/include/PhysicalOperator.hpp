@@ -46,8 +46,8 @@ inline OperatorId getNextPhysicalOperatorId()
 }
 }
 
-/// Each operator can implement setup, open, close, execute, and terminate.
-/// The concept carries an OperatorId that is stable across copies.
+/// Concept defining the interface for all physical operators in the query plan.
+/// Physical operators represent operations that are executed during query execution.
 struct PhysicalOperatorConcept
 {
     virtual ~PhysicalOperatorConcept() = default;
@@ -55,33 +55,95 @@ struct PhysicalOperatorConcept
     explicit PhysicalOperatorConcept();
     explicit PhysicalOperatorConcept(OperatorId existingId);
 
+    /// Returns the child operator of this operator, if any.
     [[nodiscard]] virtual std::optional<struct PhysicalOperator> getChild() const = 0;
+    
+    /// Sets the child operator of this operator.
     virtual void setChild(struct PhysicalOperator child) = 0;
 
-    /// @brief Setup initializes this operator for execution.
+    /// Sets up the operator for execution.
+    /// This is called once before the operator starts processing records.
     virtual void setup(ExecutionContext& executionCtx) const;
-    /// @brief Open is called for each record buffer and is used to initialize execution local state.
+
+    /// Opens the operator for processing records.
+    /// This is called before each batch of records is processed.
     virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    /// @brief Close is called for each record buffer and clears execution local state.
+
+    /// Closes the operator after processing records.
+    /// This is called after each batch of records is processed.
     virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    /// @brief Terminates the operator and clears all operator state.
+
+    /// Terminates the operator.
+    /// This is called once after all records have been processed.
     virtual void terminate(ExecutionContext& executionCtx) const;
-    /// @brief Called by the upstream operator (parent) to process one record.
-    virtual void execute(ExecutionContext&, Record&) const;
 
-    virtual std::string toString() const;
+    /// Executes the operator on the given record.
+    /// @param executionCtx The execution context.
+    /// @param record The record to process.
+    virtual void execute(ExecutionContext& executionCtx, Record& record) const;
 
+    /// Returns a string representation of the operator.
+    [[nodiscard]] virtual std::string toString() const;
+
+    /// Unique identifier for this operator.
     OperatorId id = INVALID_OPERATOR_ID;
 };
 
+/// A type-erased wrapper for physical operators.
+/// This class provides type erasure for physical operators, allowing them to be stored
+/// and manipulated without knowing their concrete type. It uses the PIMPL pattern
+/// to store the actual operator implementation.
+/// @tparam T The type of the physical operator. Must inherit from PhysicalOperatorConcept.
+template<typename T>
+concept IsPhysicalOperator = std::is_base_of_v<PhysicalOperatorConcept, std::remove_cv_t<std::remove_reference_t<T>>>;
+
+/// Type-erased physical operator that can be used to process records.
 struct PhysicalOperator
 {
-    template <typename T>
+    /// Constructs a PhysicalOperator from a concrete operator type.
+    /// @tparam T The type of the operator. Must satisfy IsPhysicalOperator concept.
+    /// @param op The operator to wrap.
+    template <IsPhysicalOperator T>
     PhysicalOperator(const T& op) : self(std::make_unique<Model<T>>(op, op.id))
     {
     }
-    PhysicalOperator(const PhysicalOperator& other);
 
+    PhysicalOperator();
+    PhysicalOperator(const PhysicalOperator& other);
+    PhysicalOperator(PhysicalOperator&&) noexcept;
+
+    PhysicalOperator& operator=(const PhysicalOperator& other);
+
+    /// Returns the child operator of this operator, if any.
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+
+    /// Sets the child operator of this operator.
+    void setChild(PhysicalOperator child);
+
+    /// Sets up the operator for execution.
+    void setup(ExecutionContext& executionCtx) const;
+
+    /// Opens the operator for processing records.
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+
+    /// Closes the operator after processing records.
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+
+    /// Terminates the operator.
+    void terminate(ExecutionContext& executionCtx) const;
+
+    /// Executes the operator on the given record.
+    void execute(ExecutionContext& executionCtx, Record& record) const;
+
+    /// Returns a string representation of the operator.
+    [[nodiscard]] std::string toString() const;
+
+    /// Returns the unique identifier of this operator.
+    [[nodiscard]] OperatorId getId() const;
+
+    /// Attempts to get the underlying operator as type T.
+    /// @tparam T The type to try to get the operator as.
+    /// @return std::optional<T> The operator if it is of type T, nullopt otherwise.
     template <typename T>
     [[nodiscard]] std::optional<T> tryGet() const
     {
@@ -92,6 +154,10 @@ struct PhysicalOperator
         return std::nullopt;
     }
 
+    /// Gets the underlying operator as type T.
+    /// @tparam T The type to get the operator as.
+    /// @return const T The operator.
+    /// @throw InvalidDynamicCast If the operator is not of type T.
     template <typename T>
     [[nodiscard]] const T get() const
     {
@@ -102,21 +168,7 @@ struct PhysicalOperator
         throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
     }
 
-    PhysicalOperator(PhysicalOperator&&) noexcept;
-    PhysicalOperator& operator=(const PhysicalOperator& other);
-
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    void setChild(PhysicalOperator child);
-
-    void setup(ExecutionContext& executionCtx) const;
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void terminate(ExecutionContext& executionCtx) const;
-    void execute(ExecutionContext& executionCtx, Record& record) const;
-
-    [[nodiscard]] std::string toString() const;
-    [[nodiscard]] OperatorId getId() const;
-
+private:
     struct Concept : PhysicalOperatorConcept
     {
         explicit Concept(OperatorId existingId) : PhysicalOperatorConcept(existingId) { }
@@ -127,6 +179,7 @@ struct PhysicalOperator
     struct Model : Concept
     {
         T data;
+
         explicit Model(T d) : Concept(getNextPhysicalOperatorId()), data(std::move(d)) { }
 
         Model(T d, OperatorId existingId) : Concept(existingId), data(std::move(d)) { }
@@ -147,7 +200,7 @@ struct PhysicalOperator
 
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
 
-        std::string toString() const override
+        [[nodiscard]] std::string toString() const override
         {
             const auto name = typeid(T).name();
             int status = 0;
