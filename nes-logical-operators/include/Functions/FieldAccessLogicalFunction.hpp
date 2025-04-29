@@ -57,6 +57,7 @@ public:
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);
 
+    /// Serialization
     struct ConfigParameters
     {
         static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> FIELD_NAME{

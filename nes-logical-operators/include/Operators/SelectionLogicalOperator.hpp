@@ -56,9 +56,6 @@ public:
 
 
     /// Serialization
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string> config);
-
     struct ConfigParameters
     {
         static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> SELECTION_FUNCTION_NAME{

@@ -33,23 +33,23 @@ DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory() = default;
 
 std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::shared_ptr<DataType> dataType) const
 {
-    if (const auto* booleanPtr = dynamic_cast<const Boolean*>(dataType.get()))
+    if (const auto booleanPtr = std::dynamic_pointer_cast<Boolean>(dataType))
     {
         return BasicPhysicalType::create(dataType, BasicPhysicalType::NativeType::BOOLEAN);
     }
-    else if (const auto* integerPtr = dynamic_cast<const Integer*>(dataType.get()))
+    else if (const auto integerPtr = std::dynamic_pointer_cast<Integer>(dataType))
     {
         return getPhysicalType(DataType::as<Integer>(dataType));
     }
-    else if (const auto* floatPtr = dynamic_cast<const Float*>(dataType.get()))
+    else if (const auto floatPtr = std::dynamic_pointer_cast<Float>(dataType))
     {
         return getPhysicalType(DataType::as<Float>(dataType));
     }
-    else if (const auto* charPtr = dynamic_cast<const Char*>(dataType.get()))
+    else if (const auto charPtr = std::dynamic_pointer_cast<Char>(dataType))
     {
         return BasicPhysicalType::create(dataType, BasicPhysicalType::NativeType::CHAR);
     }
-    else if (const auto* varSizedPtr = dynamic_cast<const VariableSizedDataType*>(dataType.get()))
+    else if (const auto varSizedPtr = std::dynamic_pointer_cast<VariableSizedDataType>(dataType))
     {
         return VariableSizedDataPhysicalType::create(dataType);
     }
@@ -67,11 +67,11 @@ std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::s
     {
         if (integer->getBits() <= 8)
         {
-            return BasicPhysicalType::create(std::move(integer), UINT_8);
+            return BasicPhysicalType::create(integer, UINT_8);
         }
         else if (integer->getBits() <= 16)
         {
-            return BasicPhysicalType::create(std::move(integer), UINT_16);
+            return BasicPhysicalType::create(integer, UINT_16);
         }
         else if (integer->getBits() <= 32)
         {
@@ -90,19 +90,19 @@ std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::s
     {
         if (integer->getBits() <= 8)
         {
-            return BasicPhysicalType::create(std::move(integer), INT_8);
+            return BasicPhysicalType::create(integer, INT_8);
         }
         else if (integer->getBits() <= 16)
         {
-            return BasicPhysicalType::create(std::move(integer), INT_16);
+            return BasicPhysicalType::create(integer, INT_16);
         }
         else if (integer->getBits() <= 32)
         {
-            return BasicPhysicalType::create(std::move(integer), INT_32);
+            return BasicPhysicalType::create(integer, INT_32);
         }
         else if (integer->getBits() <= 64)
         {
-            return BasicPhysicalType::create(std::move(integer), INT_64);
+            return BasicPhysicalType::create(integer, INT_64);
         }
         else
         {
@@ -115,11 +115,11 @@ std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::s
 {
     if (floatType->getBits() <= 32)
     {
-        return BasicPhysicalType::create(std::move(floatType), BasicPhysicalType::NativeType::FLOAT);
+        return BasicPhysicalType::create(floatType, BasicPhysicalType::NativeType::FLOAT);
     }
     else if (floatType->getBits() <= 64)
     {
-        return BasicPhysicalType::create(std::move(floatType), BasicPhysicalType::NativeType::DOUBLE);
+        return BasicPhysicalType::create(floatType, BasicPhysicalType::NativeType::DOUBLE);
     }
     else
     {

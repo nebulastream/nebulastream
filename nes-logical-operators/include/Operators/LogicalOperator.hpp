@@ -105,7 +105,7 @@ template<typename T>
 concept IsLogicalOperator = std::is_base_of_v<LogicalOperatorConcept, std::remove_cv_t<std::remove_reference_t<T>>>;
 
 /// Enables default construction of LogicalOperator.
-/// Necessary to enable more ergonomic usage in e.g. unordered maps etc.
+/// Necessary to enable more ergonomic usage in e.g. default constructable of unordered maps etc.
 class NullLogicalOperator : public LogicalOperatorConcept
 {
 public:

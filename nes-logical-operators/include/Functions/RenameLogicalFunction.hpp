@@ -44,6 +44,7 @@ public:
     [[nodiscard]] std::string getType() const override;
     [[nodiscard]] std::string toString() const override;
 
+    /// Serialization
     struct ConfigParameters
     {
         static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> NEW_FIELD_NAME{

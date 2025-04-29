@@ -30,7 +30,7 @@ public:
     /// @brief gets the multiplier to convert this to milliseconds
     [[nodiscard]] uint64_t getMillisecondsConversionMultiplier() const;
 
-    [[nodiscard]] std::string toString() const;
+    friend std::ostream& operator<<(std::ostream& os, const TimeUnit& timeUnit);
     [[nodiscard]] bool operator==(const TimeUnit& other) const;
 
     static TimeUnit Milliseconds();

@@ -26,7 +26,7 @@ namespace NES
 {
 
 /// This function node represents a constant value and a fixed data type.
-/// Thus the samp of this function is always fixed.
+/// Thus, the stamp of this function is always fixed.
 class ConstantValueLogicalFunction final : public LogicalFunctionConcept
 {
 public:
@@ -52,6 +52,7 @@ public:
     [[nodiscard]] std::string getType() const override;
     [[nodiscard]] std::string toString() const override;
 
+    /// Serialization
     struct ConfigParameters
     {
         static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> CONSTANT_VALUE_AS_STRING{

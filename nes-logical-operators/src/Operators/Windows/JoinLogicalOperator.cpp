@@ -125,7 +125,6 @@ std::string JoinLogicalOperator::toString() const
 
 LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
-    PRECONDITION(inputSchemas.size() == 2, "Join should have two inputs");
     const auto& leftInputSchema = inputSchemas[0];
     const auto& rightInputSchema = inputSchemas[1];
 

@@ -56,7 +56,7 @@ bool MapLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 
 LogicalOperator MapLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
-    INVARIANT(!inputSchemas.empty(), "Map should have at least one input");
+    INVARIANT(inputSchemas.size() == 1, "Map should have one input but got {}", inputSchemas.size());
     
     const auto& firstSchema = inputSchemas[0];
     for (const auto& schema : inputSchemas) {
@@ -66,7 +66,7 @@ LogicalOperator MapLogicalOperator::withInferredSchema(std::vector<Schema> input
     }
 
     auto copy = *this;
-    /// use the default input schema to calculate the out schema of this operator.
+    /// use the default input schema to calculate the output schema of this operator.
     copy.mapFunction = mapFunction.withInferredStamp(firstSchema).get<FieldAssignmentLogicalFunction>();
 
     copy.inputSchema = firstSchema;

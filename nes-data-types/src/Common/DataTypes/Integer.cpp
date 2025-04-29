@@ -41,13 +41,9 @@ bool Integer::operator==(const NES::DataType& other) const
 
 std::shared_ptr<DataType> Integer::join(const DataType& otherDataType) const
 {
-    if (dynamic_cast<const Undefined*>(&otherDataType) != nullptr)
-    {
-        return std::make_shared<Integer>(bits, isSigned);
-    }
     if (dynamic_cast<const Numeric*>(&otherDataType) == nullptr)
     {
-        throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType.toString());
+        return std::make_shared<Undefined>();
     }
 
     if (auto newDataType = inferDataType(*this, *dynamic_cast<const Numeric*>(&otherDataType)); newDataType.has_value())

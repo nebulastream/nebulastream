@@ -28,9 +28,10 @@ uint64_t TimeUnit::getMillisecondsConversionMultiplier() const
     return multiplier;
 }
 
-std::string TimeUnit::toString() const
+std::ostream& operator<<(std::ostream& os, const TimeUnit& timeUnit)
 {
-    return fmt::format("TimeUnit: multiplier= {}", std::to_string(multiplier));
+    os << fmt::format("TimeUnit: multiplier= {}", std::to_string(timeUnit.multiplier));
+    return os;
 }
 
 bool TimeUnit::operator==(const TimeUnit& other) const
