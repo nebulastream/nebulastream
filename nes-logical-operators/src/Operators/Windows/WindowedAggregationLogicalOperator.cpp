@@ -26,8 +26,6 @@
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <WindowTypes/Types/ContentBasedWindowType.hpp>
-#include <WindowTypes/Types/ThresholdWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
@@ -140,14 +138,6 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
         copy.windowEndFieldName = newQualifierForSystemField + "$end";
         copy.outputSchema.addField(copy.windowStartFieldName, BasicType::UINT64);
         copy.outputSchema.addField(copy.windowEndFieldName, BasicType::UINT64);
-    }
-    else if (auto* contentBasedWindowType = dynamic_cast<Windowing::ContentBasedWindowType*>(&getWindowType()))
-    {
-        if (contentBasedWindowType->getContentBasedSubWindowType()
-            == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
-        {
-            auto thresholdWindow = Windowing::ContentBasedWindowType::asThresholdWindow(*contentBasedWindowType);
-        }
     }
     else
     {
