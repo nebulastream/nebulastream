@@ -10,13 +10,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# include registrar generation functions
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-physical-operators ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-physical-operators PUBLIC nes-sources nes-sinks nes-nautilus) # TODO check if we need all this
+target_link_libraries(nes-physical-operators PUBLIC nes-sources nes-sinks nes-nautilus)
 target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+
+# Create library for the registries
+create_plugin_registry_library(nes-physical-operators-registry nes-physical-operators)
+target_link_libraries(nes-physical-operators PRIVATE nes-physical-operators-registry)
+# Generate a registrar for each registry
+generate_plugin_registrars(nes-physical-operators PhysicalFunction)

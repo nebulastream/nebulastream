@@ -22,9 +22,8 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <SliceStore/Slice.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Execution.hpp>
-
 
 namespace NES
 {
