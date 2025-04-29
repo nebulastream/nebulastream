@@ -21,7 +21,7 @@
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 /// Is the general probe operator for window operators. It is responsible for emitting slices and windows to the second phase (probe).

@@ -35,9 +35,10 @@ namespace NES::Runtime::Execution::Operators
 struct EmittedAggregationWindow
 {
     WindowInfo windowInfo;
-    std::unique_ptr<Interface::HashMap> finalHashMap; /// Pointer to the final hash map that the probe should use to combine all hash maps
+    std::unique_ptr<Nautilus::Interface::HashMap>
+        finalHashMap; /// Pointer to the final hash map that the probe should use to combine all hash maps
     uint64_t numberOfHashMaps;
-    Interface::HashMap** hashMaps; /// Pointer to the stored pointers of all hash maps that the probe should combine
+    Nautilus::Interface::HashMap** hashMaps; /// Pointer to the stored pointers of all hash maps that the probe should combine
 };
 
 class AggregationOperatorHandler final : public WindowBasedOperatorHandler

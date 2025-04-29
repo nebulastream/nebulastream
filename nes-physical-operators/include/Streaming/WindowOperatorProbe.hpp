@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 
 
-namespace NES::Runtime::Execution::Operators
+namespace NES
 {
 
 /// Is the general probe operator for window operators. It is responsible for garbage collecting slices and windows.
