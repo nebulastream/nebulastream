@@ -376,10 +376,10 @@ void FileBackedTimeBasedSliceStore::updateSlices(
 
     /// Sort slices by state size to offload larger slices first and choose which ones can be efficiently written to external storage
     std::multimap<size_t, std::pair<std::shared_ptr<Slice>, FileLayout>> slicesToBeOffloadedBySize;
-    //for (const auto& [sliceEnd, slice] : *slices.rlock())
-    for (const auto& [sliceEnd, slice] : *windows.rlock())
+    //for (const auto& [sliceEnd, slice] : *windows.rlock())
+    for (const auto& [sliceEnd, slice] : *slices.rlock())
     {
-        const auto nextWindowTrigger = Predictor.predict(windowEnd, newGlobalWatermark);
+        //const auto nextWindowTrigger = Predictor.predict(windowEnd, newGlobalWatermark);
 
         // TODO exclude all slices that have already been read back from ssd or are going to be read back below
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
@@ -466,7 +466,7 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
 }
 
-void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::vector<size_t>& dataSizes)
+void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes)
 {
     for (const auto dataSize : dataSizes)
     {
