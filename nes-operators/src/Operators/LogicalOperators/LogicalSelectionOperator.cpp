@@ -70,7 +70,7 @@ std::ostream& LogicalSelectionOperator::toDebugString(std::ostream& os) const
 
 std::ostream& LogicalSelectionOperator::toQueryPlanString(std::ostream& os) const
 {
-    return os << fmt::format("FILTER({:q})", *predicate);
+    return os << fmt::format("FILTER({:q})", *predicate); ///ausprinten
 }
 
 bool LogicalSelectionOperator::inferSchema()

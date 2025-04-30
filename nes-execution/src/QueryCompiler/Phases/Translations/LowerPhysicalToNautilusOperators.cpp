@@ -344,10 +344,13 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 
     throw UnknownPhysicalOperator(fmt::format("Cannot lower {}", *operatorNode));
 }
-
+pr schreiben, welche ändferungen fixen perf
+                  rebasen mit main
+                  input output schema + memlayout (richtig?) logical -> nautilus anschauen (filter (scan, emit) -> selected coluzmn oder all?)
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<Schema>& schema, size_t bufferSize)
 {
+    ///investigate schema ausprinten
     switch (schema->getLayoutType())
     {
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
