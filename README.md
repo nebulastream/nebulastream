@@ -1,3 +1,4 @@
+[![NES Nightly](https://github.com/nebulastream/nebulastream-public/actions/workflows/nightly.yml/badge.svg)](https://github.com/nebulastream/nebulastream-public/actions/workflows/nightly.yml) [![Conbench](https://img.shields.io/badge/Benchmark-Conbench-blue?labelColor=3D444C)](https://bench.nebula.stream/c-benchmarks/)
 # NebulaStream
 
 NebulaStream is our attempt to develop a general-purpose, end-to-end data management system for the IoT.
