@@ -406,7 +406,7 @@ int main(int argc, const char** argv)
         if (not failedQueries.empty())
         {
             std::stringstream outputMessage;
-            outputMessage << fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
+            outputMessage << fmt::format("The following queries ({} of {}) failed:\n[Name, Command]\n- {}", failedQueries.size(), queries.size(), fmt::join(failedQueries, "\n- "));
             NES_ERROR("{}", outputMessage.str());
             std::cout << '\n' << outputMessage.str() << '\n';
             return 1;
