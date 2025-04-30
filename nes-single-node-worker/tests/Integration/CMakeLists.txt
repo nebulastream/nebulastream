@@ -13,19 +13,20 @@
 
 # Called whenever TARGET CMake builds TARGET
 # Executes 'nes-nebuli dump -i INPUT_PATH -o OUTPUT_PATH', generating the proto version of the yaml input query
-# Assumes the input and output directories already exist
-function(run_nes_nebuli TARGET QUERY_NAME)
+function(serialize_query_with_nebuli TARGET QUERY_NAME)
     # Get the full path to the nes-nebuli binary
-    set(NES_NEBULI_BIN "${CMAKE_BINARY_DIR}/nes-nebuli/nes-nebuli")
-    set(PATH_TO_QUERIES "${INTEGRATION_TEST_DIR}/queries")
+    set(NEBULI_BINARY "${CMAKE_BINARY_DIR}/nes-nebuli/nes-nebuli")
+    set(YAML_QUERIES_DIR "${CMAKE_SOURCE_DIR}/${INTEGRATION_TEST_DATA_PATH}/queries")
+    set(SERIALIZED_QUERIES_DIR "${CMAKE_BINARY_DIR}/${INTEGRATION_TEST_DATA_PATH}/queries")
+    file(MAKE_DIRECTORY ${SERIALIZED_QUERIES_DIR})
 
-    # Add dependency to ensure nes-nebuli is built before the target that uses it
+    # Add dependency to ensure that the nebuli binary is built before the target that uses it
     add_dependencies(${TARGET} nes-nebuli)
 
-    # Add a custom command to run the binary with the provided input and output paths
+    # Run nebuli on the specified yaml query (QUERY_NAME) and output the serialized protobuf version in the build directory
     add_custom_command(
             TARGET ${TARGET} PRE_BUILD
-            COMMAND "${NES_NEBULI_BIN}" dump -i "${PATH_TO_QUERIES}/${QUERY_NAME}.yaml" -o "${PATH_TO_QUERIES}/${QUERY_NAME}.bin"
+            COMMAND "${NEBULI_BINARY}" dump -i "${YAML_QUERIES_DIR}/${QUERY_NAME}.yaml" -o "${SERIALIZED_QUERIES_DIR}/${QUERY_NAME}.bin"
             COMMENT "Running nes-nebuli: ${INPUT_PATH} -> ${OUTPUT_PATH}"
             VERBATIM
     )
@@ -43,7 +44,7 @@ target_link_libraries(
         nes-execution
         nes-single-node-worker-test-util
 )
-run_nes_nebuli(single-node-integration-tests-csv "qTwoCSVSourcesWithFilter")
+serialize_query_with_nebuli(single-node-integration-tests-csv "qTwoCSVSourcesWithFilter")
 
 # TCP integration tests
 add_nes_unit_test(single-node-integration-tests-tcp SingleNodeIntegrationTestsTCP.cpp ../../src/GrpcService.cpp ../../src/SingleNodeWorker.cpp)
@@ -56,9 +57,9 @@ target_link_libraries(
         Boost::asio
         nes-single-node-worker-test-util
 )
-run_nes_nebuli(single-node-integration-tests-tcp "qOneTCPSource")
-run_nes_nebuli(single-node-integration-tests-tcp "qOneTCPSourceWithFilter")
-run_nes_nebuli(single-node-integration-tests-tcp "qTwoTCPSourcesWithFilter")
+serialize_query_with_nebuli(single-node-integration-tests-tcp "qOneTCPSource")
+serialize_query_with_nebuli(single-node-integration-tests-tcp "qOneTCPSourceWithFilter")
+serialize_query_with_nebuli(single-node-integration-tests-tcp "qTwoTCPSourcesWithFilter")
 
 # Mixed CSV and TCP integration tests
 add_nes_unit_test(single-node-integration-tests-mixed-sources SingleNodeIntegrationTestsMixedSources.cpp ../../src/GrpcService.cpp ../../src/SingleNodeWorker.cpp)
@@ -71,7 +72,7 @@ target_link_libraries(
         Boost::asio
         nes-single-node-worker-test-util
 )
-run_nes_nebuli(single-node-integration-tests-mixed-sources "qOneCSVSourceAndOneTCPSourceWithFilter")
+serialize_query_with_nebuli(single-node-integration-tests-mixed-sources "qOneCSVSourceAndOneTCPSourceWithFilter")
 
 add_nes_unit_test(single-node-integration-tests-query-status SingleNodeIntegrationTestsQueryStatus.cpp ../../src/GrpcService.cpp ../../src/SingleNodeWorker.cpp)
 target_include_directories(single-node-integration-tests-query-status PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include/ ${CMAKE_CURRENT_SOURCE_DIR}/../Util/include/)

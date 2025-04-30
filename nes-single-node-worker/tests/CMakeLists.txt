@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(INTEGRATION_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/testdata")
+set(INTEGRATION_TEST_DATA_PATH "nes-single-node-worker/tests/testdata")
 
 add_subdirectory(Integration)
 add_subdirectory(Util)
