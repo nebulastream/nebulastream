@@ -11,11 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        Slice.cpp
-        DefaultTimeBasedSliceStore.cpp
-        FileBackedTimeBasedSliceStore.cpp
+        AbstractWindowTriggerPredictor.cpp
+        KalmanWindowTriggerPredictor.cpp
 )
-
-add_subdirectory(FileDescriptors)
-add_subdirectory(MemoryController)
-add_subdirectory(WindowTriggerPredictor)
