@@ -24,18 +24,7 @@ RUN apt install -y \
     libelf-dev\
     libtraceevent-dev
 
-RUN git clone --depth 1 https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git \
-    && old_path=`pwd` \
-    && cd linux \
-    && git fetch --all --tags \
-    && git checkout v`uname -r | awk -F'[.-]' '{print $1"."$2}'` \
-    && cd tools/perf \
-    && NO_JEVENTS=1 make -j$(nproc) perf \
-    && cp perf /usr/bin/ \
-    && chmod +x /usr/bin/perf \
-    && perf --version \
-    && cd $old_path \
-    && rm -rf linux
+RUN apt install -y linux-tools-6.8.0-1027-azure
 
 RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && \
     (delgroup ubuntu || true) && \
