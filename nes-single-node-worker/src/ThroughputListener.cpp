@@ -44,6 +44,7 @@ void threadRoutine(
     const Execution::Operators::SliceAssigner sliceAssigner(timeIntervalInMilliSeconds, timeIntervalInMilliSeconds);
     struct ThroughputWindow
     {
+        explicit ThroughputWindow() : startTime(Timestamp::INVALID_VALUE), endTime(Timestamp::INVALID_VALUE), numberOfTuplesProcessed(0) { }
         Timestamp startTime;
         Timestamp endTime;
         uint64_t numberOfTuplesProcessed;
@@ -52,6 +53,11 @@ void threadRoutine(
     };
     struct TaskIntermediateStore
     {
+        TaskIntermediateStore(QueryId queryId, Timestamp startTime, uint64_t numberOfTuples)
+            : queryId(std::move(queryId)), startTime(std::move(startTime)), numberOfTuples(numberOfTuples)
+        {
+        }
+        explicit TaskIntermediateStore() : queryId(INVALID_QUERY_ID), startTime(Timestamp::INVALID_VALUE), numberOfTuples(0) { }
         QueryId queryId;
         Timestamp startTime;
         uint64_t numberOfTuples;
@@ -82,8 +88,7 @@ void threadRoutine(
                     const auto queryId = taskStartEvent.queryId;
                     const auto numberOfTuples = taskStartEvent.numberOfTuples;
                     const auto startTime = convertToTimeStamp(taskStartEvent.timestamp);
-                    taskIdToTaskIntermediateStoreMap[taskId]
-                        = {.queryId = queryId, .startTime = startTime, .numberOfTuples = numberOfTuples};
+                    taskIdToTaskIntermediateStoreMap[taskId] = TaskIntermediateStore(queryId, startTime, numberOfTuples);
                 },
                 [&](const TaskExecutionComplete& taskStopEvent)
                 {
@@ -154,10 +159,12 @@ void ThroughputListener::onEvent(Event event)
 }
 
 ThroughputListener::ThroughputListener(
-    const Timestamp::Underlying timeIntervalInMilliSeconds, const std::function<void(const QueryId&, const Timestamp&, const Timestamp&, double)>& callBack)
+    const Timestamp::Underlying timeIntervalInMilliSeconds,
+    const std::function<void(const QueryId&, const Timestamp&, const Timestamp&, double)>& callBack)
     : timeIntervalInMilliSeconds(timeIntervalInMilliSeconds)
     , callBack(callBack)
-    , calculateThread([this](const std::stop_token& stopToken) { threadRoutine(stopToken, this->timeIntervalInMilliSeconds, events, this->callBack); })
+    , calculateThread([this](const std::stop_token& stopToken)
+                      { threadRoutine(stopToken, this->timeIntervalInMilliSeconds, events, this->callBack); })
 
 {
 }
