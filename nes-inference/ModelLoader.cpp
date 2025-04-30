@@ -31,6 +31,7 @@
 #include <boost/process/search_path.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <nlohmann/json.hpp>
 
 namespace bp = boost::process;
 using namespace std::literals;
@@ -152,6 +153,8 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
     compileArgs.emplace_back("-");
     compileArgs.emplace_back("--iree-hal-target-device=local");
     compileArgs.emplace_back("--iree-hal-local-target-device-backends=llvm-cpu");
+    compileArgs.emplace_back("--iree-llvmcpu-debug-symbols=false");
+    compileArgs.emplace_back("--iree-stream-partitioning-favor=min-peak-memory");
 
     ///TODO: (#???) This only works if nebuli and the worker are running on the same arch
     compileArgs.emplace_back("--iree-llvmcpu-target-cpu=host");
@@ -190,7 +193,32 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             auto modelVmfb1 = std::make_shared<std::byte[]>(modelVmfb.size());
             auto modelVmfb1Span = std::span{modelVmfb1.get(), modelVmfb.size()};
             std::ranges::copy(modelVmfb, modelVmfb1Span.begin());
-            return Model{std::move(modelVmfb1), modelVmfb.size()};
+
+            auto tmpPath = std::filesystem::temp_directory_path() / "model.vmfb";
+            {
+                std::ofstream tmpOut(tmpPath, std::ios::binary);
+                tmpOut.write(reinterpret_cast<const char*>(modelVmfb.data()), modelVmfb.size());
+            }
+
+            std::stringstream dumpedText;
+            bp::ipstream dump_output;
+            std::vector<std::string> dumpArgs { tmpPath.string(), "--output=flatbuffer-json" };
+
+            bp::child dump_proc(bp::search_path("iree-dump-module"), dumpArgs, bp::std_out > dump_output);
+
+            std::string line;
+            std::getline(dump_output, line);
+
+            dump_proc.wait();
+            std::filesystem::remove(tmpPath);
+
+            nlohmann::json modelMetadata = nlohmann::json::parse(line);
+            const auto& functions = modelMetadata["exported_functions"];
+            std::string moduleName = functions[functions.size() - 2]["local_name"];
+
+            auto model = Model{std::move(modelVmfb1), modelVmfb.size()};
+            model.setFunctionName("module." + moduleName);
+            return model;
         }
         return std::unexpected(ModelLoadError("Model Import was not successful: Non Zero Exit Code."));
     }

@@ -55,11 +55,6 @@ void IREEAdapter::infer()
     this->outputData = runtimeWrapper.execute(functionName, inputData, inputSize, outputData);
 }
 
-float IREEAdapter::getResultAt(int i)
-{
-    return outputData[i];
-}
-
 IREEAdapter::~IREEAdapter()
 {
     free(inputData);

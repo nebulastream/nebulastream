@@ -38,7 +38,7 @@ class Model
 
     RefCountedByteBuffer byteCode;
     std::vector<int> shape;
-    std::string functionName = "module.main_graph";
+    std::string functionName;
     size_t dims = 0;
     size_t inputSizeInBytes = 0;
     std::vector<std::shared_ptr<NES::DataType>> inputs;
@@ -52,6 +52,8 @@ public:
     const std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>>& getOutputs() const { return outputs; }
 
     bool operator==(const Model&) const = default;
+
+    void setFunctionName(std::string moduleName) { this->functionName = moduleName; }
 
     const std::vector<int>& getInputShape() { return shape; }
     size_t getNDim() { return dims; }

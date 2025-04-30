@@ -40,7 +40,7 @@ public:
     };
 
     void infer();
-    float getResultAt(int idx);
+    float getResultAt(int idx) { return outputData[idx]; }
 
 private:
     void* inputData{};
