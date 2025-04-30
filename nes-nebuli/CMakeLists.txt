@@ -13,12 +13,12 @@
 add_subdirectory(src)
 
 get_source(nes-clients CLIENT_SOURCE_FILES)
-get_source(nes-catalogs CATALOG_SOURCE_FILES)
 get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
 get_source(nes-operators OPERATORS_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 
-add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${OPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+
 
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
@@ -29,6 +29,7 @@ target_include_directories(nes-nebuli-lib
 
 target_link_libraries(nes-nebuli-lib
         PUBLIC nes-operators
+        PUBLIC nes-catalogs
         PRIVATE nes-sql-parser yaml-cpp::yaml-cpp nes-client
 )
 

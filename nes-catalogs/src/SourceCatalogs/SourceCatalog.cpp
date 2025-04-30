@@ -274,6 +274,17 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString()
     return allLogicalSourceAsString;
 }
 
+nlohmann::json SourceCatalog::getAllLogicalSourcesAsJson() {
+    nlohmann::json logicalSources;
+    const auto& allLogicalSourceAsString = getAllLogicalSourceAsString();
+    for (auto const& [key, val] : allLogicalSourceAsString) {
+        nlohmann::json entry;
+        entry[key] = val;
+        logicalSources.push_back(entry);
+    }
+    return logicalSources;
+}
+
 bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema)
 {
     std::unique_lock lock(catalogMutex);

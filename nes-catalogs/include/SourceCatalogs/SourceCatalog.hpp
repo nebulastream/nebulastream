@@ -18,6 +18,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <set>
 #include <string>
 #include <vector>
@@ -103,6 +104,10 @@ public:
     /// @brief Get all logical sources with their schema as string
     /// @return map of logical source name to schema as string
     std::map<std::string, std::string> getAllLogicalSourceAsString();
+
+    /// @brief Get a json containing all logical sources with their schema as string
+    /// @return json containing logical source name to schema as string
+    nlohmann::json getAllLogicalSourcesAsJson();
 
     /// @brief method to return the physical source and the associated schemas
     /// @return string containing the content of the catalog
