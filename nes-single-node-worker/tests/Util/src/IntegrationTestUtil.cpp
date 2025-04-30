@@ -389,15 +389,15 @@ bool loadFile(
     const std::string_view dataFileName,
     const std::string_view querySpecificDataFileName)
 {
-    std::ifstream file(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
+    std::ifstream file(std::filesystem::path(SERIALIZED_QUERIES_DIR) / (queryFileName));
     if (!file)
     {
-        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, SERRIALIZED_QUERIES_DIRECTORY, queryFileName);
+        NES_ERROR("Query file is not available: {}/{}", SERIALIZED_QUERIES_DIR, queryFileName);
         return false;
     }
     if (!queryPlan.ParseFromIstream(&file))
     {
-        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, SERRIALIZED_QUERIES_DIRECTORY, queryFileName);
+        NES_ERROR("Could not load protobuffer file: {}/{}", SERIALIZED_QUERIES_DIR, queryFileName);
         return false;
     }
     copyInputFile(dataFileName, querySpecificDataFileName);
@@ -406,15 +406,15 @@ bool loadFile(
 
 bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName)
 {
-    std::ifstream f(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
+    std::ifstream f(std::filesystem::path(SERIALIZED_QUERIES_DIR) / (queryFileName));
     if (!f)
     {
-        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, SERRIALIZED_QUERIES_DIRECTORY, queryFileName);
+        NES_ERROR("Query file is not available: {}/{}", SERIALIZED_QUERIES_DIR, queryFileName);
         return false;
     }
     if (!queryPlan.ParseFromIstream(&f))
     {
-        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, SERRIALIZED_QUERIES_DIRECTORY, queryFileName);
+        NES_ERROR("Could not load protobuffer file: {}/{}", SERIALIZED_QUERIES_DIR, queryFileName);
         return false;
     }
     return true;

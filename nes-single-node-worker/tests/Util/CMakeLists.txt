@@ -18,7 +18,11 @@ target_include_directories(nes-single-node-worker-test-util PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_compile_definitions(nes-single-node-worker-test-util PRIVATE TEST_DATA_DIR="${INTEGRATION_TEST_DIR}")
+target_compile_definitions(nes-single-node-worker-test-util PRIVATE
+        TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/${INTEGRATION_TEST_DATA_PATH}"
+        SERIALIZED_QUERIES_DIR="${CMAKE_BINARY_DIR}/${INTEGRATION_TEST_DATA_PATH}/queries"
+)
+
 target_link_libraries(nes-single-node-worker-test-util PUBLIC
         nes-runtime
         nes-memory
