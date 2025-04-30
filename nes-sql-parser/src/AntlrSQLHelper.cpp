@@ -49,7 +49,7 @@ void AntlrSQLHelper::addHavingClause(LogicalFunction expressionNode)
 {
     this->havingClauses.emplace_back(std::move(expressionNode));
 }
-void AntlrSQLHelper::addProjectionField(LogicalFunction expressionNode)
+void AntlrSQLHelper::addProjectionField(FieldAccessLogicalFunction expressionNode)
 {
     this->projectionFields.push_back(std::move(expressionNode));
 }

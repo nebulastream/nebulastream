@@ -120,21 +120,21 @@ struct ExpectStats
 
     explicit ExpectStats(std::shared_ptr<TestQueryStatisticListener> listener) : listener(std::move(listener))
     {
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<QueryStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<QueryStop>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStop>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<PipelineStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::PipelineStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<PipelineStop>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::PipelineStop>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<TaskExecutionStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExecutionStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<TaskExecutionComplete>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExecutionComplete>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<TaskExpired>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExpired>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<TaskEmit>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskEmit>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
     }
 

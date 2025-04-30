@@ -63,6 +63,7 @@ public:
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs;
     std::vector<LogicalFunction> projections;
     std::vector<Sinks::SinkDescriptor> sinkDescriptor;
+    std::vector<std::string> constantBuilder;
     std::vector<LogicalFunction> functionBuilder;
     std::vector<FieldAssignmentLogicalFunction> mapBuilder;
     std::vector<FieldAccessLogicalFunction> groupByFields;
@@ -93,7 +94,7 @@ public:
 
     void addWhereClause(LogicalFunction expressionNode);
     void addHavingClause(LogicalFunction expressionNode);
-    void addProjectionField(LogicalFunction expressionNode);
+    void addProjectionField(FieldAccessLogicalFunction expressionNode);
     [[nodiscard]] static std::shared_ptr<Windowing::WindowType> getWindowType();
     void setSource(std::string sourceName);
     const std::string getSource() const;

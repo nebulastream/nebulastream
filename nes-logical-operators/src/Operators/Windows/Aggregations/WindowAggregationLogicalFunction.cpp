@@ -28,11 +28,7 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     std::shared_ptr<DataType> partialAggregateStamp,
     std::shared_ptr<DataType> finalAggregateStamp,
     FieldAccessLogicalFunction onField)
-    : inputStamp(std::move(inputStamp))
-    , partialAggregateStamp(std::move(partialAggregateStamp))
-    , finalAggregateStamp(std::move(finalAggregateStamp))
-    , onField(onField)
-    , asField(onField)
+    : WindowAggregationLogicalFunction(inputStamp, partialAggregateStamp, finalAggregateStamp, onField, onField)
 {
 }
 

@@ -51,7 +51,7 @@ QueryId SingleNodeWorker::registerQuery(LogicalPlan plan)
     {
         plan.queryId = QueryId(queryIdCounter++);
         auto queryPlan = optimizer->optimize(plan);
-        listener->onEvent(SubmitQuerySystemEvent{queryPlan.queryId, plan.toString()});
+        listener->onEvent(SubmitQuerySystemEvent{queryPlan.queryId, plan.explain()});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         auto result = compiler->compileQuery(std::move(request));
         return nodeEngine->registerCompiledQueryPlan(std::move(result));
