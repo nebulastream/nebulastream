@@ -299,7 +299,8 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                     if (queryStatus == QueryStatus::Stopped or queryStatus == QueryStatus::Failed)
                     {
                         worker.unregisterQuery(QueryId(runningQuery->queryId));
-                        runningQuery->queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
+                        INVARIANT(runningQuery->queryExecutionInfo.has_value(), "Expected a valid queryExecutionInfo");
+                        runningQuery->queryExecutionInfo->endTime = std::chrono::high_resolution_clock::now();
                         auto errorMessage = checkResult(*runningQuery);
                         printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
                         if (errorMessage.has_value())
@@ -377,7 +378,8 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
             if (runningQuery and (client.status(runningQuery->queryId.getRawValue()).status() == Stopped or client.status(runningQuery->queryId.getRawValue()).status() == Failed))
             {
                 client.unregister(runningQuery->queryId.getRawValue());
-                runningQuery->queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
+                INVARIANT(runningQuery->queryExecutionInfo.has_value(), "Expected a valid queryExecutionInfo");
+                runningQuery->queryExecutionInfo->endTime = std::chrono::high_resolution_clock::now();
                 auto errorMessage = checkResult(*runningQuery);
                 printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
                 if (errorMessage.has_value())
@@ -404,12 +406,13 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
     std::vector<RunningQuery> failedQueries;
     for (const auto& queryRan : queries)
     {
-        if (!queryRan.queryExecutionInfo.passed)
+        INVARIANT(queryRan.queryExecutionInfo.has_value(), "Expected a valid queryExecutionInfo");
+        if (!queryRan.queryExecutionInfo->passed)
         {
             failedQueries.emplace_back(queryRan);
         }
         const auto executionTimeInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                              queryRan.queryExecutionInfo.endTime - queryRan.queryExecutionInfo.startTime)
+                                              queryRan.queryExecutionInfo->endTime - queryRan.queryExecutionInfo->startTime)
                                               .count();
         resultJson.push_back({{"query name", queryRan.query.name}, {"time", executionTimeInNanos}});
     }
@@ -453,8 +456,9 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         }
 
         auto errorMessage = checkResult(ranQueries.back());
-        ranQueries.back().queryExecutionInfo.passed = !errorMessage.has_value();
-        ranQueries.back().queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
+        INVARIANT(ranQueries.back().queryExecutionInfo.has_value(), "Expected a valid queryExecutionInfo");
+        ranQueries.back().queryExecutionInfo->passed = !errorMessage.has_value();
+        ranQueries.back().queryExecutionInfo->endTime = std::chrono::high_resolution_clock::now();
 
         printQueryResultToStdOut(ranQueries.back(), errorMessage.value_or(""), queryFinishedCounter, totalQueries);
         worker.unregisterQuery(queryId);
@@ -471,8 +475,9 @@ void printQueryResultToStdOut(
     const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile + 1);
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
+    INVARIANT(runningQuery.queryExecutionInfo.has_value(), "Expected a valid queryExecutionInfo");
     const std::chrono::duration<double> queryDurationInMs
-        = (runningQuery.queryExecutionInfo.endTime - runningQuery.queryExecutionInfo.startTime);
+        = (runningQuery.queryExecutionInfo->endTime - runningQuery.queryExecutionInfo->startTime);
     const auto queryDurationTime = fmt::format(" in {}", queryDurationInMs);
 
     /// spd logger cannot handle multiline prints with proper color and pattern.
