@@ -385,7 +385,7 @@ SystestParser::Model SystestParser::expectModel()
         Field{DataTypeProvider::provideBasicType(BasicType::FLOAT32), "virginica"},
     };
 
-    model.path = "/home/ls/dima/nebulastream-public/demo/iris.onnx";
+    model.path = "/tmp/nebulastream-public/cmake-build-debug-docker/nes-systests/testdata/iris.onnx";
     return model;
 }
 

@@ -123,7 +123,6 @@ float* IREERuntimeWrapper::execute(std::string functionName, void* inputData, si
         {
             status = iree_runtime_call_invoke(&call, /*flags=*/0);
         }
-        NES_DEBUG("Executed the call")
 
         iree_hal_buffer_view_t* outputBuffer = nullptr;
         if (iree_status_is_ok(status))

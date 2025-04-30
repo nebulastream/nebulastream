@@ -76,6 +76,7 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
 
     child->execute(ctx, record);
 }
+
 void IREEInferenceOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     ExecutableOperator::open(executionCtx, recordBuffer);
@@ -84,6 +85,7 @@ void IREEInferenceOperator::open(ExecutionContext& executionCtx, RecordBuffer& r
         executionCtx.getGlobalOperatorHandler(inferModelHandlerIndex),
         executionCtx.pipelineContext);
 }
+
 void IREEInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     invoke(
@@ -93,6 +95,7 @@ void IREEInferenceOperator::close(ExecutionContext& executionCtx, RecordBuffer& 
     ExecutableOperator::close(executionCtx, recordBuffer);
 }
 }
+
 namespace NES::Runtime::Execution::Operators::ExecutableOperatorGeneratedRegistrar
 {
 
@@ -106,12 +109,6 @@ ExecutableOperatorRegistryReturnType RegisterIREEExecutableOperator(ExecutableOp
 
     NES_INFO("Lower infer model operator to IREE operator");
     auto model = inferModelOperator->getModel();
-
-    // TODO: check model file extension (when it's clear what types are accepted)
-    // if (!model.ends_with(".foo"))
-    // {
-    //     return {};
-    // }
 
     std::vector<std::string> inputFields;
     for (const auto& inputField : inferModelOperator->getInputFields())
