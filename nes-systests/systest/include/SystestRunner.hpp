@@ -37,6 +37,7 @@ struct LoadedQueryPlan
     std::shared_ptr<DecomposedQueryPlan> queryPlan;
     std::string queryName;
     SystestParser::Schema sinkSchema;
+    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
 };
 
 /// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
