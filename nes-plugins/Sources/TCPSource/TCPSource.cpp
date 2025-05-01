@@ -124,8 +124,8 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         {
             close();
             /// if connection was unsuccessful, throw an exception with context using errno
-            strerror_r(errno, errBuffer.data(), errBuffer.size());
-            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
+            throw CannotOpenSource(
+                "Could not connect to: {}:{}. {}", socketHost, socketPort, strerror_r(errno, errBuffer.data(), errBuffer.size()));
         }
 
         /// Set the timeout for the connect attempt
