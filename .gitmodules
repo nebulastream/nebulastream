@@ -1,0 +1,3 @@
+[submodule "webulastream"]
+	path = webulastream
+	url = https://github.com/ls-1801/webulastream.git
