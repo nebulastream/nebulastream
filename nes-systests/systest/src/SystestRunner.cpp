@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/ostream.h>
@@ -37,7 +38,6 @@
 #include <grpcpp/security/credentials.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
-
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
@@ -60,6 +60,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
     SystestParser parser{};
+    std::unordered_map<std::string, std::filesystem::path> sourceNamesToFilepath;
     std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema{
         {"CHECKSUM",
          {{.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "S$Count"},
@@ -95,6 +96,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                 .logical = source.name,
                 .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
                 .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
+            sourceNamesToFilepath[source.name] = source.csvFilePath;
         });
 
     parser.registerOnSLTSourceCallback(
@@ -115,12 +117,11 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                 }()});
 
             const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
+            sourceNamesToFilepath[source.name] = sourceFile;
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
                 .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
                 .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
-
-
             {
                 std::ofstream testFile(sourceFile);
                 if (!testFile.is_open())
@@ -218,7 +219,20 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
 
             config.query = query;
             auto plan = createFullySpecifiedQueryPlan(config);
-            plans.emplace_back(plan, query, sinkNamesToSchema[sinkName]);
+            std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
+            for (const auto& logicalSource : plan->getSourceOperators<SourceDescriptorLogicalOperator>())
+            {
+                const auto sourceName = logicalSource->getSourceDescriptor()->logicalSourceName;
+                if (sourceNamesToFilepath.contains(sourceName))
+                {
+                    auto& entry = sourceNamesToFilepathAndCountForQuery[sourceName];
+                    entry = {sourceNamesToFilepath.at(sourceName), entry.second + 1};
+                    continue;
+                }
+                throw CannotLoadConfig("SourceName {} does not exist in sourceNamesToFilepathAndCount!");
+            }
+            INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
+            plans.emplace_back(plan, query, sinkNamesToSchema[sinkName], sourceNamesToFilepathAndCountForQuery);
         });
     try
     {
@@ -416,7 +430,13 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
         const auto executionTimeInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
                                               queryRan.queryExecutionInfo.endTime - queryRan.queryExecutionInfo.startTime)
                                               .count();
-        resultJson.push_back({{"query name", queryRan.query.name}, {"time", executionTimeInNanos}});
+        const auto executionTimeInSeconds = executionTimeInNanos / (1000 * 1000 * 1000);
+        resultJson.push_back({
+            {"query name", queryRan.query.name},
+            {"time", executionTimeInNanos},
+            {"bytesPerSecond", static_cast<double>(queryRan.queryExecutionInfo.bytesProcessed) / executionTimeInSeconds},
+            {"tuplesPerSecond", static_cast<double>(queryRan.queryExecutionInfo.tuplesProcessed) / executionTimeInSeconds},
+        });
     }
     return failedQueries;
 }
@@ -447,22 +467,37 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     for (const auto& queryToRun : queries)
     {
         const auto queryId = worker.registerQuery(queryToRun.queryPlan);
-        ranQueries.emplace_back(queryToRun, queryId, QueryExecutionInfo{std::chrono::high_resolution_clock::now()});
-        worker.startQuery(queryId);
-        const auto summary = waitForQueryTermination(worker, queryId);
-
-        if (summary.runs.back().error.has_value())
+        RunningQuery currentRunningQuery(queryToRun, queryId, QueryExecutionInfo{std::chrono::high_resolution_clock::now()});
         {
-            fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
-            continue;
+            /// Measuring the time it takes from registering the query till unregistering / completion
+            worker.startQuery(queryId);
+            if (const auto summary = waitForQueryTermination(worker, queryId); summary.runs.back().error.has_value())
+            {
+                fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
+                continue;
+            }
+            worker.unregisterQuery(queryId);
+            currentRunningQuery.queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
         }
 
-        auto errorMessage = checkResult(ranQueries.back());
-        ranQueries.back().queryExecutionInfo.passed = !errorMessage.has_value();
-        ranQueries.back().queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
+        /// Getting the size of all input files to pass this information to currentRunningQuery.queryExecutionInfo.bytesProcessed
+        currentRunningQuery.queryExecutionInfo.bytesProcessed = 0;
+        currentRunningQuery.queryExecutionInfo.tuplesProcessed = 0;
+        for (const auto& [sourcePath, sourceOccurrencesInQuery] : queryToRun.sourceNamesToFilepathAndCount | std::views::values)
+        {
+            currentRunningQuery.queryExecutionInfo.bytesProcessed += (std::filesystem::file_size(sourcePath) * sourceOccurrencesInQuery);
 
-        printQueryResultToStdOut(ranQueries.back(), errorMessage.value_or(""), queryFinishedCounter, totalQueries);
-        worker.unregisterQuery(queryId);
+            /// Counting the lines, i.e., \n in the sourcePath
+            std::ifstream inFile(sourcePath);
+            currentRunningQuery.queryExecutionInfo.tuplesProcessed
+                += std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
+        }
+
+        auto errorMessage = checkResult(currentRunningQuery);
+        currentRunningQuery.queryExecutionInfo.passed = not errorMessage.has_value();
+        printQueryResultToStdOut(currentRunningQuery, errorMessage.value_or(""), queryFinishedCounter, totalQueries);
+        ranQueries.emplace_back(currentRunningQuery);
+
         queryFinishedCounter += 1;
     }
 
@@ -476,9 +511,9 @@ void printQueryResultToStdOut(
     const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile + 1);
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
-    const std::chrono::duration<double> queryDurationInMs
+    const std::chrono::duration<double> queryDuration
         = (runningQuery.queryExecutionInfo.endTime - runningQuery.queryExecutionInfo.startTime);
-    const auto queryDurationTime = fmt::format(" in {}", queryDurationInMs);
+    const auto queryPerformanceMessage = fmt::format(" in {} ({})", queryDuration, runningQuery.queryExecutionInfo.getThroughput());
 
     /// spd logger cannot handle multiline prints with proper color and pattern.
     /// And as this is only for test runs we use stdout here.
@@ -488,11 +523,11 @@ void printQueryResultToStdOut(
     std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
     if (errorMessage.empty())
     {
-        std::cout << "PASSED" << queryDurationTime << '\n';
+        std::cout << "PASSED" << queryPerformanceMessage << '\n';
     }
     else
     {
-        std::cout << "FAILED" << queryDurationTime << '\n';
+        std::cout << "FAILED" << queryPerformanceMessage << '\n';
         std::cout << "===================================================================" << '\n';
         std::cout << runningQuery.query.queryDefinition << '\n';
         std::cout << "===================================================================" << '\n';

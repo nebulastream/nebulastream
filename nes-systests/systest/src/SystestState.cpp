@@ -63,7 +63,7 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
     uint64_t queryIdInFile = 0;
     std::unordered_set<uint64_t> foundQueries;
 
-    for (const auto& [decomposedPlan, queryDefinition, sinkSchema] : loadedPlans)
+    for (const auto& [decomposedPlan, queryDefinition, sinkSchema, sourceNamesToFilepath] : loadedPlans)
     {
         if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
         {
@@ -72,13 +72,27 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
             {
                 foundQueries.insert(queryIdInFile + 1);
                 testfile.queries.emplace_back(
-                    testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
+                    testfile.name(),
+                    queryDefinition,
+                    testfile.file,
+                    decomposedPlan,
+                    queryIdInFile,
+                    workingDir,
+                    sourceNamesToFilepath,
+                    sinkSchema);
             }
         }
         else
         {
             testfile.queries.emplace_back(
-                testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
+                testfile.name(),
+                queryDefinition,
+                testfile.file,
+                decomposedPlan,
+                queryIdInFile,
+                workingDir,
+                sourceNamesToFilepath,
+                sinkSchema);
         }
         ++queryIdInFile;
     }
