@@ -47,7 +47,9 @@ bool SelectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) con
 {
     if (const auto rhsOperator = dynamic_cast<const SelectionLogicalOperator*>(&rhs))
     {
-        return predicate == rhsOperator->predicate;
+        if (predicate != rhsOperator->predicate)
+            return false;
+        return true;
     }
     return false;
 };

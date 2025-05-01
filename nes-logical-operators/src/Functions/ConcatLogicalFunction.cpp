@@ -36,7 +36,9 @@ bool ConcatLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (auto other = dynamic_cast<const ConcatLogicalFunction*>(&rhs))
     {
-        return left == other->left and left == other->right;
+        const bool simpleMatch = left == other->left and right == other->right;
+        const bool commutativeMatch = left == other->right and right == other->left;
+        return simpleMatch or commutativeMatch;
     }
     return false;
 }

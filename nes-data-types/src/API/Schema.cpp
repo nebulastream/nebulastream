@@ -149,7 +149,7 @@ std::optional<AttributeField> Schema::getFieldByName(const std::string& fieldNam
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
     {
         potentialMatches = potentialMatches | std::views::filter([&fieldName](const auto& field) { return field.getName() == fieldName; })
-            | NES::ranges::to<std::vector>();
+            | std::ranges::to<std::vector>();
     }
 
     /// Check how many matching fields were found and raise appropriate exception

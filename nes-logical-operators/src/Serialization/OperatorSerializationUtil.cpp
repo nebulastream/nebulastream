@@ -87,8 +87,9 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(SerializableOpera
         }
         registryArgument.outputOriginIds = outputIds;
 
-        if (!serializedOperator.operator_().input_schemas().empty()) {
-            registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().input_schemas(0)));
+        for (const auto& schema : serializedOperator.operator_().input_schemas())
+        {
+            registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(schema));
         }
 
         if (serializedOperator.operator_().has_output_schema()) {
@@ -112,6 +113,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
     auto logicalSourceName = sourceDescriptor.logicalsourcename();
     auto sourceType = sourceDescriptor.sourcetype();
+    auto numberOfBuffersInSourceLocalBufferPool = sourceDescriptor.numberofbuffersinsourcelocalbufferpool();
 
     /// Deserialize the parser config.
     const auto& serializedParserConfig = sourceDescriptor.parserconfig();
@@ -131,6 +133,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
         std::move(schema),
         std::move(logicalSourceName),
         std::move(sourceType),
+        numberOfBuffersInSourceLocalBufferPool,
         std::move(deserializedParserConfig),
         std::move(SourceDescriptorConfig));
 }

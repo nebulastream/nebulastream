@@ -82,10 +82,11 @@ std::string TimeCharacteristic::getTypeAsString() const
 
 bool TimeCharacteristic::operator==(const TimeCharacteristic& other) const
 {
-    const auto isFieldsEqual = (this->field == nullptr and other.field == nullptr) or (this->field->isEqual(*other.field));
-    const auto isTypesEqual = this->type == other.type;
-    const auto isEqual = isFieldsEqual and isTypesEqual and this->unit == other.unit;
-    return isEqual;
+    const auto fieldsEqual =
+           (this->field == nullptr && other.field == nullptr) ||
+           (this->field != nullptr && other.field != nullptr &&
+            this->field->isEqual(*other.field));
+    return fieldsEqual && type == other.type && unit == other.unit;
 }
 
 std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic)

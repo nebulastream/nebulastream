@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <deque>
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <stack>
@@ -225,43 +225,55 @@ std::unordered_set<LogicalOperator> LogicalPlan::getAllOperators() const
     return visitedOperators;
 }
 
-bool LogicalPlan::operator==(const LogicalPlan& otherPlan) const
+bool LogicalPlan::operator==(const LogicalPlan& other) const
 {
-    auto leftRootOperators = this->rootOperators;
-    auto rightRootOperators = otherPlan.rootOperators;
-
-    if (leftRootOperators.size() != rightRootOperators.size())
-    {
+    if (this == &other) {
+        return true;
+    }
+    if (rootOperators.size() != other.rootOperators.size()) {
         return false;
     }
 
-    /// add all root-operators to stack
-    std::stack<std::pair<LogicalOperator, LogicalOperator>> stack;
-    for (size_t i = 0; i < leftRootOperators.size(); ++i)
-    {
-        stack.emplace(leftRootOperators[i], rightRootOperators[i]);
+    using Pair = std::pair<LogicalOperator, LogicalOperator>;
+    std::stack<Pair> work;
+    std::unordered_set<std::size_t> seenPairs; /// hash of (leftId<<32 | rightId)
+
+    auto pushPair = [&](const LogicalOperator& l, const LogicalOperator& r) {
+        std::size_t key = ((l.getId().getRawValue()) << 32) |
+            (r.getId().getRawValue());
+        if (seenPairs.insert(key).second) {
+            work.emplace(l, r);
+        }
+    };
+
+    for (std::size_t i = 0; i < rootOperators.size(); ++i) {
+        pushPair(rootOperators[i], other.rootOperators[i]);
     }
 
-    /// iterate over stack
-    while (!stack.empty())
-    {
-        auto [leftOperator, rightOperator] = stack.top();
-        stack.pop();
+    while (!work.empty()) {
+        auto [l, r] = work.top();
+        work.pop();
 
-        if (leftOperator != rightOperator)
-        {
+        if (l != r) {
             return false;
         }
 
-        if (leftOperator.getChildren().size() != rightOperator.getChildren().size())
+        auto lc = l.getChildren();
+        auto rc = r.getChildren();
+        if (lc.size() != rc.size()) {
             return false;
+        }
 
-        /// discover children and add them to stack
-        for (size_t j = 0; j < leftOperator.getChildren().size(); ++j)
+        std::vector lcSorted(lc.begin(), lc.end());
+        std::vector rcSorted(rc.begin(), rc.end());
+        std::sort(lcSorted.begin(), lcSorted.end(),
+                  [](auto& a, auto& b){ return a.getId() < b.getId(); });
+        std::sort(rcSorted.begin(), rcSorted.end(),
+                  [](auto& a, auto& b){ return a.getId() < b.getId(); });
+
+        for (std::size_t i = 0; i < lcSorted.size(); ++i)
         {
-            auto leftChild = leftOperator.getChildren()[j];
-            auto rightChild = rightOperator.getChildren()[j];
-            stack.emplace(leftChild, rightChild);
+            pushPair(lcSorted[i], rcSorted[i]);
         }
     }
     return true;

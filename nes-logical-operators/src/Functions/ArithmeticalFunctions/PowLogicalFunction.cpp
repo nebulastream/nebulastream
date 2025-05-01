@@ -34,7 +34,9 @@ bool PowLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
     if (auto other = dynamic_cast<const PowLogicalFunction*>(&rhs))
     {
-        return left == other->left && right == other->right;
+        const bool simpleMatch = left == other->left and right == other->right;
+        const bool commutativeMatch = left == other->right and right == other->left;
+        return simpleMatch or commutativeMatch;
     }
     return false;
 }

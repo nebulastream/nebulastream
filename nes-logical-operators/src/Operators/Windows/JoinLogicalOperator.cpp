@@ -275,26 +275,24 @@ SerializableOperator JoinLogicalOperator::serialize() const
         serializableOperator.add_children_ids(child.getId().getRawValue());
     }
 
-   WindowInfos windowInfo;
+    WindowInfos windowInfo;
     if (auto timeBasedWindow = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType)) {
         auto timeChar = timeBasedWindow->getTimeCharacteristic();
-        auto* timeCharProto = new WindowInfos_TimeCharacteristic();
-        timeCharProto->set_type(WindowInfos_TimeCharacteristic_Type_EventTime);
+        auto timeCharProto = WindowInfos_TimeCharacteristic();
+        timeCharProto.set_type(WindowInfos_TimeCharacteristic_Type_EventTime);
         if(timeChar.field)
         {
-            timeCharProto->set_field(timeChar.field->getName());
+            timeCharProto.set_field(timeChar.field->getName());
         }
-        timeCharProto->set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
-
+        timeCharProto.set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
+        windowInfo.mutable_time_characteristic()->CopyFrom(timeCharProto);
         if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType)) {
             auto* tumbling = windowInfo.mutable_tumbling_window();
             tumbling->set_size(tumblingWindow->getSize().getTime());
-            tumbling->set_allocated_time_characteristic(timeCharProto);
         } else if (auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType)) {
             auto* sliding = windowInfo.mutable_sliding_window();
             sliding->set_size(slidingWindow->getSize().getTime());
             sliding->set_slide(slidingWindow->getSlide().getTime());
-            sliding->set_allocated_time_characteristic(timeCharProto);
         }
     }
 
@@ -315,6 +313,8 @@ SerializableOperator JoinLogicalOperator::serialize() const
 
 LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
+    PRECONDITION(arguments.inputSchemas.size() == 2, "Expected two input schemas, but got {}", arguments.inputSchemas.size());
+
     auto functionVariant = arguments.config[JoinLogicalOperator::ConfigParameters::JOIN_FUNCTION];
     auto joinTypeVariant = arguments.config[JoinLogicalOperator::ConfigParameters::JOIN_TYPE];
     auto windowInfoVariant = arguments.config[JoinLogicalOperator::ConfigParameters::WINDOW_INFOS];
@@ -335,15 +335,14 @@ LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoi
         std::shared_ptr<Windowing::WindowType> windowType;
         if (std::holds_alternative<WindowInfos>(windowInfoVariant)) {
             auto windowInfoProto = std::get<WindowInfos>(windowInfoVariant);
+            auto timeCharProto = windowInfoProto.time_characteristic();
             if (windowInfoProto.has_tumbling_window()) {
-                auto timeCharProto = windowInfoProto.tumbling_window().time_characteristic();
                 auto timeChar = Windowing::TimeCharacteristic::createEventTime(
                     FieldAccessLogicalFunction(timeCharProto.field()),
                     Windowing::TimeUnit(timeCharProto.multiplier()));
                 windowType = std::make_shared<Windowing::TumblingWindow>(timeChar,
                                                                         Windowing::TimeMeasure(windowInfoProto.tumbling_window().size()));
             } else if (windowInfoProto.has_sliding_window()) {
-                auto timeCharProto = windowInfoProto.sliding_window().time_characteristic();
                 auto timeChar = Windowing::TimeCharacteristic::createEventTime(
                     FieldAccessLogicalFunction(timeCharProto.field()),
                     Windowing::TimeUnit(timeCharProto.multiplier()));

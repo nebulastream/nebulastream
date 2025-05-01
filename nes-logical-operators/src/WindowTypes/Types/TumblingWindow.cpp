@@ -42,7 +42,6 @@ std::string TumblingWindow::toString() const
     std::stringstream ss;
     ss << "TumblingWindow: size=" << size.getTime();
     ss << " timeCharacteristic=" << timeCharacteristic;
-    ss << std::endl;
     return ss.str();
 }
 

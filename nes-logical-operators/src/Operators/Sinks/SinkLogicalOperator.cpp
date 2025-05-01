@@ -82,8 +82,6 @@ LogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     }
     
     copy.sinkDescriptor->schema = firstSchema;
-    copy.inputSchema = firstSchema;
-    copy.outputSchema = firstSchema;
     return copy;
 }
 
@@ -101,12 +99,12 @@ LogicalOperator SinkLogicalOperator::withChildren(std::vector<LogicalOperator> c
 
 std::vector<Schema> SinkLogicalOperator::getInputSchemas() const
 {
-    return {inputSchema};
+    return {sinkDescriptor->schema};
 };
 
 Schema SinkLogicalOperator::getOutputSchema() const
 {
-    return outputSchema;
+    return sinkDescriptor->schema;
 }
 
 std::vector<std::vector<OriginId>> SinkLogicalOperator::getInputOriginIds() const
@@ -141,7 +139,7 @@ std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const
 
 void SinkLogicalOperator::setOutputSchema(Schema schema)
 {
-    outputSchema = std::move(schema);
+    sinkDescriptor->schema = schema;
 }
 
 SerializableOperator SinkLogicalOperator::serialize() const
