@@ -23,6 +23,10 @@ namespace NES::Configuration
 class SingleNodeWorkerConfiguration final : public Configurations::BaseConfiguration
 {
 public:
+    Configurations::StringOption connection = {"connection", "", "Connection name. This is the {Hostname}:{PORT}"};
+    Configurations::StringOption bind
+        = {"bind", "", "Address port combo the receiver server is listening binding to. Cannot be a dns name!"};
+
     /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
     Configurations::StringOption grpcAddressUri
         = {"grpc",
@@ -34,7 +38,7 @@ connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
 
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri}; }
+    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri, &bind, &connection}; }
     template <typename T>
     friend void generateHelp(std::ostream& ostream);
 
