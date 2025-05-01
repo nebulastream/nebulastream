@@ -37,7 +37,6 @@ std::shared_ptr<PhaseFactory> DefaultPhaseFactory::create()
 
 std::shared_ptr<PipeliningPhase> DefaultPhaseFactory::createPipeliningPhase() const
 {
-    NES_DEBUG("Create pipelining phase with fuse policy");
     const auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
     return DefaultPipeliningPhase::create(operatorFusionPolicy);
 }
@@ -45,14 +44,12 @@ std::shared_ptr<PipeliningPhase> DefaultPhaseFactory::createPipeliningPhase() co
 std::shared_ptr<LowerLogicalToPhysicalOperators>
 DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(Configurations::QueryCompilerConfiguration queryCompilerConfig) const
 {
-    NES_DEBUG("Create default lower logical plan phase");
     const auto physicalOperatorProvider = std::make_shared<DefaultPhysicalOperatorProvider>(std::move(queryCompilerConfig));
     return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 }
 
 std::shared_ptr<AddScanAndEmitPhase> DefaultPhaseFactory::createAddScanAndEmitPhase(Configurations::QueryCompilerConfiguration) const
 {
-    NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
 }
 

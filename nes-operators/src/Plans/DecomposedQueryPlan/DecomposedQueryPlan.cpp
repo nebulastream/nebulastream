@@ -69,11 +69,11 @@ std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getRootOperators() c
 std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getLeafOperators() const
 {
     /// Find all the leaf nodes in the query plan
-    NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
+    NES_TRACE("QueryPlan: Get all leaf nodes in the query plan.");
     std::vector<std::shared_ptr<Operator>> leafOperators;
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::set<OperatorId> visitedOpIds;
-    NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
+    NES_TRACE("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
@@ -85,11 +85,11 @@ std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getLeafOperators() c
                 /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
-            NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
+            NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
             visitedOpIds.insert(visitingOp->getId());
             if (visitingOp->getChildren().empty())
             {
-                NES_DEBUG("QueryPlan: Found leaf node. Adding to the collection of leaf nodes.");
+                NES_TRACE("QueryPlan: Found leaf node. Adding to the collection of leaf nodes.");
                 leafOperators.push_back(visitingOp);
             }
         }
