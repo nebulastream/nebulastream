@@ -53,6 +53,7 @@ if (NOT ${USING_LIBCXX})
     #endif
 " LIBSTDCXX_VERSION_CHECK)
 
+#    set(USING_LIBSTDCXX ON)
     if (LIBSTDCXX_VERSION_CHECK)
         set(USING_LIBSTDCXX ON)
         message(STATUS "Libstdc++ >= 14")

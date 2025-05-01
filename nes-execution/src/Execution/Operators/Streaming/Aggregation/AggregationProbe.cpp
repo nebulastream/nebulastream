@@ -78,8 +78,6 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
         const Interface::ChainedHashMapRef currentMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
         for (const auto entry : currentMap)
         {
-            const auto tmpRecordKey = entry.getKey();
-
             /// Inserting the record key into the final/global hash map. If an entry for the key already exists, we have to combine the aggregation states
             /// We do this by iterating over the aggregation functions and combining all aggregation states into a global state.
             finalHashMap.insertOrUpdateEntry(
