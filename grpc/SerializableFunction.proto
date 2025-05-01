@@ -28,19 +28,18 @@ message WindowInfos {
     }
 
     message TumblingWindow {
-        TimeCharacteristic time_characteristic = 1;
-        uint64 size = 2;
+        uint64 size = 1;
     }
 
     message SlidingWindow {
-        TimeCharacteristic time_characteristic = 1;
-        uint64 size = 2;
-        uint64 slide = 3;
+        uint64 size = 1;
+        uint64 slide = 2;
     }
 
+    TimeCharacteristic time_characteristic = 1;
     oneof window_type {
-        TumblingWindow tumbling_window = 1;
-        SlidingWindow sliding_window = 2;
+        TumblingWindow tumbling_window = 2;
+        SlidingWindow sliding_window = 3;
     }
 }
 

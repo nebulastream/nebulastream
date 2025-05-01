@@ -87,8 +87,9 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(SerializableOpera
         }
         registryArgument.outputOriginIds = outputIds;
 
-        if (!serializedOperator.operator_().input_schemas().empty()) {
-            registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(serializedOperator.operator_().input_schemas(0)));
+        for (const auto& schema : serializedOperator.operator_().input_schemas())
+        {
+            registryArgument.inputSchemas.push_back(SchemaSerializationUtil::deserializeSchema(schema));
         }
 
         if (serializedOperator.operator_().has_output_schema()) {

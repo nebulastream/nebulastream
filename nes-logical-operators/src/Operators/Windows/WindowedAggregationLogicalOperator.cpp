@@ -56,7 +56,7 @@ std::string WindowedAggregationLogicalOperator::toString() const
     std::stringstream ss;
     auto& wt = getWindowType();
     const auto& aggs = getWindowAggregation();
-    ss << "WINDOW AGGREGATION(OP-" << id << ", ";
+    ss << "WINDOW AGGREGATION(id: " << id << ", ";
     for (const auto& agg : aggs)
     {
         ss << agg->toString() << ";";
@@ -291,7 +291,7 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
         serializableOperator.add_children_ids(child.getId().getRawValue());
     }
 
-    // Serialize window aggregations
+    /// Serialize window aggregations
     AggregationFunctionList aggList;
     for (const auto& agg : getWindowAggregation()) {
         *aggList.add_functions() = agg->serialize();
@@ -299,7 +299,7 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_AGGREGATIONS] =
         Configurations::descriptorConfigTypeToProto(aggList);
 
-    // Serialize keys if present
+    /// Serialize keys if present
     if (isKeyed()) {
         FunctionList keyList;
         for (const auto& key : getKeys()) {
@@ -309,28 +309,28 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
             Configurations::descriptorConfigTypeToProto(keyList);
     }
 
-   // Serialize window info
-    WindowInfos windowInfoProto;
+    /// Serialize window info
+    WindowInfos windowInfo;
     if (auto timeBasedWindow = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType)) {
-        if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(timeBasedWindow)) {
-            auto* tumbling = windowInfoProto.mutable_tumbling_window();
+        auto timeChar = timeBasedWindow->getTimeCharacteristic();
+        auto timeCharProto = WindowInfos_TimeCharacteristic();
+        timeCharProto.set_type(WindowInfos_TimeCharacteristic_Type_EventTime);
+        if(timeChar.field)
+        {
+            timeCharProto.set_field(timeChar.field->getName());
+        }
+        timeCharProto.set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
+        windowInfo.mutable_time_characteristic()->CopyFrom(timeCharProto);
+        if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType)) {
+            auto* tumbling = windowInfo.mutable_tumbling_window();
             tumbling->set_size(tumblingWindow->getSize().getTime());
-        } else if (auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(timeBasedWindow)) {
-            auto* sliding = windowInfoProto.mutable_sliding_window();
+        } else if (auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType)) {
+            auto* sliding = windowInfo.mutable_sliding_window();
             sliding->set_size(slidingWindow->getSize().getTime());
             sliding->set_slide(slidingWindow->getSlide().getTime());
-            auto timeChar = slidingWindow->getTimeCharacteristic();
-            auto* timeCharProto = new WindowInfos_TimeCharacteristic();
-            timeCharProto->set_type(WindowInfos_TimeCharacteristic_Type_EventTime);
-            if (timeChar.field)
-            {
-                timeCharProto->set_field(timeChar.field->getName());
-            }
-            timeCharProto->set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
-            sliding->set_allocated_time_characteristic(timeCharProto);
         }
     }
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfoProto);
+    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfo);
 
     // Serialize window field names
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME] =
@@ -380,14 +380,36 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
     if (std::holds_alternative<WindowInfos>(windowInfoVariant)) {
         auto windowInfoProto = std::get<WindowInfos>(windowInfoVariant);
         if (windowInfoProto.has_tumbling_window()) {
-            auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
-            windowType = std::make_shared<Windowing::TumblingWindow>(timeChar,
-                                                                    Windowing::TimeMeasure(windowInfoProto.tumbling_window().size()));
+            if (windowInfoProto.time_characteristic().type() == WindowInfos_TimeCharacteristic_Type_IngestionTime)
+            {
+                auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
+                windowType = std::make_shared<Windowing::TumblingWindow>(timeChar,
+                                                        Windowing::TimeMeasure(windowInfoProto.tumbling_window().size()));
+            } else
+            {
+                auto field = FieldAccessLogicalFunction(windowInfoProto.time_characteristic().field());
+                auto multiplier = windowInfoProto.time_characteristic().multiplier();
+                auto timeChar = Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier));
+                windowType = std::make_shared<Windowing::TumblingWindow>(timeChar,
+                                                        Windowing::TimeMeasure(windowInfoProto.tumbling_window().size()));
+            }
+
         } else if (windowInfoProto.has_sliding_window()) {
-            auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
-            windowType = Windowing::SlidingWindow::of(timeChar,
-                                                                   Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
-                                                                   Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
+            if (windowInfoProto.time_characteristic().type() == WindowInfos_TimeCharacteristic_Type_IngestionTime)
+            {
+                auto timeChar = Windowing::TimeCharacteristic::createIngestionTime();
+                windowType = Windowing::SlidingWindow::of(timeChar,
+                                                                       Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
+                                                                       Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
+            } else
+            {
+                auto field = FieldAccessLogicalFunction(windowInfoProto.time_characteristic().field());
+                auto multiplier = windowInfoProto.time_characteristic().multiplier();
+                auto timeChar = Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier));
+                windowType = Windowing::SlidingWindow::of(timeChar,
+                                                                       Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
+                                                                       Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
+            }
         }
     }
     if (!windowType) {

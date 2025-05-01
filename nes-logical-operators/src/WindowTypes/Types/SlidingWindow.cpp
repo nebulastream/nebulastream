@@ -50,7 +50,6 @@ std::string SlidingWindow::toString() const
     ss << "SlidingWindow: size=" << size.getTime();
     ss << " slide=" << slide.getTime();
     ss << " timeCharacteristic=" << timeCharacteristic;
-    ss << std::endl;
     return ss.str();
 }
 
