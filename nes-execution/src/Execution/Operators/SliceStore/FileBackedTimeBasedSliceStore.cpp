@@ -54,7 +54,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , readExecTimes(other.readExecTimes)
     , sliceAssigner(other.sliceAssigner)
     , sequenceNumber(other.sequenceNumber.load())
-    , numberOfActiveOrigins(other.numberOfActiveOrigins.load())
+    , numberOfActiveOrigins(other.numberOfActiveOrigins)
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
@@ -72,7 +72,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , readExecTimes(std::move(other.readExecTimes))
     , sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
-    , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins.load()))
+    , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins))
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
@@ -99,7 +99,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     readExecTimes = other.readExecTimes;
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
-    numberOfActiveOrigins = other.numberOfActiveOrigins.load();
+    numberOfActiveOrigins = other.numberOfActiveOrigins;
     return *this;
 }
 
@@ -119,7 +119,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     readExecTimes = std::move(other.readExecTimes);
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
-    numberOfActiveOrigins = std::move(other.numberOfActiveOrigins.load());
+    numberOfActiveOrigins = std::move(other.numberOfActiveOrigins);
     return *this;
 }
 
@@ -235,12 +235,13 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
 
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices()
 {
+    /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows
+    const auto windowsWriteLocked = windows.wlock();
+
+    /// numberOfActiveOrigins is guarded by the windows lock.
     /// If this method gets called, we know that an origin has terminated.
     INVARIANT(numberOfActiveOrigins > 0, "Method should not be called if all origin have terminated.");
     --numberOfActiveOrigins;
-
-    /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows
-    const auto windowsWriteLocked = windows.wlock();
 
     /// Creating a lambda to add all slices to the return map windowsToSlices
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
@@ -269,7 +270,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
                     NES_TRACE(
                         "Waiting on termination for window end {} and number of origins terminated {}",
                         windowInfo.windowEnd,
-                        numberOfActiveOrigins.load());
+                        numberOfActiveOrigins);
                     break;
                 }
                 addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
@@ -280,7 +281,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileB
                 NES_TRACE(
                     "Checking if all origins have terminated for window with window end {} and number of origins terminated {}",
                     windowInfo.windowEnd,
-                    numberOfActiveOrigins.load());
+                    numberOfActiveOrigins);
                 if (numberOfActiveOrigins > 0)
                 {
                     continue;
