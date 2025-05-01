@@ -32,7 +32,9 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/color.h>
 #include <fmt/ostream.h>
+#include <fmt/std.h>
 #include <folly/MPMCQueue.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
@@ -314,12 +316,24 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                 const auto& runningQuery = *runningQueriesIter;
                 if (runningQuery)
                 {
-                    const auto queryStatus = worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus;
+                    const auto querySummary = worker.getQuerySummary(QueryId(runningQuery->queryId));
+                    const auto queryStatus = querySummary->currentStatus;
                     if (queryStatus == Runtime::Execution::QueryStatus::Stopped or queryStatus == Runtime::Execution::QueryStatus::Failed)
                     {
                         worker.unregisterQuery(QueryId(runningQuery->queryId));
                         runningQuery->queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
-                        auto errorMessage = checkResult(*runningQuery);
+
+                        std::optional<std::string> errorMessage;
+                        if (queryStatus == Runtime::Execution::QueryStatus::Failed)
+                        {
+                            errorMessage
+                                = querySummary->runs.back().error.transform([](auto ex) { return ex.what(); }).value_or("No Error Message");
+                        }
+                        else
+                        {
+                            errorMessage = checkResult(*runningQuery);
+                        }
+                        runningQuery->queryExecutionInfo.passed = not errorMessage.has_value();
                         printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
                         if (errorMessage.has_value())
                         {
@@ -398,6 +412,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
                 client.unregister(runningQuery->queryId.getRawValue());
                 runningQuery->queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
                 auto errorMessage = checkResult(*runningQuery);
+                runningQuery->queryExecutionInfo.passed = not errorMessage.has_value();
                 printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
                 if (errorMessage.has_value())
                 {
@@ -521,17 +536,17 @@ void printQueryResultToStdOut(
     std::cout << queryCounterAsString << "/" << totalQueries << " ";
     std::cout << runningQuery.query.name << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
     std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
-    if (errorMessage.empty())
+    if (runningQuery.queryExecutionInfo.passed)
     {
         std::cout << "PASSED" << queryPerformanceMessage << '\n';
     }
     else
     {
-        std::cout << "FAILED" << queryPerformanceMessage << '\n';
+        fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "FAILED {}\n", queryPerformanceMessage);
         std::cout << "===================================================================" << '\n';
         std::cout << runningQuery.query.queryDefinition << '\n';
         std::cout << "===================================================================" << '\n';
-        std::cout << errorMessage;
+        fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "Error: {}\n", errorMessage);
         std::cout << "===================================================================" << '\n';
     }
 }
