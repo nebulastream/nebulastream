@@ -113,7 +113,7 @@ private:
 
         explicit Model(T d) : data(std::move(d)) { }
 
-        [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::unique_ptr<Concept>(new Model(data)); }
+        [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(data); }
 
         [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override
         {
