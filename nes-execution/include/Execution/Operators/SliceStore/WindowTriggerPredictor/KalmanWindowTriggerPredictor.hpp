@@ -19,7 +19,8 @@
 #include <map>
 #include <../../eigen/Dense>
 #include <Execution/Operators/SliceStore/WindowTriggerPredictor/AbstractWindowTriggerPredictor.hpp>
-#include "Identifiers/Identifiers.hpp"
+#include <Identifiers/Identifiers.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -54,16 +55,30 @@ public:
 
         [[nodiscard]] Eigen::VectorXd getState() const { return state; }
 
-        [[nodiscard]] int getEstimatedTimestamp() const { return static_cast<int>(state(0)); }
+        [[nodiscard]] Timestamp getEstimatedTimestamp(const SequenceNumber sequenceNumber) const
+        {
+            const auto it = sequenceTimestamps.find(sequenceNumber);
+            if (it != sequenceTimestamps.end())
+            {
+                return it->second;
+            }
+            return Timestamp(std::numeric_limits<int>::max()); // Return a large value if the sequence number is not found
+        }
+
+        void setEstimatedTimestamp(const SequenceNumber sequenceNumber, const Timestamp timestamp)
+        {
+            sequenceTimestamps[sequenceNumber] = timestamp;
+        }
 
     private:
         Eigen::VectorXd state;
         Eigen::MatrixXd covariance;
         Eigen::MatrixXd processNoise;
         Eigen::MatrixXd measurementNoise;
+        std::map<SequenceNumber, Timestamp> sequenceTimestamps; // Map sequence numbers to their estimated timestamps
     };
 
-    void processSlice(const OriginId streamId, const int timestamp, const SequenceNumber sequenceNumber)
+    void processSlice(const OriginId streamId, const Timestamp timestamp, const SequenceNumber sequenceNumber)
     {
         if (!kalmanFilters.contains(streamId))
         {
@@ -71,23 +86,26 @@ public:
         }
 
         Eigen::VectorXd measurement(2);
-        measurement << timestamp, sequenceNumber.getRawValue();
+        measurement << timestamp.getRawValue(), sequenceNumber.getRawValue();
 
         kalmanFilters[streamId].predict(stateTransitionMatrix);
         kalmanFilters[streamId].update(measurement, measurementMatrix);
 
-        const int estimatedTimestamp = kalmanFilters[streamId].getEstimatedTimestamp();
-        std::cout << "Stream ID: " << streamId << ", Estimated timestamp for slice " << sequenceNumber.getRawValue() << ": "
-                  << estimatedTimestamp << std::endl;
+        // Update the estimated timestamp for the sequence number
+        kalmanFilters[streamId].setEstimatedTimestamp(sequenceNumber, timestamp);
+
+        const auto estimatedTimestamp = kalmanFilters[streamId].getEstimatedTimestamp(sequenceNumber);
+        std::cout << "Stream ID: " << streamId << ", Estimated timestamp for slice " << sequenceNumber << ": " << estimatedTimestamp
+                  << std::endl;
     }
 
-    int getEstimatedTimestamp(const OriginId streamId, int sequenceNumber)
+    Timestamp getEstimatedTimestamp(const OriginId streamId, const SequenceNumber sequenceNumber)
     {
         if (!kalmanFilters.contains(streamId))
         {
-            return std::numeric_limits<int>::max(); // Return a large value if the stream ID is not found
+            return Timestamp(std::numeric_limits<int>::max()); // Return a large value if the stream ID is not found
         }
-        return kalmanFilters[streamId].getEstimatedTimestamp();
+        return kalmanFilters[streamId].getEstimatedTimestamp(sequenceNumber);
     }
 
 private:
