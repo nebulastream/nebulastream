@@ -183,7 +183,7 @@ size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tuple
     std::ranges::copy(data->data, tupleBuffer.getBuffer<std::byte>());
     return data->data.size();
 }
-void NES::Sources::TestSource::open()
+void NES::Sources::TestSource::open(::std::shared_ptr<Memory::AbstractBufferProvider>)
 {
     control->open.set_value();
     if (control->fail_during_open)

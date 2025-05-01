@@ -39,7 +39,7 @@ FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sour
 {
 }
 
-void FileSource::open()
+void FileSource::open(std::shared_ptr<Memory::AbstractBufferProvider>)
 {
     const auto realCSVPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
     this->inputFile = std::ifstream(realCSVPath.get(), std::ios::binary);
