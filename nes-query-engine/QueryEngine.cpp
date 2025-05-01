@@ -454,7 +454,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                         pool.statistic,
                         [&](auto& listener) {
                             listener->onEvent(
-                                TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
+                                TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples(), tupleBuffer.getUsedMemorySize()});
                         });
                     return pool.emitWork(task.queryId, pipeline, tupleBuffer, {}, {}, continuationPolicy);
                 }
@@ -467,7 +467,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                             pool.statistic,
                             [&](auto& listener) {
                                 listener->onEvent(
-                                    TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
+                                    TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples(), tupleBuffer.getUsedMemorySize()});
                             });
                         return pool.emitWork(task.queryId, successor, tupleBuffer, {}, {}, continuationPolicy);
                     });

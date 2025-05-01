@@ -25,11 +25,12 @@ namespace NES::Runtime
 namespace
 {
 
-Timestamp convertToTimeStamp(ChronoClock::time_point timePoint)
+Timestamp convertToTimeStamp(const ChronoClock::time_point timePoint)
 {
-    const auto durationSinceEpoch = timePoint.time_since_epoch();
-    const auto milliSecondsSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(durationSinceEpoch);
-    return Timestamp(milliSecondsSinceEpoch.count());
+    const unsigned long milliSecondsSinceEpoch
+        = std::chrono::time_point_cast<std::chrono::milliseconds>(timePoint).time_since_epoch().count();
+    INVARIANT(milliSecondsSinceEpoch > 0, "milliSecondsSinceEpoch should be larger than 0 but are {}", milliSecondsSinceEpoch);
+    return Timestamp(milliSecondsSinceEpoch);
 }
 
 void threadRoutine(
@@ -55,14 +56,15 @@ void threadRoutine(
     };
     struct TaskIntermediateStore
     {
-        TaskIntermediateStore(QueryId queryId, Timestamp startTime, const uint64_t bytes)
-            : queryId(std::move(queryId)), startTime(std::move(startTime)), bytes(bytes)
+        TaskIntermediateStore(QueryId queryId, Timestamp startTime, const uint64_t bytes, ChronoClock::time_point startTimePoint)
+            : queryId(std::move(queryId)), startTime(std::move(startTime)), bytes(bytes), startTimePoint(std::move(startTimePoint))
         {
         }
         explicit TaskIntermediateStore() : queryId(INVALID_QUERY_ID), startTime(Timestamp::INVALID_VALUE), bytes(0) { }
         QueryId queryId;
         Timestamp startTime;
         uint64_t bytes;
+        ChronoClock::time_point startTimePoint;
     };
 
     /// We need to have for each query id windows that store the number of tuples processed in one.
@@ -90,7 +92,13 @@ void threadRoutine(
                     const auto queryId = taskStartEvent.queryId;
                     const auto bytes = taskStartEvent.bytesInTupleBuffer;
                     const auto startTime = convertToTimeStamp(taskStartEvent.timestamp);
-                    const auto intermediateStoreItem = TaskIntermediateStore(queryId, startTime, bytes);
+                    const auto intermediateStoreItem = TaskIntermediateStore(queryId, startTime, bytes, taskStartEvent.timestamp);
+                    INVARIANT(
+                        not taskIdToTaskIntermediateStoreMap.contains(taskId),
+                        "TaskId {} was already presented with start time {} and new start time {}",
+                        taskId,
+                        taskIdToTaskIntermediateStoreMap.at(taskId).startTime,
+                        startTime);
                     taskIdToTaskIntermediateStoreMap[taskId] = intermediateStoreItem;
                 },
                 [&](const TaskExecutionComplete& taskStopEvent)
@@ -98,56 +106,31 @@ void threadRoutine(
                     const auto taskId = taskStopEvent.taskId;
                     const auto queryId = taskStopEvent.queryId;
                     const auto endTime = convertToTimeStamp(taskStopEvent.timestamp);
+                    if (endTime.getRawValue() == 3384)
+                    {
+                        NES_INFO("asdasd");
+                    }
+                    if (taskIdToTaskIntermediateStoreMap.contains(taskId))
+                    {
+                        std::cout << fmt::format("TaskId {} must be in taskIdToTaskIntermediateStoreMap but it is not", taskId) << std::endl;
+                    }
+
+
                     const auto startTime = taskIdToTaskIntermediateStoreMap[taskId].startTime;
+                    const auto startTimePoint = taskIdToTaskIntermediateStoreMap[taskId].startTimePoint;
                     const auto bytes = taskIdToTaskIntermediateStoreMap[taskId].bytes;
                     taskIdToTaskIntermediateStoreMap.erase(taskId);
 
                     /// We need to check if the task started and completed in the same interval
-                    const auto windowStartForStartTime = sliceAssigner.getSliceStartTs(startTime);
-                    const auto windowEndForStartTime = sliceAssigner.getSliceEndTs(startTime);
-                    const auto windowStartForEndTime = sliceAssigner.getSliceStartTs(endTime);
+                    const auto windowStartForEndTime = sliceAssigner.getSliceStartTs(startTime);
                     const auto windowEndForEndTime = sliceAssigner.getSliceEndTs(endTime);
-                    const auto sameWindow = windowEndForStartTime == windowEndForEndTime;
 
-                    // std::cout << fmt::format(
-                    //     "sameWindow is {} for startTime {} and endTime {} with taskStopEvent.timestamp {}",
-                    //     sameWindow,
-                    //     startTime,
-                    //     endTime,
-                    //     taskStopEvent.timestamp)
-                    //           << std::endl;
+                    /// Task started and completed in the same window.
+                    /// Add the number of tuples to the window of the query
+                    queryIdToThroughputWindowMap[queryId][windowEndForEndTime].bytesProcessed += bytes;
+                    queryIdToThroughputWindowMap[queryId][windowEndForEndTime].startTime = windowStartForEndTime;
+                    queryIdToThroughputWindowMap[queryId][windowEndForEndTime].endTime = windowEndForEndTime;
 
-                    if (sameWindow)
-                    {
-                        /// Task started and completed in the same window.
-                        /// Therefore, we can simply add the number of tuples to the window of the query
-                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].bytesProcessed += bytes;
-                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].startTime = windowStartForStartTime;
-                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].endTime = windowEndForStartTime;
-
-                        // std::cout << fmt::format(
-                        //     "bytesProcessed for window {}-{} is {}",
-                        //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].startTime,
-                        //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].endTime,
-                        //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].bytesProcessed)
-                        //           << std::endl;
-                    }
-                    else
-                    {
-                        /// Task started and completed in different windows
-                        /// For now, we simply say that half of the number of tuples have been processed in both windows
-                        /// So 50% of tuples in windowEndForStartTime and 50% in windowEndForEndTime.
-                        /// If number of tuples is even, windowEndForStartTime will get the additional tuple
-                        const auto bytesFirst = static_cast<uint64_t>(std::ceil(bytes / 2.0));
-                        const auto bytesLast = static_cast<uint64_t>(std::floor(bytes / 2.0));
-
-                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].bytesProcessed += bytesFirst;
-                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].startTime = windowStartForStartTime;
-                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].endTime = windowEndForStartTime;
-                        queryIdToThroughputWindowMap[queryId][windowEndForEndTime].bytesProcessed += bytesLast;
-                        queryIdToThroughputWindowMap[queryId][windowEndForEndTime].startTime = windowStartForEndTime;
-                        queryIdToThroughputWindowMap[queryId][windowEndForEndTime].endTime = windowEndForEndTime;
-                    }
 
 
                     /// Now we need to check if we can emit / calculate a throughput. We assume that taskStopEvent.timestamp is increasing
@@ -163,9 +146,13 @@ void threadRoutine(
                                 break;
                             }
 
-                            /// Calculating the throughput over this window and calling the function
+                            /// Calculating the throughput over this window and letting the callback know that a new throughput has been calculated
                             const auto durationInMilliseconds = (endTime - startTime).getRawValue();
                             const auto throughputInBytesPerSec = bytesProcessed / (durationInMilliseconds / 1000.0);
+                            if (startTime.getRawValue() == 18446744073709550000UL)
+                            {
+                                NES_INFO("blab");
+                            }
                             callBack(queryId, startTime, endTime, throughputInBytesPerSec);
 
                             /// Removing the window, as we do not need it anymore
