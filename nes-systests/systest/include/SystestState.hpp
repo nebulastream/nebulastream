@@ -78,6 +78,7 @@ struct Query
         std::shared_ptr<DecomposedQueryPlan> queryPlan,
         const uint64_t queryIdInFile,
         std::filesystem::path workingDir,
+        std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
         SystestParser::Schema sinkSchema)
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
@@ -85,6 +86,7 @@ struct Query
         , queryPlan(std::move(queryPlan))
         , queryIdInFile(queryIdInFile)
         , workingDir(std::move(workingDir))
+        , sourceNamesToFilepathAndCount(std::move(sourceNamesToFilepathAndCount))
         , expectedSinkSchema(std::move(sinkSchema))
     {
     }
@@ -97,6 +99,7 @@ struct Query
     std::shared_ptr<DecomposedQueryPlan> queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
+    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
     SystestParser::Schema expectedSinkSchema;
 };
 
@@ -109,6 +112,31 @@ struct QueryExecutionInfo
     bool passed;
     std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
     std::chrono::time_point<std::chrono::high_resolution_clock> endTime;
+    uint64_t bytesProcessed{0};
+    uint64_t tuplesProcessed{0};
+
+    [[nodiscard]] std::string getThroughput() const
+    {
+        /// Calculating the throughput in bytes per second
+        const std::chrono::duration<double> duration = endTime - startTime;
+        const auto bytesPerSecond = static_cast<double>(bytesProcessed) / duration.count();
+        const auto tuplesPerSecond = static_cast<double>(tuplesProcessed) / duration.count();
+
+        auto formatUnits = [](double throughput)
+        {
+            /// Format throughput in SI units, e.g. 1.234 MB/s instead of 1234000 B/s
+            const std::array<std::string, 5> units = {"", "k", "M", "G", "T"};
+            uint64_t unitIndex = 0;
+            constexpr auto nextUnit = 1000;
+            while (throughput >= nextUnit && unitIndex < units.size() - 1)
+            {
+                throughput /= nextUnit;
+                unitIndex++;
+            }
+            return fmt::format("{:.3f} {}", throughput, units[unitIndex]);
+        };
+        return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
+    }
 };
 
 struct RunningQuery

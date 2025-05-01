@@ -31,7 +31,8 @@ namespace NES::Runtime::Execution::Operators
 class SliceAssigner
 {
 public:
-    explicit SliceAssigner(const uint64_t windowSize, const uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide)
+    explicit SliceAssigner(const Timestamp::Underlying windowSize, const Timestamp::Underlying windowSlide)
+        : windowSize(windowSize), windowSlide(windowSlide)
     {
         INVARIANT(
             windowSize >= windowSlide, "Currently the window assigner does not support windows with a larger slide then the window size.");
@@ -47,7 +48,7 @@ public:
     /**
      * @brief Calculates the start of a slice for a specific timestamp ts.
      * @param ts the timestamp for which we calculate the start of the particular slice.
-     * @return uint64_t slice start
+     * @return Timestamp::Underlying slice start
      */
     [[nodiscard]] SliceStart getSliceStartTs(const Timestamp ts) const
     {
@@ -60,7 +61,7 @@ public:
     /**
      * @brief Calculates the end of a slice for a specific timestamp ts.
      * @param ts the timestamp for which we calculate the end of the particular slice.
-     * @return uint64_t slice end
+     * @return Timestamp::Underlying slice end
      */
     [[nodiscard]] SliceEnd getSliceEndTs(const Timestamp ts) const
     {
@@ -71,12 +72,12 @@ public:
         return SliceEnd(std::min(nextSlideEnd, nextWindowEnd));
     }
 
-    [[nodiscard]] uint64_t getWindowSize() const { return windowSize; }
-    [[nodiscard]] uint64_t getWindowSlide() const { return windowSlide; }
+    [[nodiscard]] Timestamp::Underlying getWindowSize() const { return windowSize; }
+    [[nodiscard]] Timestamp::Underlying getWindowSlide() const { return windowSlide; }
 
 private:
-    uint64_t windowSize;
-    uint64_t windowSlide;
+    Timestamp::Underlying windowSize;
+    Timestamp::Underlying windowSlide;
 };
 
 }
