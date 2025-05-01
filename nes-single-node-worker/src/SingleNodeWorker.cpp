@@ -48,8 +48,7 @@ QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPla
 {
     try
     {
-        auto logicalQueryPlan
-            = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
+        auto logicalQueryPlan = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), "", plan->getRootOperators());
 
         listener->onEvent(Runtime::SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
 

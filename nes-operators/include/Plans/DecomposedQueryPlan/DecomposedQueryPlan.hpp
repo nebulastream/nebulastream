@@ -34,8 +34,8 @@ namespace NES
 class DecomposedQueryPlan
 {
 public:
-    explicit DecomposedQueryPlan(QueryId queryId, WorkerId workerId);
-    explicit DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<std::shared_ptr<Operator>> rootOperators);
+    explicit DecomposedQueryPlan(QueryId queryId, std::string grpc);
+    explicit DecomposedQueryPlan(QueryId queryId, std::string grpc, std::vector<std::shared_ptr<Operator>> rootOperators);
 
     /// Remove the operator with given id as the root
     bool removeAsRootOperator(OperatorId rootOperatorId);
@@ -75,7 +75,8 @@ public:
     void setQueryId(QueryId queryId);
     [[nodiscard]] QueryId getQueryId() const;
 
-    [[nodiscard]] WorkerId getWorkerId() const;
+    [[nodiscard]] const std::string& getGRPC() const;
+    void setGRPC(std::string grpc);
 
     [[nodiscard]] std::shared_ptr<DecomposedQueryPlan> copy() const;
     [[nodiscard]] std::string toString() const;
@@ -110,7 +111,7 @@ public:
 
 private:
     QueryId queryId;
-    WorkerId workerId;
+    std::string grpc;
     std::vector<std::shared_ptr<Operator>>
         rootOperators; /// Using a shared_ptr, because there are back-references from child to parent(root) operators.
 };

@@ -32,12 +32,12 @@
 namespace NES
 {
 
-DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId) : queryId(queryId), workerId(workerId)
+DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, std::string grpc) : queryId(queryId), grpc(std::move(grpc))
 {
 }
 
-DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<std::shared_ptr<Operator>> rootOperators)
-    : queryId(queryId), workerId(workerId), rootOperators(std::move(rootOperators))
+DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, std::string grpc, std::vector<std::shared_ptr<Operator>> rootOperators)
+    : queryId(queryId), grpc(std::move(grpc)), rootOperators(std::move(rootOperators))
 {
 }
 
@@ -100,6 +100,16 @@ std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getLeafOperators() c
 QueryId DecomposedQueryPlan::getQueryId() const
 {
     return queryId;
+}
+
+const std::string& DecomposedQueryPlan::getGRPC() const
+{
+    return grpc;
+}
+
+void DecomposedQueryPlan::setGRPC(std::string grpc)
+{
+    this->grpc = std::move(grpc);
 }
 
 void DecomposedQueryPlan::setQueryId(QueryId queryId)
@@ -279,7 +289,7 @@ std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlan::copy() const
     operatorIdToOperatorMap.clear();
 
     /// Create the duplicated decomposed query plan
-    auto copiedDecomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, workerId, duplicateRootOperators);
+    auto copiedDecomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, grpc, duplicateRootOperators);
     return copiedDecomposedQueryPlan;
 }
 
@@ -287,16 +297,8 @@ std::string DecomposedQueryPlan::toString() const
 {
     std::stringstream ss;
     auto dumpHandler = LogicalQueryDumpHelper(ss);
-    for (const auto& rootOperator : rootOperators)
-    {
-        dumpHandler.dump({rootOperator});
-    }
+    dumpHandler.dump({rootOperators});
     return ss.str();
-}
-
-WorkerId DecomposedQueryPlan::getWorkerId() const
-{
-    return workerId;
 }
 
 }
