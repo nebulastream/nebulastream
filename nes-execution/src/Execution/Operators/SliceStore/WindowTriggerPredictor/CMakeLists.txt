@@ -13,4 +13,5 @@
 add_source_files(nes-execution
         AbstractWindowTriggerPredictor.cpp
         KalmanWindowTriggerPredictor.cpp
+        WatermarkBasedWindowTriggerPredictor.cpp
 )
