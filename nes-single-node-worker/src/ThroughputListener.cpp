@@ -38,6 +38,8 @@ void threadRoutine(
     folly::MPMCQueue<Event>& events,
     const std::function<void(const QueryId&, const Timestamp&, const Timestamp&, double)>& callBack)
 {
+    PRECONDITION(callBack != nullptr, "Call Back is null");
+
     setThreadName("ThroughputCalculator");
 
     /// All variables necessary for performing a simple tumbling window average aggregation per query id
@@ -53,7 +55,7 @@ void threadRoutine(
     };
     struct TaskIntermediateStore
     {
-        TaskIntermediateStore(QueryId queryId, Timestamp startTime, uint64_t numberOfTuples)
+        TaskIntermediateStore(QueryId queryId, Timestamp startTime, const uint64_t numberOfTuples)
             : queryId(std::move(queryId)), startTime(std::move(startTime)), numberOfTuples(numberOfTuples)
         {
         }
@@ -88,7 +90,8 @@ void threadRoutine(
                     const auto queryId = taskStartEvent.queryId;
                     const auto numberOfTuples = taskStartEvent.numberOfTuples;
                     const auto startTime = convertToTimeStamp(taskStartEvent.timestamp);
-                    taskIdToTaskIntermediateStoreMap[taskId] = TaskIntermediateStore(queryId, startTime, numberOfTuples);
+                    const auto intermediateStoreItem = TaskIntermediateStore(queryId, startTime, numberOfTuples);
+                    taskIdToTaskIntermediateStoreMap[taskId] = intermediateStoreItem;
                 },
                 [&](const TaskExecutionComplete& taskStopEvent)
                 {
@@ -100,15 +103,34 @@ void threadRoutine(
                     taskIdToTaskIntermediateStoreMap.erase(taskId);
 
                     /// We need to check if the task started and completed in the same interval
+                    const auto windowStartForStartTime = sliceAssigner.getSliceStartTs(startTime);
                     const auto windowEndForStartTime = sliceAssigner.getSliceEndTs(startTime);
+                    const auto windowStartForEndTime = sliceAssigner.getSliceStartTs(endTime);
                     const auto windowEndForEndTime = sliceAssigner.getSliceEndTs(endTime);
                     const auto sameWindow = windowEndForStartTime == windowEndForEndTime;
+
+                    // std::cout << fmt::format(
+                    //     "sameWindow is {} for startTime {} and endTime {} with taskStopEvent.timestamp {}",
+                    //     sameWindow,
+                    //     startTime,
+                    //     endTime,
+                    //     taskStopEvent.timestamp)
+                    //           << std::endl;
 
                     if (sameWindow)
                     {
                         /// Task started and completed in the same window.
                         /// Therefore, we can simply add the number of tuples to the window of the query
                         queryIdToThroughputWindowMap[queryId][windowEndForStartTime].numberOfTuplesProcessed += numberOfTuples;
+                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].startTime = windowStartForStartTime;
+                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].endTime = windowEndForStartTime;
+
+                        // std::cout << fmt::format(
+                        //     "numberOfTuplesProcessed for window {}-{} is {}",
+                        //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].startTime,
+                        //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].endTime,
+                        //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].numberOfTuplesProcessed)
+                        //           << std::endl;
                     }
                     else
                     {
@@ -120,7 +142,11 @@ void threadRoutine(
                         const auto numberOfTuplesLast = static_cast<uint64_t>(std::floor(numberOfTuples / 2.0));
 
                         queryIdToThroughputWindowMap[queryId][windowEndForStartTime].numberOfTuplesProcessed += numberOfTuplesFirst;
+                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].startTime = windowStartForStartTime;
+                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].endTime = windowEndForStartTime;
                         queryIdToThroughputWindowMap[queryId][windowEndForEndTime].numberOfTuplesProcessed += numberOfTuplesLast;
+                        queryIdToThroughputWindowMap[queryId][windowEndForEndTime].startTime = windowStartForEndTime;
+                        queryIdToThroughputWindowMap[queryId][windowEndForEndTime].endTime = windowEndForEndTime;
                     }
 
 
@@ -131,7 +157,7 @@ void threadRoutine(
                         {
                             const auto& curWindowEnd = it->first;
                             const auto& [startTime, endTime, numberOfTuplesProcessed] = it->second;
-                            if (curWindowEnd >= windowEndForEndTime)
+                            if (curWindowEnd + timeIntervalInMilliSeconds >= windowEndForEndTime)
                             {
                                 /// As the windows are sorted by their end time, we can break here
                                 break;

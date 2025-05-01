@@ -28,14 +28,17 @@ class ThroughputListener : public QueryEngineStatisticListener
     std::ofstream file;
     folly::MPMCQueue<Event> events{100};
     const Timestamp::Underlying timeIntervalInMilliSeconds; // todo change this to std::milliseconds from std::chrono
-    const std::function<void(const QueryId&, const Timestamp&, const Timestamp&, double)>& callBack;
+
+    /// We need to store the callback, as it might go out of scope
+    std::function<void(const QueryId&, const Timestamp&, const Timestamp&, double)> callBack;
     std::jthread calculateThread;
 
 
 public:
     void onEvent(Event event) override;
     explicit ThroughputListener(
-        const Timestamp::Underlying timeIntervalInMilliSeconds, const std::function<void(const QueryId&, const Timestamp&, const Timestamp&, double)>& callBack);
+        const Timestamp::Underlying timeIntervalInMilliSeconds,
+        const std::function<void(const QueryId&, const Timestamp&, const Timestamp&, double)>& callBack);
 };
 
 }

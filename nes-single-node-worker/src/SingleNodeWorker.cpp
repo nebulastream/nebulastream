@@ -31,25 +31,42 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
-          configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
+    : compiler(
+          std::make_unique<QueryCompilation::QueryCompiler>(
+              configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
-
-    constexpr auto timeIntervalInMilliSeconds = 1000;
+    constexpr auto timeIntervalInMilliSeconds = 5000;
     // todo have here a CallBackStruct instead of the four variables
-    auto callback = [](const QueryId& queryId, const Runtime::Timestamp& windowStart, const Runtime::Timestamp& windowEnd, double throughputPerSecond)
+    auto callback
+        = [](const QueryId& queryId, const Runtime::Timestamp& windowStart, const Runtime::Timestamp& windowEnd, double throughputPerSecond)
     {
-        std::cout << fmt::format("Throughput for queryId {} in window {}-{} is {} tup/s", queryId, windowStart, windowEnd, throughputPerSecond) << std::endl;
+        // Helper function to format throughput in SI units
+        auto formatThroughput = [](double throughput)
+        {
+            constexpr std::array<const char*, 5> units = {"", "k", "M", "G", "T"};
+            int unitIndex = 0;
+
+            while (throughput >= 1000 && unitIndex < 4)
+            {
+                throughput /= 1000;
+                unitIndex++;
+            }
+
+            return fmt::format("{:.3f} {}tup/s", throughput, units[unitIndex]);
+        };
+
+        std::cout << fmt::format(
+            "Throughput for queryId {} in window {}-{} is {}", queryId, windowStart, windowEnd, formatThroughput(throughputPerSecond))
+                  << std::endl;
     };
     const auto throughputListener = std::make_shared<Runtime::ThroughputListener>(timeIntervalInMilliSeconds, callback);
 
     const auto printStatisticListener = std::make_shared<Runtime::PrintingStatisticListener>(
-          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
+        fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
     queryEngineStatisticsListener = {printStatisticListener, throughputListener};
     systemEventListener = printStatisticListener;
     nodeEngine = Runtime::NodeEngineBuilder(configuration.workerConfiguration, systemEventListener, queryEngineStatisticsListener).build();
-
 }
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.
