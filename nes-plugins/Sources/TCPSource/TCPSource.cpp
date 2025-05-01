@@ -51,9 +51,6 @@ TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
     , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
     , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
     , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
-    , tupleDelimiter(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
-    , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
-    , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
     , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
     , connectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCP::CONNECT_TIMEOUT))
 {
@@ -75,9 +72,6 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     str << "\n  socketPort: " << socketPort;
     str << "\n  socketType: " << socketType;
     str << "\n  socketDomain: " << socketDomain;
-    str << "\n  tupleDelimiter: " << tupleDelimiter;
-    str << "\n  socketBufferSize: " << socketBufferSize;
-    str << "\n  bytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
     str << "\n  flushIntervalInMs" << flushIntervalInMs;
     str << ")\n";
     return str;
