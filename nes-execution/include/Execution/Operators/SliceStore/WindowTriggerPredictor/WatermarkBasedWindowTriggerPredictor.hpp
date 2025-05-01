@@ -41,8 +41,11 @@ public:
         {
             return {};
         }
-        const auto& seqNumbers = sequenceNumbers.find(streamId);
-        std::vector<SequenceNumber> sortedSeqNumbers(sequenceNumbers.lower_bound(streamId), sequenceNumbers.upper_bound(streamId));
+        std::vector<SequenceNumber> sortedSeqNumbers;
+        auto [begin, end] = sequenceNumbers.equal_range(streamId);
+        for (auto it = begin; it != end; ++it) {
+            sortedSeqNumbers.push_back(it->second);
+        }
         std::ranges::sort(sortedSeqNumbers);
 
         std::vector<SequenceNumber> gaps;
