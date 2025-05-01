@@ -207,7 +207,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             if (sinkName == "CHECKSUM")
             {
                 auto sink = CLI::Sink{.name = sinkName, .type = "Checksum", .config = {std::make_pair("filePath", resultFile)}};
-                config.sinks.emplace(sinkForQuery, std::move(sink));
+                config.sinks.emplace_back(std::move(sink));
             }
             else
             {
@@ -216,11 +216,10 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     .type = "File",
                     .config
                     = {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
-                config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
+                config.sinks.emplace_back(std::move(sinkCLI));
             }
 
-            config.query = query;
-            auto plan = createFullySpecifiedQueryPlan(config);
+            auto plan = CLI::createFullySpecifiedQueryPlan(query, NES::Distributed::Config::Topology::from(config, "localhost:9090"))[0];
             std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
             for (const auto& logicalSource : plan->getSourceOperators<SourceDescriptorLogicalOperator>())
             {
