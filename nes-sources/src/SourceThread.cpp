@@ -84,9 +84,9 @@ void threadSetup(OriginId originId)
 /// RAII-Wrapper around source open and close
 struct SourceHandle
 {
-    explicit SourceHandle(Source& source) : source(source) { source.open(); }
     explicit SourceHandle(Source& source, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) : source(source)
     {
+        source.open(std::move(bufferProvider));
     }
     SourceHandle(const SourceHandle& other) = delete;
     SourceHandle(SourceHandle&& other) noexcept = delete;
