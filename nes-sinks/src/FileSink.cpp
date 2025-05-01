@@ -39,8 +39,8 @@
 namespace NES::Sinks
 {
 
-FileSink::FileSink(const SinkDescriptor& sinkDescriptor)
-    : Sink()
+FileSink::FileSink(Valve valve, const SinkDescriptor& sinkDescriptor)
+    : Sink(std::move(valve))
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
@@ -133,7 +133,7 @@ SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterFileS
 
 SinkRegistryReturnType SinkGeneratedRegistrar::RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<FileSink>(sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<FileSink>(std::move(sinkRegistryArguments.valve), sinkRegistryArguments.sinkDescriptor);
 }
 
 }

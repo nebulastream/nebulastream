@@ -39,7 +39,7 @@ class FileSink final : public Sink
 {
 public:
     static constexpr std::string_view NAME = "File";
-    explicit FileSink(const SinkDescriptor& sinkDescriptor);
+    explicit FileSink(Valve valve, const SinkDescriptor& sinkDescriptor);
     ~FileSink() override = default;
 
     FileSink(const FileSink&) = delete;

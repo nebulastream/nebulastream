@@ -19,6 +19,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 
@@ -32,6 +33,7 @@ std::unique_ptr<SourceProvider> SourceProvider::create()
 
 std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
+    Ingestion ingestion,
     const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
     const int numberOfBuffersInSourceLocalBufferPool)
@@ -46,7 +48,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
             ? numberOfBuffersInSourceLocalBufferPool
             : sourceDescriptor.numberOfBuffersInSourceLocalBufferPool;
         return std::make_unique<SourceHandle>(
-            std::move(originId), std::move(bufferPool), numberOfSourceLocalBuffers, std::move(source.value()));
+            std::move(ingestion), std::move(originId), std::move(bufferPool), numberOfSourceLocalBuffers, std::move(source.value()));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }

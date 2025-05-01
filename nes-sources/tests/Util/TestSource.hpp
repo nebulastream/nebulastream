@@ -107,6 +107,6 @@ private:
 };
 
 std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
-getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool);
+getTestSource(Ingestion ingestion, OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool);
 
 }

@@ -38,6 +38,7 @@ namespace NES::Sources
 {
 
 SourceThread::SourceThread(
+    Ingestion ingestion,
     OriginId originId,
     std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     size_t numSourceLocalBuffers,
@@ -46,6 +47,7 @@ SourceThread::SourceThread(
     , localBufferManager(std::move(poolProvider))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , sourceImplementation(std::move(sourceImplementation))
+    , ingestion(std::move(ingestion))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -83,6 +85,9 @@ void threadSetup(OriginId originId)
 struct SourceHandle
 {
     explicit SourceHandle(Source& source) : source(source) { source.open(); }
+    explicit SourceHandle(Source& source, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) : source(source)
+    {
+    }
     SourceHandle(const SourceHandle& other) = delete;
     SourceHandle(SourceHandle&& other) noexcept = delete;
     SourceHandle& operator=(const SourceHandle& other) = delete;
@@ -104,10 +109,14 @@ struct SourceHandle
 };
 
 SourceImplementationTermination dataSourceThreadRoutine(
-    const std::stop_token& stopToken, Source& source, Memory::AbstractBufferProvider& bufferProvider, const EmitFn& emit)
+    const std::stop_token& stopToken,
+    Ingestion ingestion,
+    Source& source,
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
+    const EmitFn& emit)
 {
-    const SourceHandle sourceHandle(source);
-    while (!stopToken.stop_requested())
+    const SourceHandle sourceHandle(source, bufferProvider);
+    while (ingestion.wait(stopToken), !stopToken.stop_requested())
     {
         /// 4 Things that could happen:
         /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
@@ -118,13 +127,23 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exits with `EndOfStream`
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
-        auto emptyBuffer = bufferProvider.getBufferBlocking();
-        auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
+
+        std::optional<Memory::TupleBuffer> emptyBuffer;
+        while (!emptyBuffer && !stopToken.stop_requested())
+        {
+            emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
+        }
+        if (stopToken.stop_requested())
+        {
+            return {SourceImplementationTermination::StopRequested};
+        }
+
+        auto numReadBytes = source.fillTupleBuffer(*emptyBuffer, stopToken);
 
         if (numReadBytes != 0)
         {
-            emptyBuffer.setNumberOfTuples(numReadBytes);
-            emit(emptyBuffer, true);
+            emptyBuffer->setNumberOfTuples(numReadBytes);
+            emit(*emptyBuffer, true);
         }
 
         if (stopToken.stop_requested())
@@ -148,6 +167,7 @@ struct DestroyOnExit
 
 void dataSourceThread(
     const std::stop_token& stopToken,
+    Ingestion ingestion,
     std::promise<SourceImplementationTermination> result,
     Source* source,
     SourceReturnType::EmitFunction emit,
@@ -175,7 +195,7 @@ void dataSourceThread(
 
     try
     {
-        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, dataEmit));
+        result.set_value_at_thread_exit(dataSourceThreadRoutine(stopToken, std::move(ingestion), *source, *bufferProvider, dataEmit));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{});
@@ -204,6 +224,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
 
     std::jthread sourceThread(
         detail::dataSourceThread,
+        ingestion,
         std::move(terminationPromise),
         sourceImplementation.get(),
         std::move(emitFunction),

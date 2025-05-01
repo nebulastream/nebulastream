@@ -28,6 +28,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <folly/Synchronized.h>
+#include <BackpressureChannel.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::Sinks
@@ -38,7 +39,7 @@ class PrintSink final : public Sink
 public:
     static constexpr std::string_view NAME = "Print";
 
-    explicit PrintSink(const SinkDescriptor& sinkDescriptor);
+    explicit PrintSink(Valve valve, const SinkDescriptor& sinkDescriptor);
     ~PrintSink() override = default;
 
     PrintSink(const PrintSink&) = delete;
@@ -58,11 +59,19 @@ protected:
 private:
     folly::Synchronized<std::ostream*> outputStream;
     std::unique_ptr<CSVFormat> outputParser;
+
+    uint32_t ingestion = 0;
 };
 
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersPrint
 {
+    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
+        "ingestion",
+        0,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return Configurations::DescriptorConfig::tryGet(INGESTION, config); }};
+
     static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>
         INPUT_FORMAT{
             "inputFormat",
@@ -72,7 +81,7 @@ struct ConfigParametersPrint
                 { return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config); })};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT);
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(INGESTION, INPUT_FORMAT);
 };
 
 }
