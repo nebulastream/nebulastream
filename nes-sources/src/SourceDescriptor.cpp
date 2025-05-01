@@ -39,18 +39,19 @@ SourceDescriptor::SourceDescriptor(
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
     const auto schemaString = ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL");
-    const auto parserConfigString = fmt::format(
+    const auto parserConfigString = Util::escapeSpecialCharacters(fmt::format(
         "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
         sourceDescriptor.parserConfig.parserType,
         Util::escapeSpecialCharacters(sourceDescriptor.parserConfig.tupleDelimiter),
-        Util::escapeSpecialCharacters(sourceDescriptor.parserConfig.fieldDelimiter));
+        Util::escapeSpecialCharacters(sourceDescriptor.parserConfig.fieldDelimiter)));
     return out << fmt::format(
-               "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
+               "SourceDescriptor(logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {{{}}}, config: "
+               "{{{}}})",
                sourceDescriptor.logicalSourceName,
                sourceDescriptor.sourceType,
                schemaString,
-               parserConfigString,
-               sourceDescriptor.toStringConfig());
+               Util::escapeSpecialCharacters(parserConfigString),
+               Util::escapeSpecialCharacters(sourceDescriptor.toStringConfig()));
 }
 
 bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)

@@ -18,6 +18,8 @@
 #include <string>
 #include <utility>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Util/Strings.hpp>
+#include <fmt/std.h>
 #include <ErrorHandling.hpp>
 #include <SinkValidationRegistry.hpp>
 
@@ -42,12 +44,11 @@ SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unorde
 
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
-    fmt::println(
+    fmt::print(
         out,
-        "SinkDescriptor: (type: {}, add_timestamp: {}, Config: {})",
+        "SinkDescriptor(Type: {}, Config: {{{}}})",
         sinkDescriptor.sinkType,
-        sinkDescriptor.addTimestamp,
-        sinkDescriptor.toStringConfig());
+        Util::escapeSpecialCharacters(sinkDescriptor.toStringConfig()));
     return out;
 }
 
