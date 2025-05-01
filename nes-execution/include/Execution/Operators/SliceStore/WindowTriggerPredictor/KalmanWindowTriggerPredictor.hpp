@@ -55,27 +55,13 @@ public:
 
         [[nodiscard]] Eigen::VectorXd getState() const { return state; }
 
-        [[nodiscard]] Timestamp getEstimatedTimestamp(const SequenceNumber sequenceNumber) const
-        {
-            const auto it = sequenceTimestamps.find(sequenceNumber);
-            if (it != sequenceTimestamps.end())
-            {
-                return it->second;
-            }
-            return Timestamp(std::numeric_limits<int>::max()); // Return a large value if the sequence number is not found
-        }
-
-        void setEstimatedTimestamp(const SequenceNumber sequenceNumber, const Timestamp timestamp)
-        {
-            sequenceTimestamps[sequenceNumber] = timestamp;
-        }
+        [[nodiscard]] int getEstimatedTimestamp() const { return static_cast<int>(state(0)); }
 
     private:
         Eigen::VectorXd state;
         Eigen::MatrixXd covariance;
         Eigen::MatrixXd processNoise;
         Eigen::MatrixXd measurementNoise;
-        std::map<SequenceNumber, Timestamp> sequenceTimestamps; // Map sequence numbers to their estimated timestamps
     };
 
     void processSlice(const OriginId streamId, const Timestamp timestamp, const SequenceNumber sequenceNumber)
@@ -91,12 +77,10 @@ public:
         kalmanFilters[streamId].predict(stateTransitionMatrix);
         kalmanFilters[streamId].update(measurement, measurementMatrix);
 
-        // Update the estimated timestamp for the sequence number
-        kalmanFilters[streamId].setEstimatedTimestamp(sequenceNumber, timestamp);
+        // Update the sequence number and timestamp mapping
+        sequenceTimestamps[streamId][sequenceNumber] = timestamp;
 
-        const auto estimatedTimestamp = kalmanFilters[streamId].getEstimatedTimestamp(sequenceNumber);
-        std::cout << "Stream ID: " << streamId << ", Estimated timestamp for slice " << sequenceNumber << ": " << estimatedTimestamp
-                  << std::endl;
+        std::cout << "Stream ID: " << streamId << ", Processed slice " << sequenceNumber << " at timestamp " << timestamp << std::endl;
     }
 
     Timestamp getEstimatedTimestamp(const OriginId streamId, const SequenceNumber sequenceNumber)
@@ -105,7 +89,23 @@ public:
         {
             return Timestamp(std::numeric_limits<int>::max()); // Return a large value if the stream ID is not found
         }
-        return kalmanFilters[streamId].getEstimatedTimestamp(sequenceNumber);
+
+        // If the sequence number is already received, return its timestamp
+        if (sequenceTimestamps[streamId].contains(sequenceNumber))
+        {
+            return sequenceTimestamps[streamId][sequenceNumber];
+        }
+
+        // Predict the timestamp for the missing sequence number using the Kalman filter
+        const auto lastSequenceNumber = getLastSequenceNumber(streamId);
+        const auto lastTimestamp = sequenceTimestamps[streamId][lastSequenceNumber];
+
+        // Predict the timestamp for the missing sequence number
+        const auto deltaSequence = sequenceNumber.getRawValue() - lastSequenceNumber.getRawValue();
+        const auto deltaTime = deltaSequence * averageTimeInterval(streamId);
+        const auto estimatedTimestamp = lastTimestamp + deltaTime;
+
+        return estimatedTimestamp;
     }
 
 private:
@@ -124,9 +124,41 @@ private:
         measurementNoise << 0.1, 0, 0, 0.1;
 
         kalmanFilters[streamId] = KalmanFilter(initialState, initialCovariance, processNoise, measurementNoise);
+        sequenceTimestamps[streamId] = std::map<SequenceNumber, Timestamp>();
+    }
+
+    SequenceNumber getLastSequenceNumber(const OriginId streamId) const
+    {
+        if (!sequenceTimestamps.contains(streamId) || sequenceTimestamps.at(streamId).empty())
+        {
+            return SequenceNumber(-1); // TODO Return -1 if no sequence numbers are available
+        }
+        return std::prev(sequenceTimestamps.at(streamId).end())->first;
+    }
+
+    uint64_t averageTimeInterval(const OriginId streamId) const
+    {
+        if (!sequenceTimestamps.contains(streamId) || sequenceTimestamps.at(streamId).size() < 2)
+        {
+            return 1; // Return a default value if not enough data is available
+        }
+        auto totalTime = Timestamp(0);
+        int count = 0;
+        auto& timestamps = sequenceTimestamps.at(streamId);
+        auto it = timestamps.begin();
+        auto prevTimestamp = it->second;
+        ++it;
+        for (; it != timestamps.end(); ++it)
+        {
+            totalTime += (it->second - prevTimestamp.getRawValue()).getRawValue();
+            prevTimestamp = it->second;
+            ++count;
+        }
+        return totalTime.getRawValue() / count;
     }
 
     std::map<OriginId, KalmanFilter> kalmanFilters;
+    std::map<OriginId, std::map<SequenceNumber, Timestamp>> sequenceTimestamps; // Map stream IDs to sequence number and timestamp mappings
     Eigen::MatrixXd stateTransitionMatrix = Eigen::MatrixXd::Identity(2, 2);
     Eigen::MatrixXd measurementMatrix = Eigen::MatrixXd::Identity(2, 2);
 };
