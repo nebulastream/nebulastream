@@ -17,7 +17,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <Identifiers/Identifiers.hpp>
+#include <Distributed/Topology.hpp>
 
 namespace NES
 {
@@ -44,8 +44,10 @@ public:
      * @param topologyNodeId: the if of topology node
      * @return shared pointer to Source catalog entry
      */
-    static std::shared_ptr<SourceCatalogEntry>
-    create(std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId);
+    static std::shared_ptr<SourceCatalogEntry> create(
+        std::shared_ptr<PhysicalSource> physicalSource,
+        std::shared_ptr<LogicalSource> logicalSource,
+        Distributed::Topology::Node topologyNodeId = INVALID<Distributed::Topology::Node>);
 
     /**
      * @brief Get the physical source
@@ -63,7 +65,7 @@ public:
      * @brief Get the topology node
      * @return the shared pointer to the topology node
      */
-    WorkerId getTopologyNodeId() const;
+    Distributed::Topology::Node getTopologyNodeId() const;
 
     /**
      * @brief Get the string rep of the source catalog entry
@@ -79,11 +81,13 @@ private:
      * @param topologyNodeId : the topology node id
      */
     explicit SourceCatalogEntry(
-        std::shared_ptr<PhysicalSource> physicalSource, std::shared_ptr<LogicalSource> logicalSource, WorkerId topologyNodeId);
+        std::shared_ptr<PhysicalSource> physicalSource,
+        std::shared_ptr<LogicalSource> logicalSource,
+        Distributed::Topology::Node topologyNodeId = INVALID<Distributed::Topology::Node>);
 
     std::shared_ptr<PhysicalSource> physicalSource;
     std::shared_ptr<LogicalSource> logicalSource;
-    WorkerId topologyNodeId;
+    Distributed::Topology::Node topologyNodeId = INVALID<Distributed::Topology::Node>;
 };
 }
 }

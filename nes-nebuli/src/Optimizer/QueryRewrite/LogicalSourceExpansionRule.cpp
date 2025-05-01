@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 
+#include <Distributed/Placement.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -61,6 +62,8 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
         auto firstSourceDescriptor = sourceCatalogEntries.front()->getPhysicalSource()->createSourceDescriptor(sourceOperator->getSchema());
         auto firstOperatorSourceLogicalDescriptor
             = std::make_shared<SourceDescriptorLogicalOperator>(std::move(firstSourceDescriptor), sourceOperator->getId());
+        firstOperatorSourceLogicalDescriptor->addProperty(
+            std::string(Distributed::BottomUpPlacement::PINNED_NODE), sourceCatalogEntries.front()->getTopologyNodeId());
         sourceOperator->replace(firstOperatorSourceLogicalDescriptor, sourceOperator);
 
         /// Iterate over all subsequent entries, create the corresponding SourceDescriptorLogicalOperators and add them to the query plan.
@@ -69,6 +72,8 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
             auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(sourceSchema);
             auto operatorSourceLogicalDescriptor
                 = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), getNextOperatorId());
+            operatorSourceLogicalDescriptor->addProperty(
+                std::string(Distributed::BottomUpPlacement::PINNED_NODE), sourceCatalogEntry->getTopologyNodeId());
             /// Add the OperatorSourceLogicalDescriptor to the query plan, by adding it as a child to the parent operator(s).
             for (const auto& parentNode : firstOperatorSourceLogicalDescriptor->getParents())
             {
