@@ -31,7 +31,9 @@
 #include <vector>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/color.h>
 #include <fmt/ostream.h>
+#include <fmt/std.h>
 #include <folly/MPMCQueue.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
@@ -299,13 +301,25 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                 const auto& runningQuery = *runningQueriesIter;
                 if (runningQuery)
                 {
-                    const auto queryStatus = worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus;
+                    const auto querySummary = worker.getQuerySummary(QueryId(runningQuery->queryId));
+                    const auto queryStatus = querySummary->currentStatus;
                     if (queryStatus == Runtime::Execution::QueryStatus::Stopped or queryStatus == Runtime::Execution::QueryStatus::Failed)
                     {
                         worker.unregisterQuery(QueryId(runningQuery->queryId));
                         runningQuery->queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
-                        auto errorMessage = checkResult(*runningQuery);
-                        printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
+
+                        std::optional<std::string> errorMessage;
+                        if (queryStatus == Runtime::Execution::QueryStatus::Failed)
+                        {
+                            errorMessage
+                                = querySummary->runs.back().error.transform([](auto ex) { return ex.what(); }).value_or("No Error Message");
+                        }
+                        else
+                        {
+                            errorMessage = checkResult(*runningQuery);
+                        }
+
+                        printQueryResultToStdOut(*runningQuery, errorMessage, queryFinishedCounter.fetch_add(1), totalQueries);
                         if (errorMessage.has_value())
                         {
                             failedQueries.wlock()->emplace_back(*runningQuery);
@@ -469,7 +483,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
 }
 
 void printQueryResultToStdOut(
-    const RunningQuery& runningQuery, const std::string& errorMessage, const size_t queryCounter, const size_t totalQueries)
+    const RunningQuery& runningQuery, const std::optional<std::string>& errorMessage, const size_t queryCounter, const size_t totalQueries)
 {
     const auto queryNameLength = runningQuery.query.name.size();
     const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile + 1);
@@ -485,17 +499,17 @@ void printQueryResultToStdOut(
     std::cout << queryCounterAsString << "/" << totalQueries << " ";
     std::cout << runningQuery.query.name << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
     std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
-    if (errorMessage.empty())
+    if (!errorMessage)
     {
         std::cout << "PASSED" << queryDurationTime << '\n';
     }
     else
     {
-        std::cout << "FAILED" << queryDurationTime << '\n';
+        fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "FAILED after {}\n", queryDurationTime);
         std::cout << "===================================================================" << '\n';
         std::cout << runningQuery.query.queryDefinition << '\n';
         std::cout << "===================================================================" << '\n';
-        std::cout << errorMessage;
+        fmt::print(fmt::emphasis::bold | fg(fmt::color::red), "Error: {}\n", *errorMessage);
         std::cout << "===================================================================" << '\n';
     }
 }
