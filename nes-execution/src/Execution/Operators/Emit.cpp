@@ -134,6 +134,10 @@ void Emit::emitRecordBuffer(
     const nautilus::val<uint64_t>& numRecords,
     const nautilus::val<bool>& isLastChunk) const
 {
+
+    const auto tupleSize = memoryProvider->getMemoryLayout()->getSchema()->getSchemaSizeInBytes();
+    const auto usedMemorySize = numRecords * tupleSize;
+
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
@@ -141,6 +145,7 @@ void Emit::emitRecordBuffer(
     recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerIndex));
     recordBuffer.setLastChunk(isLastChunk);
     recordBuffer.setCreationTs(ctx.currentTs);
+    recordBuffer.setUsedMemorySize(usedMemorySize);
     ctx.emitBuffer(recordBuffer);
 
     if (isLastChunk == true)

@@ -475,7 +475,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
         std::ranges::for_each(
             pool.statistic,
             [&](auto& listener) {
-                listener->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
+                listener->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples(), task.buf.getUsedMemorySize()});
             });
         pipeline->stage->execute(task.buf, pec);
         std::ranges::for_each(

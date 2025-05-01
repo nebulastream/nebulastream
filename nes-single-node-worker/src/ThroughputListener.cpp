@@ -46,23 +46,23 @@ void threadRoutine(
     const Execution::Operators::SliceAssigner sliceAssigner(timeIntervalInMilliSeconds, timeIntervalInMilliSeconds);
     struct ThroughputWindow
     {
-        explicit ThroughputWindow() : startTime(Timestamp::INVALID_VALUE), endTime(Timestamp::INVALID_VALUE), numberOfTuplesProcessed(0) { }
+        explicit ThroughputWindow() : startTime(Timestamp::INVALID_VALUE), endTime(Timestamp::INVALID_VALUE), bytesProcessed(0) { }
         Timestamp startTime;
         Timestamp endTime;
-        uint64_t numberOfTuplesProcessed;
+        uint64_t bytesProcessed;
 
         bool operator<(const ThroughputWindow& other) const { return endTime < other.endTime; }
     };
     struct TaskIntermediateStore
     {
-        TaskIntermediateStore(QueryId queryId, Timestamp startTime, const uint64_t numberOfTuples)
-            : queryId(std::move(queryId)), startTime(std::move(startTime)), numberOfTuples(numberOfTuples)
+        TaskIntermediateStore(QueryId queryId, Timestamp startTime, const uint64_t bytes)
+            : queryId(std::move(queryId)), startTime(std::move(startTime)), bytes(bytes)
         {
         }
-        explicit TaskIntermediateStore() : queryId(INVALID_QUERY_ID), startTime(Timestamp::INVALID_VALUE), numberOfTuples(0) { }
+        explicit TaskIntermediateStore() : queryId(INVALID_QUERY_ID), startTime(Timestamp::INVALID_VALUE), bytes(0) { }
         QueryId queryId;
         Timestamp startTime;
-        uint64_t numberOfTuples;
+        uint64_t bytes;
     };
 
     /// We need to have for each query id windows that store the number of tuples processed in one.
@@ -88,9 +88,9 @@ void threadRoutine(
                 {
                     const auto taskId = taskStartEvent.taskId;
                     const auto queryId = taskStartEvent.queryId;
-                    const auto numberOfTuples = taskStartEvent.numberOfTuples;
+                    const auto bytes = taskStartEvent.bytesInTupleBuffer;
                     const auto startTime = convertToTimeStamp(taskStartEvent.timestamp);
-                    const auto intermediateStoreItem = TaskIntermediateStore(queryId, startTime, numberOfTuples);
+                    const auto intermediateStoreItem = TaskIntermediateStore(queryId, startTime, bytes);
                     taskIdToTaskIntermediateStoreMap[taskId] = intermediateStoreItem;
                 },
                 [&](const TaskExecutionComplete& taskStopEvent)
@@ -99,7 +99,7 @@ void threadRoutine(
                     const auto queryId = taskStopEvent.queryId;
                     const auto endTime = convertToTimeStamp(taskStopEvent.timestamp);
                     const auto startTime = taskIdToTaskIntermediateStoreMap[taskId].startTime;
-                    const auto numberOfTuples = taskIdToTaskIntermediateStoreMap[taskId].numberOfTuples;
+                    const auto bytes = taskIdToTaskIntermediateStoreMap[taskId].bytes;
                     taskIdToTaskIntermediateStoreMap.erase(taskId);
 
                     /// We need to check if the task started and completed in the same interval
@@ -121,15 +121,15 @@ void threadRoutine(
                     {
                         /// Task started and completed in the same window.
                         /// Therefore, we can simply add the number of tuples to the window of the query
-                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].numberOfTuplesProcessed += numberOfTuples;
+                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].bytesProcessed += bytes;
                         queryIdToThroughputWindowMap[queryId][windowEndForStartTime].startTime = windowStartForStartTime;
                         queryIdToThroughputWindowMap[queryId][windowEndForStartTime].endTime = windowEndForStartTime;
 
                         // std::cout << fmt::format(
-                        //     "numberOfTuplesProcessed for window {}-{} is {}",
+                        //     "bytesProcessed for window {}-{} is {}",
                         //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].startTime,
                         //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].endTime,
-                        //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].numberOfTuplesProcessed)
+                        //     queryIdToThroughputWindowMap[queryId][windowEndForStartTime].bytesProcessed)
                         //           << std::endl;
                     }
                     else
@@ -138,13 +138,13 @@ void threadRoutine(
                         /// For now, we simply say that half of the number of tuples have been processed in both windows
                         /// So 50% of tuples in windowEndForStartTime and 50% in windowEndForEndTime.
                         /// If number of tuples is even, windowEndForStartTime will get the additional tuple
-                        const auto numberOfTuplesFirst = static_cast<uint64_t>(std::ceil(numberOfTuples / 2.0));
-                        const auto numberOfTuplesLast = static_cast<uint64_t>(std::floor(numberOfTuples / 2.0));
+                        const auto bytesFirst = static_cast<uint64_t>(std::ceil(bytes / 2.0));
+                        const auto bytesLast = static_cast<uint64_t>(std::floor(bytes / 2.0));
 
-                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].numberOfTuplesProcessed += numberOfTuplesFirst;
+                        queryIdToThroughputWindowMap[queryId][windowEndForStartTime].bytesProcessed += bytesFirst;
                         queryIdToThroughputWindowMap[queryId][windowEndForStartTime].startTime = windowStartForStartTime;
                         queryIdToThroughputWindowMap[queryId][windowEndForStartTime].endTime = windowEndForStartTime;
-                        queryIdToThroughputWindowMap[queryId][windowEndForEndTime].numberOfTuplesProcessed += numberOfTuplesLast;
+                        queryIdToThroughputWindowMap[queryId][windowEndForEndTime].bytesProcessed += bytesLast;
                         queryIdToThroughputWindowMap[queryId][windowEndForEndTime].startTime = windowStartForEndTime;
                         queryIdToThroughputWindowMap[queryId][windowEndForEndTime].endTime = windowEndForEndTime;
                     }
@@ -156,7 +156,7 @@ void threadRoutine(
                         for (auto it = endTimeAndThroughputWindow.cbegin(); it != endTimeAndThroughputWindow.cend();)
                         {
                             const auto& curWindowEnd = it->first;
-                            const auto& [startTime, endTime, numberOfTuplesProcessed] = it->second;
+                            const auto& [startTime, endTime, bytesProcessed] = it->second;
                             if (curWindowEnd + timeIntervalInMilliSeconds >= windowEndForEndTime)
                             {
                                 /// As the windows are sorted by their end time, we can break here
@@ -165,8 +165,8 @@ void threadRoutine(
 
                             /// Calculating the throughput over this window and calling the function
                             const auto durationInMilliseconds = (endTime - startTime).getRawValue();
-                            const auto throughputInTupPerSec = numberOfTuplesProcessed / (durationInMilliseconds / 1000.0);
-                            callBack(queryId, startTime, endTime, throughputInTupPerSec);
+                            const auto throughputInBytesPerSec = bytesProcessed / (durationInMilliseconds / 1000.0);
+                            callBack(queryId, startTime, endTime, throughputInBytesPerSec);
 
                             /// Removing the window, as we do not need it anymore
                             it = endTimeAndThroughputWindow.erase(it);

@@ -45,7 +45,7 @@ MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
 
 MemorySegment::MemorySegment(
     uint8_t* ptr,
-    uint32_t size,
+    const uint32_t size,
     std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
     uint8_t* controlBlock) /// NOLINT (readability-non-const-parameter)
     : ptr(ptr), size(size), controlBlock(new(controlBlock) BufferControlBlock(this, std::move(recycleFunction)))
@@ -237,6 +237,16 @@ uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
 void BufferControlBlock::setNumberOfTuples(const uint64_t numberOfTuples)
 {
     this->numberOfTuples = numberOfTuples;
+}
+
+uint64_t BufferControlBlock::getUsedMemorySize() const noexcept
+{
+    return usedMemorySize;
+}
+
+void BufferControlBlock::setUsedMemorySize(const uint64_t usedMemorySize)
+{
+    this->usedMemorySize = usedMemorySize;
 }
 
 Runtime::Timestamp BufferControlBlock::getWatermark() const noexcept

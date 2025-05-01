@@ -39,7 +39,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
     constexpr auto timeIntervalInMilliSeconds = 5000;
     // todo have here a CallBackStruct instead of the four variables
     auto callback
-        = [](const QueryId& queryId, const Runtime::Timestamp& windowStart, const Runtime::Timestamp& windowEnd, double throughputPerSecond)
+        = [](const QueryId& queryId, const Runtime::Timestamp& windowStart, const Runtime::Timestamp& windowEnd, double throughputInBytesPerSec)
     {
         // Helper function to format throughput in SI units
         auto formatThroughput = [](double throughput)
@@ -53,11 +53,11 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
                 unitIndex++;
             }
 
-            return fmt::format("{:.3f} {}tup/s", throughput, units[unitIndex]);
+            return fmt::format("{:.3f} {}B/s", throughput, units[unitIndex]);
         };
 
         std::cout << fmt::format(
-            "Throughput for queryId {} in window {}-{} is {}", queryId, windowStart, windowEnd, formatThroughput(throughputPerSecond))
+            "Throughput for queryId {} in window {}-{} is {}", queryId, windowStart, windowEnd, formatThroughput(throughputInBytesPerSec))
                   << std::endl;
     };
     const auto throughputListener = std::make_shared<Runtime::ThroughputListener>(timeIntervalInMilliSeconds, callback);

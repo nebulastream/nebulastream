@@ -160,17 +160,23 @@ public:
     /// @brief set the number of tuples stored.
     void setNumberOfTuples(uint64_t numberOfTuples) const noexcept;
 
+    /// @brief gets the used memory in byte
+    [[nodiscard]] uint64_t getUsedMemorySize() const noexcept;
+
+    /// @brief sets the used memory in bytes
+    void setUsedMemorySize(uint64_t) const noexcept;
+
     /// @brief get the watermark as a timestamp
     [[nodiscard]] Runtime::Timestamp getWatermark() const noexcept;
 
     /// @brief set the watermark from a timestamp
-    void setWatermark(Runtime::Timestamp value) noexcept;
+    void setWatermark(Runtime::Timestamp value) const noexcept;
 
     /// @brief get the creation timestamp in milliseconds
     [[nodiscard]] Runtime::Timestamp getCreationTimestampInMS() const noexcept;
 
     /// @brief set the sequence number
-    void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
+    void setSequenceNumber(SequenceNumber sequenceNumber) const noexcept;
 
     [[nodiscard]] std::string getSequenceDataAsString() const noexcept;
 
@@ -178,25 +184,25 @@ public:
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
 
     /// @brief set the chunk number
-    void setChunkNumber(ChunkNumber chunkNumber) noexcept;
+    void setChunkNumber(ChunkNumber chunkNumber) const noexcept;
 
     /// @brief get the chunk number
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
 
     /// @brief set if this is the last chunk of a sequence number
-    void setLastChunk(bool isLastChunk) noexcept;
+    void setLastChunk(bool isLastChunk) const noexcept;
 
     /// @brief retrieves if this is the last chunk
     [[nodiscard]] bool isLastChunk() const noexcept;
 
     /// @brief set the creation timestamp in milliseconds
-    void setCreationTimestampInMS(Runtime::Timestamp value) noexcept;
+    void setCreationTimestampInMS(Runtime::Timestamp value) const noexcept;
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] OriginId getOriginId() const noexcept;
 
     ///@brief set the buffer's origin id (the operator id that creates this buffer).
-    void setOriginId(OriginId id) noexcept;
+    void setOriginId(OriginId id) const noexcept;
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
     [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) const noexcept;

@@ -92,6 +92,8 @@ public:
     bool release();
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
     void setNumberOfTuples(uint64_t);
+    [[nodiscard]] uint64_t getUsedMemorySize() const noexcept;
+    void setUsedMemorySize(uint64_t);
     [[nodiscard]] Runtime::Timestamp getWatermark() const noexcept;
     void setWatermark(Runtime::Timestamp watermark);
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
@@ -114,6 +116,7 @@ public:
 private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;
+    uint32_t usedMemorySize = 0;
     Runtime::Timestamp watermark = Runtime::Timestamp(Runtime::Timestamp::INITIAL_VALUE);
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
