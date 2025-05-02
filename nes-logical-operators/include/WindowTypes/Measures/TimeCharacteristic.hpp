@@ -53,8 +53,6 @@ public:
     [[nodiscard]] bool operator==(const TimeCharacteristic& other) const;
     friend std::ostream& operator<<(std::ostream& os, const TimeCharacteristic& timeCharacteristic);
 
-    [[nodiscard]] uint64_t hash() const;
-
     [[nodiscard]] std::string getTypeAsString() const;
     [[nodiscard]] TimeUnit getTimeUnit() const;
 
@@ -67,3 +65,4 @@ private:
     TimeUnit unit;
 };
 }
+FMT_OSTREAM(NES::Windowing::TimeCharacteristic);

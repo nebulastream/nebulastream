@@ -33,12 +33,12 @@ public:
 
     [[nodiscard]] std::shared_ptr<DataType> getStamp() const override;
     [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override;
-    [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const override;
+    [[nodiscard]] LogicalFunction withInferredStamp(const Schema& schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override;
+    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
 
-    [[nodiscard]] std::string getType() const override;
+    [[nodiscard]] std::string_view getType() const override;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
 
 private:

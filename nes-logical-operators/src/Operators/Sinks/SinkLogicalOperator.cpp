@@ -42,19 +42,15 @@ bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 
 std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << fmt::format(
-                       "SINK(opId: {}, sinkName: {}, sinkDescriptor: {})",
-                       id,
-                       sinkName,
-                       (sinkDescriptor) ? fmt::format("{}", *sinkDescriptor) : "(null)");
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        ss << fmt::format("SINK({})", sinkName);
+        return fmt::format(
+            "SINK(opId: {}, sinkName: {}, sinkDescriptor: {})",
+            id,
+            sinkName,
+            (sinkDescriptor) ? fmt::format("{}", *sinkDescriptor) : "(null)");
     }
-    return ss.str();
+    return fmt::format("SINK({})", sinkName);
 }
 
 std::string_view SinkLogicalOperator::getName() const noexcept

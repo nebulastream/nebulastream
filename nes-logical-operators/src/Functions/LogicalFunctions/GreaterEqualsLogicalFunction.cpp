@@ -20,6 +20,7 @@
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -36,8 +37,7 @@ GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left,
 
 bool GreaterEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const GreaterEqualsLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const GreaterEqualsLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;
@@ -48,9 +48,7 @@ bool GreaterEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs)
 
 std::string GreaterEqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " >= " << right.explain(verbosity);
-    return ss.str();
+    return fmt::format("{} >= {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 std::shared_ptr<DataType> GreaterEqualsLogicalFunction::getStamp() const
@@ -65,7 +63,7 @@ LogicalFunction GreaterEqualsLogicalFunction::withStamp(std::shared_ptr<DataType
     return copy;
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction GreaterEqualsLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -80,17 +78,18 @@ std::vector<LogicalFunction> GreaterEqualsLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction GreaterEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "GreaterEqualsLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
     return copy;
 };
 
-std::string GreaterEqualsLogicalFunction::getType() const
+std::string_view GreaterEqualsLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction GreaterEqualsLogicalFunction::serialize() const
@@ -106,6 +105,7 @@ SerializableFunction GreaterEqualsLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "GreaterEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return GreaterEqualsLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

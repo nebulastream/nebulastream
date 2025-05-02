@@ -18,6 +18,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -51,12 +52,7 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
 
 std::string WindowAggregationLogicalFunction::toString() const
 {
-    std::stringstream ss;
-    ss << "WindowAggregation: ";
-    ss << " onField=" << onField;
-    ss << " asField=" << asField;
-    ss << std::endl;
-    return ss.str();
+    return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
 std::shared_ptr<DataType> WindowAggregationLogicalFunction::getInputStamp() const

@@ -66,21 +66,16 @@ LogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName)
 
 std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << "FieldAccessLogicalFunction(" << fieldName;
-        if (stamp) {
-            ss << " [" << stamp->toString() << "]";
-        }
-        ss << ")";
-    } else if (verbosity == ExplainVerbosity::Short) {
-        ss << fieldName;
+        return fmt::format("FieldAccessLogicalFunction({}{})", 
+            fieldName,
+            stamp ? fmt::format(" [{}]", stamp->toString()) : "");
     }
-    return ss.str();
+    return fieldName;
 }
 
-LogicalFunction FieldAccessLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction FieldAccessLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     const auto existingField = schema.getFieldByName(fieldName);
     INVARIANT(existingField, "field is not part of the schema");
@@ -109,14 +104,14 @@ std::vector<LogicalFunction> FieldAccessLogicalFunction::getChildren() const
     return {};
 };
 
-LogicalFunction FieldAccessLogicalFunction::withChildren(std::vector<LogicalFunction>) const
+LogicalFunction FieldAccessLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
 {
     return *this;
 };
 
-std::string FieldAccessLogicalFunction::getType() const
+std::string_view FieldAccessLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction FieldAccessLogicalFunction::serialize() const
@@ -136,7 +131,9 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.config.contains("FieldName"), "FieldAccessLogicalFunction requires a FieldName in its config");
     auto fieldName = get<std::string>(arguments.config["FieldName"]);
+    PRECONDITION(!fieldName.empty(), "FieldName cannot be empty");
     return FieldAccessLogicalFunction(arguments.stamp, fieldName);
 }
 

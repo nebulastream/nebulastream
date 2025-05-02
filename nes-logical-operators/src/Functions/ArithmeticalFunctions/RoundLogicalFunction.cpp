@@ -21,6 +21,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -33,8 +34,7 @@ RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : 
 
 bool RoundLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const RoundLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const RoundLogicalFunction*>(&rhs))
     {
         return child == other->getChildren()[0];
     }
@@ -43,9 +43,13 @@ bool RoundLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string RoundLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "ROUND(" << child.explain(verbosity) << ")";
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("RoundLogicalFunction({} : {})", 
+            child.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("ROUND({})", child.explain(verbosity));
 }
 
 std::shared_ptr<DataType> RoundLogicalFunction::getStamp() const
@@ -60,7 +64,7 @@ LogicalFunction RoundLogicalFunction::withStamp(std::shared_ptr<DataType> stamp)
     return copy;
 };
 
-LogicalFunction RoundLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction RoundLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -75,16 +79,17 @@ std::vector<LogicalFunction> RoundLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction RoundLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction RoundLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 1, "RoundLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
 };
 
-std::string RoundLogicalFunction::getType() const
+std::string_view RoundLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction RoundLogicalFunction::serialize() const
@@ -99,6 +104,7 @@ SerializableFunction RoundLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 1, "RoundLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     return RoundLogicalFunction(arguments.children[0]);
 }
 

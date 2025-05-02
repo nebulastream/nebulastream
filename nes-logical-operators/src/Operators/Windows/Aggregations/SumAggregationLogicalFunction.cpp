@@ -24,10 +24,10 @@
 #include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
-
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), std::move(field))
 {
@@ -96,4 +96,9 @@ NES::SerializableAggregationFunction SumAggregationLogicalFunction::serialize() 
     return serializedAggregationFunction;
 }
 
+AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+{
+    PRECONDITION(arguments.fields.size() == 2, "SumAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    return SumAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+}
 }

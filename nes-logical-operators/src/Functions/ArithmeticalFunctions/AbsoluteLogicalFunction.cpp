@@ -19,6 +19,7 @@
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableFunction.pb.h>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -43,7 +44,7 @@ LogicalFunction AbsoluteLogicalFunction::withStamp(std::shared_ptr<DataType> sta
     return copy;
 };
 
-LogicalFunction AbsoluteLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction AbsoluteLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -58,22 +59,22 @@ std::vector<LogicalFunction> AbsoluteLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction AbsoluteLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction AbsoluteLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 1, "AbsoluteLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
-    return *this;
+    return copy;
 };
 
-std::string AbsoluteLogicalFunction::getType() const
+std::string_view AbsoluteLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 bool AbsoluteLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs))
     {
         return child == other->child;
     }
@@ -82,9 +83,13 @@ bool AbsoluteLogicalFunction::operator==(const LogicalFunctionConcept& rhs) cons
 
 std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "ABS(" << child.explain(verbosity) << ")";
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("AbsoluteLogicalFunction({} : {})", 
+            child.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("ABS({})", child.explain(verbosity));
 }
 
 SerializableFunction AbsoluteLogicalFunction::serialize() const
@@ -99,6 +104,7 @@ SerializableFunction AbsoluteLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterAbsoluteLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 1, "AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     return AbsoluteLogicalFunction(arguments.children[0]);
 }
 

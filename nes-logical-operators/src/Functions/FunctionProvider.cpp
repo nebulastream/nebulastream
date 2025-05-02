@@ -49,14 +49,14 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     {
         return FieldAccessPhysicalFunction(fieldAccessNode->getFieldName());
     }
-    if (auto constantValueNode = logicalFunction.tryGet<ConstantValueLogicalFunction>())
+    if (const auto constantValueNode = logicalFunction.tryGet<ConstantValueLogicalFunction>())
     {
         return lowerConstantFunction(*constantValueNode);
     }
 
     /// 3. Calling the registry to create an executable function.
     auto executableFunctionArguments = PhysicalFunctionRegistryArguments(childFunction);
-    auto function = PhysicalFunctionRegistry::instance().create(logicalFunction.getType(), std::move(executableFunctionArguments));
+    auto function = PhysicalFunctionRegistry::instance().create(std::string(logicalFunction.getType()), std::move(executableFunctionArguments));
     if (not function.has_value())
     {
         throw UnknownFunctionType("Can not lower function: {}", logicalFunction);

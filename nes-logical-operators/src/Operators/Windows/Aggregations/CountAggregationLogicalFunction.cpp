@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -24,10 +25,10 @@
 #include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
-
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(LogicalType::UINT64),
@@ -99,4 +100,10 @@ NES::SerializableAggregationFunction CountAggregationLogicalFunction::serialize(
     return serializedAggregationFunction;
 }
 
+AggregationLogicalFunctionRegistryReturnType
+AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+{
+    PRECONDITION(arguments.fields.size() == 2, "CountAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    return CountAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+}
 }

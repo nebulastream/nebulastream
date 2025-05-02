@@ -18,8 +18,9 @@
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <SerializableOperator.pb.h>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
-
-#include "LogicalOperatorRegistry.hpp"
+#include <LogicalOperatorRegistry.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 namespace NES
 {
@@ -33,21 +34,19 @@ std::string_view IngestionTimeWatermarkAssignerLogicalOperator::getName() const 
 
 std::string IngestionTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "INGESTIONTIMEWATERMARKASSIGNER(opId: " << id;
-    if (verbosity == ExplainVerbosity::Debug) {
-        ss << ", inputSchema: " << inputSchema.toString();
-        if (!inputOriginIds.empty()) {
-            ss << ", inputOriginIds: [";
-            for (size_t i = 0; i < inputOriginIds.size(); ++i) {
-                if (i > 0) ss << ", ";
-                ss << inputOriginIds[i];
-            }
-            ss << "]";
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        std::string inputOriginIdsStr;
+        if (!inputOriginIds.empty())
+        {
+            inputOriginIdsStr = fmt::format(", inputOriginIds: [{}]", fmt::join(inputOriginIds, ", "));
         }
+        return fmt::format("INGESTIONTIMEWATERMARKASSIGNER(opId: {}, inputSchema: {}{})", 
+            id, 
+            inputSchema.toString(),
+            inputOriginIdsStr);
     }
-    ss << ")";
-    return ss.str();
+    return "INGESTIONTIMEWATERMARKASSIGNER";
 }
 
 bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const

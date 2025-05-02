@@ -20,6 +20,7 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -35,8 +36,7 @@ LessLogicalFunction::LessLogicalFunction(LogicalFunction left, LogicalFunction r
 
 bool LessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const LessLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const LessLogicalFunction*>(&rhs))
     {
         return this->left == other->left && this->right == other->right;
     }
@@ -45,9 +45,7 @@ bool LessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string LessLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " < " << right.explain(verbosity);
-    return ss.str();
+    return fmt::format("{} < {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 std::shared_ptr<DataType> LessLogicalFunction::getStamp() const
@@ -62,7 +60,7 @@ LogicalFunction LessLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) 
     return copy;
 };
 
-LogicalFunction LessLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction LessLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -77,17 +75,18 @@ std::vector<LogicalFunction> LessLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction LessLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction LessLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "LessLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
     return copy;
 };
 
-std::string LessLogicalFunction::getType() const
+std::string_view LessLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction LessLogicalFunction::serialize() const
@@ -102,6 +101,7 @@ SerializableFunction LessLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return LessLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

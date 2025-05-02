@@ -81,30 +81,24 @@ std::string getFieldName(const LogicalFunction& function)
 
 std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
         if (not outputSchema.getFieldNames().empty())
         {
-            ss << fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema.toString());
+            return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema.toString());
         }
-        ss << fmt::format(
-                   "PROJECTION(opId: {}, fields: [{}])",
-                   id,
-                   fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(function); }), ", "));
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        if (not outputSchema.getFieldNames().empty())
-        {
-            ss << fmt::format("PROJECTION(schema={})", outputSchema.toString());
-        } else
-        {
-            ss << fmt::format(
-                       "PROJECTION(fields: [{}])",
-                       fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(function); }), ", "));
-        }
+        return fmt::format(
+            "PROJECTION(opId: {}, fields: [{}])",
+            id,
+            fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(function); }), ", "));
     }
-    return ss.str();
+    if (not outputSchema.getFieldNames().empty())
+    {
+        return fmt::format("PROJECTION(schema={})", outputSchema.toString());
+    }
+    return fmt::format(
+        "PROJECTION(fields: [{}])",
+        fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(function); }), ", "));
 }
 
 LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const

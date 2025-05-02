@@ -29,7 +29,6 @@
 namespace NES
 {
 
-/// only used in this header, thus the anonymous namespace
 namespace
 {
 inline OperatorId getNextLogicalOperatorId()

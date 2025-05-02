@@ -23,10 +23,11 @@
 #include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
-
 MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field)
 {
@@ -94,4 +95,9 @@ NES::SerializableAggregationFunction MinAggregationLogicalFunction::serialize() 
     return serializedAggregationFunction;
 }
 
+AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterMinAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+{
+    PRECONDITION(arguments.fields.size() == 2, "MinAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    return MinAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+}
 }

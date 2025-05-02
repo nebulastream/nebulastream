@@ -17,6 +17,7 @@
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -39,7 +40,7 @@ LogicalFunction FloorLogicalFunction::withStamp(std::shared_ptr<DataType> stamp)
     return copy;
 };
 
-LogicalFunction FloorLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction FloorLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -54,22 +55,22 @@ std::vector<LogicalFunction> FloorLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction FloorLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction FloorLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 1, "FloorLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
 };
 
-std::string FloorLogicalFunction::getType() const
+std::string_view FloorLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 bool FloorLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const FloorLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const FloorLogicalFunction*>(&rhs))
     {
         return child == other->child;
     }
@@ -78,9 +79,13 @@ bool FloorLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string FloorLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "FLOOR(" << child.explain(verbosity) << ")";
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("FloorLogicalFunction({} : {})", 
+            child.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("FLOOR({})", child.explain(verbosity));
 }
 
 SerializableFunction FloorLogicalFunction::serialize() const
@@ -95,6 +100,7 @@ SerializableFunction FloorLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFloorLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 1, "FloorLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     return FloorLogicalFunction(arguments.children[0]);
 }
 

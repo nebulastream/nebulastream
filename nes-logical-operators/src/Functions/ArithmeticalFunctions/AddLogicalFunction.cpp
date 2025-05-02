@@ -19,6 +19,7 @@
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -44,7 +45,7 @@ LogicalFunction AddLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
     return copy;
 };
 
-LogicalFunction AddLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction AddLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -59,8 +60,9 @@ std::vector<LogicalFunction> AddLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction AddLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction AddLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "AddLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
@@ -68,9 +70,9 @@ LogicalFunction AddLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     return copy;
 };
 
-std::string AddLogicalFunction::getType() const
+std::string_view AddLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 bool AddLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
@@ -87,9 +89,14 @@ bool AddLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string AddLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " + " << right.explain(verbosity);
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("AddLogicalFunction({} + {} : {})", 
+            left.explain(verbosity), 
+            right.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("{} + {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 SerializableFunction AddLogicalFunction::serialize() const
@@ -104,6 +111,7 @@ SerializableFunction AddLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAddLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "AddLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return AddLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

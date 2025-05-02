@@ -19,6 +19,7 @@
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -41,9 +42,14 @@ bool SubLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string SubLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " - " << right.explain(verbosity);
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("SubLogicalFunction({} - {} : {})", 
+            left.explain(verbosity), 
+            right.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("{} - {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 std::shared_ptr<DataType> SubLogicalFunction::getStamp() const
@@ -58,7 +64,7 @@ LogicalFunction SubLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
     return copy;
 };
 
-LogicalFunction SubLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction SubLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -73,8 +79,9 @@ std::vector<LogicalFunction> SubLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction SubLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction SubLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "SubLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
@@ -82,9 +89,9 @@ LogicalFunction SubLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     return copy;
 };
 
-std::string SubLogicalFunction::getType() const
+std::string_view SubLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction SubLogicalFunction::serialize() const
@@ -99,6 +106,7 @@ SerializableFunction SubLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSubLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "SubLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return SubLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

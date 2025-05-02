@@ -21,6 +21,7 @@
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -36,8 +37,7 @@ NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other)
 
 bool NegateLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const NegateLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const NegateLogicalFunction*>(&rhs))
     {
         return this->child == other->getChildren()[0];
     }
@@ -46,12 +46,10 @@ bool NegateLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "NOT(" << child.explain(verbosity) << ")";
-    return ss.str();
+    return fmt::format("NOT({})", child.explain(verbosity));
 }
 
-LogicalFunction NegateLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction NegateLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     auto newChild = child.withInferredStamp(schema);
     if (*newChild.getStamp().get() != Boolean())
@@ -84,16 +82,17 @@ std::vector<LogicalFunction> NegateLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction NegateLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction NegateLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 1, "NegateLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
 };
 
-std::string NegateLogicalFunction::getType() const
+std::string_view NegateLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction NegateLogicalFunction::serialize() const
@@ -108,6 +107,7 @@ SerializableFunction NegateLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 1, "NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     return NegateLogicalFunction(arguments.children[0]);
 }
 

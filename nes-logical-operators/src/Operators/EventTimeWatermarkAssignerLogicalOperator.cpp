@@ -27,6 +27,8 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 namespace NES
 {
@@ -43,27 +45,21 @@ std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() const noex
 
 std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << "EVENTTIMEWATERMARKASSIGNER(opId: " << id;
-        ss << ", onField: " << onField.explain(verbosity) << ", unit: "
-        << unit.getMillisecondsConversionMultiplier();
-        ss << ", inputSchema: " << inputSchema.toString();
-        if (!inputOriginIds.empty()) {
-            ss << ", inputOriginIds: [";
-            for (size_t i = 0; i < inputOriginIds.size(); ++i) {
-                if (i > 0) ss << ", ";
-                ss << inputOriginIds[i];
-            }
-            ss << "]";
+        std::string inputOriginIdsStr;
+        if (!inputOriginIds.empty())
+        {
+            inputOriginIdsStr = fmt::format(", inputOriginIds: [{}]", fmt::join(inputOriginIds, ", "));
         }
-        ss << ")";
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        ss << "WATERMARKASSIGNER(Event time)";
+        return fmt::format("EVENTTIMEWATERMARKASSIGNER(opId: {}, onField: {}, unit: {}, inputSchema: {}{})",
+            id,
+            onField.explain(verbosity),
+            unit.getMillisecondsConversionMultiplier(),
+            inputSchema.toString(),
+            inputOriginIdsStr);
     }
-    return ss.str();
+    return "WATERMARKASSIGNER(Event time)";
 }
 
 bool EventTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const

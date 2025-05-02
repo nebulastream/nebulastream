@@ -18,6 +18,7 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -46,9 +47,7 @@ bool LessEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) co
 
 std::string LessEqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " <= " << right.explain(verbosity);
-    return ss.str();
+    return fmt::format("{} <= {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 std::shared_ptr<DataType> LessEqualsLogicalFunction::getStamp() const
@@ -63,7 +62,7 @@ LogicalFunction LessEqualsLogicalFunction::withStamp(std::shared_ptr<DataType> s
     return copy;
 };
 
-LogicalFunction LessEqualsLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction LessEqualsLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -78,17 +77,18 @@ std::vector<LogicalFunction> LessEqualsLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction LessEqualsLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction LessEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "LessEqualsLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
     return copy;
 };
 
-std::string LessEqualsLogicalFunction::getType() const
+std::string_view LessEqualsLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 
@@ -105,6 +105,7 @@ SerializableFunction LessEqualsLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterLessEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "LessEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return LessEqualsLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

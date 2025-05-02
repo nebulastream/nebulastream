@@ -18,6 +18,7 @@
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <fmt/format.h>
 
 namespace NES::Windowing
 {
@@ -39,10 +40,7 @@ TimeMeasure TumblingWindow::getSlide()
 
 std::string TumblingWindow::toString() const
 {
-    std::stringstream ss;
-    ss << "TumblingWindow: size=" << size.getTime();
-    ss << " timeCharacteristic=" << timeCharacteristic;
-    return ss.str();
+    return fmt::format("TumblingWindow: size={} timeCharacteristic={}", size.getTime(), timeCharacteristic);
 }
 
 bool TumblingWindow::operator==(const WindowType& otherWindowType) const

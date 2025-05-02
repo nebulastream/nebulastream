@@ -20,6 +20,7 @@
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <fmt/format.h>
 
 namespace NES::Windowing
 {
@@ -46,11 +47,10 @@ TimeMeasure SlidingWindow::getSlide()
 
 std::string SlidingWindow::toString() const
 {
-    std::stringstream ss;
-    ss << "SlidingWindow: size=" << size.getTime();
-    ss << " slide=" << slide.getTime();
-    ss << " timeCharacteristic=" << timeCharacteristic;
-    return ss.str();
+    return fmt::format("SlidingWindow: size={} slide={} timeCharacteristic={}", 
+        size.getTime(), 
+        slide.getTime(), 
+        timeCharacteristic);
 }
 
 bool SlidingWindow::operator==(const WindowType& otherWindowType) const

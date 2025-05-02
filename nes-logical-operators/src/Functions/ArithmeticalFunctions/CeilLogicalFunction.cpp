@@ -17,6 +17,7 @@
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -39,7 +40,7 @@ LogicalFunction CeilLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) 
     return copy;
 };
 
-LogicalFunction CeilLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction CeilLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -54,23 +55,23 @@ std::vector<LogicalFunction> CeilLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction CeilLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction CeilLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 1, "CeilLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
 };
 
-std::string CeilLogicalFunction::getType() const
+std::string_view CeilLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 
 bool CeilLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const CeilLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const CeilLogicalFunction*>(&rhs))
     {
         return child == other->child;
     }
@@ -79,9 +80,13 @@ bool CeilLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string CeilLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "CEIL(" << child.explain(verbosity) << ")";
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("CeilLogicalFunction({} : {})", 
+            child.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("CEIL({})", child.explain(verbosity));
 }
 
 SerializableFunction CeilLogicalFunction::serialize() const
@@ -96,6 +101,7 @@ SerializableFunction CeilLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterCeilLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 1, "CeilLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     return CeilLogicalFunction(arguments.children[0]);
 }
 

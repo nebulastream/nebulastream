@@ -51,15 +51,11 @@ bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& r
 
 std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << fmt::format("SOURCE(opId: {}, originid: {}, {})", id, outputOriginIds, sourceDescriptor->explain(verbosity));
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        ss << fmt::format("SOURCE({})", sourceDescriptor->explain(verbosity));
+        return fmt::format("SOURCE(opId: {}, originid: {}, {})", id, outputOriginIds, sourceDescriptor->explain(verbosity));
     }
-    return ss.str();
+    return fmt::format("SOURCE({})", sourceDescriptor->explain(verbosity));
 }
 
 Optimizer::TraitSet SourceDescriptorLogicalOperator::getTraitSet() const

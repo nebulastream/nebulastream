@@ -19,6 +19,7 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -33,8 +34,7 @@ MulLogicalFunction::MulLogicalFunction(const MulLogicalFunction& other) : stamp(
 
 bool MulLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const MulLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const MulLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;
@@ -45,9 +45,14 @@ bool MulLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string MulLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " * " << right.explain(verbosity);
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("MulLogicalFunction({} * {} : {})", 
+            left.explain(verbosity), 
+            right.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("{} * {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 std::shared_ptr<DataType> MulLogicalFunction::getStamp() const
@@ -62,7 +67,7 @@ LogicalFunction MulLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
     return copy;
 };
 
-LogicalFunction MulLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction MulLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -77,8 +82,9 @@ std::vector<LogicalFunction> MulLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction MulLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction MulLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "MulLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
@@ -86,9 +92,9 @@ LogicalFunction MulLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     return copy;
 };
 
-std::string MulLogicalFunction::getType() const
+std::string_view MulLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction MulLogicalFunction::serialize() const
@@ -103,6 +109,7 @@ SerializableFunction MulLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMulLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "MulLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return MulLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

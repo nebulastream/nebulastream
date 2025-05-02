@@ -23,6 +23,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -37,8 +38,7 @@ OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right
 
 bool OrLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const OrLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const OrLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;
@@ -49,9 +49,7 @@ bool OrLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string OrLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " OR " << right.explain(verbosity);
-    return ss.str();
+    return fmt::format("{} OR {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 std::shared_ptr<DataType> OrLogicalFunction::getStamp() const
@@ -71,20 +69,21 @@ std::vector<LogicalFunction> OrLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction OrLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction OrLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "OrLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
     return copy;
 };
 
-std::string OrLogicalFunction::getType() const
+std::string_view OrLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
-LogicalFunction OrLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction OrLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> children;
     /// delegate stamp inference of children
@@ -117,6 +116,7 @@ SerializableFunction OrLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "OrLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return OrLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

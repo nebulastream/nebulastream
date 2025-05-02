@@ -46,9 +46,7 @@ bool ConcatLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string ConcatLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "CONCAT(" << left.explain(verbosity) << ", " << right.explain(verbosity) << ")";
-    return ss.str();
+    return fmt::format("CONCAT({}, {})", left.explain(verbosity), right.explain(verbosity));
 }
 
 std::shared_ptr<DataType> ConcatLogicalFunction::getStamp() const
@@ -63,7 +61,7 @@ LogicalFunction ConcatLogicalFunction::withStamp(std::shared_ptr<DataType> stamp
     return copy;
 };
 
-LogicalFunction ConcatLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction ConcatLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -78,7 +76,7 @@ std::vector<LogicalFunction> ConcatLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction ConcatLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction ConcatLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     auto copy = *this;
     copy.left = children[0];
@@ -87,9 +85,9 @@ LogicalFunction ConcatLogicalFunction::withChildren(std::vector<LogicalFunction>
     return copy;
 };
 
-std::string ConcatLogicalFunction::getType() const
+std::string_view ConcatLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction ConcatLogicalFunction::serialize() const
@@ -105,6 +103,7 @@ SerializableFunction ConcatLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "ConcatLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return ConcatLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

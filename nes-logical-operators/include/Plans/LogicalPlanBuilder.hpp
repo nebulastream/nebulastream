@@ -41,18 +41,16 @@ public:
     /// @return the updated queryPlan
     static LogicalPlan addProjection(std::vector<LogicalFunction> functions, LogicalPlan queryPlan);
 
-    /// @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate. An
-    /// exemplary usage would be: selection(Attribute("f1" < 10))
+    /// @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate.
     /// @param selectionFunction as function node containing the predicate
-    /// @param std::shared_ptr<LogicalPlan> the queryPlan the selection node is added to
+    /// @param LogicalPlan the queryPlan the selection node is added to
     /// @return the updated queryPlan
     static LogicalPlan addSelection(LogicalFunction selectionFunction, LogicalPlan queryPlan);
 
-    /// @brief: Map records according to a map function. An
-    /// exemplary usage would be: map(Attribute("f2") = Attribute("f1") * 42 )
+    /// @brief: Map records according to a map function.
     /// @param mapFunction as function node
     /// @param queryPlan the queryPlan the map is added to
-    /// @return the updated std::shared_ptr<LogicalPlan>
+    /// @return the updated LogicalPlan
     static LogicalPlan addMap(LogicalFunction mapFunction, LogicalPlan queryPlan);
 
     static LogicalPlan addWindowAggregation(

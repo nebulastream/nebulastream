@@ -19,6 +19,7 @@
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -41,9 +42,13 @@ bool SqrtLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string SqrtLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "SQRT(" << child.explain(verbosity) << ")";
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("SqrtLogicalFunction({} : {})", 
+            child.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("SQRT({})", child.explain(verbosity));
 }
 
 std::shared_ptr<DataType> SqrtLogicalFunction::getStamp() const
@@ -58,7 +63,7 @@ LogicalFunction SqrtLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) 
     return copy;
 };
 
-LogicalFunction SqrtLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction SqrtLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -73,16 +78,17 @@ std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction SqrtLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction SqrtLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 1, "SqrtLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
 };
 
-std::string SqrtLogicalFunction::getType() const
+std::string_view SqrtLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction SqrtLogicalFunction::serialize() const
@@ -96,6 +102,7 @@ SerializableFunction SqrtLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 1, "SqrtLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     return SqrtLogicalFunction(arguments.children[0]);
 }
 

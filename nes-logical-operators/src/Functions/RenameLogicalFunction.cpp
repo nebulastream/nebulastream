@@ -35,8 +35,7 @@ RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
 
 bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const RenameLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const RenameLogicalFunction*>(&rhs))
     {
         return other->child.operator==(getOriginalField()) && this->newFieldName == other->getNewFieldName();
     }
@@ -60,16 +59,16 @@ std::vector<LogicalFunction> RenameLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction RenameLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction RenameLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     auto copy = *this;
     copy.child = children[0].get<FieldAccessLogicalFunction>();
     return copy;
 };
 
-std::string RenameLogicalFunction::getType() const
+std::string_view RenameLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 const FieldAccessLogicalFunction& RenameLogicalFunction::getOriginalField() const
@@ -84,19 +83,17 @@ std::string RenameLogicalFunction::getNewFieldName() const
 
 std::string RenameLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << "FieldRenameFunction(" << child.explain(verbosity) << " => " << newFieldName;
-        ss << " : " << stamp->toString() << ")";
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        ss << fmt::format("FieldRename({} => {})", child.explain(verbosity), newFieldName);
+        return fmt::format("FieldRenameFunction({} => {} : {})", 
+            child.explain(verbosity), 
+            newFieldName,
+            stamp->toString());
     }
-    return ss.str();
+    return fmt::format("FieldRename({} => {})", child.explain(verbosity), newFieldName);
 }
 
-LogicalFunction RenameLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction RenameLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     auto fieldName = child.withInferredStamp(schema).get<FieldAccessLogicalFunction>().getFieldName();
     auto fieldAttribute = schema.getFieldByName(fieldName);
@@ -149,7 +146,11 @@ SerializableFunction RenameLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRenameLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.config.contains("NewFieldName"), "RenameLogicalFunction requires a NewFieldName in its config");
+    PRECONDITION(arguments.children.size() == 1, "RenameLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    PRECONDITION(arguments.children[0].tryGet<FieldAccessLogicalFunction>(), "Child must be a FieldAccessLogicalFunction");
     auto newFieldName = get<std::string>(arguments.config["NewFieldName"]);
+    PRECONDITION(!newFieldName.empty(), "NewFieldName cannot be empty");
     return RenameLogicalFunction(arguments.children[0].get<FieldAccessLogicalFunction>(), newFieldName);
 }
 

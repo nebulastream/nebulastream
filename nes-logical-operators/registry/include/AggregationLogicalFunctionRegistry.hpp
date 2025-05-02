@@ -19,23 +19,24 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Windowing
+namespace NES
 {
 
-using WindowAggregationFunctionRegistryReturnType = WindowAggregationFunction;
-struct WindowAggregationFunctionRegistryArguments
+using AggregationLogicalFunctionRegistryReturnType = std::shared_ptr<WindowAggregationLogicalFunction>;
+struct AggregationLogicalFunctionRegistryArguments
 {
+    std::vector<FieldAccessLogicalFunction> fields;
 };
 
-class WindowAggregationFunctionRegistry : public BaseRegistry<
-                                              WindowAggregationFunctionRegistry,
+class AggregationLogicalFunctionRegistry : public BaseRegistry<
+                                              AggregationLogicalFunctionRegistry,
                                               std::string,
-                                              WindowAggregationFunctionRegistryReturnType,
-                                              WindowAggregationFunctionRegistryArguments>
+                                              AggregationLogicalFunctionRegistryReturnType,
+                                              AggregationLogicalFunctionRegistryArguments>
 {
 };
 }
 
 #define INCLUDED_FROM_REGISTRY_WINDOW_AGGREGATION_FUNCTION
-#include <WindowAggregationFunctionGeneratedRegistrar.inc>
+#include <AggregationLogicalFunctionGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_WINDOW_AGGREGATION_FUNCTION

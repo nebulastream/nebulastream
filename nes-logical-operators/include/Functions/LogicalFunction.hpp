@@ -54,7 +54,7 @@ struct LogicalFunctionConcept
     /// Creates a new function with an inferred data type based on the schema.
     /// @param schema The schema to use for inference.
     /// @return LogicalFunction The new function.
-    [[nodiscard]] virtual LogicalFunction withInferredStamp(Schema schema) const = 0;
+    [[nodiscard]] virtual LogicalFunction withInferredStamp(const Schema& schema) const = 0;
 
     /// Returns the children of this function.
     /// @return std::vector<LogicalFunction> The children.
@@ -63,11 +63,11 @@ struct LogicalFunctionConcept
     /// Creates a new function with the given children.
     /// @param children The new children.
     /// @return LogicalFunction The new function.
-    [[nodiscard]] virtual LogicalFunction withChildren(std::vector<LogicalFunction> children) const = 0;
+    [[nodiscard]] virtual LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const = 0;
 
     /// Returns the type of this function.
     /// @return std::string The type.
-    [[nodiscard]] virtual std::string getType() const = 0;
+    [[nodiscard]] virtual std::string_view getType() const = 0;
     
     /// Serializes this function to a protobuf message.
     /// @return SerializableFunction The serialized function.
@@ -93,12 +93,12 @@ public:
 
     [[nodiscard]] std::shared_ptr<DataType> getStamp() const override;
     [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType>) const override;
-    [[nodiscard]] LogicalFunction withInferredStamp(Schema Schema) const override;
+    [[nodiscard]] LogicalFunction withInferredStamp(const Schema& schema) const override;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction>) const override;
+    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>&) const override;
 
-    [[nodiscard]] std::string getType() const override;
+    [[nodiscard]] std::string_view getType() const override;
     [[nodiscard]] SerializableFunction serialize() const override;
 
     [[nodiscard]] bool operator==(const NullLogicalFunction&) const;
@@ -175,7 +175,7 @@ struct LogicalFunction
     /// Creates a new function with an inferred data type based on the schema.
     /// @param schema The schema to use for inference.
     /// @return LogicalFunction The new function.
-    [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const;
+    [[nodiscard]] LogicalFunction withInferredStamp(const Schema& schema) const;
     
     /// Returns the children of this function.
     /// @return std::vector<LogicalFunction> The children.
@@ -184,11 +184,11 @@ struct LogicalFunction
     /// Creates a new function with the given children.
     /// @param children The new children.
     /// @return LogicalFunction The new function.
-    [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const;
+    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
     
     /// Returns the type of this function.
     /// @return std::string The type.
-    [[nodiscard]] std::string getType() const;
+    [[nodiscard]] std::string_view getType() const;
     
     /// Serializes this function to a protobuf message.
     /// @return SerializableFunction The serialized function.
@@ -214,14 +214,14 @@ private:
         [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::unique_ptr<Concept>(new Model<T>(data)); }
         [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return data.explain(verbosity); }
         [[nodiscard]] std::vector<LogicalFunction> getChildren() const override { return data.getChildren(); }
-        [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override
+        [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override
         {
             return data.withChildren(children);
         }
         [[nodiscard]] SerializableFunction serialize() const override { return data.serialize(); }
-        [[nodiscard]] std::string getType() const override { return data.getType(); }
+        [[nodiscard]] std::string_view getType() const override { return data.getType(); }
         [[nodiscard]] std::shared_ptr<DataType> getStamp() const override { return data.getStamp(); }
-        [[nodiscard]] LogicalFunction withInferredStamp(Schema schema) const override { return data.withInferredStamp(schema); }
+        [[nodiscard]] LogicalFunction withInferredStamp(const Schema& schema) const override { return data.withInferredStamp(schema); }
         [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType> stamp) const override { return data.withStamp(stamp); }
         [[nodiscard]] bool operator==(const LogicalFunctionConcept& other) const override
         {
@@ -256,7 +256,7 @@ namespace std
 template <>
 struct hash<NES::LogicalFunction>
 {
-    std::size_t operator()(const NES::LogicalFunction& lf) const noexcept { return std::hash<std::string>{}(lf.getType()); }
+    std::size_t operator()(const NES::LogicalFunction& lf) const noexcept { return std::hash<std::string_view>{}(lf.getType()); }
 };
 }
 

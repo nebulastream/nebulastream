@@ -40,7 +40,7 @@ LogicalFunction NullLogicalFunction::withStamp(std::shared_ptr<DataType>) const
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
 
-LogicalFunction NullLogicalFunction::withInferredStamp(Schema) const
+LogicalFunction NullLogicalFunction::withInferredStamp(const Schema&) const
 {
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
@@ -50,12 +50,12 @@ std::vector<LogicalFunction> NullLogicalFunction::getChildren() const
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
 
-LogicalFunction NullLogicalFunction::withChildren(std::vector<LogicalFunction>) const
+LogicalFunction NullLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
 {
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
 
-std::string NullLogicalFunction::getType() const
+std::string_view NullLogicalFunction::getType() const
 {
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
@@ -102,7 +102,7 @@ std::string LogicalFunction::explain(ExplainVerbosity verbosity) const
     return self->explain(verbosity);
 }
 
-LogicalFunction LogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction LogicalFunction::withInferredStamp(const Schema& schema) const
 {
     return self->withInferredStamp(schema);
 }
@@ -112,7 +112,7 @@ std::vector<LogicalFunction> LogicalFunction::getChildren() const
     return self->getChildren();
 }
 
-LogicalFunction LogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction LogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     return self->withChildren(children);
 }
@@ -134,7 +134,7 @@ SerializableFunction LogicalFunction::serialize() const
     return self->serialize();
 }
 
-std::string LogicalFunction::getType() const
+std::string_view LogicalFunction::getType() const
 {
     return self->getType();
 }

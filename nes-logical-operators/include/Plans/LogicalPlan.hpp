@@ -26,7 +26,7 @@
 namespace NES
 {
 
-/// The query plan encapsulates a set of operators and provides a set of utility functions.
+/// The query plan encapsulates a set of logical operators and provides a set of utility functions.
 class LogicalPlan
 {
 public:

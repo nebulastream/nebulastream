@@ -21,10 +21,12 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableFunction.pb.h>
 #include <Common/DataTypes/Numeric.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
+#include <ErrorHandling.hpp>
+
 
 namespace NES
 {
-
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(field.getStamp(), field.getStamp(), field.getStamp(), field)
 {
@@ -91,5 +93,11 @@ NES::SerializableAggregationFunction MaxAggregationLogicalFunction::serialize() 
     serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
     serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
     return serializedAggregationFunction;
+}
+
+AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterMaxAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+{
+    PRECONDITION(arguments.fields.size() == 2, "MaxAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    return MaxAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
 }
 }

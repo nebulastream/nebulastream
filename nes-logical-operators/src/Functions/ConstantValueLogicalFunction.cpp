@@ -53,14 +53,14 @@ std::vector<LogicalFunction> ConstantValueLogicalFunction::getChildren() const
     return {};
 };
 
-LogicalFunction ConstantValueLogicalFunction::withChildren(std::vector<LogicalFunction>) const
+LogicalFunction ConstantValueLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
 {
     return *this;
 };
 
-std::string ConstantValueLogicalFunction::getType() const
+std::string_view ConstantValueLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 bool ConstantValueLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
@@ -74,15 +74,13 @@ bool ConstantValueLogicalFunction::operator==(const LogicalFunctionConcept& rhs)
 
 std::string ConstantValueLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << "ConstantValue(" << constantValue << ", " << stamp->toString() << ")";
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        ss << constantValue;
+        return fmt::format("ConstantValueLogicalFunction({} : {})", 
+            constantValue,
+            stamp->toString());
     }
-    return ss.str();
+    return constantValue;
 }
 
 std::string ConstantValueLogicalFunction::getConstantValue() const
@@ -90,7 +88,7 @@ std::string ConstantValueLogicalFunction::getConstantValue() const
     return constantValue;
 }
 
-LogicalFunction ConstantValueLogicalFunction::withInferredStamp(Schema) const
+LogicalFunction ConstantValueLogicalFunction::withInferredStamp(const Schema&) const
 {
     /// the stamp of constant value functions is defined by the constant value type.
     /// thus it is already assigned correctly when the function node is created.
@@ -114,6 +112,7 @@ SerializableFunction ConstantValueLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.config.contains("constantValueAsString"), "ConstantValueLogicalFunction requires a constantValueAsString in its config");
     auto constantValueAsString = get<std::string>(arguments.config["constantValueAsString"]);
     return ConstantValueLogicalFunction(std::move(arguments.stamp), constantValueAsString);
 }

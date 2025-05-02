@@ -17,6 +17,7 @@
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -29,8 +30,7 @@ ExpLogicalFunction::ExpLogicalFunction(const ExpLogicalFunction& other) : child(
 
 bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const ExpLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const ExpLogicalFunction*>(&rhs))
     {
         return child == other->child;
     }
@@ -49,7 +49,7 @@ LogicalFunction ExpLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
     return copy;
 };
 
-LogicalFunction ExpLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction ExpLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -64,23 +64,28 @@ std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction ExpLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction ExpLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 1, "ExpLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
 };
 
-std::string ExpLogicalFunction::getType() const
+std::string_view ExpLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 std::string ExpLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "EXP(" << child.explain(verbosity) << ")";
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("ExpLogicalFunction({} : {})", 
+            child.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("EXP({})", child.explain(verbosity));
 }
 
 SerializableFunction ExpLogicalFunction::serialize() const
@@ -95,6 +100,7 @@ SerializableFunction ExpLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExpLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 1, "ExpLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     return ExpLogicalFunction(arguments.children[0]);
 }
 }

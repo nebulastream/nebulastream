@@ -62,20 +62,16 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << fmt::format(
-                       "Join({}-{}, windowType = {}, joinFunction = {})",
-                       id,
-                       outputOriginIds,
-                       getWindowType()->toString(),
-                       getJoinFunction().explain(verbosity));
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        ss << fmt::format("Join({})", getJoinFunction().explain(verbosity));
+        return fmt::format(
+            "Join({}-{}, windowType = {}, joinFunction = {})",
+            id,
+            outputOriginIds,
+            getWindowType()->toString(),
+            getJoinFunction().explain(verbosity));
     }
-    return ss.str();
+    return fmt::format("Join({})", getJoinFunction().explain(verbosity));
 }
 
 LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const

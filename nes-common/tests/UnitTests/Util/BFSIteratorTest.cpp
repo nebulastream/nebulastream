@@ -21,7 +21,7 @@ namespace NES {
 
 class TestNode {
 public:
-    TestNode(int id, std::vector<TestNode> children = {}) : id(id), children(std::move(children)) {}
+    explicit TestNode(int id, std::vector<TestNode> children = {}) : id(id), children(std::move(children)) {}
 
     int getId() const
     {
@@ -38,37 +38,37 @@ public:
 
 private:
     uint64_t id;
-    std::vector<TestNode> children;
+    const std::vector<TestNode> children;
 };
 
 TEST(BFSIteratorTest, BasicTraversal)
 {
-    TestNode node4(4);
-    TestNode node5(5);
-    TestNode node6(6);
-    TestNode node2(2, {node4, node5});
-    TestNode node3(3, {node6});
-    TestNode root(1, {node2, node3});
+    const TestNode node4(4);
+    const TestNode node5(5);
+    const TestNode node6(6);
+    const TestNode node2(2, {node4, node5});
+    const TestNode node3(3, {node6});
+    const TestNode root(1, {node2, node3});
 
     std::vector<uint64_t> visitedIds;
     for (const auto& node : BFSRange(root)) {
         visitedIds.push_back(node.getId());
     }
 
-    std::vector<uint64_t> expectedOrder = {1, 2, 3, 4, 5, 6};
+    const std::vector<uint64_t> expectedOrder = {1, 2, 3, 4, 5, 6};
     EXPECT_EQ(visitedIds, expectedOrder);
 }
 
 TEST(BFSIteratorTest, EmptyTree)
 {
-    TestNode root(1);
+    const TestNode root(1);
     std::vector<uint64_t> visitedIds;
     for (const auto& node : BFSRange(root))
     {
         visitedIds.push_back(node.getId());
     }
 
-    std::vector<uint64_t> expectedOrder = {1};
+    const std::vector<uint64_t> expectedOrder = {1};
     EXPECT_EQ(visitedIds, expectedOrder);
 }
 

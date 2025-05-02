@@ -18,6 +18,7 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -33,8 +34,7 @@ ModuloLogicalFunction::ModuloLogicalFunction(LogicalFunction left, LogicalFuncti
 
 bool ModuloLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const ModuloLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const ModuloLogicalFunction*>(&rhs))
     {
         return left == other->left and right == other->right;
     }
@@ -53,7 +53,7 @@ LogicalFunction ModuloLogicalFunction::withStamp(std::shared_ptr<DataType> stamp
     return copy;
 };
 
-LogicalFunction ModuloLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction ModuloLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -68,8 +68,9 @@ std::vector<LogicalFunction> ModuloLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction ModuloLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction ModuloLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "ModuloLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
@@ -77,16 +78,21 @@ LogicalFunction ModuloLogicalFunction::withChildren(std::vector<LogicalFunction>
     return copy;
 };
 
-std::string ModuloLogicalFunction::getType() const
+std::string_view ModuloLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 std::string ModuloLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " % " << right.explain(verbosity);
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("ModuloLogicalFunction({} % {} : {})", 
+            left.explain(verbosity), 
+            right.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("{} % {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 SerializableFunction ModuloLogicalFunction::serialize() const
@@ -99,9 +105,9 @@ SerializableFunction ModuloLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterModuloLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterModuloLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return ModuloLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

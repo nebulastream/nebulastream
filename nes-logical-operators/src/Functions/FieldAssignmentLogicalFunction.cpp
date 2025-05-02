@@ -26,6 +26,7 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -61,16 +62,13 @@ bool operator!=(const FieldAssignmentLogicalFunction& lhs, const FieldAssignment
 
 std::string FieldAssignmentLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << "FieldAssignmentLogicalFunction("
-        << fieldAccess.explain(verbosity) << "="
-        << logicalFunction.explain(verbosity) << ")";
-    } else if (verbosity == ExplainVerbosity::Short) {
-        ss << fieldAccess.explain(verbosity) << " = " << logicalFunction.explain(verbosity);
+        return fmt::format("FieldAssignmentLogicalFunction({} = {})", 
+            fieldAccess.explain(verbosity), 
+            logicalFunction.explain(verbosity));
     }
-    return ss.str();
+    return fmt::format("{} = {}", fieldAccess.explain(verbosity), logicalFunction.explain(verbosity));
 }
 
 FieldAccessLogicalFunction FieldAssignmentLogicalFunction::getField() const
@@ -101,17 +99,17 @@ std::vector<LogicalFunction> FieldAssignmentLogicalFunction::getChildren() const
     return {};
 };
 
-LogicalFunction FieldAssignmentLogicalFunction::withChildren(std::vector<LogicalFunction>) const
+LogicalFunction FieldAssignmentLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
 {
     return *this;
 };
 
-std::string FieldAssignmentLogicalFunction::getType() const
+std::string_view FieldAssignmentLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
-LogicalFunction FieldAssignmentLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction FieldAssignmentLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     auto copy = *this;
     /// infer stamp of assignment function
@@ -172,6 +170,8 @@ SerializableFunction FieldAssignmentLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAssignmentLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "FieldAssignmentLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    PRECONDITION(arguments.children[0].tryGet<FieldAccessLogicalFunction>(), "First child must be a FieldAccessLogicalFunction");
     return FieldAssignmentLogicalFunction(arguments.children[0].get<FieldAccessLogicalFunction>(), arguments.children[1]);
 }
 

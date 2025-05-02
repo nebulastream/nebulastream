@@ -53,7 +53,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
 LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan)
 {
     /// 1) Deserialize all operators into a map
-    std::unordered_map<uint64_t, LogicalOperator> baseOps;
+    std::unordered_map<OperatorId::Underlying, LogicalOperator> baseOps;
     for (const auto& kv : serializedQueryPlan.operatormap())
     {
         const auto& serializedOp = kv.second;
@@ -64,22 +64,21 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     }
 
     /// 2) Recursive builder to attach all children
-    std::unordered_map<uint64_t, LogicalOperator> builtOps;
-    std::function<LogicalOperator(uint64_t)> build = [&](uint64_t id) -> LogicalOperator
+    std::unordered_map<OperatorId::Underlying, LogicalOperator> builtOps;
+    std::function<LogicalOperator(OperatorId::Underlying)> build = [&](OperatorId::Underlying id) -> LogicalOperator
     {
-        auto memoIt = builtOps.find(id);
-        if (memoIt != builtOps.end())
+        if (const auto memoIt = builtOps.find(id); memoIt != builtOps.end())
         {
             return memoIt->second;
         }
+        const auto baseIt = baseOps.find(id);
 
-        auto baseIt = baseOps.find(id);
         INVARIANT(baseIt != baseOps.end(), "Unknown operator id: {}", id);
         LogicalOperator op = baseIt->second;
 
         const auto& serializedOp = serializedQueryPlan.operatormap().at(id);
         std::vector<LogicalOperator> children;
-        for (auto childId : serializedOp.children_ids())
+        for (const auto childId : serializedOp.children_ids())
         {
             children.push_back(build(childId));
         }

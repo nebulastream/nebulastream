@@ -18,6 +18,7 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -34,8 +35,7 @@ GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunc
 
 bool GreaterLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const GreaterLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const GreaterLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;
@@ -46,9 +46,7 @@ bool GreaterLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string GreaterLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " > " << right.explain(verbosity);
-    return ss.str();
+    return fmt::format("{} > {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 std::shared_ptr<DataType> GreaterLogicalFunction::getStamp() const
@@ -63,7 +61,7 @@ LogicalFunction GreaterLogicalFunction::withStamp(std::shared_ptr<DataType> stam
     return copy;
 };
 
-LogicalFunction GreaterLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction GreaterLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -78,17 +76,18 @@ std::vector<LogicalFunction> GreaterLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction GreaterLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction GreaterLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "GreaterLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
     return copy;
 };
 
-std::string GreaterLogicalFunction::getType() const
+std::string_view GreaterLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction GreaterLogicalFunction::serialize() const
@@ -104,6 +103,7 @@ SerializableFunction GreaterLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return GreaterLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

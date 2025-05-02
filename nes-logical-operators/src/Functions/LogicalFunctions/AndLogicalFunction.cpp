@@ -22,6 +22,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -52,23 +53,23 @@ std::vector<LogicalFunction> AndLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction AndLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction AndLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "AndLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
     return copy;
 };
 
-std::string AndLogicalFunction::getType() const
+std::string_view AndLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 bool AndLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const AndLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const AndLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;
@@ -79,12 +80,10 @@ bool AndLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " AND " << right.explain(verbosity);
-    return ss.str();
+    return fmt::format("{} AND {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-LogicalFunction AndLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction AndLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& node : getChildren())
@@ -116,6 +115,7 @@ SerializableFunction AndLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return AndLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

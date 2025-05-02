@@ -22,22 +22,22 @@
 
 #include <memory>
 #include <string>
-#include <WindowAggregationFunctionRegistry.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Windowing::WindowAggregationFunctionGeneratedRegistrar
+namespace NES::AggregationLogicalFunctionGeneratedRegistrar
 {
 
-/// declarations of register functions for 'InputFormatters'
+/// declarations of register functions for 'AggregationLogicalFunction'
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 
 namespace NES
 {
 template <>
-inline void Registrar<WindowAggregationFunctionRegistry, std::string, WindowAggregationFunctionRegistryReturnType, WindowAggregationFunctionRegistryRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+inline void Registrar<AggregationLogicalFunctionRegistry, std::string, AggregationLogicalFunctionRegistryReturnType, AggregationLogicalFunctionRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Windowing::WindowAggregationFunctionGeneratedRegistrar;
+    using namespace NES::AggregationLogicalFunctionGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 

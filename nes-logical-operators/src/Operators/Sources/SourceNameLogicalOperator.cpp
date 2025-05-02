@@ -52,19 +52,16 @@ LogicalOperator SourceNameLogicalOperator::withInferredSchema(std::vector<Schema
 
 std::string SourceNameLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
-    } else if (verbosity == ExplainVerbosity::Short)
+        return fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
+    }
+    std::string originIds;
+    if (!inputOriginIds.empty())
     {
-        std::string originIds;
-        if (!inputOriginIds.empty())
-        {
-            originIds = fmt::format(", {}", fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
-        }
-        ss << fmt::format("SOURCE({}{})", logicalSourceName, originIds);    }
-    return ss.str();
+        originIds = fmt::format(", {}", fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
+    }
+    return fmt::format("SOURCE({}{})", logicalSourceName, originIds);
 }
 
 void SourceNameLogicalOperator::inferInputOrigins()

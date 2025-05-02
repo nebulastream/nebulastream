@@ -22,6 +22,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -37,8 +38,7 @@ EqualsLogicalFunction::EqualsLogicalFunction(const EqualsLogicalFunction& other)
 
 bool EqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const EqualsLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const EqualsLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;
@@ -59,7 +59,7 @@ LogicalFunction EqualsLogicalFunction::withStamp(std::shared_ptr<DataType> stamp
     return copy;
 };
 
-LogicalFunction EqualsLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction EqualsLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -74,24 +74,23 @@ std::vector<LogicalFunction> EqualsLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction EqualsLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction EqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "EqualsLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
     return copy;
 };
 
-std::string EqualsLogicalFunction::getType() const
+std::string_view EqualsLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 std::string EqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " == " << right.explain(verbosity);
-    return ss.str();
+    return fmt::format("{} = {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 bool EqualsLogicalFunction::validateBeforeLowering() const
@@ -115,6 +114,7 @@ SerializableFunction EqualsLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return EqualsLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

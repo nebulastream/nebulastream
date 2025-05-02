@@ -24,6 +24,8 @@
 namespace NES
 {
 
+namespace
+{
 /// Requires a function getChildren()
 template <typename T>
 concept HasChildren = requires(T t) {
@@ -37,12 +39,6 @@ template <HasChildren T>
 class BFSIterator
 {
 public:
-    using iterator_category = std::forward_iterator_tag;
-    using value_type = T;
-    using difference_type = std::ptrdiff_t;
-    using pointer = T*;
-    using reference = T&;
-
     BFSIterator() = default;
     explicit BFSIterator(T root) { nodeQueue.push(root); }
 
@@ -64,7 +60,7 @@ public:
     bool operator==(const BFSIterator& other) const { return nodeQueue.empty() && other.nodeQueue.empty(); }
     bool operator!=(const BFSIterator& other) const { return !(*this == other); }
 
-    T operator*() const
+    [[nodiscard]] T operator*() const
     {
         INVARIANT(!nodeQueue.empty(), "Attempted to dereference end iterator");
         return nodeQueue.front();
@@ -73,6 +69,7 @@ public:
 private:
     std::queue<T> nodeQueue;
 };
+}
 
 template <typename T>
 class BFSRange

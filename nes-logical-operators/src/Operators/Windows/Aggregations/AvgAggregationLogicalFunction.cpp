@@ -25,11 +25,10 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
-#include <Common/DataTypes/Undefined.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
-
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           field.getStamp(),
@@ -109,4 +108,9 @@ NES::SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() 
     return serializedAggregationFunction;
 }
 
+AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterAvgAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+{
+    PRECONDITION(arguments.fields.size() == 2, "AvgAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    return AvgAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+}
 }

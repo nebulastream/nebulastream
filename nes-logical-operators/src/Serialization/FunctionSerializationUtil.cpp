@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <AggregationLogicalFunctionRegistry.hpp>
 #include <memory>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
@@ -20,14 +21,9 @@
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableFunction.pb.h>
-#include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
 
 namespace NES::FunctionSerializationUtil
 {
@@ -63,23 +59,16 @@ LogicalFunction deserializeFunction(const SerializableFunction& serializedFuncti
 std::shared_ptr<WindowAggregationLogicalFunction> deserializeWindowAggregationFunction(
     const SerializableAggregationFunction& serializedFunction) {
     const auto& type = serializedFunction.type();
-    auto onField = FunctionSerializationUtil::deserializeFunction(serializedFunction.on_field());
-    auto asField = FunctionSerializationUtil::deserializeFunction(serializedFunction.as_field());
+    auto onField = deserializeFunction(serializedFunction.on_field());
+    auto asField = deserializeFunction(serializedFunction.as_field());
 
     if (auto fieldAccess = onField.tryGet<FieldAccessLogicalFunction>()) {
         if (auto asFieldAccess = asField.tryGet<FieldAccessLogicalFunction>()) {
-            if (type == "Sum") {
-                return SumAggregationLogicalFunction::create(*fieldAccess, *asFieldAccess);
-            } else if (type == "Min") {
-                return MinAggregationLogicalFunction::create(*fieldAccess, *asFieldAccess);
-            } else if (type == "Max") {
-                return MaxAggregationLogicalFunction::create(*fieldAccess, *asFieldAccess);
-            } else if (type == "Avg") {
-                return AvgAggregationLogicalFunction::create(*fieldAccess, *asFieldAccess);
-            } else if (type == "Count") {
-                return CountAggregationLogicalFunction::create(*fieldAccess, *asFieldAccess);
-            } else if (type == "Median") {
-                return MedianAggregationLogicalFunction::create(*fieldAccess, *asFieldAccess);
+            AggregationLogicalFunctionRegistryArguments args;
+            args.fields = {fieldAccess.value(), asFieldAccess.value()};
+            
+            if (auto function = AggregationLogicalFunctionRegistry::instance().create(type, args)) {
+                return function.value();
             }
         }
     }

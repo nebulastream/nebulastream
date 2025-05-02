@@ -19,6 +19,7 @@
 #include <Util/Common.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -43,9 +44,7 @@ bool PowLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 
 std::string PowLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << "POWER(" << left.explain(verbosity) << ", " << right.explain(verbosity) << ")";
-    return ss.str();
+    return fmt::format("POW({}, {})", left.explain(verbosity), right.explain(verbosity));
 }
 
 std::shared_ptr<DataType> PowLogicalFunction::getStamp() const
@@ -60,7 +59,7 @@ LogicalFunction PowLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
     return copy;
 };
 
-LogicalFunction PowLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction PowLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -75,7 +74,7 @@ std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction PowLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     auto copy = *this;
     copy.left = children[0];
@@ -84,9 +83,9 @@ LogicalFunction PowLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     return copy;
 };
 
-std::string PowLogicalFunction::getType() const
+std::string_view PowLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 SerializableFunction PowLogicalFunction::serialize() const
@@ -101,6 +100,7 @@ SerializableFunction PowLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterPowLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "PowLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return PowLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 

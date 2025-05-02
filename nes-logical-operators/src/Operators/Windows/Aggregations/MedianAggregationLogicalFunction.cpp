@@ -19,10 +19,10 @@
 #include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
+#include <AggregationLogicalFunctionRegistry.hpp>
 
 namespace NES
 {
-
 MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           field.getStamp(),
@@ -99,4 +99,9 @@ NES::SerializableAggregationFunction MedianAggregationLogicalFunction::serialize
     return serializedAggregationFunction;
 }
 
+AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterMedianAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
+{
+    PRECONDITION(arguments.fields.size() == 2, "MedianAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
+    return MedianAggregationLogicalFunction::create(arguments.fields[0], arguments.fields[1]);
+}
 }

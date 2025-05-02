@@ -15,6 +15,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -42,7 +43,7 @@ WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
     std::vector<FieldAccessLogicalFunction> onKey,
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation,
     std::shared_ptr<Windowing::WindowType> windowType)
-    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(onKey)
+    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(std::move(onKey))
 {
 }
 
@@ -53,24 +54,20 @@ std::string_view WindowedAggregationLogicalOperator::getName() const noexcept
 
 std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
         auto& windowType = getWindowType();
         auto windowAggregation = getWindowAggregation();
-        ss << fmt::format(
-                   "WINDOW AGGREGATION({}, {}, window type: {})",
-                   id,
-                   fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->toString(); }), ", "),
-                   windowType.toString());
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        auto windowAggregation = getWindowAggregation();
-        ss << fmt::format(
-                   "WINDOW AGG({})",
-                   fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->getName(); }), ", "));
+        return fmt::format(
+            "WINDOW AGGREGATION({}, {}, window type: {})",
+            id,
+            fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->toString(); }), ", "),
+            windowType.toString());
     }
-    return ss.str();
+    auto windowAggregation = getWindowAggregation();
+    return fmt::format(
+        "WINDOW AGG({})",
+        fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->getName(); }), ", "));
 }
 
 bool WindowedAggregationLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const

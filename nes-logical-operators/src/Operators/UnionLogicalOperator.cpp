@@ -23,6 +23,7 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableSchema.pb.h>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -45,20 +46,14 @@ bool UnionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 
 std::string UnionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << "unionWith(OpId: " << id;
-        ss << ", leftSchema: " << leftInputSchema.toString() << ", rightSchema: " << rightInputSchema.toString();
-        ss << ")";
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        ss << "unionWith";
+        return fmt::format("unionWith(OpId: {}, leftSchema: {}, rightSchema: {})", 
+            id, 
+            leftInputSchema.toString(), 
+            rightInputSchema.toString());
     }
-    return ss.str();
-
-
-    return ss.str();
+    return "unionWith";
 }
 
 LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const

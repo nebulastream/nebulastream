@@ -88,8 +88,7 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
 {
     PRECONDITION(not queryPlan.rootOperators.empty(), "invalid query plan, as the root operator is empty");
 
-    auto timeBasedWindowType = dynamic_cast<Windowing::TimeBasedWindowType*>(windowType.get());
-    if (timeBasedWindowType)
+    if (auto timeBasedWindowType = dynamic_cast<Windowing::TimeBasedWindowType*>(windowType.get()))
     {
         switch (timeBasedWindowType->getTimeCharacteristic().getType())
         {

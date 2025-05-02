@@ -27,6 +27,7 @@
 #include <SerializableOperator.pb.h>
 #include <SerializableSchema.pb.h>
 #include <Serialization/FunctionSerializationUtil.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -144,16 +145,11 @@ std::vector<LogicalOperator> MapLogicalOperator::getChildren() const
 
 std::string MapLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << "MAP(opId: " << id;
-        ss << ", function: " << mapFunction.explain(verbosity) << ")";
-    } else if (verbosity == ExplainVerbosity::Short)
-    {
-        ss << "MAP(" << mapFunction.explain(verbosity) << ")";
+        return fmt::format("MAP(opId: {}, function: {})", id, mapFunction.explain(verbosity));
     }
-    return ss.str();
+    return fmt::format("MAP({})", mapFunction.explain(verbosity));
 }
 
 SerializableOperator MapLogicalOperator::serialize() const

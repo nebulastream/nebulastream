@@ -17,6 +17,7 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -29,8 +30,7 @@ DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : stamp(
 
 bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const DivLogicalFunction*>(&rhs);
-    if (other)
+    if (auto other = dynamic_cast<const DivLogicalFunction*>(&rhs))
     {
         return left == other->left and right == other->right;
     }
@@ -49,7 +49,7 @@ LogicalFunction DivLogicalFunction::withStamp(std::shared_ptr<DataType> stamp) c
     return copy;
 };
 
-LogicalFunction DivLogicalFunction::withInferredStamp(Schema schema) const
+LogicalFunction DivLogicalFunction::withInferredStamp(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -64,8 +64,9 @@ std::vector<LogicalFunction> DivLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction DivLogicalFunction::withChildren(std::vector<LogicalFunction> children) const
+LogicalFunction DivLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
+    PRECONDITION(children.size() == 2, "DivLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
@@ -73,16 +74,21 @@ LogicalFunction DivLogicalFunction::withChildren(std::vector<LogicalFunction> ch
     return copy;
 };
 
-std::string DivLogicalFunction::getType() const
+std::string_view DivLogicalFunction::getType() const
 {
-    return std::string(NAME);
+    return NAME;
 }
 
 std::string DivLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
-    ss << left.explain(verbosity) << " / " << right.explain(verbosity);
-    return ss.str();
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("DivLogicalFunction({} / {} : {})", 
+            left.explain(verbosity), 
+            right.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("{} / {}", left.explain(verbosity), right.explain(verbosity));
 }
 
 SerializableFunction DivLogicalFunction::serialize() const
@@ -97,6 +103,7 @@ SerializableFunction DivLogicalFunction::serialize() const
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterDivLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    PRECONDITION(arguments.children.size() == 2, "DivLogicalFunction requires exactly two children, but got {}", arguments.children.size());
     return DivLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
