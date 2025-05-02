@@ -239,7 +239,7 @@ void AbstractQueryManager::updateSourceToQepMapping(NES::OperatorId sourceid,
 }
 
 std::optional<uint64_t> AbstractQueryManager::getSourceAck(uint64_t key) {
-    const auto timeout = std::chrono::seconds(5);
+    const auto timeout = std::chrono::seconds(60);
     const auto pollInterval = std::chrono::milliseconds(10);
     const auto startTime = std::chrono::steady_clock::now();
 
