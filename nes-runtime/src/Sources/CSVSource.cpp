@@ -220,13 +220,14 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 //                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
                 auto decomposedQueryPlans = queryManager->getExecutablePlanIdsForSource(shared_from_base<DataSource>());
 
+                NES_ERROR("getting record");
                 auto record = sourceInfo->records.front().front();
                 auto ack = queryManager->getSourceAck(record.value);
                 shouldGetLastAck = false;
                 if (ack.has_value() && ack.value() != 0) {
-                    // NES_ERROR("{} found ack, sent until {} ack {}", sharedQueryPlan.getRawValue(), sentUntil, ack.value());
+                    NES_ERROR("found ack, sent until {} ack {}", sentUntil, ack.value());
                     watermarkIndex = findWatermarkIndex(sourceInfo->records, ack.value());
-                    // NES_ERROR("id {}, index: {}, of: {}, watermark: {}", sharedQueryPlan.getRawValue(), watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
+                    NES_ERROR("index: {}, of: {}, watermark: {}",, watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
                 }
             }
             //            if (watermarkIndex < sourceInfo->records.back().back().ingestionTimestamp) {
