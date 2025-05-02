@@ -235,7 +235,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         const auto bufferOriginId = inputBuffer.getOriginId();
 
         auto record = inputBuffer.getBuffer<Record>();
-        std::tuple key = {record->value_1, record->value_2};
+        std::tuple key = {record->id_1, record->id_2};
         NES_ERROR("key ({}, {})", std::get<0>(key), std::get<1>(key))
 
         buffersStorageMap[key].push_back(inputBuffer);
@@ -285,7 +285,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         std::vector<Runtime::TupleBuffer> vec;
         NES_ERROR("writing and erasing elements on write data");
         for (auto& [id, bufferVec] : buffersStorageMap) {
-            NES_ERROR("there are {} saved buffers for key ({}, {})", bufferVec.size(), std::get<0>(key), std::get<1>(key))
+            //NES_ERROR("there are {} saved buffers for key ({}, {})", bufferVec.size(), std::get<0>(key), std::get<1>(key))
             auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
                 if (buf.getWatermark() < currentWatermarkAfterAdding) {
                     vec.push_back(buf);

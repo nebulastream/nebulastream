@@ -235,7 +235,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
 
                 if (record.has_value()) {
                     NES_DEBUG("getting ack");
-                    auto ack = queryManager->getSourceAck(record.value().value);
+                    auto ack = queryManager->getSourceAck(record.value().id);
                     shouldGetLastAck = false;
                     NES_DEBUG("checking if resending necessary");
                     if (ack.has_value() && ack.value() != 0) {
