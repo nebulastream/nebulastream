@@ -430,7 +430,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::map<std::string, folly::Synchronized<TcpSourceInfo>> tcpSourceInfos;
 
     std::mutex tcpAckMutex;
-    std::map<uint64_t, TcpSourceAcknowledgement> tcpSourceAcks;
+    std::unordered_map<uint64_t, TcpSourceAcknowledgement> tcpSourceAcks;
 
   private:
     friend class ThreadPool;

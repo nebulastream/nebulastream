@@ -286,10 +286,16 @@ Status WorkerRPCServer::SendCheckpointToSource(ServerContext*, const CheckPointL
 //    //todo
 //    (void) request;
 //    (void) reply;
-    auto id = request->sharedqueryid();
-    auto watermark = request->checkpointwatermark();
-
-    nodeEngine->getQueryManager()->setSourceAck(id, watermark);
+    // auto id = request->sharedqueryid();
+    auto keys = request->checkpointkeylist();
+    auto watermarks = request->checkpointwatermarklist();
+    for (int i = 0; i < keys.size(); i++) {
+        auto key = keys[i];
+        auto watermark = watermarks[i];
+        NES_DEBUG("key = ({}, {}), watermark = {}", key.first(), key.second(), watermark)
+        nodeEngine->getQueryManager()->setSourceAck(key.first(), watermark);
+        nodeEngine->getQueryManager()->setSourceAck(key.second(), watermark);
+    }
     NES_DEBUG("notifying checkpoints done")
     reply->set_success(true);
     return Status::OK;

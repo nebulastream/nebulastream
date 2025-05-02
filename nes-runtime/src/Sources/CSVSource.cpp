@@ -219,8 +219,9 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
             if (!sourceInfo->records.empty() && shouldGetLastAck) {
                 //                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
                 auto decomposedQueryPlans = queryManager->getExecutablePlanIdsForSource(shared_from_base<DataSource>());
-                auto sharedQueryPlan = queryManager->getSharedQueryId(*decomposedQueryPlans.begin());
-                auto ack = queryManager->getSourceAck(sharedQueryPlan.getRawValue());
+
+                auto record = sourceInfo->records.front().front();
+                auto ack = queryManager->getSourceAck(record.value);
                 shouldGetLastAck = false;
                 if (ack.has_value() && ack.value() != 0) {
                     // NES_ERROR("{} found ack, sent until {} ack {}", sharedQueryPlan.getRawValue(), sentUntil, ack.value());
