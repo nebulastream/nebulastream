@@ -146,7 +146,7 @@ void FileSink::shutdown() {
                 auto newWatermark = std::max(minWatermark, lastSavedWatermark);
                 nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
                 newWatermarkList.emplace_back(std::make_tuple(key, newWatermark));
-                auto bufferVec = buffersStorageMap.at(key);
+                auto& bufferVec = buffersStorageMap.at(key);
 
                 std::vector<Runtime::TupleBuffer> vec;
                 NES_DEBUG("writing and erasing elements on shutdown");
