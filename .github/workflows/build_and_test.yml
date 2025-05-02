@@ -132,13 +132,20 @@ jobs:
           path: |
             build/**/*.log
             build/**/*.stats
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() && !github.event.act }}
-        uses: codecov/test-results-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}
-          file: /junit.xml
+      - name: Run Remote Worker Test
+        # Runs our System Level Tests against a remote instance of the single node worker.
+        # The test should verify that the worker is still running after all tests have been conducted.
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          build/nes-single-node-worker/nes-single-node-worker --worker.numberOfBuffersInGlobalBufferManager=10000 &
+          PID=$!
+          
+          # Wait until the RPC server is responsive. This implictly tests if NebulaStream starts within 5 seconds
+          /bin/grpc_health_probe -addr localhost:8080 -connect-timeout 5s -rpc-timeout 1s
+          
+          build/nes-systests/systest/systest --exclude-groups large -s localhost:8080
+          kill $PID
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         if: ${{ failure() && !cancelled() && !github.event.act }}
