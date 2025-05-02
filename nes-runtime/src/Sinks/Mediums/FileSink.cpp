@@ -106,10 +106,10 @@ void FileSink::setup() {
         NES_DEBUG("creating socket for file sink")
         //auto sockfd = nodeEngine->getTcpDescriptor(filePath);
         std::vector<OriginId> origins;
-        for (uint64_t i = 1; i <= numberOfOrigins; ++i) {
-            origins.emplace_back(OriginId(i));
-        }
-        watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create(origins);
+//        for (uint64_t i = 1; i <= numberOfOrigins; ++i) {
+//            origins.emplace_back(OriginId(i));
+//        }
+//        watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create(origins);
         // Open the file stream
         //if (!outputFile.is_open()) {
         //    outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
@@ -134,16 +134,24 @@ void FileSink::shutdown() {
             // auto watermarkProcessor = nodeEngine->getWatermarkProcessorFor(filePath, numberOfOrigins);
             // std::unordered_map<uint64_t, uint64_t> map;
             // for (auto& [id, point] : *checkpoints) {
-            auto minWatermark = watermarksProcessor->getCurrentWatermark();
-            auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId);
 
-            auto newWatermark = std::max(minWatermark, lastSavedWatermark);
-            nodeEngine->updateLastSavedMinWatermark(sharedQueryId, newWatermark);
+            //create list of new watermarks
+            std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> newWatermarkList;
+
+
+            for (auto& [key, watermarksProcessor] : watermarksProcessorMap) {
+                auto minWatermark = watermarksProcessor->getCurrentWatermark();
+                auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
+                auto newWatermark = std::max(minWatermark, lastSavedWatermark);
+                nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
+                newWatermarkList.emplace_back(std::make_tuple(key, newWatermark));
+            }
+
             // NES_ERROR("sending checkpoint query id: {}, watermark: {}", sharedQueryId, newWatermark);
             // map.insert({sharedQueryId.getRawValue(), watermarkProcessor->get()->getCurrentWatermark()});
             // }
-            std::thread thread([nodeEngine, sharedQueryId, newWatermark]() mutable {
-                nodeEngine->notifyCheckpoints(sharedQueryId, newWatermark);
+            std::thread thread([nodeEngine, sharedQueryId, newWatermarkList]() mutable {
+                nodeEngine->notifyCheckpoints(sharedQueryId, newWatermarkList);
             });
             thread.detach();
 
@@ -237,6 +245,15 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         // auto watermarksProcessor = nodeEngine->getWatermarkProcessorFor(filePath, numberOfOrigins);
         // auto bufferStorage = nodeEngine->writeLockSinkStorage(filePath);
         buffersStorage[bufferOriginId.getRawValue()].push_back(inputBuffer);
+
+        std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarksProcessor;
+        std::tuple<uint64_t, uint64_t> key = {0, 0}; //FIXME
+        if (!watermarksProcessorMap.contains(key)) {
+            watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create({bufferOriginId});
+            watermarksProcessorMap.insert({key, watermarksProcessor});
+        } else {
+            watermarksProcessor = watermarksProcessorMap[key];
+        }
 
         auto currentWatermarkBeforeAdding = watermarksProcessor->getCurrentWatermark();
 

@@ -447,9 +447,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     folly::Synchronized<std::shared_ptr<Windowing::MultiOriginWatermarkProcessor>>::WLockedPtr getWatermarkProcessorFor(std::string sinkName, uint64_t numberOfOrigins);
 
-    uint64_t getLastSavedMinWatermark(SharedQueryId sharedQueryId);
+    uint64_t getLastSavedMinWatermark(SharedQueryId sharedQueryId, key);
 
-    void updateLastSavedMinWatermark(SharedQueryId sharedQueryId, uint64_t newMinWatermark);
+    void updateLastSavedMinWatermark(SharedQueryId sharedQueryId, key, uint64_t newMinWatermark);
 
     folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>::WLockedPtr writeLockSinkStorage(std::string sinkName);
 
@@ -504,7 +504,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     uint64_t parentChangeCount = 0;
 
     std::mutex lastSavedWatermarkMutex;
-    std::map<SharedQueryId, uint64_t> lastSavedWatermarkMap;
+    std::map<std::tuple<SharedQueryId, std::tuple<uint64_t, uint64_t>>, uint64_t> lastSavedWatermarkMap;
 
     std::mutex seqQueueMutex;
     std::map<std::string, folly::Synchronized<std::shared_ptr<Windowing::MultiOriginWatermarkProcessor>>> seqQueueMap;

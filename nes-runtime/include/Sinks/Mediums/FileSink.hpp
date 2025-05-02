@@ -132,7 +132,7 @@ class FileSink : public SinkMedium {
     bool timestampAndWriteToSocket;
     std::atomic<uint64_t> numberOfWrittenBuffers{0};
     std::atomic<uint64_t> numberOfReceivedBuffers{0};
-    std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarksProcessor;
+    std::unordered_map<std::tuple<uint64_t, uint64_t>, std::shared_ptr<Windowing::MultiOriginWatermarkProcessor>> watermarksProcessorMap;
     std::map<uint64_t, std::vector<Runtime::TupleBuffer>> buffersStorage;
 //    folly::Synchronized<std::map<uint64_t, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> seqQueueMap;
     // keep unordered tuple buffers with sequence number as key

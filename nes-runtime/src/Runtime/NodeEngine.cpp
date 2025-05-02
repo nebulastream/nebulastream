@@ -32,19 +32,20 @@
 #include <QueryCompiler/QueryCompilationResult.hpp> // result = queryCompiler->compileQuery(request);
 #include <QueryCompiler/QueryCompiler.hpp>          // member variable (QueryCompilation::QueryCompilerPtr queryCompiler)
 
-#include <Reconfiguration/Metadata/UpdateQueryMetadata.hpp>
 #include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateQueryMetadata.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <arpa/inet.h>
+#include <numeric>
 #include <string>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <tuple>
 #include <utility>
-#include <numeric>
 
 namespace NES::Runtime {
 
@@ -1130,17 +1131,17 @@ folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>::WLockedPtr NodeEngi
     return sinkBufferStorage[sinkName].wlock();
 }
 
-uint64_t NodeEngine::getLastSavedMinWatermark(SharedQueryId sharedQueryId) {
+uint64_t NodeEngine::getLastSavedMinWatermark(SharedQueryId sharedQueryId, std::tuple<uint64_t, uint64_t> key) {
     std::unique_lock lock(lastSavedWatermarkMutex);
-    if (lastSavedWatermarkMap.find(sharedQueryId) != lastSavedWatermarkMap.end()) {
-        return lastSavedWatermarkMap.at(sharedQueryId);
+    if (lastSavedWatermarkMap.find({sharedQueryId, key}) != lastSavedWatermarkMap.end()) {
+        return lastSavedWatermarkMap.at({sharedQueryId, key});
     } else {
         return 0;
     }
 }
 
-void NodeEngine::updateLastSavedMinWatermark(SharedQueryId sharedQueryId, uint64_t newMinWatermark) {
+void NodeEngine::updateLastSavedMinWatermark(SharedQueryId sharedQueryId, std::tuple<uint64_t, uint64_t> key, uint64_t newMinWatermark) {
     std::unique_lock lock(lastSavedWatermarkMutex);
-    lastSavedWatermarkMap[sharedQueryId] = newMinWatermark;
+    lastSavedWatermarkMap[{sharedQueryId, key}] = newMinWatermark;
 }
 }// namespace NES::Runtime
