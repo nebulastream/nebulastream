@@ -38,12 +38,12 @@ jobs:
       - name: Retag Specialized Images
         run: |
           # Iterate through each image type
-          for image_tag in development-dependency development ci benchmark; do
+          for image_tag in development-dependency development ci; do
             docker buildx imagetools create -t nebulastream/nes-$image_tag:latest \
               nebulastream/nes-$image_tag:${{ github.head_ref }}
           
             docker buildx imagetools create -t nebulastream/nes-$image_tag:latest-libcxx \
-              nebulastream/nes-$image_tag:${{ github.head_ref }}-libcxx
+              nebulastream/nes-$image_tag:${{ github.head_ref }}-libcxx-none
           
             for stdlib in libcxx libstdcxx; do
               for sanitizer in none address thread undefined; do
@@ -58,10 +58,13 @@ jobs:
               done
             done
           done
+          
+          docker buildx imagetools create -t nebulastream/nes-benchmark:latest \
+            nebulastream/nes-benchmark:${{ github.head_ref }}
 
       - name: Update Cache Images
         run: |
-          for image_tag in development-dependency development ci benchmark; do
+          for image_tag in development-dependency development; do
             for arch in x64 arm64; do
               for stdlib in libcxx libstdcxx; do
                 if [[ "$arch" == "arm64" && "$stdlib" == "libstdcxx" ]]; then
