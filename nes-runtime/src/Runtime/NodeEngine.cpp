@@ -27,6 +27,7 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <StatisticCollection/StatisticManager.hpp>
 #include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
+#include <iosfwd>
 
 #include <QueryCompiler/QueryCompilationRequest.hpp>// request = QueryCompilation::QueryCompilationRequest::create(..)
 #include <QueryCompiler/QueryCompilationResult.hpp> // result = queryCompiler->compileQuery(request);
@@ -46,6 +47,7 @@
 #include <sys/un.h>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 namespace NES::Runtime {
 
@@ -1071,8 +1073,8 @@ std::shared_ptr<const Execution::ExecutableQueryPlan>
 NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const {
     return getExecutableQueryPlan(idWithVersion.id, idWithVersion.version);
 }
-void NodeEngine::notifyCheckpoints(SharedQueryId sharedQueryId, uint64_t minWatermark) {
-    nesWorker->notifyCheckpointToCoordinator(sharedQueryId, minWatermark);
+void NodeEngine::notifyCheckpoints(SharedQueryId sharedQueryId, std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> newWatermarks) {
+    nesWorker->notifyCheckpointToCoordinator(sharedQueryId, newWatermarks);
 }
 
 folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::RLockedPtr NodeEngine::lockLastWritten(std::string sinkName) {

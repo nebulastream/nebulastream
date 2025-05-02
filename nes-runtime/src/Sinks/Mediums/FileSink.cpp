@@ -26,13 +26,13 @@
 #include <filesystem>
 #include <iostream>
 #include <netinet/in.h>
+#include <numeric>
 #include <regex>
 #include <string>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <thread>
 #include <utility>
-#include <numeric>
 
 namespace NES {
 
@@ -106,10 +106,10 @@ void FileSink::setup() {
         NES_DEBUG("creating socket for file sink")
         //auto sockfd = nodeEngine->getTcpDescriptor(filePath);
         std::vector<OriginId> origins;
-//        for (uint64_t i = 1; i <= numberOfOrigins; ++i) {
-//            origins.emplace_back(OriginId(i));
-//        }
-//        watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create(origins);
+        //        for (uint64_t i = 1; i <= numberOfOrigins; ++i) {
+        //            origins.emplace_back(OriginId(i));
+        //        }
+        //        watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create(origins);
         // Open the file stream
         //if (!outputFile.is_open()) {
         //    outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
@@ -138,6 +138,7 @@ void FileSink::shutdown() {
             //create list of new watermarks
             std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> newWatermarkList;
 
+            auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
             for (auto& [key, watermarksProcessor] : watermarksProcessorMap) {
                 auto minWatermark = watermarksProcessor->getCurrentWatermark();
@@ -145,37 +146,27 @@ void FileSink::shutdown() {
                 auto newWatermark = std::max(minWatermark, lastSavedWatermark);
                 nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
                 newWatermarkList.emplace_back(std::make_tuple(key, newWatermark));
+                auto bufferVec = buffersStorageMap.at(key);
+
+                std::vector<Runtime::TupleBuffer> vec;
+                NES_DEBUG("writing and erasing elements");
+                auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
+                    if (buf.getWatermark() < newWatermark) {
+                        vec.push_back(buf);
+                        return true;
+                    }
+                    return false;
+                });
+                bufferVec.erase(it, bufferVec.end());
+                NES_DEBUG("returning")
+                writeDataToTCP(vec, sinkInfo);
             }
 
             // NES_ERROR("sending checkpoint query id: {}, watermark: {}", sharedQueryId, newWatermark);
-            // map.insert({sharedQueryId.getRawValue(), watermarkProcessor->get()->getCurrentWatermark()});
-            // }
             std::thread thread([nodeEngine, sharedQueryId, newWatermarkList]() mutable {
                 nodeEngine->notifyCheckpoints(sharedQueryId, newWatermarkList);
             });
             thread.detach();
-
-//            if (minWatermark > lastSavedWatermark) {
-                auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
-                std::vector<Runtime::TupleBuffer> vec;
-                NES_DEBUG("writing and erasing elements");
-                for (auto& [id, bufferVec] : buffersStorage) {
-                    auto it = std::remove_if(bufferVec.begin(), bufferVec.end(),
-                                             [&](const Runtime::TupleBuffer& buf) {
-                                                 if (buf.getWatermark() < newWatermark) {
-                                                     vec.push_back(buf);
-                                                     return true;
-                                                 }
-                                                 return false;
-                                             });
-                    bufferVec.erase(it, bufferVec.end());
-                }
-                NES_DEBUG("returning")
-//                for (auto buff: vec) {
-//                    writeDataToFile(buff);
-//                }
-                 writeDataToTCP(vec, sinkInfo);
-//            }
         }
         NES_DEBUG("notify checkpoint created");
     }
@@ -218,14 +209,14 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     } else {
         // NES_ERROR("sink here 2")
         (void) context;
-         auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
+        auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
         // NES_ERROR("got buffer {}.{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
         if (!getReplayData()) {
             NES_DEBUG("replay data not activated writing buffer");
             std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
-//            return writeDataToFile(inputBuffer);
-             return writeDataToTCP(vec, sinkInfo);
+            //            return writeDataToFile(inputBuffer);
+            return writeDataToTCP(vec, sinkInfo);
         }
         // NES_ERROR("replayed ?");
         numberOfReceivedBuffers++;
@@ -242,12 +233,12 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         const auto bufferWatermark = inputBuffer.getWatermark();
         const auto bufferOriginId = inputBuffer.getOriginId();
 
-        // auto watermarksProcessor = nodeEngine->getWatermarkProcessorFor(filePath, numberOfOrigins);
-        // auto bufferStorage = nodeEngine->writeLockSinkStorage(filePath);
-        buffersStorage[bufferOriginId.getRawValue()].push_back(inputBuffer);
+        auto record = inputBuffer.getBuffer<Record>();
+        std::tuple<uint64_t, uint64_t> key = {record->value_1, record->value_2};//FIXME
+
+        buffersStorageMap[key].push_back(inputBuffer);
 
         std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarksProcessor;
-        std::tuple<uint64_t, uint64_t> key = {0, 0}; //FIXME
         if (!watermarksProcessorMap.contains(key)) {
             watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create({bufferOriginId});
             watermarksProcessorMap.insert({key, watermarksProcessor});
@@ -258,20 +249,20 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         auto currentWatermarkBeforeAdding = watermarksProcessor->getCurrentWatermark();
 
         //ignore this buffer if it was already written
-//        if (bufferWatermark < currentWatermarkBeforeAdding) {
-//            NES_DEBUG("seq {} is less than {} for id {}", bufferSeqNumber, currentWatermarkBeforeAdding, bufferOriginId);
-//            return true;
-//        }
-//
-//        {
-//            if (bufferStorage->operator[](bufferOriginId).contains(bufferSeqNumber)) {
-//                NES_DEBUG("buffer already recorded, exiting");
-//                return true;
-//            }
-//            NES_DEBUG("buffer not yet recored, proceeedign");
-//            bufferStorage->operator[](bufferOriginId).emplace(bufferSeqNumber);
-//        }
-//        NES_DEBUG("increase seq nr")
+        //        if (bufferWatermark < currentWatermarkBeforeAdding) {
+        //            NES_DEBUG("seq {} is less than {} for id {}", bufferSeqNumber, currentWatermarkBeforeAdding, bufferOriginId);
+        //            return true;
+        //        }
+        //
+        //        {
+        //            if (bufferStorage->operator[](bufferOriginId).contains(bufferSeqNumber)) {
+        //                NES_DEBUG("buffer already recorded, exiting");
+        //                return true;
+        //            }
+        //            NES_DEBUG("buffer not yet recored, proceeedign");
+        //            bufferStorage->operator[](bufferOriginId).emplace(bufferSeqNumber);
+        //        }
+        //        NES_DEBUG("increase seq nr")
 
         // save the highest consecutive sequence number in the queue
 
@@ -291,23 +282,18 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                   sharedQueryId);
         std::vector<Runtime::TupleBuffer> vec;
         NES_DEBUG("writing and erasing elements");
-        for (auto& [id, bufferVec] : buffersStorage) {
-            auto it = std::remove_if(bufferVec.begin(), bufferVec.end(),
-                                     [&](const Runtime::TupleBuffer& buf) {
-                                         if (buf.getWatermark() < currentWatermarkAfterAdding) {
-                                             vec.push_back(buf);
-                                             return true;
-                                         }
-                                         return false;
-                                     });
+        for (auto& [id, bufferVec] : buffersStorageMap) {
+            auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
+                if (buf.getWatermark() < currentWatermarkAfterAdding) {
+                    vec.push_back(buf);
+                    return true;
+                }
+                return false;
+            });
             bufferVec.erase(it, bufferVec.end());
         }
         NES_DEBUG("returning")
         return writeDataToTCP(vec, sinkInfo);
-//        for (auto buff: vec) {
-//            writeDataToFile(buff);
-//        }
-//        return true;
     }
 }
 
@@ -330,16 +316,12 @@ bool FileSink::writeDataToTCP(std::vector<Runtime::TupleBuffer>& buffersToWrite,
             //        NES_ERROR("Writing to tcp sink");
             ssize_t bytes_written =
                 write(sinkInfo->sockfd, bufferToWrite.getBuffer(), bufferToWrite.getNumberOfTuples() * sizeof(Record));
-            //        NES_ERROR("{} bytes written to tcp sink", bytes_written);
             if (bytes_written == -1) {
                 NES_ERROR("Could not write to socket in sink")
                 perror("write");
                 close(sinkInfo->sockfd);
                 return 1;
             }
-
-            //        receivedBuffers.push_back(bufferContent);
-            //        arrivalTimestamps.push_back(getTimestamp());
         }
         NES_DEBUG("finished writing to sink with descriptor {} for {}", sinkInfo->sockfd, filePath)
         return true;

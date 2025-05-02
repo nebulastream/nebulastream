@@ -751,7 +751,7 @@ bool CoordinatorRPCClient::relocateTopologyNode(const std::vector<TopologyLinkIn
     return reply.success();
 }
 
-bool CoordinatorRPCClient::notifyCheckpoint(SharedQueryId sharedQueryId, uint64_t minWatermark) {
+bool CoordinatorRPCClient::notifyCheckpoint(SharedQueryId sharedQueryId, std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> watermarkList) {
     ClientContext context;
     CheckPointList checkpointList;
     CheckPointRespone reply;

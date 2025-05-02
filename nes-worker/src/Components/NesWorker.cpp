@@ -42,7 +42,10 @@
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <iomanip>
+#include <iosfwd>
+#include <tuple>
 #include <utility>
+#include <vector>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -644,8 +647,8 @@ NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr NesWorker::g
 
 NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr NesWorker::getMobilityHandler() { return workerMobilityHandler; }
 
-void NesWorker::notifyCheckpointToCoordinator(SharedQueryId sharedQueryId, uint64_t minWatermark) {
-   coordinatorRpcClient->notifyCheckpoint(sharedQueryId, minWatermark);
+void NesWorker::notifyCheckpointToCoordinator(SharedQueryId sharedQueryId, std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> watermarkList) {
+   coordinatorRpcClient->notifyCheckpoint(sharedQueryId, watermarkList);
 }
 
 }// namespace NES

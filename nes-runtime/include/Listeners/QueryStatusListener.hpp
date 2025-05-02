@@ -41,7 +41,7 @@ class AbstractQueryStatusListener {
 
     virtual bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) = 0;
 
-    virtual void notifyCheckpointToCoordinator(SharedQueryId, uint64_t) {}
+    virtual void notifyCheckpointToCoordinator(SharedQueryId, std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>>) {}
 };
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 }// namespace NES

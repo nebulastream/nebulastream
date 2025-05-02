@@ -437,7 +437,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     bool getTimesStampOutputSources();
 
-    void notifyCheckpoints(SharedQueryId sharedQueryId, uint64_t minWatermark);
+    void notifyCheckpoints(SharedQueryId sharedQueryId, std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> newWatermarks);
 
     std::unordered_map<uint64_t, uint64_t> getLastWrittenCopy(std::string sinkName);
 
@@ -447,9 +447,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     folly::Synchronized<std::shared_ptr<Windowing::MultiOriginWatermarkProcessor>>::WLockedPtr getWatermarkProcessorFor(std::string sinkName, uint64_t numberOfOrigins);
 
-    uint64_t getLastSavedMinWatermark(SharedQueryId sharedQueryId, key);
+    uint64_t getLastSavedMinWatermark(SharedQueryId sharedQueryId, std::tuple<uint64_t, uint64_t> key);
 
-    void updateLastSavedMinWatermark(SharedQueryId sharedQueryId, key, uint64_t newMinWatermark);
+    void updateLastSavedMinWatermark(SharedQueryId sharedQueryId, std::tuple<uint64_t, uint64_t> key, uint64_t newMinWatermark);
 
     folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>::WLockedPtr writeLockSinkStorage(std::string sinkName);
 
