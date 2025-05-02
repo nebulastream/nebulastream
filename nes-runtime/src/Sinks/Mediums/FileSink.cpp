@@ -127,7 +127,7 @@ void FileSink::setup() {
 void FileSink::shutdown() {
     if (timestampAndWriteToSocket) {
         //todo: send checkpoint message
-        NES_DEBUG("sink notifies checkpoints");
+        NES_ERROR("sink notifies checkpoints");
         if (getReplayData()) {
             auto nodeEngine = this->nodeEngine;
             auto sharedQueryId = this->sharedQueryId;
@@ -149,7 +149,7 @@ void FileSink::shutdown() {
                 auto bufferVec = buffersStorageMap.at(key);
 
                 std::vector<Runtime::TupleBuffer> vec;
-                NES_DEBUG("writing and erasing elements");
+                NES_ERROR("writing and erasing elements");
                 auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
                     if (buf.getWatermark() < newWatermark) {
                         vec.push_back(buf);
@@ -168,7 +168,7 @@ void FileSink::shutdown() {
             });
             thread.detach();
         }
-        NES_DEBUG("notify checkpoint created");
+        NES_ERROR("notify checkpoint created");
     }
 }
 
