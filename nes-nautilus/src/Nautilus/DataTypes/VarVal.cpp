@@ -11,17 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 #include <cstdint>
 #include <ostream>
 #include <string>
-#include <utility>
-
 #include <type_traits>
+#include <utility>
 #include <variant>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <nautilus/std/ostream.h>
@@ -44,12 +43,20 @@ VarVal::VarVal(VarVal&& other) noexcept : value(std::move(other.value))
 
 VarVal& VarVal::operator=(const VarVal& other)
 {
+    if (value.index() != other.value.index())
+    {
+        throw UnknownOperation("Not allowed to change the data type via the assignment operator, please use castToType()!");
+    }
     value = other.value;
     return *this;
 }
 
-VarVal& VarVal::operator=(VarVal&& other) noexcept
+VarVal& VarVal::operator=(VarVal&& other) /// NOLINT, as we need to have the option of throwing
 {
+    if (value.index() != other.value.index())
+    {
+        throw UnknownOperation("Not allowed to change the data type via the assignment operator, please use castToType()!");
+    }
     value = std::move(other.value);
     return *this;
 }

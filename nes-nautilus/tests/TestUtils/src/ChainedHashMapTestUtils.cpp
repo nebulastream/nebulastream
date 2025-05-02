@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <ChainedHashMapTestUtils.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -40,7 +41,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
-#include <ChainedHashMapTestUtils.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <NautilusTestUtils.hpp>
@@ -343,7 +343,7 @@ std::map<RecordWithFields, Record> ChainedHashMapTestUtils::createExactMap(const
                     exactMap.insert({{recordKey, projectionKeys}, recordValue});
                     break;
                 case ExactMapInsert::OVERWRITE:
-                    exactMap[{recordKey, projectionKeys}] = recordValue;
+                    exactMap[{recordKey, projectionKeys}].reassignFields(recordValue);
                     break;
             }
         }
