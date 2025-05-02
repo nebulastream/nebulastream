@@ -98,3 +98,13 @@ function(generate_plugin_registrars plugin_registry_component)
         ")
     endforeach ()
 endfunction()
+
+# Provide the names of all registries that the component creates as ARGS
+# Registries are typically located in the 'registry' directory of the component, e.g., 'nes-sources/registry'
+function(create_registries_for_component)
+    get_filename_component(COMPONENT_NAME "${CMAKE_CURRENT_LIST_DIR}" NAME)
+    set(registries_library ${COMPONENT_NAME}-registry)
+    create_plugin_registry_library(${registries_library} ${COMPONENT_NAME})
+    target_link_libraries(${COMPONENT_NAME} PRIVATE ${registries_library})
+    generate_plugin_registrars(${COMPONENT_NAME} ${ARGN})
+endfunction()

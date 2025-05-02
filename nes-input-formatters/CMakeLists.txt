@@ -33,10 +33,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-input-formatters REUSE_FROM nes-common)
 endif ()
 
-# Create library for the registries, and privately link it against nes-input-formatters so that nes-input-formatters can access its registries
-create_plugin_registry_library(nes-input-formatters-registry nes-input-formatters)
-target_link_libraries(nes-input-formatters PRIVATE nes-input-formatters-registry)
-# Generate a registrar for every registry in nes-input-formatters
-generate_plugin_registrars(nes-input-formatters InputFormatter)
+create_registries_for_component(InputFormatter)
 
 add_tests_if_enabled(tests)
