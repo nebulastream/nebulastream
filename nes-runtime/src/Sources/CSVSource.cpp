@@ -227,7 +227,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 if (ack.has_value() && ack.value() != 0) {
                     NES_ERROR("found ack, sent until {} ack {}", sentUntil, ack.value());
                     watermarkIndex = findWatermarkIndex(sourceInfo->records, ack.value());
-                    NES_ERROR("index: {}, of: {}, watermark: {}",, watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
+                    NES_ERROR("index: {}, of: {}, watermark: {}", watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
                 }
             }
             //            if (watermarkIndex < sourceInfo->records.back().back().ingestionTimestamp) {
