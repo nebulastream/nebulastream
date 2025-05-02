@@ -249,7 +249,8 @@ std::optional<uint64_t> AbstractQueryManager::getSourceAck(uint64_t key) {
             auto it = tcpSourceAcks.find(key);
             if (it != tcpSourceAcks.end() && it->second.seq.has_value()) {
                 auto value = it->second.seq;
-                tcpSourceAcks.erase(it);
+                //tcpSourceAcks.erase(it);
+                tcpSourceAcks.clear();
                 return value;
             }
         }
