@@ -284,8 +284,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                   sharedQueryId);
         std::vector<Runtime::TupleBuffer> vec;
         NES_ERROR("writing and erasing elements on write data");
-        for (auto& [id, bufferVec] : buffersStorageMap) {
+        for (auto& pair : buffersStorageMap) {
+        //for (auto& [id, bufferVec] : buffersStorageMap) {
             //NES_ERROR("there are {} saved buffers for key ({}, {})", bufferVec.size(), std::get<0>(key), std::get<1>(key))
+            auto& bufferVec = pair.second;
             auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
                 if (buf.getWatermark() < currentWatermarkAfterAdding) {
                     vec.push_back(buf);
