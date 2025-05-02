@@ -40,27 +40,20 @@ bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     return false;
 }
 
-std::string SinkLogicalOperator::toString() const
+std::string SinkLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: [", id, sinkName);
-    if (sinkDescriptor) {
-        ss << "type=" << sinkDescriptor->sinkType 
-           << ", addTimestamp=" << sinkDescriptor->addTimestamp
-           << ", schema=" << sinkDescriptor->schema.toString()
-           << "]";
-    } else {
-        ss << "]";
-    }
-    if (!inputOriginIds.empty())
+    if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << ", input originId:" << inputOriginIds[0];
-    }
-    else
+        ss << fmt::format(
+                       "SINK(opId: {}, sinkName: {}, sinkDescriptor: {})",
+                       id,
+                       sinkName,
+                       (sinkDescriptor) ? fmt::format("{}", *sinkDescriptor) : "(null)");
+    } else if (verbosity == ExplainVerbosity::Short)
     {
-        ss << ", input originId: none";
+        ss << fmt::format("SINK({})", sinkName);
     }
-    ss << ")";
     return ss.str();
 }
 

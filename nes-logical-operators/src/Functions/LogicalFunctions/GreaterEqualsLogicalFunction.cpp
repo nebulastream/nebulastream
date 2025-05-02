@@ -46,10 +46,10 @@ bool GreaterEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs)
     return false;
 }
 
-std::string GreaterEqualsLogicalFunction::toString() const
+std::string GreaterEqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << left << ">=" << right;
+    ss << left.explain(verbosity) << " >= " << right.explain(verbosity);
     return ss.str();
 }
 

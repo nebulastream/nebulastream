@@ -54,10 +54,16 @@ bool SelectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) con
     return false;
 };
 
-std::string SelectionLogicalOperator::toString() const
+std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "SELECTION(opId: " << id << ": predicate: " << predicate << ")";
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        ss << fmt::format("FILTER(opId: {}, predicate: {})", id, predicate.explain(verbosity));
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        ss << fmt::format("FILTER({})", predicate.explain(verbosity));
+    }
     return ss.str();
 }
 

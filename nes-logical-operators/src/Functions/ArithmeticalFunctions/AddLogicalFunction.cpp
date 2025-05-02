@@ -85,10 +85,10 @@ bool AddLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string AddLogicalFunction::toString() const
+std::string AddLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << left << "+" << right;
+    ss << left.explain(verbosity) << " + " << right.explain(verbosity);
     return ss.str();
 }
 

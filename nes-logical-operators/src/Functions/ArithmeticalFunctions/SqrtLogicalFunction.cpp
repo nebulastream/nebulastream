@@ -39,10 +39,10 @@ bool SqrtLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string SqrtLogicalFunction::toString() const
+std::string SqrtLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "SQRT(" << child << ")";
+    ss << "SQRT(" << child.explain(verbosity) << ")";
     return ss.str();
 }
 

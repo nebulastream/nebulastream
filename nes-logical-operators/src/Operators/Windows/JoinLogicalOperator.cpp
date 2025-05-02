@@ -60,67 +60,22 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     return false;
 }
 
-std::string JoinLogicalOperator::toString() const
+std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    auto result = fmt::format("Join({}, windowType = {}, joinFunction = {})", id, getWindowType()->toString(), getJoinFunction());
-
-    if (!inputOriginIds.empty() || !outputOriginIds.empty())
+    std::stringstream ss;
+    if (verbosity == ExplainVerbosity::Debug)
     {
-        result.append(", originIds = {");
-
-        if (inputOriginIds.size() == 2)
-        {
-            result.append("left: [");
-            bool first = true;
-            for (const auto& oid : inputOriginIds[1])
-            {
-                if (!first)
-                {
-                    result.append(", ");
-                }
-                result.append(oid.toString());
-                first = false;
-            }
-            result.append("], ");
-
-            result.append("right: [");
-            first = true;
-            for (const auto& oid : inputOriginIds[0])
-            {
-                if (!first)
-                {
-                    result.append(", ");
-                }
-                result.append(oid.toString());
-                first = false;
-            }
-            result.append("]");
-        }
-
-        if (!outputOriginIds.empty())
-        {
-            if (inputOriginIds.size() == 2)
-            {
-                result.append(", ");
-            }
-            result.append("output: [");
-            bool first = true;
-            for (const auto& oid : outputOriginIds)
-            {
-                if (!first)
-                {
-                    result.append(", ");
-                }
-                result.append(oid.toString());
-                first = false;
-            }
-            result.append("]");
-        }
-        result.append("}");
+        ss << fmt::format(
+                       "Join({}-{}, windowType = {}, joinFunction = {})",
+                       id,
+                       outputOriginIds,
+                       getWindowType()->toString(),
+                       getJoinFunction().explain(verbosity));
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        ss << fmt::format("Join({})", getJoinFunction().explain(verbosity));
     }
-
-    result.append(")");
-    return result;
+    return ss.str();
 }
 
 LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const

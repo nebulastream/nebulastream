@@ -87,10 +87,10 @@ std::string EqualsLogicalFunction::getType() const
     return std::string(NAME);
 }
 
-std::string EqualsLogicalFunction::toString() const
+std::string EqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << left << "==" << right;
+    ss << left.explain(verbosity) << " == " << right.explain(verbosity);
     return ss.str();
 }
 

@@ -64,12 +64,20 @@ LogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName)
     return copy;
 }
 
-std::string FieldAccessLogicalFunction::toString() const
+std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    if (stamp) {
-        return std::format("FieldAccessLogicalFunction( {} [ {} ])", fieldName, stamp->toString());
+    std::stringstream ss;
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        ss << "FieldAccessLogicalFunction(" << fieldName;
+        if (stamp) {
+            ss << " [" << stamp->toString() << "]";
+        }
+        ss << ")";
+    } else if (verbosity == ExplainVerbosity::Short) {
+        ss << fieldName;
     }
-    return std::format("FieldAccessLogicalFunction( {} )", fieldName);
+    return ss.str();
 }
 
 LogicalFunction FieldAccessLogicalFunction::withInferredStamp(Schema schema) const

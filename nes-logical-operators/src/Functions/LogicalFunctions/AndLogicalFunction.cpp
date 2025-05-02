@@ -77,10 +77,10 @@ bool AndLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string AndLogicalFunction::toString() const
+std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << left << "&&" << right;
+    ss << left.explain(verbosity) << " AND " << right.explain(verbosity);
     return ss.str();
 }
 

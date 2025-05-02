@@ -53,7 +53,7 @@ public:
     [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
     [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>> ids) const override;
     [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId> ids) const override;
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;

@@ -23,6 +23,7 @@
 #include <ErrorHandling.hpp>
 #include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
+#include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
@@ -37,8 +38,9 @@ struct LogicalFunctionConcept
     virtual ~LogicalFunctionConcept() = default;
     
     /// Returns a string representation of this function.
+    /// @param verbosity The verbosity level for the explanation.
     /// @return std::string The string representation.
-    [[nodiscard]] virtual std::string toString() const = 0;
+    [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
 
     /// Returns the data type of this function.
     /// @return std::shared_ptr<DataType> The data type.
@@ -87,7 +89,7 @@ class NullLogicalFunction : public LogicalFunctionConcept
 {
 public:
     NullLogicalFunction();
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
 
     [[nodiscard]] std::shared_ptr<DataType> getStamp() const override;
     [[nodiscard]] LogicalFunction withStamp(std::shared_ptr<DataType>) const override;
@@ -159,7 +161,7 @@ struct LogicalFunction
     
     /// Returns a string representation of this function.
     /// @return std::string The string representation.
-    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     
     /// Returns the data type of this function.
     /// @return std::shared_ptr<DataType> The data type.
@@ -210,7 +212,7 @@ private:
         T data;
         explicit Model(T d) : data(std::move(d)) { }
         [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::unique_ptr<Concept>(new Model<T>(data)); }
-        [[nodiscard]] std::string toString() const override { return data.toString(); }
+        [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return data.explain(verbosity); }
         [[nodiscard]] std::vector<LogicalFunction> getChildren() const override { return data.getChildren(); }
         [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override
         {
@@ -244,7 +246,7 @@ private:
 
 inline std::ostream& operator<<(std::ostream& os, const LogicalFunction& lf)
 {
-    return os << lf.toString();
+    return os << lf.explain(ExplainVerbosity::Debug);
 }
 
 }
@@ -254,7 +256,7 @@ namespace std
 template <>
 struct hash<NES::LogicalFunction>
 {
-    std::size_t operator()(const NES::LogicalFunction& lf) const noexcept { return std::hash<std::string>{}(lf.toString()); }
+    std::size_t operator()(const NES::LogicalFunction& lf) const noexcept { return std::hash<std::string>{}(lf.getType()); }
 };
 }
 

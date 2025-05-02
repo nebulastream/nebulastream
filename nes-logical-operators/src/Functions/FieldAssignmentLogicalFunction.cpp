@@ -59,10 +59,17 @@ bool operator!=(const FieldAssignmentLogicalFunction& lhs, const FieldAssignment
     return !(lhs == rhs);
 }
 
-std::string FieldAssignmentLogicalFunction::toString() const
+std::string FieldAssignmentLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "FieldAssignmentLogicalFunction(" << fieldAccess << "=" << logicalFunction << ")";
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        ss << "FieldAssignmentLogicalFunction("
+        << fieldAccess.explain(verbosity) << "="
+        << logicalFunction.explain(verbosity) << ")";
+    } else if (verbosity == ExplainVerbosity::Short) {
+        ss << fieldAccess.explain(verbosity) << " = " << logicalFunction.explain(verbosity);
+    }
     return ss.str();
 }
 

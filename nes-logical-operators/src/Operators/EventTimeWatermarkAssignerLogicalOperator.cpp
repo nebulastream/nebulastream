@@ -41,10 +41,28 @@ std::string_view EventTimeWatermarkAssignerLogicalOperator::getName() const noex
     return NAME;
 }
 
-std::string EventTimeWatermarkAssignerLogicalOperator::toString() const
+std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "EVENTTIMEWATERMARKASSIGNER(" << onField.toString() << ", " << unit.getMillisecondsConversionMultiplier() << ")";
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        ss << "EVENTTIMEWATERMARKASSIGNER(opId: " << id;
+        ss << ", onField: " << onField.explain(verbosity) << ", unit: "
+        << unit.getMillisecondsConversionMultiplier();
+        ss << ", inputSchema: " << inputSchema.toString();
+        if (!inputOriginIds.empty()) {
+            ss << ", inputOriginIds: [";
+            for (size_t i = 0; i < inputOriginIds.size(); ++i) {
+                if (i > 0) ss << ", ";
+                ss << inputOriginIds[i];
+            }
+            ss << "]";
+        }
+        ss << ")";
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        ss << "WATERMARKASSIGNER(Event time)";
+    }
     return ss.str();
 }
 
@@ -52,7 +70,7 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperator
 {
     if (const auto rhsOperator = dynamic_cast<const EventTimeWatermarkAssignerLogicalOperator*>(&rhs))
     {
-        bool onFieldEqual = (onField.toString() == rhsOperator->onField.toString());
+        bool onFieldEqual = (onField == rhsOperator->onField);
         return onFieldEqual && (rhsOperator->unit == this->unit);
     }
     return false;

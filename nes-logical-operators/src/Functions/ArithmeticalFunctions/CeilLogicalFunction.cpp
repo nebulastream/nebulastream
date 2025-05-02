@@ -77,10 +77,10 @@ bool CeilLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string CeilLogicalFunction::toString() const
+std::string CeilLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "CEIL(" << child << ")";
+    ss << "CEIL(" << child.explain(verbosity) << ")";
     return ss.str();
 }
 

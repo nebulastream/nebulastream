@@ -22,6 +22,7 @@
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableFunction.pb.h>
 #include <Common/DataTypes/DataType.hpp>
+#include <sstream>
 
 namespace NES
 {
@@ -71,9 +72,17 @@ bool ConstantValueLogicalFunction::operator==(const LogicalFunctionConcept& rhs)
     return false;
 }
 
-std::string ConstantValueLogicalFunction::toString() const
+std::string ConstantValueLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
+    std::stringstream ss;
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        ss << "ConstantValue(" << constantValue << ", " << stamp->toString() << ")";
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        ss << constantValue;
+    }
+    return ss.str();
 }
 
 std::string ConstantValueLogicalFunction::getConstantValue() const

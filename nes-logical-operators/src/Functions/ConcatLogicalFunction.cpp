@@ -19,6 +19,7 @@
 #include <fmt/format.h>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <sstream>
 
 namespace NES
 {
@@ -43,9 +44,11 @@ bool ConcatLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string ConcatLogicalFunction::toString() const
+std::string ConcatLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return fmt::format("Concat({}, {})", left, right);
+    std::stringstream ss;
+    ss << "CONCAT(" << left.explain(verbosity) << ", " << right.explain(verbosity) << ")";
+    return ss.str();
 }
 
 std::shared_ptr<DataType> ConcatLogicalFunction::getStamp() const

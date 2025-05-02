@@ -82,9 +82,18 @@ std::string RenameLogicalFunction::getNewFieldName() const
     return newFieldName;
 }
 
-std::string RenameLogicalFunction::toString() const
+std::string RenameLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return "FieldRenameFunction(" + fmt::format("{}", child) + " => " + newFieldName + " : " + stamp->toString() + ")";
+    std::stringstream ss;
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        ss << "FieldRenameFunction(" << child.explain(verbosity) << " => " << newFieldName;
+        ss << " : " << stamp->toString() << ")";
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        ss << fmt::format("FieldRename({} => {})", child.explain(verbosity), newFieldName);
+    }
+    return ss.str();
 }
 
 LogicalFunction RenameLogicalFunction::withInferredStamp(Schema schema) const

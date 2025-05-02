@@ -41,10 +41,10 @@ bool PowLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string PowLogicalFunction::toString() const
+std::string PowLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "POWER(" << left << ", " << right << ")";
+    ss << "POWER(" << left.explain(verbosity) << ", " << right.explain(verbosity) << ")";
     return ss.str();
 }
 

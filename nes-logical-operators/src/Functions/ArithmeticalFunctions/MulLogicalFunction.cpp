@@ -43,10 +43,10 @@ bool MulLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string MulLogicalFunction::toString() const
+std::string MulLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << left << "*" << right;
+    ss << left.explain(verbosity) << " * " << right.explain(verbosity);
     return ss.str();
 }
 

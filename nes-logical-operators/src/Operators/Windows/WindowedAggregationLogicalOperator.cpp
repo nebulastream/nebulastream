@@ -51,17 +51,25 @@ std::string_view WindowedAggregationLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-std::string WindowedAggregationLogicalOperator::toString() const
+std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    auto& wt = getWindowType();
-    const auto& aggs = getWindowAggregation();
-    ss << "WINDOW AGGREGATION(id: " << id << ", ";
-    for (const auto& agg : aggs)
+    if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << agg->toString() << ";";
+        auto& windowType = getWindowType();
+        auto windowAggregation = getWindowAggregation();
+        ss << fmt::format(
+                   "WINDOW AGGREGATION({}, {}, window type: {})",
+                   id,
+                   fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->toString(); }), ", "),
+                   windowType.toString());
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        auto windowAggregation = getWindowAggregation();
+        ss << fmt::format(
+                   "WINDOW AGG({})",
+                   fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->getName(); }), ", "));
     }
-    ss << ") on window type: " << wt.toString();
     return ss.str();
 }
 

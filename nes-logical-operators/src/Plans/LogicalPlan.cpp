@@ -23,8 +23,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/QueryConsoleDumpHandler.hpp>
-
+#include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
@@ -170,14 +169,11 @@ std::vector<LogicalOperator> LogicalPlan::getParents(const LogicalOperator& targ
 }
 
 
-std::string LogicalPlan::toString() const
+std::string LogicalPlan::explain() const
 {
     std::stringstream ss;
-    auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(ss);
-    for (auto& rootOperator : rootOperators)
-    {
-        dumpHandler.dump(rootOperator);
-    }
+    auto dumpHandler = PlanRenderer<LogicalPlan, LogicalOperator>(ss, ExplainVerbosity::Short);
+    dumpHandler.dump(*this);
     return ss.str();
 }
 
@@ -281,7 +277,7 @@ bool LogicalPlan::operator==(const LogicalPlan& other) const
 
 std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan)
 {
-    return os <<  plan.toString();
+    return os <<  plan.explain();
 }
 
 }

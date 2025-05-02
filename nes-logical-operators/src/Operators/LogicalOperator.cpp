@@ -32,7 +32,7 @@ LogicalOperatorConcept::LogicalOperatorConcept(OperatorId existingId) : id(exist
 {
 }
 
-std::string NullLogicalOperator::toString() const
+std::string NullLogicalOperator::explain(ExplainVerbosity) const
 {
     PRECONDITION(false, "Calls in NullLogicalOperator are undefined");
 }
@@ -115,9 +115,9 @@ LogicalOperator& LogicalOperator::operator=(const LogicalOperator& other)
     return *this;
 }
 
-std::string LogicalOperator::toString() const
+std::string LogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    return self->toString();
+    return self->explain(verbosity);
 }
 
 std::vector<LogicalOperator> LogicalOperator::getChildren() const

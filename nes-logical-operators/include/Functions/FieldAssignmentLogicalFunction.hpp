@@ -42,7 +42,7 @@ public:
     [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override;
 
     [[nodiscard]] std::string getType() const override;
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
 
     friend bool operator==(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs);
     friend bool operator!=(const FieldAssignmentLogicalFunction& lhs, const FieldAssignmentLogicalFunction& rhs);

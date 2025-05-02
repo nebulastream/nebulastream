@@ -44,13 +44,12 @@ bool LessEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) co
     return false;
 }
 
-std::string LessEqualsLogicalFunction::toString() const
+std::string LessEqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << left << "<=" << right;
+    ss << left.explain(verbosity) << " <= " << right.explain(verbosity);
     return ss.str();
 }
-
 
 std::shared_ptr<DataType> LessEqualsLogicalFunction::getStamp() const
 {

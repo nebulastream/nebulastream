@@ -22,6 +22,7 @@
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <fmt/ranges.h>
 
 namespace NES
 {
@@ -49,9 +50,21 @@ LogicalOperator SourceNameLogicalOperator::withInferredSchema(std::vector<Schema
     PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
 }
 
-std::string SourceNameLogicalOperator::toString() const
+std::string SourceNameLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
-    return fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
+    std::stringstream ss;
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        ss << fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        std::string originIds;
+        if (!inputOriginIds.empty())
+        {
+            originIds = fmt::format(", {}", fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
+        }
+        ss << fmt::format("SOURCE({}{})", logicalSourceName, originIds);    }
+    return ss.str();
 }
 
 void SourceNameLogicalOperator::inferInputOrigins()

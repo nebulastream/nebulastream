@@ -24,6 +24,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
+#include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
@@ -50,7 +51,7 @@ struct LogicalOperatorConcept
     explicit LogicalOperatorConcept(OperatorId existingId);
 
     /// Returns a string representation of the operator
-    [[nodiscard]] virtual std::string toString() const = 0;
+    [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
     
     /// Returns the children operators of this operator
     [[nodiscard]] virtual std::vector<struct LogicalOperator> getChildren() const = 0;
@@ -109,7 +110,7 @@ concept IsLogicalOperator = std::is_base_of_v<LogicalOperatorConcept, std::remov
 class NullLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
     [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator>) const override;
     [[nodiscard]] bool operator==(const LogicalOperatorConcept&) const override;
@@ -170,7 +171,7 @@ struct LogicalOperator
 
     LogicalOperator& operator=(const LogicalOperator& other);
 
-    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
     [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator> children) const;
 
@@ -211,7 +212,7 @@ private:
 
         [[nodiscard]] std::unique_ptr<Concept> clone() const override { return std::make_unique<Model>(data, this->id); }
 
-        [[nodiscard]] std::string toString() const override { return data.toString(); }
+        [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return data.explain(verbosity); }
 
         [[nodiscard]] std::vector<LogicalOperator> getChildren() const override { return data.getChildren(); }
 
@@ -273,7 +274,7 @@ private:
 
 inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
 {
-    return os << op.toString();
+    return os << op.explain(ExplainVerbosity::Short);
 }
 }
 

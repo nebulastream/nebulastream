@@ -142,10 +142,17 @@ std::vector<LogicalOperator> MapLogicalOperator::getChildren() const
     return children;
 }
 
-std::string MapLogicalOperator::toString() const
+std::string MapLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "MAP(opId: " << id << ": predicate: " << mapFunction.toString() << ")";
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        ss << "MAP(opId: " << id;
+        ss << ", function: " << mapFunction.explain(verbosity) << ")";
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        ss << "MAP(" << mapFunction.explain(verbosity) << ")";
+    }
     return ss.str();
 }
 
@@ -208,7 +215,7 @@ LogicalOperatorGeneratedRegistrar::RegisterMapLogicalOperator(NES::LogicalOperat
 
         INVARIANT(functions.size() == 1, "Expected exactly one function");
         auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-        INVARIANT(function.tryGet<FieldAssignmentLogicalFunction>(), "Expected a field assignment function, got: {}", function.toString());
+        INVARIANT(function.tryGet<FieldAssignmentLogicalFunction>(), "Expected a field assignment function, got: {}", function.explain(ExplainVerbosity::Debug));
 
         auto logicalOperator = MapLogicalOperator(function.get<FieldAssignmentLogicalFunction>());
         if (auto& id = arguments.id) {

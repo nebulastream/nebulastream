@@ -80,10 +80,10 @@ bool AbsoluteLogicalFunction::operator==(const LogicalFunctionConcept& rhs) cons
     return false;
 }
 
-std::string AbsoluteLogicalFunction::toString() const
+std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "ABS(" << child << ")";
+    ss << "ABS(" << child.explain(verbosity) << ")";
     return ss.str();
 }
 

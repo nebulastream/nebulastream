@@ -41,13 +41,12 @@ bool RoundLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string RoundLogicalFunction::toString() const
+std::string RoundLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "ROUND(" << child << ")";
+    ss << "ROUND(" << child.explain(verbosity) << ")";
     return ss.str();
 }
-
 
 std::shared_ptr<DataType> RoundLogicalFunction::getStamp() const
 {

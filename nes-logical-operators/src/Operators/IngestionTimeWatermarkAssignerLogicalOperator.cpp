@@ -31,10 +31,22 @@ std::string_view IngestionTimeWatermarkAssignerLogicalOperator::getName() const 
     return NAME;
 }
 
-std::string IngestionTimeWatermarkAssignerLogicalOperator::toString() const
+std::string IngestionTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "INGESTIONTIMEWATERMARKASSIGNER(" << id << ")";
+    ss << "INGESTIONTIMEWATERMARKASSIGNER(opId: " << id;
+    if (verbosity == ExplainVerbosity::Debug) {
+        ss << ", inputSchema: " << inputSchema.toString();
+        if (!inputOriginIds.empty()) {
+            ss << ", inputOriginIds: [";
+            for (size_t i = 0; i < inputOriginIds.size(); ++i) {
+                if (i > 0) ss << ", ";
+                ss << inputOriginIds[i];
+            }
+            ss << "]";
+        }
+    }
+    ss << ")";
     return ss.str();
 }
 

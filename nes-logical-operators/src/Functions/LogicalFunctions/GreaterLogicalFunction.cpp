@@ -44,13 +44,12 @@ bool GreaterLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string GreaterLogicalFunction::toString() const
+std::string GreaterLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << left << ">" << right;
+    ss << left.explain(verbosity) << " > " << right.explain(verbosity);
     return ss.str();
 }
-
 
 std::shared_ptr<DataType> GreaterLogicalFunction::getStamp() const
 {

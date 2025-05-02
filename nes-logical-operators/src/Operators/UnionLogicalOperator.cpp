@@ -43,10 +43,21 @@ bool UnionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     return false;
 }
 
-std::string UnionLogicalOperator::toString() const
+std::string UnionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "unionWith(" << id << ")";
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        ss << "unionWith(OpId: " << id;
+        ss << ", leftSchema: " << leftInputSchema.toString() << ", rightSchema: " << rightInputSchema.toString();
+        ss << ")";
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        ss << "unionWith";
+    }
+    return ss.str();
+
+
     return ss.str();
 }
 

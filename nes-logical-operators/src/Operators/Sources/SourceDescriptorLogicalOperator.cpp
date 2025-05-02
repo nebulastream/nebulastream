@@ -49,19 +49,16 @@ bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& r
     return false;
 }
 
-std::string SourceDescriptorLogicalOperator::toString() const
+std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ", descriptor:" << *sourceDescriptor;
-    if (!inputOriginIds.empty())
+    if (verbosity == ExplainVerbosity::Debug)
     {
-        ss << ", originId:" << inputOriginIds[0];
-    }
-    else
+        ss << fmt::format("SOURCE(opId: {}, originid: {}, {})", id, outputOriginIds, sourceDescriptor->explain(verbosity));
+    } else if (verbosity == ExplainVerbosity::Short)
     {
-        ss << ", originId: none";
+        ss << fmt::format("SOURCE({})", sourceDescriptor->explain(verbosity));
     }
-    ss << ")";
     return ss.str();
 }
 

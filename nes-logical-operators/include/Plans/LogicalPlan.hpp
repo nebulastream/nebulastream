@@ -41,7 +41,8 @@ public:
     /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
     void promoteOperatorToRoot(LogicalOperator newRoot);
 
-    [[nodiscard]] std::string toString() const;
+    /// Returns a string representation of the logical query plan
+    [[nodiscard]] std::string explain() const;
 
     /// Replace `target` with `replacement`, keeping target's children
     bool replaceOperator(const LogicalOperator& target, LogicalOperator replacement);
@@ -104,6 +105,9 @@ public:
 
     [[nodiscard]] bool operator==(const LogicalPlan& otherPlan) const;
     friend std::ostream& operator<<(std::ostream& os, const LogicalPlan& plan);
+
+    /// Holds the original SQL string
+    std::string originalSql;
 
     std::vector<LogicalOperator> rootOperators{};
     QueryId queryId = INVALID_QUERY_ID;

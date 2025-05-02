@@ -20,6 +20,7 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Sources
@@ -55,6 +56,7 @@ struct SourceDescriptor : public Configurations::Descriptor
     /// is const data member, because 'SourceDescriptor' should be immutable and 'const' communicates more clearly then private+getter
     const ParserConfig parserConfig;
 
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
 };

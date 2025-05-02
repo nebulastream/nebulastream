@@ -47,10 +47,10 @@ bool OrLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string OrLogicalFunction::toString() const
+std::string OrLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << left << "||" << right;
+    ss << left.explain(verbosity) << " OR " << right.explain(verbosity);
     return ss.str();
 }
 

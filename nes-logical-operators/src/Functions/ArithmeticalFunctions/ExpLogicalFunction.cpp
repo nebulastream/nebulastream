@@ -76,10 +76,10 @@ std::string ExpLogicalFunction::getType() const
     return std::string(NAME);
 }
 
-std::string ExpLogicalFunction::toString() const
+std::string ExpLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "EXP(" << child << ")";
+    ss << "EXP(" << child.explain(verbosity) << ")";
     return ss.str();
 }
 

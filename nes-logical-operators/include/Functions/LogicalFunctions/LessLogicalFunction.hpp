@@ -39,7 +39,7 @@ public:
     [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override;
 
     [[nodiscard]] std::string getType() const override;
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
 
 private:
     LogicalFunction left, right;

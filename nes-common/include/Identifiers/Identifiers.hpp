@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 #include <Identifiers/NESStrongType.hpp>
 
 namespace NES
@@ -65,3 +66,20 @@ using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique i
 static constexpr WorkerId INVALID_WORKER_NODE_ID = INVALID<WorkerId>;
 static constexpr WorkerId INITIAL_WORKER_NODE_ID = INITIAL<WorkerId>;
 }
+
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+
+template <>
+struct fmt::formatter<std::vector<NES::OriginId>> : fmt::formatter<std::string> {
+    template <typename FormatContext>
+    auto format(const std::vector<NES::OriginId>& ids, FormatContext& ctx) const {
+        std::string result = "[";
+        for (size_t i = 0; i < ids.size(); ++i) {
+            if (i > 0) result += ", ";
+            result += std::to_string(ids[i].getRawValue());
+        }
+        result += "]";
+        return fmt::formatter<std::string>::format(result, ctx);
+    }
+};

@@ -76,10 +76,10 @@ bool FloorLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string FloorLogicalFunction::toString() const
+std::string FloorLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "FLOOR(" << child << ")";
+    ss << "FLOOR(" << child.explain(verbosity) << ")";
     return ss.str();
 }
 

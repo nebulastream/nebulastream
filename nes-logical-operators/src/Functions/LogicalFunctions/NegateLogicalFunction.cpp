@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Common.hpp>
@@ -43,10 +44,10 @@ bool NegateLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
     return false;
 }
 
-std::string NegateLogicalFunction::toString() const
+std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << "!" << child;
+    ss << "NOT(" << child.explain(verbosity) << ")";
     return ss.str();
 }
 

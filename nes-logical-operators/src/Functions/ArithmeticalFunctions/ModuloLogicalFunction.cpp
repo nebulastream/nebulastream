@@ -82,10 +82,10 @@ std::string ModuloLogicalFunction::getType() const
     return std::string(NAME);
 }
 
-std::string ModuloLogicalFunction::toString() const
+std::string ModuloLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
     std::stringstream ss;
-    ss << left << "%" << right;
+    ss << left.explain(verbosity) << " % " << right.explain(verbosity);
     return ss.str();
 }
 

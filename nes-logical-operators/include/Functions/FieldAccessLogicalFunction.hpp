@@ -52,7 +52,7 @@ public:
     [[nodiscard]] LogicalFunction withChildren(std::vector<LogicalFunction> children) const override;
 
     [[nodiscard]] std::string getType() const override;
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
 
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string> config);

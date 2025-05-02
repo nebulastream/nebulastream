@@ -25,7 +25,7 @@ NullLogicalFunction::NullLogicalFunction()
 {
 }
 
-std::string NullLogicalFunction::toString() const
+std::string NullLogicalFunction::explain(ExplainVerbosity) const
 {
     PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
 }
@@ -97,9 +97,9 @@ LogicalFunction::LogicalFunction(const LogicalFunction& other) : self(other.self
 {
 }
 
-std::string LogicalFunction::toString() const
+std::string LogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return self->toString();
+    return self->explain(verbosity);
 }
 
 LogicalFunction LogicalFunction::withInferredStamp(Schema schema) const

@@ -53,6 +53,32 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescri
                sourceDescriptor.toStringConfig());
 }
 
+std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
+{
+    std::stringstream ss;
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        const auto schemaString = schema.toString();
+        const auto parserConfigString = fmt::format(
+            "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
+            parserConfig.parserType,
+            Util::escapeSpecialCharacters(parserConfig.tupleDelimiter),
+            Util::escapeSpecialCharacters(parserConfig.fieldDelimiter));
+        ss << fmt::format(
+                   "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
+                   logicalSourceName,
+                   sourceType,
+                   schemaString,
+                   parserConfigString,
+                   toStringConfig());
+    } else if (verbosity == ExplainVerbosity::Short)
+    {
+        ss << fmt::format("{}", logicalSourceName);
+    }
+    return ss.str();
+
+}
+
 bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {
     return lhs.schema == rhs.schema && lhs.sourceType == rhs.sourceType && lhs.config == rhs.config;
