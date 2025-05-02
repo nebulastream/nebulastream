@@ -214,7 +214,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         NES_ERROR("got buffer {}.{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
         if (!getReplayData()) {
-            NES_DEBUG("replay data not activated writing buffer");
+            NES_ERROR("replay data not activated writing buffer");
             std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
             //            return writeDataToFile(inputBuffer);
             return writeDataToTCP(vec, sinkInfo);
@@ -274,7 +274,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         // get the highest consecutive sequence number in the queue after adding new value
         auto currentWatermarkAfterAdding = watermarksProcessor->getCurrentValue();
-        NES_DEBUG("saved watermark: {}", currentWatermarkAfterAdding);
+        NES_ERROR("saved watermark: {}", currentWatermarkAfterAdding);
 
         NES_DEBUG("watermark before adding {}, after adding {}, source id {}, sharedQueryId {}",
                   currentWatermarkBeforeAdding,
