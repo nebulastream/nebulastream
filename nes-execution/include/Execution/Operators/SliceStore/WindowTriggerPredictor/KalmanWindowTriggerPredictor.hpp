@@ -31,11 +31,11 @@ public:
     struct KalmanFilter
     {
         KalmanFilter(
-            const Eigen::VectorXd& initialState,
-            const Eigen::MatrixXd& initialCovariance,
-            const Eigen::MatrixXd& processNoise,
-            const Eigen::MatrixXd& measurementNoise)
-            : state(initialState), covariance(initialCovariance), processNoise(processNoise), measurementNoise(measurementNoise)
+            Eigen::VectorXd initialState, Eigen::MatrixXd initialCovariance, Eigen::MatrixXd processNoise, Eigen::MatrixXd measurementNoise)
+            : state(std::move(initialState))
+            , covariance(std::move(initialCovariance))
+            , processNoise(std::move(processNoise))
+            , measurementNoise(std::move(measurementNoise))
         {
         }
 
@@ -77,15 +77,15 @@ public:
         measurement << timestamp.getRawValue(), sequenceNumber.getRawValue();
 
         // Predict the next state
-        kalmanFilters[streamId].predict(stateTransitionMatrix);
+        kalmanFilters.at(streamId).predict(stateTransitionMatrix);
 
         // Update the state with the new measurement
-        kalmanFilters[streamId].update(measurement, measurementMatrix);
+        kalmanFilters.at(streamId).update(measurement, measurementMatrix);
 
         // Update the sequence number and timestamp mapping
-        sequenceTimestamps[streamId][sequenceNumber] = timestamp;
+        sequenceTimestamps.at(streamId).at(sequenceNumber) = timestamp;
 
-        std::cout << "Stream ID: " << streamId << ", Processed slice " << sequenceNumber << " at timestamp " << timestamp << std::endl;
+        std::cout << "Stream ID: " << streamId << ", Processed slice " << sequenceNumber << " at timestamp " << timestamp << '\n';
     }
 
     Timestamp getEstimatedTimestamp(const OriginId streamId, const SequenceNumber sequenceNumber)
@@ -98,12 +98,12 @@ public:
         // If the sequence number is already received, return its timestamp
         if (sequenceTimestamps[streamId].contains(sequenceNumber))
         {
-            return sequenceTimestamps[streamId][sequenceNumber];
+            return sequenceTimestamps.at(streamId).at(sequenceNumber);
         }
 
         // Predict the timestamp for the missing sequence number using the Kalman filter
-        const auto lastSequenceNumber = kalmanFilters[streamId].getEstimatedSequenceNumber();
-        const auto lastTimestamp = kalmanFilters[streamId].getEstimatedTimestamp();
+        const auto lastSequenceNumber = kalmanFilters.at(streamId).getEstimatedSequenceNumber();
+        const auto lastTimestamp = kalmanFilters.at(streamId).getEstimatedTimestamp();
 
         // Predict the timestamp for the missing sequence number
         const auto deltaSequence = sequenceNumber.getRawValue() - lastSequenceNumber.getRawValue();
@@ -128,11 +128,11 @@ private:
         Eigen::MatrixXd measurementNoise(2, 2);
         measurementNoise << 0.1, 0, 0, 0.1;
 
-        kalmanFilters[streamId] = KalmanFilter(initialState, initialCovariance, processNoise, measurementNoise);
-        sequenceTimestamps[streamId] = std::map<SequenceNumber, Timestamp>();
+        kalmanFilters.insert({streamId, KalmanFilter(initialState, initialCovariance, processNoise, measurementNoise)});
+        sequenceTimestamps.insert({streamId, std::map<SequenceNumber, Timestamp>()});
     }
 
-    uint64_t averageTimeInterval(const OriginId streamId) const
+    [[nodiscard]] uint64_t averageTimeInterval(const OriginId streamId) const
     {
         if (!sequenceTimestamps.contains(streamId) || sequenceTimestamps.at(streamId).size() < 2)
         {
@@ -140,7 +140,7 @@ private:
         }
         auto totalTime = 0UL;
         auto count = 0UL;
-        auto& timestamps = sequenceTimestamps.at(streamId);
+        const auto& timestamps = sequenceTimestamps.at(streamId);
         auto it = timestamps.begin();
         auto prevTimestamp = it->second;
         ++it;

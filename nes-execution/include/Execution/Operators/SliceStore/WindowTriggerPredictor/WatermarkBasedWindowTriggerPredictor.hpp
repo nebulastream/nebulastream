@@ -16,10 +16,10 @@
 
 #include <iostream>
 #include <map>
-#include <numeric>
 #include <Execution/Operators/SliceStore/WindowTriggerPredictor/AbstractWindowTriggerPredictor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
+#include <boost/range/numeric.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -30,12 +30,12 @@ public:
     void updateWatermark(const OriginId streamId, Timestamp timestamp, SequenceNumber sequenceNumber)
     {
         globalWatermark = std::max(globalWatermark, timestamp);
-        perStreamWatermarks[streamId] = std::max(perStreamWatermarks[streamId], timestamp);
+        perStreamWatermarks.insert_or_assign(streamId, std::max(perStreamWatermarks.at(streamId), timestamp));
         sequenceNumbers.insert({streamId, sequenceNumber});
-        historicalData.push_back({timestamp, sequenceNumber});
+        historicalData.emplace_back(timestamp, sequenceNumber);
     }
 
-    std::vector<SequenceNumber> identifyGaps(const OriginId streamId) const
+    [[nodiscard]] std::vector<SequenceNumber> identifyGaps(const OriginId streamId) const
     {
         if (!sequenceNumbers.contains(streamId))
         {
@@ -43,7 +43,8 @@ public:
         }
         std::vector<SequenceNumber> sortedSeqNumbers;
         auto [begin, end] = sequenceNumbers.equal_range(streamId);
-        for (auto it = begin; it != end; ++it) {
+        for (auto it = begin; it != end; ++it)
+        {
             sortedSeqNumbers.push_back(it->second);
         }
         std::ranges::sort(sortedSeqNumbers);
@@ -53,25 +54,25 @@ public:
         {
             if (std::ranges::find(sortedSeqNumbers, SequenceNumber(i)) == sortedSeqNumbers.end())
             {
-                gaps.push_back(SequenceNumber(i));
+                gaps.emplace_back(i);
             }
         }
         return gaps;
     }
 
-    Timestamp predictArrivalTime(const SequenceNumber missingSlice) const
+    [[nodiscard]] Timestamp predictArrivalTime(const SequenceNumber missingSlice) const
     {
-        std::vector<Timestamp> arrivalTimes;
+        std::vector<Timestamp::Underlying> arrivalTimes;
         for (const auto& [timestamp, sequenceNumber] : historicalData)
         {
             if (sequenceNumber == missingSlice)
             {
-                arrivalTimes.push_back(timestamp);
+                arrivalTimes.push_back(timestamp.getRawValue());
             }
         }
         if (!arrivalTimes.empty())
         {
-            const int sum = std::accumulate(arrivalTimes.begin(), arrivalTimes.end(), 0);
+            const auto sum = boost::accumulate(arrivalTimes, 0);
             return Timestamp(sum / arrivalTimes.size());
         }
         return Timestamp(std::numeric_limits<int>::max()); // Return a large value if no data is available
@@ -79,7 +80,7 @@ public:
 
     Timestamp getEstimatedTimestamp(const OriginId streamId, const SequenceNumber sequenceNumber) const
     {
-        auto gaps = identifyGaps(streamId);
+        const auto gaps = identifyGaps(streamId);
         for (const auto& gap : gaps)
         {
             if (gap == sequenceNumber)
@@ -94,7 +95,7 @@ public:
     {
         updateWatermark(streamId, timestamp, sequenceNumber);
         const Timestamp estimatedTimestamp = getEstimatedTimestamp(streamId, sequenceNumber);
-        std::cout << "Estimated timestamp for slice " << sequenceNumber << ": " << estimatedTimestamp << std::endl;
+        std::cout << "Estimated timestamp for slice " << sequenceNumber << ": " << estimatedTimestamp << '\n';
     }
 
 private:
