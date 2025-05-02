@@ -74,15 +74,15 @@ FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStream
 300,400,2,3,4,5,42,256,65536,4294967296,23,23
 
 
-# # Checking if a median over a tumbling window works for all data types
-# SELECT MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
-#        MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
-#        MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out
-# FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStreamAllF64
-# ----
-# 100,200,1,2,3,4,5,6,7,8,9,10,11
-# 200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
-# 300,400,1,2,3,4,6,7,8,9,10,11
+# Checking if a median over a tumbling window works for all data types
+SELECT MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
+       MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
+       MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out
+FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkStreamAllF64
+----
+100,200,1,2,3,4,5,6,7,8,9,10,11
+200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
+300,400,1,2,3,4,6,7,8,9,10,11
 
 
 # Checking if all aggregations over a tumbling window work for all data types in one query
@@ -172,19 +172,19 @@ FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStream
 350,450,2,3,4,5,6,7,8,9,10,11
 
 
-# # Checking if a median over a sliding window works for all data types
-# SELECT MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
-#        MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
-#        MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out
-# FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStreamAllF64
-# ----
-# 50,150,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5
-# 100,200,1,2,3,4,5,6,7,8,9,10
-# 150,250,-21,-64.5,-16384.5,-1073741824.5,21,128,32768,2147483648,11.5,11.5
-# 200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
-# 250,350,1,1,1,1,5,6,7,8,9,10
-# 300,400,1,2,3,4,6,7,8,9,10,11
-# 350,450,2,3,4,5,6,7,8,9,10,11
+# Checking if a median over a sliding window works for all data types
+SELECT MEDIAN(i8) as i8_out, MEDIAN(i16) as i16_out, MEDIAN(i32) as i32_out, MEDIAN(i64) as i64_out,
+       MEDIAN(u8) as u8_out, MEDIAN(u16) as u16_out, MEDIAN(u32) as u32_out, MEDIAN(u64) as u64_out,
+       MEDIAN(f32) as f32_out, MEDIAN(f64) as f64_out
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkStreamAllF64
+----
+50,150,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5
+100,200,1,2,3,4,5,6,7,8,9,10
+150,250,-21,-64.5,-16384.5,-1073741824.5,21,128,32768,2147483648,11.5,11.5
+200,300,-20.5,-64,-16384,-1073741824,21.5,128.5,32768.5,2147483648.5,12,12
+250,350,1,1,1,1,5,6,7,8,9,10
+300,400,1,2,3,4,6,7,8,9,10,11
+350,450,2,3,4,5,6,7,8,9,10,11
 
 # Checking if all aggregations over a sliding window work for all data types in one query
 SELECT MIN(i8) as i8_out, SUM(i16) as i16_out, AVG(i32) as i32_out, MAX(i64) as i64_out,
