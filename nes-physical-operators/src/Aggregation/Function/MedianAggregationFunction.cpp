@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <Aggregation/Function/MedianAggregationFunction.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <utility>
 #include <Aggregation/Function/AggregationFunction.hpp>
-#include <Aggregation/Function/MedianAggregationFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -92,8 +93,8 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
     const nautilus::val<int64_t> medianPos2 = numberOfEntries / 2;
     nautilus::val<uint64_t> medianItemPos1 = 0;
     nautilus::val<uint64_t> medianItemPos2 = 0;
-    nautilus::val<bool> medianFound1 = false;
-    nautilus::val<bool> medianFound2 = false;
+    nautilus::val<bool> medianFound1(false);
+    nautilus::val<bool> medianFound2(false);
 
 
     /// Picking a candidate and counting how many items are smaller or equal to the candidate
@@ -134,17 +135,23 @@ MedianAggregationFunction::lower(const nautilus::val<AggregationState*> aggregat
         }
     }
 
-    /// Calculating the median value. Regardless if the number of entries is odd or even, we calculate the median as the average of the two middle values.
-    /// For even numbers of entries, this is its natural definition.
-    /// For odd numbers of entries, both positions are pointing to the same item and thus, we are calculating the average of the same item, which is the item itself.
-    const auto medianRecord1 = pagedVectorRef.readRecord(medianItemPos1, allFieldNames);
-    const auto medianRecord2 = pagedVectorRef.readRecord(medianItemPos2, allFieldNames);
+    /// Setting the default median value. If a median was found, the value will be overwritten
+    VarVal zero(nautilus::val<uint64_t>(0));
+    VarVal medianValue = zero.castToType(resultType.type);
+    if (medianFound1 and medianFound2)
+    {
+        /// Calculating the median value. Regardless if the number of entries is odd or even, we calculate the median as the average of the two middle values.
+        /// For even numbers of entries, this is its natural definition.
+        /// For odd numbers of entries, both positions are pointing to the same item and thus, we are calculating the average of the same item, which is the item itself.
+        const auto medianRecord1 = pagedVectorRef.readRecord(medianItemPos1, allFieldNames);
+        const auto medianRecord2 = pagedVectorRef.readRecord(medianItemPos2, allFieldNames);
 
-    const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
-    const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
-    const VarVal two = nautilus::val<uint64_t>(2);
-    const auto medianValue
-        = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
+        const auto medianValue1 = inputFunction.execute(medianRecord1, pipelineMemoryProvider.arena);
+        const auto medianValue2 = inputFunction.execute(medianRecord2, pipelineMemoryProvider.arena);
+        const VarVal two = nautilus::val<uint64_t>(2);
+        medianValue
+            = (medianValue1.castToType(resultType.type) + medianValue2.castToType(resultType.type)) / two.castToType(resultType.type);
+    }
 
     /// Adding the median to the result record
     Record resultRecord;

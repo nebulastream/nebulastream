@@ -43,12 +43,15 @@ VarVal::VarVal(VarVal&& other) noexcept : value(std::move(other.value))
 
 VarVal& VarVal::operator=(const VarVal& other)
 {
+    INVARIANT(
+        value.index() == other.value.index(), "Not allowed to change the data type via the assignment operator, please use castToType()!");
     value = other.value;
     return *this;
 }
 
 VarVal& VarVal::operator=(VarVal&& other) noexcept
 {
+    INVARIANT(value.index() == other.value.index(), "Not allowed to change the data type via the move operator, please use castToType()!");
     value = std::move(other.value);
     return *this;
 }
