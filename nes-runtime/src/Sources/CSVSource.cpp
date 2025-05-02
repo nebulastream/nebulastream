@@ -220,7 +220,7 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 //                NES_ERROR("tuples were read before from this descriptor, waiting for ack");
                 auto decomposedQueryPlans = queryManager->getExecutablePlanIdsForSource(shared_from_base<DataSource>());
 
-                NES_ERROR("finding record");
+                NES_DEBUG("finding record");
                 std::optional<Runtime::Record> record = std::nullopt;
                 for (auto& vec : sourceInfo->records) {
                     if (!vec.empty()) {
@@ -230,18 +230,18 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                 }
 
                 //auto vec = sourceInfo->records.front();
-                NES_ERROR("getting record");
+                NES_DEBUG("getting record");
                 //auto record = sourceInfo->records.front().front();
 
                 if (record.has_value()) {
-                    NES_ERROR("getting ack");
+                    NES_DEBUG("getting ack");
                     auto ack = queryManager->getSourceAck(record.value().value);
                     shouldGetLastAck = false;
-                    NES_ERROR("checking if resending necessary");
+                    NES_DEBUG("checking if resending necessary");
                     if (ack.has_value() && ack.value() != 0) {
-                        NES_ERROR("found ack, sent until {} ack {}", sentUntil, ack.value());
+                        NES_DEBUG("found ack, sent until {} ack {}", sentUntil, ack.value());
                         watermarkIndex = findWatermarkIndex(sourceInfo->records, ack.value());
-                        NES_ERROR("index: {}, of: {}, watermark: {}", watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
+                        NES_DEBUG("index: {}, of: {}, watermark: {}", watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
                     }
                 } else {
                     NES_ERROR("no record found");
