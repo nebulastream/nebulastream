@@ -276,7 +276,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         // get the highest consecutive sequence number in the queue after adding new value
         auto currentWatermarkAfterAdding = watermarksProcessor->getCurrentValue();
-        NES_ERROR("saved watermark: {}", currentWatermarkAfterAdding);
+        //NES_ERROR("saved watermark: {}", currentWatermarkAfterAdding);
 
         NES_DEBUG("watermark before adding {}, after adding {}, source id {}, sharedQueryId {}",
                   currentWatermarkBeforeAdding,
