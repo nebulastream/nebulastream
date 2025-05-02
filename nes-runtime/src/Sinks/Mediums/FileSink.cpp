@@ -141,7 +141,7 @@ void FileSink::shutdown() {
             auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
             for (auto& [key, watermarksProcessor] : watermarksProcessorMap) {
-                auto minWatermark = watermarksProcessor->getCurrentWatermark();
+                auto minWatermark = watermarksProcessor->getCurrentValue();
                 auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
                 auto newWatermark = std::max(minWatermark, lastSavedWatermark);
                 nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
@@ -238,15 +238,15 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         buffersStorageMap[key].push_back(inputBuffer);
 
-        std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarksProcessor;
+        std::shared_ptr<Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>> watermarksProcessor;
         if (!watermarksProcessorMap.contains(key)) {
-            watermarksProcessor = Windowing::MultiOriginWatermarkProcessor::create({bufferOriginId});
+            watermarksProcessor = std::make_shared<Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>();
             watermarksProcessorMap.insert({key, watermarksProcessor});
         } else {
             watermarksProcessor = watermarksProcessorMap[key];
         }
 
-        auto currentWatermarkBeforeAdding = watermarksProcessor->getCurrentWatermark();
+        auto currentWatermarkBeforeAdding = watermarksProcessor->getCurrentValue();
 
         //ignore this buffer if it was already written
         //        if (bufferWatermark < currentWatermarkBeforeAdding) {
@@ -269,10 +269,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         // create sequence data without chunks, so chunk number is 1 and last chunk flag is true
         const auto seqData = SequenceData(bufferSeqNumber, bufferChunkNumber, bufferLastChunk);
         // insert input buffer sequence number to the queue
-        watermarksProcessor->updateWatermark(bufferWatermark, seqData, bufferOriginId);
+        watermarksProcessor->emplace(seqData, bufferWatermark);
 
         // get the highest consecutive sequence number in the queue after adding new value
-        auto currentWatermarkAfterAdding = watermarksProcessor->getCurrentWatermark();
+        auto currentWatermarkAfterAdding = watermarksProcessor->getCurrentValue();
         NES_DEBUG("saved watermark: {}", currentWatermarkAfterAdding);
 
         NES_DEBUG("watermark before adding {}, after adding {}, source id {}, sharedQueryId {}",
