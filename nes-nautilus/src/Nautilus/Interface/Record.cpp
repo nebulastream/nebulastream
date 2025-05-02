@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/Record.hpp>
 
 #include <cstdint>
 #include <numeric>
@@ -18,7 +19,6 @@
 #include <string>
 #include <unordered_map>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <std/ostream.h>
 #include <ErrorHandling.hpp>
 #include <static.hpp>
@@ -46,10 +46,13 @@ const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) c
 
 void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& dataType)
 {
-    /// We can not use the insert_or_assign method, as we otherwise run into a nautilus tracing exception.
+    /// We can not use the insert_or_assign method, as we otherwise run into a tracing exception, as this might result in incorrect code.
     if (const auto [hashMapIterator, inserted] = recordFields.insert({recordFieldIdentifier, dataType}); not inserted)
     {
-        hashMapIterator->second = dataType;
+        /// We need to first erase the old value, as we are overwriting an existing field with a potential new data type
+        /// This inefficiency is fine, as this code solely gets executed during tracing.
+        recordFields.erase(recordFieldIdentifier);
+        recordFields.insert_or_assign(recordFieldIdentifier, dataType);
     }
 }
 
