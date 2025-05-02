@@ -751,14 +751,22 @@ bool CoordinatorRPCClient::relocateTopologyNode(const std::vector<TopologyLinkIn
     return reply.success();
 }
 
-bool CoordinatorRPCClient::notifyCheckpoint(SharedQueryId sharedQueryId, std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> watermarkList) {
+bool CoordinatorRPCClient::notifyCheckpoint(SharedQueryId sharedQueryId,
+                                            std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> watermarkList) {
     ClientContext context;
     CheckPointList checkpointList;
     CheckPointRespone reply;
     checkpointList.set_sharedqueryid(sharedQueryId.getRawValue());
-    checkpointList.set_checkpointwatermark(minWatermark);
+    auto keys = checkpointList.mutable_checkpointkeylist();
+    auto watermarks = checkpointList.mutable_checkpointwatermarklist();
+    for (const auto& [key, watermakrk] : watermarkList) {
+        auto newKey = keys->Add();
+        auto newWatermark = watermarks->Add();
+        newKey->set_first(std::get<0>(key));
+        newKey->set_second(std::get<1>(key));
+        *newWatermark = watermakrk;
+    }
     coordinatorStub->NotifyCheckPoint(&context, checkpointList, &reply);
     return reply.success();
-
 }
 }// namespace NES

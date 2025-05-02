@@ -243,7 +243,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
-    void notifyCheckpointToCoordinator(SharedQueryId sharedQueryId, watermarkList) override;
+    void notifyCheckpointToCoordinator(SharedQueryId sharedQueryId,std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> watermarkList) override;
   private:
     /**
      * @brief method to register physical source with the coordinator

@@ -16,7 +16,14 @@ syntax = "proto3";
 
 message CheckPointList {
   uint64 sharedQueryid = 1;
-  uint64 checkpointWatermark = 2;
+  repeated CheckpointKey checkpointKeyList = 2;
+  repeated uint64 checkpointWatermarkList = 3;
+}
+
+message CheckpointKey {
+  uint64 first = 1;
+  uint64 second = 2;
+
 }
 
 message CheckPointRespone {
