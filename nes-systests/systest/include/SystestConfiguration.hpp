@@ -49,6 +49,7 @@ public:
     NES::Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
     NES::Configurations::UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
     NES::Configurations::BoolOption benchmark = {"Benchmark Queries", "false", "Records the execution time of each query"};
+    NES::Configurations::BoolOption serialization = {"Serialization Mode", "false", "Tests for correct query serialization and deserialization"};
     NES::Configurations::SequenceOption<NES::Configurations::StringOption> testGroups = {"testGroups", "test groups to run"};
     NES::Configurations::SequenceOption<NES::Configurations::StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
     NES::Configurations::StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};

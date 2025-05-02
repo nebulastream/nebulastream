@@ -114,7 +114,7 @@ struct RunningQuery
 {
     Query query;
     QueryId queryId = INVALID_QUERY_ID;
-    QueryExecutionInfo queryExecutionInfo;
+    std::optional<QueryExecutionInfo> queryExecutionInfo;
 };
 
 struct TestFile

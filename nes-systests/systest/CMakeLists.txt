@@ -121,6 +121,9 @@ if (NOT CODE_COVERAGE)
     endforeach ()
 endif (NOT CODE_COVERAGE)
 
+# Run systest with serialization mode
+ExternalData_Add_Test(TEST_DATA NAME systest_serialization COMMAND systest -se)
+
 # Adding dependency for the nes-systest-lib so that the data is downloaded before the tests are run
 add_dependencies(nes-systest-lib TEST_DATA)
 ExternalData_Add_Target(TEST_DATA SHOW_PROGRESS ON)
