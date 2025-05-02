@@ -141,7 +141,7 @@ public:
     VarVal(const VarVal& other);
     VarVal(VarVal&& other) noexcept;
     VarVal& operator=(const VarVal& other);
-    VarVal& operator=(VarVal&& other) noexcept;
+    VarVal& operator=(VarVal&& other); /// NOLINT, as we need to have the option of throwing
     explicit operator bool() const;
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal);
 

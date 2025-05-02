@@ -19,6 +19,7 @@
 #include <limits>
 #include <ostream>
 #include <sstream>
+#include <tuple>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -395,4 +396,44 @@ TEST_F(VarValTest, ostreamTest)
     testVarValOstream.operator()<bool>(true);
     testVarValOstream.operator()<bool>(false);
 }
+
+TEST_F(VarValTest, testDataTypesChange)
+{
+    using Types = std::tuple<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double>;
+
+
+    /// Implicit data type change should trow an exception if the data types are not equal
+    auto testImplicitDataTypeChange = []<typename From, typename To>(From, To)
+    {
+        /// Checking if the data types are equal / the same
+        if constexpr (std::is_same_v<std::decay_t<From>, std::decay_t<From>>)
+        {
+            const Nautilus::VarVal varValFrom{nautilus::val<From>(42)};
+            Nautilus::VarVal varValTo{nautilus::val<To>(43)};
+            ASSERT_NO_THROW(varValTo = varValFrom);
+        }
+        else
+        {
+            const Nautilus::VarVal varValFrom{nautilus::val<From>(42)};
+            Nautilus::VarVal varValTo{nautilus::val<To>(43)};
+            ASSERT_EXCEPTION_ERRORCODE(varValTo = varValFrom, ErrorCode::UnknownOperation);
+        }
+    };
+
+    /// Explicit data type change should work
+    auto testExplicitDataTypeChange = []<typename From, typename To>(From, To)
+    {
+        const Nautilus::VarVal varValFrom{nautilus::val<From>(42)};
+        Nautilus::VarVal varValTo{nautilus::val<To>(43)};
+        ASSERT_NO_THROW(varValTo = varValFrom);
+        ASSERT_EQ(varValTo, varValFrom);
+    };
+
+
+    /// Calls it for every combination of Types
+    std::apply([&](auto&&... args) { ((testImplicitDataTypeChange(args, args)), ...); }, std::tuple_cat(Types{}, Types{}));
+    std::apply([&](auto&&... args) { ((testExplicitDataTypeChange(args, args)), ...); }, std::tuple_cat(Types{}, Types{}));
+}
+
+
 }

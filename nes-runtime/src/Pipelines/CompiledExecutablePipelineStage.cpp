@@ -21,6 +21,7 @@
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <fmt/format.h>
 #include <nautilus/val_ptr.hpp>
 #include <Engine.hpp>
 #include <ExecutionContext.hpp>
