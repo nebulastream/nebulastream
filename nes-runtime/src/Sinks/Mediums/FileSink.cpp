@@ -145,6 +145,7 @@ void FileSink::shutdown() {
                 auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
                 auto newWatermark = std::max(minWatermark, lastSavedWatermark);
                 nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
+                NES_ERROR("sending acknowledgements: new watermark for key {} is {}", key, newWatermark);
                 newWatermarkList.emplace_back(std::make_tuple(key, newWatermark));
                 auto& bufferVec = buffersStorageMap.at(key);
 
@@ -159,7 +160,7 @@ void FileSink::shutdown() {
                 });
                 bufferVec.erase(it, bufferVec.end());
                 NES_DEBUG("returning")
-                NES_ERROR("writing {} buffers", vec.size());
+                //NES_ERROR("writing {} buffers", vec.size());
                 writeDataToTCP(vec, sinkInfo);
             }
 
@@ -212,9 +213,9 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         (void) context;
         auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
-        NES_ERROR("got buffer {}.{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
+        //NES_ERROR("got buffer {}.{}", inputBuffer.getSequenceNumber(), inputBuffer.getChunkNumber());
         if (!getReplayData()) {
-            NES_ERROR("replay data not activated writing buffer");
+            NES_DEBUG("replay data not activated writing buffer");
             std::vector<Runtime::TupleBuffer> vec = {inputBuffer};
             //            return writeDataToFile(inputBuffer);
             return writeDataToTCP(vec, sinkInfo);
@@ -236,7 +237,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
 
         auto record = inputBuffer.getBuffer<Record>();
         std::tuple key = {record->id_1, record->id_2};
-        NES_ERROR("key ({}, {})", std::get<0>(key), std::get<1>(key))
+        //NES_ERROR("key ({}, {})", std::get<0>(key), std::get<1>(key))
 
         buffersStorageMap[key].push_back(inputBuffer);
 
@@ -283,7 +284,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                   bufferOriginId,
                   sharedQueryId);
         std::vector<Runtime::TupleBuffer> vec;
-        NES_ERROR("writing and erasing elements on write data");
+        //NES_ERROR("writing and erasing elements on write data");
         for (auto& pair : buffersStorageMap) {
         //for (auto& [id, bufferVec] : buffersStorageMap) {
             //NES_ERROR("there are {} saved buffers for key ({}, {})", bufferVec.size(), std::get<0>(key), std::get<1>(key))
@@ -298,7 +299,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             bufferVec.erase(it, bufferVec.end());
         }
         NES_DEBUG("returning")
-        NES_ERROR("writing {} buffers", vec.size());
+        //NES_ERROR("writing {} buffers", vec.size());
         return writeDataToTCP(vec, sinkInfo);
     }
 }
