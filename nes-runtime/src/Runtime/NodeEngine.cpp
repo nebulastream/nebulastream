@@ -1146,4 +1146,9 @@ void NodeEngine::updateLastSavedMinWatermark(SharedQueryId sharedQueryId, std::t
     std::unique_lock lock(lastSavedWatermarkMutex);
     lastSavedWatermarkMap[{sharedQueryId, key}] = newMinWatermark;
 }
+
+
+std::map<std::tuple<SharedQueryId, std::tuple<uint64_t, uint64_t>>, uint64_t>& NodeEngine::getAllSavedWatermarks() {
+    return lastSavedWatermarkMap;
+}
 }// namespace NES::Runtime

@@ -140,28 +140,57 @@ void FileSink::shutdown() {
 
             auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
-            for (auto& [key, watermarksProcessor] : watermarksProcessorMap) {
-                auto minWatermark = watermarksProcessor->getCurrentValue();
-                auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
-                auto newWatermark = std::max(minWatermark, lastSavedWatermark);
-                nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
-                NES_ERROR("sending acknowledgements: new watermark for key ({}, {}) is {}", get<0>(key), get<1>(key), newWatermark);
-                newWatermarkList.emplace_back(std::make_tuple(key, newWatermark));
-                auto& bufferVec = buffersStorageMap.at(key);
+            auto& savedWatermarks = nodeEngine->getAllSavedWatermarks();
+            if (savedWatermarks.empty()) {
+                for (auto& [key, watermarksProcessor] : watermarksProcessorMap) {
+                    auto minWatermark = watermarksProcessor->getCurrentValue();
+                    auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
+                    auto newWatermark = std::max(minWatermark, lastSavedWatermark);
+                    nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
+                    NES_ERROR("sending acknowledgements: new watermark for key ({}, {}) is {}", get<0>(key), get<1>(key), newWatermark);
+                    newWatermarkList.emplace_back(std::make_tuple(key, newWatermark));
+                    auto& bufferVec = buffersStorageMap.at(key);
 
-                std::vector<Runtime::TupleBuffer> vec;
-                NES_DEBUG("writing and erasing elements on shutdown");
-                auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
-                    if (buf.getWatermark() < newWatermark) {
-                        vec.push_back(buf);
-                        return true;
-                    }
-                    return false;
-                });
-                bufferVec.erase(it, bufferVec.end());
-                NES_DEBUG("returning")
-                //NES_ERROR("writing {} buffers", vec.size());
-                writeDataToTCP(vec, sinkInfo);
+                    std::vector<Runtime::TupleBuffer> vec;
+                    NES_DEBUG("writing and erasing elements on shutdown");
+                    auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
+                        if (buf.getWatermark() < newWatermark) {
+                            vec.push_back(buf);
+                            return true;
+                        }
+                        return false;
+                    });
+                    bufferVec.erase(it, bufferVec.end());
+                    NES_DEBUG("returning")
+                    //NES_ERROR("writing {} buffers", vec.size());
+                    writeDataToTCP(vec, sinkInfo);
+                }
+            } else {
+                for (auto& [keyAndQueryId, watermark] : savedWatermarks) {
+                    auto key = get<1>(keyAndQueryId);
+                    auto& watermarksProcessor = watermarksProcessorMap[key];
+                    auto minWatermark = watermarksProcessor->getCurrentValue();
+                    auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
+                    auto newWatermark = std::max(minWatermark, lastSavedWatermark);
+                    nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
+                    NES_ERROR("sending acknowledgements: new watermark for key ({}, {}) is {}", get<0>(key), get<1>(key), newWatermark);
+                    newWatermarkList.emplace_back(std::make_tuple(key, newWatermark));
+                    auto& bufferVec = buffersStorageMap.at(key);
+
+                    std::vector<Runtime::TupleBuffer> vec;
+                    NES_DEBUG("writing and erasing elements on shutdown");
+                    auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
+                      if (buf.getWatermark() < newWatermark) {
+                          vec.push_back(buf);
+                          return true;
+                      }
+                      return false;
+                    });
+                    bufferVec.erase(it, bufferVec.end());
+                    NES_DEBUG("returning")
+                    //NES_ERROR("writing {} buffers", vec.size());
+                    writeDataToTCP(vec, sinkInfo);
+                }
             }
 
             // NES_ERROR("sending checkpoint query id: {}, watermark: {}", sharedQueryId, newWatermark);
