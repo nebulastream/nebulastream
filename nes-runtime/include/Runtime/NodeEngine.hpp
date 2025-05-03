@@ -452,7 +452,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void updateLastSavedMinWatermark(SharedQueryId sharedQueryId, std::tuple<uint64_t, uint64_t> key, uint64_t newMinWatermark);
 
     folly::Synchronized<std::map<uint64_t, std::set<uint64_t>>>::WLockedPtr writeLockSinkStorage(std::string sinkName);
-    std::map<std::tuple<SharedQueryId, std::tuple<uint64_t, uint64_t>>, uint64_t>& getAllSavedWatermarks();
+    std::vector<std::pair<std::tuple<uint64_t, uint64_t>, uint64_t>> getAllSavedWatermarks(SharedQueryId sharedQueryId);
 
   private:
     /**

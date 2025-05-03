@@ -1148,7 +1148,13 @@ void NodeEngine::updateLastSavedMinWatermark(SharedQueryId sharedQueryId, std::t
 }
 
 
-std::map<std::tuple<SharedQueryId, std::tuple<uint64_t, uint64_t>>, uint64_t>& NodeEngine::getAllSavedWatermarks() {
-    return lastSavedWatermarkMap;
+std::vector<std::pair<std::tuple<uint64_t, uint64_t>, uint64_t>> NodeEngine::getAllSavedWatermarks(SharedQueryId sharedQueryId) {
+    std::vector<std::pair<std::tuple<uint64_t, uint64_t>, uint64_t>> result;
+    for (auto [keyAndId, watermark] : lastSavedWatermarkMap) {
+        if (get<0>(keyAndId) == sharedQueryId) {
+            result.push_back({get<1>(keyAndId), watermark});
+        }
+    }
+    return result;
 }
 }// namespace NES::Runtime

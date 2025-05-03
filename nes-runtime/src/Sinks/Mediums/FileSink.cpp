@@ -140,17 +140,17 @@ void FileSink::shutdown() {
 
             auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
-            auto& savedWatermarks = nodeEngine->getAllSavedWatermarks();
-            auto foundId = false;
-            for (auto& [keyAndQueryId, watermark] : savedWatermarks) {
-                if (sharedQueryId == get<0>(keyAndQueryId)) {
-                    NES_ERROR("found id {}", sharedQueryId);
-                    foundId = true;
-                    break;
-                }
-            }
+            auto savedWatermarks = nodeEngine->getAllSavedWatermarks(sharedQueryId);
+//            auto foundId = false;
+//            for (auto& [keyAndQueryId, watermark] : savedWatermarks) {
+//                if (sharedQueryId == get<0>(keyAndQueryId)) {
+//                    NES_ERROR("found id {}", sharedQueryId);
+//                    foundId = true;
+//                    break;
+//                }
+//            }
 
-            if (!foundId) {
+            if (savedWatermarks.empty()) {
                 for (auto& [key, watermarksProcessor] : watermarksProcessorMap) {
                     auto minWatermark = watermarksProcessor->getCurrentValue();
                     auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
@@ -175,13 +175,15 @@ void FileSink::shutdown() {
                     writeDataToTCP(vec, sinkInfo);
                 }
             } else {
-                for (auto& [keyAndQueryId, watermark] : savedWatermarks) {
-                    auto key = get<1>(keyAndQueryId);
+                for (auto& [key, watermark] : savedWatermarks) {
+                //for (auto& [keyAndQueryId, watermark] : savedWatermarks) {
+//                    auto key = get<1>(keyAndQueryId);
+//                    NES_ERROR("Sink of shared query {} handles key ({}, {}) of shared query {}", sharedQueryId, get<0>(key), get<1>(key), get<0>(keyAndQueryId) );
+//                    if (sharedQueryId != get<0>(keyAndQueryId)) {
+//                        NES_ERROR("skipping");
+//                        continue;
+//                    }
                     NES_ERROR("Sink of shared query {} handles key ({}, {}) of shared query {}", sharedQueryId, get<0>(key), get<1>(key), get<0>(keyAndQueryId) );
-                    if (sharedQueryId != get<0>(keyAndQueryId)) {
-                        NES_ERROR("skipping");
-                        continue;
-                    }
                     auto& watermarksProcessor = watermarksProcessorMap[key];
                     auto minWatermark = watermarksProcessor->getCurrentValue();
                     auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
