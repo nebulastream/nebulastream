@@ -187,8 +187,12 @@ void FileSink::shutdown() {
                     //                        continue;
                     //                    }
                     NES_ERROR("Sink of shared query {} handles key ({}, {})", sharedQueryId, get<0>(key), get<1>(key));
-                    auto& watermarksProcessor = watermarksProcessorMap[key];
-                    auto minWatermark = watermarksProcessor->getCurrentValue();
+                    uint64_t minWatermark = 0;
+                    if (watermarksProcessorMap.contains(key)) {
+                        NES_ERROR("Sink of shared query {} has no watermark processor for key ({}, {})", sharedQueryId, get<0>(key), get<1>(key));
+                        auto& watermarksProcessor = watermarksProcessorMap[key];
+                        minWatermark = watermarksProcessor->getCurrentValue();
+                    }
                     auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
                     auto newWatermark = std::max(minWatermark, lastSavedWatermark);
                     nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
