@@ -141,7 +141,16 @@ void FileSink::shutdown() {
             auto sinkInfo = nodeEngine->getTcpDescriptor(filePath);
 
             auto& savedWatermarks = nodeEngine->getAllSavedWatermarks();
-            if (savedWatermarks.empty()) {
+            auto foundId = false;
+            for (auto& [keyAndQueryId, watermark] : savedWatermarks) {
+                if (sharedQueryId == get<0>(keyAndQueryId)) {
+                    NES_ERROR("found id {}", sharedQueryId);
+                    foundId = true;
+                    break;
+                }
+            }
+
+            if (!foundId) {
                 for (auto& [key, watermarksProcessor] : watermarksProcessorMap) {
                     auto minWatermark = watermarksProcessor->getCurrentValue();
                     auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
