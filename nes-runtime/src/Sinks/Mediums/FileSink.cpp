@@ -168,6 +168,11 @@ void FileSink::shutdown() {
             } else {
                 for (auto& [keyAndQueryId, watermark] : savedWatermarks) {
                     auto key = get<1>(keyAndQueryId);
+                    NES_ERROR("Sink of shared query {} handles key ({}, {}) of shared query {}", sharedQueryId, get<0>(key), get<1>(key), get<0>(keyAndQueryId) );
+                    if (sharedQueryId != get<0>(keyAndQueryId)) {
+                        NES_ERROR("skipping");
+                        continue;
+                    }
                     auto& watermarksProcessor = watermarksProcessorMap[key];
                     auto minWatermark = watermarksProcessor->getCurrentValue();
                     auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
