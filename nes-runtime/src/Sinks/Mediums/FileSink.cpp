@@ -189,12 +189,12 @@ void FileSink::shutdown() {
                     NES_ERROR("Sink of shared query {} handles key ({}, {})", sharedQueryId, get<0>(key), get<1>(key));
                     uint64_t minWatermark = 0;
                     if (watermarksProcessorMap.contains(key)) {
-                        NES_ERROR("Sink of shared query {} has no watermark processor for key ({}, {})", sharedQueryId, get<0>(key), get<1>(key));
+                        NES_ERROR("Sink of shared query {} has a watermark processor for key ({}, {})", sharedQueryId, get<0>(key), get<1>(key));
                         auto& watermarksProcessor = watermarksProcessorMap[key];
                         minWatermark = watermarksProcessor->getCurrentValue();
                     }
                     auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
-                    NES_ERROR("Saved watermark: {}, new watermekr {} for key ({}, {})", lastSavedWatermark, minWatermark, get<0>(key), get<1>(key));
+                    NES_ERROR("Saved watermark: {}, new watermark {} for key ({}, {})", lastSavedWatermark, minWatermark, get<0>(key), get<1>(key));
                     auto newWatermark = std::max(minWatermark, lastSavedWatermark);
                     nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
                     NES_ERROR("sending acknowledgements: new watermark for key ({}, {}) is {}",
@@ -296,11 +296,11 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         const auto bufferWatermark = inputBuffer.getWatermark();
         const auto bufferOriginId = inputBuffer.getOriginId();
 
+
         auto record = inputBuffer.getBuffer<Record>();
         std::tuple key = {record->id_1, record->id_2};
         //NES_ERROR("key ({}, {})", std::get<0>(key), std::get<1>(key))
 
-        buffersStorageMap[key].push_back(inputBuffer);
 
         std::shared_ptr<Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>> watermarksProcessor;
         if (!watermarksProcessorMap.contains(key)) {
@@ -309,6 +309,13 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         } else {
             watermarksProcessor = watermarksProcessorMap[key];
         }
+
+        if (bufferWatermark < watermarksProcessor->getCurrentValue()) {
+            NES_ERROR("Ignorgin duplicate buffer {}.{} for id {}", bufferSeqNumber, bufferChunkNumber, bufferOriginId);
+            return false;
+        }
+
+        buffersStorageMap[key].push_back(inputBuffer);
 
         auto currentWatermarkBeforeAdding = watermarksProcessor->getCurrentValue();
 
