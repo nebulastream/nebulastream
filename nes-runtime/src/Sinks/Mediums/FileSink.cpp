@@ -310,12 +310,14 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             watermarksProcessor = watermarksProcessorMap[key];
         }
 
-        if (bufferWatermark < watermarksProcessor->getCurrentValue()) {
-            NES_ERROR("Ignorgin duplicate buffer {}.{} for id {}", bufferSeqNumber, bufferChunkNumber, bufferOriginId);
-            return false;
-        }
+        // if (bufferWatermark < watermarksProcessor->getCurrentValue()) {
+        //     NES_ERROR("Ignorgin duplicate buffer {}.{} for id {}", bufferSeqNumber, bufferChunkNumber, bufferOriginId);
+        //     return false;
+        // }
 
-        buffersStorageMap[key].push_back(inputBuffer);
+        auto& bufferVec = buffersStorageMap[key];
+        // buffersStorageMap[key].push_back(inputBuffer);
+        bufferVec.push_back(inputBuffer);
 
         auto currentWatermarkBeforeAdding = watermarksProcessor->getCurrentValue();
 
@@ -353,10 +355,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                   sharedQueryId);
         std::vector<Runtime::TupleBuffer> vec;
         //NES_ERROR("writing and erasing elements on write data");
-        for (auto& pair : buffersStorageMap) {
+        //for (auto& pair : buffersStorageMap) {
             //for (auto& [id, bufferVec] : buffersStorageMap) {
             //NES_ERROR("there are {} saved buffers for key ({}, {})", bufferVec.size(), std::get<0>(key), std::get<1>(key))
-            auto& bufferVec = pair.second;
+            //auto& bufferVec = pair.second;
             auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
                 if (buf.getWatermark() < currentWatermarkAfterAdding) {
                     vec.push_back(buf);
@@ -365,7 +367,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
                 return false;
             });
             bufferVec.erase(it, bufferVec.end());
-        }
+        //}
         NES_DEBUG("returning")
         //NES_ERROR("writing {} buffers", vec.size());
         return writeDataToTCP(vec, sinkInfo);
