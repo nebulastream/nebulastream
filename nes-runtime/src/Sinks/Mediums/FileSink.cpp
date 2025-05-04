@@ -194,6 +194,7 @@ void FileSink::shutdown() {
                         minWatermark = watermarksProcessor->getCurrentValue();
                     }
                     auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
+                    NES_ERROR("Saved watermark: {}, new watermekr {} for key ({}, {})", lastSavedWatermark, minWatermark, get<0>(key), get<1>(key));
                     auto newWatermark = std::max(minWatermark, lastSavedWatermark);
                     nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
                     NES_ERROR("sending acknowledgements: new watermark for key ({}, {}) is {}",

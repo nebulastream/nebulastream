@@ -1144,11 +1144,13 @@ uint64_t NodeEngine::getLastSavedMinWatermark(SharedQueryId sharedQueryId, std::
 
 void NodeEngine::updateLastSavedMinWatermark(SharedQueryId sharedQueryId, std::tuple<uint64_t, uint64_t> key, uint64_t newMinWatermark) {
     std::unique_lock lock(lastSavedWatermarkMutex);
+    NES_ERROR("saving new min watermark {} for key ({}, {}) for query {}", newMinWatermark, std::get<0>(key), std::get<1>(key), sharedQueryId);
     lastSavedWatermarkMap[{sharedQueryId, key}] = newMinWatermark;
 }
 
 
 std::vector<std::pair<std::tuple<uint64_t, uint64_t>, uint64_t>> NodeEngine::getAllSavedWatermarks(SharedQueryId sharedQueryId) {
+    std::unique_lock lock(lastSavedWatermarkMutex);
     std::vector<std::pair<std::tuple<uint64_t, uint64_t>, uint64_t>> result;
     for (auto [keyAndId, watermark] : lastSavedWatermarkMap) {
         if (get<0>(keyAndId) == sharedQueryId) {
