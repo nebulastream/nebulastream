@@ -156,10 +156,10 @@ void FileSink::shutdown() {
                     auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
                     auto newWatermark = std::max(minWatermark, lastSavedWatermark);
                     nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
-                    NES_ERROR("sending acknowledgements: new watermark for key ({}, {}) is {}",
-                              get<0>(key),
-                              get<1>(key),
-                              newWatermark);
+                    // NES_ERROR("sending acknowledgements: new watermark for key ({}, {}) is {}",
+                    //           get<0>(key),
+                    //           get<1>(key),
+                    //           newWatermark);
                     newWatermarkList.emplace_back(std::make_tuple(key, newWatermark));
                     auto& bufferVec = buffersStorageMap.at(key);
 
@@ -186,27 +186,27 @@ void FileSink::shutdown() {
                     //                        NES_ERROR("skipping");
                     //                        continue;
                     //                    }
-                    NES_ERROR("Sink of shared query {} handles key ({}, {})", sharedQueryId, get<0>(key), get<1>(key));
+                    // NES_ERROR("Sink of shared query {} handles key ({}, {})", sharedQueryId, get<0>(key), get<1>(key));
                     uint64_t minWatermark = 0;
                     if (watermarksProcessorMap.contains(key)) {
-                        NES_ERROR("Sink of shared query {} has a watermark processor for key ({}, {})", sharedQueryId, get<0>(key), get<1>(key));
+                        // NES_ERROR("Sink of shared query {} has a watermark processor for key ({}, {})", sharedQueryId, get<0>(key), get<1>(key));
                         auto& watermarksProcessor = watermarksProcessorMap[key];
                         minWatermark = watermarksProcessor->getCurrentValue();
                     }
                     auto lastSavedWatermark = nodeEngine->getLastSavedMinWatermark(sharedQueryId, key);
-                    NES_ERROR("Saved watermark: {}, new watermark {} for key ({}, {})", lastSavedWatermark, minWatermark, get<0>(key), get<1>(key));
+                    // NES_ERROR("Saved watermark: {}, new watermark {} for key ({}, {})", lastSavedWatermark, minWatermark, get<0>(key), get<1>(key));
                     auto newWatermark = std::max(minWatermark, lastSavedWatermark);
                     nodeEngine->updateLastSavedMinWatermark(sharedQueryId, key, newWatermark);
-                    NES_ERROR("sending acknowledgements: new watermark for key ({}, {}) is {}",
-                              get<0>(key),
-                              get<1>(key),
-                              newWatermark);
+                    // NES_ERROR("sending acknowledgements: new watermark for key ({}, {}) is {}",
+                    //           get<0>(key),
+                    //           get<1>(key),
+                    //           newWatermark);
                     newWatermarkList.emplace_back(std::make_tuple(key, newWatermark));
                     if (buffersStorageMap.contains(key)) {
                         auto& bufferVec = buffersStorageMap.at(key);
 
                         std::vector<Runtime::TupleBuffer> vec;
-                        NES_ERROR("writing and erasing elements on shutdown");
+                        // NES_ERROR("writing and erasing elements on shutdown");
                         auto it = std::remove_if(bufferVec.begin(), bufferVec.end(), [&](const Runtime::TupleBuffer& buf) {
                             if (buf.getWatermark() < newWatermark) {
                                 vec.push_back(buf);
@@ -219,8 +219,7 @@ void FileSink::shutdown() {
                         //NES_ERROR("writing {} buffers", vec.size());
                         writeDataToTCP(vec, sinkInfo);
                     } else {
-                        NES_ERROR("No buffers found");
-
+                        // NES_ERROR("No buffers found");
                     }
                 }
             }
@@ -310,10 +309,10 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             watermarksProcessor = watermarksProcessorMap[key];
         }
 
-        // if (bufferWatermark < watermarksProcessor->getCurrentValue()) {
-        //     NES_ERROR("Ignorgin duplicate buffer {}.{} for id {}", bufferSeqNumber, bufferChunkNumber, bufferOriginId);
-        //     return false;
-        // }
+        if (bufferWatermark < watermarksProcessor->getCurrentValue()) {
+            NES_ERROR("Ignoring duplicate buffer {}.{} for id {}", bufferSeqNumber, bufferChunkNumber, bufferOriginId);
+            return false;
+        }
 
         auto& bufferVec = buffersStorageMap[key];
         // buffersStorageMap[key].push_back(inputBuffer);

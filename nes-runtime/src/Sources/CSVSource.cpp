@@ -239,14 +239,14 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     shouldGetLastAck = false;
                     NES_DEBUG("checking if resending necessary");
                     if (ack.has_value() && ack.value() != 0) {
-                        NES_ERROR("found ack, sent until {} ack {} for id {}", sentUntil, ack.value(), record.value().id);
+                        // NES_ERROR("found ack, sent until {} ack {} for id {}", sentUntil, ack.value(), record.value().id);
                         watermarkIndex = findWatermarkIndex(sourceInfo->records, ack.value());
                         NES_DEBUG("index: {}, of: {}, watermark: {}", watermarkIndex.first, sourceInfo->records.size(), sourceInfo->records.at(watermarkIndex.first)[watermarkIndex.second].value);
                     } else {
-                        NES_ERROR("no ack found for id {}", record.value().id);
+                        // NES_ERROR("no ack found for id {}", record.value().id);
                     }
                 } else {
-                    NES_ERROR("no record found");
+                    // NES_ERROR("no record found");
                 }
             }
             //            if (watermarkIndex < sourceInfo->records.back().back().ingestionTimestamp) {
