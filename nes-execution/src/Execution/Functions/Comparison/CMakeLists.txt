@@ -17,7 +17,7 @@ add_source_files(nes-execution
         ExecutableFunctionLessEquals.cpp
 )
 
-add_plugin(Greater ExecutableFunction)
-add_plugin(GreaterEquals ExecutableFunction)
-add_plugin(Less ExecutableFunction)
-add_plugin(LessEquals ExecutableFunction)
+add_plugin_to_registry(Greater ExecutableFunction)
+add_plugin_to_registry(GreaterEquals ExecutableFunction)
+add_plugin_to_registry(Less ExecutableFunction)
+add_plugin_to_registry(LessEquals ExecutableFunction)

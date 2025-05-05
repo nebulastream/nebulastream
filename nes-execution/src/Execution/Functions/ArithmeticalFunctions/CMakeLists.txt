@@ -18,8 +18,8 @@ add_source_files(nes-execution
     ExecutableFunctionSub.cpp
 )
 
-add_plugin(Add ExecutableFunction)
-add_plugin(Div ExecutableFunction)
-add_plugin(Mod ExecutableFunction)
-add_plugin(Mul ExecutableFunction)
-add_plugin(Sub ExecutableFunction)
+add_plugin_to_registry(Add ExecutableFunction)
+add_plugin_to_registry(Div ExecutableFunction)
+add_plugin_to_registry(Mod ExecutableFunction)
+add_plugin_to_registry(Mul ExecutableFunction)
+add_plugin_to_registry(Sub ExecutableFunction)

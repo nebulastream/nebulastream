@@ -18,4 +18,4 @@ add_source_files(nes-input-formatters
 )
 
 # Register plugins
-add_plugin(CSV InputFormatter)
+add_plugin_to_registry(CSV InputFormatter)

@@ -17,7 +17,7 @@ add_source_files(nes-execution
         ExecutableFunctionOr.cpp
 )
 
-add_plugin(And ExecutableFunction)
-add_plugin(Equals ExecutableFunction)
-add_plugin(Negate ExecutableFunction)
-add_plugin(Or ExecutableFunction)
+add_plugin_to_registry(And ExecutableFunction)
+add_plugin_to_registry(Equals ExecutableFunction)
+add_plugin_to_registry(Negate ExecutableFunction)
+add_plugin_to_registry(Or ExecutableFunction)

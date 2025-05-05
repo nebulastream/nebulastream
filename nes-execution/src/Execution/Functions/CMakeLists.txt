@@ -16,7 +16,7 @@ add_source_files(nes-execution
         ExecutableFunctionConcat.cpp
         )
 
-add_plugin(Concat ExecutableFunction)
+add_plugin_to_registry(Concat ExecutableFunction)
 
 
 add_subdirectory(ArithmeticalFunctions)

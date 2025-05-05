@@ -36,7 +36,7 @@ function(add_plugin_as_library plugin_name plugin_registry plugin_registry_compo
 endfunction()
 
 # adds the name of plugin to the list of plugin names for the plugin registry
-function(add_plugin plugin_name plugin_registry)
+function(add_plugin_to_registry plugin_name plugin_registry)
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
 endfunction()
 

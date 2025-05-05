@@ -21,5 +21,5 @@ add_source_files(nes-sources
 )
 
 # Register plugins
-add_plugin(File Source)
-add_plugin(File SourceValidation)
+add_plugin_to_registry(File Source)
+add_plugin_to_registry(File SourceValidation)

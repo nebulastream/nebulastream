@@ -21,7 +21,7 @@ add_source_files(nes-sinks
 )
 
 # Register plugins
-add_plugin(File Sink)
-add_plugin(File SinkValidation)
-add_plugin(Print Sink)
-add_plugin(Print SinkValidation)
+add_plugin_to_registry(File Sink)
+add_plugin_to_registry(File SinkValidation)
+add_plugin_to_registry(Print Sink)
+add_plugin_to_registry(Print SinkValidation)
