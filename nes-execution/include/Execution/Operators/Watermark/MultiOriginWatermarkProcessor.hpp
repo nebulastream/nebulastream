@@ -14,13 +14,13 @@
 
 #pragma once
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -46,7 +46,7 @@ public:
      * @param origin of the watermark ts
      * @return currentWatermarkTs
      */
-    [[nodiscard]] Timestamp updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const;
+    [[nodiscard]] Timestamp updateWatermark(Timestamp ts, const SequenceData& sequenceData, OriginId origin);
 
     /**
      * @brief Returns the current watermark across all origins
@@ -54,10 +54,14 @@ public:
      */
     [[nodiscard]] Timestamp getCurrentWatermark() const;
 
-    std::string getCurrentStatus();
+    std::string getCurrentStatus() const;
+
+    [[nodiscard]] std::map<OriginId, std::vector<std::pair<uint64_t, Timestamp::Underlying>>>
+    getIngestionTimeForWatermarks(uint64_t numGapsAllowed, uint64_t maxNumSeqNumbers) const;
 
 private:
     const std::vector<OriginId> origins;
+    folly::Synchronized<std::map<std::pair<OriginId, SequenceNumber>, uint64_t>> seqNumbersIngestionTime;
     std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors;
 };
 

@@ -15,7 +15,6 @@
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
@@ -36,13 +35,23 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
 }
 
 /// TODO use here the BufferMetaData class for the params #4177
-Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const
+Timestamp MultiOriginWatermarkProcessor::updateWatermark(const Timestamp ts, const SequenceData& sequenceData, OriginId origin)
 {
     bool found = false;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
     {
         if (origins[originIndex] == origin)
         {
+            if (sequenceData.lastChunk)
+            {
+                const auto now = std::chrono::system_clock::now();
+                const auto duration = now.time_since_epoch();
+                const auto ingestionTime = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
+
+                const auto seqNumbersIngestionTimeLocked = seqNumbersIngestionTime.wlock();
+                (*seqNumbersIngestionTimeLocked)[{origin, SequenceNumber(sequenceData.sequenceNumber)}] = ingestionTime;
+            }
+
             watermarkProcessors[originIndex]->emplace(sequenceData, ts.getRawValue());
             found = true;
         }
@@ -56,7 +65,7 @@ Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceD
     return getCurrentWatermark();
 }
 
-std::string MultiOriginWatermarkProcessor::getCurrentStatus()
+std::string MultiOriginWatermarkProcessor::getCurrentStatus() const
 {
     std::stringstream ss;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
@@ -74,6 +83,29 @@ Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
         minimalWatermark = std::min(minimalWatermark, wt->getCurrentValue());
     }
     return Timestamp(minimalWatermark);
+}
+
+std::map<OriginId, std::vector<std::pair<uint64_t, Timestamp::Underlying>>>
+MultiOriginWatermarkProcessor::getIngestionTimeForWatermarks(const uint64_t numGapsAllowed, const uint64_t maxNumSeqNumbers) const
+{
+    std::map<OriginId, std::vector<std::pair<uint64_t, Timestamp::Underlying>>> ingestionTimeForWatermarks;
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
+    {
+        const auto& nextSequenceNumbers
+            = watermarkProcessors[originIndex]->getNextSequenceNumbersAndValues(numGapsAllowed, maxNumSeqNumbers);
+        std::vector<std::pair<uint64_t, Timestamp::Underlying>> ingestionTimes;
+        ingestionTimes.reserve(nextSequenceNumbers.size());
+
+        const auto origin = origins[originIndex];
+        const auto seqNumbersIngestionTimeLocked = seqNumbersIngestionTime.rlock();
+        for (const auto& [seqNumber, timestamp] : nextSequenceNumbers)
+        {
+            const auto ingestionTime = seqNumbersIngestionTimeLocked->at({origin, SequenceNumber(seqNumber)});
+            ingestionTimes.emplace_back(ingestionTime, timestamp);
+        }
+        ingestionTimeForWatermarks.emplace(origin, ingestionTimes);
+    }
+    return ingestionTimeForWatermarks;
 }
 
 }
