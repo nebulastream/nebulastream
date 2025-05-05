@@ -105,6 +105,10 @@ public:
     /// @return boolean
     bool operator==(const Schema& other) const;
 
+    /// Checks if two schemas have the same data types
+    /// @note considers the order (UINT64 UINT8 != UINT64 UINT8)
+    [[nodiscard]] bool hasSameTypes(const Schema& other) const;
+
     /// @brief Checks if the field exists in the schema
     /// @param schema
     /// @return boolean

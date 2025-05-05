@@ -191,6 +191,22 @@ bool Schema::operator==(const Schema& other) const
     return true;
 }
 
+bool Schema::hasSameTypes(const Schema& other) const
+{
+    if (other.fields.size() != fields.size())
+    {
+        return false;
+    }
+    for (size_t fieldCount = 0; fieldCount <= fields.size(); ++fieldCount)
+    {
+        if (*fields[0].getDataType() != *other.fields[0].getDataType())
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 std::string Schema::toString(const std::string& prefix, const std::string& sep, const std::string& suffix) const
 {
     std::stringstream ss;

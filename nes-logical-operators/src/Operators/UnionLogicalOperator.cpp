@@ -94,7 +94,7 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inp
         copy.rightInputSchema.copyFields(distinctSchemas[1]);
     }
 
-    if (!(leftInputSchema == rightInputSchema))
+    if (!leftInputSchema.hasSameTypes(rightInputSchema))
     {
         throw CannotInferSchema(
             "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}",
