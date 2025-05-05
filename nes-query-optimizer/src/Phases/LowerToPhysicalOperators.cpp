@@ -32,23 +32,26 @@ RewriteRuleResultSubgraph::SubGraphRoot
 lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
 {
     /// Try to resolve rewrite rule for the current logical operator
-    auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument);
-
-    /// We expect that in this last phase of query optimiation only logical operator with physical lowering rules
-    /// are part of the plan. If not the case, this indicates a bug in our query optimizer.
-    INVARIANT(ruleOptional.has_value(), "Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
-
+    const auto rule = [](const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
+    {
+        if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument))
+        {
+            return std::move(ruleOptional.value());
+        }
+        /// We expect that in this last phase of query optimiation only logical operator with physical lowering rules
+        /// are part of the plan. If not the case, this indicates a bug in our query optimizer.
+        INVARIANT(false, "Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+    }(logicalOperator, registryArgument);
     /// We apply the rule and receive a subgraph
-    auto loweringResultSubgraph = ruleOptional.value()->apply(logicalOperator);
+    const auto [root, leafs] = rule->apply(logicalOperator);
     INVARIANT(
-        loweringResultSubgraph.leafs.size() == logicalOperator.getChildren().size(),
+        leafs.size() == logicalOperator.getChildren().size(),
         "Number of children after lowering must remain the same. {}, before:{}, after:{}",
         logicalOperator,
         logicalOperator.getChildren().size(),
-        loweringResultSubgraph.leafs.size());
-
+        leafs.size());
     /// if the lowering result is empty we bypass the operator
-    if (not loweringResultSubgraph.root)
+    if (not root)
     {
         if (not logicalOperator.getChildren().empty())
         {
@@ -60,21 +63,20 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
         }
         return {};
     }
-
     /// We embed the subgraph into the resulting plan of physical operator wrappers
     auto children = logicalOperator.getChildren();
     INVARIANT(
-        children.size() == loweringResultSubgraph.leafs.size(),
+        children.size() == leafs.size(),
         "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
         children.size(),
-        loweringResultSubgraph.leafs.size(),
+        leafs.size(),
         logicalOperator);
     for (size_t i = 0; i < children.size(); ++i)
     {
         auto rootNodeOfLoweredChild = lowerOperatorRecursively(children[i], registryArgument);
-        loweringResultSubgraph.leafs[i]->children.push_back(rootNodeOfLoweredChild);
+        leafs[i]->children.push_back(rootNodeOfLoweredChild);
     }
-    return loweringResultSubgraph.root;
+    return root;
 }
 
 PhysicalPlan apply(LogicalPlan queryPlan, NES::Configurations::QueryOptimizerConfiguration conf)

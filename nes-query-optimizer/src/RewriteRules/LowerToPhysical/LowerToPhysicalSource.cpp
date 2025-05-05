@@ -30,15 +30,15 @@ namespace NES::Optimizer
 RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGet<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
-    auto source = logicalOperator.get<SourceDescriptorLogicalOperator>();
+    const auto source = logicalOperator.get<SourceDescriptorLogicalOperator>();
 
-    auto outputOriginIds = source.getOutputOriginIds();
+    const auto outputOriginIds = source.getOutputOriginIds();
     PRECONDITION(outputOriginIds.size() == 1, "SourceDescriptorLogicalOperator should have exactly one origin id, but has {}", outputOriginIds.size());
     auto physicalOperator = SourcePhysicalOperator(source.getSourceDescriptor(), outputOriginIds[0]);
 
-    auto inputSchemas = logicalOperator.getInputSchemas();
+    const auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
-    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema());
+    const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema());
     return {wrapper, {}};
 }
 

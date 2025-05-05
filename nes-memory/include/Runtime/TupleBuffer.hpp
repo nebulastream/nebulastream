@@ -151,36 +151,22 @@ public:
     /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
     friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept;
 
-    /// @brief get the buffer's size.
     [[nodiscard]] uint64_t getBufferSize() const noexcept;
 
-    /// @brief get the number of tuples stored.
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
-
-    /// @brief set the number of tuples stored.
     void setNumberOfTuples(uint64_t numberOfTuples) const noexcept;
 
-    /// @brief get the watermark as a timestamp
     [[nodiscard]] Timestamp getWatermark() const noexcept;
-
-    /// @brief set the watermark from a timestamp
     void setWatermark(Timestamp value) noexcept;
 
-    /// @brief get the creation timestamp in milliseconds
     [[nodiscard]] Timestamp getCreationTimestampInMS() const noexcept;
-
-    /// @brief set the sequence number
     void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
 
     [[nodiscard]] std::string getSequenceDataAsString() const noexcept;
 
-    /// @brief get the sequence number
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
 
-    /// @brief set the chunk number
     void setChunkNumber(ChunkNumber chunkNumber) noexcept;
-
-    /// @brief get the chunk number
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
 
     /// @brief set if this is the last chunk of a sequence number
@@ -189,13 +175,9 @@ public:
     /// @brief retrieves if this is the last chunk
     [[nodiscard]] bool isLastChunk() const noexcept;
 
-    /// @brief set the creation timestamp in milliseconds
     void setCreationTimestampInMS(Timestamp value) noexcept;
 
-    ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] OriginId getOriginId() const noexcept;
-
-    ///@brief set the buffer's origin id (the operator id that creates this buffer).
     void setOriginId(OriginId id) noexcept;
 
     ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey

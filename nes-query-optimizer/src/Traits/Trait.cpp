@@ -32,7 +32,7 @@ Trait& Trait::operator=(const Trait& other)
     return *this;
 }
 
-const std::type_info& Trait::getType() const {
+const std::type_info& Trait::getTypeInfo() const {
     return self->getType();
 }
 

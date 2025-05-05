@@ -40,7 +40,7 @@ target_include_directories(single-node-integration-tests-csv PRIVATE ${CMAKE_CUR
 target_link_libraries(
         single-node-integration-tests-csv
         nes-grpc
-        nes-runtime
+        nes-memory
         nes-single-node-worker-test-util
 )
 serialize_query_with_nebuli(single-node-integration-tests-csv "qTwoCSVSourcesWithFilter")
@@ -51,7 +51,6 @@ target_include_directories(single-node-integration-tests-tcp PRIVATE ${CMAKE_CUR
 target_link_libraries(
         single-node-integration-tests-tcp
         nes-grpc
-        nes-runtime
         Boost::asio
         nes-single-node-worker-test-util
 )

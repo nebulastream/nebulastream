@@ -46,8 +46,7 @@ public:
 
     [[nodiscard]] std::string toString() const { return std::to_string(v); }
 
-    /// Serializes the Identifier. Useful for protobuf. Yaml and Json should not require this method.
-    /// @return the underlying value for serialization purpose
+    /// return the underlying value as a value of the underlying type
     [[nodiscard]] constexpr T getRawValue() const { return v; }
 
 private:

@@ -23,29 +23,38 @@ namespace NES
 
 PipelinedQueryPlan::PipelinedQueryPlan(QueryId id) : queryId(id) {};
 
-void printPipelineRecursive(const NES::Pipeline* pipe, std::stringstream& ss, int indentLevel)
+void printPipelineRecursive(const Pipeline* pipeline, std::ostream& os, int indentLevel)
 {
     std::string indent(indentLevel * 2, ' ');
-    ss << indent << pipe->toString() << "\n";
-    for (const auto& succ : pipe->getSuccessors())
+    os << indent << *pipeline << "\n";
+    for (const auto& succ : pipeline->getSuccessors())
     {
-        ss << indent << "Successor Pipeline:\n";
-        printPipelineRecursive(succ.get(), ss, indentLevel + 1);
+        os << indent << "Successor Pipeline:\n";
+        printPipelineRecursive(succ.get(), os, indentLevel + 1);
     }
 }
 
-std::string PipelinedQueryPlan::toString() const
+std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& plan)
 {
-    std::stringstream ss;
-    ss << "PipelinedQueryPlan for Query: " << queryId << "\n";
-    ss << "Number of root pipelines: " << pipelines.size() << "\n";
-    for (size_t i = 0; i < pipelines.size(); ++i)
+    os << "PipelinedQueryPlan for Query: " << plan.queryId << "\n";
+    os << "Number of root pipelines: " << plan.pipelines.size() << "\n";
+    for (size_t i = 0; i < plan.pipelines.size(); ++i)
     {
-        ss << "------------------\n";
-        ss << "Root Pipeline " << i << ":\n";
-        printPipelineRecursive(pipelines[i].get(), ss, 1);
+        os << "------------------\n";
+        os << "Root Pipeline " << i << ":\n";
+        printPipelineRecursive(plan.pipelines[i].get(), os, 1);
     }
-    return ss.str();
+    return os;
+}
+
+void PipelinedQueryPlan::removePipeline(Pipeline& pipeline)
+{
+    pipeline.clearSuccessors();
+    pipeline.clearPredecessors();
+    pipelines.erase(
+        std::remove_if(pipelines.begin(), pipelines.end(),
+            [&pipeline](const auto& ptr) { return ptr->pipelineId == pipeline.pipelineId; }),
+        pipelines.end());
 }
 
 std::vector<std::shared_ptr<Pipeline>> PipelinedQueryPlan::getSourcePipelines()

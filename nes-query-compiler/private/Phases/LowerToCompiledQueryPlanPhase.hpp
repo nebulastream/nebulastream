@@ -11,15 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
-#include <functional>
-#include <Plans/PipelineQueryPlan.hpp>
 
-namespace NES::QueryCompilation::NautilusCompilationPhase
+#include <memory>
+#include <CompiledQueryPlan.hpp>
+#include <PipelinedQueryPlan.hpp>
+
+namespace NES::QueryCompilation::LowerToCompiledQueryPlanPhase
 {
-/// Generates code for all pipelines in a pipelined query plan.
-std::shared_ptr<PipelineQueryPlan> apply(std::shared_ptr<PipelineQueryPlan> queryPlan);
-
-/// Generates code for a particular pipeline.
-std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline);
+std::unique_ptr<CompiledQueryPlan> apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan);
 }

@@ -55,13 +55,12 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
 
     /// 3. Calling the registry to create an executable function.
     auto executableFunctionArguments = PhysicalFunctionRegistryArguments(childFunction);
-    auto function = PhysicalFunctionRegistry::instance().create(logicalFunction.getType(), std::move(executableFunctionArguments));
-    if (not function.has_value())
+    if (const auto function
+         = PhysicalFunctionRegistry::instance().create(std::string(logicalFunction.getType()), std::move(executableFunctionArguments)))
     {
-        throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
+        return std::move(function.value());
     }
-
-    return std::move(function.value());
+    throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
 }
 
 PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)

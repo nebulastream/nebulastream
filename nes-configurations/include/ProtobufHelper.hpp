@@ -21,7 +21,7 @@
 
 namespace NES
 {
-
+/// Following functions are needed to support these serialized types in the configuration descriptor
 inline std::ostream& operator<<(std::ostream& os, const FunctionList& list)
 {
     os << list.DebugString();

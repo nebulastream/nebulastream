@@ -53,30 +53,24 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurati
                 protoVar.set_string_value(arg);
             else if constexpr (std::is_same_v<U, Configurations::EnumWrapper>)
             {
-                auto enumWrapper = SerializableEnumWrapper().New();
-                enumWrapper->set_value(arg.getValue());
-                protoVar.set_allocated_enum_value(enumWrapper);
+                protoVar.mutable_enum_value()->set_value(arg.getValue());
             }
             else if constexpr (std::is_same_v<U, NES::FunctionList>)
             {
-                NES::FunctionList* funcList = arg.New();
-                funcList->CopyFrom(arg);
-                protoVar.set_allocated_function_list(funcList);
+                protoVar.mutable_function_list()->CopyFrom(arg);
             }
             else if constexpr (std::is_same_v<U, NES::AggregationFunctionList>)
             {
-                NES::AggregationFunctionList* aggregationFunctionList = arg.New();
-                aggregationFunctionList->CopyFrom(arg);
-                protoVar.set_allocated_aggregation_function_list(aggregationFunctionList);
+                protoVar.mutable_aggregation_function_list()->CopyFrom(arg);
             }
             else if constexpr (std::is_same_v<U, NES::WindowInfos>)
             {
-                NES::WindowInfos* funcList = arg.New();
-                funcList->CopyFrom(arg);
-                protoVar.set_allocated_window_infos(funcList);
+                protoVar.mutable_window_infos()->CopyFrom(arg);
             }
             else
+            {
                 static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
+            }
         },
         var);
     return protoVar;

@@ -22,7 +22,6 @@ target_include_directories(nes-nautilus-test-util PUBLIC
 )
 
 target_link_libraries(nes-nautilus-test-util PUBLIC
-        nes-runtime
         nes-memory
         nes-grpc
         nes-nautilus

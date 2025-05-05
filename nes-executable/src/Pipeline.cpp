@@ -22,16 +22,42 @@ namespace NES
 
 namespace
 {
-std::string operatorChainToString(const NES::PhysicalOperator& op, int indent = 0)
+std::string operatorChainToString(const PhysicalOperator& op, int indent = 0)
 {
-    std::ostringstream oss;
     std::string indentation(indent, ' ');
-    oss << indentation << op.toString() << "\n";
+    std::string result = fmt::format("{}{}\n", indentation, op.toString());
     if (auto childOpt = op.getChild())
     {
-        oss << operatorChainToString(childOpt.value(), indent + 2);
+        result += operatorChainToString(childOpt.value(), indent + 2);
     }
-    return oss.str();
+    return result;
+}
+
+std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
+{
+    fmt::memory_buffer buf;
+    auto indentStr = std::string(indent, ' ');
+
+    fmt::format_to(
+        std::back_inserter(buf),
+        "{}Pipeline(ID({}), Provider({}))\n",
+        indentStr,
+        pipeline.pipelineId.getRawValue(),
+        magic_enum::enum_name(pipeline.providerType)
+    );
+
+    fmt::format_to(
+        std::back_inserter(buf),
+        "{}  Operator chain:\n{}",
+        indentStr,
+        operatorChainToString(pipeline.rootOperator, indent + 4)
+    );
+
+    for (auto& succ : pipeline.getSuccessors()) {
+        fmt::format_to(std::back_inserter(buf), "{}  Successor Pipeline:\n", indentStr);
+        fmt::format_to(std::back_inserter(buf), "{}", pipelineToString(*succ, indent + 4));
+    }
+    return fmt::to_string(buf);
 }
 
 std::atomic_uint64_t nextId{ INITIAL_PIPELINE_ID.getRawValue() };
@@ -82,13 +108,10 @@ PhysicalOperator appendOperatorHelper(PhysicalOperator op, const PhysicalOperato
         op.setChild(newOp);
         return op;
     }
-    else
-    {
-        PhysicalOperator child = op.getChild().value();
-        child = appendOperatorHelper(child, newOp);
-        op.setChild(child);
-        return op;
-    }
+    PhysicalOperator child = op.getChild().value();
+    child = appendOperatorHelper(child, newOp);
+    op.setChild(child);
+    return op;
 }
 
 void Pipeline::appendOperator(PhysicalOperator newOp)
@@ -97,23 +120,67 @@ void Pipeline::appendOperator(PhysicalOperator newOp)
     rootOperator = appendOperatorHelper(rootOperator, newOp);
 }
 
-std::string Pipeline::toString() const
+void Pipeline::addSuccessor(const std::shared_ptr<Pipeline>& successor, const std::weak_ptr<Pipeline>& self)
 {
-    std::ostringstream oss;
-    oss << "PipelineId: " << pipelineId.getRawValue() << "\n";
-    oss << "Provider: " << magic_enum::enum_name(providerType) << "\n";
-    for (const auto& successor : successorPipelines)
+    if (successor)
     {
-        oss << "Successor PipelineId: " << successor->pipelineId.getRawValue() << "\n";
+        successor->predecessorPipelines.emplace_back(self);
+        this->successorPipelines.emplace_back(successor);
     }
-    oss << "Operator Chain:\n";
-    oss << operatorChainToString(rootOperator);
-    return oss.str();
+}
+
+void Pipeline::removePredecessor(const Pipeline& pipeline)
+{
+    for (auto iter = predecessorPipelines.begin(); iter != predecessorPipelines.end(); ++iter)
+    {
+        if (iter->lock()->pipelineId == pipeline.pipelineId)
+        {
+            predecessorPipelines.erase(iter);
+            return;
+        }
+    }
+}
+
+const std::vector<std::shared_ptr<Pipeline>>& Pipeline::getSuccessors() const
+{
+    return successorPipelines;
+}
+
+void Pipeline::clearSuccessors() {
+    for (const auto& succ : successorPipelines)
+    {
+        succ->removePredecessor(*this);
+    }
+    successorPipelines.clear();
+}
+
+void Pipeline::clearPredecessors()
+{
+    for (const auto& pre : predecessorPipelines)
+    {
+        if (const auto prePipeline = pre.lock())
+        {
+            prePipeline->removeSuccessor(*this);
+        }
+    }
+    predecessorPipelines.clear();
+}
+
+void Pipeline::removeSuccessor(const Pipeline& pipeline)
+{
+    for (auto iter = successorPipelines.begin(); iter != successorPipelines.end(); ++iter)
+    {
+        if (iter->get()->pipelineId == pipeline.pipelineId)
+        {
+            successorPipelines.erase(iter);
+            return;
+        }
+    }
 }
 
 std::ostream& operator<<(std::ostream& os, const Pipeline& p)
 {
-    os << p.toString();
+    os << pipelineToString(p, 0);
     return os;
 }
 }

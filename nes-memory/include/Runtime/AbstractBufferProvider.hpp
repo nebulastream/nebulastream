@@ -45,33 +45,17 @@ public:
 
     virtual BufferManagerType getBufferManagerType() const = 0;
 
-    /// @return Configured size of the buffers
     virtual size_t getBufferSize() const = 0;
 
-    /// @return Number of total buffers in the pool
     virtual size_t getNumOfPooledBuffers() const = 0;
-
-    /// @return number of unpooled buffers
     virtual size_t getNumOfUnpooledBuffers() const = 0;
 
-    /// @brief Provides a new TupleBuffer. This blocks until a buffer is available.
-    /// @return a new buffer
     virtual TupleBuffer getBufferBlocking() = 0;
 
-    /// @brief Returns a new TupleBuffer wrapped in an optional or an invalid option if there is no buffer.
-    /// @return a new buffer
     virtual std::optional<TupleBuffer> getBufferNoBlocking() = 0;
 
-    /// @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
-    /// timeout_ms.
-    /// @param timeout_ms the amount of time to wait for a new buffer to be retuned
-    /// @return a new buffer
     virtual std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) = 0;
 
-    /// @brief Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
-    /// occurs.
-    /// @param bufferSize
-    /// @return a new buffer
     virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
 };
 
@@ -83,13 +67,5 @@ public:
     /// @return a local buffer manager with numberOfReservedBuffers exclusive buffer
     virtual std::optional<std::shared_ptr<AbstractBufferProvider>> createFixedSizeBufferPool(size_t numberOfReservedBuffers) = 0;
 };
-
-/// free functions for buffer provider
-
-/// @brief This function allocates a TupleBuffer of a desired size via a provider
-/// @param provider the buffer allocator
-/// @param size the desired size
-/// @return a tuplebuffer of size size allocated via the given provider
-TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size);
 
 }

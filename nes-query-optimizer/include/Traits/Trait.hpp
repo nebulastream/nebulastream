@@ -97,8 +97,7 @@ struct Trait
     
     /// Returns the type information of this trait.
     /// @return const std::type_info& The type information of this trait.
-    [[nodiscard]] const std::type_info& getType() const;
-    
+    [[nodiscard]] const std::type_info& getTypeInfo() const;
     /// Serializes this trait to a protobuf message.
     /// @return SerializableTrait The serialized trait.
     [[nodiscard]] SerializableTrait serialize() const;
@@ -146,10 +145,6 @@ private:
 using TraitSet = std::vector<Trait>;
 }
 
-/// Checks if a trait set contains a trait of type T.
-/// @tparam T The type of trait to check for.
-/// @param traitSet The trait set to check.
-/// @return bool True if the trait set contains a trait of type T, false otherwise.
 template <typename T>
 bool hasTrait(const NES::Optimizer::TraitSet& traitSet)
 {
@@ -163,10 +158,6 @@ bool hasTrait(const NES::Optimizer::TraitSet& traitSet)
     return false;
 }
 
-/// Checks if a trait set contains all of the specified trait types.
-/// @tparam TraitTypes The types of traits to check for.
-/// @param traitSet The trait set to check.
-/// @return bool True if the trait set contains all of the specified trait types, false otherwise.
 template <typename... TraitTypes>
 bool hasTraits(const NES::Optimizer::TraitSet& traitSet)
 {

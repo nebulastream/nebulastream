@@ -24,18 +24,12 @@ namespace NES
 /// Representation of a query plan of pipelines
 struct PipelinedQueryPlan final
 {
-    PipelinedQueryPlan(QueryId id);
+    explicit PipelinedQueryPlan(QueryId id);
 
-    std::vector<std::shared_ptr<Pipeline>> getSourcePipelines();
+    [[nodiscard]] std::vector<std::shared_ptr<Pipeline>> getSourcePipelines();
 
-    void removePipeline(std::shared_ptr<Pipeline> pipeline)
-    {
-        pipeline->clearSuccessors();
-        pipeline->clearPredecessors();
-        std::erase(pipelines, pipeline);
-    }
+    void removePipeline(Pipeline& pipeline);
 
-    [[nodiscard]] std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const PipelinedQueryPlan& t);
 
     const QueryId queryId;

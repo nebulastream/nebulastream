@@ -43,7 +43,7 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
         auto queryPlan = queryPlanCreator.getQueryPlan();
         queryPlan.originalSql = queryString;
-        NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan.explain());
+        NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
         return queryPlan;
     }
     catch (antlr4::RuntimeException antlrException)

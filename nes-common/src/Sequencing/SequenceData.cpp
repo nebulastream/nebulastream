@@ -25,13 +25,6 @@ SequenceData::SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumbe
 SequenceData::SequenceData()
     : sequenceNumber(INVALID_SEQ_NUMBER.getRawValue()), chunkNumber(INVALID_CHUNK_NUMBER.getRawValue()), lastChunk(false) { };
 
-[[nodiscard]] std::string SequenceData::toString() const
-{
-    std::ostringstream oss;
-    oss << *this;
-    return oss.str();
-}
-
 bool SequenceData::operator<=(const SequenceData& other) const
 {
     return ((*this < other)) || ((*this) == other);
@@ -58,6 +51,12 @@ bool SequenceData::operator==(const SequenceData& other) const
 bool SequenceData::operator!=(const SequenceData& other) const
 {
     return !(*this == other);
+}
+
+std::ostream& operator<<(std::ostream& os, const NES::SequenceData& obj)
+{
+    os << "{SeqNumber: " << obj.sequenceNumber << ", ChunkNumber: " << obj.chunkNumber << ", LastChunk: " << obj.lastChunk << "}";
+    return os;
 }
 
 }

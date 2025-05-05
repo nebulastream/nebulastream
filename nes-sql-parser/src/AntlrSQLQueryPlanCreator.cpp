@@ -95,17 +95,17 @@ LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction, Logica
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::EQ:
-            return EqualsLogicalFunction(leftFunction, rightFunction);
+            return EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         case AntlrSQLLexer::NEQJ:
-            return NegateLogicalFunction(EqualsLogicalFunction(leftFunction, rightFunction));
+            return NegateLogicalFunction(EqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction)));
         case AntlrSQLLexer::LT:
-            return LessLogicalFunction(leftFunction, rightFunction);
+            return LessLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         case AntlrSQLLexer::GT:
-            return GreaterLogicalFunction(leftFunction, rightFunction);
+            return GreaterLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         case AntlrSQLLexer::GTE:
-            return GreaterEqualsLogicalFunction(leftFunction, rightFunction);
+            return GreaterEqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         case AntlrSQLLexer::LTE:
-            return LessEqualsLogicalFunction(leftFunction, rightFunction);
+            return LessEqualsLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
@@ -118,17 +118,17 @@ LogicalFunction createLogicalBinaryFunction(LogicalFunction leftFunction, Logica
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::AND:
-            return AndLogicalFunction(leftFunction, rightFunction);
+            return AndLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         case AntlrSQLLexer::OR:
-            return OrLogicalFunction(leftFunction, rightFunction);
+            return OrLogicalFunction(std::move(leftFunction), std::move(rightFunction));
         default:
             auto lexer = AntlrSQLLexer(nullptr);
             throw InvalidQuerySyntax(
                 "Unknown binary function in SQL query for op {} with type: {} and left {} and right {}",
                 lexer.getVocabulary().getSymbolicName(tokenType),
                 tokenType,
-                leftFunction,
-                rightFunction);
+                std::move(leftFunction),
+                std::move(rightFunction));
     }
 }
 
@@ -175,7 +175,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
         helper.joinKeyRelationHelper.pop_back();
 
         const auto opTokenType = context->op->getType();
-        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
+        const auto function = createLogicalBinaryFunction(std::move(leftFunction), std::move(rightFunction), opTokenType);
         helper.joinKeyRelationHelper.push_back(function);
         helper.joinFunction = function;
     }
@@ -187,7 +187,7 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
         helper.functionBuilder.pop_back();
 
         const auto opTokenType = context->op->getType();
-        const auto function = createLogicalBinaryFunction(leftFunction, rightFunction, opTokenType);
+        const auto function = createLogicalBinaryFunction(std::move(leftFunction), std::move(rightFunction), opTokenType);
         helper.functionBuilder.push_back(function);
     }
 
@@ -252,19 +252,19 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     switch (opTokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::ASTERISK:
-            function = MulLogicalFunction(leftFunction, rightFunction);
+            function = MulLogicalFunction(std::move(leftFunction), std::move(rightFunction));
             break;
         case AntlrSQLLexer::SLASH:
-            function = DivLogicalFunction(leftFunction, rightFunction);
+            function = DivLogicalFunction(std::move(leftFunction), std::move(rightFunction));
             break;
         case AntlrSQLLexer::PLUS:
-            function = AddLogicalFunction(leftFunction, rightFunction);
+            function = AddLogicalFunction(std::move(leftFunction), std::move(rightFunction));
             break;
         case AntlrSQLLexer::MINUS:
-            function = SubLogicalFunction(leftFunction, rightFunction);
+            function = SubLogicalFunction(std::move(leftFunction), std::move(rightFunction));
             break;
         case AntlrSQLLexer::PERCENT:
-            function = ModuloLogicalFunction(leftFunction, rightFunction);
+            function = ModuloLogicalFunction(std::move(leftFunction), std::move(rightFunction));
             break;
         default:
             throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {} of type: {}", context->op->getText(), opTokenType);
@@ -647,7 +647,7 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
         helper.joinKeyRelationHelper.pop_back();
         const auto leftFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
-        const auto function = createFunctionFromOpBoolean(leftFunction, rightFunction, helper.opBoolean);
+        const auto function = createFunctionFromOpBoolean(std::move(leftFunction), std::move(rightFunction), helper.opBoolean);
         helper.joinKeyRelationHelper.push_back(function);
         helper.joinFunction = function;
         poppush(helper);
@@ -660,7 +660,7 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
         const auto leftFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
 
-        const auto function = createFunctionFromOpBoolean(leftFunction, rightFunction, helper.opBoolean);
+        const auto function = createFunctionFromOpBoolean(std::move(leftFunction), std::move(rightFunction), helper.opBoolean);
         helper.functionBuilder.push_back(function);
         poppush(helper);
     }
@@ -836,7 +836,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 helper.functionBuilder.pop_back();
                 const auto leftFunction = helper.functionBuilder.back();
                 helper.functionBuilder.pop_back();
-                parentHelper.functionBuilder.push_back(ConcatLogicalFunction(leftFunction, rightFunction));
+                parentHelper.functionBuilder.push_back(ConcatLogicalFunction(std::move(leftFunction), std::move(rightFunction)));
             }
             else
             {

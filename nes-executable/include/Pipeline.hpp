@@ -28,21 +28,21 @@ PipelineId getNextPipelineId();
 
 /// @brief Defines a single pipeline, which contains of a query plan of operators.
 /// Each pipeline can have N successor and predecessor pipelines.
-struct Pipeline : public std::enable_shared_from_this<Pipeline>
+/// We make use of shared_ptr reference counting of Pipelines to track the lifetime of query plans
+struct Pipeline
 {
-    Pipeline(PhysicalOperator op);
-    Pipeline(SourcePhysicalOperator op);
-    Pipeline(SinkPhysicalOperator op);
+    explicit Pipeline(PhysicalOperator op);
+    explicit Pipeline(SourcePhysicalOperator op);
+    explicit Pipeline(SinkPhysicalOperator op);
     Pipeline() = delete;
 
-    bool isSourcePipeline() const;
-    bool isOperatorPipeline() const;
-    bool isSinkPipeline() const;
+    [[nodiscard]] bool isSourcePipeline() const;
+    [[nodiscard]] bool isOperatorPipeline() const;
+    [[nodiscard]] bool isSinkPipeline() const;
 
     void appendOperator(PhysicalOperator newOp);
     void prependOperator(PhysicalOperator newOp);
 
-    std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const Pipeline& p);
 
     enum class ProviderType : uint8_t
@@ -56,69 +56,22 @@ struct Pipeline : public std::enable_shared_from_this<Pipeline>
     const PipelineId pipelineId;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
 
-    void addSuccessor(const std::shared_ptr<Pipeline>& pipeline)
-    {
-        if (pipeline)
-        {
-            pipeline->predecessorPipelines.emplace_back(weak_from_this());
-            this->successorPipelines.emplace_back(pipeline);
-        }
-    }
+    void addSuccessor(const std::shared_ptr<Pipeline>& successor, const std::weak_ptr<Pipeline>& self);
 
 
-    void removePredecessor(const std::shared_ptr<Pipeline>& pipeline)
-    {
-        for (auto iter = predecessorPipelines.begin(); iter != predecessorPipelines.end(); ++iter)
-        {
-            if (iter->lock().get() == pipeline.get())
-            {
-                predecessorPipelines.erase(iter);
-                return;
-            }
-        }
-    }
+    void removePredecessor(const Pipeline& pipeline);
 
-    const std::vector<std::shared_ptr<Pipeline>>& getSuccessors() const
-    {
-        return successorPipelines;
-    }
+    [[nodiscard]] const std::vector<std::shared_ptr<Pipeline>>& getSuccessors() const;
 
-    void clearSuccessors() {
-        for (const auto& succ : successorPipelines)
-        {
-            succ->removePredecessor(shared_from_this());
-        }
-        successorPipelines.clear();
-    }
+    void clearSuccessors();
 
-    void clearPredecessors()
-    {
-        for (const auto& pre : predecessorPipelines)
-        {
-            if (const auto prePipeline = pre.lock())
-            {
-                prePipeline->removeSuccessor(shared_from_this());
-            }
-        }
-        predecessorPipelines.clear();
-    }
+    void clearPredecessors();
 
-
-    void removeSuccessor(const std::shared_ptr<Pipeline>& pipeline)
-    {
-        for (auto iter = successorPipelines.begin(); iter != successorPipelines.end(); ++iter)
-        {
-            if (iter->get() == pipeline.get())
-            {
-                successorPipelines.erase(iter);
-                return;
-            }
-        }
-    }
+    void removeSuccessor(const Pipeline& pipeline);
 
 private:
     std::vector<std::shared_ptr<Pipeline>> successorPipelines;
     std::vector<std::weak_ptr<Pipeline>> predecessorPipelines;
 };
-
 }
+FMT_OSTREAM(NES::Pipeline);

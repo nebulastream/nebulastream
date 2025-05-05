@@ -27,9 +27,10 @@ bool OriginIdAssignerTrait::operator==(const TraitConcept& other) const
     return true;
 }
 
-std::string OriginIdAssignerTrait::toString() const
+std::ostream& operator<<(std::ostream& os, const OriginIdAssignerTrait&)
 {
-    return "OriginIdAssignerTrait";
+    os << "OriginIdAssignerTrait";
+    return os;
 }
 
 const std::type_info& OriginIdAssignerTrait::getType() const
