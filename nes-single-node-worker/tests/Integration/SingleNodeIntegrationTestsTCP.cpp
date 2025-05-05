@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -24,6 +22,7 @@
 #include <Util/ExecutionMode.hpp>
 #include <boost/asio.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
