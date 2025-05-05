@@ -19,6 +19,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
