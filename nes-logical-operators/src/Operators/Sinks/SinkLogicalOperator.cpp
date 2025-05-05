@@ -30,12 +30,17 @@ bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
     if (auto rhsOperator = dynamic_cast<const SinkLogicalOperator*>(&rhs))
     {
-        if (this->sinkDescriptor == nullptr or rhsOperator->sinkDescriptor == nullptr) {
-            return this->sinkName == rhsOperator->sinkName
-                && this->sinkDescriptor == rhsOperator->sinkDescriptor;
-        }
-        return this->sinkName == rhsOperator->sinkName
-            && *this->sinkDescriptor == *rhsOperator->sinkDescriptor;
+        const bool descriptorsEqual =
+            (sinkDescriptor == nullptr && rhsOperator->sinkDescriptor == nullptr) ||
+            (sinkDescriptor != nullptr && rhsOperator->sinkDescriptor != nullptr &&
+             *sinkDescriptor == *rhsOperator->sinkDescriptor);
+
+        return sinkName == rhsOperator->sinkName &&
+               descriptorsEqual &&
+               getOutputSchema() == rhsOperator->getOutputSchema() &&
+               getInputSchemas() == rhsOperator->getInputSchemas() &&
+               getInputOriginIds() == rhsOperator->getInputOriginIds() &&
+               getOutputOriginIds() == rhsOperator->getOutputOriginIds();
     }
     return false;
 }

@@ -38,11 +38,11 @@ public:
     LogicalPlan(LogicalPlan&& other);
     LogicalPlan& operator=(LogicalPlan&& other);
 
-    /// Operator is being promoted as the new root by reparenting existing root operators and replacing the current roots
+    /// Adds a new operator to the plan and promotes it as new root by reparenting existing root operators and replacing the current roots
     void promoteOperatorToRoot(LogicalOperator newRoot);
 
     /// Returns a string representation of the logical query plan
-    [[nodiscard]] std::string explain() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     /// Replace `target` with `replacement`, keeping target's children
     bool replaceOperator(const LogicalOperator& target, LogicalOperator replacement);
@@ -59,40 +59,44 @@ public:
         std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
-            for (LogicalOperator op : BFSRange(rootOperator))
+            auto typedOps = BFSRange(rootOperator)
+            | std::views::filter([&](const LogicalOperator& op)
             {
                 if (visitedOpIds.contains(op.getId()))
                 {
-                    continue;
+                    return false;
                 }
                 visitedOpIds.insert(op.getId());
-                if (op.tryGet<T>())
-                {
-                    operators.push_back(op.get<T>());
-                }
-            }
+                return op.tryGet<T>().has_value();
+            })
+            | std::views::transform([](const LogicalOperator& op)
+            {
+                return op.get<T>();
+            });
+            std::ranges::copy(typedOps, std::back_inserter(operators));
         }
         return operators;
     }
 
     template <typename... TraitTypes>
-    std::vector<LogicalOperator> getOperatorsByTraits()
+    std::vector<LogicalOperator> getOperatorsByTraits() const
     {
         std::vector<LogicalOperator> matchingOperators;
         std::set<OperatorId> visitedOpIds;
-        for (const auto& rootOperator : rootOperators)
+
+        for (auto const& rootOperator : rootOperators)
         {
-            for (auto op : BFSRange(rootOperator))
-            {
-                if (!visitedOpIds.contains(op.getId()))
-                {
-                    visitedOpIds.insert(op.getId());
-                    if (hasTraits<TraitTypes...>(op.getTraitSet()))
-                    {
-                        matchingOperators.emplace_back(op);
-                    }
-                }
-            }
+            auto ops = BFSRange(rootOperator);
+
+            auto filtered = ops
+              | std::views::filter([&](LogicalOperator const& op) {
+                  if (visitedOpIds.contains(op.getId()))
+                      return false;
+                  visitedOpIds.insert(op.getId());
+                  return hasTraits<TraitTypes...>(op.getTraitSet());
+                });
+
+            std::ranges::copy(filtered, std::back_inserter(matchingOperators));
         }
         return matchingOperators;
     }
@@ -113,3 +117,4 @@ public:
     QueryId queryId = INVALID_QUERY_ID;
 };
 }
+FMT_OSTREAM(NES::LogicalPlan);

@@ -66,8 +66,12 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperator
 {
     if (const auto rhsOperator = dynamic_cast<const EventTimeWatermarkAssignerLogicalOperator*>(&rhs))
     {
-        bool onFieldEqual = (onField == rhsOperator->onField);
-        return onFieldEqual && (rhsOperator->unit == this->unit);
+        return onField == rhsOperator->onField &&
+               unit == rhsOperator->unit &&
+               getOutputSchema() == rhsOperator->getOutputSchema() &&
+               getInputSchemas() == rhsOperator->getInputSchemas() &&
+               getInputOriginIds() == rhsOperator->getInputOriginIds() &&
+               getOutputOriginIds() == rhsOperator->getOutputOriginIds();
     }
     return false;
 }

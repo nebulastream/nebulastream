@@ -50,7 +50,12 @@ bool MapLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
     if (auto other = dynamic_cast<const MapLogicalOperator*>(&rhs))
     {
-        return this->mapFunction == other->mapFunction;
+        return this->mapFunction == other->mapFunction &&
+               getOutputSchema() == other->getOutputSchema() &&
+               getInputSchemas() == other->getInputSchemas() &&
+               getInputOriginIds() == other->getInputOriginIds() &&
+               getOutputOriginIds() == other->getOutputOriginIds() &&
+               getChildren() == other->getChildren();
     }
     return false;
 };

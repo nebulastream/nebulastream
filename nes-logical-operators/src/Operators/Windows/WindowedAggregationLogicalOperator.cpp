@@ -104,7 +104,12 @@ bool WindowedAggregationLogicalOperator::operator==(const LogicalOperatorConcept
                 return false;
             }
         }
-        return *windowType == rhsOperator->getWindowType();
+
+        return *windowType == rhsOperator->getWindowType() &&
+               getOutputSchema() == rhsOperator->getOutputSchema() &&
+               getInputSchemas() == rhsOperator->getInputSchemas() &&
+               getInputOriginIds() == rhsOperator->getInputOriginIds() &&
+               getOutputOriginIds() == rhsOperator->getOutputOriginIds();
     }
     return false;
 }

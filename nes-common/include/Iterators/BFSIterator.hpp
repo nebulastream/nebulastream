@@ -39,6 +39,11 @@ template <HasChildren T>
 class BFSIterator
 {
 public:
+    using value_type        = T;
+    using difference_type   = std::ptrdiff_t;
+    using iterator_category = std::input_iterator_tag;
+    using iterator_concept  = std::input_iterator_tag;
+
     BFSIterator() = default;
     explicit BFSIterator(T root) { nodeQueue.push(root); }
 
@@ -56,11 +61,18 @@ public:
         }
         return *this;
     }
+    void operator++(int) { ++(*this); }
 
-    bool operator==(const BFSIterator& other) const { return nodeQueue.empty() && other.nodeQueue.empty(); }
-    bool operator!=(const BFSIterator& other) const { return !(*this == other); }
+    bool operator==(std::default_sentinel_t) const noexcept
+    {
+        return nodeQueue.empty();
+    }
+    friend bool operator==(std::default_sentinel_t s, const BFSIterator& it) noexcept
+    {
+        return it == s;
+    }
 
-    [[nodiscard]] T operator*() const
+    [[nodiscard]] value_type operator*() const
     {
         INVARIANT(!nodeQueue.empty(), "Attempted to dereference end iterator");
         return nodeQueue.front();
@@ -72,13 +84,13 @@ private:
 }
 
 template <typename T>
-class BFSRange
+class BFSRange  : public std::ranges::view_interface<BFSRange<T>>
 {
 public:
     explicit BFSRange(T root) : root(root) { }
 
     BFSIterator<T> begin() const { return BFSIterator<T>(root); }
-    BFSIterator<T> end() const { return BFSIterator<T>(); }
+    std::default_sentinel_t end()  const noexcept { return {}; }
 
 private:
     T root;

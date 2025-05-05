@@ -64,7 +64,20 @@ bool ProjectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
 {
     if (const auto rhsOperator = dynamic_cast<const ProjectionLogicalOperator*>(&rhs))
     {
-        return (getOutputSchema() == rhsOperator->getOutputSchema());
+        if (functions.size() != rhsOperator->functions.size()) {
+            return false;
+        }
+        
+        for (size_t i = 0; i < functions.size(); i++) {
+            if (functions[i] != rhsOperator->functions[i]) {
+                return false;
+            }
+        }
+        
+        return getOutputSchema() == rhsOperator->getOutputSchema() &&
+               getInputSchemas() == rhsOperator->getInputSchemas() &&
+               getInputOriginIds() == rhsOperator->getInputOriginIds() &&
+               getOutputOriginIds() == rhsOperator->getOutputOriginIds();
     }
     return false;
 };

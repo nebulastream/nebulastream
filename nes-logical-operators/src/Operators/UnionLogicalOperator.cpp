@@ -39,7 +39,11 @@ bool UnionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
     if (const auto rhsOperator = dynamic_cast<const UnionLogicalOperator*>(&rhs))
     {
-        return (leftInputSchema == rhsOperator->leftInputSchema) && (rightInputSchema == rhsOperator->rightInputSchema);
+        return leftInputSchema == rhsOperator->leftInputSchema &&
+               rightInputSchema == rhsOperator->rightInputSchema &&
+               getOutputSchema() == rhsOperator->getOutputSchema() &&
+               getInputOriginIds() == rhsOperator->getInputOriginIds() &&
+               getOutputOriginIds() == rhsOperator->getOutputOriginIds();
     }
     return false;
 }

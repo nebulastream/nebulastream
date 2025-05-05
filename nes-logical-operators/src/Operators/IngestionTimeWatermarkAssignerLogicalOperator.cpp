@@ -51,7 +51,14 @@ std::string IngestionTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbos
 
 bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    return dynamic_cast<const IngestionTimeWatermarkAssignerLogicalOperator*>(&rhs);
+    if (const auto rhsOperator = dynamic_cast<const IngestionTimeWatermarkAssignerLogicalOperator*>(&rhs))
+    {
+        return getOutputSchema() == rhsOperator->getOutputSchema() &&
+               getInputSchemas() == rhsOperator->getInputSchemas() &&
+               getInputOriginIds() == rhsOperator->getInputOriginIds() &&
+               getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+    }
+    return false;
 }
 
 LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const

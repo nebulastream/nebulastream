@@ -55,7 +55,9 @@ bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
             and getJoinFunction() == rhsOperator->getJoinFunction()
             and getOutputSchema() == rhsOperator->outputSchema
             and getRightSchema() == rhsOperator->getRightSchema()
-            and getLeftSchema() == rhsOperator->getLeftSchema();
+            and getLeftSchema() == rhsOperator->getLeftSchema()
+            and getInputOriginIds() == rhsOperator->getInputOriginIds()
+            and getOutputOriginIds() == rhsOperator->getOutputOriginIds();
     }
     return false;
 }

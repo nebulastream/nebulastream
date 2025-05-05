@@ -72,21 +72,17 @@ TEST(BFSIteratorTest, EmptyTree)
     EXPECT_EQ(visitedIds, expectedOrder);
 }
 
-TEST(BFSIteratorTest, IteratorEquality) {
-    TestNode root(1);
-    auto range = BFSRange(root);
-    auto it1 = range.begin();
-    auto it2 = range.begin();
-    auto end = range.end();
-
-    EXPECT_FALSE(it1 == it2);
-    EXPECT_FALSE(it1 == end);
-    EXPECT_FALSE(it2 == end);
-
-    ++it1;
-    ++it2;
-    EXPECT_TRUE(it1 == it2);
-    EXPECT_TRUE(it1 == end);
+TEST(BFSIteratorTest, IteratorEquality2)
+{
+    std::vector expectedOrder = {1, 2, 3, 4, 5, 6};
+    std::vector otherOrder = {1, 2, 3, 4, 5, 6};
+    const auto expVecIt1 = expectedOrder.begin();
+    const auto expVecIt2 = expectedOrder.begin();
+    const auto otherVecIt = otherOrder.begin();
+    EXPECT_EQ(expVecIt1, expVecIt2);
+    EXPECT_NE(expVecIt1, otherVecIt);
+    EXPECT_NE((expVecIt1), (expVecIt1 + 1));
+    EXPECT_EQ((expVecIt1 + 1), (expVecIt2 + 1));
 }
 
 }

@@ -40,7 +40,12 @@ bool SourceNameLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
 {
     if (auto* rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs))
     {
-        return this->getSchema() == rhsOperator->getSchema() && this->getName() == rhsOperator->getName();
+        return this->getSchema() == rhsOperator->getSchema() &&
+                this->getName() == rhsOperator->getName() &&
+               getOutputSchema() == rhsOperator->getOutputSchema() &&
+               getInputSchemas() == rhsOperator->getInputSchemas() &&
+               getInputOriginIds() == rhsOperator->getInputOriginIds() &&
+               getOutputOriginIds() == rhsOperator->getOutputOriginIds();
     }
     return false;
 }
