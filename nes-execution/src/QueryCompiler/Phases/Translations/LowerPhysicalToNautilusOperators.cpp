@@ -26,11 +26,14 @@
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Selection.hpp>
+#include <Execution/Operators/SortTuples/SortTuplesInBuffer.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationProbe.hpp>
 #include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuildCache.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
@@ -58,6 +61,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSortTuplesInBuffer.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
@@ -194,10 +198,36 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             entrySize);
         const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
             = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
-        const auto executableAggregationBuild = std::make_shared<Runtime::Execution::Operators::AggregationBuild>(
-            handlerIndex, std::move(timeFunction), std::move(keyFunctions), std::move(windowAggregationOperator));
-        parentOperator->setChild(executableAggregationBuild);
-        return executableAggregationBuild;
+        if (queryCompilerConfig.sliceCacheType == Configurations::SliceCacheType::NONE)
+        {
+            const auto executableAggregationBuild = std::make_shared<Runtime::Execution::Operators::AggregationBuild>(
+                handlerIndex, std::move(timeFunction), std::move(keyFunctions), std::move(windowAggregationOperator));
+            parentOperator->setChild(executableAggregationBuild);
+            return executableAggregationBuild;
+        }
+        else
+        {
+            const auto executableAggregationBuild = std::make_shared<Runtime::Execution::Operators::AggregationBuildCache>(
+                handlerIndex,
+                std::move(timeFunction),
+                std::move(keyFunctions),
+                std::move(windowAggregationOperator),
+                Configurations::SliceCacheOptions{
+                    queryCompilerConfig.sliceCacheType.getValue(), queryCompilerConfig.numberOfEntriesSliceCache.getValue()});
+            parentOperator->setChild(executableAggregationBuild);
+            return executableAggregationBuild;
+        }
+    }
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalSortTuplesInBuffer>(operatorNode))
+    {
+        const auto sortTuplesInBuffer = NES::Util::as<PhysicalOperators::PhysicalSortTuplesInBuffer>(operatorNode);
+        const auto projections = sortTuplesInBuffer->getOutputSchema()->getFieldNames();
+        const auto sortField = sortTuplesInBuffer->getSortField();
+        const auto memoryProviderInput = sortTuplesInBuffer->getMemoryProviderInput(bufferSize);
+        const auto sortTuples
+            = std::make_shared<Runtime::Execution::Operators::SortTuplesInBuffer>(memoryProviderInput, projections, sortField);
+        pipeline.setRootOperator(sortTuples);
+        return sortTuples;
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalAggregationProbe>(operatorNode))
     {
@@ -265,8 +295,21 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         switch (buildOperator->getJoinStrategy())
         {
             case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN: {
-                joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(
-                    handlerIndex, buildOperator->getBuildSide(), std::move(timeFunction), memoryProvider);
+                if (queryCompilerConfig.sliceCacheType == QueryCompilation::Configurations::SliceCacheType::NONE)
+                {
+                    joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuild>(
+                        handlerIndex, buildOperator->getBuildSide(), std::move(timeFunction), memoryProvider);
+                }
+                else
+                {
+                    joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::NLJBuildCache>(
+                        handlerIndex,
+                        buildOperator->getBuildSide(),
+                        std::move(timeFunction),
+                        memoryProvider,
+                        Configurations::SliceCacheOptions{
+                            queryCompilerConfig.sliceCacheType.getValue(), queryCompilerConfig.numberOfEntriesSliceCache.getValue()});
+                }
                 break;
             };
         }

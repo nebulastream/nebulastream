@@ -49,6 +49,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSortTuplesInBuffer.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -287,7 +288,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
     const auto joinStrategy = queryCompilerConfig.joinStrategy;
 
-    const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
+    StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(
         joinFieldNameLeft, joinFieldNameRight, windowSize, windowSlide, timeStampFieldLeft, timeStampFieldRight, joinStrategy);
 
@@ -297,6 +298,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN:
             joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
             break;
+            std::unreachable();
     }
 
     auto createBuildOperator = [&](const std::shared_ptr<Schema>& inputSchema,
@@ -334,6 +336,18 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         streamJoinConfig.joinFieldNamesLeft,
         streamJoinConfig.joinFieldNamesRight,
         joinOperator->windowMetaData);
+    if (queryCompilerConfig.sortBufferByTimestamp.getValue())
+    {
+        const auto sortTuplesInBufferLeft = std::make_shared<PhysicalOperators::PhysicalSortTuplesInBuffer>(
+            getNextOperatorId(), joinOperator->getLeftInputSchema(), joinOperator->getLeftInputSchema(), timeStampFieldLeft.getName());
+
+        const auto sortTuplesInBufferRight = std::make_shared<PhysicalOperators::PhysicalSortTuplesInBuffer>(
+            getNextOperatorId(), joinOperator->getRightInputSchema(), joinOperator->getRightInputSchema(), timeStampFieldRight.getName());
+        streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(sortTuplesInBufferLeft);
+        streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(sortTuplesInBufferRight);
+        streamJoinOperators.leftInputOperator = sortTuplesInBufferLeft;
+        streamJoinOperators.rightInputOperator = sortTuplesInBufferRight;
+    }
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
@@ -454,6 +468,12 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler, windowOperator->windowMetaData);
     operatorNode->insertBetweenThisAndChildNodes(aggregationBuild);
     operatorNode->replace(aggregationProbe);
+    if (queryCompilerConfig.sortBufferByTimestamp.getValue())
+    {
+        const auto sortTuplesInBuffer = std::make_shared<PhysicalOperators::PhysicalSortTuplesInBuffer>(
+            getNextOperatorId(), windowInputSchema, windowInputSchema, timeBasedWindowType->getTimeCharacteristic()->field->getName());
+        aggregationBuild->insertBetweenThisAndChildNodes(sortTuplesInBuffer);
+    }
 }
 
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(const std::shared_ptr<LogicalOperator>& operatorNode)

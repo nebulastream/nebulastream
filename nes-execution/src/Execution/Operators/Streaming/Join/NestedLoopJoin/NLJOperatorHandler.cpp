@@ -110,12 +110,6 @@ Nautilus::Interface::PagedVector* getNLJPagedVectorProxy(
     const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-    switch (joinBuildSide)
-    {
-        case QueryCompilation::JoinBuildSideType::Left:
-            return nljSlice->getPagedVectorRefLeft(workerThreadId);
-        case QueryCompilation::JoinBuildSideType::Right:
-            return nljSlice->getPagedVectorRefRight(workerThreadId);
-    }
+    return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
 }
 }

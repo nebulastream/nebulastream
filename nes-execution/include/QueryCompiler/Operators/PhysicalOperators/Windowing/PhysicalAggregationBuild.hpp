@@ -18,12 +18,13 @@
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-class PhysicalAggregationBuild final : public PhysicalWindowOperator
+class PhysicalAggregationBuild final : public PhysicalWindowOperator, public AbstractEmitOperator
 {
 public:
     static std::shared_ptr<PhysicalOperator> create(

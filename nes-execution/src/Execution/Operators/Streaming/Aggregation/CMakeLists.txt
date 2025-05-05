@@ -12,6 +12,7 @@
 
 add_source_files(nes-execution
         AggregationBuild.cpp
+        AggregationBuildCache.cpp
         AggregationProbe.cpp
         AggregationOperatorHandler.cpp
         AggregationSlice.cpp

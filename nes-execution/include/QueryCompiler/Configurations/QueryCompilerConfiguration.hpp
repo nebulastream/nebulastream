@@ -20,11 +20,12 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
+#include <Configurations/Validation/BooleanValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Nautilus/NautilusBackend.hpp>
 #include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
-#include "Configurations/BaseOption.hpp"
+#include <QueryCompiler/Configurations/Enums/WindowManagement.hpp>
 
 namespace NES::QueryCompilation::Configurations
 {
@@ -62,11 +63,32 @@ public:
            "WindowingStrategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
+    NES::Configurations::EnumOption<SliceCacheType> sliceCacheType
+        = {"sliceCacheType",
+           SliceCacheType::NONE,
+           "Type of slice cache"
+           "[NONE|FIFO|LRU|SECOND_CHANCE]. "};
+    NES::Configurations::UIntOption numberOfEntriesSliceCache
+        = {"numberOfEntriesSliceCache", "1", "Size of the slice cache", {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::BoolOption sortBufferByTimestamp
+        = {"sortBufferByTimestamp",
+           "false",
+           "Should the sort buffer operator sort by the timestamp field.",
+           {std::make_shared<NES::Configurations::BooleanValidation>()}};
+
 
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&nautilusBackend, &pageSize, &numberOfPartitions, &joinStrategy, &pipelinesTxtFilePath};
+        return {
+            &nautilusBackend,
+            &pageSize,
+            &numberOfPartitions,
+            &joinStrategy,
+            &pipelinesTxtFilePath,
+            &sliceCacheType,
+            &numberOfEntriesSliceCache,
+            &sortBufferByTimestamp};
     }
 };
 }

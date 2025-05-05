@@ -22,10 +22,11 @@
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-class PhysicalAggregationProbe final : public PhysicalWindowOperator
+class PhysicalAggregationProbe final : public PhysicalWindowOperator, public AbstractScanOperator
 {
 public:
     WindowMetaData getWindowMetaData() const;

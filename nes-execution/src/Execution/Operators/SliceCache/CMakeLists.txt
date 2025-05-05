@@ -11,9 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        NLJBuild.cpp
-        NLJBuildCache.cpp
-        NLJOperatorHandler.cpp
-        NLJProbe.cpp
-        NLJSlice.cpp
+        SliceCache.cpp
+        SliceCacheFIFO.cpp
+        SliceCacheLRU.cpp
+        SliceCacheSecondChance.cpp
 )
