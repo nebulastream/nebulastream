@@ -12,10 +12,10 @@
 
 add_source_files(nes-input-formatters
         InputFormatterTask.cpp
-        CSVInputFormatter.cpp
         InputFormatterProvider.cpp
         SequenceShredder.cpp
 )
 
-# Register plugins
-add_plugin(CSV InputFormatter nes-input-formatters CSVInputFormatter.cpp)
+add_source_files_as_plugins(nes-input-formatters
+        CSV InputFormatter CSVInputFormatter.cpp
+)
