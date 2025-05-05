@@ -97,14 +97,7 @@ void copyInputFile(std::string_view inputFileName, std::string_view querySpecifi
 void removeFile(std::string_view filepath);
 
 /// Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
-bool loadFile(
-    SerializableQueryPlan& queryPlan,
-    std::string_view queryFileName,
-    std::string_view dataFileName,
-    std::string_view querySpecificDataFileName);
-
-/// Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
-bool loadFile(SerializableQueryPlan& queryPlan, std::string_view queryFileName);
+bool loadFile(SerializableQueryPlan& queryPlan, const std::string_view queryFileName);
 
 void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, const std::string& newInputFileName);
 
