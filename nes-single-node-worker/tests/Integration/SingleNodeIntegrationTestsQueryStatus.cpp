@@ -55,7 +55,8 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
 
     SerializableQueryPlan queryPlan;
     const auto querySpecificDataFileName = fmt::format("{}_{}", "TestQueryStatus", dataInputFile);
-    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, querySpecificDataFileName))
+    IntegrationTestUtil::copyInputFile(dataInputFile, querySpecificDataFileName);
+    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile))
     {
         GTEST_SKIP();
     }
@@ -99,7 +100,8 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
 
     SerializableQueryPlan queryPlan;
     const auto querySpecificDataFileName = fmt::format("{}_{}", "TestQueryStatusSimple", dataInputFile);
-    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, querySpecificDataFileName))
+    IntegrationTestUtil::copyInputFile(dataInputFile, querySpecificDataFileName);
+    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile))
     {
         GTEST_SKIP();
     }

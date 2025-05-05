@@ -377,27 +377,6 @@ void removeFile(const std::string_view filepath)
     }
 }
 
-bool loadFile(
-    SerializableQueryPlan& queryPlan,
-    const std::string_view queryFileName,
-    const std::string_view dataFileName,
-    const std::string_view querySpecificDataFileName)
-{
-    std::ifstream file(std::filesystem::path(SERIALIZED_QUERIES_DIR) / (queryFileName));
-    if (!file)
-    {
-        NES_ERROR("Query file is not available: {}/{}", SERIALIZED_QUERIES_DIR, queryFileName);
-        return false;
-    }
-    if (!queryPlan.ParseFromIstream(&file))
-    {
-        NES_ERROR("Could not load protobuffer file: {}/{}", SERIALIZED_QUERIES_DIR, queryFileName);
-        return false;
-    }
-    copyInputFile(dataFileName, querySpecificDataFileName);
-    return true;
-}
-
 bool loadFile(SerializableQueryPlan& queryPlan, const std::string_view queryFileName)
 {
     std::ifstream f(std::filesystem::path(SERIALIZED_QUERIES_DIR) / (queryFileName));

@@ -122,7 +122,8 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
     IntegrationTestUtil::removeFile(testSpecificResultFileName); /// remove outputFile if exists
 
     SerializableQueryPlan queryPlan;
-    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, testSpecificDataFileName))
+    IntegrationTestUtil::copyInputFile(dataInputFile, testSpecificDataFileName);
+    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile))
     {
         GTEST_SKIP();
     }
