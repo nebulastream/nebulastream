@@ -14,6 +14,7 @@ add_source_files(nes-physical-operators
         PhysicalPlan.cpp
         MapPhysicalOperator.cpp
         SelectionPhysicalOperator.cpp
+        UnionPhysicalOperator.cpp
         PhysicalOperator.cpp
         EmitPhysicalOperator.cpp
         EmitOperatorHandler.cpp
