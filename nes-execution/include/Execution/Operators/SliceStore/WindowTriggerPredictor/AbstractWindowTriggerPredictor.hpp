@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <Identifiers/Identifiers.hpp>
+#include <Time/Timestamp.hpp>
+
 namespace NES::Runtime::Execution
 {
 
@@ -21,6 +24,11 @@ class AbstractWindowTriggerPredictor
 {
 public:
     AbstractWindowTriggerPredictor() = default;
+    virtual ~AbstractWindowTriggerPredictor() = default;
+
+    virtual void processSlice(OriginId originId, Timestamp timestamp, SequenceNumber sequenceNumber) = 0;
+
+    [[nodiscard]] virtual Timestamp getEstimatedTimestamp(OriginId originId, SequenceNumber sequenceNumber) const = 0;
 };
 
 }
