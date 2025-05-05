@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        AbstractWindowTriggerPredictor.cpp
-        KalmanWindowTriggerPredictor.cpp
-        WatermarkBasedWindowTriggerPredictor.cpp
+        AbstractWatermarkPredictor.cpp
+        RegressionBasedWatermarkPredictor.cpp
 )

@@ -14,21 +14,23 @@
 
 #pragma once
 
-#include <Identifiers/Identifiers.hpp>
-#include <Time/Timestamp.hpp>
+#include <../../eigen/Dense>
+#include <Execution/Operators/SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
 
 namespace NES::Runtime::Execution
 {
 
-class AbstractWindowTriggerPredictor
+class RegressionBasedWatermarkPredictor final : public AbstractWatermarkPredictor
 {
 public:
-    AbstractWindowTriggerPredictor() = default;
-    virtual ~AbstractWindowTriggerPredictor() = default;
+    explicit RegressionBasedWatermarkPredictor(uint64_t degree);
 
-    virtual void processSlice(OriginId originId, Timestamp timestamp, SequenceNumber sequenceNumber) = 0;
+    void initialize(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data) override;
+    [[nodiscard]] Timestamp getEstimatedWatermark(uint64_t timestamp) const override;
 
-    [[nodiscard]] virtual Timestamp getEstimatedTimestamp(OriginId originId, SequenceNumber sequenceNumber) const = 0;
+private:
+    uint64_t degree;
+    Eigen::VectorXd coefficients;
 };
 
 }

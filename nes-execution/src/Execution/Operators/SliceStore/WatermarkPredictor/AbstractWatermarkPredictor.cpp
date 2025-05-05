@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/SliceStore/WindowTriggerPredictor/WatermarkBasedWindowTriggerPredictor.hpp>
+#include <Execution/Operators/SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
 
 namespace NES::Runtime::Execution
 {

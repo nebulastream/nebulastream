@@ -18,4 +18,4 @@ add_source_files(nes-execution
 
 add_subdirectory(FileDescriptors)
 add_subdirectory(MemoryController)
-add_subdirectory(WindowTriggerPredictor)
+add_subdirectory(WatermarkPredictor)
