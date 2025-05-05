@@ -29,6 +29,12 @@
 #include <Util/Logger/Logger.hpp>
 #include <boost/process.hpp>
 #include <boost/process/search_path.hpp>
+#include <boost/graph/graphviz.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <regex>
+#include <sstream>
+#include <iostream>
+#include <optional>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
@@ -48,6 +54,88 @@ struct Tool
     bool hasVersion = false;
     bool available = false;
     std::string version;
+};
+
+struct ModelMetadataGraph
+{
+    struct VertexProps
+    {
+        std::string label;
+        std::string shape;
+    };
+
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, VertexProps> Graph;
+    Graph graph;
+
+    ModelMetadataGraph(const std::string& dot_file_path)
+    {
+        boost::dynamic_properties dp = boost::dynamic_properties(boost::ignore_other_properties);
+        dp.property("label", boost::get(&VertexProps::label, graph));
+        dp.property("shape", boost::get(&VertexProps::shape, graph));
+
+        std::ifstream in(dot_file_path);
+        boost::read_graphviz(in, graph, dp);
+    }
+
+    std::vector<int> parseInputShape(const std::string& label)
+    {
+        std::regex tensor_regex(R"(tensor<([?0-9x]+)f32>)");
+        std::smatch match;
+        std::vector<int> result;
+
+        if (std::regex_search(label, match, tensor_regex))
+        {
+            std::string shape_str = match[1];
+            std::stringstream ss(shape_str);
+            std::string dim;
+            while (std::getline(ss, dim, 'x'))
+            {
+                if (dim == "?")
+                {
+                    result.push_back(1);
+                }
+                else
+                {
+                    result.push_back(std::stoi(dim));
+                }
+            }
+        }
+        return result;
+    }
+
+    std::string parseFunctionName(const std::string& label)
+    {
+        std::regex graph_name_regex(R"(@([a-zA-Z0-9_]+)\$)");
+        std::smatch match;
+        if (std::regex_search(label, match, graph_name_regex))
+        {
+            return match[1];
+        }
+        return {};
+    }
+
+    std::pair<std::vector<int>, std::string> getModelMetadata()
+    {
+        std::pair<std::vector<int>, std::string> metadata;
+        while (metadata.first.empty() || metadata.second.empty())
+        {
+            for (auto v : boost::make_iterator_range(boost::vertices(graph)))
+            {
+                const std::string& label = graph[v].label;
+
+                if (label.find("hal.tensor.import") != std::string::npos)
+                {
+                    metadata.first = parseInputShape(label);
+                }
+                else if(label.find("flow.dispatch") != std::string::npos)
+                {
+                    metadata.second = parseFunctionName(label);
+                }
+            }
+        }
+        return metadata;
+    }
+
 };
 
 auto format_as(const Tool& tool)
@@ -159,6 +247,14 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
     ///TODO: (#???) This only works if nebuli and the worker are running on the same arch
     compileArgs.emplace_back("--iree-llvmcpu-target-cpu=host");
 
+    /// iree-compile allows to dump a .dot graph containing dispatch operations
+    /// while this is not exactly metadata, we can still extract the necessary information from it
+    auto graphDir = std::filesystem::temp_directory_path() / "graph";
+    std::filesystem::create_directory(graphDir);
+    std::string graphPath = graphDir.string() + "/model.dot";
+    compileArgs.emplace_back("--iree-flow-dump-dispatch-graph");
+    compileArgs.emplace_back("--iree-flow-dump-dispatch-graph-output-file=" + graphPath);
+
     try
     {
         bp::pipe mlir_pipe;
@@ -194,30 +290,16 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             auto modelVmfb1Span = std::span{modelVmfb1.get(), modelVmfb.size()};
             std::ranges::copy(modelVmfb, modelVmfb1Span.begin());
 
-            auto tmpPath = std::filesystem::temp_directory_path() / "model.vmfb";
-            {
-                std::ofstream tmpOut(tmpPath, std::ios::binary);
-                tmpOut.write(reinterpret_cast<const char*>(modelVmfb.data()), modelVmfb.size());
-            }
+            ModelMetadataGraph modelGraph(graphPath);
+            auto metadata = modelGraph.getModelMetadata();
+            std::vector<int> inputShape = metadata.first;
+            std::string functionName = metadata.second;
 
-            std::stringstream dumpedText;
-            bp::ipstream dump_output;
-            std::vector<std::string> dumpArgs { tmpPath.string(), "--output=flatbuffer-json" };
+            Model model = Model{std::move(modelVmfb1), modelVmfb.size()};
+            model.setFunctionName("module." + functionName);
+            model.setInputShape(inputShape);
 
-            bp::child dump_proc(bp::search_path("iree-dump-module"), dumpArgs, bp::std_out > dump_output);
-
-            std::string line;
-            std::getline(dump_output, line);
-
-            dump_proc.wait();
-            std::filesystem::remove(tmpPath);
-
-            nlohmann::json modelMetadata = nlohmann::json::parse(line);
-            const auto& functions = modelMetadata["exported_functions"];
-            std::string moduleName = functions[functions.size() - 2]["local_name"];
-
-            auto model = Model{std::move(modelVmfb1), modelVmfb.size()};
-            model.setFunctionName("module." + moduleName);
+            std::filesystem::remove_all(graphDir);
             return model;
         }
         return std::unexpected(ModelLoadError("Model Import was not successful: Non Zero Exit Code."));

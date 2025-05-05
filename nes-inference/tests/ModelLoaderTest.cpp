@@ -33,7 +33,7 @@ TEST(ModelLoaderTest, TestLoadingModel)
     auto result = NES::Nebuli::Inference::load(
         std::filesystem::path(TEST_DATA_DIR) / "convit_tiny_Opset17.onnx", NES::Nebuli::Inference::ModelOptions{.opset = 17});
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result->getByteCode().size(), 29322936)
+    EXPECT_EQ(result->getByteCode().size(), 29291384)
         << "The Size of the Model does not match. Reproduce by using: \n"
            "iree-import-onnx convit_tiny_Opset17.onnx --opset-version 17 | \\ \n"
            "iree-compile - --iree-hal-target-device=local "

@@ -47,9 +47,7 @@ inline Model ModelCatalog::load(const std::string modelName) const
         auto result = Inference::load(it->second.path, {});
         if (result)
         {
-            result->shape = std::vector<int>{1, 4};
-            result->dims = 2;
-            result->inputSizeInBytes = 4 * 4;
+            result->inputSizeInBytes = 4 * std::accumulate(result->shape.begin(), result->shape.end(), 1, std::multiplies<int>());
 
             result->inputs = it->second.inputs;
             result->outputs = it->second.outputs
