@@ -35,13 +35,8 @@ function(add_plugin_as_library plugin_name plugin_registry plugin_registry_compo
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
 endfunction()
 
-# adds the source files of the plugin to the source files of the component that the plugin registry belongs to
 # adds the name of plugin to the list of plugin names for the plugin registry
-function(add_plugin plugin_name plugin_registry plugin_registry_component)
-    set(sources ${ARGN})
-    add_source_files(${plugin_registry_component}
-            ${sources}
-    )
+function(add_plugin plugin_name plugin_registry)
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
 endfunction()
 

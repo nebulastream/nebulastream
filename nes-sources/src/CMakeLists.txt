@@ -17,8 +17,9 @@ add_source_files(nes-sources
         SourceHandle.cpp
         SourceProvider.cpp
         SourceValidationProvider.cpp
+        FileSource.cpp
 )
 
 # Register plugins
-add_plugin(File Source nes-sources FileSource.cpp)
-add_plugin(File SourceValidation nes-sources FileSource.cpp)
+add_plugin(File Source)
+add_plugin(File SourceValidation)
