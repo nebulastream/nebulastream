@@ -14,3 +14,8 @@ add_source_files(nes-executable
         CompiledQueryPlan.cpp
         Pipeline.cpp
 )
+
+add_executable(sql-parser-fuzz Fuzz.cpp)
+target_link_libraries(sql-parser-fuzz nes-sql-parser)
+target_compile_options(sql-parser-fuzz PRIVATE -fsanitize=fuzzer)
+target_link_options(sql-parser-fuzz PRIVATE -fsanitize=fuzzer)
