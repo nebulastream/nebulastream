@@ -81,7 +81,8 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesCSV)
 
     SerializableQueryPlan queryPlan;
 
-    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, testSpecificDataFileName))
+    IntegrationTestUtil::copyInputFile(dataInputFile, testSpecificDataFileName);
+    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile))
     {
         GTEST_SKIP();
     }
