@@ -33,6 +33,7 @@
     "boost-system",
     "boost-filesystem",
     "boost-process",
+    "boost-graph",
     "cpptrace",
     "fmt",
     "folly",

@@ -54,6 +54,11 @@ public:
     bool operator==(const Model&) const = default;
 
     void setFunctionName(std::string moduleName) { this->functionName = moduleName; }
+    void setInputShape(std::vector<int> inputShape)
+    {
+        this->shape = inputShape;
+        this->dims = inputShape.size();
+    }
 
     const std::vector<int>& getInputShape() { return shape; }
     size_t getNDim() { return dims; }

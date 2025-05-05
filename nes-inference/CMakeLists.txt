@@ -13,10 +13,11 @@
 find_package(boost_system REQUIRED CONFIG)
 find_package(boost_filesystem REQUIRED CONFIG)
 find_package(boost_process REQUIRED CONFIG)
+find_package(boost_graph REQUIRED CONFIG)
 
 add_library(nes-inference ModelLoader.cpp Model.cpp)
 target_include_directories(nes-inference PUBLIC include PRIVATE .)
-target_link_libraries(nes-inference PUBLIC nes-data-types nes-grpc PRIVATE Boost::system Boost::filesystem Boost::process nes-common)
+target_link_libraries(nes-inference PUBLIC nes-data-types nes-grpc PRIVATE Boost::system Boost::filesystem Boost::process Boost::graph nes-common)
 
 function(add_nes_test_nebuli)
     add_nes_test(${ARGN})
