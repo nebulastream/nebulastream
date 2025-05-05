@@ -65,6 +65,12 @@ public:
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
     [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const = 0;
 
+
+    virtual void
+    allocateSliceCacheEntries(const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
+        = 0;
+
+
 protected:
     /// Gets called if slices should be triggered once a window is ready to be emitted.
     /// Each window operator can be specific about what to do if the given slices are ready to be emitted
@@ -78,5 +84,9 @@ protected:
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads;
     const OriginId outputOriginId;
+
+    /// This vector stores the start of the cache entries for each worker thread.
+    std::vector<Memory::TupleBuffer> sliceCacheEntriesBufferForWorkerThreads;
+    std::atomic<bool> hasSliceCacheCreated{false};
 };
 }

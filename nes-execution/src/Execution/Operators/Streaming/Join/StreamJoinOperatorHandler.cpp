@@ -17,6 +17,7 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+#include <Execution/Operators/SliceCache/SliceCache.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
@@ -40,6 +41,42 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(
     , leftMemoryProvider(leftMemoryProvider)
     , rightMemoryProvider(rightMemoryProvider)
 {
+}
+
+const int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(
+    const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide) const
+{
+    PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
+    PRECONDITION(hasSliceCacheCreated, "Before accessing the slice cache, it needs to be created first");
+    const auto pos
+        = workerThreadId % sliceCacheEntriesBufferForWorkerThreads.size() + numberOfWorkerThreads * static_cast<uint64_t>(joinBuildSide);
+    INVARIANT(
+        pos < sliceCacheEntriesBufferForWorkerThreads.size(),
+        "Position should be smaller than the size of the sliceCacheEntriesBufferForWorkerThreads");
+    return sliceCacheEntriesBufferForWorkerThreads.at(pos).getBuffer();
+}
+
+void StreamJoinOperatorHandler::allocateSliceCacheEntries(
+    const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
+{
+    /// If the slice cache has already been created, we simply return
+    if (hasSliceCacheCreated.exchange(true))
+    {
+        return;
+    }
+
+    PRECONDITION(bufferProvider != nullptr, "Buffer provider should not be null");
+    /// As we have a left and right side, we have to allocate the slice cache entries for both sides
+    for (uint64_t i = 0; i < numberOfWorkerThreads * 2; ++i)
+    {
+        const auto neededSize = numberOfEntries * sizeOfEntry + sizeof(HitsAndMisses);
+        INVARIANT(neededSize > 0, "Size of entry should be larger than 0");
+
+        auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);
+        INVARIANT(bufferOpt.has_value(), "Buffer provider should return a buffer");
+        std::memset(bufferOpt.value().getBuffer(), 0, bufferOpt.value().getBufferSize());
+        sliceCacheEntriesBufferForWorkerThreads.emplace_back(bufferOpt.value());
+    }
 }
 
 void StreamJoinOperatorHandler::triggerSlices(

@@ -50,10 +50,12 @@ public:
 
 
     /// We do not wish to set the hash map specific params during the lowering from the logical to physical
-    /// TODO #409 This might change after the [DD] Operator Representations  has been implemented
+    /// TODO #409 This might change after the [DD] Operator Representations has been implemented
     void setHashMapParams(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets);
-
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
+    void allocateSliceCacheEntries(
+        const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider) override;
+    const int8_t* getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId) const;
 
 protected:
     void triggerSlices(

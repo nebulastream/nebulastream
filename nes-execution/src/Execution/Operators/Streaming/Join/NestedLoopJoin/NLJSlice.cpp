@@ -21,6 +21,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Util/Execution.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -66,6 +67,19 @@ Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerT
 {
     const auto pos = workerThreadId % rightPagedVectors.size();
     return rightPagedVectors[pos].get();
+}
+
+Nautilus::Interface::PagedVector*
+NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType joinBuildSide) const
+{
+    switch (joinBuildSide)
+    {
+        case QueryCompilation::JoinBuildSideType::Right:
+            return getPagedVectorRefRight(workerThreadId);
+        case QueryCompilation::JoinBuildSideType::Left:
+            return getPagedVectorRefLeft(workerThreadId);
+    }
+    std::unreachable();
 }
 
 void NLJSlice::combinePagedVectors()
