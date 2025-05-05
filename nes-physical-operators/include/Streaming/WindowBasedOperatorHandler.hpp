@@ -18,6 +18,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <PipelineExecutionContext.hpp>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>

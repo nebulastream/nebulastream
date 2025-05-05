@@ -42,7 +42,7 @@ std::string PhysicalPlan::toString() const
     auto dumpHandler = QueryConsoleDumpHandler<PhysicalPlan, PhysicalOperatorWrapper>(ss);
     for (const auto& rootOperator : rootOperators)
     {
-        dumpHandler.dump(rootOperator);
+        dumpHandler.dump(*rootOperator);
     }
     return ss.str();
 }

@@ -21,7 +21,8 @@ namespace NES
 
 void UnionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    INVARIANT(false, "Error during pipeling phase. Union operator is not meant to be executed.");
+    /// Path-through, will be optimized out during query compilation
+    PhysicalOperatorConcept::execute(ctx, record);
 }
 
 }

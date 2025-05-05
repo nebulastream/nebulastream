@@ -29,6 +29,8 @@ public:
     std::optional<PhysicalOperator> getChild() const override { return child; }
     void setChild(struct PhysicalOperator child) override { this->child = child; }
 
+    void execute(ExecutionContext& ctx, Record& record) const override;
+
 private:
     std::optional<PhysicalOperator> child;
 };

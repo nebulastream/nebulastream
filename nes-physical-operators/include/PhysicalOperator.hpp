@@ -28,6 +28,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <ErrorHandling.hpp>
+#include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
@@ -226,7 +227,7 @@ struct PhysicalOperatorWrapper
     /// for compatibility with free functions requiring getChildren()
     [[nodiscard]] std::vector<std::shared_ptr<PhysicalOperatorWrapper>> getChildren() const { return children; }
     /// Returns a string representation of the wrapper
-    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     PhysicalOperator physicalOperator;
     std::optional<Schema> inputSchema, outputSchema;
