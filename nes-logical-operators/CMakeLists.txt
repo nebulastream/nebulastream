@@ -26,3 +26,6 @@ create_plugin_registry_library(nes-logical-operators-registry nes-logical-operat
 target_link_libraries(nes-logical-operators PRIVATE nes-logical-operators-registry)
 # Generate a registrar for every registry
 generate_plugin_registrars(nes-logical-operators LogicalOperator LogicalFunction AggregationLogicalFunction)
+
+add_tests_if_enabled(tests)
+

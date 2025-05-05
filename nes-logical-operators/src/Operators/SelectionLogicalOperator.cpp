@@ -58,9 +58,9 @@ std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("FILTER(opId: {}, predicate: {})", id, predicate.explain(verbosity));
+        return fmt::format("SELECTION(opId: {}, predicate: {})", id, predicate.explain(verbosity));
     }
-    return fmt::format("FILTER({})", predicate.explain(verbosity));
+    return fmt::format("SELECTION({})", predicate.explain(verbosity));
 }
 
 LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
