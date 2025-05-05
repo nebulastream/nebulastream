@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/SliceStore/WindowTriggerPredictor/KalmanWindowTriggerPredictor.hpp>
+#include <Execution/Operators/SliceStore/WatermarkPredictor/KalmanWindowTriggerPredictor.hpp>
 
 namespace NES::Runtime::Execution
 {

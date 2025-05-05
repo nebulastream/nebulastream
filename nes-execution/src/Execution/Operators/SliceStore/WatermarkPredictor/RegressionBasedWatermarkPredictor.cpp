@@ -37,7 +37,8 @@ void RegressionBasedWatermarkPredictor::initialize(const std::vector<std::pair<u
         y(i) = data[i].second; /// Watermark
     }
 
-    coefficients = (X.transpose() * X).ldlt().solve(X.transpose() * y);
+    const auto coefficientsLocked = coefficients.wlock();
+    *coefficientsLocked = (X.transpose() * X).ldlt().solve(X.transpose() * y);
 }
 
 Timestamp RegressionBasedWatermarkPredictor::getEstimatedWatermark(const uint64_t timestamp) const
@@ -48,7 +49,9 @@ Timestamp RegressionBasedWatermarkPredictor::getEstimatedWatermark(const uint64_
     {
         newX(j) = std::pow(timestamp, j); /// Polynomial terms
     }
-    return Timestamp(coefficients.dot(newX));
+
+    const auto coefficientsLocked = coefficients.rlock();
+    return Timestamp(coefficientsLocked->dot(newX));
 }
 
 }

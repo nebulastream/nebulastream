@@ -46,7 +46,7 @@ public:
      * @param origin of the watermark ts
      * @return currentWatermarkTs
      */
-    [[nodiscard]] Timestamp updateWatermark(Timestamp ts, const SequenceData& sequenceData, OriginId origin);
+    Timestamp updateWatermark(Timestamp ts, const SequenceData& sequenceData, OriginId origin);
 
     /**
      * @brief Returns the current watermark across all origins

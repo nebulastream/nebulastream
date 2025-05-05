@@ -21,6 +21,7 @@
 #include <vector>
 #include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
+#include <Execution/Operators/SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -34,6 +35,7 @@ namespace NES::Runtime::Execution
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize,
     const uint64_t windowSlide,
+    const WatermarkPredictorMetaData predictorMetaData,
     const std::vector<OriginId>& inputOrigins,
     const std::filesystem::path& workingDir,
     const QueryId queryId,
@@ -44,12 +46,24 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     , sequenceNumber(SequenceNumber::INITIAL)
     , numberOfActiveOrigins(inputOrigins.size())
 {
+    for (const auto origin : inputOrigins)
+    {
+        switch (predictorMetaData.type)
+        {
+            case RegressionBased: {
+                watermarkPredictors.emplace(origin, std::make_unique<RegressionBasedWatermarkPredictor>(predictorMetaData.param));
+                break;
+            }
+        }
+    }
+
     measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
     : memCtrl(other.memCtrl)
     , watermarkProcessor(other.watermarkProcessor)
+    , watermarkPredictors(other.watermarkPredictors)
     , writeExecTimes(other.writeExecTimes)
     , readExecTimes(other.readExecTimes)
     , sliceAssigner(other.sliceAssigner)
@@ -68,6 +82,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
     : memCtrl(std::move(other.memCtrl))
     , watermarkProcessor(std::move(other.watermarkProcessor))
+    , watermarkPredictors(std::move(other.watermarkPredictors))
     , writeExecTimes(std::move(other.writeExecTimes))
     , readExecTimes(std::move(other.readExecTimes))
     , sliceAssigner(std::move(other.sliceAssigner))
@@ -95,6 +110,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 
     memCtrl = other.memCtrl;
     watermarkProcessor = other.watermarkProcessor;
+    watermarkPredictors = other.watermarkPredictors;
     writeExecTimes = other.writeExecTimes;
     readExecTimes = other.readExecTimes;
     sliceAssigner = other.sliceAssigner;
@@ -115,6 +131,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 
     memCtrl = std::move(other.memCtrl);
     watermarkProcessor = std::move(other.watermarkProcessor);
+    watermarkPredictors = std::move(other.watermarkPredictors);
     writeExecTimes = std::move(other.writeExecTimes);
     readExecTimes = std::move(other.readExecTimes);
     sliceAssigner = std::move(other.sliceAssigner);
@@ -372,8 +389,26 @@ void FileBackedTimeBasedSliceStore::updateSlices(
 {
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
     const auto bufMetaData = metaData.bufferMetaData;
-    const auto newGlobalWatermark
-        = watermarkProcessor->updateWatermark(bufMetaData.watermarkTs, bufMetaData.seqNumber, bufMetaData.originId);
+
+    // TODO don't get new ingestion times every time (time should progress linearly so ideally we would only call it once), just update it from time to time
+    watermarkProcessor->updateWatermark(bufMetaData.watermarkTs, bufMetaData.seqNumber, bufMetaData.originId);
+    const auto& ingestionTimesForWatermarks
+        = watermarkProcessor->getIngestionTimeForWatermarks(USE_NUM_GAPS_ALLOWED, USE_MAX_NUM_SEQ_NUMBERS);
+    for (const auto& [origin, predictor] : watermarkPredictors)
+    {
+        predictor->initialize(ingestionTimesForWatermarks.at(origin));
+    }
+
+    const auto now = std::chrono::system_clock::now();
+    const auto duration = now.time_since_epoch();
+    const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
+    auto minWatermark = Timestamp(0);
+    for (const auto& [_, predictor] : watermarkPredictors)
+    {
+        minWatermark = std::min(minWatermark, predictor->getEstimatedWatermark(timeNow));
+    }
+    const auto slicesToReadBack = getTriggerableSlices(minWatermark);
+    // TODO write out every slice that is not in slicesToReadBack
 
     /// Sort slices by state size to offload larger slices first and choose which ones can be efficiently written to external storage
     std::multimap<size_t, std::pair<std::shared_ptr<Slice>, FileLayout>> slicesToBeOffloadedBySize;
@@ -384,7 +419,8 @@ void FileBackedTimeBasedSliceStore::updateSlices(
 
         // TODO exclude all slices that have already been read back from ssd or are going to be read back below
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        if (const auto stateSize = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId); stateSize > 0)
+        if (const auto stateSize = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId);
+            stateSize > USE_MIN_STATE_SIZE_WRITE)
         {
             memCtrl.setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
             slicesToBeOffloadedBySize.emplace(stateSize, std::make_pair(slice, USE_FILE_LAYOUT));
@@ -465,6 +501,30 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
         }
     }
     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
+}
+
+std::map<SliceEnd, std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getTriggerableSlices(const Timestamp globalWatermark)
+{
+    std::map<SliceEnd, std::shared_ptr<Slice>> slices;
+    for (auto& [windowInfo, windowSlicesAndState] : *windows.rlock())
+    {
+        if (windowInfo.windowEnd >= globalWatermark)
+        {
+            /// As the windows are sorted (due to std::map), we can break here as we will not find any windows with a smaller window end
+            break;
+        }
+        if (windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
+        {
+            /// This window has already been triggered
+            continue;
+        }
+
+        for (auto& slice : windowSlicesAndState.windowSlices)
+        {
+            slices.try_emplace(slice->getSliceEnd(), slice);
+        }
+    }
+    return slices;
 }
 
 void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes)

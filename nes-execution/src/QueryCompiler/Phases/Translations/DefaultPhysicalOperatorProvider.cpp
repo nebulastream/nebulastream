@@ -19,6 +19,7 @@
 #include <API/Schema.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
+#include <Execution/Operators/SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
@@ -362,17 +363,19 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         rightMemoryProvider->getMemoryLayout()->getBufferSize());
 
     // TODO(nikla44): ask Nils how to use config for setting the slice store, also in the CMakeLists.txt for the systests
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore = std::make_unique<FileBackedTimeBasedSliceStore>(
+    auto sliceAndWindowStore = std::make_unique<FileBackedTimeBasedSliceStore>(
         streamJoinConfig.windowSize,
         streamJoinConfig.windowSlide,
+        WatermarkPredictorMetaData(RegressionBased, 2),
         joinOperator->getAllInputOriginIds(),
         queryCompilerConfig.fileBackedWorkingDir.getValue(),
         decomposedQueryPlan.getQueryId(),
         joinOperator->getOutputOriginIds()[0]);
-    /*std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
+    /*auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         streamJoinConfig.windowSize,
         streamJoinConfig.windowSlide,
         joinOperator->getAllInputOriginIds().size());*/
+
     return std::make_shared<Operators::NLJOperatorHandler>(
         joinOperator->getAllInputOriginIds(),
         joinOperator->getOutputOriginIds()[0],

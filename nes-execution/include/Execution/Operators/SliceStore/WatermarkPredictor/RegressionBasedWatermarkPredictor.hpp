@@ -16,6 +16,7 @@
 
 #include <../../eigen/Dense>
 #include <Execution/Operators/SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
+#include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
 {
@@ -30,7 +31,7 @@ public:
 
 private:
     uint64_t degree;
-    Eigen::VectorXd coefficients;
+    folly::Synchronized<Eigen::VectorXd> coefficients;
 };
 
 }

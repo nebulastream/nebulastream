@@ -24,6 +24,7 @@
 #include <Execution/Operators/SliceStore/MemoryController/MemoryController.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/SliceAssigner.hpp>
+#include <Execution/Operators/SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -47,12 +48,17 @@ public:
     //static constexpr std::array<size_t, 10> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576, 134217728, 536870912, 1073741824, 2147483648};
     static constexpr std::array<size_t, 6> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576};
     static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
-    static constexpr auto USE_BUFFER_SIZE = 1024 * 4; // 4 KB buffer size
-    static constexpr auto USE_POOL_SIZE = 1024 * 10; // 10 K pool size
+    static constexpr auto USE_MIN_STATE_SIZE_WRITE
+        = 0; /// slices with state sice less than 0B for a given ThreadId are not written to external storage
+    static constexpr auto USE_BUFFER_SIZE = 1024 * 4; /// 4 KB size of file write and read buffers
+    static constexpr auto USE_POOL_SIZE = 1024 * 10; /// 10 K file write buffers
+    static constexpr auto USE_MAX_NUM_SEQ_NUMBERS = UINT64_MAX; /// max number of data points for predictions
+    static constexpr auto USE_NUM_GAPS_ALLOWED = 10; /// number of gaps allowed in data points of sequence numbers
 
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,
         uint64_t windowSlide,
+        WatermarkPredictorMetaData predictorMetaData,
         const std::vector<OriginId>& inputOrigins,
         const std::filesystem::path& workingDir,
         QueryId queryId,
@@ -93,6 +99,8 @@ private:
         QueryCompilation::JoinBuildSideType joinBuildSide,
         uint64_t numberOfWorkerThreads);
 
+    std::map<SliceEnd, std::shared_ptr<Slice>> getTriggerableSlices(Timestamp globalWatermark);
+
     void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
     std::pair<double, double> getReadAndWriteExecTimesForDataSize(size_t dataSize);
 
@@ -104,9 +112,11 @@ private:
     MemoryController memCtrl;
     folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
 
-    /// This internal watermark processor is used to predict when a slice should be written out or read back during the build phase.
-    /// The maps hold the execution times needed to write or read data of certain data sizes which is also used for predictions.
+    /// The watermark processor and predictors are used to predict when a slice should be written out or read back during the build phase.
     std::shared_ptr<Operators::MultiOriginWatermarkProcessor> watermarkProcessor;
+    std::map<OriginId, std::unique_ptr<AbstractWatermarkPredictor>> watermarkPredictors;
+
+    /// The maps hold the execution times needed to write or read data of certain data sizes which is also used for predictions.
     std::map<size_t, double> writeExecTimes;
     std::map<size_t, double> readExecTimes;
 
