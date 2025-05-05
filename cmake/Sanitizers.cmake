@@ -39,3 +39,6 @@ elseif (SANITIZER_OPTION STREQUAL "asan")
 else ()
     MESSAGE(STATUS "Enabling No Sanitizer")
 endif ()
+
+add_compile_options(-fsanitize=fuzzer-no-link)
+add_link_options(-fsanitize=fuzzer-no-link)
