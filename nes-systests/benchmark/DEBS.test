@@ -28,9 +28,16 @@ SourceCSV consumers INT32 consumerId INT32 sectorId FLOAT64 consumedPower VARSIZ
 #----
 #42700000, 105028347050
 
-#SELECT producedPower
-#FROM solarPanels
-#WHERE producedPower >= FLOAT64(400)
+SELECT producedPower
+FROM solarPanels
+WHERE producedPower >= FLOAT64(400)
+INTO CHECKSUM;
+----
+42700000, 105028347050
+
+#SELECT consumedPower
+#FROM consumers
+#WHERE consumedPower >= FLOAT64(400)
 #INTO CHECKSUM;
 #----
 #42700000, 105028347050

@@ -348,19 +348,25 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<Schema>& schema, size_t bufferSize)
 {
+    std::vector<std::string> fieldNames;
+    if (schema->getFieldNames().size() != 0)
+    {
+
+        fieldNames.emplace_back(schema->getFieldNames()[2]);
+    }
     switch (schema->getLayoutType())
     {
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
             auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(schema, bufferSize);
             std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                 = std::make_unique<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
-            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
+            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), fieldNames);
         }
         case Schema::MemoryLayoutType::ROW_LAYOUT: {
             auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
             std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                 = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
+            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), fieldNames);
         }
     }
 }

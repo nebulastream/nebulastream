@@ -12,8 +12,7 @@ RUN apt-get update -y && apt-get install -y \
         jq \
         python3 \
         python3-venv \
-        python3-bs4 \
-        linux-tools-generic
+        python3-bs4
 
 # install alternative more recent JRE until 21.0.7 is packaged for Noble 24.04
 # then it should be replaced with openjdk-21-jre-headless
