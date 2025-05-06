@@ -26,7 +26,13 @@ using FileWriterId = std::tuple<SliceEnd, WorkerThreadId, QueryCompilation::Join
 class MemoryController
 {
 public:
-    MemoryController(size_t bufferSize, uint64_t numBuffers, std::filesystem::path workingDir, QueryId queryId, OriginId originId);
+    MemoryController(
+        size_t bufferSize,
+        uint64_t numWriteBuffers,
+        uint64_t numReadBuffers,
+        std::filesystem::path workingDir,
+        QueryId queryId,
+        OriginId originId);
     ~MemoryController();
 
     std::shared_ptr<FileWriter>
@@ -50,22 +56,22 @@ private:
 
     void removeFileSystem(std::map<std::string, std::shared_ptr<FileWriter>>::iterator it);
 
-    char* allocateReadBuffer();
-    void deallocateReadBuffer(char* buffer);
     char* allocateWriteBuffer();
     void deallocateWriteBuffer(char* buffer);
+    char* allocateReadBuffer();
+    void deallocateReadBuffer(char* buffer);
 
     size_t bufferSize;
-
-    std::vector<char> readMemoryPool;
-    std::vector<char*> freeReadBuffers;
-    std::condition_variable readMemoryPoolCondition;
-    std::mutex readMemoryPoolMutex;
 
     std::vector<char> writeMemoryPool;
     std::vector<char*> freeWriteBuffers;
     std::condition_variable writeMemoryPoolCondition;
     std::mutex writeMemoryPoolMutex;
+
+    std::vector<char> readMemoryPool;
+    std::vector<char*> freeReadBuffers;
+    std::condition_variable readMemoryPoolCondition;
+    std::mutex readMemoryPoolMutex;
 
     // TODO build vector around maps to structure by WorkerThreadId (use less locks)
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;

@@ -18,22 +18,28 @@ namespace NES::Runtime::Execution
 {
 
 MemoryController::MemoryController(
-    const size_t bufferSize, const uint64_t numBuffers, std::filesystem::path workingDir, const QueryId queryId, const OriginId originId)
+    const size_t bufferSize,
+    const uint64_t numWriteBuffers,
+    const uint64_t numReadBuffers,
+    std::filesystem::path workingDir,
+    const QueryId queryId,
+    const OriginId originId)
     : bufferSize(bufferSize), workingDir(std::move(workingDir)), queryId(queryId), originId(originId)
 {
     if (bufferSize > 0)
     {
-        const auto poolSize = std::min(numBuffers * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
+        const auto writePoolSize = std::min(numWriteBuffers * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
+        const auto readPoolSize = std::min(numReadBuffers * POOL_SIZE_MULTIPLIER, POOL_SIZE_MULTIPLIER);
 
-        readMemoryPool.resize(bufferSize * poolSize);
-        for (size_t i = 0; i < poolSize; ++i)
-        {
-            freeReadBuffers.push_back(readMemoryPool.data() + i * bufferSize);
-        }
-        writeMemoryPool.resize(bufferSize * poolSize);
-        for (size_t i = 0; i < poolSize; ++i)
+        writeMemoryPool.resize(bufferSize * writePoolSize);
+        for (size_t i = 0; i < writePoolSize; ++i)
         {
             freeWriteBuffers.push_back(writeMemoryPool.data() + i * bufferSize);
+        }
+        readMemoryPool.resize(bufferSize * readPoolSize);
+        for (size_t i = 0; i < readPoolSize; ++i)
+        {
+            freeReadBuffers.push_back(readMemoryPool.data() + i * bufferSize);
         }
     }
 }

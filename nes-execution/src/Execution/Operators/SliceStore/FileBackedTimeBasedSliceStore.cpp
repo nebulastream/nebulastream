@@ -388,9 +388,14 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
 {
     this->numberOfWorkerThreads = numberOfWorkerThreads;
 
-    /// Initialise memory controller
+    /// Initialise memory controller and measure execution times for reading and writing
     memCtrl = std::make_shared<MemoryController>(
-        USE_BUFFER_SIZE, numberOfWorkerThreads, memCtrlMetaData.workingDir, memCtrlMetaData.queryId, memCtrlMetaData.originId);
+        USE_BUFFER_SIZE,
+        USE_NUM_WRITE_BUFFERS,
+        numberOfWorkerThreads,
+        memCtrlMetaData.workingDir,
+        memCtrlMetaData.queryId,
+        memCtrlMetaData.originId);
     measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
 }
 

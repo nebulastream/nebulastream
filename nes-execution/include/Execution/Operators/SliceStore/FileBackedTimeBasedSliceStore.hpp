@@ -61,13 +61,13 @@ public:
     static constexpr std::array<size_t, 6> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576};
     static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
     static constexpr auto USE_MIN_STATE_SIZE_WRITE
-        = 0; /// slices with state sice less than 0B for a given ThreadId are not written to external storage
+        = 0UL; /// slices with state sice less than 0B for a given ThreadId are not written to external storage
     static constexpr auto USE_MIN_STATE_SIZE_READ
-        = 0; /// slices with state sice less than 0B for a given ThreadId are not read back from external storage
-    static constexpr auto USE_BUFFER_SIZE = 1024 * 4; /// 4 KB size of file write and read buffers
-    static constexpr auto USE_POOL_SIZE = 1024 * 10; /// 10 K file write buffers
+        = 0UL; /// slices with state sice less than 0B for a given ThreadId are not read back from external storage
+    static constexpr auto USE_BUFFER_SIZE = 1024 * 4UL; /// 4 KB size of file write and read buffers
+    static constexpr auto USE_NUM_WRITE_BUFFERS = 128UL; /// num file write buffers
     static constexpr auto USE_MAX_NUM_SEQ_NUMBERS = UINT64_MAX; /// max number of data points for predictions
-    static constexpr auto USE_NUM_GAPS_ALLOWED = 10; /// number of gaps allowed in data points of sequence numbers
+    static constexpr auto USE_NUM_GAPS_ALLOWED = 10UL; /// number of gaps allowed in data points of sequence numbers
 
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,

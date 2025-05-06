@@ -348,6 +348,7 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     const DecomposedQueryPlan& decomposedQueryPlan,
     const StreamJoinConfigs& streamJoinConfig) const
 {
+    (void)decomposedQueryPlan;
     using namespace Runtime::Execution;
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
 
