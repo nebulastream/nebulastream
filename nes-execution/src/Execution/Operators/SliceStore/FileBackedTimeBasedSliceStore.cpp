@@ -389,9 +389,8 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     this->numberOfWorkerThreads = numberOfWorkerThreads;
 
     /// Initialise memory controller
-    // TODO set pool size to 2*numWorkerThreads
     memCtrl = std::make_shared<MemoryController>(
-        USE_BUFFER_SIZE, USE_POOL_SIZE, memCtrlMetaData.workingDir, memCtrlMetaData.queryId, memCtrlMetaData.originId);
+        USE_BUFFER_SIZE, numberOfWorkerThreads, memCtrlMetaData.workingDir, memCtrlMetaData.queryId, memCtrlMetaData.originId);
     measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
 }
 
@@ -438,6 +437,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
                     pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
                     pagedVector->truncate(fileLayout);
                     // TODO force flush FileWriter?
+                    fileWriter->flushAndDeallocateBuffer();
                     break;
                 }
             }
@@ -466,11 +466,14 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
             + getExecTimesForDataSize(readExecTimes, stateSizeInMemory + stateSizeOnDisk);
 
         const auto now = std::chrono::high_resolution_clock::now();
-        const auto nowTicks = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
+        const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
+        const auto predictedReadTimestamp
+            = AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(watermarkPredictors, timeNow + readExecTime);
+        const auto predictedWriteAndReadTimestamp
+            = AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(watermarkPredictors, timeNow + writeAndReadExecTime);
 
         // TODO add a time buffer to sliceEnd
-        if (stateSizeOnDisk > USE_MIN_STATE_SIZE_READ
-            && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(watermarkPredictors, nowTicks + readExecTime) >= sliceEnd)
+        if (stateSizeOnDisk > USE_MIN_STATE_SIZE_READ && predictedReadTimestamp >= sliceEnd)
         {
             /// Slice should be read back now as it will be triggered once the read operation has finished
             if (const auto fileLayout = memCtrl->getFileLayout(sliceEnd, threadId, joinBuildSide); fileLayout.has_value())
@@ -479,10 +482,7 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
             }
             /// Slice is already being read back if no FileLayout was found
         }
-        else if (
-            stateSizeInMemory > USE_MIN_STATE_SIZE_WRITE
-            && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(watermarkPredictors, nowTicks + writeAndReadExecTime)
-                < sliceEnd)
+        else if (stateSizeInMemory > USE_MIN_STATE_SIZE_WRITE && predictedWriteAndReadTimestamp < sliceEnd)
         {
             /// Slice should be written out as it will not be triggered before write and read operations have finished
             memCtrl->setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
@@ -585,7 +585,7 @@ uint64_t FileBackedTimeBasedSliceStore::getExecTimesForDataSize(std::map<size_t,
         }
         else if (foundClosest)
         {
-            // If the difference starts increasing, we have found the closest key as test data sizes are sorted
+            /// If the difference starts increasing, we have found the closest key as test data sizes are sorted
             break;
         }
         foundClosest = true;

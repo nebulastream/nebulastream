@@ -16,6 +16,6 @@ add_source_files(nes-execution
         FileBackedTimeBasedSliceStore.cpp
 )
 
-add_subdirectory(FileDescriptors)
+add_subdirectory(FileDescriptor)
 add_subdirectory(MemoryController)
 add_subdirectory(WatermarkPredictor)

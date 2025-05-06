@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Execution/Operators/SliceStore/FileDescriptors/FileDescriptors.hpp>
+#include <Execution/Operators/SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Util/Execution.hpp>
 
@@ -26,11 +26,7 @@ using FileWriterId = std::tuple<SliceEnd, WorkerThreadId, QueryCompilation::Join
 class MemoryController
 {
 public:
-    MemoryController(size_t bufferSize, uint64_t numWorkerThreads, std::filesystem::path workingDir, QueryId queryId, OriginId originId);
-    MemoryController(MemoryController& other);
-    MemoryController(MemoryController&& other) noexcept;
-    MemoryController& operator=(MemoryController& other);
-    MemoryController& operator=(MemoryController&& other) noexcept;
+    MemoryController(size_t bufferSize, uint64_t numBuffers, std::filesystem::path workingDir, QueryId queryId, OriginId originId);
     ~MemoryController();
 
     std::shared_ptr<FileWriter>
@@ -46,7 +42,8 @@ public:
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
-    static constexpr auto NUM_BUFFERS_PER_THREAD = 2;
+    /// We need a multiple of 2 buffers as we might need to separate keys and payload depending on the used FileLayout
+    static constexpr auto POOL_SIZE_MULTIPLIER = 2UL;
 
     std::string constructFilePath(SliceEnd sliceEnd, QueryCompilation::JoinBuildSideType joinBuildSide) const;
     std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide) const;

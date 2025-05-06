@@ -41,7 +41,7 @@ public:
     void write(const void* data, size_t size);
     void writeKey(const void* data, size_t size);
 
-    void flushBuffer();
+    void flushAndDeallocateBuffer();
 
 private:
     void write(const void* data, size_t dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const;

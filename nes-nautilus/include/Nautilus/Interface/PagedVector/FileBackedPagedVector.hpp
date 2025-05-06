@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Execution/Operators/SliceStore/FileDescriptors/FileDescriptors.hpp>
+#include <Execution/Operators/SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 
 namespace NES::Nautilus::Interface

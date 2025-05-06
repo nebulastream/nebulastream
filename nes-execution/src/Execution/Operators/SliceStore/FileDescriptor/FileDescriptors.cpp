@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/SliceStore/FileDescriptors/FileDescriptors.hpp>
+#include <Execution/Operators/SliceStore/FileDescriptor/FileDescriptors.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -44,15 +44,18 @@ FileWriter::FileWriter(
 
 FileWriter::~FileWriter()
 {
-    flushBuffer();
+    flushAndDeallocateBuffer();
     file.close();
-    deallocate(writeBuffer);
     keyFile.close();
-    deallocate(writeKeyBuffer);
 }
 
 void FileWriter::write(const void* data, const size_t size)
 {
+    if (writeBuffer == nullptr)
+    {
+        writeBuffer = allocate();
+    }
+
     write(data, size, writeBuffer, writeBufferPos, file);
 }
 
@@ -66,13 +69,19 @@ void FileWriter::writeKey(const void* data, const size_t size)
     write(data, size, writeKeyBuffer, writeKeyBufferPos, keyFile);
 }
 
-void FileWriter::flushBuffer()
+void FileWriter::flushAndDeallocateBuffer()
 {
     writeToFile(writeBuffer, writeBufferPos, file);
     if (writeKeyBuffer != nullptr)
     {
         writeToFile(writeKeyBuffer, writeKeyBufferPos, keyFile);
     }
+
+    /// We need to deallocate all buffers as this FileWriter might not be used for a while but would otherwise still own buffers,
+    /// resulting in a deadlock
+    // TODO create new deallocateBuffers() method and call from MemoryController (also create new function)
+    deallocate(writeBuffer);
+    deallocate(writeKeyBuffer);
 }
 
 void FileWriter::write(const void* data, size_t dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const
