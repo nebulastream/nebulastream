@@ -155,6 +155,7 @@ WarningsAsErrors: '
   -misc-throw-by-value-catch-by-reference,
   -misc-unconventional-assign-operator,
   -misc-use-anonymous-namespace,
+  -misc-use-internal-linkage,
   -modernize-avoid-c-arrays,
   -modernize-concat-nested-namespaces,
   -modernize-pass-by-value,
