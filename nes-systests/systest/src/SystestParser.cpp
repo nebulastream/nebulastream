@@ -256,7 +256,7 @@ void SystestParser::applySubstitutionRules(std::string& line)
 std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialToken)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (potentialToken.compare(0, QueryToken.size(), QueryToken) == 0)
+    if (potentialToken.starts_with(QueryToken))
     {
         return TokenType::QUERY;
     }
