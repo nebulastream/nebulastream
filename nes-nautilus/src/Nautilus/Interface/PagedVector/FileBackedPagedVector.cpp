@@ -35,6 +35,7 @@ void FileBackedPagedVector::copyFrom(const PagedVector& other)
     {
         const auto fbOther = Util::asConst<FileBackedPagedVector>(other);
         keyPages.insert(keyPages.end(), fbOther.keyPages.begin(), fbOther.keyPages.end());
+        numTuplesOnDisk += fbOther.numTuplesOnDisk;
     }
 }
 
@@ -99,7 +100,6 @@ void FileBackedPagedVector::readFromFile(
         memoryLayout->getSchema()->getLayoutType() != Schema::MemoryLayoutType::ROW_LAYOUT,
         "NLJSlice does not currently support any memory layout other than row layout");*/
 
-    numTuplesOnDisk = 0;
     switch (fileLayout)
     {
         /// Read all tuples consecutivley from file
@@ -116,11 +116,13 @@ void FileBackedPagedVector::readFromFile(
 
             while (const auto bytesRead = fileReader.read(lastPagePtr, tuplesToRead * tupleSize))
             {
-                lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + bytesRead / tupleSize);
+                const auto tuplesRead = bytesRead / tupleSize;
+                lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + tuplesRead);
                 appendPageIfFull(bufferProvider, memoryLayout);
                 lastPage = pages.back();
                 lastPagePtr = lastPage.getBuffer();
                 tuplesToRead = memoryLayout->getCapacity();
+                numTuplesOnDisk -= tuplesRead;
             }
             break;
         }
@@ -328,6 +330,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
             lastPagePtr += fieldSize;
         }
         lastPage.setNumberOfTuples(numTuplesLastPage + 1);
+        --numTuplesOnDisk;
     }
 }
 
