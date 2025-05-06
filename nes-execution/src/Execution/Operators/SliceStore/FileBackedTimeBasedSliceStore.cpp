@@ -571,6 +571,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
 
 uint64_t FileBackedTimeBasedSliceStore::getExecTimesForDataSize(std::map<size_t, uint64_t> execTimes, const size_t dataSize)
 {
+    // TODO use linear regression to estimate execution time
     size_t closestKey = std::numeric_limits<size_t>::max();
     size_t minDifference = std::numeric_limits<size_t>::max();
     bool foundClosest = false;
