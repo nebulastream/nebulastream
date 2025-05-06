@@ -42,6 +42,7 @@ Checks: [
   "-abseil-*", # we currently don't use abseil
   "-altera-*", # we don't do OpenCL
 
+  "-boost-use-ranges", # we don't use boost
   "-bugprone-easily-swappable-parameters", # annoying-ish
   "-fuchsia-default-arguments-calls", # we do not forbid default args
   "-fuchsia-overloaded-operator", # we can not overload the operator() anywhere
