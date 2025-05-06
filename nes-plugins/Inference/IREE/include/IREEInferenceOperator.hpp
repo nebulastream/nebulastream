@@ -32,6 +32,8 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
+    bool isVarSizedInput = false;
+
 private:
     const uint32_t inferModelHandlerIndex;
     const std::vector<std::string> inputFieldNames;

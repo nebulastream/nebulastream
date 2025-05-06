@@ -88,7 +88,6 @@ float* IREERuntimeWrapper::execute(std::string functionName, void* inputData, si
         {
             inputBufferShape[i] = inputShape[i];
         }
-        // const iree_hal_dim_t inputBufferShape[2] = {1, 4};
 
         status = iree_hal_buffer_view_allocate_buffer_copy(
             device,
