@@ -155,9 +155,8 @@ std::string MemoryController::constructFilePath(const SliceEnd sliceEnd, const Q
 {
     const std::string sideStr = joinBuildSide == QueryCompilation::JoinBuildSideType::Left ? "left" : "right";
     return (workingDir
-            / std::filesystem::path(
-                fmt::format(
-                    "memory_controller_{}_{}_{}_{}_", queryId.getRawValue(), originId.getRawValue(), sideStr, sliceEnd.getRawValue())))
+            / std::filesystem::path(fmt::format(
+                "memory_controller_{}_{}_{}_{}_", queryId.getRawValue(), originId.getRawValue(), sideStr, sliceEnd.getRawValue())))
         .string();
 }
 

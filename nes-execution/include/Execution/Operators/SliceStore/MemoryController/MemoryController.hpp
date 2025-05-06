@@ -83,11 +83,6 @@ private:
     std::filesystem::path workingDir;
     QueryId queryId;
     OriginId originId;
-    // IO-Auslastung
-    // StatisticsEngine
-    // CompressionController (Tuples evtl. komprimieren)
-    // MemoryProvider (für RAM) und FileComponent (für SSD)
-    // MemoryLayout (evtl. Anpassen?)
 };
 
 }

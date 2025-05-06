@@ -134,7 +134,7 @@ size_t NLJSlice::getStateSizeInBytesForThreadId(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId) const
 {
-    const auto *const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
+    const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
 
