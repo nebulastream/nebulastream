@@ -18,59 +18,71 @@ namespace NES::Runtime::Execution
 {
 
 MemoryController::MemoryController(
-    const size_t bufferSize, const size_t poolSize, std::filesystem::path workingDir, const QueryId queryId, const OriginId originId)
-    : bufferSize(bufferSize), poolSize(poolSize), workingDir(std::move(workingDir)), queryId(queryId), originId(originId)
+    const size_t bufferSize,
+    const uint64_t numWorkerThreads,
+    std::filesystem::path workingDir,
+    const QueryId queryId,
+    const OriginId originId)
+    : bufferSize(bufferSize), workingDir(std::move(workingDir)), queryId(queryId), originId(originId)
 {
     if (bufferSize > 0)
     {
-        readBuffer.resize(bufferSize * NUM_READ_BUFFERS);
-        memoryPool.resize(bufferSize * poolSize);
+        const auto poolSize = numWorkerThreads * NUM_BUFFERS_PER_THREAD;
+
+        readMemoryPool.resize(bufferSize * poolSize);
         for (size_t i = 0; i < poolSize; ++i)
         {
-            freeBuffers.push_back(memoryPool.data() + i * bufferSize);
+            freeReadBuffers.push_back(readMemoryPool.data() + i * bufferSize);
+        }
+        writeMemoryPool.resize(bufferSize * poolSize);
+        for (size_t i = 0; i < poolSize; ++i)
+        {
+            freeWriteBuffers.push_back(writeMemoryPool.data() + i * bufferSize);
         }
     }
 }
 
 MemoryController::MemoryController(MemoryController& other)
-    : readBuffer(other.readBuffer)
-    , readBufFlag(other.readBufFlag.load())
-    , memoryPool(other.memoryPool)
-    , bufferSize(other.bufferSize)
-    , poolSize(other.poolSize)
+    : bufferSize(other.bufferSize)
+    , readMemoryPool(other.readMemoryPool)
+    , writeMemoryPool(other.writeMemoryPool)
     , workingDir(other.workingDir)
     , queryId(other.queryId)
     , originId(other.originId)
 {
     const std::lock_guard writerLock(fileWritersMutex);
-    const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard readMemoryLock(readMemoryPoolMutex);
+    const std::lock_guard writeMemoryLock(writeMemoryPoolMutex);
     const std::lock_guard layoutLock(fileLayoutsMutex);
     const std::lock_guard otherWriterLock(other.fileWritersMutex);
-    const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    const std::lock_guard otherReadMemoryLock(other.readMemoryPoolMutex);
+    const std::lock_guard otherWriteMemoryLock(other.writeMemoryPoolMutex);
     const std::lock_guard otherLayoutLock(other.fileLayoutsMutex);
     fileWriters = other.fileWriters;
-    freeBuffers = other.freeBuffers;
+    freeReadBuffers = other.freeReadBuffers;
+    freeWriteBuffers = other.freeWriteBuffers;
     fileLayouts = other.fileLayouts;
 }
 
 MemoryController::MemoryController(MemoryController&& other) noexcept
-    : readBuffer(std::move(other.readBuffer))
-    , readBufFlag(std::move(other.readBufFlag.load()))
-    , memoryPool(std::move(other.memoryPool))
-    , bufferSize(std::move(other.bufferSize))
-    , poolSize(std::move(other.poolSize))
+    : bufferSize(std::move(other.bufferSize))
+    , readMemoryPool(std::move(other.readMemoryPool))
+    , writeMemoryPool(std::move(other.writeMemoryPool))
     , workingDir(std::move(other.workingDir))
     , queryId(std::move(other.queryId))
     , originId(std::move(other.originId))
 {
     const std::lock_guard writerLock(fileWritersMutex);
-    const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard readMemoryLock(readMemoryPoolMutex);
+    const std::lock_guard writeMemoryLock(writeMemoryPoolMutex);
     const std::lock_guard layoutLock(fileLayoutsMutex);
     const std::lock_guard otherWriterLock(other.fileWritersMutex);
-    const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    const std::lock_guard otherReadMemoryLock(other.readMemoryPoolMutex);
+    const std::lock_guard otherWriteMemoryLock(other.writeMemoryPoolMutex);
     const std::lock_guard otherLayoutLock(other.fileLayoutsMutex);
     fileWriters = std::move(other.fileWriters);
-    freeBuffers = std::move(other.freeBuffers);
+    freeReadBuffers = std::move(other.freeReadBuffers);
+    freeWriteBuffers = std::move(other.freeWriteBuffers);
     fileLayouts = std::move(other.fileLayouts);
 }
 
@@ -81,17 +93,18 @@ MemoryController& MemoryController::operator=(MemoryController& other)
         return *this;
     }
     const std::lock_guard writerLock(fileWritersMutex);
-    const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard readMemoryLock(readMemoryPoolMutex);
+    const std::lock_guard writeMemoryLock(writeMemoryPoolMutex);
     const std::lock_guard layoutLock(fileLayoutsMutex);
     const std::lock_guard otherWriterLock(other.fileWritersMutex);
-    const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    const std::lock_guard otherReadMemoryLock(other.readMemoryPoolMutex);
+    const std::lock_guard otherWriteMemoryLock(other.writeMemoryPoolMutex);
     const std::lock_guard otherLayoutLock(other.fileLayoutsMutex);
-    readBuffer = other.readBuffer;
-    readBufFlag = other.readBufFlag.load();
-    memoryPool = other.memoryPool;
-    freeBuffers = other.freeBuffers;
     bufferSize = other.bufferSize;
-    poolSize = other.poolSize;
+    readMemoryPool = other.readMemoryPool;
+    freeReadBuffers = other.freeReadBuffers;
+    writeMemoryPool = other.writeMemoryPool;
+    freeWriteBuffers = other.freeWriteBuffers;
     fileWriters = other.fileWriters;
     fileLayouts = other.fileLayouts;
     workingDir = other.workingDir;
@@ -107,17 +120,18 @@ MemoryController& MemoryController::operator=(MemoryController&& other) noexcept
         return *this;
     }
     const std::lock_guard writerLock(fileWritersMutex);
-    const std::lock_guard memoryLock(memoryPoolMutex);
+    const std::lock_guard readMemoryLock(readMemoryPoolMutex);
+    const std::lock_guard writeMemoryLock(writeMemoryPoolMutex);
     const std::lock_guard layoutLock(fileLayoutsMutex);
     const std::lock_guard otherWriterLock(other.fileWritersMutex);
-    const std::lock_guard otherMemoryLock(other.memoryPoolMutex);
+    const std::lock_guard otherReadMemoryLock(other.readMemoryPoolMutex);
+    const std::lock_guard otherWriteMemoryLock(other.writeMemoryPoolMutex);
     const std::lock_guard otherLayoutLock(other.fileLayoutsMutex);
-    readBuffer = std::move(other.readBuffer);
-    readBufFlag = std::move(other.readBufFlag.load());
-    memoryPool = std::move(other.memoryPool);
-    freeBuffers = std::move(other.freeBuffers);
     bufferSize = std::move(other.bufferSize);
-    poolSize = std::move(other.poolSize);
+    readMemoryPool = std::move(other.readMemoryPool);
+    freeReadBuffers = std::move(other.freeReadBuffers);
+    writeMemoryPool = std::move(other.writeMemoryPool);
+    freeWriteBuffers = std::move(other.freeWriteBuffers);
     fileWriters = std::move(other.fileWriters);
     fileLayouts = std::move(other.fileLayouts);
     workingDir = std::move(other.workingDir);
@@ -155,7 +169,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     }
 
     auto fileWriter = std::make_shared<FileWriter>(
-        filePath, [this] { return allocateBuffer(); }, [this](char* buf) { deallocateBuffer(buf); }, bufferSize);
+        filePath, [this] { return allocateWriteBuffer(); }, [this](char* buf) { deallocateWriteBuffer(buf); }, bufferSize);
     fileWriters[filePath] = fileWriter;
     return fileWriter;
 }
@@ -170,7 +184,8 @@ std::shared_ptr<FileReader> MemoryController::getFileReader(
     if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
     {
         fileWriters.erase(it);
-        return std::make_shared<FileReader>(filePath, [this] { return allocateReadBuffer(); }, [](char*) {}, bufferSize);
+        return std::make_shared<FileReader>(
+            filePath, [this] { return allocateReadBuffer(); }, [this](char* buf) { deallocateReadBuffer(buf); }, bufferSize);
     }
 
     return nullptr;
@@ -263,34 +278,52 @@ char* MemoryController::allocateReadBuffer()
         return nullptr;
     }
 
-    return readBufFlag.exchange(!readBufFlag) ? readBuffer.data() : readBuffer.data() + bufferSize;
+    std::unique_lock lock(readMemoryPoolMutex);
+    readMemoryPoolCondition.wait(lock, [this] { return !freeReadBuffers.empty(); });
+
+    char* buffer = freeReadBuffers.back();
+    freeReadBuffers.pop_back();
+    return buffer;
 }
 
-char* MemoryController::allocateBuffer()
+void MemoryController::deallocateReadBuffer(char* buffer)
+{
+    if (bufferSize == 0 || buffer == nullptr || (readMemoryPool.data() <= buffer && buffer < readMemoryPool.data() + readMemoryPool.size()))
+    {
+        return;
+    }
+
+    const std::lock_guard lock(readMemoryPoolMutex);
+    freeReadBuffers.push_back(buffer);
+    readMemoryPoolCondition.notify_one();
+}
+
+char* MemoryController::allocateWriteBuffer()
 {
     if (bufferSize == 0)
     {
         return nullptr;
     }
 
-    std::unique_lock lock(memoryPoolMutex);
-    memoryPoolCondition.wait(lock, [this] { return !freeBuffers.empty(); });
+    std::unique_lock lock(writeMemoryPoolMutex);
+    writeMemoryPoolCondition.wait(lock, [this] { return !freeWriteBuffers.empty(); });
 
-    char* buffer = freeBuffers.back();
-    freeBuffers.pop_back();
+    char* buffer = freeWriteBuffers.back();
+    freeWriteBuffers.pop_back();
     return buffer;
 }
 
-void MemoryController::deallocateBuffer(char* buffer)
+void MemoryController::deallocateWriteBuffer(char* buffer)
 {
-    if (bufferSize == 0 || buffer == nullptr || (memoryPool.data() <= buffer && buffer < memoryPool.data() + memoryPool.size()))
+    if (bufferSize == 0 || buffer == nullptr
+        || (writeMemoryPool.data() <= buffer && buffer < writeMemoryPool.data() + writeMemoryPool.size()))
     {
         return;
     }
 
-    const std::lock_guard lock(memoryPoolMutex);
-    freeBuffers.push_back(buffer);
-    memoryPoolCondition.notify_one();
+    const std::lock_guard lock(writeMemoryPoolMutex);
+    freeWriteBuffers.push_back(buffer);
+    writeMemoryPoolCondition.notify_one();
 }
 
 }

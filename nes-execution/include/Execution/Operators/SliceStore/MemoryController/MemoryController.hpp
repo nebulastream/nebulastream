@@ -26,7 +26,7 @@ using FileWriterId = std::tuple<SliceEnd, WorkerThreadId, QueryCompilation::Join
 class MemoryController
 {
 public:
-    MemoryController(size_t bufferSize, size_t poolSize, std::filesystem::path workingDir, QueryId queryId, OriginId originId);
+    MemoryController(size_t bufferSize, uint64_t numWorkerThreads, std::filesystem::path workingDir, QueryId queryId, OriginId originId);
     MemoryController(MemoryController& other);
     MemoryController(MemoryController&& other) noexcept;
     MemoryController& operator=(MemoryController& other);
@@ -46,8 +46,7 @@ public:
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
-    // TODO add a real read pool as reading is not necessarily done single threaded with predictive read
-    static constexpr auto NUM_READ_BUFFERS = 2;
+    static constexpr auto NUM_BUFFERS_PER_THREAD = 2;
 
     std::string constructFilePath(SliceEnd sliceEnd, QueryCompilation::JoinBuildSideType joinBuildSide) const;
     std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide) const;
@@ -55,18 +54,21 @@ private:
     void removeFileSystem(std::map<std::string, std::shared_ptr<FileWriter>>::iterator it);
 
     char* allocateReadBuffer();
-    char* allocateBuffer();
-    void deallocateBuffer(char* buffer);
+    void deallocateReadBuffer(char* buffer);
+    char* allocateWriteBuffer();
+    void deallocateWriteBuffer(char* buffer);
 
-    std::vector<char> readBuffer;
-    std::atomic<bool> readBufFlag;
-
-    std::vector<char> memoryPool;
-    std::vector<char*> freeBuffers;
-    std::condition_variable memoryPoolCondition;
-    std::mutex memoryPoolMutex;
     size_t bufferSize;
-    size_t poolSize;
+
+    std::vector<char> readMemoryPool;
+    std::vector<char*> freeReadBuffers;
+    std::condition_variable readMemoryPoolCondition;
+    std::mutex readMemoryPoolMutex;
+
+    std::vector<char> writeMemoryPool;
+    std::vector<char*> freeWriteBuffers;
+    std::condition_variable writeMemoryPoolCondition;
+    std::mutex writeMemoryPoolMutex;
 
     // TODO build vector around maps to structure by WorkerThreadId (use less locks)
     std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
