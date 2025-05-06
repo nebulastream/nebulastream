@@ -26,7 +26,7 @@ enum WatermarkPredictorType : uint8_t
     RegressionBased
 };
 
-struct WatermarkPredictorMetaData
+struct WatermarkPredictorInfo
 {
     WatermarkPredictorType type;
     uint64_t param;

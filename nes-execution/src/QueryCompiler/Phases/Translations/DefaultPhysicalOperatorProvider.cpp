@@ -367,9 +367,9 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     auto sliceAndWindowStore = std::make_unique<FileBackedTimeBasedSliceStore>(
         streamJoinConfig.windowSize,
         streamJoinConfig.windowSlide,
-        WatermarkPredictorMetaData(RegressionBased, 1),
+        WatermarkPredictorInfo(RegressionBased, 1),
         joinOperator->getAllInputOriginIds(),
-        MemoryControllerMetaData(
+        MemoryControllerInfo(
             queryCompilerConfig.fileBackedWorkingDir.getValue(), decomposedQueryPlan.getQueryId(), joinOperator->getOutputOriginIds()[0]));
     /*auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         streamJoinConfig.windowSize,

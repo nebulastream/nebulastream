@@ -41,7 +41,7 @@ enum DiskOperation : uint8_t
     WRITE
 };
 
-struct MemoryControllerMetaData
+struct MemoryControllerInfo
 {
     std::filesystem::path workingDir;
     QueryId queryId;
@@ -72,9 +72,9 @@ public:
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,
         uint64_t windowSlide,
-        WatermarkPredictorMetaData predictorMetaData,
+        WatermarkPredictorInfo watermarkPredictorInfo,
         const std::vector<OriginId>& inputOrigins,
-        const MemoryControllerMetaData& memoryControllerMetaData);
+        const MemoryControllerInfo& memoryControllerInfo);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore& other);
@@ -135,7 +135,7 @@ private:
     folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
 
     uint64_t numberOfWorkerThreads;
-    MemoryControllerMetaData memCtrlMetaData;
+    MemoryControllerInfo memCtrlInfo;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.

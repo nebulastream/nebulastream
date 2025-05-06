@@ -35,22 +35,22 @@ namespace NES::Runtime::Execution
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize,
     const uint64_t windowSlide,
-    const WatermarkPredictorMetaData predictorMetaData,
+    const WatermarkPredictorInfo watermarkPredictorInfo,
     const std::vector<OriginId>& inputOrigins,
-    const MemoryControllerMetaData& memoryControllerMetaData)
+    const MemoryControllerInfo& memoryControllerInfo)
     : watermarkProcessor(std::make_shared<Operators::MultiOriginWatermarkProcessor>(inputOrigins))
     , numberOfWorkerThreads(0)
-    , memCtrlMetaData(memoryControllerMetaData)
+    , memCtrlInfo(memoryControllerInfo)
     , sliceAssigner(windowSize, windowSlide)
     , sequenceNumber(SequenceNumber::INITIAL)
     , numberOfActiveOrigins(inputOrigins.size())
 {
     for (const auto origin : inputOrigins)
     {
-        switch (predictorMetaData.type)
+        switch (watermarkPredictorInfo.type)
         {
             case RegressionBased: {
-                watermarkPredictors.emplace(origin, std::make_shared<RegressionBasedWatermarkPredictor>(predictorMetaData.param));
+                watermarkPredictors.emplace(origin, std::make_shared<RegressionBasedWatermarkPredictor>(watermarkPredictorInfo.param));
                 break;
             }
         }
@@ -64,7 +64,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , readExecTimes(other.readExecTimes)
     , memCtrl(other.memCtrl)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
-    , memCtrlMetaData(other.memCtrlMetaData)
+    , memCtrlInfo(other.memCtrlInfo)
     , sliceAssigner(other.sliceAssigner)
     , sequenceNumber(other.sequenceNumber.load())
     , numberOfActiveOrigins(other.numberOfActiveOrigins)
@@ -85,7 +85,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , readExecTimes(std::move(other.readExecTimes))
     , memCtrl(std::move(other.memCtrl))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
-    , memCtrlMetaData(std::move(other.memCtrlMetaData))
+    , memCtrlInfo(std::move(other.memCtrlInfo))
     , sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
     , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins))
@@ -115,7 +115,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     readExecTimes = other.readExecTimes;
     memCtrl = other.memCtrl;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
-    memCtrlMetaData = other.memCtrlMetaData;
+    memCtrlInfo = other.memCtrlInfo;
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
     numberOfActiveOrigins = other.numberOfActiveOrigins;
@@ -138,7 +138,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     readExecTimes = std::move(other.readExecTimes);
     memCtrl = std::move(other.memCtrl);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
-    memCtrlMetaData = std::move(other.memCtrlMetaData);
+    memCtrlInfo = std::move(other.memCtrlInfo);
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
     numberOfActiveOrigins = std::move(other.numberOfActiveOrigins);
@@ -390,12 +390,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
 
     /// Initialise memory controller and measure execution times for reading and writing
     memCtrl = std::make_shared<MemoryController>(
-        USE_BUFFER_SIZE,
-        USE_NUM_WRITE_BUFFERS,
-        numberOfWorkerThreads,
-        memCtrlMetaData.workingDir,
-        memCtrlMetaData.queryId,
-        memCtrlMetaData.originId);
+        USE_BUFFER_SIZE, USE_NUM_WRITE_BUFFERS, numberOfWorkerThreads, memCtrlInfo.workingDir, memCtrlInfo.queryId, memCtrlInfo.originId);
     measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
 }
 
