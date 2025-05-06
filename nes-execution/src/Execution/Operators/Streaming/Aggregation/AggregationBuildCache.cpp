@@ -151,22 +151,78 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
             break;
     }
 }
-
+namespace
+{
 int8_t* createNewAggregationSliceProxy(
-    SliceCacheEntry* sliceCacheEntry, OperatorHandler* ptrOpHandler, const Timestamp timestamp, const WorkerThreadId workerThreadId)
+    SliceCacheEntry* sliceCacheEntry,
+    OperatorHandler* ptrOpHandler,
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const AggregationBuildCache* buildOperator)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    const auto* opHandler = dynamic_cast<AggregationOperatorHandler*>(ptrOpHandler);
-    const auto createFunction = opHandler->getCreateNewSlicesFunction();
-    const auto newAggregationSlice
-        = dynamic_cast<AggregationSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
+    const auto* operatorHandler = dynamic_cast<AggregationOperatorHandler*>(ptrOpHandler);
+    /// If a new aggregation slice is created, we need to set the cleanup function for the aggregation states
+    auto wrappedCreateFunction(
+        [createFunction = operatorHandler->getCreateNewSlicesFunction(),
+         buildOperator](const SliceStart sliceStart, const SliceEnd sliceEnd)
+        {
+            const auto createdSlices = createFunction(sliceStart, sliceEnd);
+            for (const auto& slice : createdSlices)
+            {
+                const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
+                INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
+                aggregationSlice->setCleanupFunction(buildOperator->getStateCleanupFunction());
+            }
+            return createdSlices;
+        });
+
+    const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, wrappedCreateFunction);
+    INVARIANT(
+        hashMap.size() == 1,
+        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support "
+        "slicing");
+
 
     /// Updating the slice cache entry with the new slice
+    const auto newAggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     sliceCacheEntry->sliceStart = newAggregationSlice->getSliceStart();
     sliceCacheEntry->sliceEnd = newAggregationSlice->getSliceEnd();
     sliceCacheEntry->dataStructure = reinterpret_cast<int8_t*>(newAggregationSlice->getHashMapPtr(workerThreadId));
     return sliceCacheEntry->dataStructure;
 }
+}
+
+std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> AggregationBuildCache::getStateCleanupFunction() const
+{
+
+    return [copyOfFieldKeys = fieldKeys,
+            copyOfFieldValues = fieldValues,
+            copyOfAggregationFunctions = aggregationFunctions,
+            copyOfEntriesPerPage = entriesPerPage,
+            copyOfEntrySize = entrySize](const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>& hashMaps)
+    {
+        for (const auto& hashMap :
+             hashMaps | std::views::filter([](const auto& hashMapPtr) { return hashMapPtr->getNumberOfTuples() > 0; }))
+        {
+            {
+                /// Using here the .get() is fine, as we are not moving the hashMap pointer.
+                const Interface::ChainedHashMapRef hashMapRef(hashMap.get(), copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                for (const auto entry : hashMapRef)
+                {
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
+                    auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
+                    for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                    {
+                        aggFunction->cleanup(state);
+                        state = state + aggFunction->getSizeOfStateInBytes();
+                    }
+                }
+            }
+        }
+    };
+}
+
 
 void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& record) const
 {
@@ -185,7 +241,8 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
                 sliceCacheEntryToReplace,
                 globalOperatorHandler,
                 timestamp,
-                executionCtx.getWorkerThreadId());
+                executionCtx.getWorkerThreadId(),
+                nautilus::val<const AggregationBuildCache*>(this));
         });
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
@@ -225,6 +282,5 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
         aggFunction->lift(state, executionCtx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
-
 }
 }

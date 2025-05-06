@@ -39,6 +39,9 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 
+    /// Method that gets called, once an aggregation slice gets destroyed.
+    [[nodiscard]] std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> getStateCleanupFunction() const;
+
 private:
     const std::vector<std::unique_ptr<Functions::Function>> keyFunctions;
 
