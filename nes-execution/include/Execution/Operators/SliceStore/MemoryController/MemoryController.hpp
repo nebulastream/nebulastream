@@ -26,7 +26,7 @@ using FileWriterId = std::tuple<SliceEnd, WorkerThreadId, QueryCompilation::Join
 class MemoryController
 {
 public:
-    MemoryController(size_t bufferSize, size_t poolSize, const std::filesystem::path& workingDir, QueryId queryId, OriginId originId);
+    MemoryController(size_t bufferSize, size_t poolSize, std::filesystem::path workingDir, QueryId queryId, OriginId originId);
     MemoryController(MemoryController& other);
     MemoryController(MemoryController&& other) noexcept;
     MemoryController& operator=(MemoryController& other);

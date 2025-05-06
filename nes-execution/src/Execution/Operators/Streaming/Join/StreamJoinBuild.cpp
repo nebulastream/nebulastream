@@ -32,7 +32,6 @@ void updateSlicesProxy(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
-    const PipelineExecutionContext* piplineContext,
     const WorkerThreadId workerThreadId,
     const Timestamp watermarkTs,
     const SequenceNumber sequenceNumber,
@@ -43,7 +42,6 @@ void updateSlicesProxy(
     PRECONDITION(ptrOpHandler != nullptr, "opHandler should not be null!");
     PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
     PRECONDITION(memoryLayout != nullptr, "memory layout should not be null!");
-    PRECONDITION(piplineContext != nullptr, "pipeline context should not be null!");
 
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
@@ -52,7 +50,6 @@ void updateSlicesProxy(
             bufferProvider,
             memoryLayout,
             joinBuildSide,
-            piplineContext->getNumberOfWorkerThreads(),
             SliceStoreMetaData(
                 workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId)));
     }
@@ -78,7 +75,6 @@ void StreamJoinBuild::close(ExecutionContext& executionCtx, RecordBuffer& record
         executionCtx.pipelineMemoryProvider.bufferProvider,
         nautilus::val<Memory::MemoryLayouts::MemoryLayout*>(memoryProvider->getMemoryLayout().get()),
         nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide),
-        executionCtx.pipelineContext,
         executionCtx.getWorkerThreadId(),
         executionCtx.watermarkTs,
         executionCtx.sequenceNumber,

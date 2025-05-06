@@ -43,6 +43,7 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
 {
     WindowBasedOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
+    sliceAndWindowStore->setWorkerThreads(numberOfWorkerThreads);
 }
 
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)

@@ -18,8 +18,8 @@ namespace NES::Runtime::Execution
 {
 
 MemoryController::MemoryController(
-    const size_t bufferSize, const size_t poolSize, const std::filesystem::path& workingDir, const QueryId queryId, const OriginId originId)
-    : bufferSize(bufferSize), poolSize(poolSize), workingDir(workingDir), queryId(queryId), originId(originId)
+    const size_t bufferSize, const size_t poolSize, std::filesystem::path workingDir, const QueryId queryId, const OriginId originId)
+    : bufferSize(bufferSize), poolSize(poolSize), workingDir(std::move(workingDir)), queryId(queryId), originId(originId)
 {
     if (bufferSize > 0)
     {

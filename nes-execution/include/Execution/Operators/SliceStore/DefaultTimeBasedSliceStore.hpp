@@ -58,8 +58,7 @@ public:
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        QueryCompilation::JoinBuildSideType joinBuildSide,
-        uint64_t numberOfWorkerThreads) override;
+        QueryCompilation::JoinBuildSideType joinBuildSide) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;

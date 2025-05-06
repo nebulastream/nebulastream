@@ -47,18 +47,15 @@ NLJSlice* getNLJSliceRefFromEndProxy(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
-    const PipelineExecutionContext* pipelineCtx,
     const SliceEnd sliceEnd)
 {
     PRECONDITION(ptrOpHandler != nullptr, "op handler should not be null");
     PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
     PRECONDITION(memoryLayout != nullptr, "memory layout should not be null!");
-    PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
 
-    const auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(
-        sliceEnd, bufferProvider, memoryLayout, joinBuildSide, pipelineCtx->getNumberOfWorkerThreads());
+    const auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, joinBuildSide);
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
 
     return dynamic_cast<NLJSlice*>(slice.value().get());
@@ -136,7 +133,6 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         executionCtx.pipelineMemoryProvider.bufferProvider,
         nautilus::val<Memory::MemoryLayouts::MemoryLayout*>(leftMemoryProvider->getMemoryLayout().get()),
         nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Left),
-        executionCtx.pipelineContext,
         sliceIdLeft);
     const auto sliceRefRight = invoke(
         getNLJSliceRefFromEndProxy,
@@ -144,7 +140,6 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         executionCtx.pipelineMemoryProvider.bufferProvider,
         nautilus::val<Memory::MemoryLayouts::MemoryLayout*>(rightMemoryProvider->getMemoryLayout().get()),
         nautilus::val<QueryCompilation::JoinBuildSideType>(QueryCompilation::JoinBuildSideType::Right),
-        executionCtx.pipelineContext,
         sliceIdRight);
 
     const auto leftPagedVectorRef = invoke(

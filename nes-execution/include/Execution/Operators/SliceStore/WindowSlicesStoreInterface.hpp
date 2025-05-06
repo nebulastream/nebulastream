@@ -67,8 +67,7 @@ public:
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        QueryCompilation::JoinBuildSideType joinBuildSide,
-        uint64_t numberOfWorkerThreads)
+        QueryCompilation::JoinBuildSideType joinBuildSide)
         = 0;
 
     /// Retrieves all current non-deleted slices that have not been triggered yet
@@ -86,5 +85,8 @@ public:
 
     /// Returns the window size
     [[nodiscard]] virtual uint64_t getWindowSize() const = 0;
+
+    /// Sets number of worker threads. Needs to be called before working with the slice store
+    virtual void setWorkerThreads(uint64_t) { }
 };
 }

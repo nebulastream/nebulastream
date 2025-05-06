@@ -179,8 +179,7 @@ std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySlic
     const SliceEnd sliceEnd,
     Memory::AbstractBufferProvider*,
     const Memory::MemoryLayouts::MemoryLayout*,
-    const QueryCompilation::JoinBuildSideType,
-    const uint64_t)
+    const QueryCompilation::JoinBuildSideType)
 {
     if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
     {

@@ -35,16 +35,23 @@
 namespace NES::Runtime::Execution
 {
 
-struct SliceStoreMetaData
-{
-    WorkerThreadId threadId;
-    BufferMetaData bufferMetaData;
-};
-
 enum DiskOperation : uint8_t
 {
     READ,
     WRITE
+};
+
+struct MemoryControllerMetaData
+{
+    std::filesystem::path workingDir;
+    QueryId queryId;
+    OriginId originId;
+};
+
+struct SliceStoreMetaData
+{
+    WorkerThreadId threadId;
+    BufferMetaData bufferMetaData;
 };
 
 class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
@@ -67,9 +74,7 @@ public:
         uint64_t windowSlide,
         WatermarkPredictorMetaData predictorMetaData,
         const std::vector<OriginId>& inputOrigins,
-        const std::filesystem::path& workingDir,
-        QueryId queryId,
-        OriginId originId);
+        const MemoryControllerMetaData& memoryControllerMetaData);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore& other);
@@ -85,17 +90,16 @@ public:
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        QueryCompilation::JoinBuildSideType joinBuildSide,
-        uint64_t numberOfWorkerThreads) override;
+        QueryCompilation::JoinBuildSideType joinBuildSide) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     uint64_t getWindowSize() const override;
+    void setWorkerThreads(uint64_t numberOfWorkerThreads) override;
 
     void updateSlices(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        uint64_t numberOfWorkerThreads,
         const SliceStoreMetaData& metaData);
 
 private:
@@ -108,8 +112,7 @@ private:
         const std::shared_ptr<Slice>& slice,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        QueryCompilation::JoinBuildSideType joinBuildSide,
-        uint64_t numberOfWorkerThreads);
+        QueryCompilation::JoinBuildSideType joinBuildSide);
 
     void initializeWatermarkPredictors();
     void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
@@ -118,11 +121,6 @@ private:
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
 
-    /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
-    /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory.
-    MemoryController memCtrl;
-    folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
-
     /// The watermark processor and predictors are used to predict when a slice should be written out or read back during the build phase.
     std::shared_ptr<Operators::MultiOriginWatermarkProcessor> watermarkProcessor;
     std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>> watermarkPredictors;
@@ -130,6 +128,14 @@ private:
     /// The maps hold the execution times needed to write or read data of certain data sizes which is also used for predictions.
     std::map<size_t, uint64_t> writeExecTimes;
     std::map<size_t, uint64_t> readExecTimes;
+
+    /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
+    /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory.
+    std::shared_ptr<MemoryController> memCtrl;
+    folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
+
+    uint64_t numberOfWorkerThreads;
+    MemoryControllerMetaData memCtrlMetaData;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.

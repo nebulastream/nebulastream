@@ -368,9 +368,8 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         streamJoinConfig.windowSlide,
         WatermarkPredictorMetaData(RegressionBased, 1),
         joinOperator->getAllInputOriginIds(),
-        queryCompilerConfig.fileBackedWorkingDir.getValue(),
-        decomposedQueryPlan.getQueryId(),
-        joinOperator->getOutputOriginIds()[0]);
+        MemoryControllerMetaData(
+            queryCompilerConfig.fileBackedWorkingDir.getValue(), decomposedQueryPlan.getQueryId(), joinOperator->getOutputOriginIds()[0]));
     /*auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         streamJoinConfig.windowSize,
         streamJoinConfig.windowSlide,
