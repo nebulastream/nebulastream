@@ -39,6 +39,11 @@ public:
         ((T*) inputData)[index] = value;
     };
 
+    void addModelInput(int8_t* content, uint32_t size)
+    {
+        memcpy(static_cast<float*>(inputData), content, size);
+    }
+
     void infer();
     float getResultAt(int idx) { return outputData[idx]; }
 

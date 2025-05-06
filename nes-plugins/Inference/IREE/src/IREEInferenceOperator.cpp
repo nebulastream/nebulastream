@@ -21,6 +21,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <Util/Common.hpp>
 #include <nautilus/function.hpp>
+#include <Common/DataTypes/DataTypeProvider.hpp>
 
 #include <ExecutableOperatorRegistry.hpp>
 
@@ -42,6 +43,13 @@ void addValueToModel(int index, float value, void* inferModelHandler)
     adapter->addModelInput(index, value);
 }
 
+void copyVarSizedToModel(int8_t* content, uint32_t size, void* inferModelHandler)
+{
+    auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
+    auto adapter = handler->getIREEAdapter();
+    adapter->addModelInput(content, size);
+}
+
 void applyModel(void* inferModelHandler)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
@@ -60,10 +68,19 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
 {
     auto inferModelHandler = ctx.getGlobalOperatorHandler(inferModelHandlerIndex);
 
-    for (int i = 0; i < inputFieldNames.size(); i++)
+    if (!this->isVarSizedInput)
     {
-        VarVal value = record.read(inputFieldNames.at(nautilus::static_val<int>(i)));
-        nautilus::invoke(addValueToModel<float>, nautilus::val<int>(i), value.cast<nautilus::val<float>>(), inferModelHandler);
+        for (int i = 0; i < inputFieldNames.size(); i++)
+        {
+            VarVal value = record.read(inputFieldNames.at(nautilus::static_val<int>(i)));
+            nautilus::invoke(addValueToModel<float>, nautilus::val<int>(i), value.cast<nautilus::val<float>>(), inferModelHandler);
+        }
+    }
+    else
+    {
+        VarVal value = record.read(inputFieldNames.at(nautilus::static_val<int>(0)));
+        auto varSizedValue = value.cast<VariableSizedData>();
+        nautilus::invoke(copyVarSizedToModel, varSizedValue.getContent(), varSizedValue.getSize(), inferModelHandler);
     }
 
     nautilus::invoke(applyModel, inferModelHandler);
@@ -124,6 +141,12 @@ ExecutableOperatorRegistryReturnType RegisterIREEExecutableOperator(ExecutableOp
     arguments.operatorHandlers.push_back(handler);
 
     auto ireeOperator = std::make_shared<IREEInferenceOperator>(arguments.operatorHandlers.size() - 1, inputFields, fieldNames);
+
+    std::shared_ptr<Schema> inputSchema = inferModelOperator->getInputSchema();
+    if (inputSchema->getFieldCount() == 1 && inputSchema->getFieldByIndex(0)->getDataType() == DataTypeProvider::provideDataType(LogicalType::VARSIZED))
+    {
+        ireeOperator->isVarSizedInput = true;
+    }
     return ireeOperator;
 }
 
