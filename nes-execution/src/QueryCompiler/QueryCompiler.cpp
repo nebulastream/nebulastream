@@ -17,6 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
+#include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
@@ -38,7 +39,6 @@ QueryCompiler::QueryCompiler(Configurations::QueryCompilerConfiguration queryCom
     , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(this->queryCompilerConfig))
     , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(this->queryCompilerConfig))
     , pipeliningPhase(phaseFactory.createPipeliningPhase())
-    , addScanAndEmitPhase(phaseFactory.createAddScanAndEmitPhase(this->queryCompilerConfig))
 {
 }
 
@@ -61,7 +61,7 @@ std::unique_ptr<Runtime::Execution::CompiledQueryPlan> QueryCompiler::compileQue
     auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
     dumpHelper.dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan->toString());
 
-    addScanAndEmitPhase->apply(pipelinedQueryPlan);
+    AddScanAndEmitPhase::apply(pipelinedQueryPlan);
     dumpHelper.dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan->toString());
 
     auto bufferSize = request->getBufferSize();
