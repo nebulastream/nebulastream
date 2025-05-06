@@ -57,6 +57,7 @@ Checks: [
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
+  "-cert-dcl37-c",
   "-cert-dcl51-cpp",
   "-cert-err09-cpp",
   "-cert-err61-cpp",
@@ -174,7 +175,6 @@ WarningsAsErrors: '
   -cppcoreguidelines-avoid-const-or-ref-data-members,
   -fuchsia-default-arguments-declarations,
   -bugprone-reserved-identifier,
-  -cert-dcl37-c,
   -hicpp-signed-bitwise,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-avoid-non-const-global-variables,
