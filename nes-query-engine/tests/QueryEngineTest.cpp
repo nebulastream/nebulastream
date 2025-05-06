@@ -529,6 +529,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
     TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources);
     auto builder = test.buildNewQuery();
     std::vector<QueryPlanBuilder::identifier_t> sources;
+    sources.reserve(numberOfSources);
     for (size_t i = 0; i < numberOfSources; i++)
     {
         sources.push_back(builder.addSource());
@@ -576,6 +577,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
     TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources);
     auto builder = test.buildNewQuery();
     std::vector<QueryPlanBuilder::identifier_t> sources;
+    sources.reserve(numberOfSources);
     for (size_t i = 0; i < numberOfSources; i++)
     {
         sources.push_back(builder.addSource());
