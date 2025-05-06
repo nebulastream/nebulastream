@@ -98,7 +98,7 @@ fi
 # This check warns the author of a PR about includes with double quotes to avoid burdening the reviewers
 echo
 echo "New includes with double quotes:"
-git diff --name-only $(git merge-base HEAD origin/main 2>/dev/null) | grep -E '\.cpp$|\.hpp$' | xargs -I{} git grep -n -E -e "#include \".*\"" -- {} 2>/dev/null || echo "None found"
+git diff --name-only $(git merge-base HEAD origin/main 2>/dev/null) | grep -E '\.cpp$|\.hpp$' | xargs -I{} git grep -n -E -e "#include \".*\"" -- {} 2>/dev/null || echo ""
 echo
 
 python3 scripts/check_preamble.py || FAIL=1
