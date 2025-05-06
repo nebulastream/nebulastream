@@ -28,17 +28,34 @@ include "../DataStructure/SomeDataStructure.hpp"
 ```
 
 
-# Smart Pointers and Passing Objects
-We avoid raw pointers and use [smart pointers](https:///en.cppreference.com/book/intro/smart_pointers) instead.
-This includes no calls to `new` or `malloc` and use `make_shared` or `make_unique` instead.
-If it is not possible, e.g., a library working with raw pointers, we make sure that a raw pointer is non-owning.
-This means that a developer is never responsible for deleting the object, i.e., calling `delete` or `free`.
-We use `unique_ptr` as a default and `shared_ptr` only if necessary.
-As a shared pointer is more expensive than one might think, due to the reference count being atomic and thread-safe.
+# Ownership and Pointer usage
 
-We differentiate between passing a smart pointer or only a reference to the object itself.
-We prefer passing the object itself as a const reference `const auto&`, as it is more clear and the smart pointer is not passed around [GotW #91](https:///herbsutter.com/2013/06/05/gotw-91-solution-smart-pointer-parameters/).
-We prefer `operator*` and `operator->` over `.get()` as it is more clear that the smart pointer is still managing the object.
+**Ownership:**
+- Prefer value semantics over pointers. This avoids heap allocations, pointer indirection ("pointer chasing"), and potential memory leaks.
+
+- Use `unique_ptr` when you need dynamic allocation but want exclusive ownership. It’s our default choice when the performance cost of copying is a concern.
+
+- Reserve `shared_ptr` for scenarios requiring shared ownership. Remember the atomic, thread-safe reference counting makes it more expensive than you might expect.
+
+- Use `weak_ptr` for non-owning references to shared resources, or to break reference cycles involving `shared_ptr`.
+
+- Favor type erasure (e.g., `std::function`, `std::any`, or a custom wrapper) for polymorphic objects instead of managing them through `shared_ptr`. C.f., [Sean Parent, Runtime Polymorphism](https://sean-parent.stlab.cc/presentations/2017-01-18-runtime-polymorphism/2017-01-18-runtime-polymorphism.pdf).
+
+- Avoid raw pointers for ownership. Never call `new` or `malloc`; use `make_unique` or `make_shared` instead. If you must interact with APIs that use raw pointers, treat those pointers as non-owning observers only—ownership must be explicitly managed elsewhere.
+  Remember, not only raw pointers can let you accidentally access invalid memory, but references as well.
+
+**Parameter passing:**
+
+- Pass objects by reference (e.g., `const T&`) or by value for small/trivially-copyable types.
+
+- Accept smart pointers (`unique_ptr` or `shared_ptr`) only when you intend to express ownership transfer or sharing. Preferably pass them by value (and moving) so the intent to transfer or share ownership is explicit.
+
+**Accessing smart pointers:**
+
+- Use `operator*` and `operator->` to work with the managed object.
+
+- Limit use of `.get()` to interoperate with APIs that require a raw pointer, avoiding unnecessary exposure of ownership details.
+
 ```cpp
 void correctParam(const SomeClass& someClass) {
     auto ret = someClass.someMethod();
