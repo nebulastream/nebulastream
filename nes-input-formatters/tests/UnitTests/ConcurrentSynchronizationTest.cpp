@@ -91,7 +91,6 @@ public:
         std::latch completionLatch;
         std::mutex sequenceShredderMutex;
 
-    private:
         void threadFunction(
             size_t threadIdx, const size_t upperBound, std::mt19937_64 sequenceNumberGen, std::bernoulli_distribution boolDistribution)
         {
