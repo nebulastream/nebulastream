@@ -30,7 +30,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
-#include <Util/Timer.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
@@ -42,6 +41,12 @@ struct SliceStoreMetaData
     BufferMetaData bufferMetaData;
 };
 
+enum DiskOperation : uint8_t
+{
+    READ,
+    WRITE
+};
+
 class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
@@ -50,6 +55,8 @@ public:
     static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
     static constexpr auto USE_MIN_STATE_SIZE_WRITE
         = 0; /// slices with state sice less than 0B for a given ThreadId are not written to external storage
+    static constexpr auto USE_MIN_STATE_SIZE_READ
+        = 0; /// slices with state sice less than 0B for a given ThreadId are not read back from external storage
     static constexpr auto USE_BUFFER_SIZE = 1024 * 4; /// 4 KB size of file write and read buffers
     static constexpr auto USE_POOL_SIZE = 1024 * 10; /// 10 K file write buffers
     static constexpr auto USE_MAX_NUM_SEQ_NUMBERS = UINT64_MAX; /// max number of data points for predictions
@@ -92,6 +99,11 @@ public:
         const SliceStoreMetaData& metaData);
 
 private:
+    std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> getSlicesToUpdate(
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        WorkerThreadId threadId);
+
     void readSliceFromFiles(
         const std::shared_ptr<Slice>& slice,
         Memory::AbstractBufferProvider* bufferProvider,
@@ -99,10 +111,9 @@ private:
         QueryCompilation::JoinBuildSideType joinBuildSide,
         uint64_t numberOfWorkerThreads);
 
-    std::map<SliceEnd, std::shared_ptr<Slice>> getTriggerableSlices(Timestamp globalWatermark);
-
+    void initializeWatermarkPredictors();
     void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
-    std::pair<double, double> getReadAndWriteExecTimesForDataSize(size_t dataSize);
+    static uint64_t getExecTimesForDataSize(std::map<size_t, uint64_t> execTimes, size_t dataSize);
 
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
@@ -114,11 +125,11 @@ private:
 
     /// The watermark processor and predictors are used to predict when a slice should be written out or read back during the build phase.
     std::shared_ptr<Operators::MultiOriginWatermarkProcessor> watermarkProcessor;
-    std::map<OriginId, std::unique_ptr<AbstractWatermarkPredictor>> watermarkPredictors;
+    std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>> watermarkPredictors;
 
     /// The maps hold the execution times needed to write or read data of certain data sizes which is also used for predictions.
-    std::map<size_t, double> writeExecTimes;
-    std::map<size_t, double> readExecTimes;
+    std::map<size_t, uint64_t> writeExecTimes;
+    std::map<size_t, uint64_t> readExecTimes;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.

@@ -49,7 +49,7 @@ public:
     [[nodiscard]] uint64_t getTotalNumberOfEntries() const override;
     [[nodiscard]] uint64_t getNumberOfPages() const override;
 
-    [[nodiscard]] uint64_t getNumberOfTuplesOnDisk() const;
+    [[nodiscard]] size_t getStateSizeOnDisk(const Memory::MemoryLayouts::MemoryLayout* memoryLayout) const;
 
 private:
     /// Appends a new page to the keyPages vector if the last page is full.

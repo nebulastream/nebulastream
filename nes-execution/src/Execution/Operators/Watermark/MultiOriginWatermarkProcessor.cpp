@@ -44,12 +44,12 @@ Timestamp MultiOriginWatermarkProcessor::updateWatermark(const Timestamp ts, con
         {
             if (sequenceData.lastChunk)
             {
-                const auto now = std::chrono::system_clock::now();
-                const auto duration = now.time_since_epoch();
-                const auto ingestionTime = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(duration).count());
+                const auto now = std::chrono::high_resolution_clock::now();
+                const auto ingestionTimeTicks
+                    = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
 
                 const auto seqNumbersIngestionTimeLocked = seqNumbersIngestionTime.wlock();
-                (*seqNumbersIngestionTimeLocked)[{origin, SequenceNumber(sequenceData.sequenceNumber)}] = ingestionTime;
+                (*seqNumbersIngestionTimeLocked)[{origin, SequenceNumber(sequenceData.sequenceNumber)}] = ingestionTimeTicks;
             }
 
             watermarkProcessors[originIndex]->emplace(sequenceData, ts.getRawValue());
@@ -91,12 +91,11 @@ MultiOriginWatermarkProcessor::getIngestionTimeForWatermarks(const uint64_t numG
     std::map<OriginId, std::vector<std::pair<uint64_t, Timestamp::Underlying>>> ingestionTimeForWatermarks;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
     {
+        const auto origin = origins[originIndex];
         const auto& nextSequenceNumbers
             = watermarkProcessors[originIndex]->getNextSequenceNumbersAndValues(numGapsAllowed, maxNumSeqNumbers);
-        std::vector<std::pair<uint64_t, Timestamp::Underlying>> ingestionTimes;
-        ingestionTimes.reserve(nextSequenceNumbers.size());
+        std::vector<std::pair<uint64_t, Timestamp::Underlying>> ingestionTimes(nextSequenceNumbers.size());
 
-        const auto origin = origins[originIndex];
         const auto seqNumbersIngestionTimeLocked = seqNumbersIngestionTime.rlock();
         for (const auto& [seqNumber, timestamp] : nextSequenceNumbers)
         {

@@ -46,6 +46,7 @@ public:
     void deleteSliceFiles(SliceEnd sliceEnd);
 
 private:
+    // TODO add a real read pool as reading is not necessarily done single threaded with predictive read
     static constexpr auto NUM_READ_BUFFERS = 2;
 
     std::string constructFilePath(SliceEnd sliceEnd, QueryCompilation::JoinBuildSideType joinBuildSide) const;

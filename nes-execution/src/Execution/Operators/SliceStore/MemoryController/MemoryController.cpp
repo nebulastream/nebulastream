@@ -184,7 +184,7 @@ void MemoryController::setFileLayout(
 {
     const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
 
-    /// Insert or overr
+    /// Insert or override
     const std::lock_guard lock(fileLayoutsMutex);
     fileLayouts.insert_or_assign({sliceEnd, threadId, joinBuildSide}, fileLayout);
 }

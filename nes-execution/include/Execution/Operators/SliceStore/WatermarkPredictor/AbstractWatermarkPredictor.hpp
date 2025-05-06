@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <map>
+#include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 
 namespace NES::Runtime::Execution
@@ -38,6 +40,9 @@ public:
 
     virtual void initialize(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data) = 0;
     [[nodiscard]] virtual Timestamp getEstimatedWatermark(uint64_t timestamp) const = 0;
+
+    static Timestamp getMinPredictedWatermarkForTimestamp(
+        const std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>>& watermarkPredictors, uint64_t timestamp);
 };
 
 }
