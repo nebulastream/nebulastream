@@ -35,31 +35,24 @@
 # - aliases of other checks
 Checks: [
   "*",
-  # irrelevant
+
   "-llvmlibc-*", # project-specific
   "-android-*", # project-specific
   "-zircon-*", # project-specific
   "-abseil-*", # we currently don't use abseil
   "-altera-*", # we don't do OpenCL
 
-  # it is not possible to disable this for structs
-  "-misc-non-private-member-variables-in-classes",
-  # does not work with our error of unused variable
-  "-readability-named-parameter",
-  # we can not overload the operator() anywhere
-  "-fuchsia-overloaded-operator",
-  # header guards are not needed as we use pragma once
-  "-llvm-header-guard",
-
-  # annyoing and useless
-  "-llvm-include-order", # conflicts with the order of includes forced by our formatter
   "-bugprone-easily-swappable-parameters", # annoying-ish
-  "-modernize-use-trailing-return-type", # purely cosmetic
   "-fuchsia-default-arguments-calls", # we do not forbid default args
-  "-llvm-namespace-comment", # we do not require namespace comments
+  "-fuchsia-overloaded-operator", # we can not overload the operator() anywhere
   "-fuchsia-statically-constructed-objects", # we allow statically constructed objects; constexpr is not always possible
-
-  "-misc-no-recursion",
+  "-llvm-header-guard", # header guards are not needed as we use pragma once
+  "-llvm-include-order", # conflicts with the order of includes forced by our formatter
+  "-llvm-namespace-comment", # we do not require namespace comments
+  "-misc-non-private-member-variables-in-classes", # it is not possible to disable this for structs
+  "-misc-no-recursion", # we allow recursion
+  "-modernize-use-trailing-return-type", # purely cosmetic
+  "-readability-named-parameter", # does not work with our error of unused variable
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
