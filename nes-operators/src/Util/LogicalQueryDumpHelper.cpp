@@ -69,7 +69,7 @@ size_t LogicalQueryDumpHelper::calculateLayers(const std::vector<std::shared_ptr
     size_t maxWidth = 0;
     size_t currentDepth = 0;
     std::unordered_set<OperatorId> alreadySeen = {};
-    NodesPerLayerCounter nodesPerLayer = {rootOperators.size(), 0};
+    NodesPerLayerCounter nodesPerLayer = {.current = rootOperators.size(), .next = 0};
     for (auto rootOp : rootOperators)
     {
         layerCalcQueue.emplace_back(std::move(rootOp), std::vector<std::weak_ptr<PrintNode>>());
@@ -98,7 +98,7 @@ size_t LogicalQueryDumpHelper::calculateLayers(const std::vector<std::shared_ptr
         }
         else
         {
-            processedDag.emplace_back(Layer{{layerNode}, width});
+            processedDag.emplace_back(Layer{.nodes = {layerNode}, .layerWidth = width});
         }
         /// Now that the current Node has been created, we can save its pointer in the parents.
         for (const auto& parent : parentPtrs)
@@ -211,7 +211,13 @@ void LogicalQueryDumpHelper::insertVerticalBranches(
         auto parents = node->parents;
         for (auto depthDiff = startDepth; depthDiff < endDepth; ++depthDiff)
         {
-            auto verticalBranchNode = std::make_shared<PrintNode>(PrintNode{"|", {}, parents, {}, true, INVALID_OPERATOR_ID});
+            auto verticalBranchNode = std::make_shared<PrintNode>(PrintNode{
+                .nodeAsString = "|",
+                .parentPositions = {},
+                .parents = parents,
+                .children = {},
+                .verticalBranch = true,
+                .id = INVALID_OPERATOR_ID});
             if (depthDiff == startDepth)
             {
                 processedDag.at(depthDiff).nodes.at(nodesIndex) = verticalBranchNode;

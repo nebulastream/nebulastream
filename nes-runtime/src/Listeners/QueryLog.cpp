@@ -132,7 +132,7 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
             }
         }
 
-        QuerySummary summary = {queryId, Execution::QueryStatus::Registered, std::move(runs)};
+        QuerySummary summary = {.queryId = queryId, .currentStatus = Execution::QueryStatus::Registered, .runs = std::move(runs)};
 
         if (summary.runs.empty())
         {

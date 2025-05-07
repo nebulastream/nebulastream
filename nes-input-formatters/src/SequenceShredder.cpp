@@ -228,7 +228,8 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
                 bitmapSnapshot.tupleDelimiterBitmapSnapshot,
                 bitmapSnapshot.seenAndUsedBitmapSnapshot);
 
-            spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
+            spanningTuple = SpanningTuple{
+                .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
             break;
         }
         case WrappingMode::CHECK_WRAPPING_TO_LOWER: {
@@ -246,11 +247,13 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             {
                 const auto [spanningTupleStart, isStartValid]
                     = tryToFindLowerWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
             }
             else
             {
-                spanningTuple = SpanningTuple{INVALID_SEQUENCE_NUMBER, spanningTupleEnd, false, isEndValid};
+                spanningTuple = SpanningTuple{
+                    .spanStart = INVALID_SEQUENCE_NUMBER, .spanEnd = spanningTupleEnd, .isStartValid = false, .isEndValid = isEndValid};
             }
             break;
         }
@@ -269,11 +272,13 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             {
                 const auto [spanningTupleEnd, isEndValid]
                     = tryToFindHigherWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
             }
             else
             {
-                spanningTuple = SpanningTuple{spanningTupleStart, INVALID_SEQUENCE_NUMBER, isStartValid, false};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = INVALID_SEQUENCE_NUMBER, .isStartValid = isStartValid, .isEndValid = false};
             }
             break;
         }
@@ -285,11 +290,13 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             {
                 const auto [spanningTupleEnd, isEndValid]
                     = tryToFindHigherWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
             }
             else
             {
-                spanningTuple = SpanningTuple{spanningTupleStart, INVALID_SEQUENCE_NUMBER, isStartValid, false};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = INVALID_SEQUENCE_NUMBER, .isStartValid = isStartValid, .isEndValid = false};
             }
             break;
         }

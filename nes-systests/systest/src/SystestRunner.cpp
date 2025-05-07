@@ -62,10 +62,10 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     SystestParser parser{};
     std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema{
         {"CHECKSUM",
-         {{DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Count"},
-          {DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Checksum"}}}};
+         {{.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "S$Count"},
+          {.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "S$Checksum"}}}};
 
-    parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = testDataDir; }});
+    parser.registerSubstitutionRule({.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
     if (!parser.loadFile(testFilePath))
     {
         throw TestException("Could not successfully load test file://{}", testFilePath.string());
@@ -203,15 +203,16 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
 
             if (sinkName == "CHECKSUM")
             {
-                auto sink = CLI::Sink{sinkName, "Checksum", {std::make_pair("filePath", resultFile)}};
+                auto sink = CLI::Sink{.name = sinkName, .type = "Checksum", .config = {std::make_pair("filePath", resultFile)}};
                 config.sinks.emplace(sinkForQuery, std::move(sink));
             }
             else
             {
                 auto sinkCLI = CLI::Sink{
-                    sinkForQuery,
-                    "File",
-                    {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
+                    .name = sinkForQuery,
+                    .type = "File",
+                    .config
+                    = {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
                 config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
             }
 

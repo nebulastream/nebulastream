@@ -410,10 +410,10 @@ struct BufferMetaDataTest
 TEST_F(NonBlockingMonotonicSeqQueueTest, simpleInsertionsWithSingleChunks)
 {
     std::vector<BufferMetaDataTest> sequenceData = {
-        BufferMetaDataTest{{SequenceNumber(1), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(31)},
-        BufferMetaDataTest{{SequenceNumber(2), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(63)},
-        BufferMetaDataTest{{SequenceNumber(3), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(80)},
-        BufferMetaDataTest{{SequenceNumber(4), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(99)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(1), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(31)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(2), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(63)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(3), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(80)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(4), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(99)},
     };
 
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();

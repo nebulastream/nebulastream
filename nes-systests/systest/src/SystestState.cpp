@@ -181,7 +181,7 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
     testGroups.reserve(groupFilesMap.size());
     for (const auto& [groupName, files] : groupFilesMap)
     {
-        testGroups.push_back(TestGroupFiles{groupName, files});
+        testGroups.push_back(TestGroupFiles{.name = groupName, .files = files});
     }
     return testGroups;
 }
