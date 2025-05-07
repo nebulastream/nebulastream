@@ -22,6 +22,7 @@ add_source_files(nes-execution
         PhysicalDemultiplexOperator.cpp
         PhysicalWatermarkAssignmentOperator.cpp
         PhysicalScanOperator.cpp
+        PhysicalSequenceOperator.cpp
         PhysicalEmitOperator.cpp
 )
 

@@ -17,6 +17,8 @@ add_source_files(nes-execution
         Emit.cpp
         EmitOperatorHandler.cpp
         Scan.cpp
+        Sequence.cpp
+        SequenceOperatorHandler.cpp
         ExecutionContext.cpp)
 
 add_subdirectory(Watermark)
