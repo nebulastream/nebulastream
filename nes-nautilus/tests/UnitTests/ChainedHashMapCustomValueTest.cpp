@@ -50,9 +50,9 @@ class ChainedHashMapCustomValueTest
 {
 public:
     /// This is fine, as we are writing all items for each number of keys
-    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {100, 2000};
-    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {1, 2048};
-    static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {512, 10240};
+    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {.min = 100, .max = 2000};
+    static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {.min = 1, .max = 2048};
+    static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {.min = 512, .max = 10240};
     Nautilus::Configurations::NautilusBackend backend;
 
     static void SetUpTestSuite()

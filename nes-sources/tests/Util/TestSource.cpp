@@ -77,7 +77,7 @@ bool NES::Sources::TestSourceControl::injectEoS()
 bool NES::Sources::TestSourceControl::injectData(std::vector<std::byte> data, size_t numberOfTuples)
 {
     PRECONDITION(!failed, "Should not be called on a failed source");
-    return tryIngestionUntil(queue, Data{std::move(data), numberOfTuples}, [this] { return wasClosed(); });
+    return tryIngestionUntil(queue, Data{.data = std::move(data), .numberOfTuples = numberOfTuples}, [this] { return wasClosed(); });
 }
 bool NES::Sources::TestSourceControl::injectError(std::string error)
 {

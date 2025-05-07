@@ -221,7 +221,11 @@ TEST_P(TestTupleBufferTest, countOccurrencesTest)
         uint64_t occurrences;
     };
 
-    std::vector<TupleOccurrences> vec = {{{1, true, rand()}, 5}, {{2, false, rand()}, 6}, {{3, false, rand()}, 20}, {{4, true, rand()}, 5}};
+    std::vector<TupleOccurrences> vec
+        = {{.tuple = {1, true, rand()}, .occurrences = 5},
+           {.tuple = {2, false, rand()}, .occurrences = 6},
+           {.tuple = {3, false, rand()}, .occurrences = 20},
+           {.tuple = {4, true, rand()}, .occurrences = 5}};
 
     auto posTuple = 0_u64;
     for (auto item : vec)
@@ -247,10 +251,10 @@ TEST_P(TestTupleBufferTest, countOccurrencesTestVarSizeData)
     };
 
     std::vector<TupleOccurrences> vec
-        = {{{1, "true", rand(), "aaaaa"}, 5},
-           {{2, "false", rand(), "bbbbb"}, 6},
-           {{4, "true", rand(), "ccccc"}, 20},
-           {{3, "false", rand(), "ddddd"}, 5}};
+        = {{.tuple = {1, "true", rand(), "aaaaa"}, .occurrences = 5},
+           {.tuple = {2, "false", rand(), "bbbbb"}, .occurrences = 6},
+           {.tuple = {4, "true", rand(), "ccccc"}, .occurrences = 20},
+           {.tuple = {3, "false", rand(), "ddddd"}, .occurrences = 5}};
 
     auto posTuple = 0_u64;
     for (auto item : vec)

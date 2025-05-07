@@ -46,22 +46,24 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
     SystestParser::SLTSource expextedSLTSource
-        = {.name = "e123", .fields = {{DataTypeProvider::provideDataType(LogicalType::UINT32), "id"}}, .tuples = {"1", "1", "1", "1"}};
+        = {.name = "e123",
+           .fields = {{.type = DataTypeProvider::provideDataType(LogicalType::UINT32), .name = "id"}},
+           .tuples = {"1", "1", "1", "1"}};
     SystestParser::CSVSource expextedCSVSource
         = {.name = "e124",
            .fields
-           = {{DataTypeProvider::provideDataType(LogicalType::INT8), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::UINT8), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::INT16), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::UINT16), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::INT32), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::UINT32), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::INT64), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::FLOAT32), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::UINT64), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::FLOAT64), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::BOOLEAN), "i"},
-              {DataTypeProvider::provideDataType(LogicalType::CHAR), "i"}},
+           = {{.type = DataTypeProvider::provideDataType(LogicalType::INT8), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::UINT8), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::INT16), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::UINT16), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::INT32), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::UINT32), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::INT64), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::FLOAT32), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::FLOAT64), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::BOOLEAN), .name = "i"},
+              {.type = DataTypeProvider::provideDataType(LogicalType::CHAR), .name = "i"}},
            .csvFilePath = "xyz.txt"};
 
     SystestParser parser{};
@@ -81,9 +83,9 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
-        = {{DataTypeProvider::provideDataType(LogicalType::UINT64), "id"},
-           {DataTypeProvider::provideDataType(LogicalType::UINT64), "value"},
-           {DataTypeProvider::provideDataType(LogicalType::UINT64), "timestamp"}};
+        = {{.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "id"},
+           {.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "value"},
+           {.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
                                 "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
                                 "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
@@ -143,9 +145,9 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
-        = {{DataTypeProvider::provideDataType(LogicalType::UINT64), "id"},
-           {DataTypeProvider::provideDataType(LogicalType::UINT64), "value"},
-           {DataTypeProvider::provideDataType(LogicalType::UINT64), "timestamp"}};
+        = {{.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "id"},
+           {.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "value"},
+           {.type = DataTypeProvider::provideDataType(LogicalType::UINT64), .name = "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
                                 "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
                                 "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",

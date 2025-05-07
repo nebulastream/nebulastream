@@ -130,7 +130,7 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
 
         /// Set the timeout for the connect attempt
         fd_set fdset;
-        timeval timeValue{socketConnectDefaultTimeout.count(), IMPLICIT_TIMEOUT_USEC};
+        timeval timeValue{.tv_sec = socketConnectDefaultTimeout.count(), .tv_usec = IMPLICIT_TIMEOUT_USEC};
 
         FD_ZERO(&fdset);
         FD_SET(sockfd, &fdset);
