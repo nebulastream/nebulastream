@@ -27,7 +27,7 @@ if (ENABLE_LARGE_TESTS)
     set(TEST_DATA_PATH DATA{../testdata/,RECURSE:,REGEX:.*})
 else ()
     # By default this only includes small files located in testdata/small
-    set(TEST_DATA_PATH DATA{../testdata/,RECURSE:,REGEX:small.*})
+    set(TEST_DATA_PATH DATA{../testdata/,RECURSE:,REGEX:small.*|model.*})
 endif ()
 set(ExternalData_TIMEOUT_ABSOLUTE 1200)
 ExternalData_Expand_Arguments(
