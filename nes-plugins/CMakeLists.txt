@@ -19,6 +19,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("ImageManip" ON)
 activate_optional_plugin("Inference/IREE" ON)
+activate_optional_plugin("Sources/AudioSource" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
