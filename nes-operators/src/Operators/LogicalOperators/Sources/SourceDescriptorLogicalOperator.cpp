@@ -12,11 +12,18 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
 #include <Nodes/Node.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -25,13 +32,26 @@
 namespace NES
 {
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
+    std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor,
+    std::shared_ptr<InputFormatters::InputFormatterDescriptor> inputFormatterDescriptor,
+    const OperatorId id)
+    : Operator(id)
+    , LogicalUnaryOperator(id)
+    , OriginIdAssignmentOperator(id)
+    , sourceDescriptor(std::move(sourceDescriptor))
+    , inputFormatterDescriptor(std::move(inputFormatterDescriptor))
 {
 }
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OperatorId id, const OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
+    std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor,
+    std::shared_ptr<InputFormatters::InputFormatterDescriptor> inputFormatterDescriptor,
+    const OperatorId id,
+    const OriginId originId)
+    : Operator(id)
+    , LogicalUnaryOperator(id)
+    , OriginIdAssignmentOperator(id, originId)
+    , sourceDescriptor(std::move(sourceDescriptor))
+    , inputFormatterDescriptor(std::move(inputFormatterDescriptor))
 {
 }
 
@@ -70,6 +90,17 @@ std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getS
     return sourceDescriptor;
 }
 
+
+const InputFormatters::InputFormatterDescriptor& SourceDescriptorLogicalOperator::getInputFormatterDescriptorRef() const
+{
+    return *inputFormatterDescriptor;
+}
+
+std::shared_ptr<InputFormatters::InputFormatterDescriptor> SourceDescriptorLogicalOperator::getInputFormatterDescriptor() const
+{
+    return inputFormatterDescriptor;
+}
+
 bool SourceDescriptorLogicalOperator::inferSchema()
 {
     inputSchema = sourceDescriptor->getSchema();
@@ -80,7 +111,9 @@ bool SourceDescriptorLogicalOperator::inferSchema()
 std::shared_ptr<Operator> SourceDescriptorLogicalOperator::copy()
 {
     auto sourceDescriptorPtrCopy = sourceDescriptor;
-    auto result = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptorPtrCopy), id);
+    auto inputFormatterDescriptorPtrCopy = inputFormatterDescriptor;
+    auto result = std::make_shared<SourceDescriptorLogicalOperator>(
+        std::move(sourceDescriptorPtrCopy), std::move(inputFormatterDescriptorPtrCopy), id);
     result->setOriginId(getOriginId());
     result->inferSchema();
     result->addAllProperties(properties);

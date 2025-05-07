@@ -18,7 +18,6 @@
 #include <cstdint>
 #include <memory>
 #include <ostream>
-#include <span>
 #include <string_view>
 #include <type_traits>
 #include <utility>

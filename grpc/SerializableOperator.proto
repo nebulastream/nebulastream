@@ -68,7 +68,6 @@ message SerializableOperator {
 
   message SourceDescriptorLogicalOperator {
 
-    /* Source Descriptor Definition */
     message SourceDescriptor {
         SerializableSchema sourceSchema = 1;
         string logicalSourceName = 2;
@@ -77,9 +76,16 @@ message SerializableOperator {
         ParserConfig parserConfig = 5;
         map<string, SerializableVariantDescriptor> config = 6;
     }
+    message InputFormatterDescriptor {
+        SerializableSchema sourceSchema = 1;
+        string inputFormatterType = 2;
+        bool hasSpanningTuples = 3;
+        map<string, SerializableVariantDescriptor> config = 4;
+    }
 
     uint64 sourceOriginId = 1;
     SourceDescriptor sourceDescriptor = 2;
+    InputFormatterDescriptor inputFormatterDescriptor = 3;
   }
 
   message SinkLogicalOperator {

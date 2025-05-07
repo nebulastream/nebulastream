@@ -1,0 +1,50 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <memory>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <API/Schema.hpp>
+#include <Configurations/Descriptor.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
+#include <fmt/format.h>
+
+namespace NES::InputFormatters
+{
+
+InputFormatterDescriptor::InputFormatterDescriptor(
+    std::shared_ptr<Schema> schema,
+    std::string inputFormatterType,
+    const bool hasSpanningTuples,
+    Configurations::DescriptorConfig::Config config)
+    : Descriptor(std::move(config))
+    , schema(std::move(schema))
+    , inputFormatterType(std::move(inputFormatterType))
+    , hasSpanningTuples(hasSpanningTuples)
+{
+}
+
+std::ostream& operator<<(std::ostream& out, const InputFormatterDescriptor& inputFormatterDescriptor)
+{
+    const auto schemaString = ((inputFormatterDescriptor.schema) ? inputFormatterDescriptor.schema->toString() : "NULL");
+    return out << fmt::format(
+               "InputFormatterDescriptor( inputFormatterType: {}, hasSpanningTuples: {}, schema: {}, config: {})",
+               inputFormatterDescriptor.inputFormatterType,
+               inputFormatterDescriptor.hasSpanningTuples,
+               schemaString,
+               inputFormatterDescriptor.toStringConfig());
+}
+
+}

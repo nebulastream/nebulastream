@@ -24,6 +24,7 @@
 #include <variant>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -145,10 +146,9 @@ public:
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)
         {
-            if (key != SOURCE_TYPE_CONFIG and key != NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL
-                and not SpecificConfiguration::parameterMap.contains(key))
+            if (not Names::containsValue(key) and not SpecificConfiguration::parameterMap.contains(key))
             {
-                throw InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key));
+                throw InvalidConfigParameter("Unknown configuration parameter: {}.", key);
             }
         }
         /// Next, try to validate all config parameters.
@@ -338,11 +338,4 @@ private:
 
 /// Specializing the fmt ostream_formatter to accept Descriptor objects.
 /// Allows to call fmt::format("Descriptor: {}", descriptorObject); and therefore also works with our logging.
-namespace fmt
-{
-template <>
-struct formatter<NES::Configurations::Descriptor> : ostream_formatter
-{
-};
-
-}
+FMT_OSTREAM(NES::Configurations::Descriptor);

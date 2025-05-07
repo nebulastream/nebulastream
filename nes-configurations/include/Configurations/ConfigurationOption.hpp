@@ -145,22 +145,6 @@ public:
         return false;
     };
 
-    /**
-     * @brief converts a string to the appropriate InputFormat enum value and sets it
-     * @param inputFormat
-     */
-    void setInputFormatEnum(std::string inputFormat)
-    {
-        if (inputFormat == "CSV")
-        {
-            this->value = InputFormat::CSV;
-        }
-        else
-        {
-            NES_ERROR("InputFormatEnum: value unknown.");
-        }
-    }
-
 private:
     /**
      * @brief Constructs a ConfigurationOption<T> object

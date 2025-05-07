@@ -20,11 +20,15 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
+#include <utility>
+
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterValidationProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -72,13 +76,20 @@ struct WorkerThreadResults
     std::vector<std::vector<TupleSchemaTemplate>> expectedResultsForThread;
 };
 
+struct InputFormatterConfig
+{
+    std::string type;
+    bool hasSpanningTuples;
+    std::unordered_map<std::string, std::string> config;
+};
+
 template <typename TupleSchemaTemplate>
 struct TestConfig
 {
     size_t numRequiredBuffers{};
     uint64_t sizeOfRawBuffers{};
     uint64_t sizeOfFormattedBuffers{};
-    Sources::ParserConfig parserConfig;
+    InputFormatterConfig inputFormatterConfig;
     std::vector<TestDataTypes> testSchema;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
     std::vector<WorkerThreadResults<TupleSchemaTemplate>> expectedResults;
@@ -142,7 +153,7 @@ std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataT
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
 getEmitFunction(ThreadSafeVector<NES::Memory::TupleBuffer>& resultBuffers);
 
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
+InputFormatters::InputFormatterDescriptor validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
     const std::string& filePath,
@@ -151,19 +162,13 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     int numberOfLocalBuffersInSource);
 
 std::shared_ptr<InputFormatters::InputFormatterTaskPipeline>
-createInputFormatterTask(const Schema& schema, std::string formatterType, bool hasSpanningTuples);
+createInputFormatterTask(const std::shared_ptr<Schema>& schema, std::string formatterType, bool hasSpanningTuples);
 
 /// Waits until source reached EoS
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, size_t numExpectedBuffers);
 
 /// Compares two files and returns true if they are equal on a byte level.
 bool compareFiles(const std::filesystem::path& file1, const std::filesystem::path& file2);
-
-Runtime::Execution::TestPipelineTask createInputFormatterTask(
-    SequenceNumber sequenceNumber,
-    WorkerThreadId workerThreadId,
-    Memory::TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask);
 
 template <typename TupleSchemaTemplate>
 struct TestHandle
@@ -272,15 +277,29 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
 template <typename TupleSchemaTemplate>
 std::vector<Runtime::Execution::TestPipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
+    const auto descriptor = InputFormatters::InputFormatterValidationProvider::provide(
+        testHandle.testConfig.inputFormatterConfig.type, testHandle.testConfig.inputFormatterConfig.config);
+    const auto inputFormatterDescriptor = InputFormatters::InputFormatterDescriptor{
+        testHandle.schema,
+        testHandle.testConfig.inputFormatterConfig.type,
+        testHandle.testConfig.inputFormatterConfig.hasSpanningTuples,
+        std::move(descriptor)};
     const std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask
-        = InputFormatters::InputFormatterProvider::provideInputFormatterTask(
-            OriginId(0), *testHandle.schema, testHandle.testConfig.parserConfig);
+        = InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), *testHandle.schema, inputFormatterDescriptor);
     std::vector<Runtime::Execution::TestPipelineTask> tasks;
     tasks.reserve(testHandle.inputBuffers.size());
+
+    const auto createTask = [](const SequenceNumber sequenceNumber,
+                               const WorkerThreadId workerThreadId,
+                               Memory::TupleBuffer taskBuffer,
+                               std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
+    {
+        taskBuffer.setSequenceNumber(sequenceNumber);
+        return Runtime::Execution::TestPipelineTask{workerThreadId, taskBuffer, std::move(inputFormatterTask)};
+    };
     for (const auto& inputBuffer : testHandle.inputBuffers)
     {
-        tasks.emplace_back(
-            createInputFormatterTask(inputBuffer.sequenceNumber, WorkerThreadId(0), inputBuffer.rawByteBuffer, inputFormatterTask));
+        tasks.emplace_back(createTask(inputBuffer.sequenceNumber, WorkerThreadId(0), inputBuffer.rawByteBuffer, inputFormatterTask));
     }
     return tasks;
 }

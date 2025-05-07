@@ -93,7 +93,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
 
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                .inputFormatterConfig = {{"type", "CSV"}, {"hasSpanningTuples", "true"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
                 .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
         });
 
@@ -117,7 +117,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                .inputFormatterConfig = {{"type", "CSV"}, {"hasSpanningTuples", "true"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
                 .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
 
 
@@ -211,7 +211,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                 auto sinkCLI = CLI::Sink{
                     sinkForQuery,
                     "File",
-                    {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
+                    {std::make_pair("outputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
                 config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
             }
 

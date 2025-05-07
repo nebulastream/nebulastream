@@ -25,37 +25,24 @@ SourceDescriptor::SourceDescriptor(
     std::string logicalSourceName,
     std::string sourceType,
     const int numberOfBuffersInSourceLocalBufferPool,
-    ParserConfig parserConfig,
     Configurations::DescriptorConfig::Config&& config)
     : Descriptor(std::move(config))
     , schema(std::move(schema))
     , logicalSourceName(std::move(logicalSourceName))
     , sourceType(std::move(sourceType))
     , numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool)
-    , parserConfig(std::move(parserConfig))
 {
 }
 
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
     const auto schemaString = ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL");
-    const auto parserConfigString = fmt::format(
-        "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
-        sourceDescriptor.parserConfig.parserType,
-        Util::escapeSpecialCharacters(sourceDescriptor.parserConfig.tupleDelimiter),
-        Util::escapeSpecialCharacters(sourceDescriptor.parserConfig.fieldDelimiter));
     return out << fmt::format(
-               "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
+               "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, config: {})",
                sourceDescriptor.logicalSourceName,
                sourceDescriptor.sourceType,
                schemaString,
-               parserConfigString,
                sourceDescriptor.toStringConfig());
-}
-
-bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
-{
-    return lhs.schema == rhs.schema && lhs.sourceType == rhs.sourceType && lhs.config == rhs.config;
 }
 
 }

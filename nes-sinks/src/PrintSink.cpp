@@ -40,7 +40,7 @@ PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
-        case Configurations::InputFormat::CSV:
+        case Configurations::OutputFormat::CSV:
             outputParser = std::make_unique<CSVFormat>(sinkDescriptor.schema);
             break;
         default:

@@ -165,7 +165,7 @@ public:
         {
             auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);
             auto inputFormatterTask
-                = InputFormatterTestUtil::createInputFormatterTask(*schema, testConfig.formatterType, testConfig.hasSpanningTuples);
+                = InputFormatterTestUtil::createInputFormatterTask(schema, testConfig.formatterType, testConfig.hasSpanningTuples);
             auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numberOfThreads);
 
             std::vector<Runtime::Execution::TestPipelineTask> pipelineTasks;

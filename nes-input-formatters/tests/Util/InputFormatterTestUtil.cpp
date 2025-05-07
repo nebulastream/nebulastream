@@ -24,13 +24,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <InputFormatters/InputFormatterValidationProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
-#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
@@ -105,55 +105,6 @@ getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
     };
 }
 
-/// Taken from Nebuli.cpp
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
-{
-    auto validParserConfig = Sources::ParserConfig{};
-    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
-    {
-        validParserConfig.parserType = parserType->second;
-    }
-    else
-    {
-        throw InvalidConfigParameter("Parser configuration must contain: type");
-    }
-    if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
-    {
-        /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
-        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
-        validParserConfig.tupleDelimiter = tupleDelimiter->second;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
-        validParserConfig.tupleDelimiter = '\n';
-    }
-    if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
-    {
-        validParserConfig.fieldDelimiter = fieldDelimiter->second;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
-        validParserConfig.fieldDelimiter = ",";
-    }
-    if (const auto hasSpanningTuples = parserConfig.find("hasSpanningTuples"); hasSpanningTuples != parserConfig.end())
-    {
-        const auto hasSpanningTuplesBool = Util::from_chars<bool>(hasSpanningTuples->second);
-        if (not hasSpanningTuplesBool.has_value())
-        {
-            throw InvalidConfigParameter("hasSpanningTuples must be a valid: true");
-        }
-        validParserConfig.hasSpanningTuples = hasSpanningTuplesBool.value();
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: hasSpanningTuples, using default: false");
-        validParserConfig.hasSpanningTuples = true;
-    }
-    return validParserConfig;
-}
-
 std::unique_ptr<Sources::SourceHandle> createFileSource(
     const std::string& filePath,
     std::shared_ptr<Schema> schema,
@@ -164,27 +115,33 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
 
     const auto sourceDescriptor = Sources::SourceDescriptor(
-        std::move(schema),
-        "TestSource",
-        "File",
-        numberOfLocalBuffersInSource,
-        Sources::ParserConfig{},
-        std::move(validatedSourceConfiguration));
+        std::move(schema), "TestSource", "File", numberOfLocalBuffersInSource, std::move(validatedSourceConfiguration));
 
     return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), -1);
 }
 
 std::shared_ptr<InputFormatters::InputFormatterTaskPipeline>
-createInputFormatterTask(const Schema& schema, std::string formatterType, const bool hasSpanningTuples)
+createInputFormatterTask(const std::shared_ptr<Schema>& schema, std::string formatterType, const bool hasSpanningTuples)
 {
-    const std::unordered_map<std::string, std::string> parserConfiguration{
-        {"type", std::move(formatterType)},
-        {"tupleDelimiter", "\n"},
-        {"fieldDelimiter", "|"},
-        {"hasSpanningTuples", (hasSpanningTuples) ? "true" : "false"}};
-    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
+    auto parserConfiguration
+        = [](const std::string& formatterType, const bool hasSpanningTuples) -> std::unordered_map<std::string, std::string>
+    {
+        if (formatterType == "Native")
+        {
+            return {{"type", formatterType}, {"hasSpanningTuples", (hasSpanningTuples) ? "true" : "false"}};
+        }
+        return {
+            {"type", formatterType},
+            {"tupleDelimiter", "\n"},
+            {"fieldDelimiter", "|"},
+            {"hasSpanningTuples", (hasSpanningTuples) ? "true" : "false"}};
+    }(formatterType, hasSpanningTuples);
+    auto validatedParserConfiguration
+        = NES::InputFormatters::InputFormatterValidationProvider::provide(formatterType, std::move(parserConfiguration));
+    const auto inputFormatterDescriptor = InputFormatters::InputFormatterDescriptor{
+        schema, std::move(formatterType), hasSpanningTuples, std::move(validatedParserConfiguration)};
 
-    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), schema, validatedParserConfiguration);
+    return InputFormatters::InputFormatterProvider::provideInputFormatterTask(OriginId(0), *schema, inputFormatterDescriptor);
 }
 
 void waitForSource(const std::vector<NES::Memory::TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
@@ -211,15 +168,4 @@ bool compareFiles(const std::filesystem::path& file1, const std::filesystem::pat
 
     return std::equal(std::istreambuf_iterator(f1.rdbuf()), std::istreambuf_iterator<char>(), std::istreambuf_iterator(f2.rdbuf()));
 }
-
-Runtime::Execution::TestPipelineTask createInputFormatterTask(
-    const SequenceNumber sequenceNumber,
-    const WorkerThreadId workerThreadId,
-    Memory::TupleBuffer taskBuffer,
-    std::shared_ptr<InputFormatters::InputFormatterTaskPipeline> inputFormatterTask)
-{
-    taskBuffer.setSequenceNumber(sequenceNumber);
-    return Runtime::Execution::TestPipelineTask{workerThreadId, taskBuffer, std::move(inputFormatterTask)};
-}
-
 }

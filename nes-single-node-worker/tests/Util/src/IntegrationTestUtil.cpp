@@ -462,6 +462,8 @@ void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQu
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
+            const auto inputFormatterDescriptor
+                = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getInputFormatterDescriptor();
             if (sourceDescriptor.getSourceType() == "File")
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
@@ -472,11 +474,11 @@ void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQu
                     sourceDescriptor.getLogicalSourceName(),
                     sourceDescriptor.getSourceType(),
                     sourceDescriptor.getNumberOfBuffersInSourceLocalBufferPool(),
-                    sourceDescriptor.getParserConfig(),
                     std::move(configUpdated));
 
                 const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
                     std::move(sourceDescriptorUpdated),
+                    inputFormatterDescriptor,
                     deserializedSourceOperator->getId(),
                     NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getOriginId());
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(sourceDescriptorLogicalOperatorUpdated);
@@ -500,6 +502,8 @@ void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPla
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
+            const auto inputFormatterDescriptor
+                = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getInputFormatterDescriptor();
             if (sourceDescriptor.getSourceType() == "TCP")
             {
                 if (sourceNumber == queryPlanTCPSourceCounter)
@@ -512,11 +516,11 @@ void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPla
                         sourceDescriptor.getLogicalSourceName(),
                         sourceDescriptor.getSourceType(),
                         sourceDescriptor.getNumberOfBuffersInSourceLocalBufferPool(),
-                        sourceDescriptor.getParserConfig(),
                         std::move(configUpdated));
 
                     const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
                         std::move(sourceDescriptorUpdated),
+                        inputFormatterDescriptor,
                         deserializedSourceOperator->getId(),
                         NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getOriginId());
                     auto serializedOperator = OperatorSerializationUtil::serializeOperator(sourceDescriptorLogicalOperatorUpdated);

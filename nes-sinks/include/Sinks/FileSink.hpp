@@ -23,11 +23,13 @@
 #include <unordered_map>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
@@ -70,9 +72,9 @@ private:
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersFile
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>
+    static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::OutputFormat>
         INPUT_FORMAT{
-            "inputFormat",
+            "outputFormat",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
             { return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
@@ -93,10 +95,4 @@ struct ConfigParametersFile
 
 }
 
-namespace fmt
-{
-template <>
-struct formatter<NES::Sinks::FileSink> : ostream_formatter
-{
-};
-}
+FMT_OSTREAM(NES::Sinks::FileSink);

@@ -28,7 +28,6 @@ namespace NES::InputFormatters
 struct TupleMetaData
 {
     std::string tupleDelimiter;
-    std::string fieldDelimiter;
     size_t sizeOfTupleInBytes{};
     std::vector<size_t> fieldSizesInBytes;
     std::vector<size_t> fieldOffsetsInBytes;

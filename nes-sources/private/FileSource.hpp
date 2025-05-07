@@ -61,7 +61,7 @@ private:
     std::atomic<size_t> totalNumBytesRead;
 };
 
-struct ConfigParametersCSV
+struct ConfigParametersFile
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         "filePath",

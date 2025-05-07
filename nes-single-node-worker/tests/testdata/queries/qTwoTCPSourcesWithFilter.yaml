@@ -4,7 +4,7 @@ sink:
   name: csv_sink
   type: File
   config:
-    inputFormat: CSV
+    outputFormat: CSV
     filePath: "[GENERATED_IN_TEST]"
     append: false
 logical:
@@ -14,8 +14,11 @@ logical:
         type: UINT64
 physical:
   - logical: tcp_source
-    parserConfig:
+    inputFormatterConfig:
       type: CSV
+      hasSpanningTuples: true
+      tupleDelimiter: "\n"
+      fieldDelimiter: ","
     sourceConfig:
       type: TCP
       socketDomain: AF_INET
@@ -26,8 +29,11 @@ physical:
       flushIntervalMS: 100
       connectTimeoutSeconds: 60
   - logical: tcp_source
-    parserConfig:
+    inputFormatterConfig:
       type: CSV
+      hasSpanningTuples: true
+      tupleDelimiter: "\n"
+      fieldDelimiter: ","
     sourceConfig:
       type: TCP
       socketDomain: AF_INET

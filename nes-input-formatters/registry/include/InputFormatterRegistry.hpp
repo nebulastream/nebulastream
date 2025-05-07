@@ -16,10 +16,12 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
@@ -36,11 +38,8 @@ using InputFormatterRegistryReturnType = std::unique_ptr<InputFormatterTaskPipel
 struct InputFormatterRegistryArguments
 {
     InputFormatterRegistryArguments(
-        Sources::ParserConfig config, const size_t numberOfFieldsInSchema, const OriginId originId, Schema schema)
-        : inputFormatterConfig(std::move(config))
-        , numberOfFieldsInSchema(numberOfFieldsInSchema)
-        , originId(originId)
-        , schema(std::move(schema))
+        const InputFormatterDescriptor& config, const size_t numberOfFieldsInSchema, const OriginId originId, Schema schema)
+        : inputFormatterConfig(config), numberOfFieldsInSchema(numberOfFieldsInSchema), originId(originId), schema(std::move(schema))
     {
     }
 
@@ -48,15 +47,15 @@ struct InputFormatterRegistryArguments
     /// @tparam: FieldAccessType: function used to index fields when parsing/processing the data of the (raw) input buffer
     /// @tparam: HasSpanningTuple: hardcode to 'true' if format cannot guarantee buffers with tuples that never span across buffers
     template <typename FormatterType, typename FieldAccessType, bool HasSpanningTuple>
-    InputFormatterRegistryReturnType createInputFormatterTaskPipeline(std::unique_ptr<FormatterType> inputFormatter)
+    InputFormatterRegistryReturnType
+    createInputFormatterTaskPipeline(std::unique_ptr<FormatterType> inputFormatter, const std::optional<std::string>& tupleDelimiter)
     {
         auto inputFormatterTask = InputFormatterTask<FormatterType, FieldAccessType, HasSpanningTuple>(
-            originId, std::move(inputFormatter), schema, inputFormatterConfig);
+            originId, std::move(inputFormatter), schema, tupleDelimiter);
         return std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatterTask));
     }
 
-public:
-    Sources::ParserConfig inputFormatterConfig;
+    InputFormatterDescriptor inputFormatterConfig;
     size_t numberOfFieldsInSchema;
 
 private:

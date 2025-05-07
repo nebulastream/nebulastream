@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <ranges>
 #include <span>
@@ -34,7 +35,6 @@
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <FieldAccessFunction.hpp>
@@ -76,7 +76,7 @@ inline size_t calculateNumberOfRequiredFormattedBuffers(
     /// Overflow-safe calculation of ceil taken from (https://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c)
     /// 1 + ceil(numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer / numberOfTuplesPerBuffer)
     const auto numberOfBuffersToFill = 1
-        + ((numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer % numberOfTuplesPerBuffer != 0u)
+        + ((numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer % numberOfTuplesPerBuffer != 0U)
                ? (numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer / numberOfTuplesPerBuffer) + 1
                : numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer / numberOfTuplesPerBuffer);
     return numberOfBuffersToFill;
@@ -134,9 +134,9 @@ void processSpanningTuple(
     std::stringstream spanningTupleStringStream;
     spanningTupleStringStream << tupleMetaData.tupleDelimiter;
 
-    auto firstBuffer = stagedBuffersSpan.front();
-    const auto firstSpanningTuple
-        = (firstBuffer.isValidRawBuffer()) ? firstBuffer.getTrailingBytes(tupleMetaData.tupleDelimiter.size()) : "";
+    const auto firstSpanningTuple = (stagedBuffersSpan.front().isValidRawBuffer())
+        ? stagedBuffersSpan.front().getTrailingBytes(tupleMetaData.tupleDelimiter.size())
+        : "";
     spanningTupleStringStream << firstSpanningTuple;
 
     /// Process all buffers in-between the first and the last
@@ -180,7 +180,7 @@ public:
         const OriginId originId,
         std::unique_ptr<InputFormatter<FieldAccessFunctionType, FormatterType::UsesNativeFormat>> inputFormatter,
         const Schema& schema,
-        const Sources::ParserConfig& parserConfig)
+        const std::optional<std::string>& optionalTupleDelimiter)
         : originId(originId), inputFormatter(std::move(inputFormatter))
     {
         const auto schemaContainsVarSized = std::ranges::any_of(
@@ -191,11 +191,11 @@ public:
             not(FormatterType::UsesNativeFormat and schemaContainsVarSized and HasSpanningTuple),
             "Not supporting variable sized data for the internal format with spanning tuples.");
         /// Only if we need to resolve spanning tuples, we need the SequenceShredder
-        this->sequenceShredder = (HasSpanningTuple) ? std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()) : nullptr;
+        const auto tupleDelimiter = (optionalTupleDelimiter.has_value() ? optionalTupleDelimiter.value() : "");
+        this->sequenceShredder = (HasSpanningTuple) ? std::make_unique<SequenceShredder>(tupleDelimiter.size()) : nullptr;
         this->tupleMetaData.sizeOfTupleInBytes = schema.getSchemaSizeInBytes();
         this->tupleMetaData.fieldSizesInBytes.reserve(schema.getFieldCount());
-        this->tupleMetaData.tupleDelimiter = parserConfig.tupleDelimiter;
-        this->tupleMetaData.fieldDelimiter = parserConfig.fieldDelimiter;
+        this->tupleMetaData.tupleDelimiter = tupleDelimiter;
         this->parseFunctions.reserve(this->tupleMetaData.fieldSizesInBytes.size());
 
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value

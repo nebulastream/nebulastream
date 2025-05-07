@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
-#include <memory>
+#include <string>
+#include <unordered_map>
+#include <Configurations/Descriptor.hpp>
 
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterDescriptor.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
-
-namespace NES::InputFormatters::InputFormatterProvider
+namespace NES::InputFormatters
 {
-std::unique_ptr<InputFormatterTaskPipeline>
-provideInputFormatterTask(OriginId originId, const Schema& schema, const InputFormatterDescriptor& descriptor);
+class InputFormatterValidationProvider
+{
+public:
+    static NES::Configurations::DescriptorConfig::Config
+    provide(const std::string& inputFormatterType, std::unordered_map<std::string, std::string> stringConfig);
+};
 }

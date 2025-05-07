@@ -24,12 +24,13 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <utility>
 
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
+#include <InputFormatters/InputFormatterValidationProvider.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
@@ -107,7 +108,7 @@ struct convert<NES::CLI::PhysicalSource>
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
         rhs.logical = node["logical"].as<std::string>();
-        rhs.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
+        rhs.inputFormatterConfig = node["inputFormatterConfig"].as<std::unordered_map<std::string, std::string>>();
         rhs.sourceConfig = node["sourceConfig"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
@@ -127,101 +128,24 @@ struct convert<NES::CLI::QueryConfig>
 };
 }
 
-namespace NES::CLI
+namespace
 {
-
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig, const Schema& schema)
+NES::Sources::SourceDescriptor createSourceDescriptor(
+    std::string logicalSourceName, std::shared_ptr<NES::Schema> schema, std::unordered_map<std::string, std::string> sourceConfiguration)
 {
-    auto validParserConfig = Sources::ParserConfig{};
-    const auto parseHasSpanningTuple = [](const std::string_view hasSpanningTupleString)
-    {
-        const auto hasSpanningTuplesBool = Util::from_chars<bool>(hasSpanningTupleString);
-        if (not hasSpanningTuplesBool.has_value())
-        {
-            throw InvalidConfigParameter("hasSpanningTuples must be a valid bool");
-        }
-        return hasSpanningTuplesBool.value();
-    };
-
-    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
-    {
-        /// TODO #804: improve InputFormatter validation (make sure the type exists and that the args below are valid)
-        if (not(parserType->second == "CSV" or parserType->second == "Internal"))
-        {
-            throw InvalidConfigParameter("Not supporting parser type: {}", parserType->second);
-        }
-        validParserConfig.parserType = parserType->second;
-        bool hasSpanningTuplesBool = true;
-        if (const auto hasSpanningTuplesString = parserConfig.find("hasSpanningTuples"); hasSpanningTuplesString != parserConfig.end())
-        {
-            hasSpanningTuplesBool = parseHasSpanningTuple(hasSpanningTuplesString->second);
-        }
-        if (hasSpanningTuplesBool and validParserConfig.parserType == "Internal")
-        {
-            if (std::ranges::any_of(
-                    schema.getFieldNames(),
-                    [&schema](const auto& fieldName)
-                    { return Util::instanceOf<VariableSizedDataType>(schema.getFieldByName(fieldName).value()->getDataType()); }))
-            {
-                throw InvalidConfigParameter("Not supporting variable sized data for the internal format with spanning tuples.");
-            }
-        }
-    }
-    else
-    {
-        throw InvalidConfigParameter("Parser configuration must contain: type");
-    }
-    if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
-    {
-        /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
-        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
-        validParserConfig.tupleDelimiter = tupleDelimiter->second;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
-        validParserConfig.tupleDelimiter = '\n';
-    }
-    if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
-    {
-        validParserConfig.fieldDelimiter = fieldDelimiter->second;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
-        validParserConfig.fieldDelimiter = ",";
-    }
-    if (const auto hasSpanningTuplesString = parserConfig.find("hasSpanningTuples"); hasSpanningTuplesString != parserConfig.end())
-    {
-        validParserConfig.hasSpanningTuples = parseHasSpanningTuple(hasSpanningTuplesString->second);
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: hasSpanningTuples, using default: true");
-        validParserConfig.hasSpanningTuples = true;
-    }
-    return validParserConfig;
-}
-
-Sources::SourceDescriptor createSourceDescriptor(
-    std::string logicalSourceName,
-    std::shared_ptr<Schema> schema,
-    const std::unordered_map<std::string, std::string>& parserConfig,
-    std::unordered_map<std::string, std::string> sourceConfiguration)
-{
-    PRECONDITION(
-        sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG),
-        "Missing `Configurations::SOURCE_TYPE_CONFIG` in source configuration");
-    const auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
+    static constexpr auto TypeConfig = NES::Configurations::Names::getString<NES::Configurations::Names::Option::TYPE_CONFIG>();
+    PRECONDITION(sourceConfiguration.contains(TypeConfig), "Missing `Configurations::TYPE_CONFIG` in source configuration");
+    const auto sourceType = sourceConfiguration.at(TypeConfig);
     const auto numberOfBuffersInSourceLocalBufferPool = [](const std::unordered_map<std::string, std::string>& sourceConfig)
     {
         /// Initialize with invalid value and overwrite with configured value if given
-        auto numSourceLocalBuffers = Sources::SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL;
+        auto numSourceLocalBuffers = NES::Sources::SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL;
 
-        if (const auto configuredNumSourceLocalBuffers = sourceConfig.find(Configurations::NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL);
+        if (const auto configuredNumSourceLocalBuffers = sourceConfig.find(
+                NES::Configurations::Names::getString<NES::Configurations::Names::Option::NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL>());
             configuredNumSourceLocalBuffers != sourceConfig.end())
         {
-            if (const auto customNumSourceLocalBuffers = Util::from_chars<int>(configuredNumSourceLocalBuffers->second))
+            if (const auto customNumSourceLocalBuffers = NES::Util::from_chars<int>(configuredNumSourceLocalBuffers->second))
             {
                 numSourceLocalBuffers = customNumSourceLocalBuffers.value();
             }
@@ -229,16 +153,63 @@ Sources::SourceDescriptor createSourceDescriptor(
         return numSourceLocalBuffers;
     }(sourceConfiguration);
 
-    auto validParserConfig = validateAndFormatParserConfig(parserConfig, *schema);
-    auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
-    return Sources::SourceDescriptor(
-        std::move(schema),
-        std::move(logicalSourceName),
-        sourceType,
-        numberOfBuffersInSourceLocalBufferPool,
-        std::move(validParserConfig),
-        std::move(validSourceConfig));
+    auto validSourceConfig = NES::Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
+    return NES::Sources::SourceDescriptor(
+        std::move(schema), std::move(logicalSourceName), sourceType, numberOfBuffersInSourceLocalBufferPool, std::move(validSourceConfig));
 }
+
+NES::InputFormatters::InputFormatterDescriptor createInputFormatterDescriptor(
+    std::shared_ptr<NES::Schema> schema, std::unordered_map<std::string, std::string> inputFormatterConfiguration)
+{
+    const auto hasSpanningTuple = [](const std::unordered_map<std::string, std::string>& inputFormatterConfiguration)
+    {
+        if (const auto hasSpanningTupleString = inputFormatterConfiguration.find("hasSpanningTuples");
+            hasSpanningTupleString != inputFormatterConfiguration.end())
+        {
+            if (const auto hasSpanningTuplesBool = NES::Util::from_chars<bool>(hasSpanningTupleString->second))
+            {
+                return hasSpanningTuplesBool.value();
+            }
+        }
+        throw NES::InvalidConfigParameter("Missing mandatory 'hasSpanningTuples' in configuration.");
+    }(inputFormatterConfiguration);
+
+    const auto inputFormatterType = [](const std::unordered_map<std::string, std::string>& inputFormatterConfiguration,
+                                       const bool hasSpanningTuple,
+                                       const NES::Schema& schema)
+    {
+        if (const auto type
+            = inputFormatterConfiguration.find(NES::Configurations::Names::getString<NES::Configurations::Names::Option::TYPE_CONFIG>());
+            type != inputFormatterConfiguration.end())
+        {
+            /// We currently only support spanning tuple support for native types without varsized fields
+            if (type->second == "Native" and hasSpanningTuple)
+            {
+                if (std::ranges::any_of(
+                        schema.getFieldNames(),
+                        [&schema](const auto& fieldName)
+                        {
+                            return NES::Util::instanceOf<NES::VariableSizedDataType>(
+                                schema.getFieldByName(fieldName).value()->getDataType());
+                        }))
+                {
+                    throw NES::InvalidConfigParameter("Not supporting variable sized data for the internal format with spanning tuples.");
+                }
+            }
+            return type->second;
+        }
+        throw NES::UnknownInputFormatterType("Missing mandatory input formatter type in configuration.");
+    }(inputFormatterConfiguration, hasSpanningTuple, *schema);
+
+    auto validInputFormatterConfig
+        = NES::InputFormatters::InputFormatterValidationProvider::provide(inputFormatterType, std::move(inputFormatterConfiguration));
+    return NES::InputFormatters::InputFormatterDescriptor(
+        std::move(schema), inputFormatterType, hasSpanningTuple, std::move(validInputFormatterConfig));
+}
+}
+
+namespace NES::CLI
+{
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
 {
@@ -280,14 +251,16 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     }
 
     /// Add physical sources to corresponding logical sources.
-    for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
+    for (auto [logicalSourceName, inputFormatterConfig, sourceConfig] : config.physical)
     {
         auto sourceDescriptor = createSourceDescriptor(
-            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
+            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), std::move(sourceConfig));
+        auto inputFormatterDescriptor
+            = createInputFormatterDescriptor(sourceCatalog->getSchemaForLogicalSource(logicalSourceName), std::move(inputFormatterConfig));
         sourceCatalog->addPhysicalSource(
             logicalSourceName,
             Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceDescriptor)),
+                NES::PhysicalSource::create(sourceDescriptor, inputFormatterDescriptor),
                 sourceCatalog->getLogicalSource(logicalSourceName),
                 INITIAL<WorkerId>));
     }

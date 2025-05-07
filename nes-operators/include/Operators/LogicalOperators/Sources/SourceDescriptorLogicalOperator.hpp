@@ -14,6 +14,10 @@
 
 #pragma once
 
+
+#include <memory>
+#include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
@@ -30,13 +34,22 @@ namespace NES
 class SourceDescriptorLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
+    explicit SourceDescriptorLogicalOperator(
+        std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor,
+        std::shared_ptr<InputFormatters::InputFormatterDescriptor> inputFormatterDescriptor,
+        OperatorId id);
 
     explicit SourceDescriptorLogicalOperator(
-        std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
+        std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor,
+        std::shared_ptr<InputFormatters::InputFormatterDescriptor> inputFormatterDescriptor,
+        OperatorId id,
+        OriginId originId);
 
     const Sources::SourceDescriptor& getSourceDescriptorRef() const;
     std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
+
+    const InputFormatters::InputFormatterDescriptor& getInputFormatterDescriptorRef() const;
+    std::shared_ptr<InputFormatters::InputFormatterDescriptor> getInputFormatterDescriptor() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -53,7 +66,8 @@ protected:
     [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
 private:
-    const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    std::shared_ptr<InputFormatters::InputFormatterDescriptor> inputFormatterDescriptor;
 };
 
 }

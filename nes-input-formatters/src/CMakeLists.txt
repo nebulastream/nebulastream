@@ -16,8 +16,12 @@ add_source_files(nes-input-formatters
         SequenceShredder.cpp
         RawInputDataParser.cpp
         FieldOffsets.cpp
+        InputFormatterDescriptor.cpp
+        InputFormatterValidationProvider.cpp
 )
 
 # Register plugins
 add_plugin(CSV InputFormatter nes-input-formatters CSVInputFormatter.cpp)
+add_plugin(CSV InputFormatterValidation nes-input-formatters CSVInputFormatter.cpp)
 add_plugin(Native InputFormatter nes-input-formatters NativeInputFormatter.cpp)
+add_plugin(Native InputFormatterValidation nes-input-formatters NativeInputFormatter.cpp)

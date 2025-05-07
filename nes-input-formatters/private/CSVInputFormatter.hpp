@@ -15,11 +15,17 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <ostream>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 
+#include <Configurations/Descriptor.hpp>
 #include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <FieldOffsets.hpp>
 
 namespace NES::InputFormatters
@@ -28,7 +34,9 @@ namespace NES::InputFormatters
 class CSVInputFormatter final : public InputFormatter<FieldOffsets, /* IsNativeFormat */ false>
 {
 public:
-    explicit CSVInputFormatter(Sources::ParserConfig config, size_t numberOfFieldsInSchema);
+    static constexpr std::string_view NAME = "CSV";
+
+    explicit CSVInputFormatter(const InputFormatterDescriptor& descriptor, size_t numberOfFieldsInSchema);
     ~CSVInputFormatter() override = default;
 
     CSVInputFormatter(const CSVInputFormatter&) = delete;
@@ -40,10 +48,49 @@ public:
     setupFieldAccessFunctionForBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 private:
-    Sources::ParserConfig config;
+    std::string tupleDelimiter;
+    std::string fieldDelimiter;
     size_t numberOfFieldsInSchema;
 };
 
+struct ConfigParametersCSV
+{
+    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> TUPLE_DELIMITER{
+        "tupleDelimiter",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
+        {
+            if (auto tupleDelimiter = Configurations::DescriptorConfig::tryGet(TUPLE_DELIMITER, config))
+            {
+                if (tupleDelimiter.value().size() == 1)
+                {
+                    return {tupleDelimiter};
+                }
+                NES_ERROR("The CSVInputFormatter expects that the size of the tuple delimiter is exactly one byte.");
+                return std::nullopt;
+            }
+            return std::nullopt;
+        }};
+    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FIELD_DELIMITER{
+        "fieldDelimiter",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
+        {
+            if (auto fieldDelimiter = Configurations::DescriptorConfig::tryGet(FIELD_DELIMITER, config))
+            {
+                if (fieldDelimiter.value().size() == 1)
+                {
+                    return {fieldDelimiter};
+                }
+                NES_ERROR("The CSVInputFormatter expects that the size of the field delimiter is exactly one byte.");
+                return std::nullopt;
+            }
+            return std::nullopt;
+        }};
+    static inline const std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(TUPLE_DELIMITER, FIELD_DELIMITER);
+};
 }

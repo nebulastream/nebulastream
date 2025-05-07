@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -66,8 +67,15 @@ public:
     static void serializeSourceDescriptor(
         const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
 
+    static void serializeInputFormatterDescriptor(
+        const InputFormatters::InputFormatterDescriptor& inputFormatterDescriptor,
+        SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
+
     static std::unique_ptr<Sources::SourceDescriptor>
     deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
+
+    static std::unique_ptr<InputFormatters::InputFormatterDescriptor> deserializeInputFormatterDescriptor(
+        const SerializableOperator_SourceDescriptorLogicalOperator_InputFormatterDescriptor& inputFormatterDescriptor);
 
     static void serializeSinkDescriptor(
         std::shared_ptr<Schema> schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails);

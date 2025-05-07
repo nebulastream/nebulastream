@@ -11,25 +11,35 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <memory>
 #include <sstream>
+#include <string>
 #include <utility>
 
 #include <API/Schema.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
 
-PhysicalSource::PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor&& sourceDescriptor)
-    : logicalSourceName(std::move(logicalSourceName)), sourceDescriptor(sourceDescriptor)
+PhysicalSource::PhysicalSource(
+    std::string logicalSourceName,
+    const Sources::SourceDescriptor& sourceDescriptor,
+    const InputFormatters::InputFormatterDescriptor& inputFormatterDescriptor)
+    : logicalSourceName(std::move(logicalSourceName))
+    , sourceDescriptor(sourceDescriptor)
+    , inputFormatterDescriptor(inputFormatterDescriptor)
 {
 }
 
-std::shared_ptr<PhysicalSource> PhysicalSource::create(Sources::SourceDescriptor&& sourceDescriptor)
+std::shared_ptr<PhysicalSource> PhysicalSource::create(
+    const Sources::SourceDescriptor& sourceDescriptor, const InputFormatters::InputFormatterDescriptor& inputFormatterDescriptor)
 {
     const auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
-    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, std::move(sourceDescriptor)));
+    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, sourceDescriptor, inputFormatterDescriptor));
 }
 
 std::string PhysicalSource::toString()
@@ -53,7 +63,16 @@ std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescripto
         sourceDescriptor.getLogicalSourceName(),
         sourceDescriptor.getSourceType(),
         sourceDescriptor.getNumberOfBuffersInSourceLocalBufferPool(),
-        sourceDescriptor.getParserConfig(),
+        std::move(copyOfConfig));
+}
+
+std::unique_ptr<InputFormatters::InputFormatterDescriptor> PhysicalSource::createInputFormatterDescriptor(std::shared_ptr<Schema> schema)
+{
+    auto copyOfConfig = inputFormatterDescriptor.config;
+    return std::make_unique<InputFormatters::InputFormatterDescriptor>(
+        std::move(schema),
+        inputFormatterDescriptor.getInputFormatterType(),
+        inputFormatterDescriptor.getHasSpanningTuples(),
         std::move(copyOfConfig));
 }
 }

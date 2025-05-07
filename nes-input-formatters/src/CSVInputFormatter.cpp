@@ -19,9 +19,12 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 
+#include <Configurations/Descriptor.hpp>
 #include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterDescriptor.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -31,6 +34,7 @@
 #include <FieldOffsets.hpp>
 #include <InputFormatterRegistry.hpp>
 #include <InputFormatterTask.hpp>
+#include <InputFormatterValidationRegistry.hpp>
 
 namespace
 {
@@ -38,7 +42,7 @@ void setupFieldAccessFunctionForTuple(
     NES::InputFormatters::FieldOffsets& fieldOffsets,
     const std::string_view tuple,
     const NES::InputFormatters::FieldOffsetsType startIdxOfTuple,
-    const NES::Sources::ParserConfig& config,
+    const std::string_view fieldDelimiter,
     size_t numberOfFieldsInSchema)
 {
     /// The start of the tuple is the offset of the first field of the tuple
@@ -46,10 +50,10 @@ void setupFieldAccessFunctionForTuple(
     fieldOffsets.writeOffsetAt(startIdxOfTuple, fieldIdx++);
     /// Find field delimiters, until reaching the end of the tuple
     /// The position of the field delimiter (+ size of field delimiter) is the beginning of the next field
-    for (size_t nextFieldOffset = tuple.find(config.fieldDelimiter, 0); nextFieldOffset != std::string_view::npos;
-         nextFieldOffset = tuple.find(config.fieldDelimiter, nextFieldOffset))
+    for (size_t nextFieldOffset = tuple.find(fieldDelimiter, 0); nextFieldOffset != std::string_view::npos;
+         nextFieldOffset = tuple.find(fieldDelimiter, nextFieldOffset))
     {
-        nextFieldOffset += config.fieldDelimiter.size();
+        nextFieldOffset += fieldDelimiter.size();
         fieldOffsets.writeOffsetAt(startIdxOfTuple + nextFieldOffset, fieldIdx);
         ++fieldIdx;
     }
@@ -66,18 +70,20 @@ void setupFieldAccessFunctionForTuple(
 namespace NES::InputFormatters
 {
 
-CSVInputFormatter::CSVInputFormatter(Sources::ParserConfig config, const size_t numberOfFieldsInSchema)
-    : config(std::move(config)), numberOfFieldsInSchema(numberOfFieldsInSchema)
+CSVInputFormatter::CSVInputFormatter(const InputFormatterDescriptor& descriptor, const size_t numberOfFieldsInSchema)
+    : tupleDelimiter(descriptor.getFromConfig(ConfigParametersCSV::TUPLE_DELIMITER))
+    , fieldDelimiter(descriptor.getFromConfig(ConfigParametersCSV::FIELD_DELIMITER))
+    , numberOfFieldsInSchema(numberOfFieldsInSchema)
 {
 }
 
 void CSVInputFormatter::setupFieldAccessFunctionForBuffer(
     FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const TupleMetaData&) const
 {
-    fieldOffsets.startSetup(numberOfFieldsInSchema, this->config.fieldDelimiter.size());
+    fieldOffsets.startSetup(numberOfFieldsInSchema, this->fieldDelimiter.size());
 
-    const auto sizeOfTupleDelimiter = this->config.tupleDelimiter.size();
-    const auto offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(rawBuffer.getBufferView().find(this->config.tupleDelimiter));
+    const auto sizeOfTupleDelimiter = this->tupleDelimiter.size();
+    const auto offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(rawBuffer.getBufferView().find(this->tupleDelimiter));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTupleDelimiter' to a value larger than the buffer size to tell
     /// the InputFormatterTask that there was no tuple delimiter in the buffer and return
@@ -89,7 +95,7 @@ void CSVInputFormatter::setupFieldAccessFunctionForBuffer(
 
     /// If the buffer contains at least one delimiter, check if it contains more and index all tuples between the tuple delimiters
     auto startIdxOfNextTuple = offsetOfFirstTupleDelimiter + sizeOfTupleDelimiter;
-    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(this->config.tupleDelimiter, startIdxOfNextTuple);
+    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(this->tupleDelimiter, startIdxOfNextTuple);
 
     while (endIdxOfNextTuple != std::string::npos)
     {
@@ -99,12 +105,12 @@ void CSVInputFormatter::setupFieldAccessFunctionForBuffer(
         const auto nextTuple = std::string_view(rawBuffer.getBufferView().begin() + startIdxOfNextTuple, sizeOfNextTuple);
 
         /// Determine the offsets to the individual fields of the next tuple, including the start of the first and the end of the last field
-        setupFieldAccessFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, this->config, this->numberOfFieldsInSchema);
+        setupFieldAccessFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, this->fieldDelimiter, this->numberOfFieldsInSchema);
         fieldOffsets.writeOffsetsOfNextTuple();
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
         startIdxOfNextTuple = endIdxOfNextTuple + sizeOfTupleDelimiter;
-        endIdxOfNextTuple = rawBuffer.getBufferView().find(this->config.tupleDelimiter, startIdxOfNextTuple);
+        endIdxOfNextTuple = rawBuffer.getBufferView().find(this->tupleDelimiter, startIdxOfNextTuple);
     }
     /// Since 'endIdxOfNextTuple == std::string::npos', we use the startIdx to determine the offset of the last tuple
     const auto offsetOfLastTupleDelimiter = static_cast<FieldOffsetsType>(startIdxOfNextTuple - sizeOfTupleDelimiter);
@@ -113,18 +119,32 @@ void CSVInputFormatter::setupFieldAccessFunctionForBuffer(
 
 std::ostream& CSVInputFormatter::toString(std::ostream& os) const
 {
-    return os << fmt::format(
-               "CSVInputFormatter(tupleDelimiter: {}, fieldDelimiter: {})", this->config.tupleDelimiter, this->config.fieldDelimiter);
+    return os << fmt::format("CSVInputFormatter(tupleDelimiter: {}, fieldDelimiter: {})", this->tupleDelimiter, this->fieldDelimiter);
+}
+
+
+NES::Configurations::DescriptorConfig::Config CSVInputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
+}
+
+InputFormatterValidationRegistryReturnType
+NES::InputFormatters::InputFormatterValidationGeneratedRegistrar::RegisterCSVInputFormatterValidation(
+    InputFormatterValidationRegistryArguments inputFormatterConfig)
+{
+    return CSVInputFormatter::validateAndFormat(std::move(inputFormatterConfig.config));
 }
 
 InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(InputFormatterRegistryArguments arguments)
 {
     constexpr bool hasSpanningTuples = true;
+    const auto tupleDelimiter = arguments.inputFormatterConfig.getFromConfig(ConfigParametersCSV::TUPLE_DELIMITER);
     PRECONDITION(
-        arguments.inputFormatterConfig.hasSpanningTuples == hasSpanningTuples,
+        arguments.inputFormatterConfig.getHasSpanningTuples() == hasSpanningTuples,
         "The CSVInputFormatter does not support parsing buffers without spanning tuples.");
     auto inputFormatter = std::make_unique<CSVInputFormatter>(arguments.inputFormatterConfig, arguments.numberOfFieldsInSchema);
-    return arguments.createInputFormatterTaskPipeline<CSVInputFormatter, FieldOffsets, hasSpanningTuples>(std::move(inputFormatter));
+    return arguments.createInputFormatterTaskPipeline<CSVInputFormatter, FieldOffsets, hasSpanningTuples>(
+        std::move(inputFormatter), tupleDelimiter);
 }
 
 }

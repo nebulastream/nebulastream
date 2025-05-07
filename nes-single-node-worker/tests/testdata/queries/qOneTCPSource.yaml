@@ -4,7 +4,7 @@ sink:
   name: csv_sink
   type: File
   config:
-    inputFormat: CSV
+    outputFormat: CSV
     filePath: "[GENERATED_IN_TEST]"
     append: false
 logical:
@@ -14,8 +14,9 @@ logical:
         type: UINT64
 physical:
   - logical: tcp_source
-    parserConfig:
+    inputFormatterConfig:
       type: CSV
+      hasSpanningTuples: true
       tupleDelimiter: "\n"
       fieldDelimiter: ","
     sourceConfig:

@@ -35,7 +35,7 @@
 namespace NES::Sources
 {
 
-FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
 {
 }
 
@@ -63,7 +63,7 @@ size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const 
 
 NES::Configurations::DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
+    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
 std::ostream& FileSource::toString(std::ostream& str) const

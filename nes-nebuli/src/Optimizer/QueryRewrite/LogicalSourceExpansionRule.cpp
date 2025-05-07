@@ -59,16 +59,19 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
 
         /// Replace the SourceNameLogicalOperator with the SourceDescriptorLogicalOperator corresponding to the first entry.
         auto firstSourceDescriptor = sourceCatalogEntries.front()->getPhysicalSource()->createSourceDescriptor(sourceOperator->getSchema());
-        auto firstOperatorSourceLogicalDescriptor
-            = std::make_shared<SourceDescriptorLogicalOperator>(std::move(firstSourceDescriptor), sourceOperator->getId());
+        auto firstInputFormatterDescriptor
+            = sourceCatalogEntries.front()->getPhysicalSource()->createInputFormatterDescriptor(sourceOperator->getSchema());
+        auto firstOperatorSourceLogicalDescriptor = std::make_shared<SourceDescriptorLogicalOperator>(
+            std::move(firstSourceDescriptor), std::move(firstInputFormatterDescriptor), sourceOperator->getId());
         sourceOperator->replace(firstOperatorSourceLogicalDescriptor, sourceOperator);
 
         /// Iterate over all subsequent entries, create the corresponding SourceDescriptorLogicalOperators and add them to the query plan.
         for (const auto& sourceCatalogEntry : sourceCatalogEntries | std::views::drop(1))
         {
             auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(sourceSchema);
-            auto operatorSourceLogicalDescriptor
-                = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), getNextOperatorId());
+            auto inputFormatterDescriptor = sourceCatalogEntry->getPhysicalSource()->createInputFormatterDescriptor(sourceSchema);
+            auto operatorSourceLogicalDescriptor = std::make_shared<SourceDescriptorLogicalOperator>(
+                std::move(sourceDescriptor), std::move(inputFormatterDescriptor), getNextOperatorId());
             /// Add the OperatorSourceLogicalDescriptor to the query plan, by adding it as a child to the parent operator(s).
             for (const auto& parentNode : firstOperatorSourceLogicalDescriptor->getParents())
             {
