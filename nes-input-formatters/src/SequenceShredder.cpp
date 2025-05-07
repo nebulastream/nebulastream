@@ -283,7 +283,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             break;
         }
         case WrappingMode::CHECK_WRAPPING_TO_LOWER_AND_HIGHER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
+            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
             const auto [spanningTupleStart, isStartValid]
                 = tryToFindLowerWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
             if (spanningTupleStart or HasTupleDelimiter)

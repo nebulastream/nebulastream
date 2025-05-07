@@ -56,7 +56,7 @@ bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> cond
         {
             return true;
         }
-        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), std::forward<Args>(args)))
+        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), args))
         {
             return true;
         }
