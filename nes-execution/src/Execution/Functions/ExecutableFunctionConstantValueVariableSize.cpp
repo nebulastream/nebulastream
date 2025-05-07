@@ -17,13 +17,20 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <string_view>
 #include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Functions
 {
+
+ExecutableFunctionConstantValueVariableSize::ExecutableFunctionConstantValueVariableSize(std::string_view value)
+    : ExecutableFunctionConstantValueVariableSize(reinterpret_cast<const int8_t*>(value.data()), value.size())
+{
+}
 
 ExecutableFunctionConstantValueVariableSize::ExecutableFunctionConstantValueVariableSize(const int8_t* value, const size_t size)
     : sizeIncludingLength(size + sizeof(uint32_t)), data(std::make_unique<int8_t[]>(sizeIncludingLength))

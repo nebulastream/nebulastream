@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string_view>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -29,6 +30,7 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionConstantValueVariableSize final : public Function
 {
 public:
+    explicit ExecutableFunctionConstantValueVariableSize(std::string_view value);
     explicit ExecutableFunctionConstantValueVariableSize(const int8_t* value, size_t size);
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
