@@ -13,6 +13,8 @@
 */
 #include <NautilusTestUtils.hpp>
 
+#include <NautilusTestUtils.hpp>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -224,7 +226,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                         bufferProvider,
                         sizeVarSizedDataVal);
 
-                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData)));
+                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData, VariableSizedData::Owned(true))));
                 }
                 else
                 {
