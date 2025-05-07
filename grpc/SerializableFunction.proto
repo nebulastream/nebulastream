@@ -88,6 +88,10 @@ The serializable wrapper definition for function nodes
      SerializableFunction left = 1;
      SerializableFunction right = 2;
   }
+   message FunctionImageManip {
+     string functionName = 1;
+     repeated SerializableFunction children = 2;
+  }
    message FunctionAbs{
      SerializableFunction child = 1;
   }
