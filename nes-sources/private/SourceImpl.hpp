@@ -31,6 +31,7 @@ public:
     [[nodiscard]] virtual SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) = 0;
     [[nodiscard]] virtual OriginId getOriginId() const = 0;
     [[nodiscard]] virtual std::ostream& toString(std::ostream&) const = 0;
+
     friend std::ostream& operator<<(std::ostream& os, const SourceImpl& obj) { return obj.toString(os); }
 };
 

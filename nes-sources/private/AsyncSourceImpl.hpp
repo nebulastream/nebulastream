@@ -42,9 +42,7 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<AsyncSource> sourceImplementation)
-        : originId(originId)
-        , bufferManager(std::move(bufferManager))
-        , sourceImplementation(std::move(sourceImplementation))
+        : originId(originId), bufferManager(std::move(bufferManager)), sourceImplementation(std::move(sourceImplementation))
     {
     }
 

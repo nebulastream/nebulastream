@@ -81,14 +81,12 @@ struct ConfigParametersMQTTVideoPlayback
     static inline const DescriptorConfig::ConfigParameter<std::string> SERVER_URI{
         "serverURI",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(SERVER_URI, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SERVER_URI, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> CLIENT_ID{
         "clientId",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(CLIENT_ID, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CLIENT_ID, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> TOPIC{
         "topic",
@@ -98,8 +96,7 @@ struct ConfigParametersMQTTVideoPlayback
     static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
         "flushIntervalMS",
         0,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<int32_t> QOS{
         "qos",

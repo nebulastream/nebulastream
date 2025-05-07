@@ -27,9 +27,7 @@
 
 namespace NES
 {
-SourceHandle::SourceHandle(
-    SourceRuntimeConfiguration configuration,
-    std::unique_ptr<SourceImpl> sourceImplementation)
+SourceHandle::SourceHandle(SourceRuntimeConfiguration configuration, std::unique_ptr<SourceImpl> sourceImplementation)
     : configuration(std::move(configuration)), sourceImpl(std::move(sourceImplementation))
 {
 }

@@ -18,6 +18,7 @@
 
 #include "SourceRegistry.hpp"
 #include "VideoSourceValidation.hpp"
+
 namespace NES
 {
 class VideoSourceService
@@ -31,6 +32,7 @@ private:
         Handle nextHandle;
         std::unordered_map<Handle, AsyncSource::AsyncSourceEmit> consumers;
     };
+
     std::shared_ptr<folly::Synchronized<State>> stateMutex;
     std::jthread thread;
     friend void sourceThreadInner(
@@ -43,6 +45,7 @@ private:
         SourceDescriptor descriptor,
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
         std::shared_ptr<folly::Synchronized<State>> stateMutex);
+
     struct Private
     {
     };

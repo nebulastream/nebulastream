@@ -19,6 +19,7 @@
 #include <mqtt/async_client.h>
 #include "SourceRegistry.hpp"
 #include "VideoSourceValidation.hpp"
+
 namespace NES
 {
 class MQTTPlaybackVideoSourceService
@@ -67,8 +68,7 @@ private:
     void onData(std::string data);
 
 public:
-    MQTTPlaybackVideoSourceService(
-        Private, SourceDescriptor config, std::shared_ptr<AbstractBufferProvider> bufferProvider);
+    MQTTPlaybackVideoSourceService(Private, SourceDescriptor config, std::shared_ptr<AbstractBufferProvider> bufferProvider);
     Handle addConsumer(AsyncSource::AsyncSourceEmit&& consumer);
     void removeConsumer(Handle handle);
 

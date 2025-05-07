@@ -63,15 +63,13 @@ void validateSchema(const Schema& schema)
 }
 }
 
-SourceValidationRegistryReturnType
-RegisterVideoSourceValidation(SourceValidationRegistryArguments sourceConfig)
+SourceValidationRegistryReturnType RegisterVideoSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     validateSchema(sourceConfig.schema);
     return DescriptorConfig::validateAndFormat<ConfigParametersVideo>(std::move(sourceConfig.config), "Video");
 }
 
-SourceValidationRegistryReturnType
-RegisterMQTTVideoPlaybackSourceValidation(SourceValidationRegistryArguments sourceConfig)
+SourceValidationRegistryReturnType RegisterMQTTVideoPlaybackSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
     validateSchema(sourceConfig.schema);
     return DescriptorConfig::validateAndFormat<ConfigParametersMQTTVideoPlayback>(std::move(sourceConfig.config), "MQTTVideoPlayback");

@@ -107,7 +107,111 @@ const static std::unordered_map<std::string_view, ImageManipFunction> Functions
             std::vector{
                 DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
                 DataTypeProvider::provideDataType(DataType::Type::UINT64),
-                DataTypeProvider::provideDataType(DataType::Type::UINT64)})}};
+                DataTypeProvider::provideDataType(DataType::Type::UINT64)})},
+       {"Mono8ToJPG",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+            std::vector{
+                DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+            })},
+
+       {"Rectangle",
+        ImageManipFunction(
+            NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+            std::vector{
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)})},
+
+       {"Mono16ToMono8",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+            std::vector{
+                DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16)})},
+
+       {"Mono16ToPNG16",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+            std::vector{
+                DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)})},
+
+       {"YUYVToJPG",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+            std::vector{
+                DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)})},
+
+       {"FaceDetection",
+        ImageManipFunction(
+            NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+            std::vector{
+                DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64),
+                NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT64)})},
+
+       {"Mono16MIN",
+        ImageManipFunction(
+            NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16),
+            std::vector{DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED)})},
+
+       {"Mono16MAX",
+        ImageManipFunction(
+            NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16),
+            std::vector{DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED)})},
+
+       {"Mono16AVG",
+        ImageManipFunction(
+            NES::DataTypeProvider::provideDataType(NES::DataType::Type::UINT16),
+            std::vector{DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED)})},
+
+       {"Mono16ToCelsius",
+        ImageManipFunction(
+            NES::DataTypeProvider::provideDataType(NES::DataType::Type::FLOAT32),
+            std::vector{DataTypeProvider::provideDataType(NES::DataType::Type::UINT16)})},
+
+       {"Mono16ROI",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+            std::vector{
+                DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64)})},
+
+       {"Deserialize",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+            std::vector{
+                DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64)})},
+
+       {"Serialize",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+            std::vector{
+                DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64),
+                DataTypeProvider::provideDataType(DataType::Type::UINT64)})},
+
+       {"DrawRectangle",
+        ImageManipFunction(
+            DataTypeProvider::provideDataType(DataType::Type::VARSIZED),
+            std::vector{
+                DataTypeProvider::provideDataType(DataType::Type::VARSIZED), DataTypeProvider::provideDataType(DataType::Type::UINT64)})}};
 
 ImageManipLogicalFunction::ImageManipLogicalFunction(DataType stamp, std::string type, std::vector<LogicalFunction> children)
     : functionName(std::move(type)), children(std::move(children)), dataType(std::move(stamp))
@@ -206,5 +310,19 @@ namespace LogicalFunctionGeneratedRegistrar
 ImageManipFunction(ToBase64);
 ImageManipFunction(FromBase64);
 ImageManipFunction(FromBase64ToTensor);
+ImageManipFunction(Mono8ToJPG);
+ImageManipFunction(Mono16ToMono8);
+ImageManipFunction(YUYVToJPG);
+ImageManipFunction(Mono16ToPNG16);
+ImageManipFunction(FaceDetection);
+ImageManipFunction(Serialize);
+ImageManipFunction(Deserialize);
+ImageManipFunction(DrawRectangle);
+ImageManipFunction(Mono16ROI);
+ImageManipFunction(Mono16AVG);
+ImageManipFunction(Mono16ToCelsius);
+ImageManipFunction(Mono16MAX);
+ImageManipFunction(Mono16MIN);
+ImageManipFunction(Rectangle);
 }
 }

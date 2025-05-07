@@ -23,9 +23,9 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Overloaded.hpp>
+#include <AsyncSourceImpl.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
-#include <AsyncSourceImpl.hpp>
 #include "SourceThread.hpp"
 
 namespace NES
@@ -42,7 +42,6 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(OriginId originId, const Sou
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))
     {
-
         /// The source-specific configuration of maxInflightBuffers takes priority.
         /// If not specified (0), we take the NodeEngine-wide configuration.
         const auto maxInflightBuffers = (sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS) > 0)
@@ -54,12 +53,13 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(OriginId originId, const Sou
             Overloaded{
                 [&](std::unique_ptr<Source> source)
                 {
-                    return std::make_unique<SourceHandle>(runtimeConfig, std::make_unique<SourceThread>(originId, bufferPool, std::move(source)));
+                    return std::make_unique<SourceHandle>(
+                        runtimeConfig, std::make_unique<SourceThread>(originId, bufferPool, std::move(source)));
                 },
                 [&](std::unique_ptr<AsyncSource> source)
                 {
-                    return std::make_unique<SourceHandle>(runtimeConfig,
-                        std::make_unique<AsyncSourceImpl>( originId, bufferPool, std::move(source)));
+                    return std::make_unique<SourceHandle>(
+                        runtimeConfig, std::make_unique<AsyncSourceImpl>(originId, bufferPool, std::move(source)));
                 }},
             std::move(*source));
     }

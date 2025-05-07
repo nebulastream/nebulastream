@@ -45,7 +45,6 @@ VideoSource<Service>::VideoSource(const SourceDescriptor& descriptor) : sourceDe
     NES_TRACE("VideoSource::VideoSource: Init VideoSource.");
 }
 
-
 template <typename Service>
 std::ostream& VideoSource<Service>::toString(std::ostream& str) const
 {

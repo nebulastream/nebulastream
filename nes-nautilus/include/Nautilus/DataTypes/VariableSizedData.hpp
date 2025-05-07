@@ -33,7 +33,6 @@ nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableS
 class VariableSizedData
 {
 public:
-
     /// @param bufferBacked: If set to true the VariableSizedData object is backed by a tuple buffer.
     explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size);
     explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData);
