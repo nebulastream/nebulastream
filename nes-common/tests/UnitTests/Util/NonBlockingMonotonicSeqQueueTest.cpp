@@ -288,7 +288,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadedUpdatesWithChunkNumberInR
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i <= noSeqNumbers; i++)
     {
-        auto noChunks = 1 + rand() % maxChunksPerSeqNumber;
+        auto noChunks = 1 + (rand() % maxChunksPerSeqNumber);
         for (auto chunk = ChunkNumber::INITIAL; chunk < ChunkNumber::INITIAL + noChunks; ++chunk)
         {
             watermarkBarriers.emplace_back(
@@ -334,7 +334,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i < noSeqNumbers + SequenceNumber::INITIAL; i++)
     {
-        auto noChunks = 1 + rand() % maxChunksPerSeqNumber;
+        auto noChunks = 1 + (rand() % maxChunksPerSeqNumber);
         for (auto chunk = ChunkNumber::INITIAL; chunk < noChunks + ChunkNumber::INITIAL; ++chunk)
         {
             watermarkBarriers.emplace_back(
@@ -353,7 +353,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
     {
         const auto copyGlobalUpdateCounter = globalUpdateCounter.load();
         const auto missingUpdates = watermarkBarriers.size() - globalUpdateCounter;
-        const auto updatesThisRound = std::min(missingUpdates, 1 + rand() % averageUpdatesPerRound);
+        const auto updatesThisRound = std::min(missingUpdates, 1 + (rand() % averageUpdatesPerRound));
         const auto maxUpdatePos = copyGlobalUpdateCounter + updatesThisRound;
 
         std::vector<std::thread> threads;

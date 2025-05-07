@@ -643,10 +643,10 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
     for (const auto& [index, _] : queryPlans | views::enumerate)
     {
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
-        sourcesCtrls.push_back(test.sourceControls[sources[index * 2 + 1]]);
+        sourcesCtrls.push_back(test.sourceControls[sources[(index * 2) + 1]]);
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectSourceTermination(QueryId(1 + index), sources[index * 2], Runtime::QueryTerminationType::Graceful);
-        test.expectSourceTermination(QueryId(1 + index), sources[index * 2 + 1], Runtime::QueryTerminationType::Graceful);
+        test.expectSourceTermination(QueryId(1 + index), sources[(index * 2) + 1], Runtime::QueryTerminationType::Graceful);
         test.expectQueryStatusEvents(
             QueryId(1 + index),
             {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
@@ -738,10 +738,10 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
     for (size_t index = 2; const auto& query : queryPlans | std::ranges::views::drop(2))
     {
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
-        sourcesCtrls.push_back(test.sourceControls[sources[index * 2 + 1]]);
+        sourcesCtrls.push_back(test.sourceControls[sources[(index * 2) + 1]]);
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectSourceTermination(QueryId(1 + index), sources[index * 2], Runtime::QueryTerminationType::Graceful);
-        test.expectSourceTermination(QueryId(1 + index), sources[index * 2 + 1], Runtime::QueryTerminationType::Graceful);
+        test.expectSourceTermination(QueryId(1 + index), sources[(index * 2) + 1], Runtime::QueryTerminationType::Graceful);
         test.expectQueryStatusEvents(
             QueryId(1 + index),
             {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
@@ -1093,7 +1093,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
     {
         test.pipelineControls[pipelines[index]]->throwOnNthInvocation = failAfterNInvocations;
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
-        sourcesCtrls.push_back(test.sourceControls[sources[index * 2 + 1]]);
+        sourcesCtrls.push_back(test.sourceControls[sources[(index * 2) + 1]]);
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectQueryStatusEvents(
             QueryId(1 + index),
