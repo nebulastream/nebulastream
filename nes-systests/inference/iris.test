@@ -1,0 +1,16 @@
+# name: inference/iris.test
+# description: Simple Iris inference
+# groups: [Inference]
+
+SourceCSV stream VARSIZED data TESTDATA/iris_in.csv
+
+SINK classification VARSIZED stream$data VARSIZED stream$flower
+MODEL iris TEST_MODELS/model.onnx (FLOAT32 FLOAT32 FLOAT32 FLOAT32) FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+
+SELECT data, iris_label(setosa, versicolor, virginica) as flower
+FROM (SELECT INFER_MODEL(iris, (data)) FROM stream)
+INTO classification
+----
+aaaaaaaaaaaaaaaa,virginica
+
+
