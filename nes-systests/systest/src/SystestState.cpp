@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -35,7 +36,7 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     auto toLowerCopy = [](const std::string& str)
     {
         std::string lowerStr = str;
-        std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
+        std::ranges::transform(lowerStr, lowerStr.begin(), ::tolower);
         return lowerStr;
     };
 

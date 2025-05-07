@@ -375,7 +375,7 @@ bool Node::swapLeftAndRightBranch()
             " children, instead of 2");
         return false;
     }
-    std::reverse(children.begin(), children.end());
+    std::ranges::reverse(children);
     return true;
 }
 

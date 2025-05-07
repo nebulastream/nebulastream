@@ -184,7 +184,7 @@ void LogicalProjectionOperator::inferStringSignature()
     {
         fields.push_back(field->getName());
     }
-    std::sort(fields.begin(), fields.end());
+    std::ranges::sort(fields);
     signatureStream << "PROJECTION(";
     for (const auto& field : fields)
     {

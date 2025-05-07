@@ -57,5 +57,5 @@ TEST_F(QueryPlanTest, testLeafOperators)
     queryPlan->appendOperatorAsNewRoot(op2);
 
     std::vector<std::shared_ptr<Operator>> leafOptrs = queryPlan->getLeafOperators();
-    EXPECT_TRUE(std::find(leafOptrs.begin(), leafOptrs.end(), op1) != leafOptrs.end());
+    EXPECT_TRUE(std::ranges::find(leafOptrs, op1) != leafOptrs.end());
 }

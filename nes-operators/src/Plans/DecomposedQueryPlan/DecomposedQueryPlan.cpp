@@ -49,8 +49,7 @@ void DecomposedQueryPlan::addRootOperator(std::shared_ptr<Operator> newRootOpera
 bool DecomposedQueryPlan::removeAsRootOperator(OperatorId rootOperatorId)
 {
     NES_WARNING("Remove root operator with id {}", rootOperatorId);
-    auto found = std::find_if(
-        rootOperators.begin(), rootOperators.end(), [&](const auto& rootOperator) { return rootOperator->getId() == rootOperatorId; });
+    auto found = std::ranges::find_if(rootOperators, [&](const auto& rootOperator) { return rootOperator->getId() == rootOperatorId; });
 
     if (found == rootOperators.end())
     {

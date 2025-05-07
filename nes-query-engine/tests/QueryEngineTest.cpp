@@ -539,9 +539,8 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
     auto query = test.addNewQuery(std::move(builder));
 
     std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
-    std::transform(
-        sources.begin(),
-        sources.end(),
+    std::ranges::transform(
+        sources,
         std::back_inserter(sourcesCtrls),
         [&](auto identifier)
         {
@@ -587,8 +586,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
     auto query = test.addNewQuery(std::move(builder));
 
     std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
-    std::transform(
-        sources.begin(), sources.end(), std::back_inserter(sourcesCtrls), [&](auto identifier) { return test.sourceControls[identifier]; });
+    std::ranges::transform(sources, std::back_inserter(sourcesCtrls), [&](auto identifier) { return test.sourceControls[identifier]; });
 
     test.expectQueryStatusEvents(
         QueryId(1),

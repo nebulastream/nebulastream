@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <filesystem>
@@ -34,7 +35,7 @@ void DumpHelper::dump(std::string_view name, std::string_view output) const
     if (not output.empty())
     {
         auto fileName = std::string{name};
-        std::replace(fileName.begin(), fileName.end(), ' ', '_');
+        std::ranges::replace(fileName, ' ', '_');
         auto path = std::string{outputPath} + std::filesystem::path::preferred_separator + fileName;
 
         std::ofstream outputFile;
