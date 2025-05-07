@@ -1,0 +1,38 @@
+query: |
+  SELECT start, end, samples, INFER_MODEL(speech_recognition, (chunked)) as command
+  FROM (
+      SELECT COUNT(value) as samples, MERGE(value) as chunked
+      FROM audio_stream WINDOW SLIDING(timestamp, size 1000000 ms, advance by 20000 ms)
+  ) INTO csv_sink
+sink:
+  name: csv_sink
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "/tmp/out.csv"
+    append: false
+logical:
+  - name: audio_stream
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: value
+        type: FLOAT32
+physical:
+  - logical: audio_stream
+    parserConfig:
+      type: Raw
+    sourceConfig:
+      type: Audio
+      socketPort: 65432
+      socketHost: localhost
+      sampleRate: 16000
+      sampleWidth: 2
+models:
+  - path: /home/ls/dima/nebulastream-public/demo/audio_model.onnx
+    name: speech_recognition
+    inputs:
+      - VARSIZED
+    outputs:
+      - name: output
+        type: VARSIZED
