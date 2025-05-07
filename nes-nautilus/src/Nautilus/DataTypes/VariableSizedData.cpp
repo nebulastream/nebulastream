@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 
 #include <cstdint>
 #include <ostream>
 #include <utility>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
@@ -27,13 +27,13 @@
 namespace NES::Nautilus
 {
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size)
-    : size(size), ptrToVarSized(reference)
+VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size, Owned owned)
+    : size(size), ptrToVarSized(reference), ownsBuffer_(std::move(owned.isOwned))
 {
 }
 
-VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData)
-    : VariableSizedData(pointerToVarSizedData, Util::readValueFromMemRef<uint32_t>(pointerToVarSizedData))
+VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData, Owned owned)
+    : VariableSizedData(pointerToVarSizedData, Util::readValueFromMemRef<uint32_t>(pointerToVarSizedData), std::move(owned))
 {
 }
 
@@ -67,6 +67,8 @@ VariableSizedData& VariableSizedData::operator=(VariableSizedData&& other) noexc
 
     size = std::move(other.size);
     ptrToVarSized = std::move(other.ptrToVarSized);
+    ownsBuffer_ = std::move(other.ownsBuffer_);
+    other.ownsBuffer_ = false;
     return *this;
 }
 
