@@ -96,11 +96,14 @@ class Registrar
 template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename Arguments>
 class BaseRegistry : public Registry<Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments>>
 {
+    BaseRegistry() = default;
+
 public:
     static ConcreteRegistry& instance()
     {
         static ConcreteRegistry instance;
         return instance;
     }
+    friend ConcreteRegistry;
 };
 }
