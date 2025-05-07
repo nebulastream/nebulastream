@@ -38,4 +38,4 @@ endif ()
 
 add_tests_if_enabled(tests)
 
-create_registries_for_component(ExecutableFunction)
+create_registries_for_component(ExecutableFunction ExecutableOperator)
