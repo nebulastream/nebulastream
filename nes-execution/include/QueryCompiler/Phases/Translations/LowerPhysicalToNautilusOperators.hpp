@@ -49,6 +49,11 @@ public:
     std::shared_ptr<OperatorPipeline> apply(std::shared_ptr<OperatorPipeline> pipeline, size_t bufferSize) const;
 
 private:
+    static std::shared_ptr<Runtime::Execution::Operators::Operator> lowerSequence(
+        const std::shared_ptr<PhysicalOperators::PhysicalOperator>& shared,
+        size_t size,
+        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& vector);
+
     std::shared_ptr<Runtime::Execution::Operators::Operator> lower(
         Runtime::Execution::PhysicalOperatorPipeline& pipeline,
         const std::shared_ptr<Runtime::Execution::Operators::Operator>& parentOperator,
