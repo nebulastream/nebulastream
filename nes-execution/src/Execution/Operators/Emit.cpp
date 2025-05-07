@@ -37,7 +37,7 @@ uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, OriginId originId, Se
 {
     PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
-    auto chunkNumber = pipelineCtx->getNextChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)});
+    auto chunkNumber = pipelineCtx->getNextChunkNumber({.sequenceNumber = SequenceNumber(sequenceNumber), .originId = OriginId(originId)});
     NES_TRACE("(Sequence Number: {}, Chunk Number: {})", sequenceNumber, chunkNumber);
     return chunkNumber;
 }
@@ -46,14 +46,15 @@ bool isLastChunkProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumbe
 {
     PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
-    return pipelineCtx->processChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
+    return pipelineCtx->processChunkNumber(
+        {.sequenceNumber = SequenceNumber(sequenceNumber), .originId = OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
 }
 
 void removeSequenceStateProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
 {
     PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
-    pipelineCtx->removeSequenceState({SequenceNumber(sequenceNumber), OriginId(originId)});
+    pipelineCtx->removeSequenceState({.sequenceNumber = SequenceNumber(sequenceNumber), .originId = OriginId(originId)});
 }
 
 namespace

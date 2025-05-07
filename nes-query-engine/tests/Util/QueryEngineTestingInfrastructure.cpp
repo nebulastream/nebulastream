@@ -241,13 +241,13 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     }
 
     return {
-        std::make_unique<Runtime::ExecutableQueryPlan>(queryId, std::move(pipelines), std::move(sources)),
-        sourceIds,
-        pipelineIds,
-        sourceCtrls,
-        sinkCtrls,
-        pipelineCtrls,
-        stages};
+        .query = std::make_unique<Runtime::ExecutableQueryPlan>(queryId, std::move(pipelines), std::move(sources)),
+        .sourceIds = sourceIds,
+        .pipelineIds = pipelineIds,
+        .sourceCtrls = sourceCtrls,
+        .sinkCtrls = sinkCtrls,
+        .pipelineCtrls = pipelineCtrls,
+        .stages = stages};
 }
 QueryPlanBuilder::QueryPlanBuilder(
     identifier_t nextIdentifier, PipelineId::Underlying pipelineIdCounter, OriginId::Underlying originIdCounter)
