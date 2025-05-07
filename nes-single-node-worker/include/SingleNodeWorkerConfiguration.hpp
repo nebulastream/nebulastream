@@ -13,10 +13,12 @@
 */
 
 #pragma once
+#include <ostream>
 #include <string>
+#include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/PrintingVisitor.hpp>
+#include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 
 namespace NES
@@ -35,8 +37,16 @@ please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
 
+    /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
+    NES::Configurations::IntOption grpcPayloadRestriction
+        = {"grpcPayloadRestriction",
+           "-1",
+           R"(By default gRPC is configured to allow arbitrary payload sizes, which could be a security concern.
+This configuration parameter can limit the size (in bytes) of gRPC requests.
+The default value of -1 applies no restrictions.)"};
+
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri}; }
+    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri, &grpcPayloadRestriction}; }
     template <typename T>
     friend void generateHelp(std::ostream& ostream);
 
