@@ -1,0 +1,182 @@
+# name: inference/iris.test
+# description: Simple Iris inference
+# groups: [Inference]
+
+Source streamVarsized VARSIZED data
+aaaaaaaaaaaaaaaa
+
+SINK classificationVarsized VARSIZED streamVarsized$data VARSIZED streamVarsized$flower
+
+MODEL iris TESTDATA/model/iris.onnx
+VARSIZED
+FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+
+SELECT data, iris_label(setosa, versicolor, virginica) as flower
+FROM (SELECT INFER_MODEL(iris, (data)) FROM streamVarsized)
+INTO classificationVarsized
+----
+aaaaaaaaaaaaaaaa,virginica
+
+
+SourceCSV streamFloat FLOAT32 p1 FLOAT32 p2 FLOAT32 p3 FLOAT32 p4 TESTDATA/small/iris.csv
+
+SINK classification VARSIZED streamFloat$flower
+
+MODEL iris4 TESTDATA/model/iris.onnx
+FLOAT32 FLOAT32 FLOAT32 FLOAT32
+FLOAT32 setosa FLOAT32 versicolor FLOAT32 virginica
+
+SELECT iris_label(setosa, versicolor, virginica) as flower
+FROM (SELECT INFER_MODEL(iris4, (p1,p2,p3,p4)) FROM streamFloat)
+INTO classification
+----
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
+virginica
