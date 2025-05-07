@@ -76,7 +76,7 @@ void AggregationSlice::setCleanupFunction(
 {
     if (this->cleanupFunction == nullptr)
     {
-        INVARIANT(
+        PRECONDITION(
             cleanupFunction != nullptr, "The cleanup function should not be null. Have you passed a null function to setCleanupFunction?");
         this->cleanupFunction = std::move(cleanupFunction);
     }
