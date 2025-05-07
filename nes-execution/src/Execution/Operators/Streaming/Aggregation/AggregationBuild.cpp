@@ -67,7 +67,8 @@ Interface::HashMap* getHashMapProxy(
     INVARIANT(
         hashMap.size() == 1,
         "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support "
-        "slicing");
+        "slicing, but got {}",
+        hashMap.size());
 
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
