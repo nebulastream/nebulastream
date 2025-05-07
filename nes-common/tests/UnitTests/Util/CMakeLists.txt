@@ -24,3 +24,7 @@ add_nes_common_test(nes-common-tests
 add_nes_test(chunk-collector-test
         "ChunkCollectorTest.cpp"
 )
+
+add_nes_test(sequencer-test
+        "SequencerTest.cpp"
+)
