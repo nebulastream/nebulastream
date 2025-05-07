@@ -14,21 +14,44 @@
 
 #pragma once
 #include <algorithm>
+#include <concepts>
 #include <functional>
 #include <memory>
 #include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Util/Strings.hpp>
 
 namespace NES
 {
 
 /// The registry singleton allows registration of factory methods to produce a certain type.
 /// There exists multiple distinct registries for different types.
-template <typename Registrar>
+template <typename Registrar, bool CaseSensitive = false>
 class Registry
 {
+    struct InternalKey
+    {
+        typename Registrar::KeyType key;
+        auto operator<=>(const InternalKey&) const = default;
+        struct Hash
+        {
+            std::size_t operator()(const InternalKey& key) const { return std::hash<typename Registrar::KeyType>()(key.key); }
+        };
+    };
+
+    InternalKey internalKey(const Registrar::KeyType& externalKey) const
+    {
+        if constexpr (
+            !CaseSensitive && std::convertible_to<typename Registrar::KeyType, std::string_view>
+            && std::constructible_from<typename Registrar::KeyType, std::string_view>)
+        {
+            return InternalKey{typename Registrar::KeyType(NES::Util::toUpperCase(static_cast<std::string_view>(externalKey)))};
+        }
+        return InternalKey{externalKey};
+    }
+
 public:
     /// Cannot copy and move
     Registry(const Registry& other) = delete;
@@ -37,12 +60,12 @@ public:
     Registry& operator=(Registry&& other) noexcept = delete;
     ~Registry() = default;
 
-    [[nodiscard]] bool contains(const typename Registrar::KeyType& key) const { return registryImpl.contains(key); }
+    [[nodiscard]] bool contains(const typename Registrar::KeyType& key) const { return registryImpl.contains(internalKey(key)); }
 
     template <typename Arguments>
     [[nodiscard]] std::optional<typename Registrar::ReturnType> create(const typename Registrar::KeyType& key, Arguments&& args) const
     {
-        if (const auto entry = registryImpl.find(key); entry != registryImpl.end())
+        if (const auto entry = registryImpl.find(internalKey(key)); entry != registryImpl.end())
         {
             /// Call the creator function of the entry.
             return entry->second(std::forward<Arguments>(args));
@@ -54,7 +77,7 @@ public:
     {
         std::vector<typename Registrar::KeyType> names;
         names.reserve(registryImpl.size());
-        std::ranges::transform(registryImpl, std::back_inserter(names), [](const auto& kv) { return kv.first; });
+        std::ranges::transform(registryImpl, std::back_inserter(names), [](const auto& kv) { return kv.first.key; });
         return names;
     }
 
@@ -66,11 +89,11 @@ private:
     /// Only the Registrar can register new entries.
     void addEntry(typename Registrar::KeyType key, typename Registrar::CreatorFn creatorFunction)
     {
-        registryImpl.emplace(std::move(key), std::move(creatorFunction));
+        registryImpl.emplace(internalKey(std::move(key)), std::move(creatorFunction));
     }
     friend Registrar;
 
-    std::unordered_map<typename Registrar::KeyType, typename Registrar::CreatorFn> registryImpl;
+    std::unordered_map<InternalKey, typename Registrar::CreatorFn, typename InternalKey::Hash> registryImpl;
 };
 
 /// Tagging the Registrar avoids the following issue:
@@ -87,14 +110,14 @@ class Registrar
     using ReturnType = ReturnTypeT;
     using CreatorFn = std::function<ReturnType(Arguments)>;
     static void registerAll(Registry<Registrar>& registry);
-    template <typename Registrar>
+    template <typename Registrar, bool>
     friend class Registry;
 };
 
 /// CRTPBase of the Registry. This allows the `instance()` method to return a concrete instance of the registry, which is useful
 /// if custom member functions are added to the concrete registry class.
-template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename Arguments>
-class BaseRegistry : public Registry<Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments>>
+template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename Arguments, bool CaseSensitive = false>
+class BaseRegistry : public Registry<Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments>, CaseSensitive>
 {
     BaseRegistry() = default;
 
