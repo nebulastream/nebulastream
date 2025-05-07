@@ -24,9 +24,9 @@ namespace NES::Runtime::Execution
 class RegressionBasedWatermarkPredictor final : public AbstractWatermarkPredictor
 {
 public:
-    explicit RegressionBasedWatermarkPredictor(uint64_t degree);
+    RegressionBasedWatermarkPredictor(uint64_t initial, uint64_t degree);
 
-    void initialize(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data) override;
+    void update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data) override;
     [[nodiscard]] Timestamp getEstimatedWatermark(uint64_t timestamp) const override;
 
 private:

@@ -36,7 +36,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize,
     const uint64_t windowSlide,
     MemoryControllerInfo memoryControllerInfo,
-    const WatermarkPredictorInfo watermarkPredictorInfo,
+    const WatermarkPredictorInfo& watermarkPredictorInfo,
     const std::vector<OriginId>& inputOrigins)
     : watermarkProcessor(std::make_shared<Operators::MultiOriginWatermarkProcessor>(inputOrigins))
     , numberOfWorkerThreads(0)
@@ -50,7 +50,9 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
         switch (watermarkPredictorInfo.type)
         {
             case RegressionBased: {
-                watermarkPredictors.emplace(origin, std::make_shared<RegressionBasedWatermarkPredictor>(watermarkPredictorInfo.param));
+                watermarkPredictors.emplace(
+                    origin,
+                    std::make_shared<RegressionBasedWatermarkPredictor>(watermarkPredictorInfo.initial, watermarkPredictorInfo.param));
                 break;
             }
         }
@@ -408,7 +410,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     watermarkProcessor->updateWatermark(
         metaData.bufferMetaData.watermarkTs, metaData.bufferMetaData.seqNumber, metaData.bufferMetaData.originId);
     // TODO don't get new ingestion times every time (time should progress linearly so ideally we would only call it once), just update it from time to time
-    initializeWatermarkPredictors();
+    updateWatermarkPredictor(metaData.bufferMetaData.originId);
 
     /// Write and read all selected slices to and from disk
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
@@ -529,14 +531,11 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
 }
 
-void FileBackedTimeBasedSliceStore::initializeWatermarkPredictors()
+void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId originId)
 {
     const auto& ingestionTimesForWatermarks
-        = watermarkProcessor->getIngestionTimeForWatermarks(USE_NUM_GAPS_ALLOWED, USE_MAX_NUM_SEQ_NUMBERS);
-    for (const auto& [origin, predictor] : watermarkPredictors)
-    {
-        predictor->initialize(ingestionTimesForWatermarks.at(origin));
-    }
+        = watermarkProcessor->getIngestionTimesForWatermarks(originId, USE_NUM_GAPS_ALLOWED, USE_MAX_NUM_SEQ_NUMBERS);
+    watermarkPredictors[originId]->update(ingestionTimesForWatermarks);
 }
 
 void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes)

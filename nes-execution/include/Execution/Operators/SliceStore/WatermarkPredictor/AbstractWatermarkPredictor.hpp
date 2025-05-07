@@ -29,20 +29,25 @@ enum WatermarkPredictorType : uint8_t
 struct WatermarkPredictorInfo
 {
     WatermarkPredictorType type;
+    uint64_t initial;
     uint64_t param;
 };
 
 class AbstractWatermarkPredictor
 {
 public:
-    AbstractWatermarkPredictor() = default;
+    explicit AbstractWatermarkPredictor(uint64_t initial);
     virtual ~AbstractWatermarkPredictor() = default;
 
-    virtual void initialize(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data) = 0;
+    virtual void update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data) = 0;
     [[nodiscard]] virtual Timestamp getEstimatedWatermark(uint64_t timestamp) const = 0;
 
     static Timestamp getMinPredictedWatermarkForTimestamp(
         const std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>>& watermarkPredictors, uint64_t timestamp);
+
+protected:
+    uint64_t initial;
+    bool init;
 };
 
 }

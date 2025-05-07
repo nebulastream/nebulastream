@@ -17,11 +17,12 @@
 namespace NES::Runtime::Execution
 {
 
-RegressionBasedWatermarkPredictor::RegressionBasedWatermarkPredictor(const uint64_t degree) : degree(degree)
+RegressionBasedWatermarkPredictor::RegressionBasedWatermarkPredictor(const uint64_t initial, const uint64_t degree)
+    : AbstractWatermarkPredictor(initial), degree(degree)
 {
 }
 
-void RegressionBasedWatermarkPredictor::initialize(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data)
+void RegressionBasedWatermarkPredictor::update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data)
 {
     const auto n = data.size();
     Eigen::MatrixXd X(n, degree + 1);
@@ -39,10 +40,17 @@ void RegressionBasedWatermarkPredictor::initialize(const std::vector<std::pair<u
 
     const auto coefficientsLocked = coefficients.wlock();
     *coefficientsLocked = (X.transpose() * X).ldlt().solve(X.transpose() * y);
+    init = true;
 }
 
 Timestamp RegressionBasedWatermarkPredictor::getEstimatedWatermark(const uint64_t timestamp) const
 {
+    const auto coefficientsLocked = coefficients.rlock();
+    if (!init)
+    {
+        return Timestamp(initial);
+    }
+
     Eigen::VectorXd newX(degree + 1);
     newX(0) = 1; /// Bias term
     for (auto j = 1UL; j <= degree; ++j)
@@ -50,7 +58,6 @@ Timestamp RegressionBasedWatermarkPredictor::getEstimatedWatermark(const uint64_
         newX(j) = std::pow(timestamp, j); /// Polynomial terms
     }
 
-    const auto coefficientsLocked = coefficients.rlock();
     return Timestamp(coefficientsLocked->dot(newX));
 }
 

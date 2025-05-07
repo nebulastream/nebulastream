@@ -73,7 +73,7 @@ public:
         uint64_t windowSize,
         uint64_t windowSlide,
         MemoryControllerInfo memoryControllerInfo,
-        WatermarkPredictorInfo watermarkPredictorInfo,
+        const WatermarkPredictorInfo& watermarkPredictorInfo,
         const std::vector<OriginId>& inputOrigins);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
@@ -114,7 +114,7 @@ private:
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide);
 
-    void initializeWatermarkPredictors();
+    void updateWatermarkPredictor(OriginId originId);
     void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
     static uint64_t getExecTimesForDataSize(std::map<size_t, uint64_t> execTimes, size_t dataSize);
 

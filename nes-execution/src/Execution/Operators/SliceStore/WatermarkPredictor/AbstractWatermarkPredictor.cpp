@@ -17,6 +17,10 @@
 namespace NES::Runtime::Execution
 {
 
+AbstractWatermarkPredictor::AbstractWatermarkPredictor(const uint64_t initial) : initial(initial), init(false)
+{
+}
+
 Timestamp AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
     const std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>>& watermarkPredictors, const uint64_t timestamp)
 {

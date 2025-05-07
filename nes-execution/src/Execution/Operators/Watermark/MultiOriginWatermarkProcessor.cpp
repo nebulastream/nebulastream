@@ -54,6 +54,7 @@ Timestamp MultiOriginWatermarkProcessor::updateWatermark(const Timestamp ts, con
 
             watermarkProcessors[originIndex]->emplace(sequenceData, ts.getRawValue());
             found = true;
+            break;
         }
     }
     INVARIANT(
@@ -85,26 +86,28 @@ Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
     return Timestamp(minimalWatermark);
 }
 
-std::map<OriginId, std::vector<std::pair<uint64_t, Timestamp::Underlying>>>
-MultiOriginWatermarkProcessor::getIngestionTimeForWatermarks(const uint64_t numGapsAllowed, const uint64_t maxNumSeqNumbers) const
+std::vector<std::pair<uint64_t, Timestamp::Underlying>> MultiOriginWatermarkProcessor::getIngestionTimesForWatermarks(
+    const OriginId origin, const uint64_t numGapsAllowed, const uint64_t maxNumSeqNumbers) const
 {
-    std::map<OriginId, std::vector<std::pair<uint64_t, Timestamp::Underlying>>> ingestionTimeForWatermarks;
+    std::vector<std::pair<uint64_t, Timestamp::Underlying>> ingestionTimesForWatermarks;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
     {
-        const auto origin = origins[originIndex];
-        const auto& nextSequenceNumbers
-            = watermarkProcessors[originIndex]->getNextSequenceNumbersAndValues(numGapsAllowed, maxNumSeqNumbers);
-        std::vector<std::pair<uint64_t, Timestamp::Underlying>> ingestionTimes(nextSequenceNumbers.size());
-
-        const auto seqNumbersIngestionTimeLocked = seqNumbersIngestionTime.rlock();
-        for (const auto& [seqNumber, timestamp] : nextSequenceNumbers)
+        if (origins[originIndex] == origin)
         {
-            const auto ingestionTime = seqNumbersIngestionTimeLocked->at({origin, SequenceNumber(seqNumber)});
-            ingestionTimes.emplace_back(ingestionTime, timestamp);
+            const auto& nextSequenceNumbers
+                = watermarkProcessors[originIndex]->getNextSequenceNumbersAndValues(numGapsAllowed, maxNumSeqNumbers);
+            ingestionTimesForWatermarks.reserve(nextSequenceNumbers.size());
+
+            const auto seqNumbersIngestionTimeLocked = seqNumbersIngestionTime.rlock();
+            for (const auto& [seqNumber, timestamp] : nextSequenceNumbers)
+            {
+                const auto ingestionTime = seqNumbersIngestionTimeLocked->at({origin, SequenceNumber(seqNumber)});
+                ingestionTimesForWatermarks.emplace_back(ingestionTime, timestamp);
+            }
+            break;
         }
-        ingestionTimeForWatermarks.emplace(origin, ingestionTimes);
     }
-    return ingestionTimeForWatermarks;
+    return ingestionTimesForWatermarks;
 }
 
 }

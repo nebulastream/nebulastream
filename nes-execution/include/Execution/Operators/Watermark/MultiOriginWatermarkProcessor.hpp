@@ -56,8 +56,8 @@ public:
 
     std::string getCurrentStatus() const;
 
-    [[nodiscard]] std::map<OriginId, std::vector<std::pair<uint64_t, Timestamp::Underlying>>>
-    getIngestionTimeForWatermarks(uint64_t numGapsAllowed, uint64_t maxNumSeqNumbers) const;
+    [[nodiscard]] std::vector<std::pair<uint64_t, Timestamp::Underlying>>
+    getIngestionTimesForWatermarks(OriginId origin, uint64_t numGapsAllowed, uint64_t maxNumSeqNumbers) const;
 
 private:
     const std::vector<OriginId> origins;
