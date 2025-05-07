@@ -3,17 +3,21 @@
   "version-string": "latest",
   "homepage": "https://nebula.stream",
   "description": "Data Management for the Internet of Things.",
-
   "builtin-baseline": "4334d8b4c8916018600212ab4dd4bbdc343065d1",
   "$comment": [
     "BEWARE: changing the baseline might change the expected ANTLR_VERSION",
-    "        supplied to cmake by the antlr4 dependency." ,
+    "        supplied to cmake by the antlr4 dependency.",
     "        This in turn requires changing the version of the antlr jar that",
     "        is fetched by cmake or baked into the dev docker image.",
     "        (c.f. nes-sql-parser/CMakeLists.txt)"
   ],
-
   "features": {
+    "mqtt": {
+      "description": "enables mqtt sources and sinks",
+      "dependencies": [
+        "paho-mqttpp3"
+      ]
+    },
     "mlir": {
       "description": "nautilus mlir backend",
       "dependencies": [
