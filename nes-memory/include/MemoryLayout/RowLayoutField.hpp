@@ -114,7 +114,7 @@ inline T& RowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
 {
     INVARIANT(
         boundaryChecks && recordIndex < layout->getCapacity(), "recordIndex out of bounds! {}  >= {}", layout->getCapacity(), recordIndex);
-    return *reinterpret_cast<T*>(basePointer + recordSize * recordIndex);
+    return *reinterpret_cast<T*>(basePointer + (recordSize * recordIndex));
 }
 
 }

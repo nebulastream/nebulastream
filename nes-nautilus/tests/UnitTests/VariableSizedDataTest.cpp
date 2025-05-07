@@ -218,7 +218,7 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
 
         using namespace NES::Nautilus;
         constexpr auto maxSize = 5; /// We set the size quite small to ensure that we also happen to have the same content
-        const auto sizeInBytes = std::rand() % maxSize + 1;
+        const auto sizeInBytes = (std::rand() % maxSize) + 1;
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         auto otherVariableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());

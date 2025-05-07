@@ -133,7 +133,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
         const auto tuplesToFill = std::min(capacity, numberOfTuples - i);
         auto buffer = bufferManager.getBufferBlocking();
         auto outputBufferIndex = createShuffledVector(tuplesToFill);
-        const auto sizeVarSizedData = rand() % (maxSizeVarSizedData + 1 - minSizeVarSizedData) + minSizeVarSizedData;
+        const auto sizeVarSizedData = (rand() % (maxSizeVarSizedData + 1 - minSizeVarSizedData)) + minSizeVarSizedData;
         callCompiledFunction<void, Memory::TupleBuffer*, Memory::AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>(
             {FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend},
             std::addressof(buffer),
