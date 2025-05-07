@@ -181,6 +181,7 @@ class TopologyController : public oatpp::web::server::api::ApiController {
                 NES_ERROR("Invalid json")
                 return errorHandler->handleError(Status::CODE_400, "Invalid JSON");
             };
+            NES_ERROR("Topology {}",topology->toString());
             NES_DEBUG("Parse json")
             nlohmann::json reqJson = nlohmann::json::parse(req);
             NES_DEBUG("{}", reqJson.dump());
