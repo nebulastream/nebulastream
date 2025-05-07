@@ -30,3 +30,7 @@ add_nes_test(nes-thread-test
 add_nes_test(chunk-collector-test
         "ChunkCollectorTest.cpp"
 )
+
+add_nes_test(sequencer-test
+        "SequencerTest.cpp"
+)
