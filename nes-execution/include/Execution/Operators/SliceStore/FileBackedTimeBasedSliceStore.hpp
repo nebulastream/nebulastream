@@ -45,7 +45,7 @@ struct MemoryControllerInfo
 {
     std::filesystem::path workingDir;
     QueryId queryId;
-    OriginId originId;
+    OriginId outputOriginId;
 };
 
 struct SliceStoreMetaData
@@ -72,9 +72,9 @@ public:
     FileBackedTimeBasedSliceStore(
         uint64_t windowSize,
         uint64_t windowSlide,
+        MemoryControllerInfo memoryControllerInfo,
         WatermarkPredictorInfo watermarkPredictorInfo,
-        const std::vector<OriginId>& inputOrigins,
-        const MemoryControllerInfo& memoryControllerInfo);
+        const std::vector<OriginId>& inputOrigins);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;
     FileBackedTimeBasedSliceStore& operator=(FileBackedTimeBasedSliceStore& other);
@@ -131,11 +131,11 @@ private:
 
     /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
     /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory.
-    std::shared_ptr<MemoryController> memCtrl;
+    std::shared_ptr<MemoryController> memoryController;
     folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
 
     uint64_t numberOfWorkerThreads;
-    MemoryControllerInfo memCtrlInfo;
+    MemoryControllerInfo memoryControllerInfo;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.

@@ -35,12 +35,12 @@ namespace NES::Runtime::Execution
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize,
     const uint64_t windowSlide,
+    MemoryControllerInfo memoryControllerInfo,
     const WatermarkPredictorInfo watermarkPredictorInfo,
-    const std::vector<OriginId>& inputOrigins,
-    const MemoryControllerInfo& memoryControllerInfo)
+    const std::vector<OriginId>& inputOrigins)
     : watermarkProcessor(std::make_shared<Operators::MultiOriginWatermarkProcessor>(inputOrigins))
     , numberOfWorkerThreads(0)
-    , memCtrlInfo(memoryControllerInfo)
+    , memoryControllerInfo(std::move(memoryControllerInfo))
     , sliceAssigner(windowSize, windowSlide)
     , sequenceNumber(SequenceNumber::INITIAL)
     , numberOfActiveOrigins(inputOrigins.size())
@@ -62,9 +62,9 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , watermarkPredictors(other.watermarkPredictors)
     , writeExecTimes(other.writeExecTimes)
     , readExecTimes(other.readExecTimes)
-    , memCtrl(other.memCtrl)
+    , memoryController(other.memoryController)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
-    , memCtrlInfo(other.memCtrlInfo)
+    , memoryControllerInfo(other.memoryControllerInfo)
     , sliceAssigner(other.sliceAssigner)
     , sequenceNumber(other.sequenceNumber.load())
     , numberOfActiveOrigins(other.numberOfActiveOrigins)
@@ -83,9 +83,9 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , watermarkPredictors(std::move(other.watermarkPredictors))
     , writeExecTimes(std::move(other.writeExecTimes))
     , readExecTimes(std::move(other.readExecTimes))
-    , memCtrl(std::move(other.memCtrl))
+    , memoryController(std::move(other.memoryController))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
-    , memCtrlInfo(std::move(other.memCtrlInfo))
+    , memoryControllerInfo(std::move(other.memoryControllerInfo))
     , sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
     , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins))
@@ -113,9 +113,9 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     watermarkPredictors = other.watermarkPredictors;
     writeExecTimes = other.writeExecTimes;
     readExecTimes = other.readExecTimes;
-    memCtrl = other.memCtrl;
+    memoryController = other.memoryController;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
-    memCtrlInfo = other.memCtrlInfo;
+    memoryControllerInfo = other.memoryControllerInfo;
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
     numberOfActiveOrigins = other.numberOfActiveOrigins;
@@ -136,9 +136,9 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     watermarkPredictors = std::move(other.watermarkPredictors);
     writeExecTimes = std::move(other.writeExecTimes);
     readExecTimes = std::move(other.readExecTimes);
-    memCtrl = std::move(other.memCtrl);
+    memoryController = std::move(other.memoryController);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
-    memCtrlInfo = std::move(other.memCtrlInfo);
+    memoryControllerInfo = std::move(other.memoryControllerInfo);
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
     numberOfActiveOrigins = std::move(other.numberOfActiveOrigins);
@@ -356,7 +356,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         if (sliceEnd + sliceAssigner.getWindowSize() < newGlobalWaterMark)
         {
             NES_TRACE("Deleting slice with sliceEnd {} as it is not used anymore", sliceEnd);
-            memCtrl->deleteSliceFiles(sliceEnd);
+            memoryController->deleteSliceFiles(sliceEnd);
             slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Left}));
             slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Right}));
             slicesWriteLocked->erase(slicesLockedIt++);
@@ -389,8 +389,13 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     this->numberOfWorkerThreads = numberOfWorkerThreads;
 
     /// Initialise memory controller and measure execution times for reading and writing
-    memCtrl = std::make_shared<MemoryController>(
-        USE_BUFFER_SIZE, USE_NUM_WRITE_BUFFERS, numberOfWorkerThreads, memCtrlInfo.workingDir, memCtrlInfo.queryId, memCtrlInfo.originId);
+    memoryController = std::make_shared<MemoryController>(
+        USE_BUFFER_SIZE,
+        USE_NUM_WRITE_BUFFERS,
+        numberOfWorkerThreads,
+        memoryControllerInfo.workingDir,
+        memoryControllerInfo.queryId,
+        memoryControllerInfo.outputOriginId);
     measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
 }
 
@@ -423,9 +428,9 @@ void FileBackedTimeBasedSliceStore::updateSlices(
             switch (operation)
             {
                 case READ: {
-                    auto fileReader = memCtrl->getFileReader(sliceEnd, threadId, joinBuildSide);
+                    auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
                     pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout);
-                    memCtrl->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
+                    memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
                     break;
                 }
                 case WRITE: {
@@ -433,7 +438,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
                     const auto slicesInMemoryLocked = slicesInMemory.wlock();
                     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = false;
 
-                    auto fileWriter = memCtrl->getFileWriter(sliceEnd, threadId, joinBuildSide);
+                    auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide);
                     pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
                     pagedVector->truncate(fileLayout);
                     // TODO force flush FileWriter?
@@ -476,7 +481,7 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
         if (stateSizeOnDisk > USE_MIN_STATE_SIZE_READ && predictedReadTimestamp >= sliceEnd)
         {
             /// Slice should be read back now as it will be triggered once the read operation has finished
-            if (const auto fileLayout = memCtrl->getFileLayout(sliceEnd, threadId, joinBuildSide); fileLayout.has_value())
+            if (const auto fileLayout = memoryController->getFileLayout(sliceEnd, threadId, joinBuildSide); fileLayout.has_value())
             {
                 slicesToUpdate.emplace_back(slice, READ, fileLayout.value());
             }
@@ -485,7 +490,7 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
         else if (stateSizeInMemory > USE_MIN_STATE_SIZE_WRITE && predictedWriteAndReadTimestamp < sliceEnd)
         {
             /// Slice should be written out as it will not be triggered before write and read operations have finished
-            memCtrl->setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
+            memoryController->setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
             slicesToUpdate.emplace_back(slice, WRITE, USE_FILE_LAYOUT);
         }
         /// Slice should not be written out or read back in any other case
@@ -512,13 +517,13 @@ void FileBackedTimeBasedSliceStore::readSliceFromFiles(
     for (auto threadId = 0UL; threadId < numberOfWorkerThreads; ++threadId)
     {
         /// Only read from file if the slice was written out earlier for this build side
-        if (auto fileReader = memCtrl->getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
+        if (auto fileReader = memoryController->getFileReader(sliceEnd, WorkerThreadId(threadId), joinBuildSide))
         {
-            const auto fileLayout = memCtrl->getFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
+            const auto fileLayout = memoryController->getFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
             auto* const pagedVector
                 = std::dynamic_pointer_cast<NLJSlice>(slice)->getPagedVectorRef(joinBuildSide, WorkerThreadId(threadId));
             pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout.value());
-            memCtrl->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
+            memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
         }
     }
     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
@@ -547,12 +552,12 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
 
         const auto start = std::chrono::high_resolution_clock::now();
 
-        const auto fileWriter = memCtrl->getFileWriter(
+        const auto fileWriter = memoryController->getFileWriter(
             SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
         fileWriter->write(data.data(), dataSize);
         const auto write = std::chrono::high_resolution_clock::now();
 
-        const auto fileReader = memCtrl->getFileReader(
+        const auto fileReader = memoryController->getFileReader(
             SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
         fileReader->read(data.data(), dataSize);
         const auto read = std::chrono::high_resolution_clock::now();
