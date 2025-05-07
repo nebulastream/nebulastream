@@ -71,6 +71,7 @@ QueryPlacementAmendmentPhase::create(GlobalExecutionPlanPtr globalExecutionPlan,
 
 DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& sharedQueryPlan) {
     NES_INFO("QueryPlacementAmendmentPhase: Perform query placement phase for shared query plan {}", sharedQueryPlan->getId());
+    NES_ERROR(globalExecutionPlan->getAsString())
 
     auto startPlacementAmendmentTime = getTimestamp();
     uint64_t deploymentTime = 0;
