@@ -1,0 +1,133 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt-broker
+    healthcheck:
+      test: [ "CMD-SHELL", "mosquitto_pub", "-h", "localhost", "-p", "1883", "-n", "-t", "test", "--quiet" ]
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    command: |
+      sh -c '
+      cat > /mosquitto/config/mosquitto.conf <<EOF
+      persistence true
+      persistence_location /mosquitto/data/
+      log_dest file /mosquitto/log/mosquitto.log
+      log_type all
+
+      listener 1883
+      protocol mqtt
+      allow_anonymous true
+
+      listener 9001
+      protocol websockets
+      allow_anonymous true
+      EOF
+      
+      mosquitto -c /mosquitto/config/mosquitto.conf
+      '
+
+  nes:
+    container_name: nes
+    healthcheck:
+      test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
+    image: worker-local
+
+  mic-stream:
+    build:
+      context: mic-server
+      args:
+        HOST_UID: ${HOST_UID}
+        HOST_GID: ${HOST_GID}
+
+    # run as your host user so you can access the socket:
+    user: "${HOST_UID}:${HOST_GID}"
+
+    # map in the sound card:
+    devices:
+      - /dev/snd:/dev/snd
+
+    # mount the Pulse/pipewire socket read-only:
+    volumes:
+      - ${XDG_RUNTIME_DIR}/pulse/native:/run/pulse/native:ro
+
+    # publish the raw‑PCM TCP port:
+    ports:
+      - "1234:1234"
+
+    environment:
+      # tell all clients where the socket lives:
+      PULSE_SERVER: unix:/run/pulse/native
+
+      # pick up the discovered mic source:
+      SOURCE: ${PULSE_SOURCE}
+
+      # for faster data ingestion
+      PULSE_LATENCY_MSEC: "20"
+
+    # on startup, stream your mic out on TCP 1234
+    command: >
+       sh -c "parec --format=s16le --rate=16000 --channels=1 --device=$$SOURCE |
+             socat -u - TCP-LISTEN:1234,reuseaddr,fork"
+
+  nebuli:
+    image: nebuli-local
+    depends_on:
+      - nes
+      - mosquitto
+    volumes:
+      - ./queries:/queries
+      - ./model:/model
+    command: [ "register", "-s", "nes:8080", "-x", "-i", "queries/mqtt.yaml" ]
+
+  audio-query:
+    image: nebuli-local
+    depends_on:
+      - nes
+      - mosquitto
+      - mic-stream
+    volumes:
+      - ./queries:/queries
+      - ./model:/model
+    command: [ "register", "-s", "nes:8080", "-x", "-i", "queries/speech_recognition_audio.yml" ]
+
+  mqtt-publisher:
+    container_name: mqtt-publisher
+    depends_on:
+      - mosquitto
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+    build:
+      dockerfile_inline: |
+        FROM alpine:latest
+        
+        RUN apk add --no-cache mosquitto-clients bash
+        
+        # Create the publish script
+        RUN cat > /publish.sh <<'EOF'
+        #!/bin/bash
+        # MQTT broker settings
+        MQTT_HOST="$${MQTT_HOST:-mosquitto}"
+        MQTT_PORT="$${MQTT_PORT:-1883}"
+        MQTT_TOPIC="test/messages"
+        
+        # Function to publish messages
+        publish_message() {
+            local message="$$1"
+            mosquitto_pub -h $$MQTT_HOST -p $$MQTT_PORT -t $$MQTT_TOPIC -m "$$message"
+        }
+        
+        # Publish messages in a loop
+        sleep 5
+        counter=1
+        while true; do
+            sleep 0.1
+            publish_message "$$counter,$$counter|"
+            counter=$$((counter + 1))
+        done
+        EOF
+        
+        RUN chmod +x /publish.sh
+        
+        CMD ["/publish.sh"]
