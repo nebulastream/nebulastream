@@ -470,7 +470,8 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
     {
         // TODO state sizes do not include size of variable sized data
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        const auto stateSizeOnDisk = nljSlice->getPagedVectorRef(joinBuildSide, threadId)->getStateSizeOnDisk(memoryLayout);
+        const auto *const pagedVector = nljSlice->getPagedVectorRef(joinBuildSide, threadId);
+        const auto stateSizeOnDisk = pagedVector->getStateSizeOnDisk(memoryLayout);
         const auto stateSizeInMemory = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId);
 
         const auto readExecTime = getExecTimesForDataSize(readExecTimes, stateSizeOnDisk);
