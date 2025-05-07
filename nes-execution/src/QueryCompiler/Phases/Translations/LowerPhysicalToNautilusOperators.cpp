@@ -26,6 +26,8 @@
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Selection.hpp>
+#include <Execution/Operators/Sequence.hpp>
+#include <Execution/Operators/SequenceOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationProbe.hpp>
@@ -58,6 +60,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSequenceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationBuild.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalAggregationProbe.hpp>
@@ -122,6 +125,24 @@ LowerPhysicalToNautilusOperators::apply(std::shared_ptr<OperatorPipeline> operat
     return operatorPipeline;
 }
 
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerSequence(
+    const std::shared_ptr<PhysicalOperators::PhysicalOperator>& operatorNode,
+    size_t bufferSize,
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& handler)
+{
+    auto schema = operatorNode->getOutputSchema();
+    INVARIANT(
+        schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT,
+        "Currently only row layout is supported, current layout={}",
+        magic_enum::enum_name(schema->getLayoutType()));
+
+    auto handlerIndex = handler.size();
+    handler.emplace_back(std::make_shared<NES::Runtime::Execution::Operators::SequenceOperatorHandler>());
+    auto physicalScan = PhysicalOperators::PhysicalScanOperator::create(operatorNode->getOutputSchema());
+    return std::make_unique<Runtime::Execution::Operators::Sequence>(
+        handlerIndex, std::dynamic_pointer_cast<Runtime::Execution::Operators::Scan>(lowerScan(physicalScan, bufferSize)));
+}
+
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lower(
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
     const std::shared_ptr<Runtime::Execution::Operators::Operator>& parentOperator,
@@ -130,6 +151,12 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers) const
 {
     NES_INFO("Lower node:{} to NautilusOperator.", *operatorNode);
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalSequenceOperator>(operatorNode))
+    {
+        auto sequence = lowerSequence(operatorNode, bufferSize, operatorHandlers);
+        pipeline.setRootOperator(sequence);
+        return sequence;
+    }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
     {
         auto scan = lowerScan(operatorNode, bufferSize);

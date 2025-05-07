@@ -49,6 +49,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSequenceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -149,6 +150,10 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const std::shared_ptr<L
     else if (NES::Util::instanceOf<LogicalMapOperator>(operatorNode))
     {
         lowerMapOperator(operatorNode);
+    }
+    else if (NES::Util::instanceOf<InferModel::LogicalInferModelOperator>(operatorNode))
+    {
+        lowerInferModelOperator(operatorNode);
     }
     else if (NES::Util::instanceOf<LogicalProjectionOperator>(operatorNode))
     {
@@ -452,6 +457,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler);
     const auto aggregationProbe = PhysicalOperators::PhysicalAggregationProbe::create(
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler, windowOperator->windowMetaData);
+    operatorNode->insertBetweenThisAndChildNodes(PhysicalOperators::PhysicalSequenceOperator::create(windowInputSchema));
     operatorNode->insertBetweenThisAndChildNodes(aggregationBuild);
     operatorNode->replace(aggregationProbe);
 }

@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Aggregation/Function/CountAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MaxAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MedianAggregationFunction.hpp>
+#include <Execution/Operators/Streaming/Aggregation/Function/MergeAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/MinAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/SumAggregationFunction.hpp>
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
@@ -181,6 +182,29 @@ PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompi
                     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                         = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
                     aggregationFunctions.emplace_back(std::make_shared<Runtime::Execution::Aggregation::MedianAggregationFunction>(
+                        physicalInputType,
+                        physicalFinalType,
+                        std::move(aggregationInputExpression),
+                        aggregationResultFieldIdentifier,
+                        memoryProvider));
+                    break;
+                }
+                case Windowing::WindowAggregationDescriptor::Type::Merge: {
+                    auto [keys, values] = getKeyAndValueFields();
+                    auto memoryLayoutSchema = Schema::create();
+                    for (auto existingField : *inputSchema)
+                    {
+                        if (std::ranges::find(keys, existingField->getName()) != keys.end()
+                            || std::ranges::find(values, existingField->getName()) != values.end())
+                        {
+                            memoryLayoutSchema->addField(existingField->deepCopy());
+                        }
+                    }
+
+                    auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(memoryLayoutSchema, options.pageSize.getValue());
+                    const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+                        = std::make_shared<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
+                    aggregationFunctions.emplace_back(std::make_unique<Runtime::Execution::Aggregation::MergeAggregationFunction>(
                         physicalInputType,
                         physicalFinalType,
                         std::move(aggregationInputExpression),

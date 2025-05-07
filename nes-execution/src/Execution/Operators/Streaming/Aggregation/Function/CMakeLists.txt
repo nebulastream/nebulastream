@@ -17,5 +17,6 @@ add_source_files(nes-execution
         MaxAggregationFunction.cpp
         MinAggregationFunction.cpp
         MedianAggregationFunction.cpp
+        MergeAggregationFunction.cpp
         SumAggregationFunction.cpp
 )
