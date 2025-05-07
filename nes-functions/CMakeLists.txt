@@ -20,3 +20,10 @@ target_link_libraries(nes-functions PUBLIC nes-data-types)
 target_include_directories(nes-functions PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+
+# Create library for the registries, and privately link it against nes-functions so that nes-execution can access its registries
+create_plugin_registry_library(nes-logical-function-registry nes-functions)
+target_link_libraries(nes-functions PUBLIC nes-logical-function-registry)
+
+# Generate a registrar for each registry in nes-functions
+generate_plugin_registrars(nes-functions LogicalFunction)
