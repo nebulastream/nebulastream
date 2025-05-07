@@ -16,7 +16,7 @@ get_source(nes-operators NES_OPERATORS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-operators ${NES_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-operators PUBLIC nes-sources nes-sinks nes-window-types)
+target_link_libraries(nes-operators PUBLIC nes-sources nes-sinks nes-window-types nes-inference)
 target_include_directories(nes-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

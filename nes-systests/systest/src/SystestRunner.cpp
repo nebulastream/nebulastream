@@ -75,6 +75,18 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     parser.registerOnSinkCallBack([&](SystestParser::Sink&& sinkParsed)
                                   { sinkNamesToSchema.insert_or_assign(sinkParsed.name, sinkParsed.fields); });
 
+    parser.registerOnModelCallback(
+        [&config](SystestParser::Model&& model)
+        {
+            std::vector<CLI::SchemaField> schema;
+            for (const auto& [type, name] : model.outputs)
+            {
+                schema.emplace_back(name, type);
+            }
+
+            config.models.emplace_back(model.name, std::filesystem::absolute(model.path), model.inputs, schema);
+        });
+
     /// We add new found sources to our config
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&& source)

@@ -303,6 +303,13 @@ Query& Query::map(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunctio
     return *this;
 }
 
+Query& Query::inferModel(const std::string& model, const std::vector<std::shared_ptr<NodeFunction>>& inputFields)
+{
+    NES_DEBUG("Query: add inferModel operator to query");
+    this->queryPlan = QueryPlanBuilder::addInferModel(model, inputFields, this->queryPlan);
+    return *this;
+}
+
 Query& Query::sink(std::string sinkName, WorkerId workerId)
 {
     NES_DEBUG("Query: add sink operator to query");

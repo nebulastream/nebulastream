@@ -40,16 +40,20 @@ namespace NES::Systest
 {
 static constexpr auto CSVSourceToken = "SourceCSV"s;
 static constexpr auto SLTSourceToken = "Source"s;
+static constexpr auto ModelToken = "MODEL"sv;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 
-static const std::array<std::pair<std::string_view, TokenType>, 5> stringToToken
-    = {{{CSVSourceToken, TokenType::CSV_SOURCE},
-        {SLTSourceToken, TokenType::SLT_SOURCE},
-        {QueryToken, TokenType::QUERY},
-        {SinkToken, TokenType::SINK},
-        {ResultDelimiter, TokenType::RESULT_DELIMITER}}};
+
+static const auto stringToToken = std::to_array<std::pair<std::string_view, TokenType>>({
+    {CSVSourceToken, TokenType::CSV_SOURCE},
+    {SLTSourceToken, TokenType::SLT_SOURCE},
+    {QueryToken, TokenType::QUERY},
+    {SinkToken, TokenType::SINK},
+    {ModelToken, TokenType::MODEL},
+    {ResultDelimiter, TokenType::RESULT_DELIMITER},
+});
 
 static bool emptyOrComment(const std::string& line)
 {
@@ -166,6 +170,11 @@ void SystestParser::registerOnSinkCallBack(SinkCallback callback)
     this->onSinkCallback = std::move(callback);
 }
 
+void SystestParser::registerOnModelCallback(ModelCallback callback)
+{
+    this->onModelCallback = std::move(callback);
+}
+
 void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
 {
     this->onCSVSourceCallback = std::move(callback);
@@ -191,6 +200,14 @@ void SystestParser::parse()
             if (onSLTSourceCallback)
             {
                 onSLTSourceCallback(std::move(source));
+            }
+        }
+        else if (token == TokenType::MODEL)
+        {
+            auto model = expectModel();
+            if (onModelCallback)
+            {
+                onModelCallback(std::move(model));
             }
         }
         else if (token == TokenType::SINK)
@@ -342,6 +359,30 @@ SystestParser::Sink SystestParser::expectSink() const
     sink.fields = parseSchemaFields(arguments);
 
     return sink;
+}
+
+SystestParser::Model SystestParser::expectModel()
+{
+    INVARIANT(currentLine < lines.size(), "current parse line should exist");
+    Model model;
+    auto& line = lines[currentLine];
+    std::istringstream stream(line);
+    std::string discard;
+    if (!(stream >> discard))
+    {
+        throw SLTUnexpectedToken("failed to read the first word in: {}", line);
+    }
+    model.name = "iris";
+    model.inputs = {DataTypeProvider::provideDataType(LogicalType::VARSIZED)};
+
+    model.outputs = {
+        Field{DataTypeProvider::provideBasicType(BasicType::FLOAT32), "setosa"},
+        Field{DataTypeProvider::provideBasicType(BasicType::FLOAT32), "versicolor"},
+        Field{DataTypeProvider::provideBasicType(BasicType::FLOAT32), "virginica"},
+    };
+
+    model.path = "/tmp/nebulastream-public/cmake-build-debug-docker/nes-systests/testdata/iris.onnx";
+    return model;
 }
 
 SystestParser::SLTSource SystestParser::expectSLTSource()

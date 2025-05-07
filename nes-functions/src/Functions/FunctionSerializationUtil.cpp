@@ -46,8 +46,8 @@
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fmt/format.h>
 #include <Util/Ranges.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <SerializableFunction.pb.h>
 

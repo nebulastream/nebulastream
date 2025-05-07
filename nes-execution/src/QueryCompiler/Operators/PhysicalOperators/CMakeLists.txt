@@ -24,6 +24,7 @@ add_source_files(nes-execution
         PhysicalScanOperator.cpp
         PhysicalSequenceOperator.cpp
         PhysicalEmitOperator.cpp
+        PhysicalInferModelOperator.cpp
 )
 
 add_subdirectory(Joining)

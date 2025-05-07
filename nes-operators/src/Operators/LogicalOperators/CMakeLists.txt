@@ -15,7 +15,6 @@ add_source_files(nes-operators
         LogicalSelectionOperator.cpp
         LogicalProjectionOperator.cpp
         LogicalMapOperator.cpp
-        LogicalInferModelOperator.cpp
         LogicalUnionOperator.cpp
         RenameSourceOperator.cpp
         LogicalBinaryOperator.cpp
@@ -23,6 +22,7 @@ add_source_files(nes-operators
         LogicalLimitOperator.cpp
 )
 
+add_subdirectory(Inference)
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Watermarks)
