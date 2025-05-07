@@ -52,6 +52,7 @@
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
@@ -856,15 +857,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 parentHelper.functionBuilder.push_back(constFunctionItem);
                 break;
             }
-            if (funcName == "CONCAT")
+            if (auto logicalFunction = LogicalFunctionRegistry::instance().create(
+                    Util::toLowerCase(funcName), LogicalFunctionRegistryArguments{helper.functionBuilder}))
             {
-                INVARIANT(helper.functionBuilder.size() == 2, "Concat requires two arguments, but got {}", helper.functionBuilder.size());
-                const auto rightFunction = helper.functionBuilder.back();
-                helper.functionBuilder.pop_back();
-                const auto leftFunction = helper.functionBuilder.back();
-                helper.functionBuilder.pop_back();
-
-                parentHelper.functionBuilder.push_back(NodeFunctionConcat::create(leftFunction, rightFunction));
+                parentHelper.functionBuilder.push_back(*logicalFunction);
             }
             else
             {
