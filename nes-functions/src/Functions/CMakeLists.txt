@@ -25,3 +25,5 @@ add_source_files(nes-functions
 )
 add_subdirectory(LogicalFunctions)
 add_subdirectory(ArithmeticalFunctions)
+
+add_plugin(Concat LogicalFunction nes-functions NodeFunctionConcat.cpp)

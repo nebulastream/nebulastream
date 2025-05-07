@@ -42,17 +42,6 @@ namespace NES::Nautilus::Interface::MemoryProvider
 {
 namespace
 {
-uint32_t storeAssociatedTextValueProxy(
-    const Memory::TupleBuffer* tupleBuffer,
-    Memory::AbstractBufferProvider* bufferProvider,
-    const int8_t* textValue,
-    const uint32_t totalVariableSize)
-{
-    auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize);
-    INVARIANT(buffer.has_value(), "Cannot allocate unpooled buffer of size {}", totalVariableSize);
-    std::memcpy(buffer.value().getBuffer<int8_t>(), textValue, totalVariableSize);
-    return tupleBuffer->storeChildBuffer(buffer.value());
-}
 
 const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
 {
@@ -72,11 +61,31 @@ VarVal TupleBufferMemoryProvider::loadValue(
     {
         const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
         const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-        return VariableSizedData(textPtr);
+        return VariableSizedData(textPtr, true);
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
+uint32_t storeAssociatedTextValueProxy(
+    const Memory::TupleBuffer* tupleBuffer,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const int8_t* textValue,
+    const uint32_t size,
+    bool ownsBuffer)
+{
+    if (ownsBuffer)
+    {
+        auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer(const_cast<int8_t*>(textValue));
+        return tupleBuffer->storeChildBuffer(textBuffer);
+    }
+    else
+    {
+        auto buffer = bufferProvider->getUnpooledBuffer(size + 4);
+        *buffer.value().getBuffer<uint32_t>() = size;
+        memcpy(buffer.value().getBuffer<int8_t>() + 4, textValue + 4, size);
+        return tupleBuffer->storeChildBuffer(buffer.value());
+    }
+}
 
 VarVal TupleBufferMemoryProvider::storeValue(
     const std::shared_ptr<PhysicalType>& type,
@@ -100,8 +109,13 @@ VarVal TupleBufferMemoryProvider::storeValue(
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
         const auto textValue = value.cast<VariableSizedData>();
-        const auto childIndex = invoke(
-            storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize());
+        const auto childIndex = nautilus::invoke(
+            storeAssociatedTextValueProxy,
+            recordBuffer.getReference(),
+            bufferProvider,
+            textValue.getReference(),
+            textValue.getContentSize(),
+            textValue.ownsBuffer());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;

@@ -42,7 +42,7 @@ VarVal ExecutableFunctionConcat::execute(const Record& record, ArenaRef& arena) 
 
     const auto newSize = leftValue.getContentSize() + rightValue.getContentSize();
     const auto newVarSizeDataArea = arena.allocateMemory(newSize + nautilus::val<uint64_t>(sizeof(uint32_t)));
-    VariableSizedData newVarSizeData(newVarSizeDataArea, newSize);
+    VariableSizedData newVarSizeData(newVarSizeDataArea, newSize, false);
 
     /// Writing the left value and then the right value to the new variable sized data
     nautilus::memcpy(newVarSizeData.getContent(), leftValue.getContent(), leftValue.getContentSize());
