@@ -31,8 +31,9 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
-          configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
+    : compiler(
+          std::make_unique<QueryCompilation::QueryCompiler>(
+              configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
     /// Writing the current throughput to the log
@@ -55,13 +56,14 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 
         const auto bytesPerSecondMessage = formatThroughput(callBackParams.throughputInBytesPerSec, "B");
         const auto tuplesPerSecondMessage = formatThroughput(callBackParams.throughputInTuplesPerSec, "Tup");
-        NES_INFO(
+        std::cout << fmt::format(
             "Throughput for queryId {} in window {}-{} is {} / {}",
             callBackParams.queryId,
             callBackParams.windowStart,
             callBackParams.windowEnd,
             bytesPerSecondMessage,
-            tuplesPerSecondMessage);
+            tuplesPerSecondMessage)
+                  << std::endl;
     };
     constexpr auto timeIntervalInMilliSeconds = 1000;
     const auto throughputListener = std::make_shared<Runtime::ThroughputListener>(timeIntervalInMilliSeconds, callback);
