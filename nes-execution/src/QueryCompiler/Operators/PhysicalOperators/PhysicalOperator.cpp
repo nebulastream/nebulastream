@@ -26,4 +26,9 @@ std::ostream& PhysicalOperator::toDebugString(std::ostream& os) const
     os << "\nPhysicalOperator:\n";
     return Operator::toDebugString(os);
 }
+std::optional<std::reference_wrapper<const std::string>> PhysicalOperator::registryType() const
+{
+    return {};
+}
+
 }

@@ -68,6 +68,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableOperatorRegistry.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::QueryCompilation
@@ -328,6 +329,19 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             parentOperator->setChild(watermarkAssignmentOperator);
             return watermarkAssignmentOperator;
         }
+    }
+
+    if (auto registryType = operatorNode->registryType())
+    {
+        auto optOperator = Runtime::Execution::Operators::ExecutableOperatorRegistry::instance().create(
+            std::string(*registryType), Runtime::Execution::Operators::ExecutableOperatorRegistryArguments{operatorNode, operatorHandlers});
+        if (!optOperator)
+        {
+            throw UnknownPhysicalOperator(
+                fmt::format("Cannot lower '{}' via OperatorRegistry. Operator: {}", registryType->get(), *operatorNode));
+        }
+        parentOperator->setChild(*optOperator);
+        return *optOperator;
     }
 
     throw UnknownPhysicalOperator(fmt::format("Cannot lower {}", *operatorNode));
