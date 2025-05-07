@@ -52,8 +52,8 @@ checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::Tupl
                 continue;
             }
 
-            const auto startPosBuffer1 = leftBuffer.getBuffer() + schemaSizeInByte * idxBuffer1;
-            const auto startPosBuffer2 = rightBuffer.getBuffer() + schemaSizeInByte * idxBuffer2;
+            const auto startPosBuffer1 = leftBuffer.getBuffer() + (schemaSizeInByte * idxBuffer1);
+            const auto startPosBuffer2 = rightBuffer.getBuffer() + (schemaSizeInByte * idxBuffer2);
             if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0)
             {
                 sameTupleIndices.insert(idxBuffer2);
