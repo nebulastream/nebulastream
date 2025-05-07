@@ -81,7 +81,7 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             {
                 const auto varSizedDataPtr
                     = nautilus::invoke(+[](const int8_t** memoryAddressInEntry) { return *memoryAddressInEntry; }, memoryAddress);
-                VariableSizedData varSizedData(varSizedDataPtr);
+                VariableSizedData varSizedData(varSizedDataPtr, VariableSizedData::Owned(false));
                 return varSizedData;
             }
             const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type.type);

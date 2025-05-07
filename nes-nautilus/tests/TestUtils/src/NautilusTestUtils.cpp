@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <NautilusTestUtils.hpp>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -34,7 +36,6 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-
 #include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -49,7 +50,6 @@
 #include <nautilus/val_ptr.hpp>
 #include <std/sstream.h>
 #include <ErrorHandling.hpp>
-#include <NautilusTestUtils.hpp>
 
 namespace NES::Nautilus::TestUtils
 {
@@ -219,7 +219,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                         bufferProvider,
                         sizeVarSizedDataVal);
 
-                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData)));
+                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData, VariableSizedData::Owned(true))));
                 }
                 else
                 {

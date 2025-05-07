@@ -12,17 +12,24 @@
     limitations under the License.
 */
 
+#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
+
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 namespace NES
 {
+
+ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(std::string_view value)
+    : ConstantValueVariableSizePhysicalFunction(std::bit_cast<const int8_t*>(value.data()), value.size())
+{
+}
+
 ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size)
     : data(size + sizeof(uint32_t))
 {
@@ -38,7 +45,7 @@ ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunc
 
 VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const
 {
-    VariableSizedData result(const_cast<int8_t*>(data.data()));
+    VariableSizedData result(const_cast<int8_t*>(data.data()), VariableSizedData::Owned(false));
     return result;
 }
 

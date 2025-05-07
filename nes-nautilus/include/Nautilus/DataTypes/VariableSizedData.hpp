@@ -18,6 +18,7 @@
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <nautilus/std/sstream.h>
 #include <nautilus/val.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Nautilus
 {
@@ -32,9 +33,19 @@ nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableS
 class VariableSizedData
 {
 public:
+    /// Prevent accidental conversions from nautilus<uint32_t> to nautilus<bool>
+    class Owned
+    {
+        nautilus::val<bool> isOwned;
+
+    public:
+        explicit Owned(nautilus::val<bool> isOwned) : isOwned(std::move(isOwned)) { }
+        friend class VariableSizedData;
+    };
+
     /// @param bufferBacked: If set to true the VariableSizedData object is backed by a tuple buffer.
-    explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size);
-    explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData);
+    explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size, Owned);
+    explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData, Owned);
     VariableSizedData(const VariableSizedData& other);
     VariableSizedData& operator=(const VariableSizedData& other) noexcept;
     VariableSizedData(VariableSizedData&& other) noexcept;
@@ -68,7 +79,10 @@ public:
 private:
     nautilus::val<uint32_t> size;
     nautilus::val<int8_t*> ptrToVarSized;
+    nautilus::val<bool> ownsBuffer_;
 };
 
+template <typename T>
+concept NonScalarType = std::same_as<std::remove_cvref_t<T>, VariableSizedData>;
 
 }

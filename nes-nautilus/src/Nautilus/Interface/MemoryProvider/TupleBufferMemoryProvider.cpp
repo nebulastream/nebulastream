@@ -11,6 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
@@ -27,7 +30,6 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -68,7 +70,7 @@ VarVal TupleBufferMemoryProvider::loadValue(
     }
     const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
     const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-    return VariableSizedData(textPtr);
+    return VariableSizedData(textPtr, VariableSizedData::Owned(true));
 }
 
 

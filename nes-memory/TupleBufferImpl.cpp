@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <TupleBufferImpl.hpp>
+
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -22,7 +24,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <iostream>
