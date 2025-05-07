@@ -43,6 +43,8 @@ public:
 
     std::shared_ptr<DataType> getStamp() const;
     void setStamp(std::shared_ptr<DataType> stamp);
+
+    /// This type is used when attempting to lower to a physical implementation
     [[nodiscard]] const std::string& getType() const;
 
     /// Checks if the function is valid. This means that the function can be lowered to an executable function.
