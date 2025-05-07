@@ -74,7 +74,7 @@ struct Query
         TestName name,
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
-        const LogicalPlan& queryPlan,
+        const Logical::Plan& queryPlan,
         const uint64_t queryIdInFile,
         std::filesystem::path workingDir,
         SystestParser::Schema sinkSchema)
@@ -93,7 +93,7 @@ struct Query
     TestName name;
     std::string queryDefinition;
     std::filesystem::path sqlLogicTestFile;
-    LogicalPlan queryPlan;
+    Logical::Plan queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
     SystestParser::Schema expectedSinkSchema;

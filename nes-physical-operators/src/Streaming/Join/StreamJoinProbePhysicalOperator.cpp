@@ -24,7 +24,7 @@
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
 #include <static.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <LogicalFunctions/Function.hpp>
 
 namespace NES
 {

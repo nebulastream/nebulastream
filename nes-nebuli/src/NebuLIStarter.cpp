@@ -13,7 +13,7 @@
 */
 
 #include <fstream>
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
@@ -34,12 +34,12 @@ public:
     explicit GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel)) { }
     std::unique_ptr<WorkerRPCService::Stub> stub;
 
-    size_t registerQuery(const NES::LogicalPlan& plan) const
+    size_t registerQuery(const NES::Logical::Plan& plan) const
     {
         grpc::ClientContext context;
         RegisterQueryReply reply;
         RegisterQueryRequest request;
-        request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(plan));
+        request.mutable_queryplan()->CopyFrom(NES::Logical::QueryPlanSerializationUtil::serializeQueryPlan(plan));
         auto status = stub->RegisterQuery(&context, request, &reply);
         if (status.ok())
         {
@@ -208,7 +208,7 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        std::shared_ptr<NES::LogicalPlan> queryPlan;
+        std::shared_ptr<NES::Logical::Plan> queryPlan;
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
         if (input == "-")
@@ -221,7 +221,7 @@ int main(int argc, char** argv)
         }
 
         std::string output;
-        auto serialized = NES::QueryPlanSerializationUtil::serializeQueryPlan(*queryPlan);
+        auto serialized = NES::Logical::QueryPlanSerializationUtil::serializeQueryPlan(*queryPlan);
         google::protobuf::TextFormat::PrintToString(serialized, &output);
         NES_INFO("GRPC QueryPlan: {}", output);
         if (program.is_subcommand_used("dump"))

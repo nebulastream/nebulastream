@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
-#include <Operators/MapLogicalOperator.hpp>
+#include <LogicalOperators/MapOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
 #include <MapPhysicalOperator.hpp>
@@ -23,10 +23,10 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalMap::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalMap::apply(Logical::Operator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<MapLogicalOperator>(), "Expected a MapLogicalOperator");
-    auto map = logicalOperator.get<MapLogicalOperator>();
+    PRECONDITION(logicalOperator.tryGet<Logical::MapOperator>(), "Expected a MapLogicalOperator");
+    auto map = logicalOperator.get<Logical::MapOperator>();
     auto function = map.getMapFunction().getAssignment();
     auto fieldName = map.getMapFunction().getField().getFieldName();
     auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);

@@ -15,17 +15,17 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <LogicalOperators/Sources/SourceNameOperator.hpp>
 
 namespace NES::LegacyOptimizer
 {
 
-void TypeInferencePhase::apply(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog)
+void TypeInferencePhase::apply(Logical::Plan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog)
 {
-    auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
+    auto sourceOperators = queryPlan.getOperatorByType<Logical::SourceNameOperator>();
 
     PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
 
@@ -54,9 +54,9 @@ void TypeInferencePhase::apply(LogicalPlan& queryPlan, Catalogs::Source::SourceC
     }
 }
 
-LogicalOperator propagateSchema(const LogicalOperator& op)
+Logical::Operator propagateSchema(const Logical::Operator& op)
 {
-    std::vector<LogicalOperator> children = op.getChildren();
+    std::vector<Logical::Operator> children = op.getChildren();
 
     // Base case: if no children (source operators)
     if (children.empty())
@@ -64,25 +64,25 @@ LogicalOperator propagateSchema(const LogicalOperator& op)
         return op;
     }
 
-    std::vector<LogicalOperator> newChildren;
+    std::vector<Logical::Operator> newChildren;
     std::vector<Schema> childSchemas;
     for (const auto& child : children)
     {
-        LogicalOperator childWithSchema = propagateSchema(child);
+        Logical::Operator childWithSchema = propagateSchema(child);
         childSchemas.push_back(childWithSchema.getOutputSchema());
         newChildren.push_back(childWithSchema);
     }
 
-    LogicalOperator updatedOperator = op.withChildren(newChildren);
+    Logical::Operator updatedOperator = op.withChildren(newChildren);
     return updatedOperator.withInferredSchema(childSchemas);
 }
 
-void TypeInferencePhase::apply(LogicalPlan& queryPlan)
+void TypeInferencePhase::apply(Logical::Plan& queryPlan)
 {
-    std::vector<LogicalOperator> newRoots;
+    std::vector<Logical::Operator> newRoots;
     for (const auto& sink : queryPlan.rootOperators)
     {
-        LogicalOperator inferredRoot = propagateSchema(sink);
+        Logical::Operator inferredRoot = propagateSchema(sink);
         newRoots.push_back(inferredRoot);
     }
     queryPlan.rootOperators = newRoots;

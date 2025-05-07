@@ -14,10 +14,7 @@
 
 #pragma once
 
-#include <memory>
 #include <API/TimeUnit.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 

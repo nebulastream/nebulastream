@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
-#include <Operators/SelectionLogicalOperator.hpp>
+#include <LogicalOperators/SelectionOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 #include <PhysicalOperator.hpp>
@@ -24,10 +24,10 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(Logical::Operator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<SelectionLogicalOperator>(), "Expected a SelectionLogicalOperator");
-    auto selection = logicalOperator.get<SelectionLogicalOperator>();
+    PRECONDITION(logicalOperator.tryGet<Logical::SelectionOperator>(), "Expected a SelectionLogicalOperator");
+    auto selection = logicalOperator.get<Logical::SelectionOperator>();
     auto function = selection.getPredicate();
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto physicalOperator = SelectionPhysicalOperator(func);

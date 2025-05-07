@@ -16,7 +16,7 @@
 #include <chrono>
 #include <memory>
 #include <optional>
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
@@ -45,7 +45,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(LogicalPlan plan)
+QueryId SingleNodeWorker::registerQuery(Logical::Plan plan)
 {
     try
     {

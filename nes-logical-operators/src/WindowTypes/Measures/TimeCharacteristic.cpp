@@ -15,13 +15,12 @@
 #include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <LogicalFunctions/FieldAccessFunction.hpp>
 
 
 namespace NES::Windowing
@@ -35,14 +34,14 @@ TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField
     : field(std::move(field)), type(type), unit(std::move(unit))
 {
 }
-TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction field)
+TimeCharacteristic TimeCharacteristic::createEventTime(Logical::Function field)
 {
     return createEventTime(std::move(field), TimeUnit(1));
 }
 
-TimeCharacteristic TimeCharacteristic::createEventTime(LogicalFunction fieldValue, const TimeUnit& unit)
+TimeCharacteristic TimeCharacteristic::createEventTime(Logical::Function fieldValue, const TimeUnit& unit)
 {
-    const auto& fieldAccess = fieldValue.get<FieldAccessLogicalFunction>();
+    const auto& fieldAccess = fieldValue.get<Logical::FieldAccessFunction>();
     auto keyField = std::make_shared<AttributeField>(fieldAccess.getFieldName(), fieldAccess.getStamp());
     return TimeCharacteristic(Type::EventTime, keyField, unit);
 }

@@ -16,22 +16,22 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
-#include <Operators/LogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/UnionLogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalOperators/Operator.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <ErrorHandling.hpp>
+#include <gmock/internal/gmock-internal-utils.h>
+#include <LogicalOperators/Sources/SourceDescriptorOperator.hpp>
 
 namespace NES::LegacyOptimizer
 {
 
 namespace
 {
-LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
+Logical::Operator propagateOriginIds(const Logical::Operator& visitingOperator)
 {
-    std::vector<LogicalOperator> newChildren;
+    std::vector<Logical::Operator> newChildren;
     std::vector<std::vector<OriginId>> childOriginIds;
     for (const auto& child : visitingOperator.getChildren())
     {
@@ -42,7 +42,7 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
 
     auto copy = visitingOperator;
 
-    if (not copy.tryGet<SourceDescriptorLogicalOperator>())
+    if (not copy.tryGet<Logical::SourceDescriptorOperator>())
     {
         copy = copy.withInputOriginIds(childOriginIds);
     }
@@ -56,13 +56,13 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
 }
 }
 
-void OriginIdInferencePhase::apply(LogicalPlan& queryPlan)
+void OriginIdInferencePhase::apply(Logical::Plan& queryPlan)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
     for (auto& assigner : queryPlan.getOperatorsByTraits<Optimizer::OriginIdAssignerTrait>())
     {
-        if (assigner.tryGet<SourceDescriptorLogicalOperator>())
+        if (assigner.tryGet<Logical::SourceDescriptorOperator>())
         {
             assigner = assigner.withInputOriginIds({{OriginId(++originIdCounter)}});
             auto inferredAssigner = assigner.withOutputOriginIds({OriginId(originIdCounter)});
@@ -76,7 +76,7 @@ void OriginIdInferencePhase::apply(LogicalPlan& queryPlan)
     }
 
     /// propagate origin ids through the complete query plan
-    std::vector<LogicalOperator> newSinks;
+    std::vector<Logical::Operator> newSinks;
     for (auto& sinkOperator : queryPlan.rootOperators)
     {
         newSinks.push_back(propagateOriginIds(sinkOperator));

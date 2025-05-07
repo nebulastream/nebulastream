@@ -12,27 +12,26 @@
     limitations under the License.
 */
 
-#include <AggregationLogicalFunctionRegistry.hpp>
+#include <AggregationFunctionRegistry.hpp>
 #include <memory>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <LogicalFunctions/Function.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <ErrorHandling.hpp>
-#include <LogicalFunctionRegistry.hpp>
+#include <FunctionRegistry.hpp>
 #include <SerializableFunction.pb.h>
-#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <AggregationLogicalFunctionRegistry.hpp>
 
 namespace NES::FunctionSerializationUtil
 {
 
-LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction)
+Logical::Function deserializeFunction(const SerializableFunction& serializedFunction)
 {
     const auto& functionType = serializedFunction.functiontype();
 
-    std::vector<LogicalFunction> deserializedChildren;
+    std::vector<Logical::Function> deserializedChildren;
     for (const auto& child : serializedFunction.children())
     {
         deserializedChildren.emplace_back(deserializeFunction(child));
@@ -46,28 +45,28 @@ LogicalFunction deserializeFunction(const SerializableFunction& serializedFuncti
         functionDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
     }
 
-    auto argument = LogicalFunctionRegistryArguments(functionDescriptorConfig, deserializedChildren, stamp);
+    auto argument = Logical::FunctionRegistryArguments(functionDescriptorConfig, deserializedChildren, stamp);
 
     if (auto function
-        = LogicalFunctionRegistry::instance().create(functionType, argument))
+        = Logical::FunctionRegistry::instance().create(functionType, argument))
     {
         return function.value();
     }
     throw CannotDeserialize("Logical Function: {}", serializedFunction.DebugString());
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> deserializeWindowAggregationFunction(
+std::shared_ptr<Logical::WindowAggregationFunction> deserializeWindowAggregationFunction(
     const SerializableAggregationFunction& serializedFunction) {
     const auto& type = serializedFunction.type();
     auto onField = deserializeFunction(serializedFunction.on_field());
     auto asField = deserializeFunction(serializedFunction.as_field());
 
-    if (auto fieldAccess = onField.tryGet<FieldAccessLogicalFunction>()) {
-        if (auto asFieldAccess = asField.tryGet<FieldAccessLogicalFunction>()) {
-            AggregationLogicalFunctionRegistryArguments args;
+    if (auto fieldAccess = onField.tryGet<Logical::FieldAccessFunction>()) {
+        if (auto asFieldAccess = asField.tryGet<Logical::FieldAccessFunction>()) {
+            Logical::AggregationFunctionRegistryArguments args;
             args.fields = {fieldAccess.value(), asFieldAccess.value()};
             
-            if (auto function = AggregationLogicalFunctionRegistry::instance().create(type, args)) {
+            if (auto function = Logical::AggregationFunctionRegistry::instance().create(type, args)) {
                 return function.value();
             }
         }

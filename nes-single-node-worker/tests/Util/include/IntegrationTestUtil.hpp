@@ -76,7 +76,7 @@ QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut);
 void querySummaryFailure(QueryId queryId, GRPCServer& uut, grpc::StatusCode statusCode);
 
 /// Current status of the query.
-::QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
+SerializableQueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
 
 std::vector<std::pair<QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut);
 

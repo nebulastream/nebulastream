@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <PhysicalPlan.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 
@@ -26,7 +26,7 @@ class QueryOptimizer final
 public:
     explicit QueryOptimizer(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) {};
     /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] PhysicalPlan optimize(LogicalPlan plan);
+    [[nodiscard]] PhysicalPlan optimize(Logical::Plan plan);
 private:
     NES::Configurations::QueryOptimizerConfiguration conf;
 };

@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <utility>
-#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <LogicalOperators/Windows/Aggregations/WindowAggregationFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 
@@ -70,12 +70,12 @@ Windowing::TimeUnit Days()
     return Windowing::TimeUnit::Days();
 }
 
-Windowing::TimeCharacteristic EventTime(FieldAccessLogicalFunction onField)
+Windowing::TimeCharacteristic EventTime(Logical::FieldAccessFunction onField)
 {
     return Windowing::TimeCharacteristic::createEventTime(onField);
 }
 
-Windowing::TimeCharacteristic EventTime(FieldAccessLogicalFunction onField, const Windowing::TimeUnit& unit)
+Windowing::TimeCharacteristic EventTime(Logical::FieldAccessFunction onField, const Windowing::TimeUnit& unit)
 {
     return Windowing::TimeCharacteristic::createEventTime(onField, unit);
 }

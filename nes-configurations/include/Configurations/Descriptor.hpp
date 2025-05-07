@@ -31,7 +31,6 @@
 #include <ProtobufHelper.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableFunction.pb.h>
-#include <Util/Logger/Formatter.hpp>
 
 namespace NES::Configurations
 {
@@ -344,4 +343,13 @@ NES::Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(co
 
 }
 
-FMT_OSTREAM(NES::Configurations::Descriptor);
+/// Specializing the fmt ostream_formatter to accept Descriptor objects.
+/// Allows to call fmt::format("Descriptor: {}", descriptorObject); and therefore also works with our logging.
+namespace fmt
+{
+template <>
+struct formatter<NES::Configurations::Descriptor> : ostream_formatter
+{
+};
+
+}

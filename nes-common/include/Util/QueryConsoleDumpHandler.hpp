@@ -45,26 +45,37 @@ class QueryConsoleDumpHandler
 public:
     explicit QueryConsoleDumpHandler(std::ostream& out, bool multiline = false) : out(out), multiline(multiline) { }
 
+    void dump(const std::shared_ptr<Operator>& node) { dump(*node); }
+
     void dump(const Operator& node)
     {
-        dumpRecursive(node, 0, out, multiline);
-    }
-
-    static void dumpRecursive(const Operator& op, const uint64_t level, std::ostream& out, const bool multiline)
-    {
-        const std::string indent(level * 2, ' ');
-        out << indent << (multiline ? "+ " : "") << op.explain(ExplainVerbosity::Debug) << '\n';
-        for (auto& child : op.getChildren())
+        std::function<void(const Operator&, uint64_t)> dumpRecursive = [this, &dumpRecursive](const Operator& op, uint64_t level)
         {
-            if constexpr (is_shared_ptr_v<std::decay_t<decltype(child)>>)
+            std::string indent(level * 2, ' ');
+
+            if (multiline)
             {
-                dumpRecursive(*child, level + 1, out, multiline);
+                out << indent << "+ " << op.explain(ExplainVerbosity::Debug) << "\n";
             }
             else
             {
-                dumpRecursive(child, level + 1, out, multiline);
+                out << indent << op.explain(ExplainVerbosity::Debug) << "\n";
             }
-        }
+
+            for (auto& child : op.getChildren())
+            {
+                if constexpr (is_shared_ptr_v<std::decay_t<decltype(child)>>)
+                {
+                    dumpRecursive(*child, level + 1);
+                }
+                else
+                {
+                    dumpRecursive(child, level + 1);
+                }
+            }
+        };
+
+        dumpRecursive(node, 0);
     }
 
     void dumpPlan(const Plan& plan) { out << "Dumping query plan: " << plan.toString() << std::endl; }

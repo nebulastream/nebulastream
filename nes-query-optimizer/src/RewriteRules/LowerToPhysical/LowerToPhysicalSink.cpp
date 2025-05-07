@@ -13,8 +13,8 @@
 */
 
 #include <memory>
-#include <Operators/LogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <LogicalOperators/Operator.hpp>
+#include <LogicalOperators/Sinks/SinkOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSink.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -23,10 +23,10 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalSink::apply(Logical::Operator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<SinkLogicalOperator>(), "Expected a SinkLogicalOperator");
-    auto sink = logicalOperator.get<SinkLogicalOperator>();
+    PRECONDITION(logicalOperator.tryGet<Logical::SinkOperator>(), "Expected a SinkLogicalOperator");
+    auto sink = logicalOperator.get<Logical::SinkOperator>();
     auto physicalOperator = SinkPhysicalOperator(sink.sinkDescriptor);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema());
 

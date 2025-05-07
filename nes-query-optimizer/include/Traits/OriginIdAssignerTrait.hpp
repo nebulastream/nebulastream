@@ -25,7 +25,7 @@ namespace NES::Optimizer
 struct OriginIdAssignerTrait final : TraitConcept
 {
     bool operator==(const TraitConcept& other) const override;
-    friend std::ostream& operator<<(std::ostream& os, const TraitConcept& t);
+    [[nodiscard]] std::string toString() const;
     [[nodiscard]] const std::type_info& getType() const override;
     [[nodiscard]] SerializableTrait serialize() const override;
 };

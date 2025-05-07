@@ -14,31 +14,31 @@
 
 #include <memory>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <LogicalOperators/Sinks/SinkOperator.hpp>
+#include <LogicalOperators/Sources/SourceDescriptorOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SourcePhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
-#include <Operators/LogicalOperator.hpp>
+#include <LogicalOperators/Operator.hpp>
 
 namespace NES::Optimizer
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalSource::apply(Logical::Operator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<SourceDescriptorLogicalOperator>(), "Expected a SourceDescriptorLogicalOperator");
-    const auto source = logicalOperator.get<SourceDescriptorLogicalOperator>();
+    PRECONDITION(logicalOperator.tryGet<Logical::SourceDescriptorOperator>(), "Expected a SourceDescriptorLogicalOperator");
+    auto source = logicalOperator.get<Logical::SourceDescriptorOperator>();
 
-    const auto outputOriginIds = source.getOutputOriginIds();
+    auto outputOriginIds = source.getOutputOriginIds();
     PRECONDITION(outputOriginIds.size() == 1, "SourceDescriptorLogicalOperator should have exactly one origin id, but has {}", outputOriginIds.size());
     auto physicalOperator = SourcePhysicalOperator(source.getSourceDescriptor(), outputOriginIds[0]);
 
-    const auto inputSchemas = logicalOperator.getInputSchemas();
+    auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
-    const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema());
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema());
     return {wrapper, {}};
 }
 

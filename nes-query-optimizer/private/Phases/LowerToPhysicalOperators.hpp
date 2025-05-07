@@ -13,11 +13,11 @@
 */
 
 #pragma once
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <PhysicalPlan.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 
 namespace NES::Optimizer::LowerToPhysicalOperators
 {
-PhysicalPlan apply(LogicalPlan queryPlan, NES::Configurations::QueryOptimizerConfiguration conf);
+PhysicalPlan apply(Logical::Plan queryPlan, NES::Configurations::QueryOptimizerConfiguration conf);
 }

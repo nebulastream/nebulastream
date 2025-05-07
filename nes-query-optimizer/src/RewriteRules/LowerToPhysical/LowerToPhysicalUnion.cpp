@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Operators/UnionLogicalOperator.hpp>
+#include <LogicalOperators/UnionOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalUnion.hpp>
 #include <PhysicalOperator.hpp>
@@ -26,10 +26,10 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(Logical::Operator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<UnionLogicalOperator>(), "Expected a UnionLogicalOperator");
-    auto source = logicalOperator.get<UnionLogicalOperator>();
+    PRECONDITION(logicalOperator.tryGet<Logical::UnionOperator>(), "Expected a UnionLogicalOperator");
+    auto source = logicalOperator.get<Logical::UnionOperator>();
 
     auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(inputSchemas.size() == 2, "UnionLogicalOperator should have exactly two schema, but has {}", inputSchemas.size());

@@ -1,0 +1,114 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <sstream>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <FunctionRegistry.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <fmt/format.h>
+#include <LogicalFunctions/ArithmeticalFunctions/DivFunction.hpp>
+
+namespace NES::Logical
+{
+
+DivFunction::DivFunction(Function left, Function right)
+    : stamp(left.getStamp()->join(*right.getStamp())), left(left), right(right)
+{
+}
+
+DivFunction::DivFunction(const DivFunction& other) : stamp(other.stamp), left(other.left), right(other.right)
+{
+}
+
+bool DivFunction::operator==(const FunctionConcept& rhs) const
+{
+    if (auto other = dynamic_cast<const DivFunction*>(&rhs))
+    {
+        return left == other->left and right == other->right;
+    }
+    return false;
+}
+
+std::shared_ptr<DataType> DivFunction::getStamp() const
+{
+    return stamp;
+};
+
+Function DivFunction::withStamp(std::shared_ptr<DataType> stamp) const
+{
+    auto copy = *this;
+    copy.stamp = stamp;
+    return copy;
+};
+
+Function DivFunction::withInferredStamp(const Schema& schema) const
+{
+    std::vector<Function> newChildren;
+    for (auto& child : getChildren())
+    {
+        newChildren.push_back(child.withInferredStamp(schema));
+    }
+    return withChildren(newChildren);
+};
+
+std::vector<Function> DivFunction::getChildren() const
+{
+    return {left, right};
+};
+
+Function DivFunction::withChildren(const std::vector<Function>& children) const
+{
+    PRECONDITION(children.size() == 2, "DivFunction requires exactly two children, but got {}", children.size());
+    auto copy = *this;
+    copy.left = children[0];
+    copy.right = children[1];
+    copy.stamp = children[0].getStamp()->join(*children[1].getStamp());
+    return copy;
+};
+
+std::string_view DivFunction::getType() const
+{
+    return NAME;
+}
+
+std::string DivFunction::explain(ExplainVerbosity verbosity) const
+{
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        return fmt::format("DivFunction({} / {} : {})",
+            left.explain(verbosity),
+            right.explain(verbosity),
+            stamp->toString());
+    }
+    return fmt::format("{} / {}", left.explain(verbosity), right.explain(verbosity));
+}
+
+SerializableFunction DivFunction::serialize() const
+{
+    SerializableFunction serializedFunction;
+    serializedFunction.set_functiontype(NAME);
+    serializedFunction.add_children()->CopyFrom(left.serialize());
+    serializedFunction.add_children()->CopyFrom(right.serialize());
+    DataTypeSerializationUtil::serializeDataType(this->getStamp(), serializedFunction.mutable_stamp());
+    return serializedFunction;
+}
+
+FunctionRegistryReturnType FunctionGeneratedRegistrar::RegisterDivFunction(FunctionRegistryArguments arguments)
+{
+    PRECONDITION(arguments.children.size() == 2, "DivFunction requires exactly two children, but got {}", arguments.children.size());
+    return DivFunction(arguments.children[0], arguments.children[1]);
+}
+
+
+}

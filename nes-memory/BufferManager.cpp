@@ -371,4 +371,11 @@ std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createFixe
     return ret;
 }
 
+TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size)
+{
+    auto optBuffer = provider->getUnpooledBuffer(size);
+    INVARIANT(!!optBuffer, "Cannot allocate buffer of size {}", size);
+    return *optBuffer;
+}
+
 }

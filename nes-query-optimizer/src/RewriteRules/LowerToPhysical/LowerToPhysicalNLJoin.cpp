@@ -17,11 +17,11 @@
 #include <tuple>
 #include <utility>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <LogicalFunctions/FieldAccessFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <LogicalOperators/Windows/JoinOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -89,7 +89,7 @@ private:
 
 
 std::tuple<TimestampField, TimestampField>
-getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, std::shared_ptr<Windowing::TimeBasedWindowType> windowType)
+getTimestampLeftAndRight(const Logical::JoinOperator& joinOperator, std::shared_ptr<Windowing::TimeBasedWindowType> windowType)
 {
     if (windowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
     {
@@ -131,7 +131,7 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, std::shared_pt
 }
 
 void flattenAllChildrenHelper(
-    const LogicalFunction& node, std::vector<LogicalFunction>& allChildren, const LogicalFunction& excludedNode, bool allowDuplicate)
+    const Logical::Function& node, std::vector<Logical::Function>& allChildren, const Logical::Function& excludedNode, bool allowDuplicate)
 {
     for (const auto& currentNode : node.getChildren())
     {
@@ -148,24 +148,24 @@ void flattenAllChildrenHelper(
     }
 }
 
-std::vector<LogicalFunction> flattenAllChildren(const LogicalFunction& current, bool withDuplicateChildren)
+std::vector<Logical::Function> flattenAllChildren(const Logical::Function& current, bool withDuplicateChildren)
 {
-    std::vector<LogicalFunction> allChildren;
+    std::vector<Logical::Function> allChildren;
     flattenAllChildrenHelper(current, allChildren, current, withDuplicateChildren);
     return allChildren;
 }
 
-auto getJoinFieldNames(const Schema inputSchema, const LogicalFunction joinFunction)
+auto getJoinFieldNames(const Schema inputSchema, const Logical::Function joinFunction)
 {
     std::vector<std::string> joinFieldNames;
     std::vector<std::string> fieldNamesInJoinFunction;
     std::ranges::for_each(
         flattenAllChildren(joinFunction, false),
-        [&fieldNamesInJoinFunction](const LogicalFunction& child)
+        [&fieldNamesInJoinFunction](const Logical::Function& child)
         {
-            if (child.tryGet<FieldAccessLogicalFunction>())
+            if (child.tryGet<Logical::FieldAccessFunction>())
             {
-                fieldNamesInJoinFunction.push_back(child.get<FieldAccessLogicalFunction>().getFieldName());
+                fieldNamesInJoinFunction.push_back(child.get<Logical::FieldAccessFunction>().getFieldName());
             }
         });
 
@@ -180,14 +180,14 @@ auto getJoinFieldNames(const Schema inputSchema, const LogicalFunction joinFunct
 };
 
 
-RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(Logical::Operator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<JoinLogicalOperator>(), "Expected a JoinLogicalOperator");
+    PRECONDITION(logicalOperator.tryGet<Logical::JoinOperator>(), "Expected a Logical::JoinOperator");
     PRECONDITION(logicalOperator.getInputOriginIds().size() == 2, "Expected two origin id vector");
     PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 2, "Expected two input schemas");
 
-    auto join = logicalOperator.get<JoinLogicalOperator>();
+    auto join = logicalOperator.get<Logical::JoinOperator>();
     auto handlerId = getNextOperatorHandlerId();
 
     auto rightInputSchema = join.getInputSchemas()[0];

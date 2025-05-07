@@ -15,20 +15,25 @@
 #pragma once
 #include <sstream>
 #include <Identifiers/Identifiers.hpp>
-#include <Util/Logger/Formatter.hpp>
 
 namespace NES
 {
 
-struct SequenceData
+class SequenceData
 {
+public:
     SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk);
     explicit SequenceData();
 
-    friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj);
+    [[nodiscard]] std::string toString() const;
+
+    friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj)
+    {
+        os << "{SeqNumber: " << obj.sequenceNumber << ", ChunkNumber: " << obj.chunkNumber << ", LastChunk: " << obj.lastChunk << "}";
+        return os;
+    }
 
     bool operator<=(const SequenceData& other) const;
-    /// Checks sequenceNumber, then chunkNumber, then lastChunk
     bool operator<(const SequenceData& other) const;
     bool operator==(const SequenceData& other) const;
     bool operator!=(const SequenceData& other) const;
@@ -39,4 +44,3 @@ struct SequenceData
 };
 
 }
-FMT_OSTREAM(NES::SequenceData);

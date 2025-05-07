@@ -15,7 +15,7 @@
 #include <exception>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -48,7 +48,7 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
 
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
 {
-    auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
+    auto fullySpecifiedQueryPlan = Logical::QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
     CPPTRACE_TRY
     {
         auto queryId = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
@@ -129,7 +129,7 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
         auto summary = delegate.getQuerySummary(queryId);
         if (summary.has_value())
         {
-            reply->set_status(::QueryStatus(summary->currentStatus));
+            reply->set_status(SerializableQueryStatus(summary->currentStatus));
             for (const auto& [start, running, stop, error] : summary->runs)
             {
                 auto* const replyRun = reply->add_runs();
@@ -180,7 +180,7 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
             for (const auto& entry : *log)
             {
                 QueryLogEntry logEntry;
-                logEntry.set_status((::QueryStatus)entry.state);
+                logEntry.set_status(SerializableQueryStatus(entry.state));
                 logEntry.set_unixtimeinms(
                     std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
                 if (entry.exception.has_value())

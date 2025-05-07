@@ -28,10 +28,9 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutableQueryPlan.hpp>
 #include <Pipeline.hpp>
 #include <options.hpp>
-#include <SinkPhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::LowerToCompiledQueryPlanPhase
 {
@@ -85,7 +84,7 @@ Source processSource(
     const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan,
     LoweringContext& loweringContext)
 {
-    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", *pipeline);
+    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->toString());
 
     /// Convert logical source descriptor to actual source descriptor
     const auto sourceOperator = pipeline->rootOperator.get<SourcePhysicalOperator>();
@@ -111,7 +110,7 @@ Source processSource(
     }
 
     /// Insert the executable pipeline into the pipelineQueryPlan at position 1 (after the source)
-    pipelineQueryPlan->removePipeline(*pipeline);
+    pipelineQueryPlan->removePipeline(pipeline);
 
     std::vector<std::weak_ptr<ExecutablePipeline>> inputFormatterTasks;
 
@@ -179,7 +178,6 @@ std::shared_ptr<ExecutablePipeline> processOperatorPipeline(
 
 std::unique_ptr<CompiledQueryPlan> apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan)
 {
-    std::cout << *pipelineQueryPlan << "\n";
     LoweringContext loweringContext;
     ///Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();

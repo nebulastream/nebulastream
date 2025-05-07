@@ -14,14 +14,14 @@
 
 #pragma once
 
-#include <Functions/LogicalFunction.hpp>
+#include <LogicalFunctions/Function.hpp>
+#include <LogicalOperators/Windows/WindowedAggregationOperator.hpp>
 #include <SerializableFunction.pb.h>
-#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 
 namespace NES::FunctionSerializationUtil
 {
 /// Note: corresponding serialization is implemented as member function of each function
-LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction);
-std::shared_ptr<WindowAggregationLogicalFunction> deserializeWindowAggregationFunction(
+Logical::Function deserializeFunction(const SerializableFunction& serializedFunction);
+std::shared_ptr<Logical::WindowAggregationFunction> deserializeWindowAggregationFunction(
     const SerializableAggregationFunction& serializedFunction);
 }

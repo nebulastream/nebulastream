@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <vector>
-#include <Operators/LogicalOperator.hpp>
+#include <LogicalOperators/Operator.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES::Optimizer
@@ -40,7 +40,7 @@ struct RewriteRuleResultSubgraph
 /// For now, the interface only considers lowering rules (logical operator to physical subgraph)
 struct AbstractRewriteRule
 {
-    virtual RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) = 0;
+    virtual RewriteRuleResultSubgraph apply(Logical::Operator logicalOperator) = 0;
     virtual ~AbstractRewriteRule() = default;
 };
 

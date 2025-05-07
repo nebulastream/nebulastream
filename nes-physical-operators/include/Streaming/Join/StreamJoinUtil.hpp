@@ -18,7 +18,6 @@
 #include <API/Schema.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
-#include <Identifiers/NESStrongTypeFormat.hpp>
 
 namespace NES
 {
@@ -75,12 +74,11 @@ struct BufferMetaData
 
     [[nodiscard]] std::string toString() const
     {
-        return fmt::format(
-            "waterMarkTs: {}, seqNumber: {}, originId: {}",
-            watermarkTs,
-            seqNumber,
-            originId
-        );
+        std::ostringstream oss;
+        oss << "waterMarkTs: " << watermarkTs << ","
+            << "seqNumber: " << seqNumber << ","
+            << "originId: " << originId;
+        return oss.str();
     }
 
     Timestamp watermarkTs;

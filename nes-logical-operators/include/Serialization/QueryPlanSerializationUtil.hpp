@@ -15,15 +15,15 @@
 #pragma once
 
 #include <memory>
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <SerializableQueryPlan.pb.h>
 
-namespace NES
+namespace NES::Logical
 {
 class QueryPlanSerializationUtil
 {
 public:
-    static SerializableQueryPlan serializeQueryPlan(const LogicalPlan& queryPlan);
-    static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan);
+    static SerializableQueryPlan serializeQueryPlan(const Plan& queryPlan);
+    static Plan deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan);
 };
 }

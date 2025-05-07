@@ -23,7 +23,7 @@ namespace NES::Optimizer
 struct LowerToPhysicalSink : AbstractRewriteRule
 {
     LowerToPhysicalSink(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
-    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+    RewriteRuleResultSubgraph apply(Logical::Operator logicalOperator) override;
     NES::Configurations::QueryOptimizerConfiguration conf;
 };
 

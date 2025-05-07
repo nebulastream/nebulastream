@@ -48,7 +48,7 @@ void addDefaultScan(std::shared_ptr<Pipeline> pipeline, const PhysicalOperatorWr
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), bufferSize);
-    const auto memoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(layout);
+    auto memoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(layout);
     // Prepend the default scan operator.
     pipeline->prependOperator(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
 }
@@ -63,26 +63,26 @@ void addDefaultEmit(std::shared_ptr<Pipeline> pipeline, const PhysicalOperatorWr
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), bufferSize);
-    const auto memoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(layout);
+    auto memoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(layout);
     // Create an operator handler for the emit
     OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
     pipeline->operatorHandlers.emplace(operatorHandlerIndex, std::make_shared<EmitOperatorHandler>());
     pipeline->appendOperator(EmitPhysicalOperator(operatorHandlerIndex, memoryProvider));
 }
 
-void buildPipelineRecursively(
+void buildPipelineRecursive(
     const std::shared_ptr<PhysicalOperatorWrapper>& opWrapper,
     const std::shared_ptr<PhysicalOperatorWrapper>& prevOpWrapper,
     std::shared_ptr<Pipeline> currentPipeline,
     OperatorPipelineMap& pipelineMap,
-    const bool forceNewPipeline = false)
+    bool forceNewPipeline = false)
 {
     /// Check if we have already see the operator
-    const OperatorId opId = opWrapper->physicalOperator.getId();
-    if (const auto it = pipelineMap.find(opId); it != pipelineMap.end())
+    OperatorId opId = opWrapper->physicalOperator.getId();
+    if (auto it = pipelineMap.find(opId); it != pipelineMap.end())
     {
         // We make sure the existing pipeline is linked as a successor.
-        currentPipeline->addSuccessor(it->second, currentPipeline);
+        currentPipeline->addSuccessor(it->second);
         return;
     }
 
@@ -100,12 +100,12 @@ void buildPipelineRecursively(
         {
             newPipeline->operatorHandlers.emplace(opWrapper->handlerId.value(), opWrapper->handler.value());
         }
-        pipelineMap.emplace(opId, newPipeline);
-        currentPipeline->addSuccessor(newPipeline, currentPipeline);
+        pipelineMap[opId] = newPipeline;
+        currentPipeline->addSuccessor(newPipeline);
         auto newPipelinePtr = currentPipeline->getSuccessors().back();
         for (const auto& child : opWrapper->children)
         {
-            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap);
+            buildPipelineRecursive(child, opWrapper, newPipelinePtr, pipelineMap);
         }
         return;
     }
@@ -119,10 +119,10 @@ void buildPipelineRecursively(
         {
             currentPipeline->operatorHandlers.emplace(opWrapper->handlerId.value(), opWrapper->handler.value());
         }
-        pipelineMap.emplace(opId, currentPipeline);
+        pipelineMap[opId] = currentPipeline;
         for (const auto& child : opWrapper->children)
         {
-            buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, true);
+            buildPipelineRecursive(child, opWrapper, currentPipeline, pipelineMap, true);
         }
         return;
     }
@@ -136,12 +136,12 @@ void buildPipelineRecursively(
             addDefaultEmit(currentPipeline, *prevOpWrapper);
         }
         auto newPipeline = std::make_shared<Pipeline>(*sink);
-        currentPipeline->addSuccessor(newPipeline, currentPipeline);
+        currentPipeline->addSuccessor(newPipeline);
         auto newPipelinePtr = currentPipeline->getSuccessors().back();
-        pipelineMap.emplace(opId, newPipelinePtr);
+        pipelineMap[opId] = newPipelinePtr;
         for (const auto& child : opWrapper->children)
         {
-            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap);
+            buildPipelineRecursive(child, opWrapper, newPipelinePtr, pipelineMap);
         }
         return;
     }
@@ -154,7 +154,7 @@ void buildPipelineRecursively(
             addDefaultEmit(currentPipeline, *opWrapper);
         }
         auto newPipeline = std::make_shared<Pipeline>(opWrapper->physicalOperator);
-        currentPipeline->addSuccessor(newPipeline, currentPipeline);
+        currentPipeline->addSuccessor(newPipeline);
         auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
 
@@ -162,7 +162,7 @@ void buildPipelineRecursively(
 
         for (const auto& child : opWrapper->children)
         {
-            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap);
+            buildPipelineRecursive(child, opWrapper, newPipelinePtr, pipelineMap);
         }
         return;
     }
@@ -184,14 +184,14 @@ void buildPipelineRecursively(
         /// Continue processing children within the current pipeline
         for (const auto& child : opWrapper->children)
         {
-            buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap);
+            buildPipelineRecursive(child, opWrapper, currentPipeline, pipelineMap);
         }
     }
 }
 
 }
 
-std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
+std::shared_ptr<PipelinedQueryPlan> apply(PhysicalPlan physicalPlan)
 {
     auto pipelinedPlan = std::make_shared<PipelinedQueryPlan>(physicalPlan.queryId);
 
@@ -200,13 +200,13 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
     for (const auto& rootWrapper : physicalPlan.rootOperators)
     {
         auto rootPipeline = std::make_shared<Pipeline>(rootWrapper->physicalOperator);
-        const auto opId = rootWrapper->physicalOperator.getId();
-        pipelineMap.emplace(opId, rootPipeline);
+        OperatorId opId = rootWrapper->physicalOperator.getId();
+        pipelineMap[opId] = rootPipeline;
         pipelinedPlan->pipelines.push_back(rootPipeline);
 
         for (const auto& child : rootWrapper->children)
         {
-            buildPipelineRecursively(child, nullptr, rootPipeline, pipelineMap, true);
+            buildPipelineRecursive(child, nullptr, rootPipeline, pipelineMap, true);
         }
     }
 

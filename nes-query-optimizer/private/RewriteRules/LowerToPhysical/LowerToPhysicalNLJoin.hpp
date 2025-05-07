@@ -15,7 +15,7 @@
 #pragma once
 
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <LogicalOperators/Windows/JoinOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 
 namespace NES::Optimizer
@@ -23,7 +23,7 @@ namespace NES::Optimizer
 struct LowerToPhysicalNLJoin : AbstractRewriteRule
 {
     LowerToPhysicalNLJoin(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
-    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+    RewriteRuleResultSubgraph apply(Logical::Operator logicalOperator) override;
     NES::Configurations::QueryOptimizerConfiguration conf;
 };
 

@@ -15,8 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <Functions/ConstantValueLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <LogicalFunctions/ConstantValueFunction.hpp>
+#include <LogicalFunctions/Function.hpp>
 #include <Functions/PhysicalFunction.hpp>
 
 namespace NES::QueryCompilation
@@ -26,10 +26,10 @@ class FunctionProvider
 public:
     /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
     /// NodeFunction a NodeFunctionConstantValue, FieldAccessLogicalFunction or FieldAssignment
-    static Functions::PhysicalFunction lowerFunction(LogicalFunction nodeFunction);
+    static Functions::PhysicalFunction lowerFunction(Logical::Function nodeFunction);
 
 private:
-    static Functions::PhysicalFunction lowerConstantFunction(const ConstantValueLogicalFunction& nodeFunction);
+    static Functions::PhysicalFunction lowerConstantFunction(const Logical::ConstantValueFunction& nodeFunction);
 };
 
 }

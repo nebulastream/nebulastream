@@ -67,7 +67,7 @@ void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMeta
         "New global watermark probe: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
         newGlobalWaterMarkProbe,
         bufferMetaData.originId,
-        bufferMetaData.seqNumber,
+        bufferMetaData.seqNumber.toString(),
         bufferMetaData.watermarkTs);
     sliceAndWindowStore->garbageCollectSlicesAndWindows(newGlobalWaterMarkProbe);
 }
@@ -82,7 +82,7 @@ void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bu
         "New global watermark: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
         newGlobalWatermark,
         bufferMetaData.originId,
-        bufferMetaData.seqNumber,
+        bufferMetaData.seqNumber.toString(),
         bufferMetaData.watermarkTs);
 
     /// Getting all slices that can be triggered and triggering them

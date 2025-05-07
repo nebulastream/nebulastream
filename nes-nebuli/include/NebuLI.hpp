@@ -23,9 +23,9 @@
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
-namespace NES
+namespace NES::Logical
 {
-class LogicalPlan;
+class Plan;
 }
 
 namespace NES::CLI
@@ -69,7 +69,7 @@ struct QueryConfig
     std::vector<PhysicalSource> physical;
 };
 
-std::unique_ptr<LogicalPlan> loadFromYAMLFile(const std::filesystem::path& file);
-std::unique_ptr<LogicalPlan> loadFrom(std::istream& inputStream);
-std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
+std::unique_ptr<Logical::Plan> loadFromYAMLFile(const std::filesystem::path& file);
+std::unique_ptr<Logical::Plan> loadFrom(std::istream& inputStream);
+std::unique_ptr<Logical::Plan> createFullySpecifiedQueryPlan(const QueryConfig& config);
 }

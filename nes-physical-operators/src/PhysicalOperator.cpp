@@ -137,18 +137,15 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperat
 
 std::string PhysicalOperatorWrapper::explain(ExplainVerbosity) const
 {
-    return fmt::format(
-        "PhysicalOperatorWrapper("
-        "Operator: {}, id: {}, "
-        "InputSchema: {}, OutputSchema: {}, "
-        "isScan: {}, isEmit: {})",
-        physicalOperator.toString(),
-        physicalOperator.getId(),
-        inputSchema ? inputSchema->toString() : "none",
-        outputSchema ? outputSchema->toString() : "none",
-        isScan,
-        isEmit
-    );
+    std::ostringstream oss;
+    oss << "PhysicalOperatorWrapper(";
+    oss << "Operator: " << physicalOperator.toString() << ", id: " << physicalOperator.getId() << ", ";
+    oss << "InputSchema: " << (inputSchema ? inputSchema.value().toString() : "none") << ", ";
+    oss << "OutputSchema: " << (outputSchema ? outputSchema.value().toString() : "none") << ", ";
+    oss << "isScan: " << std::boolalpha << isScan << ", ";
+    oss << "isEmit: " << std::boolalpha << isEmit;
+    oss << ")";
+    return oss.str();
 }
 
 

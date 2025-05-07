@@ -16,8 +16,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <Operators/LogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalOperators/Operator.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalPlan.hpp>
 #include <RewriteRuleRegistry.hpp>
@@ -29,29 +29,26 @@ namespace NES::Optimizer::LowerToPhysicalOperators
 {
 
 RewriteRuleResultSubgraph::SubGraphRoot
-lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
+lowerOperatorRecursively(const Logical::Operator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
 {
     /// Try to resolve rewrite rule for the current logical operator
-    const auto rule = [](const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
-    {
-        if (auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument))
-        {
-            return std::move(ruleOptional.value());
-        }
-        /// We expect that in this last phase of query optimiation only logical operator with physical lowering rules
-        /// are part of the plan. If not the case, this indicates a bug in our query optimizer.
-        INVARIANT(false, "Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
-    }(logicalOperator, registryArgument);
+    auto ruleOptional = RewriteRuleRegistry::instance().create(std::string(logicalOperator.getName()), registryArgument);
+
+    /// We expect that in this last phase of query optimiation only logical operator with physical lowering rules
+    /// are part of the plan. If not the case, this indicates a bug in our query optimizer.
+    INVARIANT(ruleOptional.has_value(), "Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+
     /// We apply the rule and receive a subgraph
-    const auto [root, leafs] = rule->apply(logicalOperator);
+    auto loweringResultSubgraph = ruleOptional.value()->apply(logicalOperator);
     INVARIANT(
-        leafs.size() == logicalOperator.getChildren().size(),
+        loweringResultSubgraph.leafs.size() == logicalOperator.getChildren().size(),
         "Number of children after lowering must remain the same. {}, before:{}, after:{}",
         logicalOperator,
         logicalOperator.getChildren().size(),
-        leafs.size());
+        loweringResultSubgraph.leafs.size());
+
     /// if the lowering result is empty we bypass the operator
-    if (not root)
+    if (not loweringResultSubgraph.root)
     {
         if (not logicalOperator.getChildren().empty())
         {
@@ -63,23 +60,24 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
         }
         return {};
     }
+
     /// We embed the subgraph into the resulting plan of physical operator wrappers
     auto children = logicalOperator.getChildren();
     INVARIANT(
-        children.size() == leafs.size(),
+        children.size() == loweringResultSubgraph.leafs.size(),
         "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
         children.size(),
-        leafs.size(),
+        loweringResultSubgraph.leafs.size(),
         logicalOperator);
     for (size_t i = 0; i < children.size(); ++i)
     {
         auto rootNodeOfLoweredChild = lowerOperatorRecursively(children[i], registryArgument);
-        leafs[i]->children.push_back(rootNodeOfLoweredChild);
+        loweringResultSubgraph.leafs[i]->children.push_back(rootNodeOfLoweredChild);
     }
-    return root;
+    return loweringResultSubgraph.root;
 }
 
-PhysicalPlan apply(LogicalPlan queryPlan, NES::Configurations::QueryOptimizerConfiguration conf)
+PhysicalPlan apply(Logical::Plan queryPlan, NES::Configurations::QueryOptimizerConfiguration conf)
 {
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;

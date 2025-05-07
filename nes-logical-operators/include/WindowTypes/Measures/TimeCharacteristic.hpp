@@ -16,7 +16,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/TimeUnit.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <LogicalFunctions/Function.hpp>
 
 namespace NES::Windowing
 {
@@ -44,8 +44,8 @@ public:
     /// @param unit the time unit of the EventTime, defaults to milliseconds
     /// @param field the field from which we want to extract the time.
     /// @return std::shared_ptr<TimeCharacteristic>
-    static TimeCharacteristic createEventTime(LogicalFunction field, const TimeUnit& unit);
-    static TimeCharacteristic createEventTime(LogicalFunction field);
+    static TimeCharacteristic createEventTime(Logical::Function field, const TimeUnit& unit);
+    static TimeCharacteristic createEventTime(Logical::Function field);
 
     /// @return The TimeCharacteristic type.
     [[nodiscard]] Type getType() const;

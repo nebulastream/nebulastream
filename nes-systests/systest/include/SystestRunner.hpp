@@ -21,7 +21,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -34,7 +34,7 @@ struct RunningQuery;
 
 struct LoadedQueryPlan
 {
-    LogicalPlan queryPlan;
+    Logical::Plan queryPlan;
     std::string queryName;
     SystestParser::Schema sinkSchema;
 };

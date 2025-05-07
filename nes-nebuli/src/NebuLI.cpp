@@ -31,8 +31,6 @@
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
@@ -195,9 +193,9 @@ Sources::SourceDescriptor createSourceDescriptor(
         std::move(validSourceConfig));
 }
 
-void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config)
+void validateAndSetSinkDescriptors(Logical::Plan& query, const QueryConfig& config)
 {
-    auto sinkOperators = query.getOperatorByType<SinkLogicalOperator>();
+    auto sinkOperators = query.getOperatorByType<Logical::SinkOperator>();
     PRECONDITION(
         sinkOperators.size() == 1,
         "NebulaStream currently only supports a single sink per query, but the query contains: {}",
@@ -219,7 +217,7 @@ void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config
     }
 }
 
-std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
+std::unique_ptr<Logical::Plan> createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
@@ -258,10 +256,10 @@ std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& co
     LegacyOptimizer::OriginIdInferencePhase::apply(queryplan);
     LegacyOptimizer::TypeInferencePhase::apply(queryplan);
 
-    return std::make_unique<LogicalPlan>(queryplan);
+    return std::make_unique<Logical::Plan>(queryplan);
 }
 
-std::unique_ptr<LogicalPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
+std::unique_ptr<Logical::Plan> loadFromYAMLFile(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -280,7 +278,7 @@ SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) 
 {
 }
 
-std::unique_ptr<LogicalPlan> loadFrom(std::istream& inputStream)
+std::unique_ptr<Logical::Plan> loadFrom(std::istream& inputStream)
 {
     try
     {

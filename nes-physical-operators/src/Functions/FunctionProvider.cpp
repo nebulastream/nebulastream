@@ -16,10 +16,10 @@
 #include <utility>
 #include <vector>
 #include <Functions/ConstantValuePhysicalFunction.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <LogicalFunctions/FieldAccessFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <LogicalFunctions/Function.hpp>
 #include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -33,7 +33,7 @@ namespace NES::QueryCompilation
 {
 using namespace Functions;
 
-PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
+PhysicalFunction FunctionProvider::lowerFunction(Logical::Function logicalFunction)
 {
     /// 1. Recursively lower the children of the function node.
     std::vector<PhysicalFunction> childFunction;
@@ -44,11 +44,11 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
 
     /// 2. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessNode = logicalFunction.tryGet<FieldAccessLogicalFunction>())
+    if (const auto fieldAccessNode = logicalFunction.tryGet<Logical::FieldAccessFunction>())
     {
         return FieldAccessPhysicalFunction(fieldAccessNode->getFieldName());
     }
-    if (auto constantValueNode = logicalFunction.tryGet<ConstantValueLogicalFunction>())
+    if (auto constantValueNode = logicalFunction.tryGet<Logical::ConstantValueFunction>())
     {
         return lowerConstantFunction(*constantValueNode);
     }
@@ -63,7 +63,7 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
 }
 
-PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogicalFunction& constantFunction)
+PhysicalFunction FunctionProvider::lowerConstantFunction(const Logical::ConstantValueFunction& constantFunction)
 {
     const auto stringValue = constantFunction.getConstantValue();
     const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction.getStamp());

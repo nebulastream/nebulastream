@@ -16,18 +16,18 @@
 #include <string>
 #include <utility>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <ErrorHandling.hpp>
-#include <Operators/LogicalOperator.hpp>
+#include <LogicalOperators/Operator.hpp>
+#include <LogicalOperators/Sources/SourceDescriptorOperator.hpp>
+#include <LogicalOperators/Sources/SourceNameOperator.hpp>
 
 namespace NES::LegacyOptimizer
 {
 
-void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog)
+void LogicalSourceExpansionRule::apply(Logical::Plan& queryPlan, Catalogs::Source::SourceCatalog& sourceCatalog)
 {
-    auto sourceOperators = queryPlan.getOperatorByType<SourceNameLogicalOperator>();
+    auto sourceOperators = queryPlan.getOperatorByType<Logical::SourceNameOperator>();
 
     for (const auto& sourceOp : sourceOperators)
     {
@@ -42,13 +42,13 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan, Catalogs::Source:
 
         /// Replace the SourceNameLogicalOperator with the SourceDescriptorLogicalOperator corresponding to the first entry.
         auto sourceDescriptor = entries.front()->getPhysicalSource()->createSourceDescriptor(sourceOp.getSchema());
-        const LogicalOperator firstOperatorSourceLogicalDescriptor(SourceDescriptorLogicalOperator(std::move(sourceDescriptor)));
+        const Logical::Operator firstOperatorSourceLogicalDescriptor(Logical::SourceDescriptorOperator(std::move(sourceDescriptor)));
         queryPlan.replaceOperator(sourceOp, firstOperatorSourceLogicalDescriptor);
 
         /// Iterate over all subsequent entries, create the corresponding SourceDescriptorLogicalOperators and add them to the query plan.
         for (auto const& entry : entries | std::views::drop(1)) {
             auto desc = entry->getPhysicalSource()->createSourceDescriptor(sourceOp.getSchema());
-            auto nextOp = LogicalOperator{ SourceDescriptorLogicalOperator(std::move(desc)) };
+            auto nextOp = Logical::Operator{ Logical::SourceDescriptorOperator(std::move(desc)) };
 
             for (auto const& parent : queryPlan.getParents(firstOperatorSourceLogicalDescriptor)) {
                 auto children = parent.getChildren();

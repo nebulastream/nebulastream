@@ -24,7 +24,7 @@
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
+#include <LogicalOperators/Windows/WindowedAggregationOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
@@ -51,7 +51,7 @@ namespace NES::Optimizer
 {
 
 std::pair<std::vector<Nautilus::Record::RecordFieldIdentifier>, std::vector<Nautilus::Record::RecordFieldIdentifier>>
-getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
+getKeyAndValueFields(const Logical::WindowedAggregationOperator& logicalOperator)
 {
     std::vector<Nautilus::Record::RecordFieldIdentifier> fieldKeyNames;
     std::vector<Nautilus::Record::RecordFieldIdentifier> fieldValueNames;
@@ -69,7 +69,7 @@ getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
     return {fieldKeyNames, fieldValueNames};
 }
 
-std::shared_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOperator& logicalOperator)
+std::shared_ptr<TimeFunction> getTimeFunction(const Logical::WindowedAggregationOperator& logicalOperator)
 {
     const auto timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(&logicalOperator.getWindowType());
     if (not timeWindow)
@@ -100,7 +100,7 @@ std::shared_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOp
 }
 
 std::vector<std::shared_ptr<AggregationFunction>>
-getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration&)
+getAggregationFunctions(const Logical::WindowedAggregationOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration&)
 {
     std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
@@ -179,14 +179,14 @@ getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperato
     return aggregationFunctions;
 }
 
-RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(Logical::Operator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<WindowedAggregationLogicalOperator>(), "Expected a WindowedAggregationLogicalOperator");
+    PRECONDITION(logicalOperator.tryGet<Logical::WindowedAggregationOperator>(), "Expected a Logical::WindowedAggregationOperator");
     PRECONDITION(logicalOperator.getInputOriginIds().size() == 1, "Expected one origin id vector");
     PRECONDITION(logicalOperator.getOutputOriginIds().size() == 1, "Expected one output origin id");
     PRECONDITION(logicalOperator.getInputSchemas().size() == 1, "Expected one input schema");
 
-    auto aggregation = logicalOperator.get<WindowedAggregationLogicalOperator>();
+    auto aggregation = logicalOperator.get<Logical::WindowedAggregationOperator>();
     auto handlerId = getNextOperatorHandlerId();
     auto inputSchema = aggregation.getInputSchemas()[0];
     auto outputSchema = aggregation.getOutputSchema();

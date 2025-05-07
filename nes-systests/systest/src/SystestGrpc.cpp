@@ -24,12 +24,12 @@ GRPCClient::GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCS
 {
 }
 
-size_t GRPCClient::registerQuery(const NES::LogicalPlan& queryPlan) const
+size_t GRPCClient::registerQuery(const NES::Logical::Plan& queryPlan) const
 {
     grpc::ClientContext context;
     RegisterQueryReply reply;
     RegisterQueryRequest request;
-    request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(queryPlan));
+    request.mutable_queryplan()->CopyFrom(NES::Logical::QueryPlanSerializationUtil::serializeQueryPlan(queryPlan));
     auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
     {

@@ -20,7 +20,7 @@
 #include <CommonTokenStream.h>
 #include <Exceptions.h>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -28,7 +28,7 @@
 namespace NES::AntlrSQLQueryParser
 {
 
-LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
+Logical::Plan createLogicalQueryPlanFromSQLString(std::string_view queryString)
 {
     try
     {

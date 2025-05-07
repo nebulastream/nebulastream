@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 #include <nlohmann/json.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <LogicalPlans/Plan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/ostream.h>

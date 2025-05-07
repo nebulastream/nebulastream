@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
-#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
+#include <LogicalOperators/IngestionTimeWatermarkAssignerOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalIngestionTimeWatermarkAssigner.hpp>
 #include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
@@ -25,9 +25,9 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(LogicalOperator logicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(Logical::Operator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<IngestionTimeWatermarkAssignerLogicalOperator>(), "Expected a IngestionTimeWatermarkAssigner");
+    PRECONDITION(logicalOperator.tryGet<Logical::IngestionTimeWatermarkAssignerOperator>(), "Expected a IngestionTimeWatermarkAssigner");
     auto physicalOperator = IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction());
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());

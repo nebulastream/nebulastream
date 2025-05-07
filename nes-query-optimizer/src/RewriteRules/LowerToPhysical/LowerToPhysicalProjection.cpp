@@ -16,7 +16,7 @@
 #include <Functions/FunctionProvider.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Operators/ProjectionLogicalOperator.hpp>
+#include <LogicalOperators/ProjectionOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalProjection.hpp>
 #include <EmitOperatorHandler.hpp>
@@ -27,7 +27,7 @@
 namespace NES::Optimizer
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator projectionLogicalOperator)
+RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(Logical::Operator projectionLogicalOperator)
 {
     auto handlerId = getNextOperatorHandlerId();
     auto inputSchema = projectionLogicalOperator.getInputSchemas()[0];

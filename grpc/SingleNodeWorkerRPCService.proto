@@ -49,7 +49,7 @@ message StopQueryRequest {
     QueryTerminationType terminationType = 3;
 }
 
-enum QueryStatus {
+enum SerializableQueryStatus {
     Registered = 0;
     Started = 1;
     Running = 2;
@@ -68,7 +68,7 @@ message QuerySummaryRequest {
   uint64 queryId = 1;
 }
 
-message QueryRunSummary {
+message SerializableQuerySummary {
    uint64 startUnixTimeInMs = 1;
    uint64 runningUnixTimeInMs = 2;
    uint64 stopUnixTimeInMs = 3;
@@ -77,8 +77,8 @@ message QueryRunSummary {
 
 message QuerySummaryReply {
     uint64 queryId = 1;
-    QueryStatus status = 2;
-    repeated QueryRunSummary runs = 3;
+    SerializableQueryStatus status = 2;
+    repeated SerializableQuerySummary runs = 3;
 }
 
 message QueryLogRequest {
@@ -86,7 +86,7 @@ message QueryLogRequest {
 }
 
 message QueryLogEntry {
-    QueryStatus status = 1;
+    SerializableQueryStatus status = 1;
     uint64 unixTimeInMs = 2;
     optional Error error = 3;
 }

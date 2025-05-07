@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <PipelineExecutionContext.hpp>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>

@@ -21,8 +21,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <LogicalOperators/Sinks/SinkOperator.hpp>
+#include <LogicalOperators/Sources/SourceDescriptorOperator.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/FileSink.hpp>
@@ -307,7 +307,7 @@ void querySummaryFailure(QueryId queryId, GRPCServer& uut, grpc::StatusCode stat
     EXPECT_EQ(response.error_code(), statusCode);
 }
 
-::QueryStatus queryStatus(QueryId queryId, GRPCServer& uut)
+SerializableQueryStatus queryStatus(QueryId queryId, GRPCServer& uut)
 {
     grpc::ServerContext context;
     QuerySummaryRequest request;
@@ -323,7 +323,7 @@ testing::AssertionResult waitForQueryToEnd(QueryId queryId, GRPCServer& uut)
     constexpr size_t maxNumberOfTimeoutChecks = 80;
     size_t numTimeouts = 0;
     auto currentQueryStatus = queryStatus(queryId, uut);
-    while (currentQueryStatus != ::QueryStatus::Stopped && currentQueryStatus != ::QueryStatus::Failed)
+    while (currentQueryStatus != Stopped && currentQueryStatus != Failed)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
         if (++numTimeouts > maxNumberOfTimeoutChecks)
@@ -425,7 +425,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
     auto& rootOperator = decomposedQueryPlan.mutable_operatormap()->at(rootoperator_id);
 
     EXPECT_TRUE(rootOperator.has_sink()) << "Redirection expects the single root operator to be a sink operator";
-    const auto deserializedSinkOperator = OperatorSerializationUtil::deserializeOperator(rootOperator).get<SinkLogicalOperator>();
+    const auto deserializedSinkOperator = NES::Logical::OperatorSerializationUtil::deserializeOperator(rootOperator).get<Logical::SinkOperator>();
     auto descriptor = deserializedSinkOperator.sinkDescriptor;
     if (descriptor->sinkType == Sinks::FileSink::NAME)
     {
@@ -435,7 +435,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
         auto sinkDescriptorUpdated
             = std::make_unique<Sinks::SinkDescriptor>(descriptor->sinkType, std::move(configCopy), descriptor->addTimestamp);
         sinkDescriptorUpdated->schema = deserializedOutputSchema;
-        auto sinkLogicalOperatorUpdated = SinkLogicalOperator(deserializedSinkOperator.sinkName);
+        auto sinkLogicalOperatorUpdated = Logical::SinkOperator(deserializedSinkOperator.sinkName);
         sinkLogicalOperatorUpdated.sinkDescriptor = std::move(sinkDescriptorUpdated);
         sinkLogicalOperatorUpdated.setOutputSchema(deserializedOutputSchema);
         auto serializedOperator = sinkLogicalOperatorUpdated.serialize();
@@ -455,8 +455,8 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
         auto& value = pair.second; /// Note: non-const reference
         if (value.has_source())
         {
-            auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            const auto sourceDescriptor = deserializedSourceOperator.get<SourceDescriptorLogicalOperator>().getSourceDescriptor();
+            auto deserializedSourceOperator = Logical::OperatorSerializationUtil::deserializeOperator(value);
+            const auto sourceDescriptor = deserializedSourceOperator.get<Logical::SourceDescriptorOperator>().getSourceDescriptor();
             if (sourceDescriptor->sourceType == "File")
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
@@ -470,7 +470,7 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, s
                     sourceDescriptor->parserConfig,
                     std::move(configUpdated));
 
-                auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdated))
+                auto sourceDescriptorLogicalOperatorUpdated = Logical::SourceDescriptorOperator(std::move(sourceDescriptorUpdated))
                     .withOutputOriginIds(deserializedSourceOperator.getOutputOriginIds());
                 auto serializedOperator = sourceDescriptorLogicalOperatorUpdated.serialize();
 
@@ -490,8 +490,8 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
         auto& value = pair.second; /// Note: non-const reference
         if (value.has_source())
         {
-            auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            const auto sourceDescriptor = deserializedSourceOperator.get<SourceDescriptorLogicalOperator>().getSourceDescriptor();
+            auto deserializedSourceOperator = Logical::OperatorSerializationUtil::deserializeOperator(value);
+            const auto sourceDescriptor = deserializedSourceOperator.get<Logical::SourceDescriptorOperator>().getSourceDescriptor();
             if (sourceDescriptor->sourceType == "TCP")
             {
                 if (sourceNumber == queryPlanTCPSourceCounter)
@@ -507,7 +507,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
                         sourceDescriptor->parserConfig,
                         std::move(configUpdated));
 
-                    auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdated));
+                    auto sourceDescriptorLogicalOperatorUpdated = Logical::SourceDescriptorOperator(std::move(sourceDescriptorUpdated));
                     auto serializedOperator =   sourceDescriptorLogicalOperatorUpdated
                         .withOutputOriginIds(deserializedSourceOperator.getOutputOriginIds()).serialize();
 
