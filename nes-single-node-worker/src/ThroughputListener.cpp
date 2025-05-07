@@ -89,13 +89,33 @@ void threadRoutine(
     /// across multiple intervals / slices. To accomplish this, we store each TaskExecutionStart in a hash map.
     std::unordered_map<TaskId, TaskIntermediateStore> taskIdToTaskIntermediateStoreMap;
 
-
+    auto startTimeNoEventsTriggered = std::chrono::high_resolution_clock::now();
     while (!token.stop_requested())
     {
         Event event = QueryStart{WorkerThreadId(0), QueryId(0)}; /// Will be overwritten
 
+
+        /// Check if there are any events to handle
         if (!events.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(100), event))
         {
+            /// Check if we have see no event for more than timeIntervalInMilliSeconds. If this is the case, we invoke the callback with a throughput of 0
+            const auto curTimePoint = std::chrono::high_resolution_clock::now();
+            const auto noEventSeenFor = std::chrono::duration_cast<std::chrono::milliseconds>(curTimePoint - startTimeNoEventsTriggered).count();
+            if (noEventSeenFor > static_cast<long>(timeIntervalInMilliSeconds))
+            {
+                /// We call the callback and set the throughput to 0 and create a window of the current time
+                const auto curTime = convertToTimeStamp(curTimePoint);
+                const auto windowStart = sliceAssigner.getSliceStartTs(curTime);
+                const auto windowEnd = sliceAssigner.getSliceEndTs(curTime);
+                const ThroughputListener::CallBackParams callbackParams
+                    = {.queryId = INVALID_QUERY_ID,
+                       .windowStart = windowStart,
+                       .windowEnd = windowEnd,
+                       .throughputInBytesPerSec = 0,
+                       .throughputInTuplesPerSec = 0};
+                callBack(callbackParams);
+                startTimeNoEventsTriggered = curTimePoint;
+            }
             continue;
         }
         std::visit(
@@ -167,6 +187,9 @@ void threadRoutine(
 
                             /// Removing the window, as we do not need it anymore
                             it = endTimeAndThroughputWindow.erase(it);
+
+                            /// Resetting the startTimeNoEventsTriggered
+                            startTimeNoEventsTriggered = std::chrono::high_resolution_clock::now();
                         }
                     }
                 },
