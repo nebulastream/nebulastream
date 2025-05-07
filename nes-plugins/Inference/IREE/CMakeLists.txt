@@ -17,3 +17,6 @@ add_plugin(ArgMax PhysicalFunction nes-physical-operators ArgMaxExecutableFuncti
 
 add_plugin(MaxValue LogicalFunction nes-logical-operators MaxValueLogicalFunction.cpp)
 add_plugin(MaxValue PhysicalFunction nes-physical-operators MaxValueExecutableFunction.cpp)
+
+add_plugin(iris_label LogicalFunction nes-logical-operators IrisLabelLogicalFunction.cpp)
+add_plugin(iris_label PhysicalFunction nes-physical-operators IrisLabelExecutableFunction.cpp)

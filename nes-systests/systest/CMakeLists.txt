@@ -58,6 +58,9 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
+set(SMALL_DATA DATA{../testdata/,RECURSE:,REGEX:small.*|model.*})
+set(LARGE_DATA DATA{../testdata/,RECURSE:,REGEX:large.*})
+
 # Add code coverage if enabled
 if (CODE_COVERAGE)
     target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage PUBLIC AUTO ALL ARGS -n 20 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.query_engine.task_queue_size=100000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --enable_google_eventTrace=true)
