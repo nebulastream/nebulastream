@@ -7,13 +7,18 @@
   "builtin-baseline": "16e7a3eb109cde6115b1b5126449dfdf72341dfb",
   "$comment": [
     "BEWARE: changing the baseline might change the expected ANTLR_VERSION",
-    "        supplied to cmake by the antlr4 dependency." ,
+    "        supplied to cmake by the antlr4 dependency.",
     "        This in turn requires changing the version of the antlr jar that",
     "        is fetched by cmake or baked into the dev docker image.",
     "        (c.f. nes-sql-parser/CMakeLists.txt)"
   ],
-
   "features": {
+    "mqtt": {
+      "description": "enables mqtt sources and sinks",
+      "dependencies": [
+        "paho-mqttpp3"
+      ]
+    },
     "mlir": {
       "description": "nautilus mlir backend",
       "dependencies": [
@@ -42,5 +47,8 @@
     "replxx",
     "spdlog",
     "yaml-cpp"
+  ],
+  "default-features": [
+    "mqtt"
   ]
 }
