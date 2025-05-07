@@ -351,6 +351,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                                                                                       coordinatorConfiguration,
                                                                                       queryCatalog,
                                                                                       deploymentPhase);
+        NES_ERROR("Initial GlobalExecutionPlan: \n {}", globalExecutionPlan->getAsString());
         placementAmendmentHandler->enqueueRequest(amendmentInstance);
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());

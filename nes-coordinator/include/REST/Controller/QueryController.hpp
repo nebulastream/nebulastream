@@ -187,6 +187,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
                       userQuery,
                       placementStrategyString);
             QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement);
+            // NES_ERROR("{}", globalExecutionPlan->getAsString())
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
