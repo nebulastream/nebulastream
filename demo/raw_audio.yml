@@ -1,0 +1,26 @@
+query: |
+  SELECT * FROM audio_stream INTO csv_sink
+sink:
+  name: csv_sink
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "/tmp/out.csv"
+    append: false
+logical:
+  - name: audio_stream
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: value
+        type: FLOAT32
+physical:
+  - logical: audio_stream
+    parserConfig:
+      type: Raw
+    sourceConfig:
+      type: Audio
+      socketPort: 65432
+      socketHost: localhost
+      sampleRate: 16000
+      sampleWidth: 2
