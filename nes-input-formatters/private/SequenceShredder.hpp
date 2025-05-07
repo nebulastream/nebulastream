@@ -118,6 +118,8 @@ namespace NES::InputFormatters
           the thread doubles the size of the ring buffer.
 */
 
+/// A staged buffer represents a raw buffer that we know the first and last tuple delimiter off.
+/// Thus, the SequenceShredder can determine the spanning tuple(s) starting/ending in or containing the StagedBuffer.
 struct StagedBuffer
 {
 private:
@@ -150,7 +152,7 @@ public:
     [[nodiscard]] std::string_view getTrailingBytes(const size_t sizeOfTupleDelimiter) const
     {
         const auto sizeOfTrailingSpanningTuple = sizeOfBufferInBytes - (offsetOfLastTupleDelimiter + sizeOfTupleDelimiter);
-        const auto startOfTrailingSpanningTuple = (not isValidRawBuffer()) ? 0 : offsetOfLastTupleDelimiter + sizeOfTupleDelimiter;
+        const auto startOfTrailingSpanningTuple = offsetOfLastTupleDelimiter + sizeOfTupleDelimiter;
         return rawBuffer.getBufferView().substr(startOfTrailingSpanningTuple, sizeOfTrailingSpanningTuple);
     }
 

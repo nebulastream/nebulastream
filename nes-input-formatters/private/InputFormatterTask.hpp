@@ -63,6 +63,105 @@ inline void setMetadataOfFormattedBuffer(
     formattedBuffer.setOriginId(rawBuffer.getOriginId());
 }
 
+/// Given that we know the number of tuples in a raw buffer, the number of (spanning) tuples that we already wrote into our current formatted
+/// buffer and the max number of tuples that fit into a formatted buffer (given a schema), we can precisely calculate how many formatted buffers
+/// we need to store all tuples from the raw buffer.
+inline size_t calculateNumberOfRequiredFormattedBuffers(
+    const size_t totalNumberOfTuplesInRawBuffer, const size_t numberOfTuplesInFirstFormattedBuffer, const size_t numberOfTuplesPerBuffer)
+{
+    const auto capacityOfFirstBuffer
+        = std::min(numberOfTuplesPerBuffer - numberOfTuplesInFirstFormattedBuffer, totalNumberOfTuplesInRawBuffer);
+    const auto numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer = totalNumberOfTuplesInRawBuffer - capacityOfFirstBuffer;
+    /// We need at least one (first) formatted buffer. We need additional buffers if we have leftover raw tuples.
+    /// Overflow-safe calculation of ceil taken from (https://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c)
+    /// 1 + ceil(numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer / numberOfTuplesPerBuffer)
+    const auto numberOfBuffersToFill = 1
+        + ((numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer % numberOfTuplesPerBuffer != 0u)
+               ? (numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer / numberOfTuplesPerBuffer) + 1
+               : numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer / numberOfTuplesPerBuffer);
+    return numberOfBuffersToFill;
+}
+
+/// Takes a view over the raw bytes of a tuple, and a fieldAccessFunction that knows the field offsets in the raw bytes of the tuple.
+/// Iterates over all fields of the tuple and parses each field using the corresponding 'parse function'.
+template <typename FieldAccessFunctionType>
+void processTuple(
+    const std::string_view tupleView,
+    const FieldAccessFunction<FieldAccessFunctionType>& fieldAccessFunction,
+    const size_t numTuplesReadFromRawBuffer,
+    Memory::TupleBuffer& formattedBuffer,
+    const TupleMetaData& tupleMetaData,
+    const std::vector<RawInputDataParser::ParseFunctionSignature>& parseFunctions,
+    Memory::AbstractBufferProvider& bufferProvider /// for getting unpooled buffers for varsized data
+)
+{
+    const size_t currentTupleIdx = formattedBuffer.getNumberOfTuples();
+    const size_t offsetOfCurrentTupleInBytes = currentTupleIdx * tupleMetaData.sizeOfTupleInBytes;
+    size_t offsetOfCurrentFieldInBytes = 0;
+
+    /// Currently, we still allow only row-wise writing to the formatted buffer
+    /// This will will change with #496, which implements the InputFormatterTask in Nautilus
+    /// The InputFormatterTask then becomes part of a pipeline with a scan/emit phase and has access to the MemoryProvider
+    for (size_t fieldIndex = 0; fieldIndex < tupleMetaData.fieldSizesInBytes.size(); ++fieldIndex)
+    {
+        /// Get the current field, parse it, and write it to the correct position in the formatted buffer
+        const auto currentFieldSV = fieldAccessFunction.readFieldAt(tupleView, numTuplesReadFromRawBuffer, fieldIndex);
+        const auto writeOffsetInBytes = offsetOfCurrentTupleInBytes + offsetOfCurrentFieldInBytes;
+        parseFunctions[fieldIndex](currentFieldSV, writeOffsetInBytes, bufferProvider, formattedBuffer);
+
+        /// Add the size of the current field to the running offset to get the offset of the next field
+        const auto sizeOfCurrentFieldInBytes = tupleMetaData.fieldSizesInBytes[fieldIndex];
+        offsetOfCurrentFieldInBytes += sizeOfCurrentFieldInBytes;
+    }
+}
+
+/// Constructs a spanning tuple (string) that spans over at least two buffers (buffersToFormat).
+/// First, determines the start of the spanning tuple in the first buffer to format. Constructs a spanning tuple from the required bytes.
+/// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
+/// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
+/// Lastly, formats the full spanning tuple.
+template <typename FieldAccessFunctionType, bool UsesNativeFormat>
+void processSpanningTuple(
+    const std::span<const StagedBuffer> stagedBuffersSpan,
+    Memory::AbstractBufferProvider& bufferProvider,
+    Memory::TupleBuffer& formattedBuffer,
+    const TupleMetaData& tupleMetaData,
+    const InputFormatter<FieldAccessFunctionType, UsesNativeFormat>& inputFormatter,
+    const std::vector<RawInputDataParser::ParseFunctionSignature>& parseFunctions)
+{
+    INVARIANT(stagedBuffersSpan.size() >= 2, "A spanning tuple must span across at least two buffers");
+    /// If the buffers are not empty, there are at least three buffers
+    std::stringstream spanningTupleStringStream;
+    spanningTupleStringStream << tupleMetaData.tupleDelimiter;
+
+    auto firstBuffer = stagedBuffersSpan.front();
+    const auto firstSpanningTuple
+        = (firstBuffer.isValidRawBuffer()) ? firstBuffer.getTrailingBytes(tupleMetaData.tupleDelimiter.size()) : "";
+    spanningTupleStringStream << firstSpanningTuple;
+
+    /// Process all buffers in-between the first and the last
+    for (const auto middleBuffers = stagedBuffersSpan | std::views::drop(1) | std::views::take(stagedBuffersSpan.size() - 2);
+         const auto& buffer : middleBuffers)
+    {
+        spanningTupleStringStream << buffer.getBufferView();
+    }
+
+    auto lastBuffer = stagedBuffersSpan.back();
+    spanningTupleStringStream << lastBuffer.getLeadingBytes();
+    spanningTupleStringStream << tupleMetaData.tupleDelimiter;
+
+    const std::string completeSpanningTuple(spanningTupleStringStream.str());
+    const auto sizeOfLeadingAndTrailingTupleDelimiter = 2 * tupleMetaData.tupleDelimiter.size();
+    if (completeSpanningTuple.size() > sizeOfLeadingAndTrailingTupleDelimiter)
+    {
+        auto fieldAccessFunction = FieldAccessFunctionType(bufferProvider);
+        lastBuffer.setSpanningTuple(completeSpanningTuple);
+        inputFormatter.setupFieldAccessFunctionForBuffer(fieldAccessFunction, lastBuffer.getRawTupleBuffer(), tupleMetaData);
+        processTuple<FieldAccessFunctionType>(
+            completeSpanningTuple, fieldAccessFunction, 0, formattedBuffer, tupleMetaData, parseFunctions, bufferProvider);
+        formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
+    }
+}
 
 /// InputFormatterTasks concurrently take (potentially) raw input buffers and format all full tuples in these raw input buffers that the
 /// individual InputFormatterTasks see during execution.
@@ -170,7 +269,8 @@ public:
     }
 
     /// @Note: throws CannotAccessBuffer exception if the copy is out of bounds of the formatted buffer
-    void copyWithBoundsCheck(const std::string_view rawBufferBytes, Memory::TupleBuffer formattedBuffer, const size_t formattedBufferOffset)
+    static void
+    copyWithBoundsCheck(const std::string_view rawBufferBytes, Memory::TupleBuffer formattedBuffer, const size_t formattedBufferOffset)
     {
         if (formattedBufferOffset + rawBufferBytes.size() >= formattedBuffer.getBufferSize())
         {
@@ -344,23 +444,6 @@ private:
     std::vector<RawInputDataParser::ParseFunctionSignature> parseFunctions;
     TupleMetaData tupleMetaData;
 
-    static size_t calculateNumberOfRequiredFormattedBuffers(
-        const size_t totalNumberOfTuplesInRawBuffer,
-        const size_t numberOfTuplesInFirstFormattedBuffer,
-        const size_t numberOfTuplesPerBuffer)
-    {
-        const auto capacityOfFirstBuffer
-            = std::min(numberOfTuplesPerBuffer - numberOfTuplesInFirstFormattedBuffer, totalNumberOfTuplesInRawBuffer);
-        const auto numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer = totalNumberOfTuplesInRawBuffer - capacityOfFirstBuffer;
-        /// We need at least one (first) formatted buffer. We need additional buffers if we have leftover raw tuples.
-        /// Overflow-safe calculation of ceil taken from (https://stackoverflow.com/questions/2745074/fast-ceiling-of-an-integer-division-in-c-c)
-        /// 1 + ceil(numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer / numberOfTuplesPerBuffer)
-        const auto numberOfBuffersToFill = 1
-            + ((numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer % numberOfTuplesPerBuffer != static_cast<uint32_t>(0))
-                   ? (numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer / numberOfTuplesPerBuffer) + 1
-                   : numberOfTuplesThatDoNotFitIntoFirstFormattedBuffer / numberOfTuplesPerBuffer);
-        return numberOfBuffersToFill;
-    }
     /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
     /// Iterates over all full tuples, using the indexes in FieldOffsets and parses the tuples into formatted data.
     void parseRawBuffer(
@@ -402,7 +485,14 @@ private:
             /// Fill current buffer until either full, or we exhausted tuples in raw buffer
             while (formattedBuffer.getNumberOfTuples() < numberOfTuplesToRead)
             {
-                processTuple(rawBuffer.getBufferView(), numTuplesReadFromRawBuffer, fieldAccessFunction, *bufferProvider, formattedBuffer);
+                processTuple<FieldAccessFunctionType>(
+                    rawBuffer.getBufferView(),
+                    fieldAccessFunction,
+                    numTuplesReadFromRawBuffer,
+                    formattedBuffer,
+                    this->tupleMetaData,
+                    this->parseFunctions,
+                    *bufferProvider);
                 formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
                 ++numTuplesReadFromRawBuffer;
             }
@@ -434,7 +524,8 @@ private:
         if (/* hasLeadingSpanningTuple */ indexOfSequenceNumberInStagedBuffers != 0)
         {
             const auto spanningTupleBuffers = std::span(stagedBuffers).subspan(0, indexOfSequenceNumberInStagedBuffers + 1);
-            processSpanningTuple(spanningTupleBuffers, *bufferProvider, formattedBuffer);
+            processSpanningTuple<FieldAccessFunctionType, FormatterType::UsesNativeFormat>(
+                spanningTupleBuffers, *bufferProvider, formattedBuffer, this->tupleMetaData, *this->inputFormatter, this->parseFunctions);
         }
 
         /// 2. process tuples in buffer
@@ -459,7 +550,8 @@ private:
             const auto spanningTupleBuffers
                 = std::span(stagedBuffers)
                       .subspan(indexOfSequenceNumberInStagedBuffers, stagedBuffers.size() - indexOfSequenceNumberInStagedBuffers);
-            processSpanningTuple(spanningTupleBuffers, *bufferProvider, formattedBuffer);
+            processSpanningTuple<FieldAccessFunctionType, FormatterType::UsesNativeFormat>(
+                spanningTupleBuffers, *bufferProvider, formattedBuffer, this->tupleMetaData, *this->inputFormatter, this->parseFunctions);
         }
         /// If a raw buffer contains exactly one delimiter, but does not complete a spanning tuple, the formatted buffer does not contain a tuple
         if (formattedBuffer.getNumberOfTuples() != 0)
@@ -493,81 +585,13 @@ private:
         }
         /// If there is a spanning tuple, get a new buffer for formatted data and process the spanning tuples
         auto formattedBuffer = bufferProvider->getBufferBlocking();
-        processSpanningTuple(stagedBuffers, *bufferProvider, formattedBuffer);
+        processSpanningTuple<FieldAccessFunctionType, FormatterType::UsesNativeFormat>(
+            stagedBuffers, *bufferProvider, formattedBuffer, this->tupleMetaData, *this->inputFormatter, this->parseFunctions);
 
         formattedBuffer.setSequenceNumber(rawBuffer.getSequenceNumber());
         formattedBuffer.setChunkNumber(NES::ChunkNumber(runningChunkNumber++));
         formattedBuffer.setOriginId(rawBuffer.getOriginId());
         pec.emitBuffer(formattedBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-    }
-
-    /// Constructs a spanning tuple (string) that spans over at least two buffers (buffersToFormat).
-    /// First, determines the start of the spanning tuple in the first buffer to format. Constructs a spanning tuple from the required bytes.
-    /// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
-    /// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
-    /// Lastly, formats the full spanning tuple.
-    void processSpanningTuple(
-        const std::span<const StagedBuffer> spanningTupleSpan,
-        Memory::AbstractBufferProvider& bufferProvider,
-        Memory::TupleBuffer& formattedBuffer) const
-    {
-        INVARIANT(spanningTupleSpan.size() >= 2, "A spanning tuple must span across at least two buffers");
-        /// If the buffers are not empty, there are at least three buffers
-        std::stringstream spanningTupleStringStream;
-        spanningTupleStringStream << this->tupleMetaData.tupleDelimiter;
-
-        auto firstBuffer = spanningTupleSpan.front();
-        const auto firstSpanningTuple = firstBuffer.getTrailingBytes(this->tupleMetaData.tupleDelimiter.size());
-        spanningTupleStringStream << firstSpanningTuple;
-
-        /// Process all buffers in-between the first and the last
-        for (const auto middleBuffers = spanningTupleSpan | std::views::drop(1) | std::views::take(spanningTupleSpan.size() - 2);
-             const auto& buffer : middleBuffers)
-        {
-            spanningTupleStringStream << buffer.getBufferView();
-        }
-
-        auto lastBuffer = spanningTupleSpan.back();
-        spanningTupleStringStream << lastBuffer.getLeadingBytes();
-        spanningTupleStringStream << this->tupleMetaData.tupleDelimiter;
-
-        const std::string completeSpanningTuple(spanningTupleStringStream.str());
-        const auto sizeOfLeadingAndTrailingTupleDelimiter = 2 * this->tupleMetaData.tupleDelimiter.size();
-        if (completeSpanningTuple.size() > sizeOfLeadingAndTrailingTupleDelimiter)
-        {
-            auto fieldAccessFunction = FieldAccessFunctionType(bufferProvider);
-            lastBuffer.setSpanningTuple(completeSpanningTuple);
-            inputFormatter->setupFieldAccessFunctionForBuffer(fieldAccessFunction, lastBuffer.getRawTupleBuffer(), this->tupleMetaData);
-            processTuple(completeSpanningTuple, 0, fieldAccessFunction, bufferProvider, formattedBuffer);
-            formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
-        }
-    }
-
-    void processTuple(
-        const std::string_view bufferView,
-        const size_t numTuplesReadFromRawBuffer,
-        const FieldAccessFunction<FieldAccessFunctionType>& fieldAccessFunction,
-        Memory::AbstractBufferProvider& bufferProvider,
-        Memory::TupleBuffer& formattedBuffer) const
-    {
-        const size_t currentTupleIdx = formattedBuffer.getNumberOfTuples();
-        const size_t offsetOfCurrentTupleInBytes = currentTupleIdx * this->tupleMetaData.sizeOfTupleInBytes;
-        size_t offsetOfCurrentFieldInBytes = 0;
-
-        /// Currently, we still allow only row-wise writing to the formatted buffer
-        /// This will will change with #496, which implements the InputFormatterTask in Nautilus
-        /// The InputFormatterTask then becomes part of a pipeline with a scan/emit phase and has access to the MemoryProvider
-        for (size_t fieldIndex = 0; fieldIndex < this->tupleMetaData.fieldSizesInBytes.size(); ++fieldIndex)
-        {
-            /// Get the current field, parse it, and write it to the correct position in the formatted buffer
-            const auto currentFieldSV = fieldAccessFunction.readFieldAt(bufferView, numTuplesReadFromRawBuffer, fieldIndex);
-            const auto writeOffsetInBytes = offsetOfCurrentTupleInBytes + offsetOfCurrentFieldInBytes;
-            parseFunctions[fieldIndex](currentFieldSV, writeOffsetInBytes, bufferProvider, formattedBuffer);
-
-            /// Add the size of the current field to the running offset to get the offset of the next field
-            const auto sizeOfCurrentFieldInBytes = this->tupleMetaData.fieldSizesInBytes[fieldIndex];
-            offsetOfCurrentFieldInBytes += sizeOfCurrentFieldInBytes;
-        }
     }
 };
 

@@ -14,10 +14,15 @@
 
 #pragma once
 
-#include <cstddef> /// size_t
+#include <cstddef>
 #include <string_view>
+#include <vector>
+
+#include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp> /// FieldOffsetType
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <RawInputDataParser.hpp>
 
 namespace NES::InputFormatters
 {
@@ -32,6 +37,17 @@ class FieldAccessFunction
     /// Expose the FieldAccessFunction interface functions only to the InputFormatterTask
     template <typename FormatterType, typename FieldAccessFunctionType, bool HasSpanningTuple>
     friend class InputFormatterTask;
+
+    /// Allows the free function 'processTuple' to access the protected 'readFieldAt' function
+    template <typename FieldAccessFunctionType>
+    friend void processTuple(
+        std::string_view bufferView,
+        const FieldAccessFunction<FieldAccessFunctionType>& fieldAccessFunction,
+        size_t numTuplesReadFromRawBuffer,
+        Memory::TupleBuffer& formattedBuffer,
+        const TupleMetaData& tupleMetaData,
+        const std::vector<RawInputDataParser::ParseFunctionSignature>& parseFunctions,
+        Memory::AbstractBufferProvider& bufferProvider);
 
 protected:
     FieldAccessFunction()
