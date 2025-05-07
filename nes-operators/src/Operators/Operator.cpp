@@ -141,9 +141,8 @@ bool Operator::addChild(const std::shared_ptr<Node>& newNode)
     }
 
     std::vector<std::shared_ptr<Node>> currentChildren = getChildren();
-    const auto found = std::find_if(
-        currentChildren.begin(),
-        currentChildren.end(),
+    const auto found = std::ranges::find_if(
+        currentChildren,
         [&](const std::shared_ptr<Node>& child)
         { return NES::Util::as<Operator>(child)->getId() == NES::Util::as<Operator>(newNode)->getId(); });
 

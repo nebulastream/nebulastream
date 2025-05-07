@@ -200,10 +200,8 @@ void QueryPlan::setQueryId(QueryId queryId)
 void QueryPlan::addRootOperator(const std::shared_ptr<Operator>& newRootOperator)
 {
     ///Check if a root with the id already present
-    auto found = std::find_if(
-        rootOperators.begin(),
-        rootOperators.end(),
-        [&](const std::shared_ptr<Operator>& root) { return newRootOperator->getId() == root->getId(); });
+    auto found = std::ranges::find_if(
+        rootOperators, [&](const std::shared_ptr<Operator>& root) { return newRootOperator->getId() == root->getId(); });
 
     /// If not present then add it
     if (found == rootOperators.end())
@@ -219,10 +217,8 @@ void QueryPlan::addRootOperator(const std::shared_ptr<Operator>& newRootOperator
 void QueryPlan::removeAsRootOperator(std::shared_ptr<Operator> root)
 {
     NES_DEBUG("QueryPlan: removing operator {} as root operator.", *root);
-    auto found = std::find_if(
-        rootOperators.begin(),
-        rootOperators.end(),
-        [&](const std::shared_ptr<Operator>& rootOperator) { return rootOperator->getId() == root->getId(); });
+    auto found = std::ranges::find_if(
+        rootOperators, [&](const std::shared_ptr<Operator>& rootOperator) { return rootOperator->getId() == root->getId(); });
     if (found != rootOperators.end())
     {
         NES_DEBUG(
@@ -404,10 +400,8 @@ std::set<std::shared_ptr<Operator>> QueryPlan::findOperatorsBetweenSourceAndTarg
     const std::shared_ptr<Operator>& sourceOperator, const std::set<std::shared_ptr<Operator>>& targetOperators)
 {
     ///Find if downstream operator is also in the vector of target operators
-    auto found = std::find_if(
-        targetOperators.begin(),
-        targetOperators.end(),
-        [&](const auto& upstreamOperator) { return upstreamOperator->getId() == sourceOperator->getId(); });
+    auto found = std::ranges::find_if(
+        targetOperators, [&](const auto& upstreamOperator) { return upstreamOperator->getId() == sourceOperator->getId(); });
 
     ///If downstream operator is in the list of target operators then return the operator
     if (found != targetOperators.end())

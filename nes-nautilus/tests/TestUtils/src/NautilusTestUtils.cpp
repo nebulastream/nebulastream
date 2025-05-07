@@ -115,7 +115,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     const auto createShuffledVector = [seed](const uint64_t n)
     {
         std::vector<uint64_t> vec(n);
-        std::iota(vec.begin(), vec.end(), 0);
+        std::iota(vec.begin(), vec.end(), 0); /// NOLINT(modernize-use-ranges) as libcxx does not have ranges::iota
         std::ranges::shuffle(vec, std::default_random_engine(seed));
         return vec;
     };

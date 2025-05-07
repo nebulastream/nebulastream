@@ -136,7 +136,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadReversSequentialUpdaterTest
             std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), INITIAL<ChunkNumber>, true}, /*ts*/ i));
     }
     /// reverse updates
-    std::reverse(watermarkBarriers.begin(), watermarkBarriers.end());
+    std::ranges::reverse(watermarkBarriers);
 
     for (auto i = 0_u64; i < updates - 1; i++)
     {

@@ -21,7 +21,7 @@ namespace NES::Configurations
 bool BooleanValidation::isValid(const std::string& parameter) const
 {
     std::string lowerParam = parameter;
-    std::transform(lowerParam.begin(), lowerParam.end(), lowerParam.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::ranges::transform(lowerParam, lowerParam.begin(), [](unsigned char c) { return std::tolower(c); });
 
     return lowerParam == "true" || lowerParam == "false" || lowerParam == "1" || lowerParam == "0";
 }

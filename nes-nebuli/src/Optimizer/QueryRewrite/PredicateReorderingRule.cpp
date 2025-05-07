@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -48,17 +49,15 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
                 const std::vector<std::shared_ptr<Node>> filterChainParents = consecutiveFilters.front()->getParents();
                 const std::vector<std::shared_ptr<Node>> filterChainChildren = consecutiveFilters.back()->getChildren();
                 NES_TRACE("PredicateReorderingRule: If the filters are already sorted, no change is needed");
-                auto already_sorted = std::is_sorted(
-                    consecutiveFilters.begin(),
-                    consecutiveFilters.end(),
+                auto already_sorted = std::ranges::is_sorted(
+                    consecutiveFilters,
                     [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
                     { return lhs->getSelectivity() < rhs->getSelectivity(); });
                 if (!already_sorted)
                 {
                     NES_TRACE("PredicateReorderingRule: Sort all filter nodes in increasing order of selectivity");
-                    std::sort(
-                        consecutiveFilters.begin(),
-                        consecutiveFilters.end(),
+                    std::ranges::sort(
+                        consecutiveFilters,
                         [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
                         { return lhs->getSelectivity() < rhs->getSelectivity(); });
                     NES_TRACE("PredicateReorderingRule: Start re-writing the new query plan");
