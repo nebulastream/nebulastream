@@ -29,6 +29,7 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionConstantValueVariableSize final : public Function
 {
 public:
+    explicit ExecutableFunctionConstantValueVariableSize(std::string_view value);
     explicit ExecutableFunctionConstantValueVariableSize(const int8_t* value, size_t size);
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
