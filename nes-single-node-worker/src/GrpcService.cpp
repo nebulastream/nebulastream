@@ -21,6 +21,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/Strings.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/empty.pb.h>
@@ -36,7 +37,7 @@ grpc::Status handleError(const std::exception& exception, grpc::ServerContext* c
 {
     context->AddTrailingMetadata("code", std::to_string(ErrorCode::UnknownException));
     context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", cpptrace::from_current_exception().to_string());
+    context->AddTrailingMetadata("trace", Util::replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
     return {grpc::INTERNAL, exception.what()};
 }
 
@@ -44,7 +45,7 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
 {
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
     context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", exception.trace().to_string());
+    context->AddTrailingMetadata("trace", Util::replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
     return {grpc::INTERNAL, exception.what()};
 }
 
