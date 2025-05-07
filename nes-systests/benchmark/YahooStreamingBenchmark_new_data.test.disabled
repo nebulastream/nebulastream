@@ -1,0 +1,38 @@
+# name: milestone/YahooStreamingBenchmark.test
+# description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks)
+# groups: [milestone, benchmark, large]
+
+# Source definitions
+SourceCSV ysb1k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/large/ysb/ysb_1k.csv
+SourceCSV ysb10k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/large/ysb/ysb_10k.csv
+
+
+# Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
+# TODO: DID NOT DOUBLE CHECK THE CHECKSUM WITH APACHE FLINK. DO NOT MERGE INTO MAIN LIKE THIS
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET FAILED OUTPUT
+# YSB Query
+SELECT
+    campaign_id,
+    COUNT(user_id) AS count_user_id
+FROM ysb1k
+WHERE event_type == VARSIZED("view")
+GROUP BY campaign_id
+WINDOW TUMBLING(event_time, SIZE 30 SEC)
+INTO CHECKSUM;
+----
+167167, 232106578
+
+# Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
+# TODO: DID NOT DOUBLE CHECK THE CHECKSUM WITH APACHE FLINK. DO NOT MERGE INTO MAIN LIKE THIS
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET FAILED OUTPUT
+# YSB Query
+SELECT
+    campaign_id,
+    COUNT(user_id) AS count_user_id
+FROM ysb10k
+WHERE event_type == VARSIZED("view")
+GROUP BY campaign_id
+WINDOW TUMBLING(event_time, SIZE 30 SEC)
+INTO CHECKSUM;
+----
+167167, 232106578

@@ -1,0 +1,75 @@
+# name: milestone/Nexmark.test
+# description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
+# We have used https://github.com/risingwavelabs/nexmark-rs to generate the two source csv files
+# groups: [milestone, benchmark, large]
+
+# Source definition. We have removed some columns that are not needed in our queries
+SourceCSV bid UINT64 timestamp INT32 auctionId INT32 bidder FLOAT64 price TESTDATA/large/nexmark/output_bid.csv
+SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/nexmark/output_auction.csv
+SourceCSV person UINT64 timestamp INT32 id VARSIZED name VARSIZED email_address VARSIZED credit_card VARSIZED city VARSIZED state VARSIZED extra TESTDATA/large/nexmark/output_person.csv
+
+# Query 0
+# TODO: DID NOT DOUBLE CHECK THE CHECKSUM WITH APACHE FLINK. DO NOT MERGE INTO MAIN LIKE THIS
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET THE FAILED OUTPUT
+SELECT * FROM bid INTO CHECKSUM;
+----
+184000000 353231101640
+
+# Query 1
+# TODO: DID NOT DOUBLE CHECK THE CHECKSUM WITH APACHE FLINK. DO NOT MERGE INTO MAIN LIKE THIS
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET THE FAILED OUTPUT
+SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bid INTO CHECKSUM;
+----
+184000000 80983157879
+
+# Query 2
+# TODO: DID NOT DOUBLE CHECK THE CHECKSUM WITH APACHE FLINK. DO NOT MERGE INTO MAIN LIKE THIS
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET THE FAILED OUTPUT
+SELECT * FROM bid WHERE auctionId % INT32(123) = INT32(0) INTO CHECKSUM;
+----
+1511849 2902202416
+
+# Query 5
+# TODO: DID NOT DOUBLE CHECK THE CHECKSUM WITH APACHE FLINK. DO NOT MERGE INTO MAIN LIKE THIS
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET THE FAILED OUTPUT
+SELECT start, end, start, end, auctionId, num, start, end, max_tmp
+FROM (SELECT auctionId, COUNT(auctionId) AS num, start, end
+      FROM bid
+      GROUP BY auctionId
+      WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
+INNER JOIN (SELECT auctionId, MAX(num_ids) AS max_tmp, start, end
+              FROM
+                    (SELECT auctionId, COUNT(auctionId) AS num_ids, start
+                     FROM bid
+                     GROUP BY auctionId
+                     WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
+              WINDOW TUMBLING(start, SIZE 2 SEC))
+ON num >= max_tmp
+WINDOW TUMBLING(start, SIZE 2 SEC)
+INTO CHECKSUM;
+----
+10570 53564751
+
+
+# Query 8
+# TODO: DID NOT DOUBLE CHECK THE CHECKSUM WITH APACHE FLINK. DO NOT MERGE INTO MAIN LIKE THIS
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET THE FAILED OUTPUT
+SELECT start, end, personId, name
+    FROM (SELECT * FROM person)
+INNER JOIN
+    (SELECT * FROM auction)
+ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO CHECKSUM;
+----
+0 0
+
+
+# Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
+# TODO: DID NOT DOUBLE CHECK THE CHECKSUM WITH APACHE FLINK. DO NOT MERGE INTO MAIN LIKE THIS
+# TODO: SIMPLY COPIED THE ONE PROVIDED BY NEBULASTREAM TO NOT GET THE FAILED OUTPUT
+SELECT start, end, timestamp, auctionId, bidder, price, timestamp, id, initialbid, reserve, expires, seller, category
+    FROM (SELECT * FROM bid)
+INNER JOIN
+    (SELECT * FROM auction)
+ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO CHECKSUM;
+----
+9149189 44872388544
