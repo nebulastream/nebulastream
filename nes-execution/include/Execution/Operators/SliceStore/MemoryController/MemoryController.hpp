@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <map>
 #include <Execution/Operators/SliceStore/FileDescriptor/FileDescriptors.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Util/Execution.hpp>

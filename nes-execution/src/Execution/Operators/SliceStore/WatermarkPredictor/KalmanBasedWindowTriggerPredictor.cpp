@@ -27,7 +27,7 @@ KalmanWindowTriggerPredictor::KalmanWindowTriggerPredictor(const uint64_t initia
 
 void KalmanWindowTriggerPredictor::update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data)
 {
-    std::lock_guard const lock(mtx);
+    const std::lock_guard lock(mtx);
     for (const auto& [timestamp, watermark] : data)
     {
         const auto dx = timestamp - lastX;
@@ -54,7 +54,7 @@ void KalmanWindowTriggerPredictor::update(const std::vector<std::pair<uint64_t, 
 
 Timestamp KalmanWindowTriggerPredictor::getEstimatedWatermark(const uint64_t timestamp) const
 {
-    std::lock_guard const lock(mtx);
+    const std::lock_guard lock(mtx);
     if (!init)
     {
         return Timestamp(initial);

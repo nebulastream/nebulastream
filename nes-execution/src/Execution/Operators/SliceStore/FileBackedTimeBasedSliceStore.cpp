@@ -357,7 +357,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     }
 
     /// 2. We gather all slices if they are not used in any window that has not been triggered/can not be deleted yet
-    for (auto slicesLockedIt = slicesWriteLocked->cbegin(); slicesLockedIt != slicesWriteLocked->cend();)
+    for (auto slicesLockedIt = slicesWriteLocked->begin(); slicesLockedIt != slicesWriteLocked->end();)
     {
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
         if (sliceEnd + sliceAssigner.getWindowSize() < newGlobalWaterMark)
@@ -366,7 +366,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
             memoryController->deleteSliceFiles(sliceEnd);
             slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Left}));
             slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Right}));
-            slicesWriteLocked->erase(slicesLockedIt++);
+            slicesLockedIt = slicesWriteLocked->erase(slicesLockedIt);
         }
         else
         {
