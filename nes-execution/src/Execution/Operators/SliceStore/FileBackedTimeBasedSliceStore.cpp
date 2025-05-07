@@ -21,6 +21,7 @@
 #include <vector>
 #include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
+#include <Execution/Operators/SliceStore/WatermarkPredictor/KalmanBasedWindowTriggerPredictor.hpp>
 #include <Execution/Operators/SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
@@ -49,6 +50,10 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     {
         switch (watermarkPredictorInfo.type)
         {
+            case KalmanBased: {
+                watermarkPredictors.emplace(origin, std::make_shared<KalmanWindowTriggerPredictor>(watermarkPredictorInfo.initial));
+                break;
+            }
             case RegressionBased: {
                 watermarkPredictors.emplace(
                     origin,

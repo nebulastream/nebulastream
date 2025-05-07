@@ -23,6 +23,7 @@ namespace NES::Runtime::Execution
 
 enum WatermarkPredictorType : uint8_t
 {
+    KalmanBased,
     RegressionBased
 };
 

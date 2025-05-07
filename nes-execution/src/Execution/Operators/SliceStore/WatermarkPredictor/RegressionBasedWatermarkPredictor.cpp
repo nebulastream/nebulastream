@@ -25,6 +25,11 @@ RegressionBasedWatermarkPredictor::RegressionBasedWatermarkPredictor(const uint6
 void RegressionBasedWatermarkPredictor::update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data)
 {
     const auto n = data.size();
+    if (n < 1)
+    {
+        return;
+    }
+
     Eigen::MatrixXd X(n, degree + 1);
     Eigen::VectorXd y(n);
 
