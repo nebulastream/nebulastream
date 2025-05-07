@@ -168,7 +168,7 @@ jobs:
           ref: ${{ inputs.ref }}
       - name: Build and Run Log Level Tests
         run: |
-          for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR; do
+          for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR FATAL_ERROR LEVEL_NONE; do
             echo "Running tests with log level: $LOG_LEVEL"
             cmake -GNinja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=$LOG_LEVEL
             cmake --build build --target nes-common-tests -j -- -k 0
