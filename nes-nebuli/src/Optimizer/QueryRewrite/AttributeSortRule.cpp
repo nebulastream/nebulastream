@@ -231,9 +231,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInArithmeticalFun
             sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
-        std::sort(
-            sortedCommutativeFields.begin(),
-            sortedCommutativeFields.end(),
+        std::ranges::sort(
+            sortedCommutativeFields,
             [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
             {
                 std::string leftValue;
@@ -341,9 +340,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
             sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
-        std::sort(
-            sortedCommutativeFields.begin(),
-            sortedCommutativeFields.end(),
+        std::ranges::sort(
+            sortedCommutativeFields,
             [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
             {
                 std::string leftValue;
@@ -435,9 +433,8 @@ std::shared_ptr<NodeFunction> AttributeSortRule::sortAttributesInLogicalFunction
             sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
-        std::sort(
-            sortedCommutativeFields.begin(),
-            sortedCommutativeFields.end(),
+        std::ranges::sort(
+            sortedCommutativeFields,
             [](const std::shared_ptr<NodeFunction>& lhsField, const std::shared_ptr<NodeFunction>& rhsField)
             {
                 std::string leftValue;

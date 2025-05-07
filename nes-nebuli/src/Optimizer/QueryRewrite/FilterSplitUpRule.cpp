@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <vector>
@@ -44,9 +45,8 @@ std::shared_ptr<QueryPlan> FilterSplitUpRule::apply(std::shared_ptr<QueryPlan> q
     }
     std::vector<std::shared_ptr<LogicalSelectionOperator>> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
     NES_DEBUG("FilterSplitUpRule: Sort all filter nodes in increasing order of the operator id")
-    std::sort(
-        filterOperators.begin(),
-        filterOperators.end(),
+    std::ranges::sort(
+        filterOperators,
         [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
         { return lhs->getId() < rhs->getId(); });
     auto originalQueryPlan = queryPlan->copy();

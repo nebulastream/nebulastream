@@ -90,7 +90,7 @@ std::string updateSourceName(std::string queryPlanSourceConsumed, std::string su
     std::vector<std::string> sourceNames;
     sourceNames.emplace_back(subQueryPlanSourceConsumed);
     sourceNames.emplace_back(queryPlanSourceConsumed);
-    std::sort(sourceNames.begin(), sourceNames.end());
+    std::ranges::sort(sourceNames);
     /// accumulating sourceNames with delimiters between all sourceNames to enable backtracking of origin
     auto updatedSourceName = std::accumulate(
         sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) { return a + "_" + b; });

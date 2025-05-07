@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <Configurations/BaseConfiguration.hpp>
@@ -46,7 +47,7 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
         if (node.IsScalar())
         {
             auto value = node.as<std::string>();
-            if (value.empty() || std::all_of(value.begin(), value.end(), ::isspace))
+            if (value.empty() || std::ranges::all_of(value, ::isspace))
             {
                 throw InvalidConfigParameter("Value for: {} is empty.", identifier);
             }

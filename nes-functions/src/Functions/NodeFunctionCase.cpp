@@ -143,11 +143,8 @@ std::ostream& NodeFunctionCase::toDebugString(std::ostream& os) const
 {
     std::vector<std::shared_ptr<NodeFunction>> left = getWhenChildren();
     std::vector<std::string> leftStrs;
-    std::transform(
-        left.begin(),
-        left.end(),
-        std::back_inserter(leftStrs),
-        [](const std::shared_ptr<NodeFunction>& func) { return fmt::format("{}", *func); });
+    std::ranges::transform(
+        left, std::back_inserter(leftStrs), [](const std::shared_ptr<NodeFunction>& func) { return fmt::format("{}", *func); });
     return os << fmt::format("CASE({{{}}}, defaultExp: )", fmt::join(leftStrs, ", "));
 }
 
