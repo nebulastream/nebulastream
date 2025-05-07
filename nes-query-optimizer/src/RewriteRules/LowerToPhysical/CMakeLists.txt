@@ -18,5 +18,6 @@ add_plugin(WindowedAggregation RewriteRule nes-query-optimizer LowerToPhysicalWi
 add_plugin(Union RewriteRule nes-query-optimizer LowerToPhysicalUnion.cpp)
 add_plugin(Sink RewriteRule nes-query-optimizer LowerToPhysicalSink.cpp)
 add_plugin(Source RewriteRule nes-query-optimizer LowerToPhysicalSource.cpp)
+add_plugin(Sequence RewriteRule nes-query-optimizer LowerToPhysicalSequence.cpp)
 add_plugin(IngestionTimeWatermarkAssigner RewriteRule nes-query-optimizer LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
 add_plugin(EventTimeWatermarkAssigner RewriteRule nes-query-optimizer LowerToPhysicalEventTimeWatermarkAssigner.cpp)
