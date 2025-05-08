@@ -117,6 +117,7 @@ if (NOT CODE_COVERAGE)
                 COMMAND systest -n 4 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${taskQueueSize}_compiler --data ${SMALL_DATA} -- --worker.queryEngine.numberOfWorkerThreads=4 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=200000 --worker.queryEngine.taskQueueSize=${taskQueueSize})
     endforeach ()
 
+    ## TODO not to me: use this for different configs
     ## We run all join and aggregation tests with different no. worker threads
     ## Also we test for the different slice caches
     set(sliceCaches NONE LRU FIFO SECOND_CHANCE)

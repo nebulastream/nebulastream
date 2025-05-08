@@ -71,6 +71,12 @@ public:
 
 private:
     std::vector<FieldOffsets> fields;
+    static void storeCopyOfVarSizedData(
+        const nautilus::val<int8_t*>& pointerToVarsized,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<HashMap*>& hashMapRef,
+        const nautilus::val<int8_t**>& pointerWritePositionOnPage,
+        const nautilus::val<uint32_t> size);
 };
 
 }

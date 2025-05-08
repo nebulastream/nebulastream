@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -200,6 +201,21 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(
     entries[entryPos] = newEntry;
     this->numberOfTuples++;
     return newEntry;
+}
+
+void ChainedHashMap::storeCopyOfVarSizedData(
+    Memory::AbstractBufferProvider* bufferProvider, int8_t* pointerToVarSized, int8_t** pointerToWritePositionOnPage, uint32_t size)
+{
+    auto entryBuffer = bufferProvider->getUnpooledBuffer(size);
+    ;
+    if (not entryBuffer)
+    {
+        throw CannotAllocateBuffer("Could not allocate memory in ChainedHashMap for variable sized data of size {}", std::to_string(size));
+    }
+    varSizedStorage.emplace_back(entryBuffer.value());
+    auto dataPtr = entryBuffer.value().getBuffer();
+    std::memcpy(dataPtr, pointerToVarSized, size);
+    *pointerToWritePositionOnPage = dataPtr;
 }
 
 const ChainedHashMapEntry* ChainedHashMap::getPage(const uint64_t pageIndex) const
