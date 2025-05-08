@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <memory>
-#include <mutex>
 #include <numeric>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
@@ -56,12 +54,12 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
         [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
 }
 
-Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
+Interface::PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
     return getPagedVectorRef(QueryCompilation::JoinBuildSideType::Left, workerThreadId);
 }
 
-Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
+Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
     return getPagedVectorRef(QueryCompilation::JoinBuildSideType::Right, workerThreadId);
 }
@@ -88,8 +86,8 @@ void NLJSlice::combinePagedVectors()
 {
     /// Due to the out-of-order nature of our execution engine, it might happen that we call this code here from multiple worker threads.
     /// For example, if different worker threads are emitting the same slice for different windows.
-    /// To ensure correctness, we use a lock here
-    const std::scoped_lock lock(combinePagedVectorsMutex);
+    /// To ensure correctness, we use a write lock here
+    const std::unique_lock lock(combinePagedVectorsMutex);
     combinedPagedVectors = true;
 
     /// Append all PagedVectors on the left join side and erase all items except for the first one
@@ -114,14 +112,14 @@ void NLJSlice::combinePagedVectors()
     }
 }
 
-void NLJSlice::acquireCombinePagedVectorsMutex()
+void NLJSlice::acquireCombinePagedVectorsSharedLock()
 {
-    combinePagedVectorsMutex.lock();
+    combinePagedVectorsMutex.lock_shared();
 }
 
-void NLJSlice::releaseCombinePagedVectorsMutex()
+void NLJSlice::releaseCombinePagedVectorsSharedLock()
 {
-    combinePagedVectorsMutex.unlock();
+    combinePagedVectorsMutex.unlock_shared();
 }
 
 bool NLJSlice::pagedVectorsCombined() const
@@ -129,16 +127,26 @@ bool NLJSlice::pagedVectorsCombined() const
     return combinedPagedVectors;
 }
 
-size_t NLJSlice::getStateSizeInBytesForThreadId(
+size_t NLJSlice::getStateSizeInMemoryForThreadId(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
-    const WorkerThreadId threadId) const
+    const WorkerThreadId threadId)
 {
+    const std::shared_lock lock(combinePagedVectorsMutex);
     const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
-
     return pageSize * numPages;
+}
+
+size_t NLJSlice::getStateSizeOnDiskForThreadId(
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const WorkerThreadId threadId)
+{
+    const std::shared_lock lock(combinePagedVectorsMutex);
+    const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
+    return pagedVector->getStateSizeOnDisk(memoryLayout);
 }
 
 }

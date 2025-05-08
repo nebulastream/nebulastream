@@ -424,10 +424,9 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     {
         /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        nljSlice->acquireCombinePagedVectorsMutex();
+        nljSlice->acquireCombinePagedVectorsSharedLock();
 
         /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
-        // TODO is this also relevant for reading?
         if (!nljSlice->pagedVectorsCombined())
         {
             const auto sliceEnd = slice->getSliceEnd();
@@ -455,7 +454,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
             }
         }
 
-        nljSlice->releaseCombinePagedVectorsMutex();
+        nljSlice->releaseCombinePagedVectorsSharedLock();
     }
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
 }
@@ -470,9 +469,8 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
     {
         // TODO state sizes do not include size of variable sized data
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        const auto *const pagedVector = nljSlice->getPagedVectorRef(joinBuildSide, threadId);
-        const auto stateSizeOnDisk = pagedVector->getStateSizeOnDisk(memoryLayout);
-        const auto stateSizeInMemory = nljSlice->getStateSizeInBytesForThreadId(memoryLayout, joinBuildSide, threadId);
+        const auto stateSizeOnDisk = nljSlice->getStateSizeOnDiskForThreadId(memoryLayout, joinBuildSide, threadId);
+        const auto stateSizeInMemory = nljSlice->getStateSizeInMemoryForThreadId(memoryLayout, joinBuildSide, threadId);
 
         const auto readExecTime = getExecTimesForDataSize(readExecTimes, stateSizeOnDisk);
         const auto writeAndReadExecTime = getExecTimesForDataSize(writeExecTimes, stateSizeInMemory)

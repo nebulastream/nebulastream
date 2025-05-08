@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <shared_mutex>
 #include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -36,31 +37,37 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuplesRight() const;
 
     /// Returns the pointer to the PagedVector on either side.
-    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] Nautilus::Interface::PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] Interface::PagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] Interface::PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
 
     Interface::FileBackedPagedVector* getPagedVectorRef(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
 
-    /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
+    /// Moves all tuples in this slice to the PagedVector at 0th index on both sides. Acquires a unique lock for combinePagedVectorsMutex.
     void combinePagedVectors();
 
-    /// Acquires and releases the lock for combinePagedVectorsMutex.
-    void acquireCombinePagedVectorsMutex();
-    void releaseCombinePagedVectorsMutex();
+    /// Acquires and releases a shared lock for combinePagedVectorsMutex.
+    void acquireCombinePagedVectorsSharedLock();
+    void releaseCombinePagedVectorsSharedLock();
 
     /// Returns true if both pagedVector vectors have a size of one. This does not acquire a lock for combinePagedVectorsMutex.
     bool pagedVectorsCombined() const;
 
-    /// Returns the size of the pages in the left and right PagedVectors in bytes
-    size_t getStateSizeInBytesForThreadId(
+    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a shared lock for combinePagedVectorsMutex.
+    size_t getStateSizeInMemoryForThreadId(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        WorkerThreadId threadId) const;
+        WorkerThreadId threadId);
+
+    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a shared lock for combinePagedVectorsMutex.
+    size_t getStateSizeOnDiskForThreadId(
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        WorkerThreadId threadId);
 
 private:
-    std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> leftPagedVectors;
-    std::vector<std::unique_ptr<Nautilus::Interface::FileBackedPagedVector>> rightPagedVectors;
-    std::mutex combinePagedVectorsMutex;
+    std::vector<std::unique_ptr<Interface::FileBackedPagedVector>> leftPagedVectors;
+    std::vector<std::unique_ptr<Interface::FileBackedPagedVector>> rightPagedVectors;
+    std::shared_mutex combinePagedVectorsMutex;
     bool combinedPagedVectors;
 };
 }
