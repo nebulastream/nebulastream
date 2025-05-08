@@ -19,6 +19,7 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
 #include <nautilus/function.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/iostream.h>

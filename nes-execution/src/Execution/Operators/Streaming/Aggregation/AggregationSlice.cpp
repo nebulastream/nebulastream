@@ -13,8 +13,10 @@
 */
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <numeric>
+#include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -78,7 +80,7 @@ void AggregationSlice::setCleanupFunction(
     {
         PRECONDITION(
             cleanupFunction != nullptr, "The cleanup function should not be null. Have you passed a null function to setCleanupFunction?");
-        this->cleanupFunction = std::move(cleanupFunction);
+        this->cleanupFunction = cleanupFunction;
     }
 }
 

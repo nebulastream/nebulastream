@@ -19,6 +19,7 @@
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider

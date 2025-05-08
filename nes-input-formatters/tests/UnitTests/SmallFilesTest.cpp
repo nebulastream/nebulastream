@@ -124,8 +124,8 @@ public:
                         const auto currentWorkerThreadId = bufferIdx % testConfig.numberOfThreads;
                         const auto currentSequenceNumber = SequenceNumber(bufferIdx + 1);
                         rawBuffer.setSequenceNumber(currentSequenceNumber);
-                        auto pipelineTask = Runtime::Execution::TestPipelineTask(
-                            WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
+                        auto pipelineTask
+                            = Runtime::Execution::TestPipelineTask(WorkerThreadId(currentWorkerThreadId), rawBuffer, inputFormatterTask);
                         pipelineTasks.emplace_back(std::move(pipelineTask));
                         ++bufferIdx;
                     }

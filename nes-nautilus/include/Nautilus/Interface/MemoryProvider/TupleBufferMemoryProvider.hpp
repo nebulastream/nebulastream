@@ -17,11 +17,12 @@
 #include <cstdint>
 #include <memory>
 #include <API/Schema.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <val_concepts.hpp>
 #include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 

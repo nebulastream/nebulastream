@@ -90,7 +90,8 @@ std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataT
     return schema;
 }
 
-std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)> getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
+std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
+getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers)
 {
     return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType)
     {

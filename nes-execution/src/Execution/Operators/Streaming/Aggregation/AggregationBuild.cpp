@@ -13,11 +13,13 @@
 */
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
 #include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>

@@ -16,12 +16,14 @@
 
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <vector>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <Nautilus/Interface/HashMap/HashMap.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
