@@ -24,7 +24,6 @@
 #include <Nautilus/NautilusBackend.hpp>
 #include <QueryCompiler/Configurations/Enums/CompilationStrategy.hpp>
 #include <QueryCompiler/Configurations/Enums/DumpMode.hpp>
-#include "Configurations/BaseOption.hpp"
 
 namespace NES::QueryCompilation::Configurations
 {
