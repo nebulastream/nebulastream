@@ -114,12 +114,12 @@ void NLJSlice::combinePagedVectors()
 
 void NLJSlice::acquireCombinePagedVectorsSharedLock()
 {
-    combinePagedVectorsMutex.lock_shared();
+    combinePagedVectorsMutex.lock();
 }
 
 void NLJSlice::releaseCombinePagedVectorsSharedLock()
 {
-    combinePagedVectorsMutex.unlock_shared();
+    combinePagedVectorsMutex.unlock();
 }
 
 bool NLJSlice::pagedVectorsCombined() const
@@ -132,7 +132,7 @@ size_t NLJSlice::getStateSizeInMemoryForThreadId(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId)
 {
-    const std::shared_lock lock(combinePagedVectorsMutex);
+    const std::unique_lock lock(combinePagedVectorsMutex);
     const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
@@ -144,7 +144,7 @@ size_t NLJSlice::getStateSizeOnDiskForThreadId(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId)
 {
-    const std::shared_lock lock(combinePagedVectorsMutex);
+    const std::unique_lock lock(combinePagedVectorsMutex);
     const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
     return pagedVector->getStateSizeOnDisk(memoryLayout);
 }
