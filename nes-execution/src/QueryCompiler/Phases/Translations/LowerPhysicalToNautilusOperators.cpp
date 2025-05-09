@@ -134,9 +134,19 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     NES_INFO("Lower node:{} to NautilusOperator.", *operatorNode);
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
     {
-        auto scan = lowerScan(operatorNode->getOutputSchema(), bufferSize);
-        pipeline.setRootOperator(scan);
-        return scan;
+        auto child = operatorNode->getChildren()[0];
+        if (NES::Util::instanceOf<PhysicalOperators::PhysicalSelectionOperator>(child)){
+            std::vector<std::string> fieldNames;
+            fieldNames.push_back(operatorNode->getOutputSchema()->getFieldNames()[2]);
+            auto scan = lowerScan(operatorNode->getOutputSchema(), bufferSize, fieldNames);
+            pipeline.setRootOperator(scan);
+            return scan;
+        }else {
+            auto scan = lowerScan(operatorNode->getOutputSchema(), bufferSize, operatorNode->getOutputSchema()->getFieldNames());
+            pipeline.setRootOperator(scan);
+            return scan;
+        }
+
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalEmitOperator>(operatorNode))
     {
@@ -280,7 +290,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalMemoryLayoutSwapOperator>(operatorNode))
     {
         const auto swapOperator = NES::Util::as<PhysicalOperators::PhysicalMemoryLayoutSwapOperator>(operatorNode);
-        auto scan = lowerScan(swapOperator->getInputSchema(), bufferSize);
+        auto scan = lowerScan(swapOperator->getInputSchema(), bufferSize, swapOperator->getInputSchema()->getFieldNames());
         auto emit = lowerEmit(swapOperator->getOutputSchema(), bufferSize, operatorHandlers);
         scan->setChild(emit);
         pipeline.setRootOperator(scan);
@@ -346,27 +356,26 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
-LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<Schema>& schema, size_t bufferSize)
+LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<Schema>& schema, size_t bufferSize, std::vector<std::string> name)
 {
-    std::vector<std::string> fieldNames;
-    if (schema->getFieldNames().size() != 0)
+    auto schemas = Schema::create(schema->getLayoutType());
+    for (const auto& fieldName : name)
     {
-
-        fieldNames.emplace_back(schema->getFieldNames()[2]);
+        schemas->addField(fieldName, schema->getFieldByName(fieldName)->get()->getDataType());
     }
-    switch (schema->getLayoutType())
+    switch (schemas->getLayoutType())
     {
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
-            auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(schema, bufferSize);
+            auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(schemas, bufferSize);
             std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                 = std::make_unique<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
-            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), fieldNames);
+            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), name);
         }
         case Schema::MemoryLayoutType::ROW_LAYOUT: {
-            auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
+            auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schemas, bufferSize);
             std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                 = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), fieldNames);
+            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), name);
         }
     }
 }
