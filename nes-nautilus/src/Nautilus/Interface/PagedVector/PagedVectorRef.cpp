@@ -50,12 +50,12 @@ const Memory::TupleBuffer* getFirstPageProxy(const PagedVector* pagedVector)
 
 const Memory::TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
 {
-    return std::addressof(pagedVector->getTupleBufferForEntry(entryPos));
+    return pagedVector->getTupleBufferForEntry(entryPos);
 }
 
 uint64_t getBufferPosForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
 {
-    return pagedVector->getBufferPosForEntry(entryPos);
+    return pagedVector->getBufferPosForEntry(entryPos).value_or(0);
 }
 
 PagedVectorRef::PagedVectorRef(
@@ -90,20 +90,22 @@ Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos, const std:
 
 PagedVectorRefIter PagedVectorRef::begin(const std::vector<Record::RecordFieldIdentifier>& projections) const
 {
-    return at(projections, 0);
-}
-
-PagedVectorRefIter
-PagedVectorRef::at(const std::vector<Record::RecordFieldIdentifier>& projections, const nautilus::val<uint64_t>& pos) const
-{
-    PagedVectorRefIter pagedVectorRefIter(*this, projections, pos);
+    const nautilus::val<uint64_t> pos(0);
+    const auto numberOfTuplesInPagedVector = invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
+    const auto curPage = nautilus::invoke(getTupleBufferForEntryProxy, pagedVectorRef, pos);
+    const auto posOnPage = nautilus::invoke(getBufferPosForEntryProxy, pagedVectorRef, pos);
+    PagedVectorRefIter pagedVectorRefIter(*this, memoryProvider, projections, curPage, posOnPage, pos, numberOfTuplesInPagedVector);
     return pagedVectorRefIter;
 }
 
 PagedVectorRefIter PagedVectorRef::end(const std::vector<Record::RecordFieldIdentifier>& projections) const
 {
+    /// End does not point to any existing page. Therefore, we only set the pos
     const auto pos = invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
-    return at(projections, pos);
+    const nautilus::val<Memory::TupleBuffer*> curPage(nullptr);
+    const nautilus::val<uint64_t> posOnPage(0);
+    PagedVectorRefIter pagedVectorRefIter(*this, memoryProvider, projections, curPage, posOnPage, pos, pos);
+    return pagedVectorRefIter;
 }
 
 nautilus::val<bool> PagedVectorRef::operator==(const PagedVectorRef& other) const
@@ -112,19 +114,45 @@ nautilus::val<bool> PagedVectorRef::operator==(const PagedVectorRef& other) cons
 }
 
 PagedVectorRefIter::PagedVectorRefIter(
-    PagedVectorRef pagedVector, const std::vector<Record::RecordFieldIdentifier>& projections, const nautilus::val<uint64_t>& pos)
-    : pagedVector(std::move(pagedVector)), projections(projections), pos(pos)
+    PagedVectorRef pagedVector,
+    const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
+    const std::vector<Record::RecordFieldIdentifier>& projections,
+    const nautilus::val<Memory::TupleBuffer*>& curPage,
+    const nautilus::val<uint64_t>& posOnPage,
+    const nautilus::val<uint64_t>& pos,
+    const nautilus::val<uint64_t>& numberOfTuplesInPagedVector)
+    : pagedVector(std::move(pagedVector))
+    , projections(projections)
+    , pos(pos)
+    , numberOfTuplesInPagedVector(numberOfTuplesInPagedVector)
+    , posOnPage(posOnPage)
+    , curPage(curPage)
+    , memoryProvider(memoryProvider)
 {
 }
 
 Record PagedVectorRefIter::operator*() const
 {
-    return pagedVector.readRecord(pos, projections);
+    const RecordBuffer recordBuffer(curPage);
+    auto recordEntry = posOnPage;
+    return memoryProvider->readRecord(projections, recordBuffer, recordEntry);
 }
 
 PagedVectorRefIter& PagedVectorRefIter::operator++()
 {
     pos = pos + 1;
+    posOnPage = posOnPage + 1;
+    const auto tuplesOnPage = RecordBuffer(curPage).getNumRecords();
+    if (posOnPage >= tuplesOnPage)
+    {
+        /// Go to the next page
+        posOnPage = 0;
+        if (pos < numberOfTuplesInPagedVector)
+        {
+            curPage = nautilus::invoke(getTupleBufferForEntryProxy, this->pagedVector.pagedVectorRef, this->pos);
+            posOnPage = nautilus::invoke(getBufferPosForEntryProxy, this->pagedVector.pagedVectorRef, this->pos);
+        }
+    }
     return *this;
 }
 
