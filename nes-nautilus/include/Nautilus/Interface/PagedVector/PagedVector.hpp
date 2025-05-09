@@ -15,9 +15,11 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -29,6 +31,13 @@ namespace NES::Nautilus::Interface
 class PagedVector
 {
 public:
+    struct TupleBufferWithCumulativeSum
+    {
+        explicit TupleBufferWithCumulativeSum(const Memory::TupleBuffer& buffer) : cumulativeSum(0), buffer(buffer) { }
+        size_t cumulativeSum;
+        Memory::TupleBuffer buffer;
+    };
+
     PagedVector() = default;
     virtual ~PagedVector() = default;
 
@@ -42,9 +51,9 @@ public:
     virtual void copyFrom(const PagedVector& other);
 
     /// Returns a pointer to the tuple buffer that contains the entry at the given position.
-    [[nodiscard]] const Memory::TupleBuffer& getTupleBufferForEntry(uint64_t entryPos) const;
+    [[nodiscard]] const Memory::TupleBuffer* getTupleBufferForEntry(uint64_t entryPos) const;
     /// Returns the position of the buffer in the buffer provider that contains the entry at the given position.
-    [[nodiscard]] uint64_t getBufferPosForEntry(uint64_t entryPos) const;
+    [[nodiscard]] std::optional<uint64_t> getBufferPosForEntry(uint64_t entryPos) const;
 
     /// Iterates over all pages and sums up the number of tuples.
     [[nodiscard]] virtual uint64_t getTotalNumberOfEntries() const;
@@ -53,7 +62,11 @@ public:
     [[nodiscard]] virtual uint64_t getNumberOfPages() const;
 
 protected:
-    std::vector<Memory::TupleBuffer> pages;
+    void updateCumulativeSumLastItem();
+    void updateCumulativeSumAllPages();
+    std::optional<size_t> findIdx(const uint64_t entryPos) const;
+
+    std::vector<TupleBufferWithCumulativeSum> pages;
 };
 
 }
