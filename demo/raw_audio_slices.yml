@@ -1,8 +1,8 @@
 query: |
-  SELECT start, end, samples, INFER_MODEL(speech_recognition, (chunked)) as command
+  SELECT start, end, samples, ImageManip(VARSIZED("ToBase64"), chunked) as audio
   FROM (
       SELECT COUNT(value) as samples, MERGE(value) as chunked
-      FROM audio_stream WINDOW SLIDING(timestamp, size 1000000 ms, advance by 20000 ms)
+      FROM audio_stream WINDOW TUMBLING(timestamp, size 1000000 ms)
   ) INTO csv_sink
 sink:
   name: csv_sink
@@ -28,11 +28,3 @@ physical:
       socketHost: localhost
       sampleRate: 16000
       sampleWidth: 2
-models:
-  - path: /home/ls/dima/nebulastream-public/demo/audio_model.onnx
-    name: speech_recognition
-    inputs:
-      - VARSIZED
-    outputs:
-      - name: output
-        type: VARSIZED

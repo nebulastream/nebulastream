@@ -35,39 +35,44 @@ namespace NES::Runtime::Execution::Operators
 {
 
 template <class T>
-void addValueToModel(int index, float value, void* inferModelHandler)
+void addValueToModel(int index, float value, void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
-    auto adapter = handler->getIREEAdapter();
+    auto adapter = handler->getIREEAdapter(thread);
     adapter->addModelInput(index, value);
 }
 
-void copyVarSizedFromModel(std::byte* content, uint32_t size, void* inferModelHandler)
+void copyVarSizedFromModel(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
-    auto adapter = handler->getIREEAdapter();
+    auto adapter = handler->getIREEAdapter(thread);
     adapter->copyResultTo(std::span{content, size});
 }
 
-void copyVarSizedToModel(std::byte* content, uint32_t size, void* inferModelHandler)
+void copyVarSizedToModel(std::byte* content, uint32_t size, void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
-    auto adapter = handler->getIREEAdapter();
+    auto adapter = handler->getIREEAdapter(thread);
     adapter->addModelInput(std::span{content, size});
 }
 
-void applyModel(void* inferModelHandler)
+void applyModel(void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
-    auto adapter = handler->getIREEAdapter();
+    auto adapter = handler->getIREEAdapter(thread);
     adapter->infer();
 }
 
-float getValueFromModel(int index, void* inferModelHandler)
+float getValueFromModel(int index, void* inferModelHandler, WorkerThreadId thread)
 {
     auto handler = static_cast<IREEInferenceOperatorHandler*>(inferModelHandler);
-    auto adapter = handler->getIREEAdapter();
+    auto adapter = handler->getIREEAdapter(thread);
     return adapter->getResultAt(index);
+}
+template <typename T>
+nautilus::val<T> min(const nautilus::val<T>& lhs, const nautilus::val<T>& rhs)
+{
+    return lhs < rhs ? lhs : rhs;
 }
 
 void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record& record) const
@@ -79,30 +84,40 @@ void IREEInferenceOperator::execute(ExecutionContext& ctx, NES::Nautilus::Record
         for (nautilus::static_val<size_t> i = 0; i < inputFieldNames.size(); ++i)
         {
             VarVal value = record.read(inputFieldNames.at(nautilus::static_val<int>(i)));
-            nautilus::invoke(addValueToModel<float>, nautilus::val<int>(i), value.cast<nautilus::val<float>>(), inferModelHandler);
+            nautilus::invoke(
+                addValueToModel<float>,
+                nautilus::val<int>(i),
+                value.cast<nautilus::val<float>>(),
+                inferModelHandler,
+                ctx.getWorkerThreadId());
         }
     }
     else
     {
         VarVal value = record.read(inputFieldNames.at(nautilus::static_val<int>(0)));
         auto varSizedValue = value.cast<VariableSizedData>();
-        nautilus::invoke(copyVarSizedToModel, varSizedValue.getContent(), varSizedValue.getContentSize(), inferModelHandler);
+        nautilus::invoke(
+            copyVarSizedToModel,
+            varSizedValue.getContent(),
+            min(varSizedValue.getContentSize(), nautilus::val<uint32_t>(static_cast<uint32_t>(this->inputSize))),
+            inferModelHandler,
+            ctx.getWorkerThreadId());
     }
 
-    nautilus::invoke(applyModel, inferModelHandler);
+    nautilus::invoke(applyModel, inferModelHandler, ctx.getWorkerThreadId());
 
     if (!this->isVarSizedOutput)
     {
         for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
         {
-            VarVal result = VarVal(nautilus::invoke(getValueFromModel, nautilus::val<int>(i), inferModelHandler));
+            VarVal result = VarVal(nautilus::invoke(getValueFromModel, nautilus::val<int>(i), inferModelHandler, ctx.getWorkerThreadId()));
             record.write(outputFieldNames.at(i), result);
         }
     }
     else
     {
         auto output = ctx.pipelineMemoryProvider.arena.allocateVariableSizedData(this->outputSize);
-        nautilus::invoke(copyVarSizedFromModel, output.getContent(), output.getContentSize(), inferModelHandler);
+        nautilus::invoke(copyVarSizedFromModel, output.getContent(), output.getContentSize(), inferModelHandler, ctx.getWorkerThreadId());
         record.write(outputFieldNames.at(0), output);
     }
 
@@ -164,13 +179,15 @@ ExecutableOperatorRegistryReturnType RegisterIREEExecutableOperator(ExecutableOp
         ireeOperator->isVarSizedInput = true;
     }
 
-    if (inferModelOperator->getOutputSchema()->getFieldCount() == 1
-        && NES::Util::instanceOf<VariableSizedDataType>(inferModelOperator->getOutputSchema()->getFieldByIndex(0)->getDataType()))
+    if (inferModelOperator->getOutputFields().size() == 1
+        && NES::Util::instanceOf<VariableSizedDataType>(
+            inferModelOperator->getOutputSchema()->getFieldByName(inferModelOperator->getOutputFields().at(0)).value()->getDataType()))
     {
         ireeOperator->isVarSizedOutput = true;
     }
 
     ireeOperator->outputSize = model.outputSize();
+    ireeOperator->inputSize = model.inputSize();
 
     return ireeOperator;
 }

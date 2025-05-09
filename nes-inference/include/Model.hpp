@@ -24,8 +24,8 @@
 
 namespace NES::Nebuli::Inference
 {
-class ModelLoadError;
-class ModelOptions;
+struct ModelLoadError;
+struct ModelOptions;
 
 class Model
 {

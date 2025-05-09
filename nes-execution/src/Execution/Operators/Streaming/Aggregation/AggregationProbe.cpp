@@ -144,7 +144,7 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
     nautilus::invoke(
         +[](EmittedAggregationWindow* emittedAggregationWindow)
         {
-            NES_INFO(
+            NES_TRACE(
                 "Resetting final hash map of emitted aggregation window start at {} and end at {}",
                 emittedAggregationWindow->windowInfo.windowStart,
                 emittedAggregationWindow->windowInfo.windowEnd);

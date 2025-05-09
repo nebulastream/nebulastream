@@ -16,6 +16,7 @@
 
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Model.hpp>
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -29,11 +30,11 @@ public:
     void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     [[nodiscard]] const Nebuli::Inference::Model& getModel() const;
-    [[nodiscard]] const std::shared_ptr<IREEAdapter>& getIREEAdapter() const;
+    [[nodiscard]] const std::shared_ptr<IREEAdapter>& getIREEAdapter(WorkerThreadId threadId) const;
 
 private:
     Nebuli::Inference::Model model;
-    std::shared_ptr<IREEAdapter> ireeAdapter;
+    std::vector<std::shared_ptr<IREEAdapter>> threadLocalAdapters;
 };
 
 }

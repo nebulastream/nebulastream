@@ -464,7 +464,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
         = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
             timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), numberOfInputOrigins);
     const auto windowHandler = std::make_shared<Runtime::Execution::Operators::AggregationOperatorHandler>(
-        windowOperator->getInputOriginIds(), windowDefinition->getOriginId(), std::move(sliceAndWindowStore));
+        windowOperator->getInputOriginIds(), windowDefinition->getOriginId(), std::move(sliceAndWindowStore), true);
 
     const auto aggregationBuild = PhysicalOperators::PhysicalAggregationBuild::create(
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler);

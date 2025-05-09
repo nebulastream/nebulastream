@@ -49,6 +49,7 @@
 #include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <SerializableFunction.pb.h>
 
 namespace NES
@@ -159,7 +160,17 @@ FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>
         serializeFunction(caseNodeFunction->getDefaultExp(), serializedNodeFunction.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedNodeFunction);
     }
-
+    else if (function->isTriviallySerializable())
+    {
+        auto serializedNodeFunction = SerializableFunction_GenericFunction();
+        serializedNodeFunction.set_name(function->getType());
+        for (const auto& child : function->getChildren())
+        {
+            auto* serialized_child = serializedNodeFunction.add_children();
+            serializeFunction(Util::as<NodeFunction>(child), serialized_child);
+        }
+        serializedFunction->mutable_details()->PackFrom(serializedNodeFunction);
+    }
     else
     {
         throw CannotSerialize(fmt::format("function: {}", *function));
@@ -184,6 +195,22 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
     /// 3. if the function was not de-serialized try remaining function types
     if (!nodeFunction)
     {
+        if (serializedFunction.details().Is<SerializableFunction_GenericFunction>())
+        {
+            auto serializedNodeFunction = SerializableFunction_GenericFunction();
+            serializedFunction.details().UnpackTo(&serializedNodeFunction);
+            auto children
+                = std::views::transform(serializedNodeFunction.children(), [](const auto& child) { return deserializeFunction(child); })
+                | std::ranges::to<std::vector>();
+            if (auto function
+                = LogicalFunctionRegistry::instance().create(serializedNodeFunction.name(), LogicalFunctionRegistryArguments{children}))
+            {
+                return *function;
+            }
+
+            throw CannotDeserialize("Could not deserialize generic function: `{}`", serializedNodeFunction.name());
+        }
+
         if (serializedFunction.details().Is<SerializableFunction_FunctionConcat>())
         {
             /// de-serialize CONCAT function node.
@@ -232,10 +259,11 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
             auto originalFieldAccessFunction = deserializeFunction(serializedFieldRenameFunction.functionoriginalfieldaccess());
             if (!Util::instanceOf<NodeFunctionFieldAccess>(originalFieldAccessFunction))
             {
-                throw CannotDeserialize(fmt::format(
-                    "FunctionSerializationUtil: the original field access function should be of type NodeFunctionFieldAccess,"
-                    "but was a {}",
-                    *originalFieldAccessFunction));
+                throw CannotDeserialize(
+                    fmt::format(
+                        "FunctionSerializationUtil: the original field access function should be of type NodeFunctionFieldAccess,"
+                        "but was a {}",
+                        *originalFieldAccessFunction));
             }
             const auto& newFieldName = serializedFieldRenameFunction.newfieldname();
             nodeFunction = NodeFunctionFieldRename::create(Util::as<NodeFunctionFieldAccess>(originalFieldAccessFunction), newFieldName);
@@ -417,10 +445,11 @@ void FunctionSerializationUtil::serializeArithmeticalFunctions(
     }
     else
     {
-        throw CannotSerialize(fmt::format(
-            "TranslateToLegacyPhase:"
-            "No serialization implemented for this arithmetical function node: {}",
-            *function));
+        throw CannotSerialize(
+            fmt::format(
+                "TranslateToLegacyPhase:"
+                "No serialization implemented for this arithmetical function node: {}",
+                *function));
     }
 }
 
@@ -461,8 +490,9 @@ void FunctionSerializationUtil::serializeLogicalFunctions(
     else if (Util::instanceOf<NodeFunctionLessEquals>(function))
     {
         /// serialize less equals function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize Less Equals logical function to "
-                  "SerializableFunction_FunctionLessEquals");
+        NES_TRACE(
+            "FunctionSerializationUtil:: serialize Less Equals logical function to "
+            "SerializableFunction_FunctionLessEquals");
         auto lessNodeFunctionEquals = Util::as<NodeFunctionLessEquals>(function);
         auto serializedNodeFunction = SerializableFunction_FunctionLessEquals();
         serializeFunction(lessNodeFunctionEquals->getLeft(), serializedNodeFunction.mutable_left());
@@ -482,8 +512,9 @@ void FunctionSerializationUtil::serializeLogicalFunctions(
     else if (Util::instanceOf<NodeFunctionGreaterEquals>(function))
     {
         /// serialize greater equals function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize Greater Equals logical function to "
-                  "SerializableFunction_FunctionGreaterEquals");
+        NES_TRACE(
+            "FunctionSerializationUtil:: serialize Greater Equals logical function to "
+            "SerializableFunction_FunctionGreaterEquals");
         auto greaterNodeFunctionEquals = Util::as<NodeFunctionGreaterEquals>(function);
         auto serializedNodeFunction = SerializableFunction_FunctionGreaterEquals();
         serializeFunction(greaterNodeFunctionEquals->getLeft(), serializedNodeFunction.mutable_left());

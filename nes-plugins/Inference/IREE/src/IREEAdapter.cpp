@@ -16,7 +16,6 @@
 #include <fstream>
 #include <Util/Logger/Logger.hpp>
 #include <iree/runtime/api.h>
-#include "IREECompilerWrapper.hpp"
 #include "IREERuntimeWrapper.hpp"
 
 #include <Model.hpp>

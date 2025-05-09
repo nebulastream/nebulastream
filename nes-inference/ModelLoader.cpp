@@ -285,7 +285,6 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
     auto graphDir = std::filesystem::temp_directory_path() / "graph";
     std::filesystem::create_directory(graphDir);
     std::string graphPath = graphDir.string() + "/model.dot";
-    NES_ERROR("Graph Path: {}", graphPath);
     compileArgs.emplace_back("--iree-flow-dump-dispatch-graph");
     compileArgs.emplace_back("--iree-flow-dump-dispatch-graph-output-file=" + graphPath);
 
@@ -329,9 +328,13 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
 
             Model model = Model{std::move(modelVmfb1), modelVmfb.size()};
             model.functionName = "module." + metadata.functionName;
+
             model.shape = metadata.inputShape;
-            model.outputShape = metadata.outputShape;
+            model.dims = metadata.inputShape.size();
             model.inputSizeInBytes = 4 * std::accumulate(model.shape.begin(), model.shape.end(), 1, std::multiplies<int>());
+
+            model.outputShape = metadata.outputShape;
+            model.outputDims = metadata.outputShape.size();
             model.outputSizeInBytes = 4 * std::accumulate(model.outputShape.begin(), model.outputShape.end(), 1, std::multiplies<int>());
 
             std::filesystem::remove_all(graphDir);

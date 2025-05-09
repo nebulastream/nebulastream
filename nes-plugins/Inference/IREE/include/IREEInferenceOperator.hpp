@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -36,6 +37,7 @@ public:
     bool isVarSizedInput = false;
     bool isVarSizedOutput = false;
     size_t outputSize = 0;
+    size_t inputSize = 0;
 
 private:
     const uint32_t inferModelHandlerIndex;

@@ -33,6 +33,8 @@ PhysicalInferModelOperator::PhysicalInferModelOperator(
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
     , model(std::move(model))
     , inputFields(std::move(inputFields))
+    , outputFields(
+          this->model.getOutputs() | std::views::transform([](const auto& output) { return output.first; }) | std::ranges::to<std::vector>())
 {
 }
 
@@ -79,6 +81,10 @@ const Nebuli::Inference::Model& PhysicalInferModelOperator::getModel() const
 const std::vector<std::shared_ptr<NodeFunction>>& PhysicalInferModelOperator::getInputFields() const
 {
     return inputFields;
+}
+const std::vector<std::string>& PhysicalInferModelOperator::getOutputFields() const
+{
+    return outputFields;
 }
 
 }

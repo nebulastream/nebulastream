@@ -17,7 +17,6 @@
 #include <ostream>
 #include <ErrorHandling.hpp>
 #include <Model.hpp>
-#include "IREECompilerWrapper.hpp"
 #include "IREERuntimeWrapper.hpp"
 
 namespace NES::Runtime::Execution::Operators
@@ -53,7 +52,6 @@ public:
 
     void addModelInput(std::span<std::byte> content)
     {
-        PRECONDITION(content.size() <= inputSize, "Input size does not match");
         std::ranges::copy_n(content.data(), std::min(content.size(), inputSize), inputData.get());
     }
 
