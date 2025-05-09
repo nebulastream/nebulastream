@@ -82,7 +82,7 @@ void NLJSlice::combinePagedVectors()
     {
         for (uint64_t i = 1; i < leftPagedVectors.size(); ++i)
         {
-            leftPagedVectors[0]->appendAllPages(*leftPagedVectors[i]);
+            leftPagedVectors[0]->moveAllPages(*leftPagedVectors[i]);
         }
         leftPagedVectors.erase(leftPagedVectors.begin() + 1, leftPagedVectors.end());
     }
@@ -92,7 +92,7 @@ void NLJSlice::combinePagedVectors()
     {
         for (uint64_t i = 1; i < rightPagedVectors.size(); ++i)
         {
-            rightPagedVectors[0]->appendAllPages(*rightPagedVectors[i]);
+            rightPagedVectors[0]->moveAllPages(*rightPagedVectors[i]);
         }
         rightPagedVectors.erase(rightPagedVectors.begin() + 1, rightPagedVectors.end());
     }

@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <PagedVectorTestUtils.hpp>
 
 #include <cmath>
 #include <cstdint>
@@ -29,7 +30,6 @@
 #include <gtest/gtest.h>
 #include <Engine.hpp>
 #include <NautilusTestUtils.hpp>
-#include <PagedVectorTestUtils.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 
@@ -202,7 +202,7 @@ void insertAndAppendAllPagesTest(
         for (uint64_t i = 1; i < allPagedVectors.size(); ++i)
         {
             auto& otherPagedVec = allPagedVectors[i];
-            firstPagedVec->appendAllPages(*otherPagedVec);
+            firstPagedVec->moveAllPages(*otherPagedVec);
             EXPECT_EQ(otherPagedVec->getNumberOfPages(), 0);
         }
 
