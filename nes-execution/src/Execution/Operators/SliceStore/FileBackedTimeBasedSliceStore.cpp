@@ -48,6 +48,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
 {
     for (const auto origin : inputOrigins)
     {
+        watermarkPredictorUpdateCnt.emplace(origin, 0);
         switch (watermarkPredictorInfo.type)
         {
             case KalmanBased: {
@@ -83,6 +84,11 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     *slicesWriteLocked = *otherSlicesWriteLocked;
     *windowsWriteLocked = *otherWindowsWriteLocked;
     *slicesInMemoryLocked = *otherSlicesInMemoryLocked;
+
+    for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
+    {
+        watermarkPredictorUpdateCnt.emplace(origin, count.load());
+    }
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
@@ -93,6 +99,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , memoryController(std::move(other.memoryController))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
     , memoryControllerInfo(std::move(other.memoryControllerInfo))
+    , watermarkPredictorUpdateCnt(std::move(other.watermarkPredictorUpdateCnt))
     , sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
     , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins))
@@ -115,6 +122,11 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     *slicesWriteLocked = *otherSlicesReadLocked;
     *windowsWriteLocked = *otherWindowsReadLocked;
     *slicesInMemoryLocked = *otherSlicesInMemoryLocked;
+
+    for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
+    {
+        watermarkPredictorUpdateCnt.emplace(origin, count.load());
+    }
 
     watermarkProcessor = other.watermarkProcessor;
     watermarkPredictors = other.watermarkPredictors;
@@ -146,6 +158,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     memoryController = std::move(other.memoryController);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
     memoryControllerInfo = std::move(other.memoryControllerInfo);
+    watermarkPredictorUpdateCnt = std::move(other.watermarkPredictorUpdateCnt);
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
     numberOfActiveOrigins = std::move(other.numberOfActiveOrigins);
@@ -412,10 +425,12 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const SliceStoreMetaData& metaData)
 {
-    watermarkProcessor->updateWatermark(
-        metaData.bufferMetaData.watermarkTs, metaData.bufferMetaData.seqNumber, metaData.bufferMetaData.originId);
-    // TODO don't get new ingestion times every time (time should progress linearly so ideally we would only call it once), just update it from time to time
-    updateWatermarkPredictor(metaData.bufferMetaData.originId);
+    const auto& [watermark, seqNumber, originId] = metaData.bufferMetaData;
+    watermarkProcessor->updateWatermark(watermark, seqNumber, originId);
+    if (isExponential(++watermarkPredictorUpdateCnt[originId]))
+    {
+        updateWatermarkPredictor(originId);
+    }
 
     /// Write and read all selected slices to and from disk
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
@@ -601,6 +616,19 @@ uint64_t FileBackedTimeBasedSliceStore::getExecTimesForDataSize(std::map<size_t,
     }
 
     return execTimes[closestKey];
+}
+
+bool FileBackedTimeBasedSliceStore::isPolynomial(const uint64_t counter)
+{
+    /// Checks if counter matches y = n^2
+    const auto root = static_cast<uint64_t>(std::sqrt(counter));
+    return root * root == counter;
+}
+
+bool FileBackedTimeBasedSliceStore::isExponential(const uint64_t counter)
+{
+    /// Checks if counter matches y = 2^n - 1
+    return (counter & counter + 1) == 0;
 }
 
 }

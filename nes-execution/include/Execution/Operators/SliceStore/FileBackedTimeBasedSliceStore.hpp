@@ -118,6 +118,9 @@ private:
     void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
     static uint64_t getExecTimesForDataSize(std::map<size_t, uint64_t> execTimes, size_t dataSize);
 
+    static bool isPolynomial(uint64_t counter);
+    static bool isExponential(uint64_t counter);
+
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
 
@@ -136,6 +139,7 @@ private:
 
     uint64_t numberOfWorkerThreads;
     MemoryControllerInfo memoryControllerInfo;
+    std::map<OriginId, std::atomic<uint64_t>> watermarkPredictorUpdateCnt;
 
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.
