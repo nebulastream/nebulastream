@@ -44,6 +44,8 @@ NES::Nebuli::Inference::Model NES::Nebuli::Inference::deserializeModel(const Ser
                         })
         | std::ranges::to<std::vector>();
 
+    model.functionName = grpcModel.functionname();
+
     return model;
 }
 
@@ -68,4 +70,6 @@ void NES::Nebuli::Inference::serializeModel(const Model& model, SerializableOper
         output->set_name(name);
         DataTypeSerializationUtil::serializeDataType(type, output->mutable_type());
     }
+
+    target.set_functionname(model.functionName);
 }

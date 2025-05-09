@@ -182,6 +182,7 @@ message SerializableOperator {
     int32 inputSizeInBytes = 4;
     repeated SerializableDataType inputs = 5;
     repeated ModelOutputParameter outputs = 6;
+    string functionName = 7;
   }
 
   message InferModelDetails {

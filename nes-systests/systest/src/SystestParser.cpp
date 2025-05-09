@@ -374,7 +374,10 @@ SystestParser::Model SystestParser::expectModel()
     }
     model.name = "iris";
     model.inputs
-        = {DataTypeProvider::provideDataType(LogicalType::VARSIZED)};
+        = {DataTypeProvider::provideBasicType(BasicType::FLOAT32),
+           DataTypeProvider::provideBasicType(BasicType::FLOAT32),
+           DataTypeProvider::provideBasicType(BasicType::FLOAT32),
+           DataTypeProvider::provideBasicType(BasicType::FLOAT32)};
 
     model.outputs = {
         Field{DataTypeProvider::provideBasicType(BasicType::FLOAT32), "setosa"},
