@@ -32,6 +32,7 @@
 #include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Time/Timestamp.hpp>
+#include <Engine.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -195,30 +196,39 @@ int8_t* createNewAggregationSliceProxy(
 
 std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> AggregationBuildCache::getStateCleanupFunction() const
 {
-
-    return [copyOfFieldKeys = fieldKeys,
-            copyOfFieldValues = fieldValues,
-            copyOfAggregationFunctions = aggregationFunctions,
-            copyOfEntriesPerPage = entriesPerPage,
-            copyOfEntrySize = entrySize](const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>& hashMaps)
+    return [copyOfFieldKeys = this->fieldKeys,
+            copyOfFieldValues = this->fieldValues,
+            copyOfAggregationFunctions = this->aggregationFunctions,
+            copyOfEntriesPerPage = this->entriesPerPage,
+            copyOfEntrySize = this->entrySize](const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>& hashMaps)
     {
+        nautilus::engine::Options options;
+        options.setOption("engine.Compilation", true);
+        const nautilus::engine::NautilusEngine nautilusEngine(options);
+        static auto cleanupStateNautilusFunc = nautilusEngine.registerFunction(
+            std::function(
+                [copyOfFieldKeys, copyOfFieldValues, copyOfAggregationFunctions, copyOfEntriesPerPage, copyOfEntrySize](
+                    nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+                {
+                    const Interface::ChainedHashMapRef hashMapRef(
+                        hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                    for (const auto entry : hashMapRef)
+                    {
+                        const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
+                        auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
+                        for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                        {
+                            aggFunction->cleanup(state);
+                            state = state + aggFunction->getSizeOfStateInBytes();
+                        }
+                    }
+                }));
+
         for (const auto& hashMap :
              hashMaps | std::views::filter([](const auto& hashMapPtr) { return hashMapPtr->getNumberOfTuples() > 0; }))
         {
-            {
-                /// Using here the .get() is fine, as we are not moving the hashMap pointer.
-                const Interface::ChainedHashMapRef hashMapRef(hashMap.get(), copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-                for (const auto entry : hashMapRef)
-                {
-                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
-                    auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
-                    for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
-                    {
-                        aggFunction->cleanup(state);
-                        state = state + aggFunction->getSizeOfStateInBytes();
-                    }
-                }
-            }
+            /// Calling the compiled nautilus function
+            cleanupStateNautilusFunc(hashMap.get());
         }
     };
 }
