@@ -22,6 +22,7 @@
 #include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WatermarkPredictor/KalmanBasedWindowTriggerPredictor.hpp>
+#include <Execution/Operators/SliceStore/WatermarkPredictor/RLSBasedWatermarkPredictor.hpp>
 #include <Execution/Operators/SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
@@ -58,7 +59,15 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
             case RegressionBased: {
                 watermarkPredictors.emplace(
                     origin,
-                    std::make_shared<RegressionBasedWatermarkPredictor>(watermarkPredictorInfo.initial, watermarkPredictorInfo.param));
+                    std::make_shared<RegressionBasedWatermarkPredictor>(watermarkPredictorInfo.initial, watermarkPredictorInfo.param1));
+                break;
+            }
+            case RLSBased: {
+                watermarkPredictors.emplace(
+                    origin,
+                    std::make_shared<RLSBasedWatermarkPredictor>(
+                        //watermarkPredictorInfo.initial, watermarkPredictorInfo.param1, watermarkPredictorInfo.param2));
+                        watermarkPredictorInfo.initial));
                 break;
             }
         }
@@ -455,7 +464,6 @@ void FileBackedTimeBasedSliceStore::updateSlices(
                     break;
                 }
                 case WRITE: {
-                    // TODO put lock in scope
                     const auto slicesInMemoryLocked = slicesInMemory.wlock();
                     (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = false;
 
@@ -493,12 +501,11 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
 
         const auto now = std::chrono::high_resolution_clock::now();
         const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
-        const auto predictedReadTimestamp
-            = AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(watermarkPredictors, timeNow + readExecTime);
-        const auto predictedWriteAndReadTimestamp
-            = AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(watermarkPredictors, timeNow + writeAndReadExecTime);
+        const auto predictedReadTimestamp = AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
+            watermarkPredictors, timeNow + readExecTime + USE_TIME_DELTA_MS);
+        const auto predictedWriteAndReadTimestamp = AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
+            watermarkPredictors, timeNow + writeAndReadExecTime + USE_TIME_DELTA_MS);
 
-        // TODO add a time buffer to sliceEnd
         if (stateSizeOnDisk > USE_MIN_STATE_SIZE_READ && predictedReadTimestamp >= sliceEnd)
         {
             /// Slice should be read back now as it will be triggered once the read operation has finished

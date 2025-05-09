@@ -24,14 +24,16 @@ namespace NES::Runtime::Execution
 enum WatermarkPredictorType : uint8_t
 {
     KalmanBased,
-    RegressionBased
+    RegressionBased,
+    RLSBased
 };
 
 struct WatermarkPredictorInfo
 {
     WatermarkPredictorType type;
     uint64_t initial;
-    uint64_t param;
+    uint64_t param1;
+    double param2;
 };
 
 class AbstractWatermarkPredictor
