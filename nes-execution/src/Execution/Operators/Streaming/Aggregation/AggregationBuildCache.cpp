@@ -50,6 +50,7 @@ AggregationBuildCache::AggregationBuildCache(
 
 {
 }
+
 void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
 {
     WindowOperatorBuild::setup(executionCtx);
@@ -241,11 +242,11 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
 
     /// Getting the current hash map that we have to insert/update the record into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto hashMapPtr = sliceCache->getDataStructureRef(
         timestamp,
         [&](const nautilus::val<SliceCacheEntry*>& sliceCacheEntryToReplace)
         {
+            const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
             return nautilus::invoke(
                 createNewAggregationSliceProxy,
                 sliceCacheEntryToReplace,

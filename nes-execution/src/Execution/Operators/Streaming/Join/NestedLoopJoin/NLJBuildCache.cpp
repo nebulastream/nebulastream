@@ -168,11 +168,11 @@ void NLJBuildCache::execute(ExecutionContext& executionCtx, Record& record) cons
 
     /// Getting the current paged vector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto nljPagedVectorRef = sliceCache->getDataStructureRef(
         timestamp,
         [&](const nautilus::val<SliceCacheEntry*>& sliceCacheEntryToReplace)
         {
+            const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
             return nautilus::invoke(
                 createNewNLJSliceProxy,
                 sliceCacheEntryToReplace,
