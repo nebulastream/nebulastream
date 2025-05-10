@@ -128,6 +128,8 @@ ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, Memory
         {
             throw CannotAllocateBuffer("Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(pageSize));
         }
+
+        /// We need to memset zero-out the new page, as we expect NULL to be present
         std::memset(newPage.value().getBuffer(), 0, pageSize);
         storageSpace.emplace_back(newPage.value());
     }
