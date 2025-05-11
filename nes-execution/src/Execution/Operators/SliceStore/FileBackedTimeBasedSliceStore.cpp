@@ -77,8 +77,8 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
     : watermarkProcessor(other.watermarkProcessor)
     , watermarkPredictors(other.watermarkPredictors)
-    , writeExecTimes(other.writeExecTimes)
-    , readExecTimes(other.readExecTimes)
+    , writeExecTimeFunction(other.writeExecTimeFunction)
+    , readExecTimeFunction(other.readExecTimeFunction)
     , memoryController(other.memoryController)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
     , memoryControllerInfo(other.memoryControllerInfo)
@@ -103,8 +103,8 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
     : watermarkProcessor(std::move(other.watermarkProcessor))
     , watermarkPredictors(std::move(other.watermarkPredictors))
-    , writeExecTimes(std::move(other.writeExecTimes))
-    , readExecTimes(std::move(other.readExecTimes))
+    , writeExecTimeFunction(std::move(other.writeExecTimeFunction))
+    , readExecTimeFunction(std::move(other.readExecTimeFunction))
     , memoryController(std::move(other.memoryController))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
     , memoryControllerInfo(std::move(other.memoryControllerInfo))
@@ -139,8 +139,8 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 
     watermarkProcessor = other.watermarkProcessor;
     watermarkPredictors = other.watermarkPredictors;
-    writeExecTimes = other.writeExecTimes;
-    readExecTimes = other.readExecTimes;
+    writeExecTimeFunction = other.writeExecTimeFunction;
+    readExecTimeFunction = other.readExecTimeFunction;
     memoryController = other.memoryController;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
     memoryControllerInfo = other.memoryControllerInfo;
@@ -162,8 +162,8 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 
     watermarkProcessor = std::move(other.watermarkProcessor);
     watermarkPredictors = std::move(other.watermarkPredictors);
-    writeExecTimes = std::move(other.writeExecTimes);
-    readExecTimes = std::move(other.readExecTimes);
+    writeExecTimeFunction = std::move(other.writeExecTimeFunction);
+    readExecTimeFunction = std::move(other.readExecTimeFunction);
     memoryController = std::move(other.memoryController);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
     memoryControllerInfo = std::move(other.memoryControllerInfo);
@@ -495,9 +495,9 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
         const auto stateSizeOnDisk = nljSlice->getStateSizeOnDiskForThreadId(memoryLayout, joinBuildSide, threadId);
         const auto stateSizeInMemory = nljSlice->getStateSizeInMemoryForThreadId(memoryLayout, joinBuildSide, threadId);
 
-        const auto readExecTime = getExecTimesForDataSize(readExecTimes, stateSizeOnDisk);
-        const auto writeAndReadExecTime = getExecTimesForDataSize(writeExecTimes, stateSizeInMemory)
-            + getExecTimesForDataSize(readExecTimes, stateSizeInMemory + stateSizeOnDisk);
+        const auto readExecTime = getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk);
+        const auto writeAndReadExecTime = getExecTimesForDataSize(writeExecTimeFunction, stateSizeInMemory)
+            + getExecTimesForDataSize(readExecTimeFunction, stateSizeInMemory + stateSizeOnDisk);
 
         const auto now = std::chrono::high_resolution_clock::now();
         const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
@@ -566,11 +566,14 @@ void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId orig
 
 void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes)
 {
-    if constexpr (USE_TEST_DATA_SIZES.size() < 2)
+    constexpr auto numElements = USE_TEST_DATA_SIZES.size();
+    if constexpr (numElements < 2)
     {
         throw std::invalid_argument("At least two points are required to initialize the model.");
     }
 
+    double sumXWrite = 0, sumYWrite = 0, sumXYWrite = 0, sumX2Write = 0;
+    double sumXRead = 0, sumYRead = 0, sumXYRead = 0, sumX2Read = 0;
     for (const auto dataSize : dataSizes)
     {
         std::vector<char> data(dataSize);
@@ -593,62 +596,25 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         const auto readTicks
             = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(read.time_since_epoch()).count());
 
-        writeExecTimes.emplace(dataSize, writeTicks - startTicks);
-        readExecTimes.emplace(dataSize, readTicks - writeTicks);
-    }
-}
-
-uint64_t FileBackedTimeBasedSliceStore::getExecTimesForDataSize(const std::map<size_t, uint64_t>& execTimes, const size_t dataSize)
-{
-    if (execTimes.empty())
-    {
-        return 0;
-    }
-
-    auto lower = execTimes.begin();
-    auto upper = execTimes.end();
-
-    for (auto it = execTimes.begin(); it != execTimes.end(); ++it)
-    {
-        if (it->first <= dataSize)
-        {
-            lower = it;
-        }
-        if (it->first > dataSize)
-        {
-            upper = it;
-            break;
-        }
+        const auto writeExecTime = writeTicks - startTicks;
+        sumXWrite += dataSize;
+        sumYWrite += writeExecTime;
+        sumXYWrite += dataSize * writeExecTime;
+        sumX2Write += dataSize * dataSize;
+        const auto readExecTimes = readTicks - writeTicks;
+        sumXRead += dataSize;
+        sumYRead += readExecTimes;
+        sumXYRead += dataSize * readExecTimes;
+        sumX2Read += dataSize * dataSize;
     }
 
-    /// Extrapolation downwards
-    if (lower == execTimes.begin() && dataSize < lower->first)
-    {
-        const auto [x1, y1] = *lower;
-        const auto [x2, y2] = *std::next(lower);
-        const double slope = static_cast<double>(y2 - y1) / (x2 - x1);
-        return static_cast<uint64_t>(y1 + slope * (dataSize - x1));
-    }
+    const auto writeSlope = (numElements * sumXYWrite - sumXWrite * sumYWrite) / (numElements * sumX2Write - sumXWrite * sumXWrite);
+    const auto writeIntercept = (sumYWrite - writeSlope * sumXWrite) / numElements;
+    writeExecTimeFunction = {writeSlope, writeIntercept};
 
-    /// Extrapolation upwards
-    if (upper == execTimes.end() && dataSize > lower->first)
-    {
-        const auto [x1, y1] = *lower;
-        const auto [x2, y2] = *std::prev(execTimes.end());
-        const double slope = static_cast<double>(y2 - y1) / (x2 - x1);
-        return static_cast<uint64_t>(y1 + slope * (dataSize - x1));
-    }
-
-    /// Interpolation between two points
-    if (lower != execTimes.end() && upper != execTimes.end())
-    {
-        const auto [x1, y1] = *lower;
-        const auto [x2, y2] = *upper;
-        const double slope = static_cast<double>(y2 - y1) / (x2 - x1);
-        return static_cast<uint64_t>(y1 + slope * (dataSize - x1));
-    }
-
-    return 0;
+    const auto readSlope = (numElements * sumXYRead - sumXRead * sumYRead) / (numElements * sumX2Read - sumXRead * sumXRead);
+    const auto readIntercept = (sumYRead - readSlope * sumXRead) / numElements;
+    readExecTimeFunction = {readSlope, readIntercept};
 }
 
 }

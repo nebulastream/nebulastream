@@ -117,7 +117,11 @@ private:
 
     void updateWatermarkPredictor(OriginId originId);
     void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
-    static uint64_t getExecTimesForDataSize(const std::map<size_t, uint64_t>& execTimes, size_t dataSize);
+
+    static uint64_t getExecTimesForDataSize(const std::pair<double, double>& execTimeFunction, const size_t dataSize)
+    {
+        return static_cast<uint64_t>(execTimeFunction.first * dataSize + execTimeFunction.second);
+    }
 
     static bool isPolynomial(const uint64_t counter)
     {
@@ -138,9 +142,10 @@ private:
     std::shared_ptr<Operators::MultiOriginWatermarkProcessor> watermarkProcessor;
     std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>> watermarkPredictors;
 
-    /// The maps hold the execution times needed to write or read data of certain data sizes which is also used for predictions.
-    std::map<size_t, uint64_t> writeExecTimes;
-    std::map<size_t, uint64_t> readExecTimes;
+    /// The pairs hold the slope and intercept needed to calculate execution times of write or read operations for certain data sizes
+    /// which is also used for predictions.
+    std::pair<double, double> writeExecTimeFunction;
+    std::pair<double, double> readExecTimeFunction;
 
     /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
     /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory.
