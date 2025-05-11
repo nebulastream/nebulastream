@@ -15,7 +15,7 @@
 #pragma once
 
 #include <cstdint>
-#include <shared_mutex>
+#include <mutex>
 #include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -67,7 +67,7 @@ public:
 private:
     std::vector<std::unique_ptr<Interface::FileBackedPagedVector>> leftPagedVectors;
     std::vector<std::unique_ptr<Interface::FileBackedPagedVector>> rightPagedVectors;
-    std::shared_mutex combinePagedVectorsMutex;
+    std::mutex combinePagedVectorsMutex;
     bool combinedPagedVectors;
 };
 }

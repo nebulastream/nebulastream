@@ -59,7 +59,7 @@ class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 public:
     //static constexpr std::array<size_t, 10> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576, 134217728, 536870912, 1073741824, 2147483648};
     static constexpr std::array<size_t, 6> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576};
-    static constexpr auto USE_FILE_LAYOUT = SEPARATE_PAYLOAD;
+    static constexpr auto USE_FILE_LAYOUT = NO_SEPARATION;
     static constexpr auto USE_MIN_STATE_SIZE_WRITE
         = 0UL; /// slices with state sice less than 0B for a given ThreadId are not written to external storage
     static constexpr auto USE_MIN_STATE_SIZE_READ

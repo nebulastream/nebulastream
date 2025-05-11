@@ -86,8 +86,8 @@ void NLJSlice::combinePagedVectors()
 {
     /// Due to the out-of-order nature of our execution engine, it might happen that we call this code here from multiple worker threads.
     /// For example, if different worker threads are emitting the same slice for different windows.
-    /// To ensure correctness, we use a write lock here
-    const std::unique_lock lock(combinePagedVectorsMutex);
+    /// To ensure correctness, we use a lock here
+    const std::scoped_lock lock(combinePagedVectorsMutex);
     combinedPagedVectors = true;
 
     /// Append all PagedVectors on the left join side and erase all items except for the first one
@@ -132,7 +132,7 @@ size_t NLJSlice::getStateSizeInMemoryForThreadId(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId)
 {
-    const std::unique_lock lock(combinePagedVectorsMutex);
+    const std::scoped_lock lock(combinePagedVectorsMutex);
     const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
@@ -144,7 +144,7 @@ size_t NLJSlice::getStateSizeOnDiskForThreadId(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const WorkerThreadId threadId)
 {
-    const std::unique_lock lock(combinePagedVectorsMutex);
+    const std::scoped_lock lock(combinePagedVectorsMutex);
     const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
     return pagedVector->getStateSizeOnDisk(memoryLayout);
 }
