@@ -52,6 +52,8 @@ public:
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
 
+    ///@return If this is set, the aggregations lift function will be called with buffers in sequence number order.
+    [[nodiscard]] virtual bool requiresSequentialAggregation() const;
 
 protected:
     explicit WindowAggregationLogicalFunction(
