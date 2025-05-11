@@ -240,6 +240,7 @@ message SerializableOperator {
         COUNT = 3;
         AVG = 4;
         MEDIAN = 5;
+        MERGE = 6;
       }
       Type type = 1;
       SerializableFunction onField = 2;

@@ -847,6 +847,9 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         case AntlrSQLLexer::MEDIAN:
             parentHelper.windowAggs.push_back(API::Median(helper.functionBuilder.back())->aggregation);
             break;
+        case AntlrSQLLexer::MERGE:
+            parentHelper.windowAggs.push_back(API::Merge(helper.functionBuilder.back())->aggregation);
+            break;
         default:
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
