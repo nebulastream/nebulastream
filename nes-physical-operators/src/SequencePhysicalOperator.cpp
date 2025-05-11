@@ -52,13 +52,13 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
     }
 }
 
-void SequencePhysicalOperator::setup(ExecutionContext& executionCtx) const
+void SequencePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     nautilus::invoke(
         +[](OperatorHandler* handler, PipelineExecutionContext* ctx) { handler->start(*ctx, 0); },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         executionCtx.pipelineContext);
-    scan.setup(executionCtx);
+    scan.setup(executionCtx, compilationContext);
 }
 
 void SequencePhysicalOperator::terminate(ExecutionContext& executionCtx) const

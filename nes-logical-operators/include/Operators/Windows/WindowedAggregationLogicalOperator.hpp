@@ -85,6 +85,8 @@ public:
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
+    [[nodiscard]] bool requiresSequentialAggregation() const;
+
     struct ConfigParameters
     {
         static inline const DescriptorConfig::ConfigParameter<uint64_t> TIME_MS{
