@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -159,6 +160,10 @@ const std::vector<OriginId>& LogicalWindowDescriptor::getInputOriginIds() const
 void LogicalWindowDescriptor::setInputOriginIds(const std::vector<OriginId>& inputOriginIds)
 {
     LogicalWindowDescriptor::inputOriginIds = inputOriginIds;
+}
+bool LogicalWindowDescriptor::requiresSequentialAggregation() const
+{
+    return std::ranges::any_of(windowAggregation, [](const auto& aggregation) { return aggregation->requiresSequentialAggregation(); });
 }
 
 }

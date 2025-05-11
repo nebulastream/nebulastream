@@ -39,8 +39,9 @@ namespace NES::Runtime::Execution::Operators
 AggregationOperatorHandler::AggregationOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    bool sequentialProcessing)
+    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), sequentialProcessing)
 {
 }
 
@@ -63,11 +64,12 @@ std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> Aggrega
          numberOfBuckets = numberOfBuckets,
          pageSize = pageSize,
          outputOriginId = outputOriginId,
-         numberOfWorkerThreads = numberOfWorkerThreads](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+         numberOfHashmaps = sequentialProcessing ? 1 : numberOfWorkerThreads](
+            SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             NES_TRACE("Creating new aggregation slice with for slice {}-{} for output origin {}", sliceStart, sliceEnd, outputOriginId);
-            return {std::make_shared<AggregationSlice>(
-                keySize, valueSize, numberOfBuckets, pageSize, sliceStart, sliceEnd, numberOfWorkerThreads)};
+            return {
+                std::make_shared<AggregationSlice>(keySize, valueSize, numberOfBuckets, pageSize, sliceStart, sliceEnd, numberOfHashmaps)};
         });
 }
 

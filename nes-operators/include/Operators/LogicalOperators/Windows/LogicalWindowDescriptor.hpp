@@ -124,8 +124,13 @@ public:
      * @return true if they are equal else false
      */
     [[nodiscard]] bool equal(const std::shared_ptr<LogicalWindowDescriptor>& otherWindowDefinition) const;
-    const std::vector<OriginId>& getInputOriginIds() const;
+    [[nodiscard]] const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
+
+    /**
+     * @return true if any of the AggregationFunctions require sequential processing
+     */
+    [[nodiscard]] bool requiresSequentialAggregation() const;
 
 private:
     std::vector<std::shared_ptr<WindowAggregationDescriptor>> windowAggregation;
