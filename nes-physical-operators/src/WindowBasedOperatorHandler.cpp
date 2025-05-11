@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <WindowBasedOperatorHandler.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -23,7 +25,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
@@ -31,9 +32,11 @@ namespace NES
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    bool sequentialProcessing)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
     , numberOfWorkerThreads(0)
+    , sequentialProcessing(sequentialProcessing)
     , outputOriginId(outputOriginId)
     , inputOrigins(inputOrigins)
 {

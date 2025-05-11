@@ -28,6 +28,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/SequentialAggregationRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -49,9 +50,11 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     const auto logicalSourceExpansionRule = NES::LegacyOptimizer::LogicalSourceExpansionRule(sourceCatalog);
     constexpr auto typeInference = NES::LegacyOptimizer::TypeInferencePhase{};
     constexpr auto originIdInferencePhase = NES::LegacyOptimizer::OriginIdInferencePhase{};
+    constexpr auto sequentialAggregationRule = NES::LegacyOptimizer::SequentialAggregationRule{};
 
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
+    sequentialAggregationRule.apply(newPlan);
     typeInference.apply(newPlan);
 
     originIdInferencePhase.apply(newPlan);

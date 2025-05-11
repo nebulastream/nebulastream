@@ -14,6 +14,7 @@
 
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -178,6 +179,11 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
         copy.outputSchema.addField(agg->asField.getFieldName(), agg->asField.getDataType());
     }
     return copy;
+}
+
+bool WindowedAggregationLogicalOperator::requiresSequentialAggregation() const
+{
+    return std::ranges::any_of(aggregationFunctions, [](const auto& aggregation) { return aggregation->requiresSequentialAggregation(); });
 }
 
 TraitSet WindowedAggregationLogicalOperator::getTraitSet() const
