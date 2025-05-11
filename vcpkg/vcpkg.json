@@ -30,6 +30,10 @@
     "antlr4",
     "argparse",
     "boost-asio",
+    "boost-system",
+    "boost-filesystem",
+    "boost-process",
+    "boost-graph",
     "cpptrace",
     "fmt",
     "folly",
@@ -40,6 +44,10 @@
     "nlohmann-json",
     "nautilus",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "ireeruntime"
+  ],
+  "default-features": [
+    "mqtt"
   ]
 }

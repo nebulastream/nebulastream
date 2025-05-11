@@ -22,6 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Model.hpp>
 
 namespace NES::InferModel
 {
@@ -32,11 +33,7 @@ namespace NES::InferModel
 class LogicalInferModelOperator : public LogicalUnaryOperator
 {
 public:
-    LogicalInferModelOperator(
-        std::string model,
-        std::vector<std::shared_ptr<NodeFunction>> inputFields,
-        std::vector<std::shared_ptr<NodeFunction>> outputFields,
-        OperatorId id);
+    LogicalInferModelOperator(OperatorId id, NES::Nebuli::Inference::Model, std::vector<std::shared_ptr<NodeFunction>> inputFields);
 
     /**
      * @brief copies the current operator node
@@ -66,37 +63,19 @@ public:
     bool inferSchema() override;
 
     /**
-     * @brief infers the signature of this operator node
-     */
-    void inferStringSignature() override;
-
-    /**
-     * @brief getter for the model
-     * @return model
-     */
-    const std::string& getModel() const;
-
-    /**
-     * @brief getter for the path to the deployed model
-     * @return path to model
-     */
-    const std::string getDeployedModelPath() const;
-
-    /**
      * @brief getter for inputFieldsPtr
      * @return inputFieldsPtr
      */
     const std::vector<std::shared_ptr<NodeFunction>>& getInputFields() const;
 
-    /**
-     * @brief getter for outputFieldsPtr
-     * @return outputFieldsPtr
-     */
-    const std::vector<std::shared_ptr<NodeFunction>>& getOutputFields() const;
+
+    void inferStringSignature() override { }
+
+    const Nebuli::Inference::Model& getModel() const { return model; }
 
 protected:
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
-    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override { return os << "InferModel"; }
 
 private:
     /**
@@ -105,9 +84,9 @@ private:
      */
     void updateToFullyQualifiedFieldName(const std::shared_ptr<NodeFunctionFieldAccess>& field) const;
 
-    std::string model;
+    Nebuli::Inference::Model model;
     std::vector<std::shared_ptr<NodeFunction>> inputFields;
-    std::vector<std::shared_ptr<NodeFunction>> outputFields;
 };
+
 
 }

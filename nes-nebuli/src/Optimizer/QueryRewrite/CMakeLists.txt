@@ -20,4 +20,5 @@ add_source_files(nes-optimizer
         PredicateReorderingRule.cpp
         ProjectBeforeUnionOperatorRule.cpp
         RenameSourceToProjectOperatorRule.cpp
+        ModelInferenceCompilationRule.cpp
 )

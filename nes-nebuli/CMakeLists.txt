@@ -29,7 +29,7 @@ target_include_directories(nes-nebuli-lib
 
 target_link_libraries(nes-nebuli-lib
         PUBLIC nes-operators
-        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp nes-client
+        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp nes-client nes-inference
 )
 
 add_executable(nes-nebuli src/NebuLIStarter.cpp)
