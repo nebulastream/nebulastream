@@ -291,7 +291,7 @@ timeUnit: MS
 
 timestampParameter: IDENTIFIER;
 
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
+functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | ARRAY_AGG;
 
 sinkClause: INTO sink (',' sink)*;
 
@@ -423,7 +423,7 @@ LEFT: 'LEFT';
 LIKE: 'LIKE';
 LIMIT: 'LIMIT' | 'limit';
 LIST: 'LIST';
-MERGE: 'MERGE' | 'merge';
+ARRAY_AGG: 'ARRAY_AGG' | 'array_agg';
 NATURAL: 'NATURAL';
 NOT: 'NOT' | 'not' | '!';
 NULLTOKEN:'NULL';
