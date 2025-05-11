@@ -431,12 +431,12 @@ bool ExecutableQueryPlan::addSuccessorPlan(ExecutableQueryPlanPtr successor) {
 
 void ExecutableQueryPlan::transferSourcesToSuccessor(const ReconfigurationMarkerPtr& marker) {
     // get the list of sources to be reused from the successor
-    NES_ERROR("Transfer sources to successor for plan with id {} of query {}", decomposedQueryId, sharedQueryId);
     auto lockedSuccessor = successor.wlock();
     if (!lockedSuccessor) {
         NES_DEBUG("Cannot transfer sources to successor because no successor was registered");
         return;
     }
+    NES_ERROR("Transfer sources to successor for plan with id {} of query {} from version {} to {}", decomposedQueryId, sharedQueryId, decomposedQueryVersion, (*lockedSuccessor)->decomposedQueryVersion);
     auto sourcesToReuseBySuccessorPlan = (*lockedSuccessor)->getSourcesToReuse();
 
     auto sources = getSources();
