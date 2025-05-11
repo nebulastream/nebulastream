@@ -39,13 +39,15 @@
 namespace NES::Systest
 {
 static constexpr auto CSVSourceToken = "SourceCSV"s;
+static constexpr auto RawSourceToken = "SourceRaw"s;
 static constexpr auto SLTSourceToken = "Source"s;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 
-static const std::array<std::pair<std::string_view, TokenType>, 5> stringToToken
+static const std::array<std::pair<std::string_view, TokenType>, 6> stringToToken
     = {{{CSVSourceToken, TokenType::CSV_SOURCE},
+        {RawSourceToken, TokenType::RAW_SOURCE},
         {SLTSourceToken, TokenType::SLT_SOURCE},
         {QueryToken, TokenType::QUERY},
         {SinkToken, TokenType::SINK},
@@ -171,6 +173,11 @@ void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
     this->onCSVSourceCallback = std::move(callback);
 }
 
+void SystestParser::registerOnRawSourceCallback(RawSourceCallback callback)
+{
+    this->onRawSourceCallback = std::move(callback);
+}
+
 /// Here we model the structure of the test file by what we `expect` to see.
 /// If we encounter something unexpected, we return false.
 void SystestParser::parse()
@@ -183,6 +190,14 @@ void SystestParser::parse()
             if (onCSVSourceCallback)
             {
                 onCSVSourceCallback(std::move(source));
+            }
+        }
+        else if (token == TokenType::RAW_SOURCE)
+        {
+            auto source = expectRawSource();
+            if (onRawSourceCallback)
+            {
+                onRawSourceCallback(std::move(source));
             }
         }
         else if (token == TokenType::SLT_SOURCE)
@@ -382,6 +397,41 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
     return source;
 }
 
+
+SystestParser::RawSource SystestParser::expectRawSource() const
+{
+    INVARIANT(currentLine < lines.size(), "current parse line should exist");
+    RawSource source;
+    const auto& line = lines[currentLine];
+    std::istringstream stream(line);
+
+    /// Read and discard the first word as it is always CSVSource
+    std::string discard;
+    if (!(stream >> discard))
+    {
+        throw SLTUnexpectedToken("failed to read the first word in: " + line);
+    }
+    INVARIANT(discard == RawSourceToken, "Expected first word to be `{}` for raw source statement", CSVSourceToken);
+
+    /// Read the source name and check if successful
+    if (!(stream >> source.name))
+    {
+        throw SLTUnexpectedToken("failed to read source name in: " + line);
+    }
+
+    std::vector<std::string> arguments;
+    std::string argument;
+    while (stream >> argument)
+    {
+        arguments.push_back(argument);
+    }
+
+    source.rawFilePath = arguments.back();
+    arguments.pop_back();
+
+    source.fields = parseSchemaFields(arguments);
+    return source;
+}
 
 SystestParser::CSVSource SystestParser::expectCSVSource() const
 {

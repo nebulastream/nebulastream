@@ -33,6 +33,7 @@ enum class TokenType : uint8_t
 {
     INVALID,
     CSV_SOURCE,
+    RAW_SOURCE,
     SLT_SOURCE,
     SINK,
     QUERY,
@@ -78,6 +79,14 @@ public:
         bool operator==(const CSVSource& other) const = default;
     };
 
+    struct RawSource
+    {
+        std::string name;
+        Schema fields;
+        std::string rawFilePath;
+        bool operator==(const RawSource& other) const = default;
+    };
+
     struct SLTSource
     {
         std::string name;
@@ -100,6 +109,7 @@ public:
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
+    using RawSourceCallback = std::function<void(RawSource&&)>;
     using SinkCallback = std::function<void(Sink&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
@@ -107,6 +117,7 @@ public:
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
+    void registerOnRawSourceCallback(RawSourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
 
 
@@ -127,6 +138,7 @@ private:
     [[nodiscard]] SLTSource expectSLTSource();
     [[nodiscard]] CSVSource expectCSVSource() const;
     [[nodiscard]] Sink expectSink() const;
+    [[nodiscard]] RawSource expectRawSource() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
     [[nodiscard]] Query expectQuery();
 
@@ -134,6 +146,7 @@ private:
     ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
     CSVSourceCallback onCSVSourceCallback;
+    RawSourceCallback onRawSourceCallback;
     SinkCallback onSinkCallback;
 
     bool firstToken = true;
