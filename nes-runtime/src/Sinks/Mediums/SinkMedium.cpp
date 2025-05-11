@@ -91,7 +91,7 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         case Runtime::ReconfigurationType::ReconfigurationMarker: {
             auto marker = message.getUserData<ReconfigurationMarkerPtr>();
             auto event = marker->getReconfigurationEvent(DecomposedQueryIdWithVersion(decomposedQueryId, decomposedQueryVersion));
-            NES_ASSERT2_FMT(event, "Markers should only be propageted to a network sink if the plan is to be reconfigured");
+            NES_ASSERT2_FMT(event, "Sink of plan {} of query {} received reconfiguration marker without an event for this sink. Markers should only be propagated to a sink if the plan is to be reconfigured");
 
             if (!event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()
                 && !event.value()->reconfigurationMetadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
