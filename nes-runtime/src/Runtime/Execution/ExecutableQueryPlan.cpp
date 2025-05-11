@@ -413,6 +413,10 @@ void ExecutableQueryPlan::setSourcesToReuse(std::vector<OperatorId> sourcesToReu
 }
 
 bool ExecutableQueryPlan::addSuccessorPlan(ExecutableQueryPlanPtr successor) {
+    auto lockedSuccessor = this->successor.wlock();
+    if (*lockedSuccessor != nullptr && successor->decomposedQueryVersion != (*lockedSuccessor)->decomposedQueryVersion) {
+        return (*lockedSuccessor)->addSuccessorPlan(successor);
+    }
     this->successor = successor;
     if (allSourcesDrained()) {
         if (*drainMarker.rlock() == nullptr) {
