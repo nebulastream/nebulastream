@@ -28,6 +28,7 @@ RUN apt update -y && apt install \
     ninja-build \
     bison \
     pkg-config \
+    pipx \
     -y
 
 # install llvm based toolchain

@@ -103,6 +103,21 @@ struct convert<NES::CLI::PhysicalSource>
     }
 };
 
+
+template <>
+struct convert<NES::CLI::Model>
+{
+    static bool decode(const Node& node, NES::CLI::Model& rhs)
+    {
+        rhs.name = node["name"].as<std::string>();
+        rhs.inputs
+            = node["inputs"].as<std::vector<std::string>>() | std::views::transform(stringToFieldType) | std::ranges::to<std::vector>();
+        rhs.outputs = node["outputs"].as<std::vector<NES::CLI::SchemaField>>();
+        rhs.path = node["path"].as<std::string>();
+        return true;
+    }
+};
+
 template <>
 struct convert<NES::CLI::QueryConfig>
 {
@@ -112,6 +127,10 @@ struct convert<NES::CLI::QueryConfig>
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
         rhs.query = node["query"].as<std::string>();
+        if (node["models"].IsDefined())
+        {
+            rhs.models = node["models"].as<std::vector<NES::CLI::Model>>();
+        }
         return true;
     }
 };
@@ -198,14 +217,33 @@ std::vector<SinkDescriptor> CLI::YAMLBinder::bindRegisterSinks(const std::vector
     return boundSinks;
 }
 
+std::vector<Nebuli::Inference::ModelDescriptor> CLI::YAMLBinder::bindRegisterModels(const std::vector<Model>& unboundModels)
+{
+    auto boundModels = unboundModels
+        | std::views::transform(
+                           [](const auto& model)
+                           {
+                               Schema schema{};
+                               for (auto [name, type] : model.outputs)
+                               {
+                                   schema.addField(name, type);
+                               }
+                               return Nebuli::Inference::ModelDescriptor{model.name, model.path, model.inputs, schema};
+                           })
+        | std::ranges::to<std::vector>();
+    std::ranges::for_each(boundModels, [&](const auto& model) { modelCatalog->registerModel(model); });
+    return boundModels;
+}
+
 LogicalPlan CLI::YAMLBinder::parseAndBind(std::istream& inputStream)
 {
     try
     {
-        auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources] = YAML::Load(inputStream).as<QueryConfig>();
+        auto [queryString, unboundSinks, unboundLogicalSources, unboundPhysicalSources, unboundModels] = YAML::Load(inputStream).as<QueryConfig>();
         bindRegisterLogicalSources(unboundLogicalSources);
         bindRegisterPhysicalSources(unboundPhysicalSources);
         bindRegisterSinks(unboundSinks);
+        bindRegisterModels(unboundModels);
         auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(queryString);
         return plan;
     }
