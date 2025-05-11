@@ -32,11 +32,13 @@ namespace NES::Runtime::Execution::Operators
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    bool sequentialProcessing)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
     , watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins))
     , watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector(1, outputOriginId)))
     , numberOfWorkerThreads(0)
+    , sequentialProcessing(sequentialProcessing)
     , outputOriginId(outputOriginId)
 {
 }

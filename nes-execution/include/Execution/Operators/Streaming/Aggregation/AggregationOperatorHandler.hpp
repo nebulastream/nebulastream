@@ -46,7 +46,8 @@ public:
     AggregationOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        bool sequentialProcessing);
 
 
     /// We do not wish to set the hash map specific params during the lowering from the logical to physical

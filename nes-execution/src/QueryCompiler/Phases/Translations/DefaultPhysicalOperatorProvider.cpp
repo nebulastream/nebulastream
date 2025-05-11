@@ -49,6 +49,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSequenceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -446,12 +447,21 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const std::sh
         = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
             timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), numberOfInputOrigins);
     const auto windowHandler = std::make_shared<Runtime::Execution::Operators::AggregationOperatorHandler>(
-        windowOperator->getInputOriginIds(), windowDefinition->getOriginId(), std::move(sliceAndWindowStore));
+        windowOperator->getInputOriginIds(),
+        windowDefinition->getOriginId(),
+        std::move(sliceAndWindowStore),
+        windowDefinition->requiresSequentialAggregation());
 
     const auto aggregationBuild = PhysicalOperators::PhysicalAggregationBuild::create(
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler);
     const auto aggregationProbe = PhysicalOperators::PhysicalAggregationProbe::create(
         getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition, windowHandler, windowOperator->windowMetaData);
+
+    if (windowDefinition->requiresSequentialAggregation())
+    {
+        operatorNode->insertBetweenThisAndChildNodes(PhysicalOperators::PhysicalSequenceOperator::create(windowInputSchema));
+    }
+
     operatorNode->insertBetweenThisAndChildNodes(aggregationBuild);
     operatorNode->replace(aggregationProbe);
 }

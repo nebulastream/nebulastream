@@ -103,6 +103,11 @@ public:
      */
     [[nodiscard]] bool equal(const std::shared_ptr<WindowAggregationDescriptor>& otherWindowAggregationDescriptor) const;
 
+    /**
+     * @return If this is set, the aggregations lift function will be called with buffers in sequence number order.
+     */
+    [[nodiscard]] virtual bool requiresSequentialAggregation() const { return false; }
+
 protected:
     explicit WindowAggregationDescriptor(const std::shared_ptr<NodeFunctionFieldAccess>& onField);
     WindowAggregationDescriptor(const std::shared_ptr<NodeFunction>& onField, const std::shared_ptr<NodeFunction>& asField);
