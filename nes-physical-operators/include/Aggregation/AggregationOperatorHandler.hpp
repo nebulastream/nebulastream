@@ -61,6 +61,7 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        bool sequentialProcessing,
         uint64_t maxNumberOfBuckets);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
