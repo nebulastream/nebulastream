@@ -64,8 +64,8 @@ void FileBackedPagedVector::writeToFile(
         case Runtime::Execution::NO_SEPARATION: {
             for (const auto& page : pages)
             {
-                numTuplesOnDisk += page.getNumberOfTuples();
                 fileWriter.write(page.getBuffer(), page.getNumberOfTuples() * memoryLayout->getTupleSize());
+                numTuplesOnDisk += page.getNumberOfTuples();
             }
             break;
         }
@@ -108,11 +108,11 @@ void FileBackedPagedVector::readFromFile(
         }
         case Runtime::Execution::NO_SEPARATION: {
             // TODO just append new page disregarding the number of tuples on the last page?
-            appendPageIfFull(bufferProvider, memoryLayout);
-            auto& lastPage = pages.back();
-            auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
             const auto tupleSize = memoryLayout->getTupleSize();
+            appendPageIfFull(bufferProvider, memoryLayout);
+            auto lastPage = pages.back();
             auto* lastPagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
+            auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
 
             while (const auto bytesRead = fileReader.read(lastPagePtr, tuplesToRead * tupleSize))
             {
