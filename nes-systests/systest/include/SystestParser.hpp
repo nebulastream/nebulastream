@@ -29,6 +29,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -38,6 +39,7 @@ using namespace std::literals;
 /// Tokens ///
 enum class TokenType : uint8_t
 {
+    MODEL,
     QUERY,
     CREATE,
     RESULT_DELIMITER,
@@ -158,10 +160,12 @@ public:
     using CreateCallback = std::function<void(std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>)>;
     using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
     using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
+    using ModelCallback = std::function<void(Nebuli::Inference::ModelDescriptor&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
+    void registerOnModelCallback(ModelCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
     void registerOnCreateCallback(CreateCallback callback);
     void registerOnDifferentialQueryBlockCallback(DifferentialQueryBlockCallback callback);
@@ -187,6 +191,7 @@ private:
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
+    [[nodiscard]] Nebuli::Inference::ModelDescriptor expectModel();
     [[nodiscard]] std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> expectCreateStatement();
     [[nodiscard]] std::string expectQuery(const std::unordered_set<TokenType>& stopTokens);
     [[nodiscard]] std::pair<std::string, std::string> expectDifferentialBlock();
@@ -197,6 +202,7 @@ private:
     std::vector<SubstitutionRule> substitutionRules;
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
+    ModelCallback onModelCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
     CreateCallback onCreateCallback;
     DifferentialQueryBlockCallback onDifferentialQueryBlockCallback;

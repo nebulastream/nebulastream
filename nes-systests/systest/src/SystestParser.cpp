@@ -46,6 +46,43 @@
 namespace
 {
 
+/// Parses the stream into a schema. It expects a string in the format: FIELDNAME FIELDTYPE, FIELDNAME FIELDTYPE, ...
+NES::Systest::SystestParser::SystestSchema parseSchemaFields(const std::vector<std::string>& arguments)
+{
+    NES::Systest::SystestParser::SystestSchema schema;
+    if (arguments.size() % 2 != 0)
+    {
+        if (const auto& lastArg = arguments.back(); lastArg.ends_with(".csv"))
+        {
+            throw NES::SLTUnexpectedToken(
+                "Incomplete fieldtype/fieldname pair for arguments {}; {} potentially is a CSV file? Are you mixing semantics",
+                fmt::join(arguments, ","),
+                lastArg);
+        }
+        throw NES::SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
+    }
+
+    for (size_t i = 0; i < arguments.size(); i += 2)
+    {
+        NES::DataType dataType;
+        if (auto type = magic_enum::enum_cast<NES::DataType::Type>(arguments[i]); type.has_value())
+        {
+            dataType = NES::DataTypeProvider::provideDataType(type.value());
+        }
+        else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
+        {
+            dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED);
+        }
+        else
+        {
+            throw NES::SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
+        }
+        schema.emplace_back(dataType, arguments[i + 1]);
+    }
+
+    return schema;
+}
+
 bool emptyOrComment(const std::string& line)
 {
     return line.empty() /// completely empty
@@ -129,6 +166,7 @@ namespace NES::Systest
 using namespace std::string_view_literals;
 
 static constexpr std::string_view CreateToken = "CREATE"sv;
+static constexpr auto ModelToken = "MODEL"sv;
 static constexpr std::string_view QueryToken = "SELECT"sv;
 static constexpr std::string_view ResultDelimiter = "----"sv;
 static constexpr std::string_view ErrorToken = "ERROR"sv;
@@ -139,6 +177,7 @@ static constexpr std::string_view GlobalConfigurationToken = "GLOBALCONFIGURATIO
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{CreateToken, TokenType::CREATE},
      {QueryToken, TokenType::QUERY},
+     {ModelToken, TokenType::MODEL},
      {ResultDelimiter, TokenType::RESULT_DELIMITER},
      {ErrorToken, TokenType::ERROR_EXPECTATION},
      {ConfigurationToken, TokenType::CONFIGURATION},
@@ -210,6 +249,11 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
     this->onErrorExpectationCallback = std::move(callback);
 }
 
+void SystestParser::registerOnModelCallback(ModelCallback callback)
+{
+    this->onModelCallback = std::move(callback);
+}
+
 void SystestParser::registerOnCreateCallback(CreateCallback callback)
 {
     this->onCreateCallback = std::move(callback);
@@ -241,6 +285,14 @@ void SystestParser::parse()
             case TokenType::CREATE: {
                 auto [query, testData] = expectCreateStatement();
                 onCreateCallback(query, testData);
+                break;
+            }
+            case TokenType::MODEL: {
+                auto model = expectModel();
+                if (onModelCallback)
+                {
+                    onModelCallback(std::move(model));
+                }
                 break;
             }
             case TokenType::QUERY: {
@@ -415,6 +467,61 @@ std::optional<TokenType> SystestParser::peekToken() const
 
     INVARIANT(!line.empty(), "a potential token should never be empty");
     return getTokenIfValid(line);
+}
+
+Nebuli::Inference::ModelDescriptor SystestParser::expectModel()
+{
+    try
+    {
+        if (lines.size() < currentLine + 2)
+        {
+            throw SLTUnexpectedToken("expected at least three lines for model definition.");
+        }
+
+        Nebuli::Inference::ModelDescriptor model;
+        auto& modelNameLine = lines[currentLine];
+        auto _ = moveToNextToken();
+        auto& inputLine = lines[currentLine];
+        _ = moveToNextToken();
+        auto& outputLine = lines[currentLine];
+
+        std::istringstream stream(modelNameLine);
+        std::string discard;
+        if (!(stream >> discard))
+        {
+            throw SLTUnexpectedToken("failed to read the first word in: {}", modelNameLine);
+        }
+        if (!(stream >> model.name))
+        {
+            throw SLTUnexpectedToken("failed to read model name in {}", modelNameLine);
+        }
+
+        if (!(stream >> model.path))
+        {
+            throw SLTUnexpectedToken("failed to read model path in {}", modelNameLine);
+        }
+
+        auto inputTypeNames = NES::Util::splitWithStringDelimiter<std::string>(inputLine, " ");
+        auto types = std::views::transform(inputTypeNames, [](const auto& typeName) { return DataTypeProvider::provideDataType(typeName); })
+            | std::ranges::to<std::vector>();
+        model.inputs = types;
+
+        auto outputSchema = NES::Util::splitWithStringDelimiter<std::string>(outputLine, " ");
+
+        for (auto [type, name] : parseSchemaFields(outputSchema))
+        {
+            model.outputs.addField(name, type);
+        }
+        return model;
+    }
+    catch (Exception& e)
+    {
+        auto modelParserSchema = "MODEL <model_name> <model_path>"
+                                 "<type-0> ... <type-N>"
+                                 "<type-0> <output-name-0> ... <type-N> <output-name-N>"sv;
+        e.what() += fmt::format("\nWhen Parsing a Model Statement:\n{}", modelParserSchema);
+        throw;
+    }
 }
 
 std::vector<std::string> SystestParser::expectTuples(const bool ignoreFirst)

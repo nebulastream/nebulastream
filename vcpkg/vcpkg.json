@@ -49,6 +49,10 @@
     "antlr4",
     "argparse",
     "boost-asio",
+    "boost-system",
+    "boost-filesystem",
+    "boost-process",
+    "boost-graph",
     "cpptrace",
     "fmt",
     "folly",
@@ -61,7 +65,8 @@
     "replxx",
     "spdlog",
     "yaml-cpp",
-    "boost-url"
+    "boost-url",
+    "ireeruntime"
   ],
   "overrides": [
     {

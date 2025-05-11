@@ -41,8 +41,8 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
-    std::vector leafes(logicalOperator.getChildren().size(), wrapper);
-    return {.root = wrapper, .leafs = {leafes}};
+    std::vector leafs(logicalOperator.getChildren().size(), wrapper);
+    return {.root = wrapper, .leafs = {leafs}};
 };
 
 std::unique_ptr<AbstractRewriteRule>

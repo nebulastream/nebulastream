@@ -59,6 +59,9 @@ public:
     /// @return the updated queryPlan
     static LogicalPlan addSelection(LogicalFunction selectionFunction, const LogicalPlan& queryPlan);
 
+    static LogicalPlan addInferModel(const std::string& model, const std::vector<LogicalFunction>& inputFields, LogicalPlan queryPlan);
+
+
     static LogicalPlan addWindowAggregation(
         LogicalPlan queryPlan,
         const std::shared_ptr<Windowing::WindowType>& windowType,

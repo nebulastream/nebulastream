@@ -29,6 +29,7 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <experimental/propagate_const>
+#include <ModelCatalog.hpp>
 
 namespace NES::CLI
 {
@@ -67,22 +68,35 @@ struct PhysicalSource
     std::unordered_map<std::string, std::string> sourceConfig;
 };
 
+struct Model
+{
+    std::string name;
+    std::filesystem::path path;
+    std::vector<NES::DataType> inputs;
+    std::vector<SchemaField> outputs;
+};
+
 struct QueryConfig
 {
     std::string query;
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
+    std::vector<Model> models;
 };
 
 class YAMLBinder
 {
     std::experimental::propagate_const<std::shared_ptr<SourceCatalog>> sourceCatalog;
     std::experimental::propagate_const<std::shared_ptr<SinkCatalog>> sinkCatalog;
+    std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog;
 
 public:
-    explicit YAMLBinder(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    explicit YAMLBinder(
+        std::shared_ptr<SourceCatalog> sourceCatalog,
+        std::shared_ptr<SinkCatalog> sinkCatalog,
+        const std::shared_ptr<Nebuli::Inference::ModelCatalog>& modelCatalog)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), modelCatalog(modelCatalog)
     {
     }
 
@@ -94,6 +108,7 @@ public:
     bindRegisterLogicalSources(const std::vector<LogicalSource>& unboundSources); /// required since it's not using CLI::LogicalSource
     std::vector<SourceDescriptor> bindRegisterPhysicalSources(const std::vector<PhysicalSource>& unboundSources);
     std::vector<SinkDescriptor> bindRegisterSinks(const std::vector<Sink>& unboundSinks);
+    std::vector<Nebuli::Inference::ModelDescriptor> bindRegisterModels(const std::vector<Model>& vector);
 };
 
 }
