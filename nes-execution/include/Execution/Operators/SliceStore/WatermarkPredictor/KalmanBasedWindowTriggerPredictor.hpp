@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution
 class KalmanWindowTriggerPredictor final : public AbstractWatermarkPredictor
 {
 public:
-    explicit KalmanWindowTriggerPredictor(uint64_t initial);
+    explicit KalmanWindowTriggerPredictor(uint64_t initial = 0);
 
     void update(const std::vector<std::pair<uint64_t, Timestamp::Underlying>>& data) override;
     [[nodiscard]] Timestamp getEstimatedWatermark(uint64_t timestamp) const override;

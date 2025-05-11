@@ -74,7 +74,7 @@ public:
         uint64_t windowSize,
         uint64_t windowSlide,
         MemoryControllerInfo memoryControllerInfo,
-        const WatermarkPredictorInfo& watermarkPredictorInfo,
+        WatermarkPredictorType watermarkPredictorType,
         const std::vector<OriginId>& inputOrigins);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other);
     FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept;

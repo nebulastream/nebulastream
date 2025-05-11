@@ -38,7 +38,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     const uint64_t windowSize,
     const uint64_t windowSlide,
     MemoryControllerInfo memoryControllerInfo,
-    const WatermarkPredictorInfo& watermarkPredictorInfo,
+    const WatermarkPredictorType watermarkPredictorType,
     const std::vector<OriginId>& inputOrigins)
     : watermarkProcessor(std::make_shared<Operators::MultiOriginWatermarkProcessor>(inputOrigins))
     , numberOfWorkerThreads(0)
@@ -50,24 +50,18 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     for (const auto origin : inputOrigins)
     {
         watermarkPredictorUpdateCnt.emplace(origin, 0);
-        switch (watermarkPredictorInfo.type)
+        switch (watermarkPredictorType)
         {
             case KalmanBased: {
-                watermarkPredictors.emplace(origin, std::make_shared<KalmanWindowTriggerPredictor>(watermarkPredictorInfo.initial));
+                watermarkPredictors.emplace(origin, std::make_shared<KalmanWindowTriggerPredictor>());
                 break;
             }
             case RegressionBased: {
-                watermarkPredictors.emplace(
-                    origin,
-                    std::make_shared<RegressionBasedWatermarkPredictor>(watermarkPredictorInfo.initial, watermarkPredictorInfo.param1));
+                watermarkPredictors.emplace(origin, std::make_shared<RegressionBasedWatermarkPredictor>());
                 break;
             }
             case RLSBased: {
-                watermarkPredictors.emplace(
-                    origin,
-                    std::make_shared<RLSBasedWatermarkPredictor>(
-                        //watermarkPredictorInfo.initial, watermarkPredictorInfo.param1, watermarkPredictorInfo.param2));
-                        watermarkPredictorInfo.initial));
+                watermarkPredictors.emplace(origin, std::make_shared<RLSBasedWatermarkPredictor>());
                 break;
             }
         }
