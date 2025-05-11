@@ -21,6 +21,7 @@
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
+#include <LegacyOptimizer/SequentialAggregationRule.hpp>
 #include <LegacyOptimizer/SinkBindingRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
@@ -39,6 +40,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto originIdInferencePhase = OriginIdInferencePhase{};
     constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
+    constexpr auto sequentialAggregationRule = SequentialAggregationRule{};
 
     inlineSinkBindingPhase.apply(newPlan);
     sinkBindingRule.apply(newPlan);

@@ -30,6 +30,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 
+#include <from_current.hpp>
+
 namespace NES
 {
 }
@@ -48,13 +50,14 @@ std::filesystem::path createTempDir(std::string_view prefix)
     }
     return std::filesystem::path(std::move(tempDirTemplate));
 }
+
 void TempDirectoryCleanup::cleanup() noexcept
 {
     if (!deleteOnExit)
     {
         return;
     }
-    try
+    CPPTRACE_TRY
     {
         if (std::filesystem::exists(*deleteOnExit))
         {
@@ -62,7 +65,7 @@ void TempDirectoryCleanup::cleanup() noexcept
         }
         deleteOnExit.reset();
     }
-    catch (...)
+    CPPTRACE_CATCH(...)
     {
         tryLogCurrentException();
     }
@@ -90,6 +93,7 @@ TempDirectoryCleanup& TempDirectoryCleanup::operator=(TempDirectoryCleanup&& oth
     other.deleteOnExit.reset();
     return *this;
 }
+
 std::string errnoString(int error)
 {
     char localBuffer[128] = {};

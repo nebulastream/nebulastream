@@ -118,7 +118,6 @@ std::shared_ptr<T> copyPtr(std::experimental::propagate_const<std::shared_ptr<T>
     return std::shared_ptr<T>{std::experimental::get_underlying(ptr)};
 }
 
-
 /// Creates new unique temporary directory with a custom prefix
 std::filesystem::path createTempDir(std::string_view prefix);
 

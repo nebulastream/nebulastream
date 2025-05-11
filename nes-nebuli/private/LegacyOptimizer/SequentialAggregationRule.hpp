@@ -14,22 +14,23 @@
 
 #pragma once
 
+#include <memory>
+#include <set>
+#include <unordered_map>
 #include <utility>
-#include <Operators/LogicalOperator.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
-#include <QueryExecutionConfiguration.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
 
-struct LowerToPhysicalSequence final : AbstractRewriteRule
+/**
+ * @brief This rule injects a LogicalSequenceOperator in front of a window aggregation if one of the aggregation requires sequential processing
+ */
+class SequentialAggregationRule
 {
-    explicit LowerToPhysicalSequence(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
-
-    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
-
-private:
-    QueryExecutionConfiguration conf;
+public:
+    void apply(LogicalPlan& queryPlan) const;
 };
-
 }

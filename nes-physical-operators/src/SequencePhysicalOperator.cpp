@@ -31,10 +31,10 @@ namespace NES::Runtime::Execution::Operators
 void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const
 {
     auto buffer = nautilus::invoke(
-        +[](OperatorHandler* handler, uint8_t* bufferMemory) -> Memory::TupleBuffer*
+        +[](OperatorHandler* handler, TupleBuffer* bufferMemory) -> TupleBuffer*
         { return dynamic_cast<SequenceOperatorHandler*>(handler)->getNextBuffer(bufferMemory).value_or(nullptr); },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
-        recordBuffer.getBuffer());
+        recordBuffer.getReference());
 
     while (buffer)
     {
@@ -44,20 +44,22 @@ void SequencePhysicalOperator::open(ExecutionContext& executionCtx, Nautilus::Re
         scan.close(executionCtx, nextBufferInSequence);
 
         buffer = nautilus::invoke(
-            +[](OperatorHandler* handler, Memory::TupleBuffer* tupleBuffer) -> Memory::TupleBuffer*
+            +[](OperatorHandler* handler, TupleBuffer* tupleBuffer) -> TupleBuffer*
             { return dynamic_cast<SequenceOperatorHandler*>(handler)->markBufferAsDone(tupleBuffer).value_or(nullptr); },
             executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
             buffer);
     }
 }
-void SequencePhysicalOperator::setup(ExecutionContext& executionCtx) const
+
+void SequencePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     nautilus::invoke(
         +[](OperatorHandler* handler, PipelineExecutionContext* ctx) { handler->start(*ctx, 0); },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         executionCtx.pipelineContext);
-    scan.setup(executionCtx);
+    scan.setup(executionCtx, compilationContext);
 }
+
 void SequencePhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     scan.terminate(executionCtx);
@@ -66,10 +68,12 @@ void SequencePhysicalOperator::terminate(ExecutionContext& executionCtx) const
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
         executionCtx.pipelineContext);
 }
+
 void SequencePhysicalOperator::setChild(PhysicalOperator child)
 {
     scan.setChild(child);
 }
+
 std::optional<struct PhysicalOperator> SequencePhysicalOperator::getChild() const
 {
     return scan.getChild();

@@ -65,7 +65,8 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        uint64_t maxNumberOfBuckets);
+        uint64_t maxNumberOfBuckets,
+        bool sequentialProcessing);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;

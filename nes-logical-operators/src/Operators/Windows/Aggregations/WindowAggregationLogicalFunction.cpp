@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 
 #include <memory>
 #include <string>
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <fmt/format.h>
 
 namespace NES
@@ -28,6 +28,11 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     : WindowAggregationLogicalFunction(
           std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
 {
+}
+
+bool WindowAggregationLogicalFunction::requiresSequentialAggregation() const
+{
+    return false;
 }
 
 WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(

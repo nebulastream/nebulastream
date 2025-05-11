@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 
 #include <cstdint>
 #include <ostream>
 #include <utility>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
@@ -128,6 +128,7 @@ nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
 {
     return ptrToVarSized;
 }
+
 nautilus::val<uint32_t> VariableSizedData::shrink(nautilus::val<uint32_t> bytesToShrink)
 {
 #ifndef NDEBUG

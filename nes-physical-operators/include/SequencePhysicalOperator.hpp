@@ -37,9 +37,10 @@ public:
     }
 
     void open(ExecutionContext& executionCtx, Nautilus::RecordBuffer& recordBuffer) const override;
+
     void close(ExecutionContext&, RecordBuffer&) const override { /*NOOP*/ }
 
-    void setup(ExecutionContext& executionCtx) const override;
+    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void terminate(ExecutionContext& executionCtx) const override;
 
     [[nodiscard]] std::optional<struct PhysicalOperator> getChild() const override;

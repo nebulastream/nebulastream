@@ -98,6 +98,7 @@ private:
     {
         bool operator()(const std::pair<SequenceData, T>& lhs, const std::pair<SequenceData, T>& rhs) { return rhs.first < lhs.first; }
     };
+
     /// Internal state for the Sequencer
     struct State
     {
@@ -106,6 +107,7 @@ private:
         std::priority_queue<std::pair<SequenceData, T>, std::vector<std::pair<SequenceData, T>>, CompareQueueElements>
             queue; /// Queue of out-of-order elements
     };
+
     folly::Synchronized<State> stateMtx{}; /// Thread-safe state management
 };
 }

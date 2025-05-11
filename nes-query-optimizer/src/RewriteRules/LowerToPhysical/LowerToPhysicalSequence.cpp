@@ -15,8 +15,9 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSequence.hpp>
 
 #include <memory>
+
 #include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SequenceLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -33,13 +34,13 @@ namespace NES
 
 RewriteRuleResultSubgraph LowerToPhysicalSequence::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGet<SequenceLogicalOperator>(), "Expected a SequenceLogicalOperator");
-    auto sink = logicalOperator.get<SequenceLogicalOperator>();
+    PRECONDITION(logicalOperator.tryGetAs<SequenceLogicalOperator>(), "Expected a SequenceLogicalOperator");
+    const auto scan = logicalOperator.getAs<SequenceLogicalOperator>();
 
     auto schema = logicalOperator.getInputSchemas().at(0);
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(conf.operatorBufferSize.getValue(), schema);
-    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+    auto layout = std::make_shared<RowLayout>(conf.operatorBufferSize.getValue(), schema);
+    const auto memoryProvider = std::make_shared<Interface::BufferRef::RowTupleBufferRef>(layout);
 
     auto operatorHandlerId = getNextOperatorHandlerId();
     auto handler = std::make_shared<Runtime::Execution::Operators::SequenceOperatorHandler>();
@@ -48,13 +49,13 @@ RewriteRuleResultSubgraph LowerToPhysicalSequence::apply(LogicalOperator logical
 
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
         physicalOperator,
-        sink.getInputSchemas()[0],
-        sink.getOutputSchema(),
+        scan.getInputSchemas().at(0),
+        scan.getOutputSchema(),
         operatorHandlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::SCAN);
 
-    return {.root = wrapper, .leafs = {wrapper}};
+    return RewriteRuleResultSubgraph{.root = wrapper, .leafs = {wrapper}};
 }
 
 std::unique_ptr<AbstractRewriteRule>
