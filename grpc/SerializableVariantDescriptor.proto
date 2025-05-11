@@ -80,6 +80,24 @@ message UInt64List {
   repeated uint64 values = 1;
 }
 
+message ModelOutputParameter {
+  string name = 1;
+  SerializableDataType type = 2;
+}
+
+message SerializableModel {
+  bytes bytecode = 1;
+  int32 dims = 2;
+  repeated int32 shape = 3;
+  int32 outputDims = 4;
+  repeated int32 outputShape = 5;
+  int32 inputSizeInBytes = 6;
+  int32 outputSizeInBytes = 7;
+  string functionName = 8;
+  repeated SerializableDataType inputs = 9;
+  repeated ModelOutputParameter outputs = 10;
+}
+
 message SerializableVariantDescriptor {
   oneof value {
     int32 int_value = 1;
@@ -97,5 +115,7 @@ message SerializableVariantDescriptor {
     WindowInfos window_infos = 13;
     ProjectionList projections = 14;
     UInt64List ulongs = 15;
+    SerializableModel model = 14;
+    ProjectionList projections = 15;
   }
 }

@@ -13,3 +13,9 @@
 include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/arm64.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/bits/sanitizers/tsan.cmake)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/local.cmake)
+
+if (PORT STREQUAL ireeruntime)
+    # Building Iree with TSAN on Arm is currently not possible, due to hard to fix compilation errors
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+endif()

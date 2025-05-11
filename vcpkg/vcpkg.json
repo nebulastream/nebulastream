@@ -43,6 +43,10 @@
     "antlr4",
     "argparse",
     "boost-asio",
+    "boost-system",
+    "boost-filesystem",
+    "boost-process",
+    "boost-graph",
     "cpptrace",
     "fmt",
     "folly",
@@ -61,6 +65,8 @@
     "scope-guard",
     "boost-url",
     "simdjson"
+    "ireeruntime",
+    "boost-url"
   ],
   "overrides": [
     {
@@ -68,7 +74,6 @@
       "version": "0.8.3",
       "port-version": 0
     }
-    "yaml-cpp"
   ],
   "default-features": [
     "video",
