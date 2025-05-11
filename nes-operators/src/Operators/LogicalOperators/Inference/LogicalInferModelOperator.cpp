@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
@@ -24,42 +25,55 @@
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/Inference/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-
+#include <fmt/ranges.h>
+#include <Model.hpp>
 
 namespace NES::InferModel
 {
 
 LogicalInferModelOperator::LogicalInferModelOperator(
-    std::string model,
-    std::vector<std::shared_ptr<NodeFunction>> inputFields,
-    std::vector<std::shared_ptr<NodeFunction>> outputFields,
-    OperatorId id)
-    : Operator(id)
-    , LogicalUnaryOperator(id)
-    , model(std::move(model))
-    , inputFields(std::move(inputFields))
-    , outputFields(std::move(outputFields))
+    OperatorId id, Nebuli::Inference::Model model, std::vector<std::shared_ptr<NodeFunction>> inputFields)
+    : Operator(id), LogicalUnaryOperator(id), model(std::move(model)), inputFields(std::move(inputFields))
 {
-    NES_DEBUG("LogicalInferModelOperator: reading from model {}", this->model);
+}
+
+namespace
+{
+std::string getFieldName(const NodeFunction& function)
+{
+    if (const auto* nodeFunctionFieldAccess = dynamic_cast<const NodeFunctionFieldAccess*>(&function))
+    {
+        return nodeFunctionFieldAccess->getFieldName();
+    }
+    return dynamic_cast<const NodeFunctionFieldAssignment*>(&function)->getField()->getFieldName();
+}
 }
 
 std::ostream& LogicalInferModelOperator::toDebugString(std::ostream& os) const
 {
-    return os << "INFER_MODEL(" << id << ")";
-}
+    PRECONDITION(not model.getByteCode().empty(), "Inference operator must contain a path to the model.");
+    PRECONDITION(not inputFields.empty(), "Inference operator must contain at least 1 input field.");
 
-std::ostream& LogicalInferModelOperator::toQueryPlanString(std::ostream& os) const
-{
-    return os << "INFER_MODEL";
+    if (not outputSchema->getFieldNames().empty())
+    {
+        fmt::println(os, "INFER_MODEL(opId: {}, schema={})", id, outputSchema->toString());
+        return os;
+    }
+    fmt::println(
+        os,
+        "INFER_MODEL(opId: {}, inputFields: [{}])",
+        id,
+        fmt::join(std::views::transform(inputFields, [](const auto& field) { return getFieldName(*field); }), ", "));
+    return os;
 }
 
 std::shared_ptr<Operator> LogicalInferModelOperator::copy()
 {
-    auto copy = std::make_shared<LogicalInferModelOperator>(model, inputFields, outputFields, id);
+    auto copy = std::make_shared<LogicalInferModelOperator>(id, model, inputFields);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
@@ -75,7 +89,7 @@ bool LogicalInferModelOperator::equal(const std::shared_ptr<Node>& rhs) const
     if (NES::Util::instanceOf<LogicalInferModelOperator>(rhs))
     {
         const auto inferModelOperator = NES::Util::as<LogicalInferModelOperator>(rhs);
-        return this->getDeployedModelPath() == inferModelOperator->getDeployedModelPath();
+        return this->model == inferModelOperator->model;
     }
     return false;
 }
@@ -118,87 +132,53 @@ bool LogicalInferModelOperator::inferSchema()
 
     const auto inputSchema = getInputSchema();
 
-    for (auto inputField : inputFields)
+    if (inputFields.size() != model.getInputs().size())
     {
-        auto inputFunction = NES::Util::as<NodeFunctionFieldAccess>(inputField);
+        throw CannotInferSchema("Model expects {} inputs, but received {}", inputFields.size(), model.getInputs().size());
+    }
+
+    for (const auto& [field, expectedType] : std::views::zip(inputFields, model.getInputs()))
+    {
+        auto inputFunction = NES::Util::as<NodeFunctionFieldAccess>(field);
         updateToFullyQualifiedFieldName(inputFunction);
         inputFunction->inferStamp(*inputSchema);
+
+        if (*inputFunction->getStamp() != *expectedType)
+        {
+            throw CannotInferSchema(
+                "Model Expected '{}', but received {}", expectedType->toString(), inputFunction->getStamp()->toString());
+        }
+
         auto fieldName = inputFunction->getFieldName();
         inputSchema->replaceField(fieldName, inputFunction->getStamp());
     }
 
-    for (auto outputField : outputFields)
+    for (const auto& [name, type] : model.getOutputs())
     {
-        auto outputFunction = NES::Util::as<NodeFunctionFieldAccess>(outputField);
-        updateToFullyQualifiedFieldName(outputFunction);
-        auto fieldName = outputFunction->getFieldName();
-        if (outputSchema->getFieldByName(fieldName))
+        if (outputSchema->getFieldByName(name))
         {
             /// The assigned field is part of the current schema.
             /// Thus we check if it has the correct type.
-            NES_TRACE("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
-            outputSchema->replaceField(fieldName, outputFunction->getStamp());
+            NES_TRACE("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", name);
+            outputSchema->replaceField(name, type);
         }
         else
         {
             /// The assigned field is not part of the current schema.
             /// Thus we extend the schema by the new attribute.
-            NES_TRACE("Infer Model Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
-            outputSchema->addField(fieldName, outputFunction->getStamp());
+            NES_TRACE("Infer Model Logical Operator: the field {} is not part of the schema, so we added it.", name);
+            // outputSchema->addField(fieldName, outputFunction->getStamp());
+            // TODO: default all output fields to Float for now
+            outputSchema->addField(name, type);
         }
     }
 
     return true;
 }
 
-void LogicalInferModelOperator::inferStringSignature()
-{
-    const std::shared_ptr<Operator> operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("InferModelOperator: Inferring String signature for {}", *operatorNode);
-    INVARIANT(!children.empty(), "InferModel must have children, but had none");
-    ///Infer query signatures for child operators
-    for (const auto& child : children)
-    {
-        const std::shared_ptr<LogicalOperator> childOperator = NES::Util::as<LogicalOperator>(child);
-        childOperator->inferStringSignature();
-    }
-    std::stringstream signatureStream;
-    const auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << "INFER_MODEL(" + model + ")." << *childSignature.begin()->second.begin();
-
-    ///Update the signature
-    const auto hashCode = hashGenerator(signatureStream.str());
-    hashBasedSignature[hashCode] = {signatureStream.str()};
-}
-
-const std::string& LogicalInferModelOperator::getModel() const
-{
-    return model;
-}
-
-const std::string LogicalInferModelOperator::getDeployedModelPath() const
-{
-    const auto idx = model.find_last_of('/');
-    auto path = model;
-
-    /// If there exist a / in the model path name. If so, then we have to remove the path to only get the file name
-    if (idx != std::string::npos)
-    {
-        path = model.substr(idx + 1);
-    }
-
-    path = std::filesystem::temp_directory_path().string() + "/" + path;
-    return path;
-}
-
 const std::vector<std::shared_ptr<NodeFunction>>& LogicalInferModelOperator::getInputFields() const
 {
     return inputFields;
-}
-
-const std::vector<std::shared_ptr<NodeFunction>>& LogicalInferModelOperator::getOutputFields() const
-{
-    return outputFields;
 }
 
 }

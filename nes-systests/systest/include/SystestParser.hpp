@@ -35,6 +35,7 @@ enum class TokenType : uint8_t
     CSV_SOURCE,
     RAW_SOURCE,
     SLT_SOURCE,
+    MODEL,
     SINK,
     QUERY,
     RESULT_DELIMITER,
@@ -95,6 +96,14 @@ public:
         bool operator==(const SLTSource& other) const = default;
     };
 
+    struct Model
+    {
+        std::string name;
+        std::string path;
+        std::vector<std::shared_ptr<DataType>> inputs;
+        Schema outputs;
+    };
+
     struct Sink
     {
         std::string name;
@@ -108,6 +117,7 @@ public:
     using QueryCallback = std::function<void(Query&&)>;
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
+    using ModelCallback = std::function<void(Model&&)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
     using RawSourceCallback = std::function<void(RawSource&&)>;
     using SinkCallback = std::function<void(Sink&&)>;
@@ -116,6 +126,7 @@ public:
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
+    void registerOnModelCallback(ModelCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
     void registerOnRawSourceCallback(RawSourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
@@ -139,12 +150,14 @@ private:
     [[nodiscard]] CSVSource expectCSVSource() const;
     [[nodiscard]] Sink expectSink() const;
     [[nodiscard]] RawSource expectRawSource() const;
+    [[nodiscard]] Model expectModel();
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
     [[nodiscard]] Query expectQuery();
 
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
+    ModelCallback onModelCallback;
     CSVSourceCallback onCSVSourceCallback;
     RawSourceCallback onRawSourceCallback;
     SinkCallback onSinkCallback;

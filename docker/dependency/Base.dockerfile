@@ -27,6 +27,7 @@ RUN apt update -y && apt install \
     ccache \
     ninja-build \
     pkg-config \
+    pipx \
     -y
 
 # install llvm based toolchain

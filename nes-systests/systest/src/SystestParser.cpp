@@ -41,17 +41,21 @@ namespace NES::Systest
 static constexpr auto CSVSourceToken = "SourceCSV"s;
 static constexpr auto RawSourceToken = "SourceRaw"s;
 static constexpr auto SLTSourceToken = "Source"s;
+static constexpr auto ModelToken = "MODEL"sv;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 
-static const std::array<std::pair<std::string_view, TokenType>, 6> stringToToken
-    = {{{CSVSourceToken, TokenType::CSV_SOURCE},
-        {RawSourceToken, TokenType::RAW_SOURCE},
-        {SLTSourceToken, TokenType::SLT_SOURCE},
-        {QueryToken, TokenType::QUERY},
-        {SinkToken, TokenType::SINK},
-        {ResultDelimiter, TokenType::RESULT_DELIMITER}}};
+
+static const auto stringToToken = std::to_array<std::pair<std::string_view, TokenType>>({
+    {CSVSourceToken, TokenType::CSV_SOURCE},
+    {RawSourceToken, TokenType::RAW_SOURCE},
+    {SLTSourceToken, TokenType::SLT_SOURCE},
+    {QueryToken, TokenType::QUERY},
+    {SinkToken, TokenType::SINK},
+    {ModelToken, TokenType::MODEL},
+    {ResultDelimiter, TokenType::RESULT_DELIMITER},
+});
 
 static bool emptyOrComment(const std::string& line)
 {
@@ -168,6 +172,11 @@ void SystestParser::registerOnSinkCallBack(SinkCallback callback)
     this->onSinkCallback = std::move(callback);
 }
 
+void SystestParser::registerOnModelCallback(ModelCallback callback)
+{
+    this->onModelCallback = std::move(callback);
+}
+
 void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
 {
     this->onCSVSourceCallback = std::move(callback);
@@ -206,6 +215,14 @@ void SystestParser::parse()
             if (onSLTSourceCallback)
             {
                 onSLTSourceCallback(std::move(source));
+            }
+        }
+        else if (token == TokenType::MODEL)
+        {
+            auto model = expectModel();
+            if (onModelCallback)
+            {
+                onModelCallback(std::move(model));
             }
         }
         else if (token == TokenType::SINK)
@@ -357,6 +374,57 @@ SystestParser::Sink SystestParser::expectSink() const
     sink.fields = parseSchemaFields(arguments);
 
     return sink;
+}
+
+SystestParser::Model SystestParser::expectModel()
+{
+    try
+    {
+        if (lines.size() < currentLine + 2)
+        {
+            throw SLTUnexpectedToken("expected at least three lines for model definition.");
+        }
+
+        Model model;
+        auto& modelNameLine = lines[currentLine];
+        auto _ = moveToNextToken();
+        auto& inputLine = lines[currentLine];
+        _ = moveToNextToken();
+        auto& outputLine = lines[currentLine];
+
+        std::istringstream stream(modelNameLine);
+        std::string discard;
+        if (!(stream >> discard))
+        {
+            throw SLTUnexpectedToken("failed to read the first word in: {}", modelNameLine);
+        }
+        if (!(stream >> model.name))
+        {
+            throw SLTUnexpectedToken("failed to read model name in {}", modelNameLine);
+        }
+
+        if (!(stream >> model.path))
+        {
+            throw SLTUnexpectedToken("failed to read model path in {}", modelNameLine);
+        }
+
+        auto inputTypeNames = NES::Util::splitWithStringDelimiter<std::string>(inputLine, " ");
+        auto types = std::views::transform(inputTypeNames, [](const auto& typeName) { return DataTypeProvider::provideDataType(typeName); })
+            | std::ranges::to<std::vector>();
+        model.inputs = types;
+
+        auto outputSchema = NES::Util::splitWithStringDelimiter<std::string>(outputLine, " ");
+        model.outputs = parseSchemaFields(outputSchema);
+        return model;
+    }
+    catch (Exception& e)
+    {
+        auto modelParserSchema = "MODEL <model_name> <model_path>"
+                                 "<type-0> ... <type-N>"
+                                 "<type-0> <output-name-0> ... <type-N> <output-name-N>"sv;
+        e.what() += fmt::format("\nWhen Parsing a Model Statement:\n{}", modelParserSchema);
+        throw;
+    }
 }
 
 SystestParser::SLTSource SystestParser::expectSLTSource()
