@@ -1,0 +1,4722 @@
+From 63e18d5d2cdddf940fa37c4092ebbff4312f50ee Mon Sep 17 00:00:00 2001
+From: Lukas Schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Sun, 13 Apr 2025 19:49:10 +0200
+Subject: [PATCH] remove-benchmark
+
+---
+ .../iree/builtins/ukernel/tools/BUILD.bazel   | 176 -----
+ .../builtins/ukernel/tools/CMakeLists.txt     | 199 ------
+ .../iree/builtins/ukernel/tools/benchmark.c   | 111 ----
+ .../iree/builtins/ukernel/tools/benchmark.h   |  38 --
+ .../ukernel/tools/e2e_matmul_benchmark.c      | 420 ------------
+ .../builtins/ukernel/tools/memcpy_benchmark.c |  71 --
+ .../builtins/ukernel/tools/memcpy_benchmark.h |  14 -
+ .../builtins/ukernel/tools/mmt4d_benchmark.c  | 199 ------
+ .../iree/builtins/ukernel/tools/mmt4d_test.c  | 608 ------------------
+ .../builtins/ukernel/tools/pack_benchmark.c   | 181 ------
+ .../iree/builtins/ukernel/tools/pack_test.c   | 246 -------
+ .../src/iree/builtins/ukernel/tools/test.c    | 187 ------
+ .../src/iree/builtins/ukernel/tools/test.h    |  45 --
+ .../builtins/ukernel/tools/unpack_benchmark.c | 167 -----
+ .../iree/builtins/ukernel/tools/unpack_test.c | 218 -------
+ .../src/iree/builtins/ukernel/tools/util.c    | 348 ----------
+ .../src/iree/builtins/ukernel/tools/util.h    |  61 --
+ .../iree/builtins/ukernel/tools/util_test.c   |  74 ---
+ runtime/src/iree/testing/BUILD.bazel          |  66 --
+ runtime/src/iree/testing/CMakeLists.txt       |  79 ---
+ runtime/src/iree/testing/benchmark.h          | 288 ---------
+ runtime/src/iree/testing/benchmark_full.cc    | 220 -------
+ runtime/src/iree/testing/benchmark_main.c     |  18 -
+ runtime/src/iree/testing/benchmark_nop.c      |  48 --
+ runtime/src/iree/testing/gtest.h              |  17 -
+ runtime/src/iree/testing/gtest_main.cc        |  24 -
+ runtime/src/iree/testing/status_matchers.h    | 372 -----------
+ 27 files changed, 4495 deletions(-)
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/BUILD.bazel
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/CMakeLists.txt
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/benchmark.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/benchmark.h
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/e2e_matmul_benchmark.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/memcpy_benchmark.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/memcpy_benchmark.h
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/mmt4d_benchmark.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/mmt4d_test.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/pack_benchmark.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/pack_test.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/test.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/test.h
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/unpack_benchmark.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/unpack_test.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/util.c
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/util.h
+ delete mode 100644 runtime/src/iree/builtins/ukernel/tools/util_test.c
+ delete mode 100644 runtime/src/iree/testing/BUILD.bazel
+ delete mode 100644 runtime/src/iree/testing/CMakeLists.txt
+ delete mode 100644 runtime/src/iree/testing/benchmark.h
+ delete mode 100644 runtime/src/iree/testing/benchmark_full.cc
+ delete mode 100644 runtime/src/iree/testing/benchmark_main.c
+ delete mode 100644 runtime/src/iree/testing/benchmark_nop.c
+ delete mode 100644 runtime/src/iree/testing/gtest.h
+ delete mode 100644 runtime/src/iree/testing/gtest_main.cc
+ delete mode 100644 runtime/src/iree/testing/status_matchers.h
+
+diff --git a/runtime/src/iree/builtins/ukernel/tools/BUILD.bazel b/runtime/src/iree/builtins/ukernel/tools/BUILD.bazel
+deleted file mode 100644
+index 5dfcee449d..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/BUILD.bazel
++++ /dev/null
+@@ -1,176 +0,0 @@
+-# Copyright 2022 The IREE Authors
+-#
+-# Licensed under the Apache License v2.0 with LLVM Exceptions.
+-# See https://llvm.org/LICENSE.txt for license information.
+-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-load("//build_tools/bazel:build_defs.oss.bzl", "iree_runtime_cc_library", "iree_runtime_cc_test")
+-load("//build_tools/bazel:cc_binary_benchmark.bzl", "cc_binary_benchmark")
+-
+-package(
+-    default_visibility = ["//visibility:public"],
+-    features = ["layering_check"],
+-    licenses = ["notice"],  # Apache 2.0
+-)
+-
+-iree_runtime_cc_library(
+-    name = "util",
+-    srcs = ["util.c"],
+-    hdrs = ["util.h"],
+-    deps = [
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal",
+-        "//runtime/src/iree/base/internal:cpu",
+-        "//runtime/src/iree/base/internal:synchronization",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/schemas:cpu_data",
+-    ],
+-)
+-
+-iree_runtime_cc_library(
+-    name = "test",
+-    srcs = ["test.c"],
+-    hdrs = ["test.h"],
+-    deps = [
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/schemas:cpu_data",
+-    ],
+-)
+-
+-iree_runtime_cc_test(
+-    name = "util_test",
+-    srcs = ["util_test.c"],
+-    deps = [
+-        ":test",
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal:cpu",
+-        "//runtime/src/iree/schemas:cpu_data",
+-    ],
+-)
+-
+-iree_runtime_cc_library(
+-    name = "benchmark",
+-    srcs = ["benchmark.c"],
+-    hdrs = ["benchmark.h"],
+-    deps = [
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/schemas:cpu_data",
+-        "//runtime/src/iree/testing:benchmark",
+-    ],
+-)
+-
+-iree_runtime_cc_library(
+-    name = "memcpy_benchmark",
+-    srcs = ["memcpy_benchmark.c"],
+-    hdrs = ["memcpy_benchmark.h"],
+-    deps = [
+-        ":benchmark",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/testing:benchmark",
+-    ],
+-)
+-
+-cc_binary_benchmark(
+-    name = "mmt4d_benchmark",
+-    srcs = ["mmt4d_benchmark.c"],
+-    deps = [
+-        ":benchmark",
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal:flags",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/builtins/ukernel:internal_headers",
+-        "//runtime/src/iree/testing:benchmark",
+-    ],
+-)
+-
+-iree_runtime_cc_test(
+-    name = "mmt4d_test",
+-    srcs = ["mmt4d_test.c"],
+-    deps = [
+-        ":test",
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal",
+-        "//runtime/src/iree/base/internal:flags",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/builtins/ukernel:internal_headers",
+-    ],
+-)
+-
+-cc_binary_benchmark(
+-    name = "pack_benchmark",
+-    srcs = ["pack_benchmark.c"],
+-    deps = [
+-        ":benchmark",
+-        ":memcpy_benchmark",
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal:flags",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/builtins/ukernel:internal_headers",
+-        "//runtime/src/iree/testing:benchmark",
+-    ],
+-)
+-
+-iree_runtime_cc_test(
+-    name = "pack_test",
+-    srcs = ["pack_test.c"],
+-    deps = [
+-        ":test",
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal:flags",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/builtins/ukernel:internal_headers",
+-    ],
+-)
+-
+-cc_binary_benchmark(
+-    name = "unpack_benchmark",
+-    srcs = ["unpack_benchmark.c"],
+-    deps = [
+-        ":benchmark",
+-        ":memcpy_benchmark",
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal:flags",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/builtins/ukernel:internal_headers",
+-        "//runtime/src/iree/testing:benchmark",
+-    ],
+-)
+-
+-iree_runtime_cc_test(
+-    name = "unpack_test",
+-    srcs = ["unpack_test.c"],
+-    deps = [
+-        ":test",
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal:cpu",
+-        "//runtime/src/iree/base/internal:flags",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/builtins/ukernel:internal_headers",
+-    ],
+-)
+-
+-cc_binary_benchmark(
+-    name = "e2e_matmul_benchmark",
+-    srcs = ["e2e_matmul_benchmark.c"],
+-    deps = [
+-        ":benchmark",
+-        ":util",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal:flags",
+-        "//runtime/src/iree/builtins/ukernel",
+-        "//runtime/src/iree/builtins/ukernel:internal_headers",
+-        "//runtime/src/iree/testing:benchmark",
+-    ],
+-)
+diff --git a/runtime/src/iree/builtins/ukernel/tools/CMakeLists.txt b/runtime/src/iree/builtins/ukernel/tools/CMakeLists.txt
+deleted file mode 100644
+index 55b6984d5c..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/CMakeLists.txt
++++ /dev/null
+@@ -1,199 +0,0 @@
+-################################################################################
+-# Autogenerated by build_tools/bazel_to_cmake/bazel_to_cmake.py from           #
+-# runtime/src/iree/builtins/ukernel/tools/BUILD.bazel                          #
+-#                                                                              #
+-# Use iree_cmake_extra_content from iree/build_defs.oss.bzl to add arbitrary   #
+-# CMake-only content.                                                          #
+-#                                                                              #
+-# To disable autogeneration for this file entirely, delete this header.        #
+-################################################################################
+-
+-iree_add_all_subdirs()
+-
+-iree_cc_library(
+-  NAME
+-    util
+-  HDRS
+-    "util.h"
+-  SRCS
+-    "util.c"
+-  DEPS
+-    iree::base
+-    iree::base::internal
+-    iree::base::internal::cpu
+-    iree::base::internal::synchronization
+-    iree::builtins::ukernel
+-    iree::schemas::cpu_data
+-  PUBLIC
+-)
+-
+-iree_cc_library(
+-  NAME
+-    test
+-  HDRS
+-    "test.h"
+-  SRCS
+-    "test.c"
+-  DEPS
+-    ::util
+-    iree::base
+-    iree::builtins::ukernel
+-    iree::schemas::cpu_data
+-  PUBLIC
+-)
+-
+-iree_cc_test(
+-  NAME
+-    util_test
+-  SRCS
+-    "util_test.c"
+-  DEPS
+-    ::test
+-    ::util
+-    iree::base
+-    iree::base::internal::cpu
+-    iree::schemas::cpu_data
+-)
+-
+-iree_cc_library(
+-  NAME
+-    benchmark
+-  HDRS
+-    "benchmark.h"
+-  SRCS
+-    "benchmark.c"
+-  DEPS
+-    ::util
+-    iree::base
+-    iree::builtins::ukernel
+-    iree::schemas::cpu_data
+-    iree::testing::benchmark
+-  PUBLIC
+-)
+-
+-iree_cc_library(
+-  NAME
+-    memcpy_benchmark
+-  HDRS
+-    "memcpy_benchmark.h"
+-  SRCS
+-    "memcpy_benchmark.c"
+-  DEPS
+-    ::benchmark
+-    iree::base
+-    iree::builtins::ukernel
+-    iree::testing::benchmark
+-  PUBLIC
+-)
+-
+-iree_cc_binary_benchmark(
+-  NAME
+-    mmt4d_benchmark
+-  SRCS
+-    "mmt4d_benchmark.c"
+-  DEPS
+-    ::benchmark
+-    ::util
+-    iree::base
+-    iree::base::internal::flags
+-    iree::builtins::ukernel
+-    iree::builtins::ukernel::internal_headers
+-    iree::testing::benchmark
+-  TESTONLY
+-)
+-
+-iree_cc_test(
+-  NAME
+-    mmt4d_test
+-  SRCS
+-    "mmt4d_test.c"
+-  DEPS
+-    ::test
+-    ::util
+-    iree::base
+-    iree::base::internal
+-    iree::base::internal::flags
+-    iree::builtins::ukernel
+-    iree::builtins::ukernel::internal_headers
+-)
+-
+-iree_cc_binary_benchmark(
+-  NAME
+-    pack_benchmark
+-  SRCS
+-    "pack_benchmark.c"
+-  DEPS
+-    ::benchmark
+-    ::memcpy_benchmark
+-    ::util
+-    iree::base
+-    iree::base::internal::flags
+-    iree::builtins::ukernel
+-    iree::builtins::ukernel::internal_headers
+-    iree::testing::benchmark
+-  TESTONLY
+-)
+-
+-iree_cc_test(
+-  NAME
+-    pack_test
+-  SRCS
+-    "pack_test.c"
+-  DEPS
+-    ::test
+-    ::util
+-    iree::base
+-    iree::base::internal::flags
+-    iree::builtins::ukernel
+-    iree::builtins::ukernel::internal_headers
+-)
+-
+-iree_cc_binary_benchmark(
+-  NAME
+-    unpack_benchmark
+-  SRCS
+-    "unpack_benchmark.c"
+-  DEPS
+-    ::benchmark
+-    ::memcpy_benchmark
+-    ::util
+-    iree::base
+-    iree::base::internal::flags
+-    iree::builtins::ukernel
+-    iree::builtins::ukernel::internal_headers
+-    iree::testing::benchmark
+-  TESTONLY
+-)
+-
+-iree_cc_test(
+-  NAME
+-    unpack_test
+-  SRCS
+-    "unpack_test.c"
+-  DEPS
+-    ::test
+-    ::util
+-    iree::base
+-    iree::base::internal::cpu
+-    iree::base::internal::flags
+-    iree::builtins::ukernel
+-    iree::builtins::ukernel::internal_headers
+-)
+-
+-iree_cc_binary_benchmark(
+-  NAME
+-    e2e_matmul_benchmark
+-  SRCS
+-    "e2e_matmul_benchmark.c"
+-  DEPS
+-    ::benchmark
+-    ::util
+-    iree::base
+-    iree::base::internal::flags
+-    iree::builtins::ukernel
+-    iree::builtins::ukernel::internal_headers
+-    iree::testing::benchmark
+-  TESTONLY
+-)
+-
+-### BAZEL_TO_CMAKE_PRESERVES_ALL_CONTENT_BELOW_THIS_LINE ###
+diff --git a/runtime/src/iree/builtins/ukernel/tools/benchmark.c b/runtime/src/iree/builtins/ukernel/tools/benchmark.c
+deleted file mode 100644
+index 17efd2ad32..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/benchmark.c
++++ /dev/null
+@@ -1,111 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/builtins/ukernel/tools/benchmark.h"
+-
+-#include <string.h>
+-
+-#include "iree/base/api.h"
+-#include "iree/schemas/cpu_data.h"
+-
+-struct iree_uk_benchmark_user_data_t {
+-  const void* params;
+-  iree_uk_uint64_t* cpu_data;
+-  iree_uk_random_engine_t random_engine;
+-};
+-
+-const void* iree_uk_benchmark_params(
+-    const iree_uk_benchmark_user_data_t* user_data) {
+-  return user_data->params;
+-}
+-
+-const iree_uk_uint64_t* iree_uk_benchmark_cpu_data(
+-    const iree_uk_benchmark_user_data_t* user_data) {
+-  return user_data->cpu_data;
+-}
+-
+-iree_uk_random_engine_t* iree_uk_benchmark_random_engine(
+-    const iree_uk_benchmark_user_data_t* user_data) {
+-  // Cast constness away, i.e. consider random engine state mutation as not
+-  // really a benchmark state mutation.
+-  return (iree_uk_random_engine_t*)&user_data->random_engine;
+-}
+-
+-static int s_iree_uk_benchmark_static_alloc_count;
+-static int s_iree_uk_benchmark_static_alloc_max;
+-static void** s_iree_uk_benchmark_static_alloc_ptrs;
+-
+-void* iree_uk_benchmark_static_alloc(size_t size) {
+-  IREE_UK_ASSERT(s_iree_uk_benchmark_static_alloc_count <
+-                 s_iree_uk_benchmark_static_alloc_max);
+-  void* ptr = malloc(size);
+-  s_iree_uk_benchmark_static_alloc_ptrs
+-      [s_iree_uk_benchmark_static_alloc_count++] = ptr;
+-  return ptr;
+-}
+-
+-void iree_uk_benchmark_initialize(int* argc, char** argv) {
+-  // Maximum number of benchmarks that can be registered.
+-  int max_benchmarks = 256;
+-  // Maximum number of calls to iree_uk_benchmark_static_alloc in
+-  // iree_uk_benchmark_register
+-  int max_static_allocs_per_benchmark = 3;
+-
+-  s_iree_uk_benchmark_static_alloc_max =
+-      max_static_allocs_per_benchmark * max_benchmarks;
+-  s_iree_uk_benchmark_static_alloc_ptrs =
+-      malloc(s_iree_uk_benchmark_static_alloc_max * sizeof(void*));
+-
+-  iree_benchmark_initialize(argc, argv);
+-}
+-
+-void iree_uk_benchmark_run_and_cleanup(void) {
+-  iree_benchmark_run_specified();
+-  for (int i = 0; i < s_iree_uk_benchmark_static_alloc_count; ++i) {
+-    free(s_iree_uk_benchmark_static_alloc_ptrs[i]);
+-  }
+-  free(s_iree_uk_benchmark_static_alloc_ptrs);
+-}
+-
+-void iree_uk_benchmark_register(
+-    const char* name,
+-    iree_status_t (*benchmark_func)(const iree_benchmark_def_t*,
+-                                    iree_benchmark_state_t*),
+-    const void* params, size_t params_size, const char* cpu_features) {
+-  // Does this benchmark require an optional CPU feature?
+-  iree_uk_uint64_t cpu_data_local[IREE_CPU_DATA_FIELD_COUNT] = {0};
+-  if (strlen(cpu_features)) {
+-    iree_uk_initialize_cpu_once();
+-    iree_uk_make_cpu_data_for_features(cpu_features, cpu_data_local);
+-    if (!iree_uk_cpu_supports(cpu_data_local)) {
+-      return;
+-    }
+-  }
+-  iree_uk_benchmark_user_data_t* user_data =
+-      iree_uk_benchmark_static_alloc(sizeof(iree_uk_benchmark_user_data_t));
+-  user_data->params = iree_uk_benchmark_static_alloc(params_size);
+-  memcpy((void*)user_data->params, params, params_size);
+-  user_data->cpu_data = iree_uk_benchmark_static_alloc(sizeof cpu_data_local);
+-  memcpy((void*)user_data->cpu_data, cpu_data_local, sizeof cpu_data_local);
+-  // benchmark_def does not need to be static, it will be cloned.
+-  const iree_benchmark_def_t benchmark_def = {
+-      .flags = IREE_BENCHMARK_FLAG_USE_REAL_TIME,
+-      .time_unit = IREE_BENCHMARK_UNIT_MICROSECOND,
+-      .minimum_duration_ns = 0,
+-      .iteration_count = 0,
+-      .run = benchmark_func,
+-      .user_data = user_data,
+-  };
+-  iree_string_builder_t full_name;
+-  iree_string_builder_initialize(iree_allocator_system(), &full_name);
+-  IREE_CHECK_OK(iree_string_builder_append_cstring(&full_name, name));
+-  if (strlen(cpu_features)) {
+-    IREE_CHECK_OK(iree_string_builder_append_cstring(&full_name, "_"));
+-    IREE_CHECK_OK(iree_string_builder_append_cstring(&full_name, cpu_features));
+-  }
+-  iree_benchmark_register(iree_string_builder_view(&full_name), &benchmark_def);
+-  iree_string_builder_deinitialize(&full_name);
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/benchmark.h b/runtime/src/iree/builtins/ukernel/tools/benchmark.h
+deleted file mode 100644
+index b6d15bda81..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/benchmark.h
++++ /dev/null
+@@ -1,38 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#ifndef IREE_BUILTINS_UKERNEL_TOOLS_BENCHMARK_H_
+-#define IREE_BUILTINS_UKERNEL_TOOLS_BENCHMARK_H_
+-
+-#include "iree/builtins/ukernel/tools/util.h"
+-#include "iree/testing/benchmark.h"
+-
+-// Struct for passing around benchmark user data
+-typedef struct iree_uk_benchmark_user_data_t iree_uk_benchmark_user_data_t;
+-
+-// High level init/register/run/cleanup entry points. Used in main().
+-void iree_uk_benchmark_initialize(int* argc, char** argv);
+-void iree_uk_benchmark_register(
+-    const char* name,
+-    iree_status_t (*benchmark_func)(const iree_benchmark_def_t*,
+-                                    iree_benchmark_state_t*),
+-    const void* params, size_t params_size, const char* cpu_features);
+-void iree_uk_benchmark_run_and_cleanup(void);
+-
+-// Like malloc, but any buffers allocated through this are freed by
+-// iree_uk_benchmark_run_and_cleanup. Used during benchmark registration to
+-// allocate buffers that will be accessed when the benchmark is run.
+-void* iree_uk_benchmark_static_alloc(size_t size);
+-
+-// Accessors for iree_uk_benchmark_user_data_t. Used by benchmark payload funcs.
+-const void* iree_uk_benchmark_params(
+-    const iree_uk_benchmark_user_data_t* user_data);
+-const iree_uk_uint64_t* iree_uk_benchmark_cpu_data(
+-    const iree_uk_benchmark_user_data_t* user_data);
+-iree_uk_random_engine_t* iree_uk_benchmark_random_engine(
+-    const iree_uk_benchmark_user_data_t* user_data);
+-
+-#endif  // IREE_BUILTINS_UKERNEL_TOOLS_BENCHMARK_H_
+diff --git a/runtime/src/iree/builtins/ukernel/tools/e2e_matmul_benchmark.c b/runtime/src/iree/builtins/ukernel/tools/e2e_matmul_benchmark.c
+deleted file mode 100644
+index 1a54a6c101..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/e2e_matmul_benchmark.c
++++ /dev/null
+@@ -1,420 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include <stdio.h>
+-
+-#include "iree/base/api.h"
+-#include "iree/base/internal/flags.h"
+-#include "iree/builtins/ukernel/api.h"
+-#include "iree/builtins/ukernel/mmt4d_internal.h"
+-#include "iree/builtins/ukernel/pack_internal.h"
+-#include "iree/builtins/ukernel/tools/benchmark.h"
+-#include "iree/builtins/ukernel/tools/util.h"
+-#include "iree/builtins/ukernel/unpack_internal.h"
+-
+-IREE_FLAG(string, type, "f32f32f32",
+-          "Element types triple (LHS, RHS, OUT). Valid values include: "
+-          "f32f32f32, i8i8i32.");
+-IREE_FLAG(int32_t, M, 256, "M dimension size (number of rows of LHS and OUT)");
+-IREE_FLAG(
+-    int32_t, K, 256,
+-    "K dimension size (number of columns of LHS and number of rows of RHS)");
+-IREE_FLAG(int32_t, N, 256,
+-          "N dimension size (number of columns of RHS and OUT)");
+-IREE_FLAG(bool, accumulate, false,
+-          "If true, benchmark a matmul accumulating into existing accumulator "
+-          "(OUT += LHS * RHS). If false, benchmark just a matmul overwriting "
+-          "the accumulator (OUT = LHS * RHS)");
+-IREE_FLAG(
+-    string, cpu_features, "host",
+-    "Name of standard CPU features set to enable, or \"host\" to detect the "
+-    "host CPU capabilities. Other values are like in other benchmarks, e.g. "
+-    "\"avx2_fma\", \"avx512_base\". The empty string \"\" means the "
+-    "architecture baseline (e.g. on x86-64 that would be SSE2).");
+-
+-typedef struct iree_uk_benchmark_e2e_matmul_params_t {
+-  iree_uk_uint32_t mmt4d_flags;
+-  int M;
+-  int K;
+-  int N;
+-} iree_uk_benchmark_e2e_matmul_params_t;
+-
+-static iree_uk_uint32_t iree_uk_qts_op_flag(iree_uk_mmt4d_type_t type) {
+-  if (type == iree_uk_mmt4d_type_f32f32f32)
+-    return IREE_UK_FLAG_QUERY_TILE_SIZES_OPERATION_MATMUL_F32F32F32;
+-  if (type == iree_uk_mmt4d_type_s8s8s32)
+-    return IREE_UK_FLAG_QUERY_TILE_SIZES_OPERATION_MATMUL_I8I8I32;
+-  iree_abort();
+-  return 0;
+-}
+-
+-static void iree_uk_query_tile_sizes_for_one_operand(
+-    iree_uk_uint32_t flags, int size0, int size1,
+-    const iree_uk_uint64_t* cpu_data, int* tile_size0, int* tile_size1) {
+-  iree_uk_query_tile_sizes_2d_params_t qts_params = {
+-      .flags = flags, .size0 = size0, .size1 = size1, .cpu_data = cpu_data};
+-  iree_uk_query_tile_sizes_2d_out_params_t qts_out_params = {0};
+-  iree_uk_query_tile_sizes_2d(&qts_params, &qts_out_params);
+-  *tile_size0 = qts_out_params.tile_size0;
+-  *tile_size1 = qts_out_params.tile_size1;
+-}
+-
+-static void iree_uk_query_tile_sizes_for_all_operands(
+-    const iree_uk_benchmark_e2e_matmul_params_t* params,
+-    const iree_uk_uint64_t* cpu_data, int* M0, int* K0, int* N0) {
+-  int M0_lhs = 0, M0_out = 0, K0_lhs = 0, K0_rhs = 0, N0_rhs = 0, N0_out = 0;
+-  iree_uk_mmt4d_type_t mmt4d_type = iree_uk_mmt4d_type(params->mmt4d_flags);
+-  iree_uk_uint32_t qts_op_flag = iree_uk_qts_op_flag(mmt4d_type);
+-  iree_uk_query_tile_sizes_for_one_operand(
+-      qts_op_flag | IREE_UK_FLAG_QUERY_TILE_SIZES_OPERAND_ROLE_LHS, params->M,
+-      params->K, cpu_data, &M0_lhs, &K0_lhs);
+-  iree_uk_query_tile_sizes_for_one_operand(
+-      qts_op_flag | IREE_UK_FLAG_QUERY_TILE_SIZES_OPERAND_ROLE_RHS, params->K,
+-      params->N, cpu_data, &N0_rhs, &K0_rhs);
+-  iree_uk_query_tile_sizes_for_one_operand(
+-      qts_op_flag | IREE_UK_FLAG_QUERY_TILE_SIZES_OPERAND_ROLE_RESULT,
+-      params->M, params->N, cpu_data, &M0_out, &N0_out);
+-  if (M0_lhs != M0_out || K0_lhs != K0_rhs || N0_rhs != N0_out) {
+-    fprintf(stderr, "query_tile_sizes mismatch\n");
+-    iree_abort();
+-  }
+-  *M0 = M0_lhs;
+-  *K0 = K0_lhs;
+-  *N0 = N0_rhs;
+-}
+-
+-static int iree_uk_ceildiv(int a, int b) {
+-  IREE_UK_ASSERT(a > 0 && b > 0);
+-  return (a + b - 1) / b;
+-}
+-
+-static void iree_uk_reference_rowmajor_matmul_f32f32f32(
+-    const iree_uk_benchmark_e2e_matmul_params_t* params, const float* lhs,
+-    const float* rhs, float* out) {
+-  bool accumulate = params->mmt4d_flags & IREE_UK_FLAG_MMT4D_ACCUMULATE;
+-  for (int i = 0; i < params->M; ++i) {
+-    for (int j = 0; j < params->N; ++j) {
+-      float* out_ptr = out + i * params->N + j;
+-      float acc = accumulate ? *out_ptr : 0.f;
+-      for (int k = 0; k < params->K; ++k) {
+-        acc += lhs[i * params->K + k] * rhs[k * params->N + j];
+-      }
+-      *out_ptr = acc;
+-    }
+-  }
+-}
+-
+-static void iree_uk_reference_rowmajor_matmul_i8i8i32(
+-    const iree_uk_benchmark_e2e_matmul_params_t* params,
+-    const iree_uk_int8_t* lhs, const iree_uk_int8_t* rhs,
+-    iree_uk_int32_t* out) {
+-  bool accumulate = params->mmt4d_flags & IREE_UK_FLAG_MMT4D_ACCUMULATE;
+-  for (int i = 0; i < params->M; ++i) {
+-    for (int j = 0; j < params->N; ++j) {
+-      iree_uk_int32_t* out_ptr = out + i * params->N + j;
+-      iree_uk_int32_t acc = accumulate ? *out_ptr : 0;
+-      for (int k = 0; k < params->K; ++k) {
+-        iree_uk_int32_t lhs_val = lhs[i * params->K + k];
+-        iree_uk_int32_t rhs_val = rhs[k * params->N + j];
+-        acc += lhs_val * rhs_val;
+-      }
+-      *out_ptr = acc;
+-    }
+-  }
+-}
+-
+-static void iree_uk_reference_rowmajor_matmul(
+-    const iree_uk_benchmark_e2e_matmul_params_t* params, const void* lhs,
+-    const void* rhs, void* out) {
+-  switch (params->mmt4d_flags & IREE_UK_FLAG_MMT4D_TYPE_MASK) {
+-    case IREE_UK_FLAG_MMT4D_TYPE_F32F32F32:
+-      iree_uk_reference_rowmajor_matmul_f32f32f32(
+-          params, (const float*)lhs, (const float*)rhs, (float*)out);
+-      break;
+-    case IREE_UK_FLAG_MMT4D_TYPE_S8S8S32:
+-      iree_uk_reference_rowmajor_matmul_i8i8i32(
+-          params, (const iree_uk_int8_t*)lhs, (const iree_uk_int8_t*)rhs,
+-          (iree_uk_int32_t*)out);
+-      break;
+-    default:
+-      IREE_UK_ASSERT(false);
+-  }
+-}
+-
+-static uint32_t iree_uk_pack_flags(iree_uk_type_t type) {
+-  switch (type) {
+-    case IREE_UK_TYPE_FLOAT_32:
+-      return IREE_UK_FLAG_PACK_TYPE_F32F32;
+-    case IREE_UK_TYPE_INT_32:
+-      return IREE_UK_FLAG_PACK_TYPE_I32I32;
+-    case IREE_UK_TYPE_INT_8:
+-      return IREE_UK_FLAG_PACK_TYPE_I8I8;
+-    default:
+-      IREE_UK_ASSERT(false);
+-      return IREE_UK_FLAG_PACK_TYPE_NONE;
+-  }
+-}
+-
+-static uint32_t iree_uk_unpack_flags(iree_uk_type_t type) {
+-  switch (type) {
+-    case IREE_UK_TYPE_FLOAT_32:
+-      return IREE_UK_FLAG_UNPACK_TYPE_F32F32;
+-    case IREE_UK_TYPE_INT_32:
+-      return IREE_UK_FLAG_UNPACK_TYPE_I32I32;
+-    default:
+-      IREE_UK_ASSERT(false);
+-      return IREE_UK_FLAG_UNPACK_TYPE_NONE;
+-  }
+-}
+-
+-static void iree_uk_e2e_matmul(
+-    const iree_uk_pack_params_t* pack_lhs_params,
+-    const iree_uk_pack_params_t* pack_rhs_params,
+-    const iree_uk_pack_params_t* pack_out_params,
+-    const iree_uk_mmt4d_params_t* mmt4d_params,
+-    const iree_uk_unpack_params_t* unpack_out_params) {
+-  iree_uk_pack_p(pack_lhs_params);
+-  iree_uk_pack_p(pack_rhs_params);
+-  if (mmt4d_params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE) {
+-    iree_uk_pack_p(pack_out_params);
+-  }
+-  iree_uk_mmt4d_p(mmt4d_params);
+-  iree_uk_unpack_p(unpack_out_params);
+-}
+-
+-static iree_status_t iree_uk_benchmark_e2e_matmul(
+-    const iree_benchmark_def_t* benchmark_def,
+-    iree_benchmark_state_t* benchmark_state) {
+-  const iree_uk_benchmark_user_data_t* user_data = benchmark_def->user_data;
+-  const iree_uk_uint64_t* cpu_data = iree_uk_benchmark_cpu_data(user_data);
+-  const iree_uk_benchmark_e2e_matmul_params_t* params =
+-      iree_uk_benchmark_params(user_data);
+-
+-  iree_uk_mmt4d_type_t mmt4d_type = iree_uk_mmt4d_type(params->mmt4d_flags);
+-  iree_uk_type_t lhs_type = iree_uk_mmt4d_lhs_type(mmt4d_type);
+-  iree_uk_type_t rhs_type = iree_uk_mmt4d_rhs_type(mmt4d_type);
+-  iree_uk_type_t out_type = iree_uk_mmt4d_out_type(mmt4d_type);
+-
+-  int M0 = 0, K0 = 0, N0 = 0;
+-  iree_uk_query_tile_sizes_for_all_operands(params, cpu_data, &M0, &K0, &N0);
+-
+-  int M1 = iree_uk_ceildiv(params->M, M0);
+-  int K1 = iree_uk_ceildiv(params->K, K0);
+-  int N1 = iree_uk_ceildiv(params->N, N0);
+-
+-  iree_uk_mmt4d_params_t mmt4d_params = {
+-      .flags = params->mmt4d_flags,
+-      .cpu_data = cpu_data,
+-      .M = M1,
+-      .K = K1,
+-      .N = N1,
+-      .M0 = M0,
+-      .K0 = K0,
+-      .N0 = N0,
+-      .lhs_stride0 = K1 * M0 * K0,
+-      .rhs_stride0 = K1 * N0 * K0,
+-      .out_stride0 = N1 * M0 * N0,
+-  };
+-
+-  iree_uk_pack_params_t pack_lhs_params = {
+-      .cpu_data = cpu_data,
+-      .flags = iree_uk_pack_flags(lhs_type),
+-      .in_size0 = params->M,
+-      .in_size1 = params->K,
+-      .out_size0 = M1,
+-      .out_size1 = K1,
+-      .out_size2 = M0,
+-      .out_size3 = K0,
+-      .in_stride0 = params->K,
+-      .in_stride1 = 1,
+-      .out_stride0 = mmt4d_params.lhs_stride0,
+-      .out_stride1 = M0 * K0,
+-      .padding_value = 0,
+-  };
+-
+-  iree_uk_pack_params_t pack_rhs_params = {
+-      .cpu_data = cpu_data,
+-      .flags = iree_uk_pack_flags(rhs_type) |
+-               IREE_UK_FLAG_PACK_TRANSPOSE_INNER |
+-               IREE_UK_FLAG_PACK_TRANSPOSE_OUTER,
+-      .in_size0 = params->K,
+-      .in_size1 = params->N,
+-      .out_size0 = N1,
+-      .out_size1 = K1,
+-      .out_size2 = N0,
+-      .out_size3 = K0,
+-      .in_stride0 = params->N,
+-      .in_stride1 = 1,
+-      .out_stride0 = mmt4d_params.rhs_stride0,
+-      .out_stride1 = N0 * K0,
+-      .padding_value = 0,
+-  };
+-
+-  iree_uk_pack_params_t pack_out_params = {
+-      .cpu_data = cpu_data,
+-      .flags = iree_uk_pack_flags(out_type),
+-      .in_size0 = params->M,
+-      .in_size1 = params->N,
+-      .out_size0 = M1,
+-      .out_size1 = N1,
+-      .out_size2 = M0,
+-      .out_size3 = N0,
+-      .in_stride0 = params->N,
+-      .in_stride1 = 1,
+-      .out_stride0 = mmt4d_params.out_stride0,
+-      .out_stride1 = M0 * N0,
+-      .padding_value = 0,
+-  };
+-
+-  iree_uk_unpack_params_t unpack_out_params = {
+-      .cpu_data = cpu_data,
+-      .flags = iree_uk_unpack_flags(out_type),
+-      .out_size0 = params->M,
+-      .out_size1 = params->N,
+-      .in_size0 = M1,
+-      .in_size1 = N1,
+-      .in_size2 = M0,
+-      .in_size3 = N0,
+-      .out_stride0 = params->N,
+-      .out_stride1 = 1,
+-      .in_stride0 = mmt4d_params.out_stride0,
+-      .in_stride1 = M0 * N0,
+-  };
+-
+-  iree_uk_index_t rowmajor_lhs_buffer_size =
+-      iree_uk_2d_buffer_length(lhs_type, params->M, params->K);
+-  iree_uk_index_t rowmajor_rhs_buffer_size =
+-      iree_uk_2d_buffer_length(rhs_type, params->K, params->N);
+-  iree_uk_index_t rowmajor_out_buffer_size =
+-      iree_uk_2d_buffer_length(out_type, params->M, params->N);
+-  iree_uk_index_t packed_lhs_buffer_size =
+-      iree_uk_2d_buffer_length(lhs_type, M1, mmt4d_params.lhs_stride0);
+-  iree_uk_index_t packed_rhs_buffer_size =
+-      iree_uk_2d_buffer_length(rhs_type, N1, mmt4d_params.rhs_stride0);
+-  iree_uk_index_t packed_out_buffer_size =
+-      iree_uk_2d_buffer_length(out_type, M1, mmt4d_params.out_stride0);
+-  void* rowmajor_lhs_buffer = malloc(rowmajor_lhs_buffer_size);
+-  void* rowmajor_rhs_buffer = malloc(rowmajor_rhs_buffer_size);
+-  void* rowmajor_init_out_buffer = malloc(rowmajor_out_buffer_size);
+-  void* rowmajor_out_buffer = malloc(rowmajor_out_buffer_size);
+-  void* packed_lhs_buffer = malloc(packed_lhs_buffer_size);
+-  void* packed_rhs_buffer = malloc(packed_rhs_buffer_size);
+-  void* packed_out_buffer = malloc(packed_out_buffer_size);
+-  iree_uk_random_engine_t* engine = iree_uk_benchmark_random_engine(user_data);
+-  // It's just about plausible that on some platform, for some number type,
+-  // performance might be different on zero buffers vs random buffers. But it
+-  // shouldn't matter that we recreate the random engine every time, getting
+-  // the same random values again.
+-  iree_uk_write_random_buffer(rowmajor_lhs_buffer, rowmajor_lhs_buffer_size,
+-                              lhs_type, engine);
+-  iree_uk_write_random_buffer(rowmajor_rhs_buffer, rowmajor_rhs_buffer_size,
+-                              rhs_type, engine);
+-  iree_uk_write_random_buffer(rowmajor_init_out_buffer,
+-                              rowmajor_out_buffer_size, out_type, engine);
+-  iree_uk_write_random_buffer(rowmajor_out_buffer, rowmajor_out_buffer_size,
+-                              out_type, engine);
+-  iree_uk_write_random_buffer(packed_lhs_buffer, packed_lhs_buffer_size,
+-                              lhs_type, engine);
+-  iree_uk_write_random_buffer(packed_rhs_buffer, packed_rhs_buffer_size,
+-                              rhs_type, engine);
+-  iree_uk_write_random_buffer(packed_out_buffer, packed_out_buffer_size,
+-                              out_type, engine);
+-  mmt4d_params.lhs_buffer = packed_lhs_buffer;
+-  mmt4d_params.rhs_buffer = packed_rhs_buffer;
+-  mmt4d_params.out_buffer = packed_out_buffer;
+-  pack_lhs_params.in_buffer = rowmajor_lhs_buffer;
+-  pack_lhs_params.out_buffer = packed_lhs_buffer;
+-  pack_rhs_params.in_buffer = rowmajor_rhs_buffer;
+-  pack_rhs_params.out_buffer = packed_rhs_buffer;
+-  pack_out_params.in_buffer = rowmajor_init_out_buffer;
+-  pack_out_params.out_buffer = packed_out_buffer;
+-  unpack_out_params.in_buffer = packed_out_buffer;
+-  unpack_out_params.out_buffer = rowmajor_out_buffer;
+-
+-  int64_t num_mul_adds =
+-      (int64_t)params->M * (int64_t)params->N * (int64_t)params->K;
+-  // For small problem sizes we check results against reference code.
+-  if (num_mul_adds <= 512 * 512 * 512) {
+-    // Run once before the benchmark loop to check numerical correctness.
+-    iree_uk_e2e_matmul(&pack_lhs_params, &pack_rhs_params, &pack_out_params,
+-                       &mmt4d_params, &unpack_out_params);
+-    // Get the reference results to compare against.
+-    void* rowmajor_reference_out_buffer = malloc(rowmajor_out_buffer_size);
+-    memcpy(rowmajor_reference_out_buffer, rowmajor_init_out_buffer,
+-           rowmajor_out_buffer_size);
+-    iree_uk_reference_rowmajor_matmul(params, rowmajor_lhs_buffer,
+-                                      rowmajor_rhs_buffer,
+-                                      rowmajor_reference_out_buffer);
+-    // Rationale for bit-exact compare: same as in mmt4d_test.
+-    if (memcmp(rowmajor_out_buffer, rowmajor_reference_out_buffer,
+-               rowmajor_out_buffer_size)) {
+-      fprintf(stderr, "❌❌❌ Numerical error! ❌❌❌\n");
+-      iree_abort();
+-    }
+-    free(rowmajor_reference_out_buffer);
+-  }
+-
+-  // The benchmark loop.
+-  int64_t batch_count = 1;
+-  int64_t total_iterations = 0;
+-  while (iree_benchmark_keep_running(benchmark_state, batch_count)) {
+-    for (int i = 0; i < batch_count; ++i) {
+-      iree_uk_e2e_matmul(&pack_lhs_params, &pack_rhs_params, &pack_out_params,
+-                         &mmt4d_params, &unpack_out_params);
+-    }
+-    total_iterations += batch_count;
+-    batch_count *= 2;
+-  }
+-  iree_benchmark_set_items_processed(benchmark_state,
+-                                     total_iterations * 2 * num_mul_adds);
+-
+-  free(rowmajor_lhs_buffer);
+-  free(rowmajor_rhs_buffer);
+-  free(rowmajor_out_buffer);
+-  free(rowmajor_init_out_buffer);
+-  free(packed_lhs_buffer);
+-  free(packed_rhs_buffer);
+-  free(packed_out_buffer);
+-  return iree_ok_status();
+-}
+-
+-iree_uk_uint32_t iree_uk_mmt4d_parse_type_into_flag(const char* type) {
+-  if (!strcmp(type, "f32f32f32")) {
+-    return IREE_UK_FLAG_MMT4D_TYPE_F32F32F32;
+-  }
+-  if (!strcmp(type, "i8i8i32")) {
+-    return IREE_UK_FLAG_MMT4D_TYPE_S8S8S32;
+-  }
+-  fprintf(stderr, "Unhandled type: %s\n", type);
+-  iree_abort();
+-  return (iree_uk_mmt4d_type_t)0;
+-}
+-
+-static void iree_uk_benchmark_register_e2e_matmul(const char* type_str, int M,
+-                                                  int K, int N, bool accumulate,
+-                                                  const char* cpu_features) {
+-  char name[128];
+-  snprintf(name, sizeof name, "e2e_matmul_%s_%dx%dx%d", type_str, M, K, N);
+-  iree_uk_uint32_t mmt4d_flags = iree_uk_mmt4d_parse_type_into_flag(type_str);
+-  mmt4d_flags |= IREE_UK_FLAG_MMT4D_ALLOW_GENERIC_FALLBACK_TILE_FUNCTION;
+-  if (accumulate) mmt4d_flags |= IREE_UK_FLAG_MMT4D_ACCUMULATE;
+-  iree_uk_benchmark_e2e_matmul_params_t params = {
+-      .mmt4d_flags = mmt4d_flags, .M = M, .K = K, .N = N};
+-  iree_uk_benchmark_register(name, iree_uk_benchmark_e2e_matmul, &params,
+-                             sizeof params, cpu_features);
+-}
+-
+-int main(int argc, char** argv) {
+-  iree_flags_set_usage(
+-      "e2e_matmul_benchmark",
+-      "Benchmark an end-to-end matmul by chaining together multiple ukernels: "
+-      "query_tile_sizes, pack, mmt4d, unpack.");
+-  iree_flags_parse_checked(IREE_FLAGS_PARSE_MODE_UNDEFINED_OK, &argc, &argv);
+-  iree_uk_benchmark_initialize(&argc, argv);
+-  iree_uk_benchmark_register_e2e_matmul(FLAG_type, FLAG_M, FLAG_K, FLAG_N,
+-                                        FLAG_accumulate, FLAG_cpu_features);
+-  iree_uk_benchmark_run_and_cleanup();
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/memcpy_benchmark.c b/runtime/src/iree/builtins/ukernel/tools/memcpy_benchmark.c
+deleted file mode 100644
+index edf7afc1b7..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/memcpy_benchmark.c
++++ /dev/null
+@@ -1,71 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/builtins/ukernel/tools/memcpy_benchmark.h"
+-
+-#include <string.h>
+-
+-#include "iree/base/api.h"
+-#include "iree/builtins/ukernel/tools/benchmark.h"
+-
+-IREE_UK_ATTRIBUTE_NOINLINE static void iree_memcpy_noinline(
+-    void* restrict dst, const void* restrict src, size_t size) {
+-  memcpy(dst, src, size);
+-}
+-
+-typedef struct iree_uk_benchmark_memcpy_user_data_t {
+-  int64_t working_set_size;
+-  int64_t batch_min_traversal_size;
+-} iree_uk_benchmark_memcpy_user_data_t;
+-
+-static iree_status_t iree_uk_benchmark_memcpy(
+-    const iree_benchmark_def_t* benchmark_def,
+-    iree_benchmark_state_t* benchmark_state) {
+-  const iree_uk_benchmark_memcpy_user_data_t* user_data =
+-      benchmark_def->user_data;
+-
+-  int64_t total_iterations = 0;
+-  iree_uk_index_t buffer_size = user_data->working_set_size / 2;
+-  uint8_t* in_buffer = malloc(buffer_size);
+-  uint8_t* out_buffer = malloc(buffer_size);
+-  for (iree_uk_index_t i = 0; i < buffer_size; ++i) in_buffer[i] = (i & 0xFF);
+-  int64_t batch_count = 1;
+-  while (iree_benchmark_keep_running(benchmark_state, batch_count)) {
+-    for (int i = 0; i < batch_count; ++i) {
+-      iree_memcpy_noinline(out_buffer, in_buffer, buffer_size);
+-    }
+-    total_iterations += batch_count;
+-    batch_count *= 2;
+-  }
+-  // Report bytes per second, so that can be easily compared to known memory
+-  // system performance metrics (e.g. RAM bandwidth, to tell whether this is
+-  // memory-bound).
+-  iree_benchmark_set_bytes_processed(benchmark_state,
+-                                     total_iterations * buffer_size);
+-  assert(!memcmp(in_buffer, out_buffer, buffer_size));
+-  free(in_buffer);
+-  free(out_buffer);
+-  return iree_ok_status();
+-}
+-
+-void iree_uk_benchmark_register_memcpy(int64_t working_set_size) {
+-  iree_uk_benchmark_memcpy_user_data_t* user_data =
+-      iree_uk_benchmark_static_alloc(
+-          sizeof(iree_uk_benchmark_memcpy_user_data_t));
+-  user_data->working_set_size = working_set_size;
+-
+-  const iree_benchmark_def_t memcpy_benchmark_def = {
+-      .flags = IREE_BENCHMARK_FLAG_USE_REAL_TIME,
+-      .time_unit = IREE_BENCHMARK_UNIT_MICROSECOND,
+-      .minimum_duration_ns = 0,
+-      .iteration_count = 0,
+-      .run = iree_uk_benchmark_memcpy,
+-      .user_data = user_data,
+-  };
+-  char name[128];
+-  snprintf(name, sizeof name, "memcpy_wss_%" PRIi64, working_set_size);
+-  iree_benchmark_register(IREE_SV(name), &memcpy_benchmark_def);
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/memcpy_benchmark.h b/runtime/src/iree/builtins/ukernel/tools/memcpy_benchmark.h
+deleted file mode 100644
+index 890154b098..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/memcpy_benchmark.h
++++ /dev/null
+@@ -1,14 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#ifndef IREE_BUILTINS_UKERNEL_TOOLS_MEMCPY_BENCHMARK_H_
+-#define IREE_BUILTINS_UKERNEL_TOOLS_MEMCPY_BENCHMARK_H_
+-
+-#include <stdint.h>
+-
+-void iree_uk_benchmark_register_memcpy(int64_t working_set_size);
+-
+-#endif  // IREE_BUILTINS_UKERNEL_TOOLS_MEMCPY_BENCHMARK_H_
+diff --git a/runtime/src/iree/builtins/ukernel/tools/mmt4d_benchmark.c b/runtime/src/iree/builtins/ukernel/tools/mmt4d_benchmark.c
+deleted file mode 100644
+index bafde054fc..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/mmt4d_benchmark.c
++++ /dev/null
+@@ -1,199 +0,0 @@
+-// Copyright 2022 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include <stdio.h>
+-
+-#include "iree/base/api.h"
+-#include "iree/base/internal/flags.h"
+-#include "iree/builtins/ukernel/api.h"
+-#include "iree/builtins/ukernel/exported_bits.h"
+-#include "iree/builtins/ukernel/mmt4d.h"
+-#include "iree/builtins/ukernel/mmt4d_internal.h"
+-#include "iree/builtins/ukernel/tools/benchmark.h"
+-#include "iree/builtins/ukernel/tools/util.h"
+-
+-IREE_FLAG(int32_t, m_size, 1,
+-          "M-dimension of mmt4d ops. The overall number of rows of the "
+-          "accumulator is that times the M0 tile size.");
+-IREE_FLAG(int32_t, n_size, 1,
+-          "N-dimension of mmt4d ops. The overall number of columns of the "
+-          "accumulator is that times the N0 tile size.");
+-IREE_FLAG(
+-    int32_t, k_size, 256,
+-    "K-dimension of mmt4d ops. That's the number of iterations of the inner "
+-    "loop. The overall accumulation depth is that times the K0 tile size.");
+-IREE_FLAG(bool, accumulate, false,
+-          "Whether the kernel should accumulate into the existing accumulator "
+-          "tile values, or zero the accumulator tile.");
+-
+-static iree_status_t iree_uk_benchmark_mmt4d(
+-    const iree_benchmark_def_t* benchmark_def,
+-    iree_benchmark_state_t* benchmark_state) {
+-  const iree_uk_benchmark_user_data_t* user_data = benchmark_def->user_data;
+-  const iree_uk_mmt4d_params_t* src_params =
+-      iree_uk_benchmark_params(user_data);
+-  iree_uk_mmt4d_params_t params;
+-  memcpy(&params, src_params, sizeof params);
+-  params.cpu_data = iree_uk_benchmark_cpu_data(user_data);
+-  if (FLAG_accumulate) params.flags |= IREE_UK_FLAG_MMT4D_ACCUMULATE;
+-  params.M = FLAG_m_size;
+-  params.N = FLAG_n_size;
+-  params.K = FLAG_k_size;
+-  params.lhs_stride0 = params.K * params.M0 * params.K0;
+-  params.rhs_stride0 = params.K * params.N0 * params.K0;
+-  params.out_stride0 = params.N * params.M0 * params.N0;
+-  iree_uk_mmt4d_type_t mmt4d_type = iree_uk_mmt4d_type(params.flags);
+-  iree_uk_type_t lhs_type = iree_uk_mmt4d_lhs_type(mmt4d_type);
+-  iree_uk_type_t rhs_type = iree_uk_mmt4d_rhs_type(mmt4d_type);
+-  iree_uk_type_t out_type = iree_uk_mmt4d_out_type(mmt4d_type);
+-  iree_uk_index_t lhs_buffer_size =
+-      iree_uk_2d_buffer_length(lhs_type, params.M, params.lhs_stride0);
+-  iree_uk_index_t rhs_buffer_size =
+-      iree_uk_2d_buffer_length(rhs_type, params.N, params.rhs_stride0);
+-  iree_uk_index_t out_buffer_size =
+-      iree_uk_2d_buffer_length(out_type, params.M, params.out_stride0);
+-  void* lhs_buffer = malloc(lhs_buffer_size);
+-  void* rhs_buffer = malloc(rhs_buffer_size);
+-  void* out_buffer = malloc(out_buffer_size);
+-  iree_uk_random_engine_t* engine = iree_uk_benchmark_random_engine(user_data);
+-  // It's just about plausible that on some platform, for some number type,
+-  // performance might be different on zero buffers vs random buffers. But it
+-  // shouldn't matter that we recreate the random engine every time, getting
+-  // the same random values again.
+-  iree_uk_write_random_buffer(lhs_buffer, lhs_buffer_size, lhs_type, engine);
+-  iree_uk_write_random_buffer(rhs_buffer, rhs_buffer_size, rhs_type, engine);
+-  iree_uk_write_random_buffer(out_buffer, out_buffer_size, out_type, engine);
+-  params.lhs_buffer = lhs_buffer;
+-  params.rhs_buffer = rhs_buffer;
+-  params.out_buffer = out_buffer;
+-  int64_t total_iterations = 0;
+-  int64_t batch_count = 1;
+-  while (iree_benchmark_keep_running(benchmark_state, batch_count)) {
+-    for (int i = 0; i < batch_count; ++i) {
+-      iree_uk_mmt4d_p(&params);
+-    }
+-    total_iterations += batch_count;
+-    batch_count *= 2;
+-  }
+-  iree_benchmark_set_items_processed(
+-      benchmark_state, total_iterations * 2 * params.M * params.N * params.K *
+-                           params.M0 * params.N0 * params.K0);
+-  free(lhs_buffer);
+-  free(rhs_buffer);
+-  free(out_buffer);
+-  return iree_ok_status();
+-}
+-
+-static void iree_uk_benchmark_register_mmt4d_impl(
+-    iree_uk_uint32_t flags, int M0, int N0, int K0, const char* cpu_features,
+-    const char* code_path_suffix) {
+-  char type_str[32];
+-  iree_uk_mmt4d_type_t mmt4d_type = iree_uk_mmt4d_type(flags);
+-  iree_uk_type_triple_str(type_str, sizeof type_str, mmt4d_type);
+-  char name[128];
+-  snprintf(name, sizeof name, "mmt4d_%s_tile_%dx%dx%d%s", type_str, M0, N0, K0,
+-           code_path_suffix);
+-  iree_uk_mmt4d_params_t params = {
+-      .flags = flags | IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS |
+-               IREE_UK_FLAG_MMT4D_ALLOW_GENERIC_FALLBACK_TILE_FUNCTION,
+-      .M0 = M0,
+-      .N0 = N0,
+-      .K0 = K0};
+-  iree_uk_benchmark_register(name, iree_uk_benchmark_mmt4d, &params,
+-                             sizeof params, cpu_features);
+-}
+-
+-static void iree_uk_benchmark_register_mmt4d(iree_uk_uint32_t flags, int M0,
+-                                             int N0, int K0,
+-                                             const char* cpu_features) {
+-  // Test narrowed, power-of-two values of M0, as mmt4d kernels tend to have
+-  // narrow variants for handling these cases.
+-  for (int narrowM0 = 1; narrowM0 < M0; narrowM0 *= 2) {
+-    iree_uk_benchmark_register_mmt4d_impl(flags, narrowM0, N0, K0, cpu_features,
+-                                          "");
+-  }
+-  iree_uk_benchmark_register_mmt4d_impl(flags, M0, N0, K0, cpu_features, "");
+-}
+-
+-int main(int argc, char** argv) {
+-  iree_flags_set_usage("mmt4d_benchmark", "");
+-
+-  iree_flags_parse_checked(IREE_FLAGS_PARSE_MODE_UNDEFINED_OK, &argc, &argv);
+-  iree_uk_benchmark_initialize(&argc, argv);
+-
+-#if defined(IREE_ARCH_ARM_64)
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F32F32F32, 8, 8, 1,
+-                                   "");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F32, 8, 8, 1,
+-                                   "");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F32, 8, 8, 1,
+-                                   "fp16fml");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F16, 8, 8, 1,
+-                                   "");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F16, 8, 8, 1,
+-                                   "fullfp16");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_BF16BF16F32, 8, 8, 4,
+-                                   "bf16");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_BF16BF16BF16, 8, 8,
+-                                   4, "bf16");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 8, 8, 1,
+-                                   "");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 8, 8, 4,
+-                                   "dotprod");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 8, 8, 8,
+-                                   "i8mm");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S4S32, 4, 16, 2,
+-                                   "");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S4S32, 8, 8, 8,
+-                                   "dotprod");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S4S32, 4, 8, 16,
+-                                   "i8mm");
+-#elif defined(IREE_ARCH_X86_64)
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F32F32F32, 8, 8, 1,
+-                                   "avx2_fma");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F32F32F32, 16, 16, 1,
+-                                   "avx512_base");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F32, 8, 8, 1,
+-                                   "avx2_fma");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F32, 16, 16, 1,
+-                                   "avx512_base");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F16, 8, 8, 1,
+-                                   "avx2_fma");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F16, 16, 16, 1,
+-                                   "avx512_base");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_BF16BF16F32, 16, 16,
+-                                   2, "avx512_bf16");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_BF16BF16BF16, 16, 16,
+-                                   2, "avx512_bf16");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 8, 8, 2,
+-                                   "avx2_fma");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 16, 16, 2,
+-                                   "avx512_base");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 16, 16, 2,
+-                                   "avx512_vnni");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16S16S32, 8, 8, 2,
+-                                   "avx2_fma");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16S16S32, 16, 16, 2,
+-                                   "avx512_base");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16S16S32, 16, 16, 2,
+-                                   "avx512_vnni");
+-  iree_uk_benchmark_register_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16U4S32, 1, 32, 8,
+-                                   "avx512_vnni");
+-#else   // defined(IREE_ARCH_ARM_64)
+-  // Architectures on which we do not have any optimized ukernel code.
+-  // Benchmark some arbitrary tile shape.
+-  iree_uk_benchmark_register_mmt4d(
+-      IREE_UK_FLAG_MMT4D_ALLOW_GENERIC_FALLBACK_TILE_FUNCTION |
+-          IREE_UK_FLAG_MMT4D_TYPE_F32F32F32,
+-      8, 8, 1, "");
+-  iree_uk_benchmark_register_mmt4d(
+-      IREE_UK_FLAG_MMT4D_ALLOW_GENERIC_FALLBACK_TILE_FUNCTION |
+-          IREE_UK_FLAG_MMT4D_TYPE_S8S8S32,
+-      8, 8, 1, "");
+-#endif  // defined(IREE_ARCH_ARM_64)
+-
+-  iree_uk_benchmark_run_and_cleanup();
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/mmt4d_test.c b/runtime/src/iree/builtins/ukernel/tools/mmt4d_test.c
+deleted file mode 100644
+index eb17204d8a..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/mmt4d_test.c
++++ /dev/null
+@@ -1,608 +0,0 @@
+-// Copyright 2022 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/base/api.h"
+-#include "iree/base/internal/math.h"
+-#include "iree/builtins/ukernel/api.h"
+-#include "iree/builtins/ukernel/exported_bits.h"
+-#include "iree/builtins/ukernel/mmt4d_internal.h"
+-#include "iree/builtins/ukernel/tools/test.h"
+-#include "iree/builtins/ukernel/tools/util.h"
+-
+-static void iree_mmt4d_reference_innerloop_f32f32f32(
+-    float* out_ptr, const float* lhs_ptr, const float* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  float acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0.f;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      float lhs_f32 = lhs_ptr[k * params->M0 * params->K0 + k0];
+-      float rhs_f32 = rhs_ptr[k * params->N0 * params->K0 + k0];
+-      acc += lhs_f32 * rhs_f32;
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference_innerloop_f16f16f32(
+-    float* out_ptr, const uint16_t* lhs_ptr, const uint16_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  float acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0.f;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      float lhs_f32 =
+-          iree_math_f16_to_f32(lhs_ptr[k * params->M0 * params->K0 + k0]);
+-      float rhs_f32 =
+-          iree_math_f16_to_f32(rhs_ptr[k * params->N0 * params->K0 + k0]);
+-      acc += lhs_f32 * rhs_f32;
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference_innerloop_f16f16f16_noskipround(
+-    uint16_t* out_ptr, const uint16_t* lhs_ptr, const uint16_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  uint16_t acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      float lhs_f32 =
+-          iree_math_f16_to_f32(lhs_ptr[k * params->M0 * params->K0 + k0]);
+-      float rhs_f32 =
+-          iree_math_f16_to_f32(rhs_ptr[k * params->N0 * params->K0 + k0]);
+-      float acc_f32 = iree_math_f16_to_f32(acc);
+-      acc = iree_math_f32_to_f16(acc_f32 + lhs_f32 * rhs_f32);
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference_innerloop_f16f16f16_skipround(
+-    uint16_t* out_ptr, const uint16_t* lhs_ptr, const uint16_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  float acc_f32 = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE
+-                      ? iree_math_f16_to_f32(*out_ptr)
+-                      : 0.f;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      float lhs_f32 =
+-          iree_math_f16_to_f32(lhs_ptr[k * params->M0 * params->K0 + k0]);
+-      float rhs_f32 =
+-          iree_math_f16_to_f32(rhs_ptr[k * params->N0 * params->K0 + k0]);
+-      acc_f32 += lhs_f32 * rhs_f32;
+-    }
+-  }
+-  *out_ptr = iree_math_f32_to_f16(acc_f32);
+-}
+-
+-static void iree_mmt4d_reference_innerloop_f16f16f16(
+-    uint16_t* out_ptr, const uint16_t* lhs_ptr, const uint16_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  if (params->flags & IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS) {
+-    iree_mmt4d_reference_innerloop_f16f16f16_skipround(out_ptr, lhs_ptr,
+-                                                       rhs_ptr, params);
+-  } else {
+-    iree_mmt4d_reference_innerloop_f16f16f16_noskipround(out_ptr, lhs_ptr,
+-                                                         rhs_ptr, params);
+-  }
+-}
+-
+-static void iree_mmt4d_reference_innerloop_bf16bf16f32(
+-    float* out_ptr, const uint16_t* lhs_ptr, const uint16_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  float acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0.f;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      float lhs_f32 =
+-          iree_math_bf16_to_f32(lhs_ptr[k * params->M0 * params->K0 + k0]);
+-      float rhs_f32 =
+-          iree_math_bf16_to_f32(rhs_ptr[k * params->N0 * params->K0 + k0]);
+-      acc += lhs_f32 * rhs_f32;
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference_innerloop_bf16bf16bf16_noskipround(
+-    uint16_t* out_ptr, const uint16_t* lhs_ptr, const uint16_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  uint16_t acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      float lhs_f32 =
+-          iree_math_bf16_to_f32(lhs_ptr[k * params->M0 * params->K0 + k0]);
+-      float rhs_f32 =
+-          iree_math_bf16_to_f32(rhs_ptr[k * params->N0 * params->K0 + k0]);
+-      float acc_f32 = iree_math_bf16_to_f32(acc);
+-      acc = iree_math_f32_to_bf16(acc_f32 + lhs_f32 * rhs_f32);
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference_innerloop_bf16bf16bf16_skipround(
+-    uint16_t* out_ptr, const uint16_t* lhs_ptr, const uint16_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  float acc_f32 = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE
+-                      ? iree_math_bf16_to_f32(*out_ptr)
+-                      : 0.f;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      float lhs_f32 =
+-          iree_math_bf16_to_f32(lhs_ptr[k * params->M0 * params->K0 + k0]);
+-      float rhs_f32 =
+-          iree_math_bf16_to_f32(rhs_ptr[k * params->N0 * params->K0 + k0]);
+-      acc_f32 += lhs_f32 * rhs_f32;
+-    }
+-  }
+-  *out_ptr = iree_math_f32_to_bf16(acc_f32);
+-}
+-
+-static void iree_mmt4d_reference_innerloop_bf16bf16bf16(
+-    uint16_t* out_ptr, const uint16_t* lhs_ptr, const uint16_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  if (params->flags & IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS) {
+-    iree_mmt4d_reference_innerloop_bf16bf16bf16_skipround(out_ptr, lhs_ptr,
+-                                                          rhs_ptr, params);
+-  } else {
+-    iree_mmt4d_reference_innerloop_bf16bf16bf16_noskipround(out_ptr, lhs_ptr,
+-                                                            rhs_ptr, params);
+-  }
+-}
+-
+-static void iree_mmt4d_reference_innerloop_s8s8s32(
+-    int32_t* out_ptr, const int8_t* lhs_ptr, const int8_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  int32_t acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      int32_t lhs_i32 = lhs_ptr[k * params->M0 * params->K0 + k0];
+-      int32_t rhs_i32 = rhs_ptr[k * params->N0 * params->K0 + k0];
+-      acc += lhs_i32 * rhs_i32;
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference_innerloop_s8s4s32(
+-    int32_t* out_ptr, const int8_t* lhs_ptr, const int8_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  // K0 must be even.
+-  IREE_UK_ASSERT(!(params->K0 % 2));
+-  iree_uk_int16_t K0half = params->K0 / 2;
+-  int32_t acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    // As K0 must be even, we 2x-unroll the K0 loop, writing a 2D dot product.
+-    for (iree_uk_index_t k0h = 0; k0h < K0half; ++k0h) {
+-      int32_t lhs_0 = lhs_ptr[k * params->M0 * params->K0 + 2 * k0h];
+-      int32_t lhs_1 = lhs_ptr[k * params->M0 * params->K0 + 2 * k0h + 1];
+-      int8_t rhs_byte = rhs_ptr[k * params->N0 * K0half + k0h];
+-      int8_t rhs_low_nibble = rhs_byte & 0x0F;
+-      // Sign-extend if negative.
+-      if (rhs_low_nibble & 0x08) {
+-        rhs_low_nibble |= 0xF0;
+-      }
+-      int8_t rhs_high_nibble = (rhs_byte >> 4) & 0x0F;
+-      // Sign-extend if negative.
+-      if (rhs_high_nibble & 0x08) {
+-        rhs_high_nibble |= 0xF0;
+-      }
+-      acc += lhs_0 * rhs_low_nibble + lhs_1 * rhs_high_nibble;
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference_innerloop_s16s16s32(
+-    int32_t* out_ptr, const int16_t* lhs_ptr, const int16_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  int32_t acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      int32_t lhs_i32 = lhs_ptr[k * params->M0 * params->K0 + k0];
+-      int32_t rhs_i32 = rhs_ptr[k * params->N0 * params->K0 + k0];
+-      acc += lhs_i32 * rhs_i32;
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference_innerloop_s16u4s32(
+-    int32_t* out_ptr, const int16_t* lhs_ptr, const uint8_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  // K0 must be even.
+-  IREE_UK_ASSERT(!(params->K0 % 2));
+-  iree_uk_int16_t K0half = params->K0 / 2;
+-  int32_t acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    // As K0 must be even, we 2x-unroll the K0 loop, writing a 2D dot product.
+-    for (iree_uk_index_t k0h = 0; k0h < K0half; ++k0h) {
+-      int32_t lhs_0 = lhs_ptr[k * params->M0 * params->K0 + 2 * k0h];
+-      int32_t lhs_1 = lhs_ptr[k * params->M0 * params->K0 + 2 * k0h + 1];
+-      uint8_t rhs_byte = rhs_ptr[k * params->N0 * K0half + k0h];
+-      int32_t rhs_0 = rhs_byte & 0xf;
+-      int32_t rhs_1 = rhs_byte >> 4;
+-      acc += lhs_0 * rhs_0 + lhs_1 * rhs_1;
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference_innerloop_s16s8s32(
+-    int32_t* out_ptr, const int16_t* lhs_ptr, const int8_t* rhs_ptr,
+-    const iree_uk_mmt4d_params_t* params) {
+-  int32_t acc = params->flags & IREE_UK_FLAG_MMT4D_ACCUMULATE ? *out_ptr : 0;
+-  for (iree_uk_index_t k = 0; k < params->K; ++k) {
+-    for (iree_uk_index_t k0 = 0; k0 < params->K0; ++k0) {
+-      int32_t lhs_i32 = lhs_ptr[k * params->M0 * params->K0 + k0];
+-      int32_t rhs_i32 = rhs_ptr[k * params->N0 * params->K0 + k0];
+-      acc += lhs_i32 * rhs_i32;
+-    }
+-  }
+-  *out_ptr = acc;
+-}
+-
+-static void iree_mmt4d_reference(const iree_uk_mmt4d_params_t* params) {
+-  iree_uk_mmt4d_type_t mmt4d_type = iree_uk_mmt4d_type(params->flags);
+-  iree_uk_index_t lhs_elem_bits =
+-      iree_uk_type_bit_count(iree_uk_mmt4d_lhs_type(mmt4d_type));
+-  iree_uk_index_t rhs_elem_bits =
+-      iree_uk_type_bit_count(iree_uk_mmt4d_rhs_type(mmt4d_type));
+-  iree_uk_index_t out_elem_size =
+-      iree_uk_type_size(iree_uk_mmt4d_out_type(mmt4d_type));
+-
+-  for (iree_uk_index_t i = 0; i < params->M; ++i) {
+-    for (iree_uk_index_t j = 0; j < params->N; ++j) {
+-      void* out_tile_ptr = ((char*)params->out_buffer) +
+-                           (params->out_offset + i * params->out_stride0 +
+-                            j * params->M0 * params->N0) *
+-                               out_elem_size;
+-      const void* lhs_panel_ptr =
+-          ((const char*)params->lhs_buffer) +
+-          iree_uk_bits_to_bytes_exact(
+-              (params->lhs_offset + i * params->lhs_stride0) * lhs_elem_bits);
+-      const void* rhs_panel_ptr =
+-          ((const char*)params->rhs_buffer) +
+-          iree_uk_bits_to_bytes_exact(
+-              (params->rhs_offset + j * params->rhs_stride0) * rhs_elem_bits);
+-
+-      for (iree_uk_index_t i0 = 0; i0 < params->M0; ++i0) {
+-        for (iree_uk_index_t j0 = 0; j0 < params->N0; ++j0) {
+-          void* out_ptr =
+-              ((char*)out_tile_ptr) + (i0 * params->N0 + j0) * out_elem_size;
+-          const void* lhs_ptr =
+-              ((char*)lhs_panel_ptr) +
+-              iree_uk_bits_to_bytes_exact(i0 * params->K0 * lhs_elem_bits);
+-          const void* rhs_ptr =
+-              ((char*)rhs_panel_ptr) +
+-              iree_uk_bits_to_bytes_exact(j0 * params->K0 * rhs_elem_bits);
+-
+-          switch (params->flags & IREE_UK_FLAG_MMT4D_TYPE_MASK) {
+-            case IREE_UK_FLAG_MMT4D_TYPE_F32F32F32:
+-              iree_mmt4d_reference_innerloop_f32f32f32(
+-                  (float*)out_ptr, (const float*)lhs_ptr, (const float*)rhs_ptr,
+-                  params);
+-              break;
+-            case IREE_UK_FLAG_MMT4D_TYPE_F16F16F32:
+-              iree_mmt4d_reference_innerloop_f16f16f32(
+-                  (float*)out_ptr, (const uint16_t*)lhs_ptr,
+-                  (const uint16_t*)rhs_ptr, params);
+-              break;
+-            case IREE_UK_FLAG_MMT4D_TYPE_F16F16F16:
+-              iree_mmt4d_reference_innerloop_f16f16f16(
+-                  (uint16_t*)out_ptr, (const uint16_t*)lhs_ptr,
+-                  (const uint16_t*)rhs_ptr, params);
+-              break;
+-            case IREE_UK_FLAG_MMT4D_TYPE_BF16BF16F32:
+-              iree_mmt4d_reference_innerloop_bf16bf16f32(
+-                  (float*)out_ptr, (const uint16_t*)lhs_ptr,
+-                  (const uint16_t*)rhs_ptr, params);
+-              break;
+-            case IREE_UK_FLAG_MMT4D_TYPE_BF16BF16BF16:
+-              iree_mmt4d_reference_innerloop_bf16bf16bf16(
+-                  (uint16_t*)out_ptr, (const uint16_t*)lhs_ptr,
+-                  (const uint16_t*)rhs_ptr, params);
+-              break;
+-            case IREE_UK_FLAG_MMT4D_TYPE_S8S8S32:
+-              iree_mmt4d_reference_innerloop_s8s8s32(
+-                  (int32_t*)out_ptr, (const int8_t*)lhs_ptr,
+-                  (const int8_t*)rhs_ptr, params);
+-              break;
+-            case IREE_UK_FLAG_MMT4D_TYPE_S8S4S32:
+-              iree_mmt4d_reference_innerloop_s8s4s32(
+-                  (int32_t*)out_ptr, (const int8_t*)lhs_ptr,
+-                  (const int8_t*)rhs_ptr, params);
+-              break;
+-            case IREE_UK_FLAG_MMT4D_TYPE_S16S16S32:
+-              iree_mmt4d_reference_innerloop_s16s16s32(
+-                  (int32_t*)out_ptr, (const int16_t*)lhs_ptr,
+-                  (const int16_t*)rhs_ptr, params);
+-              break;
+-            case IREE_UK_FLAG_MMT4D_TYPE_S16U4S32:
+-              iree_mmt4d_reference_innerloop_s16u4s32(
+-                  (int32_t*)out_ptr, (const int16_t*)lhs_ptr,
+-                  (const uint8_t*)rhs_ptr, params);
+-              break;
+-            case IREE_UK_FLAG_MMT4D_TYPE_S16S8S32:
+-              iree_mmt4d_reference_innerloop_s16s8s32(
+-                  (int32_t*)out_ptr, (const int16_t*)lhs_ptr,
+-                  (const int8_t*)rhs_ptr, params);
+-              break;
+-            default:
+-              IREE_UK_ASSERT(false && "unhandled type");
+-          }
+-          out_ptr = ((char*)out_ptr) + out_elem_size;
+-        }
+-      }
+-    }
+-  }
+-}
+-
+-static iree_uk_index_t iree_uk_test_round_up_to_ensure_multiple_of_8_bits(
+-    iree_uk_index_t index, iree_uk_type_t type) {
+-  // Honor the requirement that strides should be multiples of 8 bits.
+-  while ((index << iree_uk_type_bit_count_log2(type)) & 7) {
+-    ++index;
+-  }
+-  return index;
+-}
+-
+-static iree_uk_index_t iree_uk_test_random_stride(
+-    iree_uk_index_t min_stride, iree_uk_type_t type,
+-    iree_uk_random_engine_t* engine) {
+-  // Randomly make strides either tight or not to exercise all cases.
+-  iree_uk_index_t stride = min_stride + iree_uk_random_engine_get_0_1(engine);
+-  return iree_uk_test_round_up_to_ensure_multiple_of_8_bits(stride, type);
+-}
+-
+-static iree_uk_index_t iree_uk_test_random_offset(
+-    iree_uk_type_t type, iree_uk_random_engine_t* engine) {
+-  // Randomly make strides either tight or not to exercise all cases.
+-  iree_uk_index_t stride = iree_uk_random_engine_get_0_1(engine);
+-  return iree_uk_test_round_up_to_ensure_multiple_of_8_bits(stride, type);
+-}
+-
+-static void iree_uk_test_mmt4d_for_shape_params(
+-    iree_uk_test_t* test, const iree_uk_mmt4d_params_t* src_params) {
+-  iree_uk_mmt4d_params_t params;
+-  memcpy(&params, src_params, sizeof params);
+-  iree_uk_mmt4d_type_t mmt4d_type = iree_uk_mmt4d_type(params.flags);
+-  iree_uk_type_t lhs_type = iree_uk_mmt4d_lhs_type(mmt4d_type);
+-  iree_uk_type_t rhs_type = iree_uk_mmt4d_rhs_type(mmt4d_type);
+-  iree_uk_type_t out_type = iree_uk_mmt4d_out_type(mmt4d_type);
+-  // Populate strides first - we need them below to compute buffer lengths.
+-  // Randomly make strides either tight or not to exercise all cases.
+-  iree_uk_random_engine_t* engine = iree_uk_test_random_engine(test);
+-  params.lhs_stride0 = iree_uk_test_random_stride(
+-      params.K * params.M0 * params.K0, lhs_type, engine);
+-  params.rhs_stride0 = iree_uk_test_random_stride(
+-      params.K * params.N0 * params.K0, rhs_type, engine);
+-  params.out_stride0 = iree_uk_test_random_stride(
+-      params.N * params.M0 * params.N0, out_type, engine);
+-  iree_uk_index_t lhs_buffer_size =
+-      iree_uk_2d_buffer_length(lhs_type, params.M, params.lhs_stride0);
+-  iree_uk_index_t rhs_buffer_size =
+-      iree_uk_2d_buffer_length(rhs_type, params.N, params.rhs_stride0);
+-  void* lhs_buffer = malloc(lhs_buffer_size);
+-  void* rhs_buffer = malloc(rhs_buffer_size);
+-  iree_uk_write_random_buffer(lhs_buffer, lhs_buffer_size, lhs_type, engine);
+-  iree_uk_write_random_buffer(rhs_buffer, rhs_buffer_size, rhs_type, engine);
+-  params.lhs_offset = iree_uk_test_random_offset(lhs_type, engine);
+-  params.rhs_offset = iree_uk_test_random_offset(rhs_type, engine);
+-  params.out_offset = iree_uk_test_random_offset(out_type, engine);
+-  params.lhs_buffer =
+-      (const char*)lhs_buffer -
+-      iree_uk_bits_to_bytes_exact(params.lhs_offset
+-                                  << iree_uk_type_bit_count_log2(lhs_type));
+-  params.rhs_buffer =
+-      (const char*)rhs_buffer -
+-      iree_uk_bits_to_bytes_exact(params.rhs_offset
+-                                  << iree_uk_type_bit_count_log2(rhs_type));
+-
+-  iree_uk_mmt4d_params_t reference_params;
+-  memcpy(&reference_params, &params, sizeof params);
+-  iree_uk_index_t out_buffer_size =
+-      iree_uk_2d_buffer_length(out_type, params.M, params.out_stride0);
+-  void* init_out_buffer = malloc(out_buffer_size);
+-  iree_uk_write_random_buffer(init_out_buffer, out_buffer_size, out_type,
+-                              engine);
+-  void* reference_out_buffer = malloc(out_buffer_size);
+-  memcpy(reference_out_buffer, init_out_buffer, out_buffer_size);
+-  reference_params.out_buffer =
+-      (char*)reference_out_buffer -
+-      iree_uk_bits_to_bytes_exact(params.out_offset
+-                                  << iree_uk_type_bit_count_log2(out_type));
+-
+-  iree_uk_mmt4d_params_t actual_params;
+-  memcpy(&actual_params, &params, sizeof params);
+-  void* actual_out_buffer = malloc(out_buffer_size);
+-  memcpy(actual_out_buffer, init_out_buffer, out_buffer_size);
+-  actual_params.out_buffer =
+-      (char*)actual_out_buffer -
+-      iree_uk_bits_to_bytes_exact(params.out_offset
+-                                  << iree_uk_type_bit_count_log2(out_type));
+-
+-  iree_mmt4d_reference(&reference_params);
+-  iree_uk_mmt4d_p(&actual_params);
+-
+-  // For now we use exact comparisons, even for float, even though the reference
+-  // code accumulates in a different order compared to the actual code. This
+-  // relies on picking input test matrix elements so that all intermediate
+-  // values are exactly representable - i.e. small integer numerators.
+-  // This also relies on honoring IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS
+-  // consistently between actual tile functions (including generic fallback
+-  // ones) and the reference code in this test.
+-  bool fail = memcmp(actual_out_buffer, reference_out_buffer, out_buffer_size);
+-  if (fail) {
+-    IREE_UK_TEST_FAIL(test);
+-  }
+-
+-  free(init_out_buffer);
+-  free(reference_out_buffer);
+-  free(actual_out_buffer);
+-  free(lhs_buffer);
+-  free(rhs_buffer);
+-}
+-
+-static void iree_uk_test_mmt4d_for_tile_params(iree_uk_test_t* test,
+-                                               const void* src_params) {
+-  typedef struct shape_mnk_t {
+-    int m, n, k;
+-  } shape_mnk_t;
+-  const iree_uk_mmt4d_type_t mmt4d_type =
+-      iree_uk_mmt4d_type(((const iree_uk_mmt4d_params_t*)src_params)->flags);
+-  const iree_uk_type_t out_type = iree_uk_mmt4d_out_type(mmt4d_type);
+-  const int max_reduction_size =
+-      (out_type == IREE_UK_TYPE_BFLOAT_16) ? 100 : 1000;
+-  const shape_mnk_t shapes[] = {
+-      // Degenerate case M==0. Vacuous.
+-      {0, 1, 1},
+-      {0, 5, 7},
+-      // Degenerate case N==0. Vacuous.
+-      {1, 0, 1},
+-      {5, 0, 7},
+-      // Degenerate case K==0. Vacuous if flags have ACCUMULATE. Zeroing the
+-      // output buffer otherwise.
+-      {1, 1, 0},
+-      {5, 7, 0},
+-      // Non-degenerate cases.
+-      {1, 1, 1},
+-      {1, 1, 2},
+-      {1, 1, 10},
+-      {1, 1, max_reduction_size},
+-      {2, 1, 1},
+-      {1, 2, 1},
+-      {2, 2, 2},
+-      {5, 7, 13},
+-  };
+-  for (int i = 0; i < IREE_ARRAYSIZE(shapes); ++i) {
+-    iree_uk_mmt4d_params_t params;
+-    memcpy(&params, src_params, sizeof params);
+-    params.cpu_data = iree_uk_test_cpu_data(test);
+-    if (!(params.flags &
+-          IREE_UK_FLAG_MMT4D_ALLOW_GENERIC_FALLBACK_TILE_FUNCTION)) {
+-      if (!(iree_uk_mmt4d_info_p(&params) &
+-            IREE_UK_FLAG_MMT4D_INFO_HAVE_ARCHITECTURE_SPECIFIC_TILE_FUNCTION)) {
+-        IREE_UK_ASSERT(
+-            0 &&
+-            "No architecture-specific tile function available for this case or "
+-            "missing CPU features, which should have been handled earlier.");
+-        IREE_UK_TEST_FAIL(test);
+-      }
+-    }
+-    shape_mnk_t shape = shapes[i];
+-    params.M = shape.m;
+-    params.N = shape.n;
+-    params.K = shape.k;
+-    for (int accumulate = 0; accumulate <= 1; ++accumulate) {
+-      if (accumulate) params.flags |= IREE_UK_FLAG_MMT4D_ACCUMULATE;
+-      iree_uk_test_mmt4d_for_shape_params(test, &params);
+-    }
+-  }
+-}
+-
+-static void iree_uk_test_mmt4d_impl(iree_uk_uint32_t flags, int M0, int N0,
+-                                    int K0, const char* cpu_features) {
+-  const char* code_path_suffix = "";
+-  if (flags & IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS) {
+-    code_path_suffix = " skipround";
+-  }
+-  char types_str[32];
+-  iree_uk_mmt4d_type_t mmt4d_type = iree_uk_mmt4d_type(flags);
+-  iree_uk_type_triple_str(types_str, sizeof types_str, mmt4d_type);
+-  iree_uk_mmt4d_params_t params = {
+-      .flags = flags, .M0 = M0, .N0 = N0, .K0 = K0};
+-  char test_label_str[256];
+-  snprintf(test_label_str, sizeof test_label_str, "types:%s tile:%dx%dx%d%s",
+-           types_str, M0, N0, K0, code_path_suffix);
+-  iree_uk_test(test_label_str, iree_uk_test_mmt4d_for_tile_params, &params,
+-               cpu_features);
+-}
+-
+-static void iree_uk_test_mmt4d(iree_uk_uint32_t flags, int M0, int N0, int K0,
+-                               const char* cpu_features) {
+-  // Always allow the fallback in this test. The problem with trying to enforce
+-  // that no fallback is accidentally used, is that it's not easy to tell when
+-  // a fallback is legitimate. It depends on the build system used (CMake or
+-  // Bazel) and within the CMake case, it depends on the native toolchain. The
+-  // ground truth is given by the IREE_UK_BUILD_* defines, but they are
+-  // currently an implementation detail within each arch/ subdirectory.
+-  flags |= IREE_UK_FLAG_MMT4D_ALLOW_GENERIC_FALLBACK_TILE_FUNCTION;
+-  // Test narrowed, power-of-two values of M0, as mmt4d kernels tend to have
+-  // narrow variants for handling these cases.
+-  for (int narrowM0 = 1; narrowM0 < M0; narrowM0 *= 2) {
+-    iree_uk_test_mmt4d_impl(flags, narrowM0, N0, K0, cpu_features);
+-  }
+-  iree_uk_test_mmt4d_impl(flags, M0, N0, K0, cpu_features);
+-}
+-
+-int main(int argc, char** argv) {
+-  // Generic tests, not matching any particular CPU feature. This is the place
+-  // to test weird M0, N0, K0 to ensure e.g. that we haven't unwittingly baked
+-  // in a power-of-two assumption
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F32F32F32, 3, 5, 7, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 9, 6, 3, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S4S32, 9, 12, 2, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16S16S32, 7, 3, 6, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16U4S32, 5, 3, 2, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16S8S32, 7, 5, 6, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F32, 4, 6, 5, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F16, 3, 5, 8, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_BF16BF16F32, 11, 4, 1, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_BF16BF16BF16, 2, 9, 3, "");
+-
+-#if defined(IREE_ARCH_ARM_64)
+-
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F32F32F32, 8, 8, 1, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F32, 8, 8, 1, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS |
+-                         IREE_UK_FLAG_MMT4D_TYPE_F16F16F16,
+-                     8, 8, 1, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 8, 8, 1, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S4S32, 4, 16, 2, "");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F32, 8, 8, 1, "fp16fml");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS |
+-                         IREE_UK_FLAG_MMT4D_TYPE_F16F16F16,
+-                     8, 8, 1, "fullfp16");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_BF16BF16BF16, 8, 8, 4, "bf16");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_BF16BF16F32, 8, 8, 4, "bf16");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 8, 8, 4, "dotprod");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 8, 8, 8, "i8mm");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S4S32, 8, 8, 8, "dotprod");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S4S32, 4, 8, 16, "i8mm");
+-
+-#elif defined(IREE_ARCH_X86_64)
+-
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F32F32F32, 8, 8, 1, "avx2_fma");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F32, 8, 8, 1, "avx2_fma");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS |
+-                         IREE_UK_FLAG_MMT4D_TYPE_F16F16F16,
+-                     8, 8, 1, "avx2_fma");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 8, 8, 2, "avx2_fma");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16S16S32, 8, 8, 2, "avx2_fma");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F32F32F32, 16, 16, 1,
+-                     "avx512_base");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_F16F16F32, 16, 16, 1,
+-                     "avx512_base");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS |
+-                         IREE_UK_FLAG_MMT4D_TYPE_F16F16F16,
+-                     16, 16, 1, "avx512_base");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 16, 16, 2, "avx512_base");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16S16S32, 16, 16, 2,
+-                     "avx512_base");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_BF16BF16F32, 16, 16, 2,
+-                     "avx512_bf16");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_SKIP_INTERMEDIATE_ROUNDINGS |
+-                         IREE_UK_FLAG_MMT4D_TYPE_BF16BF16BF16,
+-                     16, 16, 2, "avx512_bf16");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S8S8S32, 16, 16, 2, "avx512_vnni");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16S16S32, 16, 16, 2,
+-                     "avx512_vnni");
+-  iree_uk_test_mmt4d(IREE_UK_FLAG_MMT4D_TYPE_S16U4S32, 1, 32, 8, "avx512_vnni");
+-
+-#endif  // defined(IREE_ARCH_ARM_64)
+-
+-  return iree_uk_test_exit_status();
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/pack_benchmark.c b/runtime/src/iree/builtins/ukernel/tools/pack_benchmark.c
+deleted file mode 100644
+index 4b588f988f..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/pack_benchmark.c
++++ /dev/null
+@@ -1,181 +0,0 @@
+-// Copyright 2022 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include <stdio.h>
+-
+-#include "iree/base/api.h"
+-#include "iree/base/internal/flags.h"
+-#include "iree/builtins/ukernel/api.h"
+-#include "iree/builtins/ukernel/pack_internal.h"
+-#include "iree/builtins/ukernel/tools/benchmark.h"
+-#include "iree/builtins/ukernel/tools/memcpy_benchmark.h"
+-#include "iree/builtins/ukernel/tools/util.h"
+-
+-IREE_FLAG(
+-    int64_t, working_set_size, 10000,
+-    "Number of bytes to be traversed by the benchmark workload (input and "
+-    "output buffers together). Matrix shapes are computed accordingly.");
+-IREE_FLAG(
+-    int32_t, padding_size, 0,
+-    "Padding size (same value used for both dimensions, 0 means no padding)");
+-IREE_FLAG(int32_t, inner_stride, 1,
+-          "Inner stride of the pack input buffers. Default 1 means unstrided.");
+-
+-static iree_status_t iree_uk_benchmark_pack(
+-    const iree_benchmark_def_t* benchmark_def,
+-    iree_benchmark_state_t* benchmark_state) {
+-  const iree_uk_benchmark_user_data_t* user_data = benchmark_def->user_data;
+-  const iree_uk_pack_params_t* src_params = iree_uk_benchmark_params(user_data);
+-  iree_uk_pack_params_t params;
+-  memcpy(&params, src_params, sizeof params);
+-  params.cpu_data = iree_uk_benchmark_cpu_data(user_data);
+-  iree_uk_pack_type_t pack_type = iree_uk_pack_type(params.flags);
+-  iree_uk_type_t in_type = iree_uk_pack_in_type(pack_type);
+-  iree_uk_type_t out_type = iree_uk_pack_out_type(pack_type);
+-  iree_uk_index_t in_type_size = iree_uk_type_size(in_type);
+-  iree_uk_index_t out_type_size = iree_uk_type_size(out_type);
+-
+-  // The inner dims 2, 3 are given to us as part of the benchmark user_data.
+-  // The outer dims 0, 1 are to be determined based on FLAG_working_set_size.
+-  iree_uk_index_t out_size0 = 1;
+-  iree_uk_index_t out_size1 = 1;
+-  iree_uk_index_t out_size2 = params.out_size2;
+-  iree_uk_index_t out_size3 = params.out_size3;
+-  int target_matrix_size_in_elems =
+-      FLAG_working_set_size / (in_type_size + out_type_size);
+-  int target_product_of_outer_sizes_0_1 =
+-      target_matrix_size_in_elems / (out_size2 * out_size3);
+-  while (target_product_of_outer_sizes_0_1 >= 4) {
+-    target_product_of_outer_sizes_0_1 /= 4;
+-    out_size0 *= 2;
+-    out_size1 *= 2;
+-  }
+-  out_size1 *= target_product_of_outer_sizes_0_1;
+-  params.out_size0 = out_size0;
+-  params.out_size1 = out_size1;
+-  if (params.flags & IREE_UK_FLAG_PACK_TRANSPOSE_OUTER) {
+-    iree_uk_index_swap(&out_size0, &out_size1);
+-  }
+-  if (params.flags & IREE_UK_FLAG_PACK_TRANSPOSE_INNER) {
+-    iree_uk_index_swap(&out_size2, &out_size3);
+-  }
+-  params.in_size0 = iree_max(0, out_size0 * out_size2 - FLAG_padding_size);
+-  params.in_size1 = iree_max(0, out_size1 * out_size3 - FLAG_padding_size);
+-  params.in_stride1 = FLAG_inner_stride;
+-  params.in_stride0 = params.in_size1 * params.in_stride1;
+-  params.out_stride1 = params.out_size2 * params.out_size3;
+-  params.out_stride0 = params.out_size1 * params.out_stride1;
+-  iree_uk_index_t in_buffer_size =
+-      iree_uk_2d_buffer_length(in_type, params.in_size0, params.in_stride0);
+-  iree_uk_index_t out_buffer_size =
+-      iree_uk_2d_buffer_length(out_type, params.out_size0, params.out_stride0);
+-  void* in_buffer = malloc(in_buffer_size);
+-  void* out_buffer = malloc(out_buffer_size);
+-  iree_uk_random_engine_t* engine = iree_uk_benchmark_random_engine(user_data);
+-  // It's just about plausible that on some platform, for some number type,
+-  // performance might be different on zero buffers vs random buffers. But it
+-  // shouldn't matter that we recreate the random engine every time, getting
+-  // the same random values again.
+-  iree_uk_write_random_buffer(in_buffer, in_buffer_size, in_type, engine);
+-  iree_uk_write_random_buffer(out_buffer, out_buffer_size, out_type, engine);
+-  // Test single-byte padding pattern, most common use case as 0.0f is 0 bytes.
+-  params.in_buffer = in_buffer;
+-  params.out_buffer = out_buffer;
+-  params.padding_value = 0;
+-  int64_t total_iterations = 0;
+-  int64_t batch_count = 1;
+-  while (iree_benchmark_keep_running(benchmark_state, batch_count)) {
+-    for (int i = 0; i < batch_count; ++i) {
+-      iree_uk_pack_p(&params);
+-    }
+-    total_iterations += batch_count;
+-    batch_count *= 2;
+-  }
+-  // Report bytes per second, so that can be easily compared to known memory
+-  // system performance metrics (e.g. RAM bandwidth, to tell whether this is
+-  // memory-bound).
+-  iree_benchmark_set_bytes_processed(benchmark_state,
+-                                     total_iterations * out_buffer_size);
+-  free(in_buffer);
+-  free(out_buffer);
+-  return iree_ok_status();
+-}
+-
+-static void iree_uk_benchmark_register_pack(iree_uk_uint32_t flags,
+-                                            int tile_size0, int tile_size1,
+-                                            const char* cpu_features) {
+-  iree_uk_pack_type_t type = iree_uk_pack_type(flags);
+-  char type_str[32];
+-  iree_uk_type_pair_str(type_str, sizeof type_str, type);
+-  iree_uk_pack_params_t params = {.out_size2 = tile_size0,
+-                                  .out_size3 = tile_size1};
+-  typedef struct pack_variant_t {
+-    const char* label;
+-    iree_uk_uint32_t flags;
+-  } pack_variant_t;
+-  const pack_variant_t variants[] = {
+-      {"trnone", 0},
+-      {"trinner", IREE_UK_FLAG_PACK_TRANSPOSE_INNER},
+-      {"trouter", IREE_UK_FLAG_PACK_TRANSPOSE_OUTER},
+-      {"trboth",
+-       IREE_UK_FLAG_PACK_TRANSPOSE_INNER | IREE_UK_FLAG_PACK_TRANSPOSE_OUTER},
+-  };
+-  for (int i = 0; i < IREE_ARRAYSIZE(variants); ++i) {
+-    pack_variant_t variant = variants[i];
+-    char name[128];
+-    snprintf(name, sizeof name, "pack_%s_tile_%dx%d_%s_wss_%" PRIi64, type_str,
+-             tile_size0, tile_size1, variant.label, FLAG_working_set_size);
+-    params.flags = flags | variant.flags;
+-    iree_uk_benchmark_register(name, iree_uk_benchmark_pack, &params,
+-                               sizeof params, cpu_features);
+-  }
+-}
+-
+-int main(int argc, char** argv) {
+-  iree_flags_set_usage("pack_benchmark", "");
+-
+-  iree_flags_parse_checked(IREE_FLAGS_PARSE_MODE_UNDEFINED_OK, &argc, &argv);
+-  iree_uk_benchmark_initialize(&argc, argv);
+-
+-  // The memcpy benchmark provides a useful comparison point, as pack is fairly
+-  // close to memory-bound.
+-  iree_uk_benchmark_register_memcpy(FLAG_working_set_size);
+-
+-#if defined(IREE_ARCH_ARM_64)
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 8, 1, "");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 8, 1, "");
+-  // Tile size selected with cpu feature "dotprod".
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 8, 4, "");
+-  // Tile size selected with cpu feature "i8mm".
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 8, 8, "");
+-#elif defined(IREE_ARCH_X86_64)
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 8, 1,
+-                                  "avx2_fma");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 16, 1,
+-                                  "avx512_base");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_BF16BF16, 16, 2,
+-                                  "avx512_base");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 8, 8,
+-                                  "avx2_fma");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 16, 16,
+-                                  "avx512_base");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 8, 2,
+-                                  "avx2_fma");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 16, 2,
+-                                  "avx512_base");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_I32I32, 8, 8,
+-                                  "avx2_fma");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_I32I32, 16, 16,
+-                                  "avx512_base");
+-#else   // defined(IREE_ARCH_ARM_64)
+-  // Architectures on which we do not have any optimized ukernel code.
+-  // Benchmark some arbitrary tile shape.
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 8, 1, "");
+-  iree_uk_benchmark_register_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 8, 1, "");
+-#endif  // defined(IREE_ARCH_ARM_64)
+-
+-  iree_uk_benchmark_run_and_cleanup();
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/pack_test.c b/runtime/src/iree/builtins/ukernel/tools/pack_test.c
+deleted file mode 100644
+index 496a919d4e..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/pack_test.c
++++ /dev/null
+@@ -1,246 +0,0 @@
+-// Copyright 2022 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/base/api.h"
+-#include "iree/builtins/ukernel/api.h"
+-#include "iree/builtins/ukernel/pack_internal.h"
+-#include "iree/builtins/ukernel/tools/test.h"
+-#include "iree/builtins/ukernel/tools/util.h"
+-
+-static void iree_pack_reference(const iree_uk_pack_params_t* params) {
+-  // For now, the input and output element types are always the same.
+-  iree_uk_pack_type_t pack_type = iree_uk_pack_type(params->flags);
+-  iree_uk_type_t elem_type = iree_uk_pack_in_type(pack_type);
+-  iree_uk_index_t elem_size = iree_uk_type_size(elem_type);
+-  iree_uk_index_t outer_size0 = params->out_size0;
+-  iree_uk_index_t outer_size1 = params->out_size1;
+-  iree_uk_index_t tile_size0 = params->out_size2;
+-  iree_uk_index_t tile_size1 = params->out_size3;
+-  iree_uk_index_t out_stride_l0 = params->out_stride0;
+-  iree_uk_index_t out_stride_l1 = params->out_size3 * params->out_size2;
+-  iree_uk_index_t out_stride_l2 = params->out_size3;
+-  iree_uk_index_t out_stride_l3 = 1;
+-  if (params->flags & IREE_UK_FLAG_PACK_TRANSPOSE_OUTER) {
+-    iree_uk_index_swap(&outer_size0, &outer_size1);
+-    iree_uk_index_swap(&out_stride_l0, &out_stride_l1);
+-  }
+-  if (params->flags & IREE_UK_FLAG_PACK_TRANSPOSE_INNER) {
+-    iree_uk_index_swap(&tile_size0, &tile_size1);
+-    iree_uk_index_swap(&out_stride_l2, &out_stride_l3);
+-  }
+-  IREE_UK_ASSERT(outer_size0 * tile_size0 >= params->in_size0);
+-  IREE_UK_ASSERT(outer_size1 * tile_size1 >= params->in_size1);
+-  for (iree_uk_index_t outer_i0 = 0; outer_i0 < outer_size0; ++outer_i0) {
+-    for (iree_uk_index_t outer_i1 = 0; outer_i1 < outer_size1; ++outer_i1) {
+-      for (iree_uk_index_t tile_i0 = 0; tile_i0 < tile_size0; ++tile_i0) {
+-        for (iree_uk_index_t tile_i1 = 0; tile_i1 < tile_size1; ++tile_i1) {
+-          iree_uk_index_t out_offset =
+-              params->out_offset + outer_i0 * out_stride_l0 +
+-              tile_i0 * out_stride_l2 + outer_i1 * out_stride_l1 +
+-              tile_i1 * out_stride_l3;
+-          iree_uk_index_t i0 = outer_i0 * tile_size0 + tile_i0;
+-          iree_uk_index_t i1 = outer_i1 * tile_size1 + tile_i1;
+-          char* out_ptr = ((char*)params->out_buffer) + out_offset * elem_size;
+-          if (i0 >= params->in_size0 || i1 >= params->in_size1) {
+-            if (elem_size == 1) {
+-              *(iree_uk_uint8_t*)out_ptr = params->padding_value;
+-            } else if (elem_size == 2) {
+-              *(iree_uk_uint16_t*)out_ptr = params->padding_value;
+-            } else if (elem_size == 4) {
+-              *(iree_uk_uint32_t*)out_ptr = params->padding_value;
+-            } else {
+-              for (iree_uk_index_t k = 0; k < elem_size; k += 8) {
+-                *(iree_uk_uint64_t*)(out_ptr + k) = params->padding_value;
+-              }
+-            }
+-          } else {
+-            iree_uk_index_t in_offset = params->in_offset +
+-                                        i1 * params->in_stride1 +
+-                                        i0 * params->in_stride0;
+-            const char* in_ptr =
+-                ((char*)params->in_buffer) + in_offset * elem_size;
+-            memcpy(out_ptr, in_ptr, elem_size);
+-          }
+-        }
+-      }
+-    }
+-  }
+-}
+-
+-static void iree_uk_test_pack_for_shape_params(
+-    iree_uk_test_t* test, const iree_uk_pack_params_t* src_params) {
+-  iree_uk_pack_params_t params;
+-  memcpy(&params, src_params, sizeof params);
+-  // Populate strides first - we need them below to compute buffer lengths.
+-  // Randomly make strides either tight or not to exercise all cases.
+-  iree_uk_random_engine_t* engine = iree_uk_test_random_engine(test);
+-  params.in_stride1 = 1 + iree_uk_random_engine_get_0_1(engine);
+-  params.in_stride0 = params.in_size1 * params.in_stride1 +
+-                      iree_uk_random_engine_get_0_1(engine);
+-  params.out_stride1 = params.out_size2 * params.out_size3;
+-  params.out_stride0 = params.out_size1 * params.out_stride1 +
+-                       iree_uk_random_engine_get_0_1(engine);
+-  iree_uk_pack_type_t pack_type = iree_uk_pack_type(params.flags);
+-  iree_uk_type_t in_type = iree_uk_pack_in_type(pack_type);
+-  iree_uk_index_t in_buffer_size =
+-      iree_uk_2d_buffer_length(in_type, params.in_size0, params.in_stride0);
+-  void* in_buffer = malloc(in_buffer_size);
+-  iree_uk_write_random_buffer(in_buffer, in_buffer_size, in_type, engine);
+-  params.in_offset = iree_uk_random_engine_get_0_65535(engine);
+-  params.out_offset = iree_uk_random_engine_get_0_65535(engine);
+-  params.in_buffer =
+-      (const char*)in_buffer - (params.in_offset * iree_uk_type_size(in_type));
+-
+-  iree_uk_pack_params_t reference_params;
+-  memcpy(&reference_params, &params, sizeof reference_params);
+-  iree_uk_type_t out_type = iree_uk_pack_out_type(pack_type);
+-  iree_uk_index_t out_buffer_size =
+-      iree_uk_2d_buffer_length(out_type, params.out_size0, params.out_stride0);
+-  void* reference_out_buffer = malloc(out_buffer_size);
+-  iree_uk_write_random_buffer(reference_out_buffer, out_buffer_size, out_type,
+-                              engine);
+-  reference_params.out_buffer =
+-      (char*)reference_out_buffer -
+-      (params.out_offset * iree_uk_type_size(out_type));
+-
+-  iree_uk_pack_params_t actual_params;
+-  memcpy(&actual_params, &params, sizeof actual_params);
+-  void* actual_out_buffer = malloc(out_buffer_size);
+-  iree_uk_write_random_buffer(actual_out_buffer, out_buffer_size, out_type,
+-                              engine);
+-  actual_params.out_buffer = (char*)actual_out_buffer -
+-                             (params.out_offset * iree_uk_type_size(out_type));
+-
+-  iree_pack_reference(&reference_params);
+-  iree_uk_pack_p(&actual_params);
+-
+-  if (!iree_uk_2d_buffers_equal(
+-          actual_out_buffer, reference_out_buffer, out_type, params.out_size0,
+-          params.out_size1 * params.out_size2 * params.out_size3,
+-          params.out_stride0, 1)) {
+-    IREE_UK_TEST_FAIL(test);
+-  }
+-
+-  free(reference_out_buffer);
+-  free(actual_out_buffer);
+-  free(in_buffer);
+-}
+-
+-static void iree_uk_test_pack_for_tile_params(iree_uk_test_t* test,
+-                                              const void* src_params) {
+-  typedef struct outer_shape_t {
+-    int size0, size1;
+-  } outer_shape_t;
+-  const outer_shape_t outer_shapes[] = {
+-      // Degenerate cases. Vacuous.
+-      {0, 1},
+-      {1, 0},
+-      // Non-degenerate cases.
+-      {1, 1},
+-      {3, 2},
+-      {9, 33},
+-  };
+-  typedef enum {
+-    pad_none,
+-    pad_one_incomplete_tile,
+-    pad_a_lot,
+-    pad_enum_end
+-  } pad_t;
+-  for (int i = 0; i < IREE_ARRAYSIZE(outer_shapes); ++i) {
+-    for (int transpose_inner = 0; transpose_inner <= 1; ++transpose_inner) {
+-      for (int transpose_outer = 0; transpose_outer <= 1; ++transpose_outer) {
+-        for (pad_t pad = 0; pad < pad_enum_end; ++pad) {
+-          iree_uk_pack_params_t params;
+-          memcpy(&params, src_params, sizeof params);
+-          params.cpu_data = iree_uk_test_cpu_data(test);
+-          outer_shape_t outer_shape = outer_shapes[i];
+-          if (pad == pad_a_lot) {
+-            outer_shape.size0 += 16;
+-            outer_shape.size1 += 16;
+-          }
+-          params.out_size0 = outer_shape.size0;
+-          params.out_size1 = outer_shape.size1;
+-          if (transpose_outer) {
+-            params.flags |= IREE_UK_FLAG_PACK_TRANSPOSE_OUTER;
+-            iree_uk_index_swap(&params.out_size0, &params.out_size1);
+-          }
+-          iree_uk_index_t tile_size0 = params.out_size2;
+-          iree_uk_index_t tile_size1 = params.out_size3;
+-          if (transpose_inner) {
+-            params.flags |= IREE_UK_FLAG_PACK_TRANSPOSE_INNER;
+-            iree_uk_index_swap(&tile_size0, &tile_size1);
+-          }
+-          params.in_size0 = outer_shape.size0 * tile_size0;
+-          params.in_size1 = outer_shape.size1 * tile_size1;
+-          iree_uk_random_engine_t* engine = iree_uk_test_random_engine(test);
+-          if (pad == pad_one_incomplete_tile) {
+-            iree_uk_index_t pad_size0 =
+-                iree_uk_random_engine_get_0_65535(engine) % tile_size0;
+-            iree_uk_index_t pad_size1 =
+-                iree_uk_random_engine_get_0_65535(engine) % tile_size1;
+-            params.in_size0 = params.in_size0 - pad_size0;
+-            if (params.in_size0 < 0) params.in_size0 = 0;
+-            params.in_size1 = params.in_size1 - pad_size1;
+-            if (params.in_size1 < 0) params.in_size1 = 0;
+-          }
+-          params.padding_value = iree_uk_random_engine_get_uint64(engine);
+-          iree_uk_test_pack_for_shape_params(test, &params);
+-        }
+-      }
+-    }
+-  }
+-}
+-
+-static void iree_uk_test_pack(iree_uk_uint32_t flags, int tile_size0,
+-                              int tile_size1, const char* cpu_features) {
+-  iree_uk_pack_params_t params = {
+-      .flags = flags, .out_size2 = tile_size0, .out_size3 = tile_size1};
+-  char types_str[32];
+-  iree_uk_pack_type_t type = iree_uk_pack_type(flags);
+-  iree_uk_type_pair_str(types_str, sizeof types_str, type);
+-  char test_label_str[256];
+-  snprintf(test_label_str, sizeof test_label_str, "types:%s tile:%dx%d",
+-           types_str, tile_size0, tile_size1);
+-  iree_uk_test(test_label_str, iree_uk_test_pack_for_tile_params, &params,
+-               cpu_features);
+-}
+-
+-int main(int argc, char** argv) {
+-  // Generic tests, not matching any particular CPU feature. This is the place
+-  // to test weird tile shapes to ensure e.g. that we haven't unwittingly baked
+-  // in a power-of-two assumption
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 3, 5, "");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 4, 2, "");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I32I32, 3, 4, "");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_F16F16, 6, 7, "");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_BF16BF16, 9, 2, "");
+-
+-#if defined(IREE_ARCH_ARM_64)
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 8, 1, "");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 8, 8, "");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 8, 1, "");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I32I32, 8, 8, "");
+-  // Tile size selected with CPU feature dotprod.
+-  // Not passing a cpu_features_list because the packing code itself
+-  // does not depend on any features.
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 8, 4, "");
+-  // Tile size selected for CPU feature i8mm. Same comment as for dotprod.
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 8, 8, "");
+-#elif defined(IREE_ARCH_X86_64)
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 8, 1, "avx2_fma");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 8, 2, "avx2_fma");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 8, 8, "avx2_fma");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I32I32, 8, 8, "avx2_fma");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 16, 1, "avx512_base");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_BF16BF16, 16, 2, "avx512_base");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I8I8, 16, 2, "avx512_base");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_F32F32, 16, 16, "avx512_base");
+-  iree_uk_test_pack(IREE_UK_FLAG_PACK_TYPE_I32I32, 16, 16, "avx512_base");
+-  // avx512_vnni uses the same tile size and same pack code as avx512_base.
+-#endif  // defined(IREE_ARCH_ARM_64)
+-
+-  return iree_uk_test_exit_status();
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/test.c b/runtime/src/iree/builtins/ukernel/tools/test.c
+deleted file mode 100644
+index 1e39726225..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/test.c
++++ /dev/null
+@@ -1,187 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/builtins/ukernel/tools/test.h"
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-
+-#include "iree/base/api.h"
+-#include "iree/schemas/cpu_data.h"
+-
+-typedef enum {
+-  IREE_UK_TEST_STATUS_RUN,
+-  IREE_UK_TEST_STATUS_OK,
+-  IREE_UK_TEST_STATUS_FAILED,
+-  IREE_UK_TEST_STATUS_SKIPPED,
+-} iree_uk_test_status_t;
+-
+-struct iree_uk_test_t {
+-  const char* name;
+-  const char* cpu_features;
+-  iree_uk_uint64_t cpu_data[IREE_CPU_DATA_FIELD_COUNT];
+-  iree_time_t time_start;
+-  iree_uk_random_engine_t random_engine;
+-  iree_uk_test_status_t status;
+-};
+-
+-iree_uk_random_engine_t* iree_uk_test_random_engine(
+-    const iree_uk_test_t* test) {
+-  // Cast constness away, i.e. consider random engine state mutation as not
+-  // really a test state mutation.
+-  return (iree_uk_random_engine_t*)&test->random_engine;
+-}
+-
+-const iree_uk_uint64_t* iree_uk_test_cpu_data(const iree_uk_test_t* test) {
+-  return test->cpu_data;
+-}
+-
+-// Returns the log line header appropriate for the given status.
+-static const char* iree_uk_test_status_header(iree_uk_test_status_t status) {
+-  switch (status) {
+-    case IREE_UK_TEST_STATUS_RUN:
+-      return "[ RUN      ] 🎲";
+-    case IREE_UK_TEST_STATUS_OK:
+-      return "[       OK ] ✅";
+-    case IREE_UK_TEST_STATUS_FAILED:
+-      return "[   FAILED ] ❌";
+-    case IREE_UK_TEST_STATUS_SKIPPED:
+-      return "[  SKIPPED ] 🙈";
+-    default:
+-      IREE_UK_ASSERT(false);
+-      return "";
+-  }
+-}
+-
+-// Log the test's current status.
+-static void iree_uk_test_log_status(const iree_uk_test_t* test) {
+-  fprintf(stderr, "%s %s", iree_uk_test_status_header(test->status),
+-          test->name);
+-  if (strlen(test->cpu_features)) {
+-    fprintf(stderr, " cpu_features:%s", test->cpu_features);
+-  }
+-  if (test->status != IREE_UK_TEST_STATUS_RUN) {
+-    fprintf(stderr, " (%" PRIi64 " ms)",
+-            (iree_time_now() - test->time_start) / (1000 * 1000));
+-  }
+-  fprintf(stderr, "\n");
+-}
+-
+-// Log an info message.
+-static void iree_uk_test_log_info(const iree_uk_test_t* test, const char* emoji,
+-                                  const char* msg) {
+-  fprintf(stderr, "[   INFO   ] %s %s\n", emoji, msg);
+-}
+-
+-// Log an error message.
+-static void iree_uk_test_log_error(const iree_uk_test_t* test,
+-                                   const char* msg) {
+-  fprintf(stderr, "[   ERROR  ] ❌ %s\n", msg);
+-}
+-
+-// Tracks whether iree_uk_test_exit_status has been called.
+-static bool global_iree_uk_test_exit_status_called = false;
+-
+-// atexit handler. Checks that iree_uk_test_exit_status has been called.
+-static void iree_uk_test_check_test_exit_status_called(void) {
+-  if (!global_iree_uk_test_exit_status_called) {
+-    fprintf(stderr, "Fatal: iree_uk_test_exit_status has not been called.\n");
+-    iree_abort();
+-  }
+-}
+-
+-// Sets the atexit handler.
+-static void iree_uk_test_set_atexit(void) {
+-  atexit(iree_uk_test_check_test_exit_status_called);
+-}
+-
+-// Global variables tracking counts of run/skipped/failed tests.
+-static int global_iree_uk_test_run_count = 0;
+-static int global_iree_uk_test_skipped_count = 0;
+-static int global_iree_uk_test_failed_count = 0;
+-
+-void iree_uk_test(const char* name,
+-                  void (*test_func)(iree_uk_test_t*, const void*),
+-                  const void* params, const char* cpu_features) {
+-  // The first iree_uk_test sets the atexit handler.
+-  if (global_iree_uk_test_run_count == 0) {
+-    iree_uk_test_set_atexit();
+-  }
+-  ++global_iree_uk_test_run_count;
+-  iree_uk_test_t test = {
+-      .name = name,
+-      .cpu_features = cpu_features,
+-      .time_start = iree_time_now(),
+-      // Letting each test create its own engine makes them independent: a
+-      // testcase succeeds or fails the same way if we isolate it or reorder it.
+-      // The potential downside of repeating the same pseudorandom sequence is
+-      // OK because any pseudorandom sequence should be equally good at
+-      // coverage, and different testcases tend to use different tile shapes
+-      // anyway.
+-      .random_engine = iree_uk_random_engine_init(),
+-      .status = IREE_UK_TEST_STATUS_RUN,
+-  };
+-  iree_uk_test_log_status(&test);
+-  // Are specified CPU features supported by the CPU?
+-  iree_uk_initialize_cpu_once();
+-  iree_uk_make_cpu_data_for_features(cpu_features, test.cpu_data);
+-  if (iree_uk_cpu_supports(test.cpu_data)) {
+-    // CPU supports features. Run this part of the test.
+-    iree_uk_test_log_info(&test, "🚀", "CPU supports required features");
+-    test_func(&test, params);
+-  } else {
+-    // CPU does not support features. Skip this part of the test.
+-    char msg[128];
+-    snprintf(msg, sizeof msg, "CPU does not support required feature %s",
+-             iree_uk_cpu_first_unsupported_feature(test.cpu_data));
+-    iree_uk_test_log_info(&test, "🦕", msg);
+-    // Set test status to SKIPPED if it was still the initial RUN.
+-    // Do not overwrite a FAILED from the run without optional CPU features.
+-    if (test.status == IREE_UK_TEST_STATUS_RUN) {
+-      test.status = IREE_UK_TEST_STATUS_SKIPPED;
+-    }
+-  }
+-  if (test.status == IREE_UK_TEST_STATUS_FAILED) {
+-    ++global_iree_uk_test_failed_count;
+-  } else if (test.status == IREE_UK_TEST_STATUS_SKIPPED) {
+-    ++global_iree_uk_test_skipped_count;
+-  } else {
+-    test.status = IREE_UK_TEST_STATUS_OK;
+-  }
+-  iree_uk_test_log_status(&test);
+-}
+-
+-static const char iree_uk_test_abort_on_error_env[] =
+-    "IREE_UK_TEST_ABORT_ON_ERROR";
+-
+-void iree_uk_test_fail(iree_uk_test_t* test, const char* file, int line) {
+-  test->status = IREE_UK_TEST_STATUS_FAILED;
+-  char msg_buf[256];
+-  snprintf(msg_buf, sizeof msg_buf, "Error occurred at %s:%d", file, line);
+-  iree_uk_test_log_error(test, msg_buf);
+-  if (getenv(iree_uk_test_abort_on_error_env)) {
+-    iree_abort();
+-  }
+-}
+-
+-int iree_uk_test_exit_status(void) {
+-  global_iree_uk_test_exit_status_called = true;
+-  fprintf(stderr, "\nSummary: %d tests run, %d failed, %d skipped.\n",
+-          global_iree_uk_test_run_count, global_iree_uk_test_failed_count,
+-          global_iree_uk_test_skipped_count);
+-  if (!global_iree_uk_test_run_count) {
+-    fprintf(stderr, "Error: 0 tests run, is that normal?!\n");
+-    return EXIT_FAILURE;
+-  }
+-  if (global_iree_uk_test_failed_count) {
+-    fprintf(stderr,
+-            "To make errors fatal, define the %s environment variable.\n",
+-            iree_uk_test_abort_on_error_env);
+-    return EXIT_FAILURE;
+-  }
+-  return EXIT_SUCCESS;
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/test.h b/runtime/src/iree/builtins/ukernel/tools/test.h
+deleted file mode 100644
+index 592ec372e2..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/test.h
++++ /dev/null
+@@ -1,45 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#ifndef IREE_BUILTINS_UKERNEL_TOOLS_TEST_H_
+-#define IREE_BUILTINS_UKERNEL_TOOLS_TEST_H_
+-
+-#include "iree/builtins/ukernel/tools/util.h"
+-
+-// Opaque struct holding some test case information and some resources such as
+-// a pseudorandom engine and CPU data.
+-typedef struct iree_uk_test_t iree_uk_test_t;
+-
+-// Synchronously run a test --- no registration.
+-//
+-// `params` is the "user data" parameters that will be passed as the second
+-// argument to `test_func`.
+-//
+-// If `cpu_features` is non-NULL then `test_func` will be called a second time
+-// with the corresponding CPU features enabled in the iree_uk_test_t* passed as
+-// first argument to `test_func`. This is done as a second separate call to
+-// `test_func` so that we maintain test coverage for the fallback logic and
+-// baseline kernels used when CPU features are unavailable.
+-void iree_uk_test(const char* name,
+-                  void (*test_func)(iree_uk_test_t*, const void*),
+-                  const void* params, const char* cpu_features);
+-
+-// Fail the current test.
+-#define IREE_UK_TEST_FAIL(test) iree_uk_test_fail(test, __FILE__, __LINE__)
+-
+-// Implementation of IREE_UK_TEST_FAIL.
+-void iree_uk_test_fail(iree_uk_test_t* test, const char* file, int line);
+-
+-// Used by test functions to get a random engine.
+-iree_uk_random_engine_t* iree_uk_test_random_engine(const iree_uk_test_t* test);
+-
+-// Used by test functions to get CPU data.
+-const iree_uk_uint64_t* iree_uk_test_cpu_data(const iree_uk_test_t* test);
+-
+-// Must be called by the test `main` function to provide its return value.
+-int iree_uk_test_exit_status(void);
+-
+-#endif  // IREE_BUILTINS_UKERNEL_TOOLS_TEST_H_
+diff --git a/runtime/src/iree/builtins/ukernel/tools/unpack_benchmark.c b/runtime/src/iree/builtins/ukernel/tools/unpack_benchmark.c
+deleted file mode 100644
+index 693c9ccce8..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/unpack_benchmark.c
++++ /dev/null
+@@ -1,167 +0,0 @@
+-// Copyright 2022 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include <stdio.h>
+-
+-#include "iree/base/api.h"
+-#include "iree/base/internal/flags.h"
+-#include "iree/builtins/ukernel/api.h"
+-#include "iree/builtins/ukernel/tools/benchmark.h"
+-#include "iree/builtins/ukernel/tools/memcpy_benchmark.h"
+-#include "iree/builtins/ukernel/tools/util.h"
+-#include "iree/builtins/ukernel/unpack_internal.h"
+-
+-IREE_FLAG(
+-    int64_t, working_set_size, 10000,
+-    "Number of bytes to be traversed by the benchmark workload (input and "
+-    "output buffers together). Matrix shapes are computed accordingly.");
+-IREE_FLAG(
+-    int32_t, padding_size, 0,
+-    "Padding size (same value used for both dimensions, 0 means no padding)");
+-IREE_FLAG(int32_t, inner_stride, 1,
+-          "Inner stride of the pack input buffers. Default 1 means unstrided.");
+-
+-static iree_status_t iree_uk_benchmark_unpack(
+-    const iree_benchmark_def_t* benchmark_def,
+-    iree_benchmark_state_t* benchmark_state) {
+-  const iree_uk_benchmark_user_data_t* user_data = benchmark_def->user_data;
+-  const iree_uk_unpack_params_t* src_params =
+-      iree_uk_benchmark_params(user_data);
+-  iree_uk_unpack_params_t params;
+-  memcpy(&params, src_params, sizeof params);
+-  params.cpu_data = iree_uk_benchmark_cpu_data(user_data);
+-  iree_uk_unpack_type_t unpack_type = iree_uk_unpack_type(params.flags);
+-  iree_uk_type_t in_type = iree_uk_unpack_in_type(unpack_type);
+-  iree_uk_type_t out_type = iree_uk_unpack_out_type(unpack_type);
+-  iree_uk_index_t in_type_size = iree_uk_type_size(in_type);
+-  iree_uk_index_t out_type_size = iree_uk_type_size(out_type);
+-
+-  // The inner dims 2, 3 are given to us as part of the benchmark user_data.
+-  // The outer dims 0, 1 are to be determined based on FLAG_working_set_size.
+-  iree_uk_index_t in_size0 = 1;
+-  iree_uk_index_t in_size1 = 1;
+-  iree_uk_index_t in_size2 = params.in_size2;
+-  iree_uk_index_t in_size3 = params.in_size3;
+-  int target_matrix_size_in_elems =
+-      FLAG_working_set_size / (in_type_size + out_type_size);
+-  int target_product_of_outer_sizes_0_1 =
+-      target_matrix_size_in_elems / (in_size2 * in_size3);
+-  while (target_product_of_outer_sizes_0_1 >= 4) {
+-    target_product_of_outer_sizes_0_1 /= 4;
+-    in_size0 *= 2;
+-    in_size1 *= 2;
+-  }
+-  in_size1 *= target_product_of_outer_sizes_0_1;
+-  params.in_size0 = in_size0;
+-  params.in_size1 = in_size1;
+-  if (params.flags & IREE_UK_FLAG_UNPACK_TRANSPOSE_OUTER) {
+-    iree_uk_index_swap(&in_size0, &in_size1);
+-  }
+-  if (params.flags & IREE_UK_FLAG_UNPACK_TRANSPOSE_INNER) {
+-    iree_uk_index_swap(&in_size2, &in_size3);
+-  }
+-  params.out_size0 = iree_max(0, in_size0 * in_size2 - FLAG_padding_size);
+-  params.out_size1 = iree_max(0, in_size1 * in_size3 - FLAG_padding_size);
+-  params.out_stride1 = FLAG_inner_stride;
+-  params.out_stride0 = params.out_size1 * params.out_stride1;
+-  params.in_stride1 = params.in_size2 * params.in_size3;
+-  params.in_stride0 = params.in_size1 * params.in_stride1;
+-  iree_uk_index_t in_buffer_size =
+-      iree_uk_2d_buffer_length(in_type, params.in_size0, params.in_stride0);
+-  iree_uk_index_t out_buffer_size =
+-      iree_uk_2d_buffer_length(out_type, params.out_size0, params.out_stride0);
+-  void* in_buffer = malloc(in_buffer_size);
+-  void* out_buffer = malloc(out_buffer_size);
+-  iree_uk_random_engine_t* engine = iree_uk_benchmark_random_engine(user_data);
+-  // It's just about plausible that on some platform, for some number type,
+-  // performance might be different on zero buffers vs random buffers. But it
+-  // shouldn't matter that we recreate the random engine every time, getting
+-  // the same random values again.
+-  iree_uk_write_random_buffer(in_buffer, in_buffer_size, in_type, engine);
+-  iree_uk_write_random_buffer(out_buffer, out_buffer_size, out_type, engine);
+-  params.in_buffer = in_buffer;
+-  params.out_buffer = out_buffer;
+-  int64_t total_iterations = 0;
+-  int64_t batch_count = 1;
+-  while (iree_benchmark_keep_running(benchmark_state, batch_count)) {
+-    for (int i = 0; i < batch_count; ++i) {
+-      iree_uk_unpack_p(&params);
+-    }
+-    total_iterations += batch_count;
+-    batch_count *= 2;
+-  }
+-  // Report bytes per second, so that can be easily compared to known memory
+-  // system performance metrics (e.g. RAM bandwidth, to tell whether this is
+-  // memory-bound).
+-  iree_benchmark_set_bytes_processed(benchmark_state,
+-                                     total_iterations * out_buffer_size);
+-  free(in_buffer);
+-  free(out_buffer);
+-  return iree_ok_status();
+-}
+-
+-static void iree_uk_benchmark_register_unpack(iree_uk_uint32_t flags,
+-                                              int tile_size0, int tile_size1,
+-                                              const char* cpu_features) {
+-  char type_str[32];
+-  iree_uk_unpack_type_t unpack_type = iree_uk_unpack_type(flags);
+-  iree_uk_type_pair_str(type_str, sizeof type_str, unpack_type);
+-  iree_uk_unpack_params_t params = {.in_size2 = tile_size0,
+-                                    .in_size3 = tile_size1};
+-  typedef struct unpack_variant_t {
+-    const char* label;
+-    iree_uk_uint32_t flags;
+-  } unpack_variant_t;
+-  const unpack_variant_t variants[] = {
+-      {"trnone", 0},
+-      {"trinner", IREE_UK_FLAG_UNPACK_TRANSPOSE_INNER},
+-      {"trouter", IREE_UK_FLAG_UNPACK_TRANSPOSE_OUTER},
+-      {"trboth", IREE_UK_FLAG_UNPACK_TRANSPOSE_INNER |
+-                     IREE_UK_FLAG_UNPACK_TRANSPOSE_OUTER},
+-  };
+-  for (int i = 0; i < IREE_ARRAYSIZE(variants); ++i) {
+-    unpack_variant_t variant = variants[i];
+-    char name[128];
+-    snprintf(name, sizeof name, "unpack_%s_tile_%dx%d_%s_wss_%" PRIi64,
+-             type_str, tile_size0, tile_size1, variant.label,
+-             FLAG_working_set_size);
+-    params.flags = flags | variant.flags;
+-    iree_uk_benchmark_register(name, iree_uk_benchmark_unpack, &params,
+-                               sizeof params, cpu_features);
+-  }
+-}
+-
+-int main(int argc, char** argv) {
+-  iree_flags_set_usage("unpack_benchmark", "");
+-
+-  iree_flags_parse_checked(IREE_FLAGS_PARSE_MODE_UNDEFINED_OK, &argc, &argv);
+-  iree_uk_benchmark_initialize(&argc, argv);
+-
+-  // The memcpy benchmark provides a useful comparison point, as pack is fairly
+-  // close to memory-bound.
+-  iree_uk_benchmark_register_memcpy(FLAG_working_set_size);
+-
+-#if defined(IREE_ARCH_ARM_64)
+-  iree_uk_benchmark_register_unpack(IREE_UK_FLAG_UNPACK_TYPE_F32F32, 8, 8, "");
+-  iree_uk_benchmark_register_unpack(IREE_UK_FLAG_UNPACK_TYPE_I32I32, 8, 8, "");
+-#elif defined(IREE_ARCH_X86_64)
+-  iree_uk_benchmark_register_unpack(IREE_UK_FLAG_UNPACK_TYPE_F32F32, 8, 8,
+-                                    "avx2_fma");
+-  iree_uk_benchmark_register_unpack(IREE_UK_FLAG_UNPACK_TYPE_I32I32, 8, 8,
+-                                    "avx2_fma");
+-  iree_uk_benchmark_register_unpack(IREE_UK_FLAG_UNPACK_TYPE_F32F32, 16, 16,
+-                                    "avx512_base");
+-  iree_uk_benchmark_register_unpack(IREE_UK_FLAG_UNPACK_TYPE_I32I32, 16, 16,
+-                                    "avx512_base");
+-#else   // defined(IREE_ARCH_ARM_64)
+-  // Architectures on which we do not have any optimized ukernel code.
+-  // Benchmark some arbitrary tile shape.
+-  iree_uk_benchmark_register_unpack(IREE_UK_FLAG_UNPACK_TYPE_F32F32, 8, 8, "");
+-  iree_uk_benchmark_register_unpack(IREE_UK_FLAG_UNPACK_TYPE_I32I32, 8, 8, "");
+-#endif  // defined(IREE_ARCH_ARM_64)
+-
+-  iree_uk_benchmark_run_and_cleanup();
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/unpack_test.c b/runtime/src/iree/builtins/ukernel/tools/unpack_test.c
+deleted file mode 100644
+index e9468968b2..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/unpack_test.c
++++ /dev/null
+@@ -1,218 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/base/api.h"
+-#include "iree/builtins/ukernel/api.h"
+-#include "iree/builtins/ukernel/tools/test.h"
+-#include "iree/builtins/ukernel/tools/util.h"
+-#include "iree/builtins/ukernel/unpack_internal.h"
+-
+-static void iree_unpack_reference(const iree_uk_unpack_params_t* params) {
+-  iree_uk_unpack_type_t unpack_type = iree_uk_unpack_type(params->flags);
+-  // For now, the input and output element types are always the same.
+-  iree_uk_type_t elem_type = iree_uk_unpack_in_type(unpack_type);
+-  iree_uk_index_t elem_size = iree_uk_type_size(elem_type);
+-  iree_uk_index_t outer_size0 = params->in_size0;
+-  iree_uk_index_t outer_size1 = params->in_size1;
+-  iree_uk_index_t tile_size0 = params->in_size2;
+-  iree_uk_index_t tile_size1 = params->in_size3;
+-  iree_uk_index_t in_stride_outer0 = params->in_stride0;
+-  iree_uk_index_t in_stride_outer1 = params->in_size3 * params->in_size2;
+-  iree_uk_index_t in_stride_tile0 = params->in_size3;
+-  iree_uk_index_t in_stride_tile1 = 1;
+-  if (params->flags & IREE_UK_FLAG_UNPACK_TRANSPOSE_OUTER) {
+-    iree_uk_index_swap(&outer_size0, &outer_size1);
+-    iree_uk_index_swap(&in_stride_outer0, &in_stride_outer1);
+-  }
+-  if (params->flags & IREE_UK_FLAG_UNPACK_TRANSPOSE_INNER) {
+-    iree_uk_index_swap(&tile_size0, &tile_size1);
+-    iree_uk_index_swap(&in_stride_tile0, &in_stride_tile1);
+-  }
+-  for (iree_uk_index_t outer_i0 = 0; outer_i0 < outer_size0; ++outer_i0) {
+-    for (iree_uk_index_t outer_i1 = 0; outer_i1 < outer_size1; ++outer_i1) {
+-      for (iree_uk_index_t tile_i0 = 0; tile_i0 < tile_size0; ++tile_i0) {
+-        for (iree_uk_index_t tile_i1 = 0; tile_i1 < tile_size1; ++tile_i1) {
+-          iree_uk_index_t in_offset =
+-              params->in_offset + outer_i0 * in_stride_outer0 +
+-              tile_i0 * in_stride_tile0 + outer_i1 * in_stride_outer1 +
+-              tile_i1 * in_stride_tile1;
+-          iree_uk_index_t i0 = outer_i0 * tile_size0 + tile_i0;
+-          iree_uk_index_t i1 = outer_i1 * tile_size1 + tile_i1;
+-          if (!(i0 >= params->out_size0 || i1 >= params->out_size1)) {
+-            iree_uk_index_t out_offset = params->out_offset +
+-                                         i1 * params->out_stride1 +
+-                                         i0 * params->out_stride0;
+-            const char* in_ptr =
+-                ((char*)params->in_buffer) + in_offset * elem_size;
+-            char* out_ptr =
+-                ((char*)params->out_buffer) + out_offset * elem_size;
+-            iree_uk_memcpy(out_ptr, in_ptr, elem_size);
+-          }
+-        }
+-      }
+-    }
+-  }
+-}
+-
+-static void iree_uk_test_unpack_for_shape_params(
+-    iree_uk_test_t* test, const iree_uk_unpack_params_t* src_params) {
+-  iree_uk_unpack_params_t params;
+-  memcpy(&params, src_params, sizeof params);
+-  // Populate strides first - we need them below to compute buffer lengths.
+-  // Randomly make strides either tight or not to exercise all cases.
+-  iree_uk_random_engine_t* engine = iree_uk_test_random_engine(test);
+-  params.out_stride1 = 1 + iree_uk_random_engine_get_0_1(engine);
+-  params.out_stride0 = params.out_size1 * params.out_stride1 +
+-                       iree_uk_random_engine_get_0_1(engine);
+-  params.in_stride1 = params.in_size2 * params.in_size3;
+-  params.in_stride0 = params.in_size1 * params.in_stride1 +
+-                      iree_uk_random_engine_get_0_1(engine);
+-  iree_uk_unpack_type_t unpack_type = iree_uk_unpack_type(params.flags);
+-  iree_uk_type_t in_type = iree_uk_unpack_in_type(unpack_type);
+-  iree_uk_index_t in_buffer_size =
+-      iree_uk_2d_buffer_length(in_type, params.in_size0, params.in_stride0);
+-  void* in_buffer = malloc(in_buffer_size);
+-  iree_uk_write_random_buffer(in_buffer, in_buffer_size, in_type, engine);
+-  params.in_offset = iree_uk_random_engine_get_0_65535(engine);
+-  params.out_offset = iree_uk_random_engine_get_0_65535(engine);
+-  params.in_buffer =
+-      (const char*)in_buffer - (params.in_offset * iree_uk_type_size(in_type));
+-
+-  iree_uk_unpack_params_t reference_params;
+-  memcpy(&reference_params, &params, sizeof reference_params);
+-  iree_uk_type_t out_type = iree_uk_unpack_out_type(unpack_type);
+-  iree_uk_index_t out_buffer_size =
+-      iree_uk_2d_buffer_length(out_type, params.out_size0, params.out_stride0);
+-  void* reference_out_buffer = malloc(out_buffer_size);
+-  iree_uk_write_random_buffer(reference_out_buffer, out_buffer_size, out_type,
+-                              engine);
+-  reference_params.out_buffer =
+-      (char*)reference_out_buffer -
+-      (params.out_offset * iree_uk_type_size(out_type));
+-
+-  iree_uk_unpack_params_t actual_params;
+-  memcpy(&actual_params, &params, sizeof actual_params);
+-  void* actual_out_buffer = malloc(out_buffer_size);
+-  iree_uk_write_random_buffer(actual_out_buffer, out_buffer_size, out_type,
+-                              engine);
+-  actual_params.out_buffer = (char*)actual_out_buffer -
+-                             (params.out_offset * iree_uk_type_size(out_type));
+-
+-  iree_unpack_reference(&reference_params);
+-  iree_uk_unpack_p(&actual_params);
+-
+-  if (!iree_uk_2d_buffers_equal(actual_out_buffer, reference_out_buffer,
+-                                out_type, params.out_size0, params.out_size1,
+-                                params.out_stride0, params.out_stride1)) {
+-    IREE_UK_TEST_FAIL(test);
+-  }
+-
+-  free(reference_out_buffer);
+-  free(actual_out_buffer);
+-  free(in_buffer);
+-}
+-
+-static void iree_uk_test_unpack_for_tile_params(iree_uk_test_t* test,
+-                                                const void* src_params) {
+-  typedef struct outer_shape_t {
+-    int size0, size1;
+-  } outer_shape_t;
+-  const outer_shape_t outer_shapes[] = {
+-      // Degenerate cases. Vacuous.
+-      {0, 1},
+-      {1, 0},
+-      // Non-degenerate cases.
+-      {1, 1},
+-      {3, 2},
+-      {9, 33},
+-  };
+-  typedef enum {
+-    pad_none,
+-    pad_one_incomplete_tile,
+-    pad_a_lot,
+-    pad_enum_end
+-  } pad_t;
+-  for (int i = 0; i < IREE_ARRAYSIZE(outer_shapes); ++i) {
+-    for (int transpose_inner = 0; transpose_inner <= 1; ++transpose_inner) {
+-      for (int transpose_outer = 0; transpose_outer <= 1; ++transpose_outer) {
+-        for (pad_t pad = 0; pad < pad_enum_end; ++pad) {
+-          iree_uk_unpack_params_t params;
+-          memcpy(&params, src_params, sizeof params);
+-          params.cpu_data = iree_uk_test_cpu_data(test);
+-          outer_shape_t outer_shape = outer_shapes[i];
+-          iree_uk_index_t in_size0 = outer_shape.size0;
+-          iree_uk_index_t in_size1 = outer_shape.size1;
+-          params.in_size0 = in_size0;
+-          params.in_size1 = in_size1;
+-          if (pad == pad_a_lot) {
+-            params.in_size0 += 16;
+-            params.in_size1 += 16;
+-          }
+-          iree_uk_index_t tile_size0 = params.in_size2;
+-          iree_uk_index_t tile_size1 = params.in_size3;
+-          if (transpose_outer) {
+-            params.flags |= IREE_UK_FLAG_UNPACK_TRANSPOSE_OUTER;
+-            iree_uk_index_swap(&in_size0, &in_size1);
+-          }
+-          if (transpose_inner) {
+-            params.flags |= IREE_UK_FLAG_UNPACK_TRANSPOSE_INNER;
+-            iree_uk_index_swap(&tile_size0, &tile_size1);
+-          }
+-          params.out_size0 = in_size0 * tile_size0;
+-          params.out_size1 = in_size1 * tile_size1;
+-          if (pad == pad_one_incomplete_tile) {
+-            iree_uk_random_engine_t* engine = iree_uk_test_random_engine(test);
+-            iree_uk_index_t pad_size0 =
+-                iree_uk_random_engine_get_0_65535(engine) % tile_size0;
+-            iree_uk_index_t pad_size1 =
+-                iree_uk_random_engine_get_0_65535(engine) % tile_size1;
+-            params.out_size0 = params.out_size0 - pad_size0;
+-            if (params.out_size0 < 0) params.out_size0 = 0;
+-            params.out_size1 = params.out_size1 - pad_size1;
+-            if (params.out_size1 < 0) params.out_size1 = 0;
+-          }
+-          iree_uk_test_unpack_for_shape_params(test, &params);
+-        }
+-      }
+-    }
+-  }
+-}
+-
+-static void iree_uk_test_unpack(iree_uk_uint32_t flags, int tile_size0,
+-                                int tile_size1, const char* cpu_features) {
+-  iree_uk_unpack_params_t params = {
+-      .flags = flags, .in_size2 = tile_size0, .in_size3 = tile_size1};
+-  char types_str[32];
+-  iree_uk_unpack_type_t unpack_type = iree_uk_unpack_type(flags);
+-  iree_uk_type_pair_str(types_str, sizeof types_str, unpack_type);
+-  char test_label_str[256];
+-  snprintf(test_label_str, sizeof test_label_str, "types:%s tile:%dx%d",
+-           types_str, tile_size0, tile_size1);
+-  iree_uk_test(test_label_str, iree_uk_test_unpack_for_tile_params, &params,
+-               cpu_features);
+-}
+-
+-int main(int argc, char** argv) {
+-  // Generic tests, not matching any particular CPU feature. This is the place
+-  // to test weird tile shapes to ensure e.g. that we haven't unwittingly baked
+-  // in a power-of-two assumption
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_F32F32, 3, 5, "");
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_I32I32, 3, 4, "");
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_F16F16, 6, 7, "");
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_BF16BF16, 9, 2, "");
+-
+-#if defined(IREE_ARCH_ARM_64)
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_F32F32, 8, 8, "");
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_I32I32, 8, 8, "");
+-#elif defined(IREE_ARCH_X86_64)
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_F32F32, 8, 8, "avx2_fma");
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_I32I32, 8, 8, "avx2_fma");
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_F32F32, 16, 16, "avx512_base");
+-  iree_uk_test_unpack(IREE_UK_FLAG_UNPACK_TYPE_I32I32, 16, 16, "avx512_base");
+-#endif  // defined(IREE_ARCH_ARM_64)
+-
+-  return iree_uk_test_exit_status();
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/util.c b/runtime/src/iree/builtins/ukernel/tools/util.c
+deleted file mode 100644
+index fcc32f58ee..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/util.c
++++ /dev/null
+@@ -1,348 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/builtins/ukernel/tools/util.h"
+-
+-#include <stdarg.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-
+-#include "iree/base/api.h"
+-#include "iree/base/internal/call_once.h"
+-#include "iree/base/internal/cpu.h"
+-#include "iree/base/internal/math.h"
+-#include "iree/schemas/cpu_data.h"
+-
+-// Implementation of iree_uk_assert_fail failure is deferred to users code, i.e.
+-// to us here, as core ukernel/ code can't use the standard library.
+-void iree_uk_assert_fail(const char* file, int line, const char* function,
+-                         const char* condition) {
+-  fflush(stdout);
+-  // Must be a single fprintf call (which must make a single write) - typically
+-  // called from multiple worker threads concurrently.
+-  fprintf(stderr, "%s:%d: %s: assertion failed: %s\n", file, line, function,
+-          condition);
+-  fflush(stderr);
+-  abort();
+-}
+-
+-iree_uk_index_t iree_uk_2d_buffer_length(iree_uk_type_t type,
+-                                         iree_uk_index_t size0,
+-                                         iree_uk_index_t stride0) {
+-  // As we require strides to be multiples of 8 bits, the stride value in bytes
+-  // is exact.
+-  return size0 * iree_uk_bits_to_bytes_exact(
+-                     stride0 << iree_uk_type_bit_count_log2(type));
+-}
+-
+-bool iree_uk_2d_buffers_equal(const void* buf1, const void* buf2,
+-                              iree_uk_type_t type, iree_uk_index_t size0,
+-                              iree_uk_index_t size1, iree_uk_index_t stride0,
+-                              iree_uk_index_t stride1) {
+-  // Strides are required to be multiples of 8 bits.
+-  iree_uk_index_t stride0_bytes =
+-      iree_uk_bits_to_bytes_exact(stride0 << iree_uk_type_bit_count_log2(type));
+-  const char* buf1_ptr = buf1;
+-  const char* buf2_ptr = buf2;
+-  // Compare individual elements, but rounded up to whole enclosing bytes
+-  // in case of sub-byte-size elements. The assumption here is that
+-  // sub-byte-types aren't used with inner strides. Guard that assumption with
+-  // this assertion:
+-  IREE_UK_ASSERT(stride1 == 1 || iree_uk_type_bit_count(type) >= 8);
+-  const iree_uk_index_t elem_bytes_rounded_up =
+-      iree_uk_index_max(1, iree_uk_type_bit_count(type) / 8);
+-  for (iree_uk_index_t i0 = 0; i0 < size0; ++i0) {
+-    for (iree_uk_index_t i1 = 0; i1 < size1; ++i1) {
+-      iree_uk_index_t byte_offset = iree_uk_bits_to_bytes_exact(
+-          (i1 * stride1) << iree_uk_type_bit_count_log2(type));
+-      if (memcmp(buf1_ptr + byte_offset, buf2_ptr + byte_offset,
+-                 elem_bytes_rounded_up)) {
+-        return false;
+-      }
+-    }
+-    buf1_ptr += stride0_bytes;
+-    buf2_ptr += stride0_bytes;
+-  }
+-  return true;
+-}
+-
+-// Parameter for locally defined lcg similar to std::minstd_rand.
+-#define IREE_PRNG_MULTIPLIER 48271
+-#define IREE_PRNG_MODULUS 2147483647
+-
+-iree_uk_uint32_t iree_uk_random_engine_get_uint32(iree_uk_random_engine_t* e) {
+-  e->state = (e->state * IREE_PRNG_MULTIPLIER) % IREE_PRNG_MODULUS;
+-  return e->state;
+-}
+-
+-iree_uk_uint64_t iree_uk_random_engine_get_uint64(iree_uk_random_engine_t* e) {
+-  iree_uk_uint64_t result = iree_uk_random_engine_get_uint32(e);
+-  result = (result << 32) + iree_uk_random_engine_get_uint32(e);
+-  return result;
+-}
+-
+-int iree_uk_random_engine_get_0_65535(iree_uk_random_engine_t* e) {
+-  iree_uk_uint32_t v = iree_uk_random_engine_get_uint32(e);
+-  // Return the middle two out of the 4 bytes of state. It avoids
+-  // some mild issues with the least-significant and most-significant bytes.
+-  return (v >> 8) & 0xffff;
+-}
+-
+-int iree_uk_random_engine_get_0_255(iree_uk_random_engine_t* e) {
+-  int v = iree_uk_random_engine_get_0_65535(e);
+-  return v & 0xff;
+-}
+-
+-int iree_uk_random_engine_get_0_1(iree_uk_random_engine_t* e) {
+-  int v = iree_uk_random_engine_get_0_65535(e);
+-  return v & 1;
+-}
+-
+-void iree_uk_write_random_buffer(void* buffer, iree_uk_index_t size_in_bytes,
+-                                 iree_uk_type_t type,
+-                                 iree_uk_random_engine_t* engine) {
+-  if (iree_uk_type_category(type) == IREE_UK_TYPE_CATEGORY_INTEGER_SIGNLESS) {
+-    // Signless integers mean that the operation that will consume this buffer
+-    // should not care if the data is signed or unsigned integers, so let's
+-    // randomly exercise both and recurse so that the rest of this function
+-    // doesn't have to deal with signless again.
+-    iree_uk_type_t resolved_type = iree_uk_random_engine_get_0_1(engine)
+-                                       ? iree_uk_integer_type_as_signed(type)
+-                                       : iree_uk_integer_type_as_unsigned(type);
+-    iree_uk_write_random_buffer(buffer, size_in_bytes, resolved_type, engine);
+-    return;
+-  }
+-  // Special-case sub-byte-size integer types. Due to their narrow range, we
+-  // want to generate values over their entire range, and then it's down to
+-  // just generating random bytes.
+-  if (iree_uk_type_is_integer(type) && iree_uk_type_bit_count(type) < 8) {
+-    for (iree_uk_index_t i = 0; i < size_in_bytes; ++i) {
+-      ((uint8_t*)buffer)[i] = iree_uk_random_engine_get_0_255(engine);
+-    }
+-    return;
+-  }
+-  // All other element types.
+-  iree_uk_index_t elem_size = iree_uk_type_size(type);
+-  iree_uk_index_t size_in_elems = size_in_bytes / elem_size;
+-  for (iree_uk_index_t i = 0; i < size_in_elems; ++i) {
+-    // Small integers, should work for now for all the types we currently have
+-    // and enable exact float arithmetic, allowing to keep tests simpler for
+-    // now. Watch out for when we'll do float16!
+-    int random_val = iree_uk_random_engine_get_0_65535(engine);
+-    switch (type) {
+-      case IREE_UK_TYPE_FLOAT_32:
+-        ((float*)buffer)[i] = (random_val % 4) - 2;
+-        break;
+-      case IREE_UK_TYPE_FLOAT_16:
+-        ((uint16_t*)buffer)[i] =
+-            iree_math_f32_to_f16((float)((random_val % 16) - 8));
+-        break;
+-      case IREE_UK_TYPE_BFLOAT_16:
+-        ((uint16_t*)buffer)[i] =
+-            iree_math_f32_to_bf16((float)((random_val % 4) - 2));
+-        break;
+-      case IREE_UK_TYPE_SINT_32:
+-        ((int32_t*)buffer)[i] = (random_val % 2048) - 512;
+-        break;
+-      case IREE_UK_TYPE_UINT_32:
+-        ((uint32_t*)buffer)[i] = random_val % 2048;
+-        break;
+-      case IREE_UK_TYPE_SINT_16:
+-        ((int16_t*)buffer)[i] = (random_val % 2048) - 512;
+-        break;
+-      case IREE_UK_TYPE_UINT_16:
+-        ((uint16_t*)buffer)[i] = random_val % 2048;
+-        break;
+-      case IREE_UK_TYPE_SINT_8:
+-        ((int8_t*)buffer)[i] = (random_val % 256) - 128;
+-        break;
+-      case IREE_UK_TYPE_UINT_8:
+-        ((uint8_t*)buffer)[i] = random_val % 256;
+-        break;
+-      default:
+-        IREE_UK_ASSERT(false && "unknown type");
+-    }
+-  }
+-}
+-
+-static const char* iree_uk_type_category_str(const iree_uk_type_t type) {
+-  switch (type & IREE_UK_TYPE_CATEGORY_MASK) {
+-    case IREE_UK_TYPE_CATEGORY_OPAQUE:
+-      return "x";
+-    case IREE_UK_TYPE_CATEGORY_INTEGER_SIGNLESS:
+-      return "i";
+-    case IREE_UK_TYPE_CATEGORY_INTEGER_SIGNED:
+-      return "s";
+-    case IREE_UK_TYPE_CATEGORY_INTEGER_UNSIGNED:
+-      return "u";
+-    case IREE_UK_TYPE_CATEGORY_FLOAT_IEEE:
+-      return "f";
+-    case IREE_UK_TYPE_CATEGORY_FLOAT_BRAIN:
+-      return "bf";
+-    default:
+-      IREE_UK_ASSERT(false && "unknown type category");
+-      return "(?)";
+-  }
+-}
+-
+-int iree_uk_type_str(char* buf, int buf_length, const iree_uk_type_t type) {
+-  return snprintf(buf, buf_length, "%s%d", iree_uk_type_category_str(type),
+-                  iree_uk_type_bit_count(type));
+-}
+-
+-int iree_uk_type_pair_str(char* buf, int buf_length,
+-                          const iree_uk_type_pair_t pair) {
+-  char type0_buf[8];
+-  char type1_buf[8];
+-  iree_uk_type_str(type0_buf, sizeof type0_buf, iree_uk_untie_type(0, pair));
+-  iree_uk_type_str(type1_buf, sizeof type1_buf, iree_uk_untie_type(1, pair));
+-  return snprintf(buf, buf_length, "%s%s", type0_buf, type1_buf);
+-}
+-
+-int iree_uk_type_triple_str(char* buf, int buf_length,
+-                            const iree_uk_type_triple_t triple) {
+-  char type0_buf[8];
+-  char type1_buf[8];
+-  char type2_buf[8];
+-  iree_uk_type_str(type0_buf, sizeof type0_buf, iree_uk_untie_type(0, triple));
+-  iree_uk_type_str(type1_buf, sizeof type1_buf, iree_uk_untie_type(1, triple));
+-  iree_uk_type_str(type2_buf, sizeof type2_buf, iree_uk_untie_type(2, triple));
+-  return snprintf(buf, buf_length, "%s%s%s", type0_buf, type1_buf, type2_buf);
+-}
+-
+-static bool iree_uk_map_cpu_feature_name_to_bit(const char* cpu_feature_ptr,
+-                                                int cpu_feature_length,
+-                                                int* out_field_index,
+-                                                int* out_bit_pos) {
+-#define IREE_CPU_FEATURE_BIT(arch, field_index, bit_pos, bit_name, llvm_name) \
+-  if (IREE_ARCH_ENUM == IREE_ARCH_ENUM_##arch) {                              \
+-    if (!strncmp(cpu_feature_ptr, llvm_name, cpu_feature_length)) {           \
+-      *out_field_index = field_index;                                         \
+-      *out_bit_pos = bit_pos;                                                 \
+-      return true;                                                            \
+-    }                                                                         \
+-  }
+-#include "iree/schemas/cpu_feature_bits.inl"
+-#undef IREE_CPU_FEATURE_BIT
+-  return false;
+-}
+-
+-void iree_uk_make_cpu_data_for_features(const char* cpu_features,
+-                                        iree_uk_uint64_t* out_cpu_data_fields) {
+-  const size_t data_fields_byte_size =
+-      IREE_CPU_DATA_FIELD_COUNT * sizeof(out_cpu_data_fields[0]);
+-  memset(out_cpu_data_fields, 0, data_fields_byte_size);
+-  // Empty string means architecture baseline. No bits set.
+-  if (!strcmp(cpu_features, "")) return;
+-  // Special case: when the name is "host", the list is required to be empty and
+-  // we detect capabilities of the host CPU.
+-  if (!strcmp(cpu_features, "host")) {
+-    memcpy(out_cpu_data_fields, iree_cpu_data_fields(), data_fields_byte_size);
+-    return;
+-  }
+-
+-  // Named feature sets.
+-#if defined(IREE_ARCH_X86_64)
+-  iree_uk_uint64_t avx2_fma =
+-      IREE_CPU_DATA0_X86_64_AVX | IREE_CPU_DATA0_X86_64_AVX2 |
+-      IREE_CPU_DATA0_X86_64_FMA | IREE_CPU_DATA0_X86_64_F16C;
+-  iree_uk_uint64_t avx512_base =
+-      avx2_fma | IREE_CPU_DATA0_X86_64_AVX512F |
+-      IREE_CPU_DATA0_X86_64_AVX512BW | IREE_CPU_DATA0_X86_64_AVX512DQ |
+-      IREE_CPU_DATA0_X86_64_AVX512VL | IREE_CPU_DATA0_X86_64_AVX512CD;
+-  if (!strcmp(cpu_features, "avx2_fma")) {
+-    out_cpu_data_fields[0] = avx2_fma;
+-    return;
+-  }
+-  if (!strcmp(cpu_features, "avx512_base")) {
+-    out_cpu_data_fields[0] = avx512_base;
+-    return;
+-  }
+-  if (!strcmp(cpu_features, "avx512_vnni")) {
+-    out_cpu_data_fields[0] = avx512_base | IREE_CPU_DATA0_X86_64_AVX512VNNI;
+-    return;
+-  }
+-  if (!strcmp(cpu_features, "avx512_bf16")) {
+-    out_cpu_data_fields[0] = avx512_base | IREE_CPU_DATA0_X86_64_AVX512BF16;
+-    return;
+-  }
+-#endif  // defined(IREE_ARCH_X86_64)
+-
+-  // Fall back to interpreting cpu_features as a comma-separated list of LLVM
+-  // feature names.
+-  const char* cpu_features_end = cpu_features + strlen(cpu_features);
+-  while (true) {
+-    const char* first_comma = strchr(cpu_features, ',');
+-    const char* this_cpu_feature_end =
+-        first_comma ? first_comma : cpu_features_end;
+-    int this_cpu_feature_length = this_cpu_feature_end - cpu_features;
+-    int field_index;
+-    int bit_pos;
+-    if (!iree_uk_map_cpu_feature_name_to_bit(
+-            cpu_features, this_cpu_feature_length, &field_index, &bit_pos)) {
+-      fprintf(stderr, "CPU feature \"%s\" unknown on %s\n", cpu_features,
+-              IREE_ARCH);
+-      iree_abort();
+-    }
+-    out_cpu_data_fields[field_index] |= (1ull << bit_pos);
+-    if (this_cpu_feature_end == cpu_features_end) {
+-      break;
+-    }
+-    cpu_features = this_cpu_feature_end + 1;
+-  }
+-}
+-
+-static void iree_uk_initialize_cpu_expensive(void) {
+-  iree_cpu_initialize(iree_allocator_system());
+-}
+-
+-void iree_uk_initialize_cpu_once(void) {
+-  static iree_once_flag once = IREE_ONCE_FLAG_INIT;
+-  iree_call_once(&once, iree_uk_initialize_cpu_expensive);
+-}
+-
+-bool iree_uk_cpu_supports(const iree_uk_uint64_t* cpu_data_fields) {
+-  for (int i = 0; i < IREE_CPU_DATA_FIELD_COUNT; ++i) {
+-    if (cpu_data_fields[i] & ~iree_cpu_data_field(i)) return false;
+-  }
+-  return true;
+-}
+-
+-static const char* iree_uk_cpu_feature_name(int feature_field_index,
+-                                            int feature_bit_pos) {
+-  IREE_UK_ASSERT(feature_field_index >= 0 &&
+-                 feature_field_index < IREE_CPU_DATA_FIELD_COUNT);
+-  IREE_UK_ASSERT(feature_bit_pos >= 0 && feature_bit_pos < 64);
+-#define IREE_CPU_FEATURE_BIT(arch, field_index, bit_pos, bit_name, llvm_name) \
+-  if (IREE_ARCH_ENUM == IREE_ARCH_ENUM_##arch) {                              \
+-    if (field_index == feature_field_index && bit_pos == feature_bit_pos) {   \
+-      return llvm_name;                                                       \
+-    }                                                                         \
+-  }
+-#include "iree/schemas/cpu_feature_bits.inl"
+-#undef IREE_CPU_FEATURE_BIT
+-  IREE_UK_ASSERT(false && "Unknown CPU feature bit");
+-  return NULL;
+-}
+-
+-const char* iree_uk_cpu_first_unsupported_feature(
+-    const iree_uk_uint64_t* cpu_data_fields) {
+-  for (int i = 0; i < IREE_CPU_DATA_FIELD_COUNT; ++i) {
+-    iree_uk_uint64_t unsupported_features_in_field =
+-        cpu_data_fields[i] & ~iree_cpu_data_field(i);
+-    for (int bit_pos = 0; bit_pos < 64; ++bit_pos) {
+-      iree_uk_uint64_t bit = 1ull << bit_pos;
+-      if (unsupported_features_in_field & bit) {
+-        return iree_uk_cpu_feature_name(i, bit_pos);
+-      }
+-    }
+-  }
+-  IREE_UK_ASSERT(false &&
+-                 "This function should only be called if there is an "
+-                 "unsupported CPU feature");
+-  return NULL;
+-}
+diff --git a/runtime/src/iree/builtins/ukernel/tools/util.h b/runtime/src/iree/builtins/ukernel/tools/util.h
+deleted file mode 100644
+index 69eac50372..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/util.h
++++ /dev/null
+@@ -1,61 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#ifndef IREE_BUILTINS_UKERNEL_TOOLS_UTIL_H_
+-#define IREE_BUILTINS_UKERNEL_TOOLS_UTIL_H_
+-
+-#include "iree/builtins/ukernel/api.h"
+-
+-// Helper to determine the length of test buffers to allocate.
+-iree_uk_index_t iree_uk_2d_buffer_length(iree_uk_type_t type,
+-                                         iree_uk_index_t size0,
+-                                         iree_uk_index_t size1);
+-
+-bool iree_uk_2d_buffers_equal(const void* buf1, const void* buf2,
+-                              iree_uk_type_t type, iree_uk_index_t size0,
+-                              iree_uk_index_t size1, iree_uk_index_t stride0,
+-                              iree_uk_index_t stride1);
+-
+-// Simple deterministic pseudorandom generator. Same as C++'s std::minstd_rand.
+-typedef struct iree_uk_random_engine_t {
+-  iree_uk_uint32_t state;
+-} iree_uk_random_engine_t;
+-
+-static inline iree_uk_random_engine_t iree_uk_random_engine_init(void) {
+-  return (iree_uk_random_engine_t){.state = 1};
+-}
+-
+-iree_uk_uint32_t iree_uk_random_engine_get_uint32(iree_uk_random_engine_t* e);
+-iree_uk_uint64_t iree_uk_random_engine_get_uint64(iree_uk_random_engine_t* e);
+-int iree_uk_random_engine_get_0_65535(iree_uk_random_engine_t* e);
+-int iree_uk_random_engine_get_0_255(iree_uk_random_engine_t* e);
+-int iree_uk_random_engine_get_0_1(iree_uk_random_engine_t* e);
+-void iree_uk_write_random_buffer(void* buffer, iree_uk_index_t size_in_bytes,
+-                                 iree_uk_type_t type,
+-                                 iree_uk_random_engine_t* engine);
+-
+-// Helpers to stringify types and other ukernel parameters. They all work like
+-// snprintf: they take a buffer and buffer length, guarantee they will zero-
+-// terminate the string and won't write more than `length` bytes (so they will
+-// write at most `length - 1` characters before the terminating zero), and
+-// return the number of characters in the output (without the terminating zero).
+-int iree_uk_type_str(char* buf, int buf_length, const iree_uk_type_t type);
+-int iree_uk_type_pair_str(char* buf, int buf_length,
+-                          const iree_uk_type_pair_t pair);
+-int iree_uk_type_triple_str(char* buf, int buf_length,
+-                            const iree_uk_type_triple_t triple);
+-
+-void iree_uk_make_cpu_data_for_features(const char* cpu_features,
+-                                        iree_uk_uint64_t* out_cpu_data_fields);
+-
+-void iree_uk_initialize_cpu_once(void);
+-
+-bool iree_uk_cpu_supports(const iree_uk_uint64_t* cpu_data_fields);
+-
+-const char* iree_uk_cpu_first_unsupported_feature(
+-    const iree_uk_uint64_t* cpu_data_fields);
+-
+-#endif  // IREE_BUILTINS_UKERNEL_TOOLS_UTIL_H_
+diff --git a/runtime/src/iree/builtins/ukernel/tools/util_test.c b/runtime/src/iree/builtins/ukernel/tools/util_test.c
+deleted file mode 100644
+index 4b70041d35..0000000000
+--- a/runtime/src/iree/builtins/ukernel/tools/util_test.c
++++ /dev/null
+@@ -1,74 +0,0 @@
+-// Copyright 2023 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/builtins/ukernel/tools/util.h"
+-
+-#include "iree/base/internal/cpu.h"
+-#include "iree/builtins/ukernel/tools/test.h"
+-#include "iree/schemas/cpu_data.h"
+-
+-static void iree_uk_test_make_cpu_data_for_features_case(
+-    iree_uk_test_t* test, const char* cpu_features,
+-    const iree_uk_uint64_t* expected) {
+-  iree_uk_uint64_t actual[IREE_CPU_DATA_FIELD_COUNT] = {0};
+-  iree_uk_make_cpu_data_for_features(cpu_features, actual);
+-  for (int i = 0; i < IREE_CPU_DATA_FIELD_COUNT; ++i) {
+-    if (actual[i] != expected[i]) {
+-      IREE_UK_TEST_FAIL(test);
+-    }
+-  }
+-}
+-
+-static void iree_uk_test_make_cpu_data_for_features(iree_uk_test_t* test,
+-                                                    const void* params) {
+-  (void)params;
+-  // Special CPU feature strings understood across architectures.
+-  iree_uk_uint64_t expected[IREE_CPU_DATA_FIELD_COUNT] = {0};
+-  iree_uk_test_make_cpu_data_for_features_case(test, "", expected);
+-  iree_uk_test_make_cpu_data_for_features_case(
+-      test, "host", (const iree_uk_uint64_t*)iree_cpu_data_fields());
+-
+-#if defined(IREE_ARCH_X86_64)
+-  // Individual x86-64 features.
+-  expected[0] = IREE_CPU_DATA0_X86_64_AVX;
+-  iree_uk_test_make_cpu_data_for_features_case(test, "avx", expected);
+-  // Comma-separated lists of x86-64 features.
+-  expected[0] = IREE_CPU_DATA0_X86_64_AVX | IREE_CPU_DATA0_X86_64_AVX2 |
+-                IREE_CPU_DATA0_X86_64_FMA;
+-  iree_uk_test_make_cpu_data_for_features_case(test, "avx,avx2,fma", expected);
+-  // Named x86-64 feature sets.
+-  iree_uk_uint64_t avx2_fma =
+-      IREE_CPU_DATA0_X86_64_AVX | IREE_CPU_DATA0_X86_64_AVX2 |
+-      IREE_CPU_DATA0_X86_64_FMA | IREE_CPU_DATA0_X86_64_F16C;
+-  iree_uk_uint64_t avx512_base =
+-      avx2_fma | IREE_CPU_DATA0_X86_64_AVX512F |
+-      IREE_CPU_DATA0_X86_64_AVX512BW | IREE_CPU_DATA0_X86_64_AVX512DQ |
+-      IREE_CPU_DATA0_X86_64_AVX512VL | IREE_CPU_DATA0_X86_64_AVX512CD;
+-  iree_uk_uint64_t avx512_vnni = avx512_base | IREE_CPU_DATA0_X86_64_AVX512VNNI;
+-  expected[0] = avx2_fma;
+-  iree_uk_test_make_cpu_data_for_features_case(test, "avx2_fma", expected);
+-  expected[0] = avx512_base;
+-  iree_uk_test_make_cpu_data_for_features_case(test, "avx512_base", expected);
+-  expected[0] = avx512_vnni;
+-  iree_uk_test_make_cpu_data_for_features_case(test, "avx512_vnni", expected);
+-
+-#elif defined(IREE_ARCH_ARM_64)
+-  // Individual arm64 features.
+-  expected[0] = IREE_CPU_DATA0_ARM_64_DOTPROD;
+-  iree_uk_test_make_cpu_data_for_features_case(test, "dotprod", expected);
+-  // Comma-separated lists of arm features.
+-  expected[0] = IREE_CPU_DATA0_ARM_64_DOTPROD | IREE_CPU_DATA0_ARM_64_I8MM;
+-  iree_uk_test_make_cpu_data_for_features_case(test, "dotprod,i8mm", expected);
+-  // Named arm64 feature sets: none at the moment.
+-
+-#endif  // defined(IREE_ARCH_X86_64)
+-}
+-
+-int main(int argc, char** argv) {
+-  iree_uk_test("make_cpu_data_for_features",
+-               iree_uk_test_make_cpu_data_for_features, NULL, "");
+-  return iree_uk_test_exit_status();
+-}
+diff --git a/runtime/src/iree/testing/BUILD.bazel b/runtime/src/iree/testing/BUILD.bazel
+deleted file mode 100644
+index f620e355e0..0000000000
+--- a/runtime/src/iree/testing/BUILD.bazel
++++ /dev/null
+@@ -1,66 +0,0 @@
+-# Copyright 2019 The IREE Authors
+-#
+-# Licensed under the Apache License v2.0 with LLVM Exceptions.
+-# See https://llvm.org/LICENSE.txt for license information.
+-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-# Testing utilities for IREE.
+-
+-load("//build_tools/bazel:build_defs.oss.bzl", "iree_runtime_cc_library")
+-
+-package(
+-    default_visibility = ["//visibility:public"],
+-    features = ["layering_check"],
+-    licenses = ["notice"],  # Apache 2.0
+-)
+-
+-iree_runtime_cc_library(
+-    name = "benchmark",
+-    srcs = [
+-        "benchmark_full.cc",
+-    ],
+-    hdrs = [
+-        "benchmark.h",
+-    ],
+-    deps = [
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal",
+-        "@com_google_benchmark//:benchmark",
+-    ],
+-)
+-
+-iree_runtime_cc_library(
+-    name = "benchmark_main",
+-    testonly = True,
+-    srcs = ["benchmark_main.c"],
+-    deps = [
+-        ":benchmark",
+-        "//runtime/src/iree/base/internal:flags",
+-    ],
+-)
+-
+-iree_runtime_cc_library(
+-    name = "gtest",
+-    testonly = True,
+-    hdrs = [
+-        "gtest.h",
+-        "status_matchers.h",
+-    ],
+-    deps = [
+-        "//runtime/src/iree/base",
+-        "@com_google_googletest//:gtest",
+-    ],
+-)
+-
+-iree_runtime_cc_library(
+-    name = "gtest_main",
+-    testonly = True,
+-    srcs = ["gtest_main.cc"],
+-    tags = ["keep_dep"],
+-    deps = [
+-        ":gtest",
+-        "//runtime/src/iree/base",
+-        "//runtime/src/iree/base/internal:flags",
+-        "@com_google_googletest//:gtest",
+-    ],
+-)
+diff --git a/runtime/src/iree/testing/CMakeLists.txt b/runtime/src/iree/testing/CMakeLists.txt
+deleted file mode 100644
+index f4bd48d2c9..0000000000
+--- a/runtime/src/iree/testing/CMakeLists.txt
++++ /dev/null
+@@ -1,79 +0,0 @@
+-# Copyright 2021 The IREE Authors
+-#
+-# Licensed under the Apache License v2.0 with LLVM Exceptions.
+-# See https://llvm.org/LICENSE.txt for license information.
+-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-# Doesn't use bazel_to_cmake because of special logic for the benchmark library.
+-
+-iree_add_all_subdirs()
+-
+-if(IREE_ENABLE_THREADING)
+-  iree_cc_library(
+-    NAME
+-      benchmark
+-    HDRS
+-      "benchmark.h"
+-    SRCS
+-      "benchmark_full.cc"
+-    DEPS
+-      benchmark
+-      iree::base
+-    PUBLIC
+-  )
+-else()
+-  iree_cc_library(
+-    NAME
+-      benchmark
+-    HDRS
+-      "benchmark.h"
+-    SRCS
+-      "benchmark_nop.c"
+-    DEPS
+-      iree::base
+-    PUBLIC
+-  )
+-endif()
+-
+-iree_cc_library(
+-  NAME
+-    benchmark_main
+-  SRCS
+-    "benchmark_main.c"
+-  DEPS
+-    ::benchmark
+-    iree::base::internal::flags
+-  TESTONLY
+-  PUBLIC
+-)
+-
+-iree_cc_library(
+-  NAME
+-    gtest
+-  HDRS
+-    "gtest.h"
+-    "status_matchers.h"
+-  DEPS
+-    gmock
+-    gtest
+-    iree::base
+-  TESTONLY
+-  PUBLIC
+-)
+-
+-iree_cc_library(
+-  NAME
+-    gtest_main
+-  SRCS
+-    "gtest_main.cc"
+-  DEPS
+-    ::gtest
+-    gmock
+-    gtest
+-    iree::base
+-    iree::base::internal::flags
+-  TESTONLY
+-  PUBLIC
+-)
+-
+-### BAZEL_TO_CMAKE_PRESERVES_ALL_CONTENT_BELOW_THIS_LINE ###
+diff --git a/runtime/src/iree/testing/benchmark.h b/runtime/src/iree/testing/benchmark.h
+deleted file mode 100644
+index 73715a9abb..0000000000
+--- a/runtime/src/iree/testing/benchmark.h
++++ /dev/null
+@@ -1,288 +0,0 @@
+-// Copyright 2021 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#ifndef IREE_TESTING_BENCHMARK_H_
+-#define IREE_TESTING_BENCHMARK_H_
+-
+-// This is a C API shim for a benchmark-like interface.
+-// The intent is that we can write benchmarks that are portable to bare-metal
+-// systems and use some simple tooling while also allowing them to run on
+-// the full benchmark library with all its useful reporting and statistics.
+-
+-#include <math.h>
+-
+-#include "iree/base/api.h"
+-
+-#ifdef __cplusplus
+-extern "C" {
+-#endif  // __cplusplus
+-
+-//===----------------------------------------------------------------------===//
+-// Benchmarking tools
+-//===----------------------------------------------------------------------===//
+-
+-void iree_benchmark_use_ptr(char const volatile* x);
+-
+-#if !defined(IREE_BENCHMARK_HAS_INLINE_ASSEMBLY)
+-#if defined(IREE_COMPILER_MSVC) || defined(IREE_PLATFORM_EMSCRIPTEN)
+-#define IREE_BENCHMARK_HAS_INLINE_ASSEMBLY 0
+-#elif defined(IREE_COMPILER_CLANG) || defined(IREE_COMPILER_GCC)
+-#define IREE_BENCHMARK_HAS_INLINE_ASSEMBLY 1
+-#else
+-#define IREE_BENCHMARK_HAS_INLINE_ASSEMBLY 0
+-#endif  // non-asm-targets
+-#endif  // !IREE_BENCHMARK_HAS_INLINE_ASSEMBLY
+-
+-#if IREE_BENCHMARK_HAS_INLINE_ASSEMBLY == 0
+-
+-#if defined(IREE_COMPILER_MSVC)
+-#define iree_benchmark_clobber() _ReadWriteBarrier()
+-#else
+-#define iree_benchmark_clobber()
+-#endif  // IREE_COMPILER_MSVC
+-
+-#if defined(__cplusplus)
+-}  // extern "C"
+-template <typename T>
+-inline IREE_ATTRIBUTE_ALWAYS_INLINE void iree_optimization_barrier(T&& value) {
+-  iree_benchmark_use_ptr(&reinterpret_cast<char const volatile&>(value));
+-  iree_benchmark_clobber();
+-}
+-extern "C" {
+-#else
+-// TODO: a C-compatible optimization barrier.
+-#define iree_optimization_barrier(x)
+-#endif  // __cplusplus
+-
+-#elif defined(IREE_COMPILER_CLANG)
+-
+-#if defined(__cplusplus)
+-}  // extern "C"
+-inline IREE_ATTRIBUTE_ALWAYS_INLINE void iree_benchmark_clobber() {
+-  asm volatile("" : : : "memory");
+-}
+-template <typename T>
+-inline IREE_ATTRIBUTE_ALWAYS_INLINE void iree_optimization_barrier(T&& value) {
+-  asm volatile("" : "+r,m"(value) : : "memory");
+-}
+-extern "C" {
+-#else
+-// TODO: a C-compatible optimization barrier.
+-#define iree_optimization_barrier(x)
+-#endif  // __cplusplus
+-
+-#elif defined(IREE_COMPILER_GCC)
+-
+-#if defined(__cplusplus)
+-}  // extern "C"
+-inline IREE_ATTRIBUTE_ALWAYS_INLINE void iree_benchmark_clobber() {
+-  asm volatile("" : : : "memory");
+-}
+-template <typename T>
+-inline IREE_ATTRIBUTE_ALWAYS_INLINE
+-    typename std::enable_if<std::is_trivially_copyable<T>::value &&
+-                            (sizeof(T) <= sizeof(T*))>::type
+-    iree_optimization_barrier(T& value) {
+-  asm volatile("" : "+m,r"(value) : : "memory");
+-}
+-template <typename T>
+-inline IREE_ATTRIBUTE_ALWAYS_INLINE
+-    typename std::enable_if<!std::is_trivially_copyable<T>::value ||
+-                            (sizeof(T) > sizeof(T*))>::type
+-    iree_optimization_barrier(T& value) {
+-  asm volatile("" : "+m"(value) : : "memory");
+-}
+-template <typename T>
+-inline IREE_ATTRIBUTE_ALWAYS_INLINE
+-    typename std::enable_if<std::is_trivially_copyable<T>::value &&
+-                            (sizeof(T) <= sizeof(T*))>::type
+-    iree_optimization_barrier(T&& value) {
+-  asm volatile("" : "+m,r"(value) : : "memory");
+-}
+-template <typename T>
+-inline IREE_ATTRIBUTE_ALWAYS_INLINE
+-    typename std::enable_if<!std::is_trivially_copyable<T>::value ||
+-                            (sizeof(T) > sizeof(T*))>::type
+-    iree_optimization_barrier(T&& value) {
+-  asm volatile("" : "+m"(value) : : "memory");
+-}
+-extern "C" {
+-#else
+-// TODO: a C-compatible optimization barrier.
+-#define iree_optimization_barrier(x)
+-#endif  // __cplusplus
+-
+-#endif  // IREE_BENCHMARK_HAS_INLINE_ASSEMBLY
+-
+-//===----------------------------------------------------------------------===//
+-// iree_benchmark_state_t
+-//===----------------------------------------------------------------------===//
+-
+-// Benchmark state manipulator.
+-// Passed to each benchmark during execution to control the benchmark state
+-// or append information beyond just timing.
+-typedef struct iree_benchmark_state_t {
+-  // Internal implementation handle.
+-  void* impl;
+-
+-  // Allocator that can be used for host allocations required during benchmark
+-  // execution.
+-  iree_allocator_t host_allocator;
+-} iree_benchmark_state_t;
+-
+-// Returns a range argument with the given ordinal.
+-int64_t iree_benchmark_get_range(iree_benchmark_state_t* state,
+-                                 iree_host_size_t ordinal);
+-
+-// Returns true while the benchmark should keep running its step loop.
+-//
+-// Usage:
+-//  while (iree_benchmark_keep_running(state, 1000)) {
+-//    // process 1000 elements
+-//  }
+-bool iree_benchmark_keep_running(iree_benchmark_state_t* state,
+-                                 uint64_t batch_count);
+-
+-// Reports that the currently executing benchmark cannot be run.
+-// Callers should return after calling as further benchmark-related calls may
+-// fail.
+-void iree_benchmark_skip(iree_benchmark_state_t* state, const char* message);
+-
+-// Suspends the benchmark timer until iree_benchmark_resume_timing is called.
+-// This can be used to guard per-step code that is required to initialze the
+-// work but not something that needs to be accounted for in the benchmark
+-// timing. Introduces non-trivial overhead: only use this ~once per step when
+-// then going on to perform large amounts of batch work in the step.
+-void iree_benchmark_pause_timing(iree_benchmark_state_t* state);
+-
+-// Resumes the benchmark timer after a prior iree_benchmark_suspend_timing.
+-void iree_benchmark_resume_timing(iree_benchmark_state_t* state);
+-
+-// Sets a label string that will be displayed alongside the report line from the
+-// currently executing benchmark.
+-void iree_benchmark_set_label(iree_benchmark_state_t* state, const char* label);
+-
+-// Adds a 'bytes/s' label with the given value.
+-//
+-// REQUIRES: must only be called outside of the benchmark step loop.
+-void iree_benchmark_set_bytes_processed(iree_benchmark_state_t* state,
+-                                        int64_t bytes);
+-
+-// Adds an `items/s` label with the given value.
+-//
+-// REQUIRES: must only be called outside of the benchmark step loop.
+-void iree_benchmark_set_items_processed(iree_benchmark_state_t* state,
+-                                        int64_t items);
+-
+-//===----------------------------------------------------------------------===//
+-// iree_benchmark_def_t
+-//===----------------------------------------------------------------------===//
+-
+-enum iree_benchmark_flag_bits_t {
+-  IREE_BENCHMARK_FLAG_MEASURE_PROCESS_CPU_TIME = 1u << 0,
+-
+-  IREE_BENCHMARK_FLAG_USE_REAL_TIME = 1u << 1,
+-  IREE_BENCHMARK_FLAG_USE_MANUAL_TIME = 1u << 2,
+-};
+-typedef uint32_t iree_benchmark_flags_t;
+-
+-typedef enum iree_benchmark_unit_e {
+-  IREE_BENCHMARK_UNIT_MILLISECOND = 0,
+-  IREE_BENCHMARK_UNIT_MICROSECOND,
+-  IREE_BENCHMARK_UNIT_NANOSECOND,
+-} iree_benchmark_unit_t;
+-
+-typedef struct iree_benchmark_def_t iree_benchmark_def_t;
+-
+-typedef iree_status_t(IREE_API_PTR* iree_benchmark_fn_t)(
+-    const iree_benchmark_def_t* benchmark_def,
+-    iree_benchmark_state_t* benchmark_state);
+-
+-// A benchmark case definition.
+-struct iree_benchmark_def_t {
+-  // IREE_BENCHMARK_FLAG_* bitmask controlling benchmark behavior and reporting.
+-  iree_benchmark_flags_t flags;
+-
+-  // Time unit used in display.
+-  iree_benchmark_unit_t time_unit;  // MILLISECOND by default
+-
+-  // Optional minimum duration the benchmark should run for in nanoseconds.
+-  iree_duration_t minimum_duration_ns;  // 0 if unspecified to autodetect
+-  // Optional iteration count the benchmark should run for.
+-  uint64_t iteration_count;  // 0 if unspecified to autodetect
+-
+-  // TODO(benvanik): add range arguments.
+-
+-  // Runs the benchmark to completion.
+-  // Implementations must call iree_benchmark_keep_running in a loop until it
+-  // returns false.
+-  iree_benchmark_fn_t run;
+-
+-  // User-defined data accessible in the run function.
+-  const void* user_data;
+-};
+-
+-// Registers a benchmark with the given definition.
+-const iree_benchmark_def_t* iree_benchmark_register(
+-    iree_string_view_t name, const iree_benchmark_def_t* benchmark_def);
+-
+-//===----------------------------------------------------------------------===//
+-// Benchmark registration utilities
+-//===----------------------------------------------------------------------===//
+-
+-#define IREE_BENCHMARK_IMPL_NAME_(name) \
+-  IREE_BENCHMARK_IMPL_CONCAT_(iree_benchmark_, __COUNTER__, name)
+-#define IREE_BENCHMARK_IMPL_CONCAT_(a, b, c) \
+-  IREE_BENCHMARK_IMPL_CONCAT2_(a, b, c)
+-#define IREE_BENCHMARK_IMPL_CONCAT2_(a, b, c) a##b##c
+-
+-#define IREE_BENCHMARK_FN(name)                                        \
+-  static iree_status_t name(const iree_benchmark_def_t* benchmark_def, \
+-                            iree_benchmark_state_t* benchmark_state)
+-
+-// Allocates a benchmark definition for the given function and returns it.
+-// The returned pointer is safe to store in a static variable.
+-// TODO(benvanik): allow optionally passing flags with variadic macros.
+-iree_benchmark_def_t* iree_make_function_benchmark(iree_benchmark_fn_t fn);
+-
+-// TODO(benvanik): find a way to make this C-compatible.
+-// Today this requires C++ in order to initialize the benchmark via the function
+-// and C disallows this. We can probably use some tricky attributes to run
+-// functions instead.
+-//
+-// Defines a benchmark of a function with default parameters.
+-//
+-// Example:
+-//  IREE_BENCHMARK_FN(my_benchmark) {
+-//    while (iree_benchmark_keep_running(benchmark_state, 1000)) {
+-//      // process 1000 elements
+-//    }
+-//    return iree_ok_status();
+-//  }
+-//  IREE_BENCHMARK_REGISTER(my_benchmark);
+-#define IREE_BENCHMARK_REGISTER(name)                                         \
+-  static const iree_benchmark_def_t* IREE_BENCHMARK_IMPL_NAME_(name)          \
+-      IREE_ATTRIBUTE_UNUSED = (iree_benchmark_def_t*)iree_benchmark_register( \
+-          iree_make_cstring_view(#name), iree_make_function_benchmark(name))
+-
+-//===----------------------------------------------------------------------===//
+-// Benchmark infra management
+-//===----------------------------------------------------------------------===//
+-
+-// Initializes the benchmark framework.
+-// Must be called before any other iree_benchmark_* functions.
+-void iree_benchmark_initialize(int* argc, char** argv);
+-
+-// Runs all registered benchmarks specified by the command line flags.
+-// Must be called after iree_benchmark_initialize and zero or more benchmarks
+-// have been registered with iree_benchmark_register.
+-void iree_benchmark_run_specified(void);
+-
+-#ifdef __cplusplus
+-}  // extern "C"
+-#endif  // __cplusplus
+-
+-#endif  // IREE_TESTING_BENCHMARK_H_
+diff --git a/runtime/src/iree/testing/benchmark_full.cc b/runtime/src/iree/testing/benchmark_full.cc
+deleted file mode 100644
+index 213ade0d0a..0000000000
+--- a/runtime/src/iree/testing/benchmark_full.cc
++++ /dev/null
+@@ -1,220 +0,0 @@
+-// Copyright 2021 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include <cstddef>
+-#include <cstdint>
+-#include <cstdio>
+-#include <cstring>
+-#include <string>
+-#include <utility>
+-
+-#include "benchmark/benchmark.h"
+-#include "iree/base/api.h"
+-#include "iree/base/internal/debugging.h"
+-#include "iree/testing/benchmark.h"
+-
+-//===----------------------------------------------------------------------===//
+-// Benchmarking tools
+-//===----------------------------------------------------------------------===//
+-
+-// NOTE: LTO will kill this (most likely) - google benchmark warns about this
+-// as well but has been letting it ride for years :shrug:
+-void iree_benchmark_use_ptr(char const volatile* x) {}
+-
+-//===----------------------------------------------------------------------===//
+-// iree_benchmark_state_t
+-//===----------------------------------------------------------------------===//
+-
+-benchmark::State& GetBenchmarkState(iree_benchmark_state_t* state) {
+-  return *(benchmark::State*)state->impl;
+-}
+-
+-int64_t iree_benchmark_get_range(iree_benchmark_state_t* state,
+-                                 iree_host_size_t ordinal) {
+-  auto& s = GetBenchmarkState(state);
+-  return s.range(ordinal);
+-}
+-
+-bool iree_benchmark_keep_running(iree_benchmark_state_t* state,
+-                                 uint64_t batch_count) {
+-  auto& s = GetBenchmarkState(state);
+-  return s.KeepRunningBatch(batch_count);
+-}
+-
+-void iree_benchmark_skip(iree_benchmark_state_t* state, const char* message) {
+-  auto& s = GetBenchmarkState(state);
+-  s.SkipWithError(message);
+-}
+-
+-void iree_benchmark_pause_timing(iree_benchmark_state_t* state) {
+-  auto& s = GetBenchmarkState(state);
+-  s.PauseTiming();
+-}
+-
+-void iree_benchmark_resume_timing(iree_benchmark_state_t* state) {
+-  auto& s = GetBenchmarkState(state);
+-  s.ResumeTiming();
+-}
+-
+-void iree_benchmark_set_label(iree_benchmark_state_t* state,
+-                              const char* label) {
+-  auto& s = GetBenchmarkState(state);
+-  s.SetLabel(label);
+-}
+-
+-void iree_benchmark_set_bytes_processed(iree_benchmark_state_t* state,
+-                                        int64_t bytes) {
+-  auto& s = GetBenchmarkState(state);
+-  s.SetBytesProcessed(bytes);
+-}
+-
+-void iree_benchmark_set_items_processed(iree_benchmark_state_t* state,
+-                                        int64_t items) {
+-  auto& s = GetBenchmarkState(state);
+-  s.SetItemsProcessed(items);
+-}
+-
+-//===----------------------------------------------------------------------===//
+-// iree_benchmark_def_t
+-//===----------------------------------------------------------------------===//
+-
+-static std::string StatusToString(iree_status_t status) {
+-  if (iree_status_is_ok(status)) {
+-    return "OK";
+-  }
+-  iree_host_size_t buffer_length = 0;
+-  if (IREE_UNLIKELY(!iree_status_format(status, /*buffer_capacity=*/0,
+-                                        /*buffer=*/NULL, &buffer_length))) {
+-    return "<!>";
+-  }
+-  std::string result(buffer_length, '\0');
+-  if (IREE_UNLIKELY(!iree_status_format(status, result.size() + 1,
+-                                        const_cast<char*>(result.data()),
+-                                        &buffer_length))) {
+-    return "<!>";
+-  }
+-  return result;
+-}
+-
+-static void iree_benchmark_run(const char* benchmark_name,
+-                               const iree_benchmark_def_t* benchmark_def,
+-                               benchmark::State& benchmark_state) {
+-  IREE_TRACE_ZONE_BEGIN_NAMED_DYNAMIC(z0, benchmark_name,
+-                                      strlen(benchmark_name));
+-  IREE_TRACE_FRAME_MARK();
+-
+-  iree_benchmark_state_t state;
+-  memset(&state, 0, sizeof(state));
+-  state.impl = &benchmark_state;
+-  state.host_allocator = iree_allocator_system();
+-
+-  iree_status_t status = benchmark_def->run(benchmark_def, &state);
+-  if (!iree_status_is_ok(status)) {
+-    auto status_str = StatusToString(status);
+-    iree_status_ignore(status);
+-    benchmark_state.SkipWithError(status_str.c_str());
+-  }
+-
+-  IREE_TRACE_ZONE_END(z0);
+-}
+-
+-const iree_benchmark_def_t* iree_benchmark_register(
+-    iree_string_view_t name, const iree_benchmark_def_t* benchmark_def) {
+-  std::string name_str(name.data, name.size);
+-  std::string prefixed_str = !iree_string_view_starts_with(name, IREE_SV("BM_"))
+-                                 ? "BM_" + name_str
+-                                 : name_str;
+-  iree_benchmark_def_t cloned_def = *benchmark_def;
+-  auto* instance = benchmark::RegisterBenchmark(
+-      prefixed_str.c_str(),
+-      [name_str, cloned_def](benchmark::State& state) -> void {
+-        iree_benchmark_run(name_str.c_str(), &cloned_def, state);
+-      });
+-
+-  if (iree_all_bits_set(benchmark_def->flags,
+-                        IREE_BENCHMARK_FLAG_MEASURE_PROCESS_CPU_TIME)) {
+-    instance->MeasureProcessCPUTime();
+-  }
+-  if (iree_all_bits_set(benchmark_def->flags,
+-                        IREE_BENCHMARK_FLAG_USE_REAL_TIME)) {
+-    instance->UseRealTime();
+-  }
+-  if (iree_all_bits_set(benchmark_def->flags,
+-                        IREE_BENCHMARK_FLAG_USE_MANUAL_TIME)) {
+-    instance->UseManualTime();
+-  }
+-
+-  if (benchmark_def->minimum_duration_ns != 0) {
+-    instance->MinTime((double)benchmark_def->minimum_duration_ns * 1e-9);
+-  } else if (benchmark_def->iteration_count != 0) {
+-    instance->Iterations(benchmark_def->iteration_count);
+-  }
+-
+-  switch (benchmark_def->time_unit) {
+-    default:
+-    case IREE_BENCHMARK_UNIT_MILLISECOND:
+-      instance->Unit(benchmark::kMillisecond);
+-      break;
+-    case IREE_BENCHMARK_UNIT_MICROSECOND:
+-      instance->Unit(benchmark::kMicrosecond);
+-      break;
+-    case IREE_BENCHMARK_UNIT_NANOSECOND:
+-      instance->Unit(benchmark::kNanosecond);
+-      break;
+-  }
+-
+-  return benchmark_def;
+-}
+-
+-iree_benchmark_def_t* iree_make_function_benchmark(iree_benchmark_fn_t fn) {
+-  // Go straight to malloc for this implementation as benchmark does the same
+-  // thing. This also has the benefit of hiding the startup allocation from
+-  // our stats >_>
+-  iree_benchmark_def_t* def = NULL;
+-  IREE_LEAK_CHECK_DISABLE_PUSH();
+-  def = (iree_benchmark_def_t*)calloc(1, sizeof(*def));
+-  IREE_LEAK_CHECK_DISABLE_POP();
+-
+-  def->run = fn;
+-
+-  // Return with no expectation of it ever being freed.
+-  return def;
+-}
+-
+-//===----------------------------------------------------------------------===//
+-// Benchmark infra management
+-//===----------------------------------------------------------------------===//
+-
+-void iree_benchmark_initialize(int* argc, char** argv) {
+-  benchmark::Initialize(argc, argv);
+-
+-#if IREE_TRACING_FEATURES & IREE_TRACING_FEATURE_INSTRUMENTATION
+-  // clang-format off
+-  fprintf(stderr,
+-"\x1b[31m"
+-"===----------------------------------------------------------------------===\n"
+-"\n"
+-"         ██     ██  █████  ██████  ███    ██ ██ ███    ██  ██████\n"
+-"         ██     ██ ██   ██ ██   ██ ████   ██ ██ ████   ██ ██\n"
+-"         ██  █  ██ ███████ ██████  ██ ██  ██ ██ ██ ██  ██ ██   ███\n"
+-"         ██ ███ ██ ██   ██ ██   ██ ██  ██ ██ ██ ██  ██ ██ ██    ██\n"
+-"          ███ ███  ██   ██ ██   ██ ██   ████ ██ ██   ████  ██████\n"
+-"\n"
+-"===----------------------------------------------------------------------===\n"
+-"\n"
+-"Tracing is enabled and will skew your results!\n"
+-"The timings involved here can be an order of magnitude off due to the\n"
+-"tracing time sampling, recording, and instrumentation overhead.\n"
+-"Disable tracing with IREE_ENABLE_RUNTIME_TRACING=OFF and rebuild.\n"
+-"\x1b[0m"
+-"\n"
+-  );
+-  fflush(stderr);
+-  // clang-format on
+-#endif  // IREE_TRACING_FEATURES & IREE_TRACING_FEATURE_INSTRUMENTATION
+-}
+-
+-void iree_benchmark_run_specified(void) { benchmark::RunSpecifiedBenchmarks(); }
+diff --git a/runtime/src/iree/testing/benchmark_main.c b/runtime/src/iree/testing/benchmark_main.c
+deleted file mode 100644
+index 860f4a6b7a..0000000000
+--- a/runtime/src/iree/testing/benchmark_main.c
++++ /dev/null
+@@ -1,18 +0,0 @@
+-// Copyright 2019 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/base/internal/flags.h"
+-#include "iree/testing/benchmark.h"
+-
+-int main(int argc, char** argv) {
+-  // Pass through flags to benchmark (allowing --help to fall through).
+-  iree_flags_parse_checked(IREE_FLAGS_PARSE_MODE_UNDEFINED_OK |
+-                               IREE_FLAGS_PARSE_MODE_CONTINUE_AFTER_HELP,
+-                           &argc, &argv);
+-  iree_benchmark_initialize(&argc, argv);
+-  iree_benchmark_run_specified();
+-  return 0;
+-}
+diff --git a/runtime/src/iree/testing/benchmark_nop.c b/runtime/src/iree/testing/benchmark_nop.c
+deleted file mode 100644
+index 759435778c..0000000000
+--- a/runtime/src/iree/testing/benchmark_nop.c
++++ /dev/null
+@@ -1,48 +0,0 @@
+-// Copyright 2021 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/base/api.h"
+-#include "iree/testing/benchmark.h"
+-
+-void iree_benchmark_use_ptr(char const volatile* x) {}
+-
+-int64_t iree_benchmark_get_range(iree_benchmark_state_t* state,
+-                                 iree_host_size_t ordinal) {
+-  return 0;
+-}
+-
+-bool iree_benchmark_keep_running(iree_benchmark_state_t* state,
+-                                 uint64_t batch_count) {
+-  return false;
+-}
+-
+-void iree_benchmark_skip(iree_benchmark_state_t* state, const char* message) {}
+-
+-void iree_benchmark_pause_timing(iree_benchmark_state_t* state) {}
+-
+-void iree_benchmark_resume_timing(iree_benchmark_state_t* state) {}
+-
+-void iree_benchmark_set_label(iree_benchmark_state_t* state,
+-                              const char* label) {}
+-
+-void iree_benchmark_set_bytes_processed(iree_benchmark_state_t* state,
+-                                        int64_t bytes) {}
+-
+-void iree_benchmark_set_items_processed(iree_benchmark_state_t* state,
+-                                        int64_t items) {}
+-
+-const iree_benchmark_def_t* iree_benchmark_register(
+-    iree_string_view_t name, const iree_benchmark_def_t* benchmark_def) {
+-  return benchmark_def;
+-}
+-
+-iree_benchmark_def_t* iree_make_function_benchmark(iree_benchmark_fn_t fn) {
+-  return NULL;
+-}
+-
+-void iree_benchmark_initialize(int* argc, char** argv) {}
+-
+-void iree_benchmark_run_specified(void) {}
+diff --git a/runtime/src/iree/testing/gtest.h b/runtime/src/iree/testing/gtest.h
+deleted file mode 100644
+index fbd6dc42e5..0000000000
+--- a/runtime/src/iree/testing/gtest.h
++++ /dev/null
+@@ -1,17 +0,0 @@
+-// Copyright 2019 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#ifndef IREE_TESTING_GTEST_H_
+-#define IREE_TESTING_GTEST_H_
+-
+-#include "gmock/gmock-matchers.h"   // IWYU pragma: export
+-#include "gmock/gmock.h"            // IWYU pragma: export
+-#include "gtest/gtest-message.h"    // IWYU pragma: export
+-#include "gtest/gtest-spi.h"        // IWYU pragma: export
+-#include "gtest/gtest-test-part.h"  // IWYU pragma: export
+-#include "gtest/gtest.h"            // IWYU pragma: export
+-
+-#endif  // IREE_TESTING_GTEST_H_
+diff --git a/runtime/src/iree/testing/gtest_main.cc b/runtime/src/iree/testing/gtest_main.cc
+deleted file mode 100644
+index 37831053a1..0000000000
+--- a/runtime/src/iree/testing/gtest_main.cc
++++ /dev/null
+@@ -1,24 +0,0 @@
+-// Copyright 2019 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#include "iree/base/api.h"
+-#include "iree/base/internal/flags.h"
+-#include "iree/testing/gtest.h"
+-
+-int main(int argc, char** argv) {
+-  IREE_TRACE_APP_ENTER();
+-
+-  // Pass through flags to gtest (allowing --help to fall through).
+-  iree_flags_parse_checked(IREE_FLAGS_PARSE_MODE_UNDEFINED_OK |
+-                               IREE_FLAGS_PARSE_MODE_CONTINUE_AFTER_HELP,
+-                           &argc, &argv);
+-  ::testing::InitGoogleTest(&argc, argv);
+-
+-  int ret = RUN_ALL_TESTS();
+-
+-  IREE_TRACE_APP_EXIT(ret);
+-  return ret;
+-}
+diff --git a/runtime/src/iree/testing/status_matchers.h b/runtime/src/iree/testing/status_matchers.h
+deleted file mode 100644
+index 1656235473..0000000000
+--- a/runtime/src/iree/testing/status_matchers.h
++++ /dev/null
+@@ -1,372 +0,0 @@
+-// Copyright 2019 The IREE Authors
+-//
+-// Licensed under the Apache License v2.0 with LLVM Exceptions.
+-// See https://llvm.org/LICENSE.txt for license information.
+-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+-
+-#ifndef IREE_TESTING_STATUS_MATCHERS_H_
+-#define IREE_TESTING_STATUS_MATCHERS_H_
+-
+-#include <memory>
+-#include <string>
+-
+-#include "iree/base/api.h"  // IWYU pragma: export
+-#include "iree/testing/gtest.h"
+-
+-namespace iree {
+-
+-namespace internal {
+-
+-// Implements a gMock matcher that checks that an iree::StaturOr<T> has an OK
+-// status and that the contained T value matches another matcher.
+-template <typename T>
+-class IsOkAndHoldsMatcher
+-    : public ::testing::MatcherInterface<const StatusOr<T> &> {
+- public:
+-  template <typename MatcherT>
+-  IsOkAndHoldsMatcher(MatcherT &&value_matcher)
+-      : value_matcher_(::testing::SafeMatcherCast<const T &>(value_matcher)) {}
+-
+-  // From testing::MatcherInterface.
+-  void DescribeTo(std::ostream *os) const override {
+-    *os << "is OK and contains a value that ";
+-    value_matcher_.DescribeTo(os);
+-  }
+-
+-  // From testing::MatcherInterface.
+-  void DescribeNegationTo(std::ostream *os) const override {
+-    *os << "is not OK or contains a value that ";
+-    value_matcher_.DescribeNegationTo(os);
+-  }
+-
+-  // From testing::MatcherInterface.
+-  bool MatchAndExplain(
+-      const StatusOr<T> &status_or,
+-      ::testing::MatchResultListener *listener) const override {
+-    if (!status_or.ok()) {
+-      *listener << "which is not OK";
+-      return false;
+-    }
+-
+-    ::testing::StringMatchResultListener value_listener;
+-    bool is_a_match =
+-        value_matcher_.MatchAndExplain(status_or.value(), &value_listener);
+-    std::string value_explanation = value_listener.str();
+-    if (!value_explanation.empty()) {
+-      *listener << "which contains a value " << value_explanation;
+-    }
+-
+-    return is_a_match;
+-  }
+-
+- private:
+-  const ::testing::Matcher<const T &> value_matcher_;
+-};
+-
+-// A polymorphic IsOkAndHolds() matcher.
+-//
+-// IsOkAndHolds() returns a matcher that can be used to process an IsOkAndHolds
+-// expectation. However, the value type T is not provided when IsOkAndHolds() is
+-// invoked. The value type is only inferable when the gUnit framework invokes
+-// the matcher with a value. Consequently, the IsOkAndHolds() function must
+-// return an object that is implicitly convertible to a matcher for StatusOr<T>.
+-// gUnit refers to such an object as a polymorphic matcher, since it can be used
+-// to match with more than one type of value.
+-template <typename ValueMatcherT>
+-class IsOkAndHoldsGenerator {
+- public:
+-  explicit IsOkAndHoldsGenerator(ValueMatcherT value_matcher)
+-      : value_matcher_(std::move(value_matcher)) {}
+-
+-  template <typename T>
+-  operator ::testing::Matcher<const StatusOr<T> &>() const {
+-    return ::testing::MakeMatcher(new IsOkAndHoldsMatcher<T>(value_matcher_));
+-  }
+-
+- private:
+-  const ValueMatcherT value_matcher_;
+-};
+-
+-// Implements a gMock matcher for checking error-code expectations on
+-// iree::Status and iree::StatusOr objects.
+-template <typename Enum, typename Matchee>
+-class StatusMatcher : public ::testing::MatcherInterface<Matchee> {
+- public:
+-  StatusMatcher(Enum code, std::string message)
+-      : code_(code), message_(std::move(message)) {}
+-
+-  // From testing::MatcherInterface.
+-  //
+-  // Describes the expected error code.
+-  void DescribeTo(std::ostream *os) const override {
+-    *os << "error code " << StatusCodeToString(code_);
+-    if (!message_.empty()) {
+-      *os << "::'" << message_ << "'";
+-    }
+-  }
+-
+-  // From testing::MatcherInterface.
+-  //
+-  // Tests whether |matchee| has an error code that meets this matcher's
+-  // expectation. If an error message string is specified in this matcher, it
+-  // also tests that |matchee| has an error message that matches that
+-  // expectation.
+-  bool MatchAndExplain(
+-      Matchee &matchee,
+-      ::testing::MatchResultListener *listener) const override {
+-    if (GetCode(matchee) != code_) {
+-      *listener << "whose error code is "
+-                << StatusCodeToString(GetCode(matchee)) << ": "
+-                << GetMessage(matchee);
+-      return false;
+-    }
+-    if (!message_.empty() && GetMessage(matchee) != message_) {
+-      *listener << "whose error message is '" << GetMessage(matchee) << "'";
+-      return false;
+-    }
+-    return true;
+-  }
+-
+- private:
+-  template <typename T>
+-  StatusCode GetCode(const T &matchee) const {
+-    return GetCode(matchee.status());
+-  }
+-
+-  StatusCode GetCode(const iree_status_code_t &status_code) const {
+-    return static_cast<StatusCode>(status_code);
+-  }
+-
+-  StatusCode GetCode(const iree_status_t &status) const {
+-    return static_cast<StatusCode>(iree_status_code(status));
+-  }
+-
+-  StatusCode GetCode(const Status &status) const { return status.code(); }
+-
+-  template <typename T>
+-  std::string GetMessage(const T &matchee) const {
+-    return GetMessage(matchee.status());
+-  }
+-
+-  std::string GetMessage(const iree_status_t &status) const {
+-    return Status::ToString(status);
+-  }
+-
+-  std::string GetMessage(const Status &status) const {
+-    return status.ToString();
+-  }
+-
+-  // Expected error code.
+-  const Enum code_;
+-
+-  // Expected error message (empty if none expected and verified).
+-  const std::string message_;
+-};
+-
+-// StatusMatcherGenerator is an intermediate object returned by
+-// iree::testing::status::StatusIs().
+-// It implements implicit type-cast operators to supported matcher types:
+-// Matcher<const Status &> and Matcher<const StatusOr<T> &>. These typecast
+-// operators create gMock matchers that test OK expectations on a status
+-// container.
+-template <typename Enum>
+-class StatusIsMatcherGenerator {
+- public:
+-  StatusIsMatcherGenerator(Enum code, std::string message)
+-      : code_(code), message_(std::move(message)) {}
+-
+-  operator ::testing::Matcher<const StatusCode &>() const {
+-    return ::testing::MakeMatcher(
+-        new internal::StatusMatcher<Enum, const StatusCode &>(code_, message_));
+-  }
+-
+-  operator ::testing::Matcher<const iree_status_t &>() const {
+-    return ::testing::MakeMatcher(
+-        new internal::StatusMatcher<Enum, const iree_status_t &>(code_,
+-                                                                 message_));
+-  }
+-
+-  operator ::testing::Matcher<const Status &>() const {
+-    return ::testing::MakeMatcher(
+-        new internal::StatusMatcher<Enum, const Status &>(code_, message_));
+-  }
+-
+-  template <class T>
+-  operator ::testing::Matcher<const StatusOr<T> &>() const {
+-    return ::testing::MakeMatcher(
+-        new internal::StatusMatcher<Enum, const StatusOr<T> &>(code_,
+-                                                               message_));
+-  }
+-
+- private:
+-  // Expected error code.
+-  const Enum code_;
+-
+-  // Expected error message (empty if none expected and verified).
+-  const std::string message_;
+-};
+-
+-// Implements a gMock matcher that checks whether a status container (e.g.
+-// iree::Status or iree::StatusOr<T>) has an OK status.
+-template <class T>
+-class IsOkMatcherImpl : public ::testing::MatcherInterface<T> {
+- public:
+-  IsOkMatcherImpl() = default;
+-
+-  // From testing::MatcherInterface.
+-  //
+-  // Describes the OK expectation.
+-  void DescribeTo(std::ostream *os) const override { *os << "is OK"; }
+-
+-  // From testing::MatcherInterface.
+-  //
+-  // Describes the negative OK expectation.
+-  void DescribeNegationTo(std::ostream *os) const override {
+-    *os << "is not OK";
+-  }
+-
+-  // From testing::MatcherInterface.
+-  //
+-  // Tests whether |status_container|'s OK value meets this matcher's
+-  // expectation.
+-  bool MatchAndExplain(
+-      const T &status_container,
+-      ::testing::MatchResultListener *listener) const override {
+-    if (!::iree::IsOk(status_container)) {
+-      *listener << "which is not OK";
+-      return false;
+-    }
+-    return true;
+-  }
+-};
+-
+-// IsOkMatcherGenerator is an intermediate object returned by iree::IsOk().
+-// It implements implicit type-cast operators to supported matcher types:
+-// Matcher<const Status &> and Matcher<const StatusOr<T> &>. These typecast
+-// operators create gMock matchers that test OK expectations on a status
+-// container.
+-class IsOkMatcherGenerator {
+- public:
+-  operator ::testing::Matcher<const iree_status_t &>() const {
+-    return ::testing::MakeMatcher(
+-        new internal::IsOkMatcherImpl<const iree_status_t &>());
+-  }
+-
+-  operator ::testing::Matcher<const Status &>() const {
+-    return ::testing::MakeMatcher(
+-        new internal::IsOkMatcherImpl<const Status &>());
+-  }
+-
+-  template <class T>
+-  operator ::testing::Matcher<const StatusOr<T> &>() const {
+-    return ::testing::MakeMatcher(
+-        new internal::IsOkMatcherImpl<const StatusOr<T> &>());
+-  }
+-};
+-
+-}  // namespace internal
+-
+-namespace testing {
+-namespace status {
+-
+-// Returns a gMock matcher that expects an iree::StatusOr<T> object to have an
+-// OK status and for the contained T object to match |value_matcher|.
+-//
+-// Example:
+-//
+-//     StatusOr<string> raven_speech_result = raven.Speak();
+-//     EXPECT_THAT(raven_speech_result, IsOkAndHolds(HasSubstr("nevermore")));
+-//
+-// If foo is an object of type T and foo_result is an object of type
+-// StatusOr<T>, you can write:
+-//
+-//     EXPECT_THAT(foo_result, IsOkAndHolds(foo));
+-//
+-// instead of:
+-//
+-//     EXPECT_THAT(foo_result, IsOkAndHolds(Eq(foo)));
+-template <typename ValueMatcherT>
+-internal::IsOkAndHoldsGenerator<ValueMatcherT> IsOkAndHolds(
+-    ValueMatcherT value_matcher) {
+-  return internal::IsOkAndHoldsGenerator<ValueMatcherT>(value_matcher);
+-}
+-
+-// Returns a gMock matcher that expects an iree::Status object to have the
+-// given |code|.
+-template <typename Enum>
+-internal::StatusIsMatcherGenerator<Enum> StatusIs(Enum code) {
+-  return internal::StatusIsMatcherGenerator<Enum>(code, "");
+-}
+-
+-// Returns a gMock matcher that expects an iree::Status object to have the
+-// given |code| and |message|.
+-template <typename Enum>
+-internal::StatusIsMatcherGenerator<Enum> StatusIs(Enum code,
+-                                                  std::string message) {
+-  return internal::StatusIsMatcherGenerator<Enum>(code, std::move(message));
+-}
+-
+-// Returns an internal::IsOkMatcherGenerator, which may be typecast to a
+-// Matcher<iree::Status> or Matcher<iree::StatusOr<T>>. These gMock
+-// matchers test that a given status container has an OK status.
+-inline internal::IsOkMatcherGenerator IsOk() {
+-  return internal::IsOkMatcherGenerator();
+-}
+-
+-}  // namespace status
+-}  // namespace testing
+-
+-// Macros for testing the results of functions that return iree::Status or
+-// iree::StatusOr<T> (for any type T).
+-#define IREE_EXPECT_OK(rexpr) \
+-  EXPECT_THAT(rexpr, ::iree::testing::status::StatusIs(::iree::StatusCode::kOk))
+-#define IREE_ASSERT_OK(rexpr) \
+-  ASSERT_THAT(rexpr, ::iree::testing::status::StatusIs(::iree::StatusCode::kOk))
+-#define IREE_EXPECT_STATUS_IS(expected_code, expr)     \
+-  EXPECT_THAT(expr, ::iree::testing::status::StatusIs( \
+-                        static_cast<::iree::StatusCode>(expected_code)))
+-#define IREE_ASSERT_STATUS_IS(expected_code, expr)     \
+-  ASSERT_THAT(expr, ::iree::testing::status::StatusIs( \
+-                        static_cast<::iree::StatusCode>(expected_code)))
+-
+-// Executes an expression that returns an iree::StatusOr<T>, and assigns the
+-// contained variable to lhs if the error code is OK.
+-// If the Status is non-OK, generates a test failure and returns from the
+-// current function, which must have a void return type.
+-//
+-// Example: Assigning to an existing value
+-//   IREE_ASSERT_OK_AND_ASSIGN(ValueType value, MaybeGetValue(arg));
+-//
+-// The value assignment example might expand into:
+-//   StatusOr<ValueType> status_or_value = MaybeGetValue(arg);
+-//   IREE_ASSERT_OK(status_or_value.status());
+-//   ValueType value = status_or_value.value();
+-#define IREE_ASSERT_OK_AND_ASSIGN(lhs, rexpr)                             \
+-  IREE_ASSERT_OK_AND_ASSIGN_IMPL(                                         \
+-      IREE_STATUS_MACROS_CONCAT_NAME(_status_or_value, __COUNTER__), lhs, \
+-      rexpr);
+-
+-#define IREE_ASSERT_OK_AND_ASSIGN_IMPL(statusor, lhs, rexpr) \
+-  auto statusor = (rexpr);                                   \
+-  IREE_ASSERT_OK(statusor.status());                         \
+-  lhs = std::move(statusor.value())
+-#define IREE_STATUS_MACROS_CONCAT_NAME(x, y) \
+-  IREE_STATUS_MACROS_CONCAT_IMPL(x, y)
+-#define IREE_STATUS_MACROS_CONCAT_IMPL(x, y) x##y
+-
+-// Implements the PrintTo() method for iree::StatusOr<T>. This method is
+-// used by gUnit to print iree::StatusOr<T> objects for debugging. The
+-// implementation relies on gUnit for printing values of T when a
+-// iree::StatusOr<T> object is OK and contains a value.
+-template <typename T>
+-void PrintTo(const StatusOr<T> &statusor, std::ostream *os) {
+-  if (!statusor.ok()) {
+-    *os << statusor.status().ToString();
+-  } else {
+-    *os << "OK: " << ::testing::PrintToString(statusor.value());
+-  }
+-}
+-
+-}  // namespace iree
+-
+-#endif  // IREE_TESTING_STATUS_MATCHERS_H_
+-- 
+2.44.1
+
