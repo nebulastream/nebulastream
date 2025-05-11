@@ -356,9 +356,11 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         helpers.top().groupByFields.emplace_back(context->getText());
     }
     else if (
-        (helpers.top().isWhereOrHaving || helpers.top().isSelect || helpers.top().isWindow)
+        (helpers.top().isWhereOrHaving || helpers.top().isSelect || helpers.top().isWindow) && !helpers.top().isInferModelInput
         && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
+        /// add identifiers in select, window, where and having clauses to the function builder list
+        /// if inference is in select, ignore the model input fields
         helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction(context->getText()));
     }
     else if (helpers.top().isFrom and not helpers.top().isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
@@ -398,6 +400,13 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         helpers.top().functionBuilder.pop_back();
         helpers.top().hasUnnamedAggregation = false;
         helpers.top().addProjectionField(aggFunc->asField);
+    }
+    else if (helpers.top().isInferModelInput)
+    {
+        if (helpers.top().isInFunctionCall())
+            helpers.top().functionBuilder.push_back(FieldAccessLogicalFunction(context->getText()));
+        else
+            helpers.top().inferModelInputs.push_back(FieldAccessLogicalFunction(context->getText()));
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
@@ -457,6 +466,15 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = LogicalPlanBuilder::addSelection(std::move(*whereExpr), queryPlan);
     }
 
+    if (!helpers.top().inferModelInputFields.empty())
+    {
+        for (size_t i = 0; i < helpers.top().inferModelInputModel.size(); ++i)
+        {
+            queryPlan = LogicalPlanBuilder::addInferModel(
+                helpers.top().inferModelInputModel[i], helpers.top().inferModelInputFields[i], queryPlan);
+        }
+    }
+
     if (helpers.top().isInAggFunction())
     {
         queryPlan = LogicalPlanBuilder::addWindowAggregation(
@@ -481,6 +499,18 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             queryPlan = LogicalPlanBuilder::addSelection(*havingExpr, queryPlan);
         }
     }
+
+    if (!helpers.top().inferModelAggInputFields.empty())
+    {
+        INVARIANT(
+            helpers.top().inferModelInputModel.size() == helpers.top().inferModelAggInputFields.size(),
+            "The number of input models and input fields must be equal.");
+        for (auto [model, field] : std::views::zip(helpers.top().inferModelInputModel, helpers.top().inferModelAggInputFields))
+        {
+            queryPlan = LogicalPlanBuilder::addInferModel(model, field, queryPlan);
+        }
+    }
+
     auto isSetOperation = helpers.top().isSetOperation;
     helpers.pop();
     if (helpers.empty() or isSetOperation)
@@ -694,6 +724,43 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
     AntlrSQLBaseListener::exitComparison(context);
 }
 
+void AntlrSQLQueryPlanCreator::enterInference(AntlrSQLParser::InferenceContext* context)
+{
+    helpers.top().isInferModel = true;
+    const AntlrSQLHelper helper = helpers.top();
+    AntlrSQLBaseListener::enterInference(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitInference(AntlrSQLParser::InferenceContext* context)
+{
+    helpers.top().isInferModel = false;
+    std::string model = context->children[2]->getText();
+    helpers.top().inferModelInputModel.push_back(model);
+    AntlrSQLBaseListener::exitInference(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterInferModelInputFields(AntlrSQLParser::InferModelInputFieldsContext* context)
+{
+    helpers.top().isInferModelInput = true;
+    AntlrSQLBaseListener::enterInferModelInputFields(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitInferModelInputFields(AntlrSQLParser::InferModelInputFieldsContext* context)
+{
+    if (!helpers.top().inferModelInputs.empty())
+    {
+        helpers.top().inferModelInputFields.push_back(helpers.top().inferModelInputs);
+        helpers.top().inferModelInputs.clear();
+    }
+    else
+    {
+        helpers.top().inferModelAggInputFields.push_back(helpers.top().inferModelAggInputs);
+        helpers.top().inferModelAggInputs.clear();
+    }
+    helpers.top().isInferModelInput = false;
+    AntlrSQLBaseListener::exitInferModelInputFields(context);
+}
+
 void AntlrSQLQueryPlanCreator::enterJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
     helpers.top().joinKeyRelationHelper.clear();
@@ -835,6 +902,11 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
 {
     const auto funcName = Util::toUpperCase(context->children[0]->getText());
     const auto tokenType = context->getStart()->getType();
+
+    if (helpers.top().isInferModelInput)
+    {
+        helpers.top().inferModelAggInputs.push_back(helpers.top().functionBuilder.back());
+    }
 
     helpers.top().hasUnnamedAggregation = true;
     switch (tokenType) /// TODO #619: improve this switch case

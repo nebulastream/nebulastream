@@ -35,3 +35,9 @@ if (PORT STREQUAL llvm)
     set(VCPKG_C_FLAGS "")
     set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Thread")
 endif()
+
+if (PORT STREQUAL ireeruntime)
+    # Building Iree with TSAN on Arm is currently not possible, due to hard to fix compilation errors
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+endif()

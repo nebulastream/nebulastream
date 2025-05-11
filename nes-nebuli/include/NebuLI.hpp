@@ -25,6 +25,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <experimental/propagate_const>
 #include <GRPCClient.hpp>
+#include <ModelCatalog.hpp>
 
 namespace NES
 {
@@ -38,11 +39,17 @@ namespace NES::CLI
 class LegacyOptimizer
 {
     std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const NES::Nebuli::Inference::ModelCatalog> modelCatalog;
 
 public:
     [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
     LegacyOptimizer() = default;
-    explicit LegacyOptimizer(const std::shared_ptr<const SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog) { }
+    explicit LegacyOptimizer(
+        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<const Nebuli::Inference::ModelCatalog>& modelCatalog)
+        : sourceCatalog(sourceCatalog), modelCatalog(modelCatalog)
+    {
+    }
 };
 class Nebuli
 {

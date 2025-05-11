@@ -20,6 +20,7 @@ activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sources/MQTTSource" ON)
 activate_optional_plugin("Sinks/MQTTSink" ON)
 activate_optional_plugin("ImageManip" ON)
+activate_optional_plugin("Inference/IREE" ON)
 activate_optional_plugin("Sources/GeneratorSource" ON)
 
 if (NES_ENABLES_TESTS)

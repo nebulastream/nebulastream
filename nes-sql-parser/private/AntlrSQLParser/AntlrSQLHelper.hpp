@@ -32,8 +32,8 @@ namespace NES::Parsers
 
 class AntlrSQLHelper
 {
-    std::vector<LogicalFunction> projectionFields; ///vector needed for logicalProjectionOperator constructor
-    std::vector<LogicalFunction> whereClauses; ///where and having clauses need to be accessed in reverse
+    std::vector<LogicalFunction> projectionFields;
+    std::vector<LogicalFunction> whereClauses;
     std::vector<LogicalFunction> havingClauses;
     std::string source;
 
@@ -89,6 +89,17 @@ public:
     size_t timeUnitAdvanceBy;
     std::optional<int> minimumCount;
     int implicitMapCountHelper = 0;
+
+    /// Inference helpers
+    bool isInferModel = false;
+    bool isInferModelInput = false;
+    bool isInferModelOutput = false;
+    std::vector<std::string> inferModelInputModel;
+    std::vector<LogicalFunction> inferModelInputs;
+    std::vector<LogicalFunction> inferModelAggInputs;
+    std::vector<std::vector<LogicalFunction>> inferModelInputFields;
+    std::vector<std::vector<LogicalFunction>> inferModelAggInputFields;
+    std::vector<std::vector<LogicalFunction>> inferModelOutputFields;
 
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();

@@ -84,6 +84,7 @@ EXCEPTION(CannotStartQueryEngine, 3003, "cannot start query engine")
 EXCEPTION(CannotStopQQueryEngine, 3004, "cannot stop query engine")
 EXCEPTION(QueryNotRegistered, 3005, "query not registered")
 EXCEPTION(CannotStartQuery, 3006, "cannot start query")
+EXCEPTION(InferenceRuntime, 3007, "Inference Runtime Error")
 /// Todo #500: place holder until we can cleanly handle malformed string values (NULL/Undefined or similar)
 /// MUST be used as the central exception to report malformed string values.
 EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed string value")

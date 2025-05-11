@@ -289,6 +289,7 @@ valueExpression
     | left=valueExpression op=HAT right=valueExpression                                #arithmeticBinary
     | left=valueExpression op=PIPE right=valueExpression                               #arithmeticBinary
     | left=valueExpression comparisonOperator right=valueExpression                          #comparison
+    | INFER_MODEL '(' IDENTIFIER ',' inferModelInputFields ')'       #inference
     | primaryExpression                                                                      #valueExpressionDefault
     ;
 
@@ -315,6 +316,8 @@ primaryExpression
     | constant                                                                                 #constantDefault
     | identifier                                                                               #columnReference
     ;
+
+inferModelInputFields: primaryExpression;
 
 qualifiedName
     : identifier ('.' identifier)*
@@ -367,6 +370,7 @@ GROUPING: 'GROUPING';
 HAVING: 'HAVING' | 'having';
 IF: 'IF';
 IN: 'IN' | 'in';
+INFER_MODEL: 'INFER_MODEL' | 'infer_model';
 INNER: 'INNER' | 'inner';
 INSERT: 'INSERT' | 'insert';
 INTO: 'INTO' | 'into';

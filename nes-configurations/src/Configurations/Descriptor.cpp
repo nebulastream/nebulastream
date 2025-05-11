@@ -96,6 +96,10 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurati
             {
                 protoVar.mutable_window_infos()->CopyFrom(arg);
             }
+            else if constexpr (std::is_same_v<U, SerializableModel>)
+            {
+                protoVar.mutable_model()->CopyFrom(arg);
+            }
             else
             {
                 static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
@@ -135,6 +139,8 @@ Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const S
             return protoVar.aggregation_function_list();
         case SerializableVariantDescriptor::kWindowInfos:
             return protoVar.window_infos();
+        case SerializableVariantDescriptor::kModel:
+            return protoVar.model();
         default:
             std::string protoVarAsJson;
             /// Log proto variable as json, in exception, if possible.

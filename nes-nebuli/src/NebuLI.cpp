@@ -27,6 +27,7 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+#include <LegacyOptimizer/ModelInferenceCompilationRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <LegacyOptimizer/SequentialAggregationRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
@@ -51,10 +52,12 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto typeInference = NES::LegacyOptimizer::TypeInferencePhase{};
     constexpr auto originIdInferencePhase = NES::LegacyOptimizer::OriginIdInferencePhase{};
     constexpr auto sequentialAggregationRule = NES::LegacyOptimizer::SequentialAggregationRule{};
+    auto modelCompilationRule = NES::LegacyOptimizer::ModelInferenceCompilationRule(modelCatalog);
 
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
     sequentialAggregationRule.apply(newPlan);
+    modelCompilationRule.apply(newPlan);
     typeInference.apply(newPlan);
 
     originIdInferencePhase.apply(newPlan);

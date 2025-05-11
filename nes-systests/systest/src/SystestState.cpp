@@ -73,7 +73,7 @@ optimizeQueryPlanIfErrorFree(const NES::Systest::LoadedQueryPlan& loadedQueryPla
         sourceNamesToFilepathAndCountForQuery;
     if (loadedQueryPlan.queryPlan.has_value())
     {
-        const NES::CLI::LegacyOptimizer optimizer{loadedQueryPlan.sourceCatalog};
+        const NES::CLI::LegacyOptimizer optimizer{loadedQueryPlan.sourceCatalog, loadedQueryPlan.modelCatalog};
         auto optimizedPlan = optimizer.optimize(loadedQueryPlan.queryPlan.value());
         std::ranges::for_each(
             NES::getOperatorByType<NES::SourceDescriptorLogicalOperator>(optimizedPlan),
@@ -491,6 +491,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
     SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName)
 {
     auto sourceCatalog = std::make_shared<SourceCatalog>();
+    auto modelCatalog = std::make_shared<Nebuli::Inference::ModelCatalog>();
     std::vector<LoadedQueryPlan> plans{};
     std::unordered_map<std::string, std::shared_ptr<Sinks::SinkDescriptor>> sinks;
     SystestParser parser{};
@@ -610,6 +611,8 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
             }
         });
 
+    parser.registerOnModelCallback([&](Nebuli::Inference::ModelDescriptor&& model) { modelCatalog->registerModel(std::move(model)); });
+
     /// We create a new query plan from our config when finding a query
     parser.registerOnQueryCallback(
         [&](std::string query, const SystestQueryId currentQueryNumberInTest)
@@ -711,11 +714,13 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
                 sinkOperator.sinkDescriptor = sink;
                 INVARIANT(!plan.rootOperators.empty(), "Plan has no root operators");
                 plan.rootOperators.at(0) = sinkOperator;
-                plans.emplace_back(plan, sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
+                plans.emplace_back(
+                    plan, sourceCatalog, modelCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
             }
             catch (Exception& e)
             {
-                plans.emplace_back(std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest);
+                plans.emplace_back(
+                    std::unexpected(e), sourceCatalog, modelCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest);
             }
         });
 
