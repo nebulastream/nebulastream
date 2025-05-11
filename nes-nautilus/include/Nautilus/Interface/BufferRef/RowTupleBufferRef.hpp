@@ -14,10 +14,13 @@
 
 #pragma once
 
-
 #include <cstdint>
+#include <memory>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
