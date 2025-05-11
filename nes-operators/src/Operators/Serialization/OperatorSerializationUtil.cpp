@@ -38,6 +38,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/MergeAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
@@ -325,6 +326,10 @@ deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetail
         else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN)
         {
             aggregation.emplace_back(Windowing::MedianAggregationDescriptor::create(onField, asField));
+        }
+        else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MERGE)
+        {
+            aggregation.emplace_back(Windowing::MergeAggregationDescriptor::create(onField, asField));
         }
         else
         {
@@ -825,6 +830,9 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
                 break;
             case Median:
                 windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
+                break;
+            case Merge:
+                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MERGE);
                 break;
             default:
                 NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
