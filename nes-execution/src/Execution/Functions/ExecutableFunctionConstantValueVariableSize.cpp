@@ -45,7 +45,7 @@ ExecutableFunctionConstantValueVariableSize::ExecutableFunctionConstantValueVari
 
 VarVal ExecutableFunctionConstantValueVariableSize::execute(const Record&, ArenaRef&) const
 {
-    VariableSizedData result(data.get());
+    VariableSizedData result(data.get(), false);
     return result;
 }
 }
