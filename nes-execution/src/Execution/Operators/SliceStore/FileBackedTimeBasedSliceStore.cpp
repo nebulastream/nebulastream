@@ -77,8 +77,8 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
     : watermarkProcessor(other.watermarkProcessor)
     , watermarkPredictors(other.watermarkPredictors)
-    , writeExecTimes(other.writeExecTimes)
-    , readExecTimes(other.readExecTimes)
+    , writeExecTimeFunction(other.writeExecTimeFunction)
+    , readExecTimeFunction(other.readExecTimeFunction)
     , memoryController(other.memoryController)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
     , memoryControllerInfo(other.memoryControllerInfo)
@@ -103,8 +103,8 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
     : watermarkProcessor(std::move(other.watermarkProcessor))
     , watermarkPredictors(std::move(other.watermarkPredictors))
-    , writeExecTimes(std::move(other.writeExecTimes))
-    , readExecTimes(std::move(other.readExecTimes))
+    , writeExecTimeFunction(std::move(other.writeExecTimeFunction))
+    , readExecTimeFunction(std::move(other.readExecTimeFunction))
     , memoryController(std::move(other.memoryController))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
     , memoryControllerInfo(std::move(other.memoryControllerInfo))
@@ -139,8 +139,8 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 
     watermarkProcessor = other.watermarkProcessor;
     watermarkPredictors = other.watermarkPredictors;
-    writeExecTimes = other.writeExecTimes;
-    readExecTimes = other.readExecTimes;
+    writeExecTimeFunction = other.writeExecTimeFunction;
+    readExecTimeFunction = other.readExecTimeFunction;
     memoryController = other.memoryController;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
     memoryControllerInfo = other.memoryControllerInfo;
@@ -162,8 +162,8 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 
     watermarkProcessor = std::move(other.watermarkProcessor);
     watermarkPredictors = std::move(other.watermarkPredictors);
-    writeExecTimes = std::move(other.writeExecTimes);
-    readExecTimes = std::move(other.readExecTimes);
+    writeExecTimeFunction = std::move(other.writeExecTimeFunction);
+    readExecTimeFunction = std::move(other.readExecTimeFunction);
     memoryController = std::move(other.memoryController);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
     memoryControllerInfo = std::move(other.memoryControllerInfo);
@@ -495,9 +495,9 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
         const auto stateSizeOnDisk = nljSlice->getStateSizeOnDiskForThreadId(memoryLayout, joinBuildSide, threadId);
         const auto stateSizeInMemory = nljSlice->getStateSizeInMemoryForThreadId(memoryLayout, joinBuildSide, threadId);
 
-        const auto readExecTime = getExecTimesForDataSize(readExecTimes, stateSizeOnDisk);
-        const auto writeAndReadExecTime = getExecTimesForDataSize(writeExecTimes, stateSizeInMemory)
-            + getExecTimesForDataSize(readExecTimes, stateSizeInMemory + stateSizeOnDisk);
+        const auto readExecTime = getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk);
+        const auto writeAndReadExecTime = getExecTimesForDataSize(writeExecTimeFunction, stateSizeInMemory)
+            + getExecTimesForDataSize(readExecTimeFunction, stateSizeInMemory + stateSizeOnDisk);
 
         const auto now = std::chrono::high_resolution_clock::now();
         const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
@@ -566,15 +566,17 @@ void FileBackedTimeBasedSliceStore::updateWatermarkPredictor(const OriginId orig
 
 void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes)
 {
+    constexpr auto numElements = USE_TEST_DATA_SIZES.size();
+    if constexpr (numElements < 2)
+    {
+        throw std::invalid_argument("At least two points are required to initialize the model.");
+    }
+
+    double sumXWrite = 0, sumYWrite = 0, sumXYWrite = 0, sumX2Write = 0;
+    double sumXRead = 0, sumYRead = 0, sumXYRead = 0, sumX2Read = 0;
     for (const auto dataSize : dataSizes)
     {
         std::vector<char> data(dataSize);
-        for (size_t i = 0; i < dataSize; ++i)
-        {
-            //data[i] = static_cast<char>(rand() % 256);
-            data[i] = static_cast<char>(i);
-        }
-
         const auto start = std::chrono::high_resolution_clock::now();
 
         const auto fileWriter = memoryController->getFileWriter(
@@ -594,48 +596,25 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         const auto readTicks
             = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(read.time_since_epoch()).count());
 
-        writeExecTimes.emplace(dataSize, writeTicks - startTicks);
-        readExecTimes.emplace(dataSize, readTicks - writeTicks);
-    }
-}
-
-uint64_t FileBackedTimeBasedSliceStore::getExecTimesForDataSize(std::map<size_t, uint64_t> execTimes, const size_t dataSize)
-{
-    // TODO use linear regression to estimate execution time
-    size_t closestKey = std::numeric_limits<size_t>::max();
-    size_t minDifference = std::numeric_limits<size_t>::max();
-    bool foundClosest = false;
-
-    for (const auto& key : USE_TEST_DATA_SIZES)
-    {
-        const size_t difference = std::abs(static_cast<int64_t>(key) - static_cast<int64_t>(dataSize));
-        if (difference < minDifference)
-        {
-            minDifference = difference;
-            closestKey = key;
-        }
-        else if (foundClosest)
-        {
-            /// If the difference starts increasing, we have found the closest key as test data sizes are sorted
-            break;
-        }
-        foundClosest = true;
+        const auto writeExecTime = writeTicks - startTicks;
+        sumXWrite += dataSize;
+        sumYWrite += writeExecTime;
+        sumXYWrite += dataSize * writeExecTime;
+        sumX2Write += dataSize * dataSize;
+        const auto readExecTimes = readTicks - writeTicks;
+        sumXRead += dataSize;
+        sumYRead += readExecTimes;
+        sumXYRead += dataSize * readExecTimes;
+        sumX2Read += dataSize * dataSize;
     }
 
-    return execTimes[closestKey];
-}
+    const auto writeSlope = (numElements * sumXYWrite - sumXWrite * sumYWrite) / (numElements * sumX2Write - sumXWrite * sumXWrite);
+    const auto writeIntercept = (sumYWrite - writeSlope * sumXWrite) / numElements;
+    writeExecTimeFunction = {writeSlope, writeIntercept};
 
-bool FileBackedTimeBasedSliceStore::isPolynomial(const uint64_t counter)
-{
-    /// Checks if counter matches y = n^2
-    const auto root = static_cast<uint64_t>(std::sqrt(counter));
-    return root * root == counter;
-}
-
-bool FileBackedTimeBasedSliceStore::isExponential(const uint64_t counter)
-{
-    /// Checks if counter matches y = 2^n - 1
-    return (counter & counter + 1) == 0;
+    const auto readSlope = (numElements * sumXYRead - sumXRead * sumYRead) / (numElements * sumX2Read - sumXRead * sumXRead);
+    const auto readIntercept = (sumYRead - readSlope * sumXRead) / numElements;
+    readExecTimeFunction = {readSlope, readIntercept};
 }
 
 }

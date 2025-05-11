@@ -117,10 +117,23 @@ private:
 
     void updateWatermarkPredictor(OriginId originId);
     void measureReadAndWriteExecTimes(const std::array<size_t, USE_TEST_DATA_SIZES.size()>& dataSizes);
-    static uint64_t getExecTimesForDataSize(std::map<size_t, uint64_t> execTimes, size_t dataSize);
 
-    static bool isPolynomial(uint64_t counter);
-    static bool isExponential(uint64_t counter);
+    static uint64_t getExecTimesForDataSize(const std::pair<double, double>& execTimeFunction, const size_t dataSize)
+    {
+        return static_cast<uint64_t>(execTimeFunction.first * dataSize + execTimeFunction.second);
+    }
+
+    static bool isPolynomial(const uint64_t counter)
+    {
+        /// Checks if counter matches y = n^2
+        const auto root = static_cast<uint64_t>(std::sqrt(counter));
+        return root * root == counter;
+    }
+    static bool isExponential(const uint64_t counter)
+    {
+        /// Checks if counter matches y = 2^n - 1
+        return (counter & counter + 1) == 0;
+    }
 
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
@@ -129,9 +142,9 @@ private:
     std::shared_ptr<Operators::MultiOriginWatermarkProcessor> watermarkProcessor;
     std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>> watermarkPredictors;
 
-    /// The maps hold the execution times needed to write or read data of certain data sizes which is also used for predictions.
-    std::map<size_t, uint64_t> writeExecTimes;
-    std::map<size_t, uint64_t> readExecTimes;
+    // TODO The maps hold the execution times needed to write or read data of certain data sizes which is also used for predictions.
+    std::pair<double, double> writeExecTimeFunction;
+    std::pair<double, double> readExecTimeFunction;
 
     /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
     /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory.
