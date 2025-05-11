@@ -53,6 +53,10 @@
     "antlr4",
     "argparse",
     "boost-asio",
+    "boost-system",
+    "boost-filesystem",
+    "boost-process",
+    "boost-graph",
     "cpptrace",
     "fmt",
     "folly",
@@ -64,7 +68,8 @@
     "nautilus",
     "replxx",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "ireeruntime"
   ],
   "default-features": [
     "video",

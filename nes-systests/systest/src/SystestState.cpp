@@ -108,7 +108,7 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
         const std::string entryExt = toLowerCopy(entry.path().extension().string());
         if (!fileExtension || entryExt == desiredExtension)
         {
-            const TestFile testfile(entry.path(), std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+            const TestFile testfile(entry.path(), std::make_shared<SourceCatalog>(), std::make_shared<Nebuli::Inference::ModelCatalog>(), std::make_shared<SinkCatalog>());
             testFiles.insert({testfile.file, testfile});
         }
     }
@@ -144,21 +144,24 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
 }
 
 TestFile::TestFile(
-    const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
+    const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
     : file(weakly_canonical(file))
     , groups(readGroups(*this))
     , sourceCatalog(std::move(sourceCatalog))
+    , modelCatalog(std::move(modelCatalog))
     , sinkCatalog(std::move(sinkCatalog)) { };
 
 TestFile::TestFile(
     const std::filesystem::path& file,
     std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
     std::shared_ptr<SourceCatalog> sourceCatalog,
+    std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog,
     std::shared_ptr<SinkCatalog> sinkCatalog)
     : file(weakly_canonical(file))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this))
     , sourceCatalog(std::move(sourceCatalog))
+    , modelCatalog(std::move(modelCatalog))
     , sinkCatalog(std::move(sinkCatalog)) { };
 
 struct TestGroupFiles
@@ -196,7 +199,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
 
         if (config.testQueryNumbers.empty()) /// case: load all tests
         {
-            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<Nebuli::Inference::ModelCatalog>(), std::make_shared<SinkCatalog>());
             return TestFileMap{{testfile.file, testfile}};
         }
         /// case: load a concrete set of tests
@@ -205,7 +208,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             scalarTestNumbers | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
 
         const auto testfile
-            = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+            = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<Nebuli::Inference::ModelCatalog>(), std::make_shared<SinkCatalog>());
         return TestFileMap{{testfile.file, testfile}};
     }
 
@@ -358,4 +361,5 @@ std::string TestFile::getLogFilePath() const
     /// Set the correct logging path without docker
     return std::filesystem::path(file);
 }
+
 }

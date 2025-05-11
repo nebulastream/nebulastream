@@ -14,3 +14,29 @@ include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/arm64.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/bits/sanitizers/asan.cmake)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/libcxx.cmake)
 
+<<<<<<< HEAD
+=======
+# boost-context does not recognize arm64
+if (PORT STREQUAL "boost-context")
+    SET(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_SYSTEM_PROCESSOR=aarch64)
+endif ()
+
+if (PORT STREQUAL "libpng")
+    SET(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_SYSTEM_PROCESSOR=aarch64)
+endif ()
+
+# Building LLVM with the `-fsanitize=address` flag causes the sanitizer itself to be built sanitized which is not
+# possible. In general if the port supports sanitization via a CMake Option this should be the preferred way, to avoid
+# incompatibilities.
+if (PORT STREQUAL llvm)
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Address")
+endif ()
+
+if (PORT STREQUAL ireeruntime)
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DIREE_ENABLE_ASAN=ON)
+endif()
+>>>>>>> df25c19ee3 (feat(Inference): Adds Inference Support)

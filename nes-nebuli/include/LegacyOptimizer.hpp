@@ -17,28 +17,38 @@
 #include <utility>
 
 #include <Plans/LogicalPlan.hpp>
+#include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <experimental/propagate_const>
+#include <ModelCatalog.hpp>
 
 namespace NES
 {
 class SinkCatalog;
 class SourceCatalog;
-}
 
-namespace NES
-{
 class LegacyOptimizer
 {
+
 public:
     [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
     LegacyOptimizer() = default;
+    explicit LegacyOptimizer(
+        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<const SinkCatalog>& sinkCatalog,
+        const std::shared_ptr<const Nebuli::Inference::ModelCatalog>& modelCatalog)
+        : sourceCatalog(sourceCatalog), sinkCatalog(sinkCatalog), modelCatalog(std::move(modelCatalog))
+    {}
 
     explicit LegacyOptimizer(std::shared_ptr<const SourceCatalog> sourceCatalog, std::shared_ptr<const SinkCatalog> sinkCatalog)
         : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
-    {
-    }
+    {}
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::shared_ptr<const Nebuli::Inference::ModelCatalog> modelCatalog;
 };
 }

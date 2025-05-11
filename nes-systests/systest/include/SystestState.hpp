@@ -35,6 +35,7 @@
 
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <ModelCatalog.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 
@@ -136,11 +137,12 @@ struct RunningQuery
 struct TestFile
 {
     explicit TestFile(
-        const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog);
+        const std::filesystem::path& file, std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog, std::shared_ptr<SinkCatalog> sinkCatalog);
     explicit TestFile(
         const std::filesystem::path& file,
         std::unordered_set<SystestQueryId> onlyEnableQueriesWithTestQueryNumber,
         std::shared_ptr<SourceCatalog> sourceCatalog,
+        std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog,
         std::shared_ptr<SinkCatalog> sinkCatalog);
     [[nodiscard]] std::string getLogFilePath() const;
 
@@ -151,6 +153,7 @@ struct TestFile
     std::vector<TestGroup> groups;
     std::vector<SystestQuery> queries;
     std::shared_ptr<SourceCatalog> sourceCatalog;
+    std::shared_ptr<Nebuli::Inference::ModelCatalog> modelCatalog;
     std::shared_ptr<SinkCatalog> sinkCatalog;
 };
 

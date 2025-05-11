@@ -60,6 +60,7 @@
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
+#include <ModelCatalog.hpp>
 
 namespace NES::Systest
 {
@@ -344,7 +345,7 @@ struct SystestBinder::Impl
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog};
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, sinkProvider);
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), *testfile.sourceCatalog, *testfile.modelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
         const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
@@ -642,6 +643,7 @@ struct SystestBinder::Impl
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
         SourceCatalog& sourceCatalog,
+        Nebuli::Inference::ModelCatalog& modelCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
         uint64_t sourceIndex = 0;
@@ -667,6 +669,8 @@ struct SystestBinder::Impl
 
         parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource& source)
                                                       { logicalSourceCallback(sourceCatalog, source); });
+
+        parser.registerOnModelCallback([&](Nebuli::Inference::ModelDescriptor&& model) { modelCatalog.registerModel(std::move(model)); });
 
         /// We add new found sources to our config
         parser.registerOnSystestAttachSourceCallback(

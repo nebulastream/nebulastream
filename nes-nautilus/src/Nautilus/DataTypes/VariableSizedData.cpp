@@ -131,7 +131,7 @@ nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
     return ptrToVarSized;
 }
 
-[[nodiscard]] nautilus::val<uint32_t> VariableSizedData::shrink(const nautilus::val<uint32_t>& bytesToShrink)
+nautilus::val<uint32_t> VariableSizedData::shrink(const nautilus::val<uint32_t>& bytesToShrink)
 {
 #ifndef NDEBUG
     nautilus::invoke(

@@ -20,4 +20,5 @@ add_source_files(nes-legacy-optimizer
         TypeInferencePhase.cpp
         SinkBindingRule.cpp
         LegacyOptimizer.cpp
+        ModelInferenceCompilationRule.cpp
 )

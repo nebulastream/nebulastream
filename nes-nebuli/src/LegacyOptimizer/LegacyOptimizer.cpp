@@ -15,6 +15,7 @@
 #include <LegacyOptimizer.hpp>
 
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+#include <LegacyOptimizer/ModelInferenceCompilationRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
@@ -34,6 +35,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto typeInference = TypeInferencePhase{};
     constexpr auto originIdInferencePhase = OriginIdInferencePhase{};
     constexpr auto sequentialAggregationRule = SequentialAggregationRule{};
+    auto modelCompilationRule = ModelInferenceCompilationRule(modelCatalog);
     constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
 
@@ -50,6 +52,7 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
     originIdInferencePhase.apply(newPlan);
     sequentialAggregationRule.apply(newPlan);
+    modelCompilationRule.apply(newPlan);
     typeInference.apply(newPlan);
     return newPlan;
 }

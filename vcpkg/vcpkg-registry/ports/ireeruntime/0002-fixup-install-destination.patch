@@ -1,0 +1,56 @@
+From 26fb7d7bbc9ea23fb8ee2dd3a47fffc633f94ce6 Mon Sep 17 00:00:00 2001
+From: lukas schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Sat, 12 Apr 2025 15:06:43 +0200
+Subject: [PATCH 2/3] fixup-install-destination
+
+---
+ build_tools/cmake/iree_install_support.cmake | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/build_tools/cmake/iree_install_support.cmake b/build_tools/cmake/iree_install_support.cmake
+index 2037452466..100b0213f7 100644
+--- a/build_tools/cmake/iree_install_support.cmake
++++ b/build_tools/cmake/iree_install_support.cmake
+@@ -4,6 +4,7 @@
+ # See https://llvm.org/LICENSE.txt for license information.
+ # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ 
++include(GNUInstallDirs)
+ function(iree_add_alias_library to_target from_target)
+   add_library(${to_target} ALIAS ${from_target})
+   # Yes: Leading-lowercase property names are load bearing and the recommended
+@@ -57,17 +58,17 @@ function(iree_install_targets)
+ 
+   # Add it to the global property that will be processed at the end of the build.
+   set_property(GLOBAL APPEND PROPERTY "IREE_EXPORT_TARGETS_${_EXPORT_SET}" ${_RULE_TARGETS})
+-
++  
+   # The export name is set at a directory level to control export.
+   install(
+     TARGETS ${_RULE_TARGETS}
+     EXPORT IREEExported-${_EXPORT_SET}
+     COMPONENT "${_INSTALL_COMPONENT}"
+     EXCLUDE_FROM_ALL
+-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
++    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
++    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
++    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
++    INCLUDES DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}
+   )
+ 
+   # Install headers if the rule declares them and the directory level
+@@ -140,7 +141,7 @@ function(iree_generate_export_targets)
+     EXPORT "IREEExported-${_RULE_EXPORT_SET}"
+     COMPONENT "${_component}"
+     FILE "IREETargets-${_RULE_EXPORT_SET}.cmake"
+-    DESTINATION "${_RULE_INSTALL_DESTINATION}"
++    DESTINATION "${CMAKE_INSTALL_PREFIX}"
+   )
+ 
+   # Clear the export targets so that innocent aggregating projects don't
+-- 
+2.45.2
+

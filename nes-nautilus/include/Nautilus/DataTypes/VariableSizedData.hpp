@@ -53,7 +53,7 @@ public:
     /// Returns the pointer to the variable sized data, this means the pointer to the size + data
     [[nodiscard]] nautilus::val<int8_t*> getReference() const;
 
-    [[nodiscard]] nautilus::val<uint32_t> shrink(const nautilus::val<uint32_t>& bytesToShrink);
+    nautilus::val<uint32_t> shrink(const nautilus::val<uint32_t>& bytesToShrink);
 
     /// Declaring friend for it, so that we can access the members in it and do not have to declare getters for it
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData);

@@ -158,8 +158,9 @@ int main(int argc, char** argv)
 
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
+        auto modelCatalog = std::make_shared<NES::Nebuli::Inference::ModelCatalog>();
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog};
+        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog, sinkCatalog, modelCatalog};
         auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
