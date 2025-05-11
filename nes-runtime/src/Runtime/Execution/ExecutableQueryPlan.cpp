@@ -438,12 +438,28 @@ void ExecutableQueryPlan::transferSourcesToSuccessor(const ReconfigurationMarker
     }
     auto sourcesToReuseBySuccessorPlan = (*lockedSuccessor)->getSourcesToReuse();
 
+    auto sources = getSources();
+
+    NES_ERROR("Sources in old plan")
+    for (auto source : sources) {
+        NES_ERROR("{}", source->toString())
+    }
+
+    NES_ERROR("Sources in new plan")
+    for (auto source : (*lockedSuccessor)->getSources()) {
+        NES_ERROR("{}", source->toString())
+    }
+
+    NES_ERROR("Id's of sources to reuse in new plan")
+    for (auto id : sourcesToReuseBySuccessorPlan) {
+        NES_ERROR("{}", id)
+    }
+
     for (auto successorSource : (*lockedSuccessor)->getSources()) {
         auto sourceId = successorSource->getOperatorId();
 
         if (std::find(sourcesToReuseBySuccessorPlan.cbegin(), sourcesToReuseBySuccessorPlan.cend(), sourceId)
             != sourcesToReuseBySuccessorPlan.cend()) {
-            auto sources = getSources();
             auto predicate = [successorSource](auto src) {
                 return DataSource::compareId(successorSource, src);
             };
