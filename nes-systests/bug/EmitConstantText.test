@@ -1,0 +1,22 @@
+# name: EmitConstantText.test
+# description: Test if constant text can be emitted
+# groups: [Constant]
+
+Source fiveTuples UINT64 field_1 INLINE
+1
+2
+3
+4
+5
+
+SINK fiveText VARSIZED fiveTuples$text
+
+# This Query should emit the constant text "text" for each tuple
+SELECT VARSIZED("text") as text FROM fiveTuples INTO fiveText;
+----
+text
+text
+text
+text
+text
+

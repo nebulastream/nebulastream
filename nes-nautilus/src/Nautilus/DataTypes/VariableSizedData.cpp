@@ -37,7 +37,8 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& pointerToVarS
 {
 }
 
-VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
+VariableSizedData::VariableSizedData(const VariableSizedData& other)
+    : size(other.size), ptrToVarSized(other.ptrToVarSized), ownsBuffer_(other.ownsBuffer_)
 {
 }
 
@@ -50,12 +51,14 @@ VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) 
 
     size = other.size;
     ptrToVarSized = other.ptrToVarSized;
+    ownsBuffer_ = other.ownsBuffer_;
     return *this;
 }
 
 VariableSizedData::VariableSizedData(VariableSizedData&& other) noexcept
-    : size(std::move(other.size)), ptrToVarSized(std::move(other.ptrToVarSized))
+    : size(std::move(other.size)), ptrToVarSized(std::move(other.ptrToVarSized)), ownsBuffer_(std::move(other.ownsBuffer_))
 {
+    other.ownsBuffer_ = false;
 }
 
 VariableSizedData& VariableSizedData::operator=(VariableSizedData&& other) noexcept
@@ -129,6 +132,10 @@ nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
 [[nodiscard]] nautilus::val<int8_t*> VariableSizedData::getReference() const
 {
     return ptrToVarSized;
+}
+nautilus::val<bool> VariableSizedData::ownsBuffer() const
+{
+    return ownsBuffer_;
 }
 
 [[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData)
