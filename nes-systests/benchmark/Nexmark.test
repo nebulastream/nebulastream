@@ -5,9 +5,17 @@
 # Source definitions
 SourceCSV bid UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetime FLOAT64 price TESTDATA/large/nexmark/bid.csv
 SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/nexmark/auction_modified.csv
+MemoryCSV bid_memory UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetime FLOAT64 price TESTDATA/large/nexmark/bid.csv
+MemoryCSV auction_memory UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/nexmark/auction_modified.csv
 
-# Query 0
+
+# Query 0 with File Source
 SELECT * FROM bid INTO CHECKSUM;
+----
+18106394 33146443404
+
+# Query 0 with Memory Source
+SELECT * FROM bid_memory INTO CHECKSUM;
 ----
 18106394 33146443404
 

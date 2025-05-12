@@ -33,6 +33,7 @@ enum class TokenType : uint8_t
 {
     INVALID,
     CSV_SOURCE,
+    MEMORY_SOURCE,
     SLT_SOURCE,
     SINK,
     QUERY,
@@ -100,6 +101,7 @@ public:
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
+    using MemorySourceCallback = std::function<void(CSVSource&&)>;
     using SinkCallback = std::function<void(Sink&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
@@ -107,6 +109,7 @@ public:
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
+    void registerOnMemorySourceCallback(MemorySourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
 
 
@@ -126,6 +129,7 @@ private:
 
     [[nodiscard]] SLTSource expectSLTSource();
     [[nodiscard]] CSVSource expectCSVSource() const;
+    [[nodiscard]] CSVSource expectMemorySource() const;
     [[nodiscard]] Sink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
     [[nodiscard]] Query expectQuery();
@@ -134,6 +138,7 @@ private:
     ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
     CSVSourceCallback onCSVSourceCallback;
+    MemorySourceCallback onMemorySourceCallback;
     SinkCallback onSinkCallback;
 
     bool firstToken = true;

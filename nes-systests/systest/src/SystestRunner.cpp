@@ -82,22 +82,50 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&& source)
         {
-            config.logical.emplace_back(CLI::LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
+            config.logical.emplace_back(
+                CLI::LogicalSource{
+                    .name = source.name,
+                    .schema = [&source]()
                     {
-                        schema.emplace_back(name, type);
-                    }
-                    return schema;
-                }()});
+                        std::vector<CLI::SchemaField> schema;
+                        for (const auto& [type, name] : source.fields)
+                        {
+                            schema.emplace_back(name, type);
+                        }
+                        return schema;
+                    }()});
 
-            config.physical.emplace_back(CLI::PhysicalSource{
-                .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
+            config.physical.emplace_back(
+                CLI::PhysicalSource{
+                    .logical = source.name,
+                    .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                    .sourceConfig
+                    = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
+            sourceNamesToFilepath[source.name] = source.csvFilePath;
+        });
+
+    parser.registerOnMemorySourceCallback(
+        [&](SystestParser::CSVSource&& source)
+        {
+            config.logical.emplace_back(
+                CLI::LogicalSource{
+                    .name = source.name,
+                    .schema = [&source]()
+                    {
+                        std::vector<CLI::SchemaField> schema;
+                        for (const auto& [type, name] : source.fields)
+                        {
+                            schema.emplace_back(name, type);
+                        }
+                        return schema;
+                    }()});
+
+            config.physical.emplace_back(
+                CLI::PhysicalSource{
+                    .logical = source.name,
+                    .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                    .sourceConfig
+                    = {{"type", "Memory"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
             sourceNamesToFilepath[source.name] = source.csvFilePath;
         });
 
@@ -106,24 +134,26 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
         {
             static uint64_t sourceIndex = 0;
 
-            config.logical.emplace_back(CLI::LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
+            config.logical.emplace_back(
+                CLI::LogicalSource{
+                    .name = source.name,
+                    .schema = [&source]()
                     {
-                        schema.emplace_back(name, type);
-                    }
-                    return schema;
-                }()});
+                        std::vector<CLI::SchemaField> schema;
+                        for (const auto& [type, name] : source.fields)
+                        {
+                            schema.emplace_back(name, type);
+                        }
+                        return schema;
+                    }()});
 
             const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
             sourceNamesToFilepath[source.name] = sourceFile;
-            config.physical.emplace_back(CLI::PhysicalSource{
-                .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
+            config.physical.emplace_back(
+                CLI::PhysicalSource{
+                    .logical = source.name,
+                    .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                    .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
             {
                 std::ofstream testFile(sourceFile);
                 if (!testFile.is_open())
@@ -499,11 +529,12 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         }
 
         /// Getting the size and no. tuples of all input files to pass this information to currentRunningQuery.bytesProcessed
-        auto bytesProcessed = 0;
-        auto tuplesProcessed = 0;
+        size_t bytesProcessed = 0;
+        size_t tuplesProcessed = 0;
         for (const auto& [sourcePath, sourceOccurrencesInQuery] : queryToRun.sourceNamesToFilepathAndCount | std::views::values)
         {
-            bytesProcessed += (std::filesystem::file_size(sourcePath) * sourceOccurrencesInQuery);
+            const auto fileSize = std::filesystem::file_size(sourcePath);
+            bytesProcessed += (fileSize * sourceOccurrencesInQuery);
 
             /// Counting the lines, i.e., \n in the sourcePath
             std::ifstream inFile(sourcePath);
