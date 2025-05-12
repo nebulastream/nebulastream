@@ -41,7 +41,7 @@ struct QueryRunSummary
 struct QuerySummary
 {
     /// In the future, this will be extended to include more information such as the query plan, etc.
-    QueryId queryId;
+    QueryId queryId = INVALID_QUERY_ID;
     Execution::QueryStatus currentStatus;
     std::vector<QueryRunSummary> runs;
 };
