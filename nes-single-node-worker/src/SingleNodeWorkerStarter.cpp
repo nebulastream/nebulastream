@@ -15,6 +15,7 @@
 #include <Configurations/Util.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <cpptrace/from_current.hpp>
+#include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/server_builder.h>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
@@ -33,7 +34,7 @@ int main(const int argc, const char* argv[])
         }
 
         NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
-
+        grpc::EnableDefaultHealthCheckService(true);
         grpc::ServerBuilder builder;
         builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
         builder.RegisterService(&workerService);
