@@ -54,6 +54,14 @@ class SystestAdapter(BenchmarkAdapter):
                 context={"benchmark_language": "systest"},
                 tags={"name": result["query name"]},
             ))
+            benchmarkResults.append(BenchmarkResult(
+                stats={
+                    "data": [result["bytesPerSecond"]],
+                    "unit": "B/s"
+                },
+                context={"benchmark_language": "systest"},
+                tags={"name": result["query name"] + " [B/s]"},
+            ))
 
         return benchmarkResults
 
