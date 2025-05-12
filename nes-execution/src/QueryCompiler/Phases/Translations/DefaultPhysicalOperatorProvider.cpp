@@ -368,7 +368,7 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         streamJoinConfig.windowSlide,
         MemoryControllerInfo(
             queryCompilerConfig.fileBackedWorkingDir.getValue(), decomposedQueryPlan.getQueryId(), joinOperator->getOutputOriginIds()[0]),
-        RLSBased,
+        KalmanBased,
         joinOperator->getAllInputOriginIds());
     /*auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         streamJoinConfig.windowSize,

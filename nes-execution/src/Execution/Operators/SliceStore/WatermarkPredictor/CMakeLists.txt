@@ -13,6 +13,7 @@
 add_source_files(nes-execution
         AbstractWatermarkPredictor.cpp
         KalmanBasedWindowTriggerPredictor.cpp
+        RandomWatermarkPredictor.cpp
         RegressionBasedWatermarkPredictor.cpp
         RLSBasedWatermarkPredictor.cpp
 )
