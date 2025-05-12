@@ -24,11 +24,11 @@ namespace NES
 class SourcePhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit SourcePhysicalOperator(std::shared_ptr<Sources::SourceDescriptor> descriptor, OriginId id);
+    explicit SourcePhysicalOperator(SourceDescriptor descriptor, OriginId id);
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
-    [[nodiscard]] std::shared_ptr<Sources::SourceDescriptor> getDescriptor() const;
+    [[nodiscard]] SourceDescriptor getDescriptor() const;
     [[nodiscard]] OriginId getOriginId() const;
 
     bool operator==(const SourcePhysicalOperator& other) const;
@@ -36,6 +36,6 @@ public:
 private:
     std::optional<PhysicalOperator> child;
     OriginId originId;
-    std::shared_ptr<Sources::SourceDescriptor> descriptor;
+    SourceDescriptor descriptor;
 };
 }

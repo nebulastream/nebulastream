@@ -23,10 +23,10 @@
 namespace NES
 {
 
-SourcePhysicalOperator::SourcePhysicalOperator(std::shared_ptr<Sources::SourceDescriptor> descriptor, OriginId id)
+SourcePhysicalOperator::SourcePhysicalOperator(SourceDescriptor descriptor, OriginId id)
     : originId(id), descriptor(std::move(std::move(descriptor))) { };
 
-std::shared_ptr<Sources::SourceDescriptor> SourcePhysicalOperator::getDescriptor() const
+SourceDescriptor SourcePhysicalOperator::getDescriptor() const
 {
     return descriptor;
 };
@@ -38,7 +38,7 @@ OriginId SourcePhysicalOperator::getOriginId() const
 
 bool SourcePhysicalOperator::operator==(const SourcePhysicalOperator& other) const
 {
-    return *descriptor == *other.descriptor;
+    return descriptor == other.descriptor;
 }
 
 std::optional<PhysicalOperator> SourcePhysicalOperator::getChild() const

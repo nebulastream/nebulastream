@@ -80,9 +80,6 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inp
         }
     }
 
-    ///validate that only two different type of schema were present
-    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
-
     copy.leftInputSchema = Schema{copy.leftInputSchema.memoryLayoutType};
     copy.rightInputSchema = Schema{copy.rightInputSchema.memoryLayoutType};
     if (distinctSchemas.size() == 1)

@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <Plans/LogicalPlan.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
 
 namespace NES::LegacyOptimizer
 {

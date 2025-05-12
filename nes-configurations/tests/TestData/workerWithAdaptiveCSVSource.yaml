@@ -11,7 +11,7 @@ numberOfWorkerThreads: 5
 numberOfBuffersInGlobalBufferManager: 2048
 
 # Number buffers in source local buffer pool
-numberOfBuffersInSourceLocalBufferPool: 128
+numberOfBuffersInSourceLocalPools: 128
 
 physicalSources:
   # Set logical source name where this source is added to

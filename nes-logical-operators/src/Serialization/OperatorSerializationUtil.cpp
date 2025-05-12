@@ -25,6 +25,7 @@
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
@@ -118,36 +119,41 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
     throw CannotDeserialize("could not de-serialize this serialized operator: {}", serializedOperator.DebugString());
 }
 
-std::unique_ptr<Sources::SourceDescriptor>
-OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)
+SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)
 {
-    /// Declaring variables outside of SourceDescriptor for readability/debuggability.
     auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
-    auto logicalSourceName = sourceDescriptor.logicalsourcename();
-    auto sourceType = sourceDescriptor.sourcetype();
-    auto numberOfBuffersInSourceLocalBufferPool = sourceDescriptor.numberofbuffersinsourcelocalbufferpool();
+    const auto& logicalSourceName = sourceDescriptor.logicalsourcename();
+    const LogicalSource logicalSource{logicalSourceName, std::make_shared<Schema>(schema)};
+
+    /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
+    const auto physicalSourceId = sourceDescriptor.physicalsourceid();
+    const auto& sourceType = sourceDescriptor.sourcetype();
+    const auto workerIdInt = sourceDescriptor.workerid();
+    const auto workerId = WorkerId{workerIdInt};
+    const auto buffersInLocalPool = sourceDescriptor.numberofbuffersinlocalpool();
 
     /// Deserialize the parser config.
     const auto& serializedParserConfig = sourceDescriptor.parserconfig();
-    auto deserializedParserConfig = Sources::ParserConfig{};
+    auto deserializedParserConfig = ParserConfig{};
     deserializedParserConfig.parserType = serializedParserConfig.type();
     deserializedParserConfig.tupleDelimiter = serializedParserConfig.tupledelimiter();
     deserializedParserConfig.fieldDelimiter = serializedParserConfig.fielddelimiter();
 
     /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
-    NES::Configurations::DescriptorConfig::Config sourceDescriptorConfig{};
+    Configurations::DescriptorConfig::Config sourceDescriptorConfig{};
     for (const auto& [key, value] : sourceDescriptor.config())
     {
         sourceDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
     }
 
-    return std::make_unique<Sources::SourceDescriptor>(
-        std::move(schema),
-        std::move(logicalSourceName),
-        std::move(sourceType),
-        numberOfBuffersInSourceLocalBufferPool,
-        std::move(deserializedParserConfig),
-        std::move(sourceDescriptorConfig));
+    return SourceDescriptor{
+        logicalSource,
+        physicalSourceId,
+        workerId,
+        sourceType,
+        buffersInLocalPool,
+        (std::move(sourceDescriptorConfig)),
+        deserializedParserConfig};
 }
 
 std::unique_ptr<Sinks::SinkDescriptor>

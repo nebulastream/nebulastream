@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <Runtime/BufferManager.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -35,7 +36,6 @@
 #include <IntegrationTestUtil.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <SingleNodeWorkerConfiguration.hpp>
-
 
 namespace NES::Testing
 {
@@ -66,6 +66,7 @@ public:
         NES_INFO("Setup SingleNodeIntegrationTest test class.");
     }
 
+    SourceCatalog sourceCatalog;
     const std::string idFieldName = "tcp_source$id";
     const std::string dataInputFile = "oneToThirtyOneSingleColumn.csv";
 };
@@ -133,7 +134,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
-    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName, sourceCatalog);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.workerConfiguration.queryOptimizer.executionMode = Nautilus::Configurations::ExecutionMode::COMPILER;
@@ -146,7 +147,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
     {
         auto mockTCPServer = SyncedMockTcpServer::create(numInputTuplesToProduceByTCPMockServer);
         auto mockTCPServerPort = mockTCPServer->getPort();
-        IntegrationTestUtil::replacePortInTCPSources(queryPlan, mockTCPServerPort, tcpSourceNumber);
+        IntegrationTestUtil::replacePortInTCPSources(queryPlan, mockTCPServerPort, tcpSourceNumber, sourceCatalog);
         mockedTcpServers.emplace_back(std::move(mockTCPServer));
     }
 
