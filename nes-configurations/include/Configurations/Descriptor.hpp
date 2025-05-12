@@ -325,12 +325,13 @@ struct Descriptor
         return std::nullopt;
     }
 
-    const DescriptorConfig::Config config;
+    [[nodiscard]] DescriptorConfig::Config getConfig() const { return config; }
 
 protected:
     std::string toStringConfig() const;
 
 private:
+    DescriptorConfig::Config config;
     friend std::ostream& operator<<(std::ostream& out, const DescriptorConfig::Config& config);
 };
 

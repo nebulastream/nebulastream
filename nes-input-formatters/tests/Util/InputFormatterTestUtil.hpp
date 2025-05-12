@@ -144,6 +144,7 @@ getEmitFunction(ThreadSafeVector<NES::Memory::TupleBuffer>& resultBuffers);
 Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
+    Catalogs::Source::SourceCatalog& sourceCatalog,
     const std::string& filePath,
     std::shared_ptr<Schema> schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,

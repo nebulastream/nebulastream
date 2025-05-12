@@ -14,14 +14,34 @@
 
 #pragma once
 
+#include <compare>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
 #include <ostream>
 #include <string>
+#include <type_traits>
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/base.h>
+#include <fmt/ostream.h>
+#include <fmt/core.h>
+#include <folly/hash/Hash.h>
 
+namespace NES
+{
+namespace Catalogs::Source
+{
+class SourceCatalog;
+}
+class OperatorSerializationUtil;
+}
 namespace NES::Sources
 {
 
@@ -30,43 +50,73 @@ struct ParserConfig
     std::string parserType;
     std::string tupleDelimiter;
     std::string fieldDelimiter;
+    friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs);
+    friend bool operator!=(const ParserConfig& lhs, const ParserConfig& rhs);
 };
+static_assert(std::is_copy_assignable_v<ParserConfig>);
 
-struct SourceDescriptor : public Configurations::Descriptor
+class SourceDescriptor : public Configurations::Descriptor
 {
+    friend class Catalogs::Source::SourceCatalog;
+    friend OperatorSerializationUtil;
+    uint64_t physicalSourceID;
+    LogicalSource logicalSource;
+    WorkerId workerID;
+    std::string sourceType;
+    ParserConfig parserConfig;
+    int buffersInLocalPool;
+
     /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
     /// Given an invalid value, the NodeEngine takes its configured value. Otherwise the source-specific configuration takes priority.
-    static constexpr int INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL = -1;
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
-        std::shared_ptr<Schema> schema,
-        std::string logicalSourceName,
+        LogicalSource  logicalSource,
+        uint64_t physicalSourceID,
+        WorkerId workerID,
         std::string sourceType,
         int numberOfBuffersInSourceLocalBufferPool,
-        ParserConfig parserConfig,
-        Configurations::DescriptorConfig::Config&& config);
+        Configurations::DescriptorConfig::Config&& config,
+        ParserConfig parserConfig);
 
+public:
+    static constexpr int INVALID_BUFFERS_IN_LOCAL_POOL = -1;
     ~SourceDescriptor() = default;
-    const std::shared_ptr<Schema> schema;
-    const std::string logicalSourceName;
-    const std::string sourceType;
-    const int numberOfBuffersInSourceLocalBufferPool;
-    /// is const data member, because 'SourceDescriptor' should be immutable and 'const' communicates more clearly then private+getter
-    const ParserConfig parserConfig;
+    SourceDescriptor(const SourceDescriptor& other) = default;
+    /// Deleted, because the descriptors have a const field
+    SourceDescriptor& operator=(const SourceDescriptor& other) = delete;
+    SourceDescriptor(SourceDescriptor&& other) noexcept = default;
+    SourceDescriptor& operator=(SourceDescriptor&& other) noexcept = delete;
 
-    friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
+    friend std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
+
+
+    friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor);
+
+    [[nodiscard]] LogicalSource getLogicalSource() const;
+    [[nodiscard]] std::string getSourceType() const;
+    [[nodiscard]] ParserConfig getParserConfig() const;
+
+    [[nodiscard]] WorkerId getWorkerId() const;
+    [[nodiscard]] uint64_t getPhysicalSourceId() const;
+    [[nodiscard]] int32_t getBuffersInLocalPool() const;
+
 };
 
 }
 
+template <>
+struct std::hash<NES::Sources::SourceDescriptor>
+{
+    size_t operator()(const NES::Sources::SourceDescriptor& sourceDescriptor) const noexcept
+    {
+        return folly::hash::hash_combine(sourceDescriptor.getLogicalSource(), sourceDescriptor.getPhysicalSourceId());
+    }
+};
 /// Specializing the fmt ostream_formatter to accept SourceDescriptor objects.
 /// Allows to call fmt::format("SourceDescriptor: {}", SourceDescriptorObject); and therefore also works with our logging.
-namespace fmt
-{
 template <>
-struct formatter<NES::Sources::SourceDescriptor> : ostream_formatter
+struct fmt::formatter<NES::Sources::SourceDescriptor> : ostream_formatter
 {
 };
-}

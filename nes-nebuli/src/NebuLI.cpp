@@ -28,6 +28,7 @@
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
@@ -37,9 +38,8 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <SourceCatalogs/PhysicalSource.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
-#include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
@@ -162,19 +162,20 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 }
 
 Sources::SourceDescriptor createSourceDescriptor(
-    std::string logicalSourceName,
-    std::shared_ptr<Schema> schema,
+    const NES::LogicalSource& logicalSource,
+    const WorkerId workerID,
     const std::unordered_map<std::string, std::string>& parserConfig,
-    std::unordered_map<std::string, std::string> sourceConfiguration)
+    std::unordered_map<std::string, std::string> sourceConfiguration,
+    const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
 {
     PRECONDITION(
         sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG),
         "Missing `Configurations::SOURCE_TYPE_CONFIG` in source configuration");
     const auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
-    const auto numberOfBuffersInSourceLocalBufferPool = [](const std::unordered_map<std::string, std::string>& sourceConfig)
+    const auto buffersInLocalPool = [](const std::unordered_map<std::string, std::string>& sourceConfig)
     {
         /// Initialize with invalid value and overwrite with configured value if given
-        auto numSourceLocalBuffers = Sources::SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL;
+        auto numSourceLocalBuffers = Sources::SourceDescriptor::INVALID_BUFFERS_IN_LOCAL_POOL;
 
         if (const auto configuredNumSourceLocalBuffers = sourceConfig.find(Configurations::NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL);
             configuredNumSourceLocalBuffers != sourceConfig.end())
@@ -187,15 +188,15 @@ Sources::SourceDescriptor createSourceDescriptor(
         return numSourceLocalBuffers;
     }(sourceConfiguration);
 
-    auto validParserConfig = validateAndFormatParserConfig(parserConfig);
+    const auto validParserConfig = validateAndFormatParserConfig(parserConfig);
     auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
-    return Sources::SourceDescriptor(
-        std::move(schema),
-        std::move(logicalSourceName),
-        sourceType,
-        numberOfBuffersInSourceLocalBufferPool,
-        std::move(validParserConfig),
-        std::move(validSourceConfig));
+    const auto physicalSourceOpt
+        = sourceCatalog->addPhysicalSource(logicalSource, workerID, sourceType, buffersInLocalPool, std::move(validSourceConfig), validParserConfig);
+    if (not physicalSourceOpt.has_value())
+    {
+        throw UnregisteredSource("{}", logicalSource.getLogicalSourceName());
+    }
+    return physicalSourceOpt.value();
 }
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
@@ -234,20 +235,19 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
         {
             schema = schema->addField(name, type);
         }
-        sourceCatalog->addLogicalSource(logicalSourceName, schema);
+        sourceCatalog->addLogicalSource(logicalSourceName, *schema);
     }
 
     /// Add physical sources to corresponding logical sources.
     for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
     {
-        auto sourceDescriptor = createSourceDescriptor(
-            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
-        sourceCatalog->addPhysicalSource(
-            logicalSourceName,
-            Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceDescriptor)),
-                sourceCatalog->getLogicalSource(logicalSourceName),
-                INITIAL<WorkerId>));
+        auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+        if (not logicalSource.has_value())
+        {
+            throw UnregisteredSource("{}", logicalSourceName);
+        }
+        auto sourceDescriptor
+            = createSourceDescriptor(logicalSource.value(), INITIAL<WorkerId>, parserConfig, std::move(sourceConfig), sourceCatalog);
     }
 
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);

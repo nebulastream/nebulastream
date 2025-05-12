@@ -54,7 +54,7 @@ public:
 
     /// Indicates how many buffers a single data source can allocate. This property controls the backpressure mechanism as a data source that can't allocate new records can't ingest more data.
     UIntOption numberOfBuffersInSourceLocalBufferPool
-        = {"numberOfBuffersInSourceLocalBufferPool",
+        = {"buffersInLocalPool",
            "64",
            "Number buffers in source local buffer pool. May be overwritten by a source-specific configuration (see SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};

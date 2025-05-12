@@ -62,6 +62,8 @@ EXCEPTION(UnknownExecutablePipelineProviderType, 2119, "unknown executable pipel
 EXCEPTION(UnknownCompilationBackendType, 2120, "unknown compilation backend type")
 EXCEPTION(UnsupportedOperation, 2121, "tried to execute an unsupported operation")
 EXCEPTION(UnknownParserType, 2122, "unknown parser type")
+EXCEPTION(UnregisteredSource, 2123, "unregistered source")
+EXCEPTION(SourceAlreadyExists, 2124, "source already exists")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")

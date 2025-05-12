@@ -53,7 +53,7 @@ std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor
 
 bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 {
-    return lhs.sinkType == rhs.sinkType && lhs.config == rhs.config;
+    return lhs.sinkType == rhs.sinkType && lhs.getConfig() == rhs.getConfig();
 }
 
 }
