@@ -65,6 +65,7 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
     /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    const auto threadId = executionCtx.getWorkerThreadId();
     const auto sliceReference = invoke(
         +[](OperatorHandler* ptrOpHandler,
             const Timestamp timestamp,
@@ -79,18 +80,13 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
         },
         operatorHandlerRef,
         timestamp,
-        executionCtx.getWorkerThreadId(),
+        threadId,
         nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
-    const auto nljPagedVectorMemRef = invoke(
-        getNLJPagedVectorProxy,
-        sliceReference,
-        executionCtx.getWorkerThreadId(),
-        nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
-
+    const auto nljPagedVectorMemRef
+        = invoke(getNLJPagedVectorProxy, sliceReference, threadId, nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
 
     /// Write record to the pagedVector
-    const Interface::PagedVectorRef pagedVectorRef(
-        nljPagedVectorMemRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, memoryProvider);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

@@ -37,8 +37,7 @@ class PagedVectorRef
 public:
     PagedVectorRef(
         const nautilus::val<PagedVector*>& pagedVectorRef,
-        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider);
+        const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
 
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
@@ -61,7 +60,6 @@ private:
     nautilus::val<PagedVector*> pagedVectorRef;
     std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     nautilus::val<Memory::MemoryLayouts::MemoryLayout*> memoryLayout;
-    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
 };
 
 class PagedVectorRefIter

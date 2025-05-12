@@ -61,7 +61,7 @@ void runStoreTest(
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
             const RecordBuffer recordBuffer(inputBufferRef);
-            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider, bufferProviderVal);
+            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider);
             for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
             {
                 const auto record = memoryProviderInputBuffer->readRecord(projections, recordBuffer, i);
@@ -123,7 +123,7 @@ void runRetrieveTest(
             nautilus::val<Interface::PagedVector*> pagedVectorVal)
         {
             RecordBuffer recordBuffer(outputBufferRef);
-            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider, bufferProviderVal);
+            const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider);
             nautilus::val<uint64_t> numberOfTuples = 0;
             for (auto it = pagedVectorRef.begin(projections); it != pagedVectorRef.end(projections); ++it)
             {
