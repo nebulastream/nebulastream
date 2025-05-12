@@ -24,12 +24,13 @@ enum class InputFormat : uint8_t
 {
     CSV
 };
-
+/// NOLINTBEGIN(cert-err58-cpp)
 ///Coordinator Configuration Names
 const std::string CONFIG_PATH = "configPath";
 
 ///Configuration names for source types (Descriptor(.hpp) must support these in 'validateAndFormat()')
 const std::string SOURCE_TYPE_CONFIG = "type";
-const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL = "numberOfBuffersInSourceLocalBufferPool";
+const std::string NUMBER_OF_BUFFERS_IN_LOCAL_POOL = "numberOfBuffersInLocalPool";
+/// NOLINTEND(cert-err58-cpp)
 
 }

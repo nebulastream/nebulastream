@@ -53,7 +53,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
         systemEventListener,
         std::move(queryLog),
         std::move(queryEngine),
-        workerConfiguration.numberOfBuffersInSourceLocalBufferPool.getValue());
+        workerConfiguration.numberOfBuffersInSourceLocalPools.getValue());
 }
 
 }

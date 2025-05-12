@@ -38,10 +38,9 @@ namespace NES
 class SourceDescriptorLogicalOperator final : public LogicalOperatorConcept
 {
 public:
-    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
+    explicit SourceDescriptorLogicalOperator(SourceDescriptor sourceDescriptor);
 
-    [[nodiscard]] std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
-    [[nodiscard]] Sources::SourceDescriptor& getSourceDescriptorRef() const;
+    [[nodiscard]] SourceDescriptor getSourceDescriptor() const;
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;
@@ -66,7 +65,7 @@ public:
 
 private:
     static constexpr std::string_view NAME = "Source";
-    const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    SourceDescriptor sourceDescriptor;
     OriginIdAssignerTrait originIdTrait;
 
     std::vector<LogicalOperator> children;

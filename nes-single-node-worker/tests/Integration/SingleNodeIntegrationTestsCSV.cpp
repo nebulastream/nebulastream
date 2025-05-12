@@ -20,6 +20,8 @@
 #include <Identifiers/Identifiers.hpp>
 
 #include <Runtime/BufferManager.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -27,6 +29,7 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -60,7 +63,7 @@ public:
         Logger::setupLogging("SingleNodeIntegrationTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup SingleNodeIntegrationTest test class.");
     }
-
+    SourceCatalog sourceCatalog;
     const std::string idFieldName = "default_source$id";
     const std::string dataInputFile = "oneToThirtyOneDoubleColumn.csv";
 };
@@ -90,7 +93,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesCSV)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
-    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName, sourceCatalog);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.workerConfiguration.queryOptimizer.executionMode = Nautilus::Configurations::ExecutionMode::COMPILER;
