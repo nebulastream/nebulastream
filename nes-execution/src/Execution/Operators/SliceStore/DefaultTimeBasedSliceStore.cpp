@@ -113,7 +113,10 @@ DefaultTimeBasedSliceStore::~DefaultTimeBasedSliceStore()
 }
 
 std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreate(
-    const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
+    const Timestamp timestamp,
+    WorkerThreadId,
+    QueryCompilation::JoinBuildSideType,
+    const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
 

@@ -83,7 +83,10 @@ public:
     ~FileBackedTimeBasedSliceStore() override;
 
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
-        Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
     getTriggerableWindowSlices(Timestamp globalWatermark) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
@@ -151,6 +154,7 @@ private:
     /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory.
     std::shared_ptr<MemoryController> memoryController;
     folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
+    std::map<WorkerThreadId, std::map<QueryCompilation::JoinBuildSideType, std::vector<std::shared_ptr<Slice>>>> alteredSlicesPerThread;
 
     uint64_t numberOfWorkerThreads;
     MemoryControllerInfo memoryControllerInfo;

@@ -66,15 +66,21 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto sliceReference = invoke(
-        +[](OperatorHandler* ptrOpHandler, const Timestamp timestamp)
+        +[](OperatorHandler* ptrOpHandler,
+            const Timestamp timestamp,
+            const WorkerThreadId workerThreadId,
+            const QueryCompilation::JoinBuildSideType joinBuildSide)
         {
             PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
             const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
             const auto createFunction = opHandler->getCreateNewSlicesFunction();
-            return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
+            return dynamic_cast<NLJSlice*>(
+                opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, workerThreadId, joinBuildSide, createFunction)[0].get());
         },
         operatorHandlerRef,
-        timestamp);
+        timestamp,
+        executionCtx.getWorkerThreadId(),
+        nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
     const auto nljPagedVectorMemRef = invoke(
         getNLJPagedVectorProxy,
         sliceReference,

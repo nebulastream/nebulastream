@@ -52,8 +52,11 @@ class WindowSlicesStoreInterface
 public:
     virtual ~WindowSlicesStoreInterface() = default;
     /// Retrieves the slices that corresponds to the timestamp. If no slices exist for the timestamp, they are created by calling the method createNewSlice
-    virtual std::vector<std::shared_ptr<Slice>>
-    getSlicesOrCreate(Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
+    virtual std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
         = 0;
 
     /// Retrieves all slices that can be triggered by the given global watermark

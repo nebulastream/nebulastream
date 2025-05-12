@@ -50,7 +50,10 @@ public:
     ~DefaultTimeBasedSliceStore() override;
 
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
-        Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
+        Timestamp timestamp,
+        WorkerThreadId workerThreadId,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
+        const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
     getTriggerableWindowSlices(Timestamp globalWatermark) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;

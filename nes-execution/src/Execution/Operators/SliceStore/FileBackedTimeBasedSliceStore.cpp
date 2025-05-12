@@ -74,6 +74,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , writeExecTimeFunction(other.writeExecTimeFunction)
     , readExecTimeFunction(other.readExecTimeFunction)
     , memoryController(other.memoryController)
+    , alteredSlicesPerThread(other.alteredSlicesPerThread)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
     , memoryControllerInfo(other.memoryControllerInfo)
     , sliceAssigner(other.sliceAssigner)
@@ -100,6 +101,7 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , writeExecTimeFunction(std::move(other.writeExecTimeFunction))
     , readExecTimeFunction(std::move(other.readExecTimeFunction))
     , memoryController(std::move(other.memoryController))
+    , alteredSlicesPerThread(std::move(other.alteredSlicesPerThread))
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
     , memoryControllerInfo(std::move(other.memoryControllerInfo))
     , watermarkPredictorUpdateCnt(std::move(other.watermarkPredictorUpdateCnt))
@@ -136,6 +138,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     writeExecTimeFunction = other.writeExecTimeFunction;
     readExecTimeFunction = other.readExecTimeFunction;
     memoryController = other.memoryController;
+    alteredSlicesPerThread = other.alteredSlicesPerThread;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
     memoryControllerInfo = other.memoryControllerInfo;
     sliceAssigner = other.sliceAssigner;
@@ -159,6 +162,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     writeExecTimeFunction = std::move(other.writeExecTimeFunction);
     readExecTimeFunction = std::move(other.readExecTimeFunction);
     memoryController = std::move(other.memoryController);
+    alteredSlicesPerThread = std::move(other.alteredSlicesPerThread);
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
     memoryControllerInfo = std::move(other.memoryControllerInfo);
     watermarkPredictorUpdateCnt = std::move(other.watermarkPredictorUpdateCnt);
@@ -196,8 +200,12 @@ FileBackedTimeBasedSliceStore::~FileBackedTimeBasedSliceStore()
 }
 
 std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCreate(
-    const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
+    const auto threadId = WorkerThreadId(workerThreadId % numberOfWorkerThreads);
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
 
     const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
@@ -205,7 +213,9 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
 
     if (slicesWriteLocked->contains(sliceEnd))
     {
-        return {slicesWriteLocked->find(sliceEnd)->second};
+        const auto slice = slicesWriteLocked->find(sliceEnd)->second;
+        alteredSlicesPerThread[threadId][joinBuildSide].emplace_back(slice);
+        return {slice};
     }
 
     /// We assume that only one slice is created per timestamp
@@ -224,6 +234,7 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
         windowSlices.emplace_back(newSlice);
     }
 
+    alteredSlicesPerThread[threadId][joinBuildSide].emplace_back(newSlice);
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
     slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Left}, true});
     slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Right}, true});
@@ -348,7 +359,6 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         return;
     }
     auto& [slicesWriteLocked, windowsWriteLocked] = *lockedSlicesAndWindows;
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
 
     NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
 
@@ -373,6 +383,7 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
     }
 
     /// 2. We gather all slices if they are not used in any window that has not been triggered/can not be deleted yet
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
     for (auto slicesLockedIt = slicesWriteLocked->begin(); slicesLockedIt != slicesWriteLocked->end();)
     {
         const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
@@ -380,8 +391,8 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
         {
             NES_TRACE("Deleting slice with sliceEnd {} as it is not used anymore", sliceEnd);
             memoryController->deleteSliceFiles(sliceEnd);
-            slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Left}));
-            slicesInMemoryLocked->erase(slicesInMemoryLocked->find({sliceEnd, QueryCompilation::JoinBuildSideType::Right}));
+            slicesInMemoryLocked->erase({sliceEnd, QueryCompilation::JoinBuildSideType::Left});
+            slicesInMemoryLocked->erase({sliceEnd, QueryCompilation::JoinBuildSideType::Right});
             slicesLockedIt = slicesWriteLocked->erase(slicesLockedIt);
         }
         else
@@ -399,6 +410,7 @@ void FileBackedTimeBasedSliceStore::deleteState()
     slicesWriteLocked->clear();
     windowsWriteLocked->clear();
     slicesInMemoryLocked->clear();
+    alteredSlicesPerThread.clear();
     // TODO delete memCtrl and state from ssd if there is any
 }
 
@@ -410,6 +422,13 @@ uint64_t FileBackedTimeBasedSliceStore::getWindowSize() const
 void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWorkerThreads)
 {
     this->numberOfWorkerThreads = numberOfWorkerThreads;
+
+    /// Initialise maps to keep track of altered slices
+    for (auto i = 0UL; i < numberOfWorkerThreads; ++i)
+    {
+        alteredSlicesPerThread[WorkerThreadId(i)][QueryCompilation::JoinBuildSideType::Left];
+        alteredSlicesPerThread[WorkerThreadId(i)][QueryCompilation::JoinBuildSideType::Right];
+    }
 
     /// Initialise memory controller and measure execution times for reading and writing
     memoryController = std::make_shared<MemoryController>(
@@ -482,25 +501,21 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
     const WorkerThreadId threadId)
 {
     std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> slicesToUpdate;
-    for (const auto& [sliceEnd, slice] : *slices.rlock())
+    for (const auto& slice : alteredSlicesPerThread[threadId][joinBuildSide])
     {
         // TODO state sizes do not include size of variable sized data
+        const auto sliceEnd = slice->getSliceEnd();
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
         const auto stateSizeOnDisk = nljSlice->getStateSizeOnDiskForThreadId(memoryLayout, joinBuildSide, threadId);
         const auto stateSizeInMemory = nljSlice->getStateSizeInMemoryForThreadId(memoryLayout, joinBuildSide, threadId);
 
-        const auto readExecTime = getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk);
-        const auto writeAndReadExecTime = getExecTimesForDataSize(writeExecTimeFunction, stateSizeInMemory)
-            + getExecTimesForDataSize(readExecTimeFunction, stateSizeInMemory + stateSizeOnDisk);
-
         const auto now = std::chrono::high_resolution_clock::now();
         const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
-        const auto predictedReadTimestamp = AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
-            watermarkPredictors, timeNow + readExecTime + USE_TIME_DELTA_MS);
-        const auto predictedWriteAndReadTimestamp = AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
-            watermarkPredictors, timeNow + writeAndReadExecTime + USE_TIME_DELTA_MS);
 
-        if (stateSizeOnDisk > USE_MIN_STATE_SIZE_READ && predictedReadTimestamp >= sliceEnd)
+        if (stateSizeOnDisk > USE_MIN_STATE_SIZE_READ
+            && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
+                   watermarkPredictors, timeNow + getExecTimesForDataSize(readExecTimeFunction, stateSizeOnDisk) + USE_TIME_DELTA_MS)
+                >= sliceEnd)
         {
             /// Slice should be read back now as it will be triggered once the read operation has finished
             if (const auto fileLayout = memoryController->getFileLayout(sliceEnd, threadId, joinBuildSide); fileLayout.has_value())
@@ -509,7 +524,13 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
             }
             /// Slice is already being read back if no FileLayout was found
         }
-        else if (stateSizeInMemory > USE_MIN_STATE_SIZE_WRITE && predictedWriteAndReadTimestamp < sliceEnd)
+        else if (
+            stateSizeInMemory > USE_MIN_STATE_SIZE_WRITE
+            && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
+                   watermarkPredictors,
+                   timeNow + getExecTimesForDataSize(writeExecTimeFunction, stateSizeInMemory)
+                       + getExecTimesForDataSize(readExecTimeFunction, stateSizeInMemory + stateSizeOnDisk) + USE_TIME_DELTA_MS)
+                < sliceEnd)
         {
             /// Slice should be written out as it will not be triggered before write and read operations have finished
             memoryController->setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
@@ -517,6 +538,7 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
         }
         /// Slice should not be written out or read back in any other case
     }
+    alteredSlicesPerThread[threadId][joinBuildSide].clear();
     return slicesToUpdate;
 }
 
