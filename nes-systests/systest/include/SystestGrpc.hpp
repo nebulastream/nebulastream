@@ -17,6 +17,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <Listeners/QueryLog.hpp>
 
 /// TODO #460: We should use on GRPC client class for nebuli and systests
 class GRPCClient
