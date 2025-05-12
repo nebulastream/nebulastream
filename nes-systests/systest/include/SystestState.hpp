@@ -28,6 +28,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Listeners/QueryLog.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <fmt/base.h>
@@ -103,24 +104,42 @@ struct Query
     SystestParser::Schema expectedSinkSchema;
 };
 
-struct QueryExecutionInfo
+
+struct RunningQuery
 {
-    explicit QueryExecutionInfo(std::chrono::time_point<std::chrono::high_resolution_clock> startTime)
-        : passed(false), startTime(std::move(startTime))
+    Query query;
+    QueryId queryId = INVALID_QUERY_ID;
+    Runtime::QuerySummary querySummary;
+    std::optional<uint64_t> bytesProcessed{0};
+    std::optional<uint64_t> tuplesProcessed{0};
+    bool passed = false;
+
+    std::chrono::duration<double> getElapsedTime() const
     {
+        INVARIANT(not querySummary.runs.empty(), "Query summaries should not be empty!");
+        INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+
+        const auto lastRun = querySummary.runs.back();
+        INVARIANT(lastRun.stop.has_value() && lastRun.running.has_value(), "Query {} has no querySummary timestamps!", queryId);
+        return std::chrono::duration_cast<std::chrono::duration<double>>(lastRun.stop.value() - lastRun.running.value());
     }
-    bool passed;
-    std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
-    std::chrono::time_point<std::chrono::high_resolution_clock> endTime;
-    uint64_t bytesProcessed{0};
-    uint64_t tuplesProcessed{0};
 
     [[nodiscard]] std::string getThroughput() const
     {
-        /// Calculating the throughput in bytes per second
-        const std::chrono::duration<double> duration = endTime - startTime;
-        const auto bytesPerSecond = static_cast<double>(bytesProcessed) / duration.count();
-        const auto tuplesPerSecond = static_cast<double>(tuplesProcessed) / duration.count();
+        INVARIANT(not querySummary.runs.empty(), "Query summaries should not be empty!");
+        INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+
+        const auto lastRun = querySummary.runs.back();
+        INVARIANT(lastRun.stop.has_value() && lastRun.running.has_value(), "Query {} has no querySummary timestamps!", queryId);
+        if (not bytesProcessed.has_value() or not tuplesProcessed.has_value())
+        {
+            return "";
+        }
+
+        /// Calculating the throughput in bytes per second and tuples per second
+        const std::chrono::duration<double> duration = lastRun.stop.value() - lastRun.running.value();
+        const auto bytesPerSecond = static_cast<double>(bytesProcessed.value()) / duration.count();
+        const auto tuplesPerSecond = static_cast<double>(tuplesProcessed.value()) / duration.count();
 
         auto formatUnits = [](double throughput)
         {
@@ -137,13 +156,6 @@ struct QueryExecutionInfo
         };
         return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
     }
-};
-
-struct RunningQuery
-{
-    Query query;
-    QueryId queryId = INVALID_QUERY_ID;
-    QueryExecutionInfo queryExecutionInfo;
 };
 
 struct TestFile
