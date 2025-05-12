@@ -7,13 +7,13 @@ Source stream UINT64 id UINT64 value UINT64 timestamp
 # TESTDATA/large/nexmark/bid.csv
 # Attach stream CONFIG/sources/file_default.yaml TESTDATA/config/inFormatter/csv_default.yaml INLINE
 Attach stream CONFIG/sources/file_default.yaml INLINE
-1,1,1000
-2,1,1001
-3,1,1002
-4,2,2000
-5,19,19000
-6,20,20000
-7,21,21000
+1|1|1000
+2|1|1001
+3|1|1002
+4|2|2000
+5|19|19000
+6|20|20000
+7|21|21000
 
 SINK sinkId UINT64 stream$id
 
