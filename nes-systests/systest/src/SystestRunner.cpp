@@ -290,8 +290,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                     }
                     worker.startQuery(queryId);
 
-                    auto runningQueryPtr = std::make_unique<RunningQuery>(
-                        query, QueryId(queryId), QueryExecutionInfo{std::chrono::high_resolution_clock::now()});
+                    auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                     runningQueries.wlock()->emplace_back(std::move(runningQueryPtr));
 
                     /// We are waiting if we have reached the maximum number of concurrent queries
@@ -317,11 +316,16 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                 if (runningQuery)
                 {
                     const auto querySummary = worker.getQuerySummary(QueryId(runningQuery->queryId));
-                    const auto queryStatus = querySummary->currentStatus;
-                    if (queryStatus == Runtime::Execution::QueryStatus::Stopped or queryStatus == Runtime::Execution::QueryStatus::Failed)
+                    if (not querySummary.has_value())
+                    {
+                        /// Query Summary is not yet available
+                        continue;
+                    }
+
+                    if (const auto queryStatus = querySummary->currentStatus;
+                        queryStatus == Runtime::Execution::QueryStatus::Stopped or queryStatus == Runtime::Execution::QueryStatus::Failed)
                     {
                         worker.unregisterQuery(QueryId(runningQuery->queryId));
-                        runningQuery->queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
 
                         std::optional<std::string> errorMessage;
                         if (queryStatus == Runtime::Execution::QueryStatus::Failed)
@@ -333,8 +337,10 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                         {
                             errorMessage = checkResult(*runningQuery);
                         }
-                        runningQuery->queryExecutionInfo.passed = not errorMessage.has_value();
-                        printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
+                        runningQuery->passed = not errorMessage.has_value();
+                        runningQuery->querySummary = querySummary.value();
+                        printQueryResultToStdOut(
+                            *runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries, "");
                         if (errorMessage.has_value())
                         {
                             failedQueries.wlock()->emplace_back(*runningQuery);
@@ -385,8 +391,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
 
                     const auto queryId = client.registerQuery(*query.queryPlan);
                     client.start(queryId);
-                    auto runningQueryPtr = std::make_unique<RunningQuery>(
-                        query, QueryId(queryId), QueryExecutionInfo{std::chrono::high_resolution_clock::now()});
+                    auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                     runningQueries.wlock()->emplace_back(std::move(runningQueryPtr));
 
                     /// We are waiting if we have reached the maximum number of concurrent queries
@@ -407,13 +412,14 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
         for (auto runningQueriesIter = runningQueriesLock->begin(); runningQueriesIter != runningQueriesLock->end();)
         {
             const auto& runningQuery = *runningQueriesIter;
-            if (runningQuery and (client.status(runningQuery->queryId.getRawValue()).status() == Stopped or client.status(runningQuery->queryId.getRawValue()).status() == Failed))
+            if (runningQuery and (client.status(runningQuery->queryId.getRawValue()).currentStatus == Runtime::Execution::QueryStatus::Stopped or client.status(runningQuery->queryId.getRawValue()).currentStatus == Runtime::Execution::QueryStatus::Failed))
             {
                 client.unregister(runningQuery->queryId.getRawValue());
-                runningQuery->queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
+                runningQuery->querySummary = client.status(runningQuery->queryId.getRawValue());
                 auto errorMessage = checkResult(*runningQuery);
-                runningQuery->queryExecutionInfo.passed = not errorMessage.has_value();
-                printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
+                runningQuery->passed = not errorMessage.has_value();
+
+                printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries, "");
                 if (errorMessage.has_value())
                 {
                     failedQueries.wlock()->emplace_back(*runningQuery);
@@ -438,19 +444,16 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
     std::vector<RunningQuery> failedQueries;
     for (const auto& queryRan : queries)
     {
-        if (!queryRan.queryExecutionInfo.passed)
+        if (!queryRan.passed)
         {
             failedQueries.emplace_back(queryRan);
         }
-        const auto executionTimeInNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                              queryRan.queryExecutionInfo.endTime - queryRan.queryExecutionInfo.startTime)
-                                              .count();
-        const auto executionTimeInSeconds = executionTimeInNanos / (1000 * 1000 * 1000);
+        const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
         resultJson.push_back({
-            {"query name", queryRan.query.name},
-            {"time", executionTimeInNanos},
-            {"bytesPerSecond", static_cast<double>(queryRan.queryExecutionInfo.bytesProcessed) / executionTimeInSeconds},
-            {"tuplesPerSecond", static_cast<double>(queryRan.queryExecutionInfo.tuplesProcessed) / executionTimeInSeconds},
+            {"query name", queryRan.query.resultFile().stem()},
+            {"time", executionTimeInSeconds},
+            {"bytesPerSecond", static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds},
+            {"tuplesPerSecond", static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds},
         });
     }
     return failedQueries;
@@ -482,35 +485,41 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     for (const auto& queryToRun : queries)
     {
         const auto queryId = worker.registerQuery(queryToRun.queryPlan);
-        RunningQuery currentRunningQuery(queryToRun, queryId, QueryExecutionInfo{std::chrono::high_resolution_clock::now()});
+        RunningQuery currentRunningQuery(queryToRun, queryId);
         {
             /// Measuring the time it takes from registering the query till unregistering / completion
             worker.startQuery(queryId);
-            if (const auto summary = waitForQueryTermination(worker, queryId); summary.runs.back().error.has_value())
+            const auto summary = waitForQueryTermination(worker, queryId);
+            if (summary.runs.back().error.has_value())
             {
                 fmt::println(std::cerr, "Query {} has failed with: {}", queryId, summary.runs.back().error->what());
                 continue;
             }
             worker.unregisterQuery(queryId);
-            currentRunningQuery.queryExecutionInfo.endTime = std::chrono::high_resolution_clock::now();
+            currentRunningQuery.querySummary = summary;
         }
 
-        /// Getting the size of all input files to pass this information to currentRunningQuery.queryExecutionInfo.bytesProcessed
-        currentRunningQuery.queryExecutionInfo.bytesProcessed = 0;
-        currentRunningQuery.queryExecutionInfo.tuplesProcessed = 0;
+        /// Getting the size and no. tuples of all input files to pass this information to currentRunningQuery.bytesProcessed
+        size_t bytesProcessed = 0;
+        size_t tuplesProcessed = 0;
         for (const auto& [sourcePath, sourceOccurrencesInQuery] : queryToRun.sourceNamesToFilepathAndCount | std::views::values)
         {
-            currentRunningQuery.queryExecutionInfo.bytesProcessed += (std::filesystem::file_size(sourcePath) * sourceOccurrencesInQuery);
+            bytesProcessed += (std::filesystem::file_size(sourcePath) * sourceOccurrencesInQuery);
 
             /// Counting the lines, i.e., \n in the sourcePath
             std::ifstream inFile(sourcePath);
-            currentRunningQuery.queryExecutionInfo.tuplesProcessed
+            tuplesProcessed
                 += std::count(std::istreambuf_iterator<char>(inFile), std::istreambuf_iterator<char>(), '\n') * sourceOccurrencesInQuery;
         }
+        currentRunningQuery.bytesProcessed = bytesProcessed;
+        currentRunningQuery.tuplesProcessed = tuplesProcessed;
 
         auto errorMessage = checkResult(currentRunningQuery);
-        currentRunningQuery.queryExecutionInfo.passed = not errorMessage.has_value();
-        printQueryResultToStdOut(currentRunningQuery, errorMessage.value_or(""), queryFinishedCounter, totalQueries);
+        currentRunningQuery.passed = not errorMessage.has_value();
+        const auto queryPerformanceMessage
+            = fmt::format(" in {} ({})", currentRunningQuery.getElapsedTime(), currentRunningQuery.getThroughput());
+        printQueryResultToStdOut(
+            currentRunningQuery, errorMessage.value_or(""), queryFinishedCounter, totalQueries, queryPerformanceMessage);
         ranQueries.emplace_back(currentRunningQuery);
 
         queryFinishedCounter += 1;
@@ -520,15 +529,16 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
 }
 
 void printQueryResultToStdOut(
-    const RunningQuery& runningQuery, const std::string& errorMessage, const size_t queryCounter, const size_t totalQueries)
+    const RunningQuery& runningQuery,
+    const std::string& errorMessage,
+    const size_t queryCounter,
+    const size_t totalQueries,
+    const std::string_view queryPerformanceMessage)
 {
     const auto queryNameLength = runningQuery.query.name.size();
     const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile + 1);
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
-    const std::chrono::duration<double> queryDuration
-        = (runningQuery.queryExecutionInfo.endTime - runningQuery.queryExecutionInfo.startTime);
-    const auto queryPerformanceMessage = fmt::format(" in {} ({})", queryDuration, runningQuery.queryExecutionInfo.getThroughput());
 
     /// spd logger cannot handle multiline prints with proper color and pattern.
     /// And as this is only for test runs we use stdout here.
@@ -536,7 +546,7 @@ void printQueryResultToStdOut(
     std::cout << queryCounterAsString << "/" << totalQueries << " ";
     std::cout << runningQuery.query.name << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
     std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
-    if (runningQuery.queryExecutionInfo.passed)
+    if (runningQuery.passed)
     {
         std::cout << "PASSED" << queryPerformanceMessage << '\n';
     }

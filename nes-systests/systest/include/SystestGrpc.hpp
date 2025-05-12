@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <Listeners/QueryLog.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
@@ -26,6 +27,6 @@ public:
 
     size_t registerQuery(const NES::DecomposedQueryPlan& queryPlan) const;
     void start(size_t queryId) const;
-    QuerySummaryReply status(size_t queryId) const;
+    NES::Runtime::QuerySummary status(size_t queryId) const;
     void unregister(size_t queryId) const;
 };
