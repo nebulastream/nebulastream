@@ -50,7 +50,7 @@ public:
 
 protected:
     uint64_t initial;
-    bool init;
+    std::atomic<bool> init;
 };
 
 }

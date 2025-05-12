@@ -48,7 +48,6 @@ void RLSBasedWatermarkPredictor::update(const std::vector<std::pair<uint64_t, Ti
 
 Timestamp RLSBasedWatermarkPredictor::getEstimatedWatermark(const uint64_t timestamp) const
 {
-    const auto weightLocked = weight.rlock();
     if (!init)
     {
         return Timestamp(initial);
@@ -57,6 +56,7 @@ Timestamp RLSBasedWatermarkPredictor::getEstimatedWatermark(const uint64_t times
     Eigen::VectorXd newX(2);
     newX << 1, timestamp;
 
+    const auto weightLocked = weight.rlock();
     return Timestamp(newX.dot(*weightLocked));
     //return Timestamp((*weightLocked)(0) + (*weightLocked)(1) * timestamp);
 }

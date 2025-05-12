@@ -50,7 +50,6 @@ void RegressionBasedWatermarkPredictor::update(const std::vector<std::pair<uint6
 
 Timestamp RegressionBasedWatermarkPredictor::getEstimatedWatermark(const uint64_t timestamp) const
 {
-    const auto coefficientsLocked = coefficients.rlock();
     if (!init)
     {
         return Timestamp(initial);
@@ -63,6 +62,7 @@ Timestamp RegressionBasedWatermarkPredictor::getEstimatedWatermark(const uint64_
         newX(j) = std::pow(timestamp, j); /// Polynomial terms
     }
 
+    const auto coefficientsLocked = coefficients.rlock();
     return Timestamp(coefficientsLocked->dot(newX));
 }
 
