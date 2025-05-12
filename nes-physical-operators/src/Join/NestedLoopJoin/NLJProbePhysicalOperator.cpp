@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
+#include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -40,7 +41,6 @@
 
 namespace NES
 {
-
 NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceEnd sliceEnd)
 {
     PRECONDITION(ptrOpHandler != nullptr, "op handler context should not be null");
@@ -64,7 +64,7 @@ Timestamp getNLJWindowEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTa
     return nljWindowTriggerTask->windowInfo.windowEnd;
 }
 
-static SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask, const JoinBuildSideType joinBuildSide)
+SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask, const JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljWindowTriggerTask != nullptr, "nljWindowTriggerTask should not be null");
 
@@ -75,6 +75,7 @@ static SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTrig
         case JoinBuildSideType::Right:
             return nljWindowTriggerTask->rightSliceEnd;
     }
+    std::unreachable();
 }
 
 NLJProbePhysicalOperator::NLJProbePhysicalOperator(
@@ -88,6 +89,41 @@ NLJProbePhysicalOperator::NLJProbePhysicalOperator(
     , leftMemoryProvider(std::move(leftMemoryProvider))
     , rightMemoryProvider(std::move(rightMemoryProvider))
 {
+}
+
+void NLJProbePhysicalOperator::performNLJ(
+    const Interface::PagedVectorRef& outerPagedVector,
+    const Interface::PagedVectorRef& innerPagedVector,
+    Interface::MemoryProvider::TupleBufferMemoryProvider& outerMemoryProvider,
+    Interface::MemoryProvider::TupleBufferMemoryProvider& innerMemoryProvider,
+    ExecutionContext& executionCtx,
+    const nautilus::val<Timestamp>& windowStart,
+    const nautilus::val<Timestamp>& windowEnd) const
+{
+    const auto outerKeyFields = outerMemoryProvider.getMemoryLayout()->getKeyFieldNames();
+    const auto innerKeyFields = innerMemoryProvider.getMemoryLayout()->getKeyFieldNames();
+    const auto outerFields = outerMemoryProvider.getMemoryLayout()->getSchema().getFieldNames();
+    const auto innerFields = innerMemoryProvider.getMemoryLayout()->getSchema().getFieldNames();
+
+    nautilus::val<uint64_t> outerItemPos(0);
+    for (auto outerIt = outerPagedVector.begin(outerKeyFields); outerIt != outerPagedVector.end(outerKeyFields); ++outerIt)
+    {
+        nautilus::val<uint64_t> innerItemPos(0);
+        for (auto innerIt = innerPagedVector.begin(innerKeyFields); innerIt != innerPagedVector.end(innerKeyFields); ++innerIt)
+        {
+            const auto joinedKeyFields = createJoinedRecord(*outerIt, *innerIt, windowStart, windowEnd, outerKeyFields, innerKeyFields);
+            if (joinFunction.execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
+            {
+                auto outerRecord = outerPagedVector.readRecord(outerItemPos, outerFields);
+                auto innerRecord = innerPagedVector.readRecord(innerItemPos, innerFields);
+                auto joinedRecord = createJoinedRecord(outerRecord, innerRecord, windowStart, windowEnd, outerFields, innerFields);
+                child->execute(executionCtx, joinedRecord);
+            }
+
+            ++innerItemPos;
+        }
+        ++outerItemPos;
+    }
 }
 
 void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -117,39 +153,40 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     const auto sliceRefLeft = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdLeft);
     const auto sliceRefRight = invoke(getNLJSliceRefFromEndProxy, operatorHandlerMemRef, sliceIdRight);
 
-    const auto leftPagedVectorRef
-        = invoke(getNLJPagedVectorProxy, sliceRefLeft, workerThreadIdForPages, nautilus::val<JoinBuildSideType>(JoinBuildSideType::Left));
-    const auto rightPagedVectorRef
-        = invoke(getNLJPagedVectorProxy, sliceRefRight, workerThreadIdForPages, nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right));
+    const auto leftPagedVectorRef = invoke(
+        +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
+        {
+            PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
+            return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
+        },
+        sliceRefLeft,
+        workerThreadIdForPages,
+        nautilus::val<JoinBuildSideType>(JoinBuildSideType::Left));
+    const auto rightPagedVectorRef = invoke(
+        +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
+        {
+            PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
+            return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
+        },
+        sliceRefRight,
+        workerThreadIdForPages,
+        nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right));
 
     const Interface::PagedVectorRef leftPagedVector(
         leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
     const Interface::PagedVectorRef rightPagedVector(
         rightPagedVectorRef, rightMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const auto numberOfTuplesLeft = leftPagedVector.getNumberOfTuples();
+    const auto numberOfTuplesRight = rightPagedVector.getNumberOfTuples();
 
-    const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema().getFieldNames();
-    const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema().getFieldNames();
-
-    nautilus::val<uint64_t> leftItemPos = 0UL;
-    for (auto leftIt = leftPagedVector.begin(leftKeyFields); leftIt != leftPagedVector.end(leftKeyFields); ++leftIt)
+    /// Outer loop should have more no. tuples
+    if (numberOfTuplesLeft < numberOfTuplesRight)
     {
-        nautilus::val<uint64_t> rightItemPos = 0UL;
-        for (auto rightIt = rightPagedVector.begin(rightKeyFields); rightIt != rightPagedVector.end(rightKeyFields); ++rightIt)
-        {
-            auto joinedKeyFields = createJoinedRecord(*leftIt, *rightIt, windowStart, windowEnd, leftKeyFields, rightKeyFields);
-            if (joinFunction.execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
-            {
-                auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
-                auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);
-                auto joinedRecord = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd);
-                executeChild(executionCtx, joinedRecord);
-            }
-
-            ++rightItemPos;
-        }
-        ++leftItemPos;
+        performNLJ(leftPagedVector, rightPagedVector, *leftMemoryProvider, *rightMemoryProvider, executionCtx, windowStart, windowEnd);
+    }
+    else
+    {
+        performNLJ(rightPagedVector, leftPagedVector, *rightMemoryProvider, *leftMemoryProvider, executionCtx, windowStart, windowEnd);
     }
 }
 

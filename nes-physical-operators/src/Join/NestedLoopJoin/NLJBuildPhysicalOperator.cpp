@@ -46,7 +46,7 @@ SliceEnd getNLJSliceEndProxy(const NLJSlice* nljSlice)
 }
 
 NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
-    OperatorHandlerId operatorHandlerId,
+    const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
@@ -69,8 +69,15 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
         },
         operatorHandlerRef,
         timestamp);
-    const auto nljPagedVectorMemRef
-        = invoke(getNLJPagedVectorProxy, sliceReference, executionCtx.workerThreadId, nautilus::val<JoinBuildSideType>(joinBuildSide));
+    const auto nljPagedVectorMemRef = invoke(
+        +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
+        {
+            PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
+            return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
+        },
+        sliceReference,
+        executionCtx.workerThreadId,
+        nautilus::val<JoinBuildSideType>(joinBuildSide));
 
 
     /// Write record to the pagedVector

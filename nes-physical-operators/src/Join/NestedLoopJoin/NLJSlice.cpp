@@ -20,6 +20,7 @@
 #include <numeric>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <SliceStore/Slice.hpp>
 
@@ -68,6 +69,20 @@ Nautilus::Interface::PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerT
     const auto pos = workerThreadId % rightPagedVectors.size();
     return rightPagedVectors[pos].get();
 }
+
+Nautilus::Interface::PagedVector*
+NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
+{
+    switch (joinBuildSide)
+    {
+        case JoinBuildSideType::Right:
+            return getPagedVectorRefRight(workerThreadId);
+        case JoinBuildSideType::Left:
+            return getPagedVectorRefLeft(workerThreadId);
+    }
+    std::unreachable();
+}
+
 
 void NLJSlice::combinePagedVectors()
 {

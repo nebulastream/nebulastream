@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 
 #include <cstdint>
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
@@ -128,12 +128,13 @@ const Memory::TupleBuffer* PagedVector::getTupleBufferForEntry(const uint64_t en
 std::optional<uint64_t> PagedVector::getBufferPosForEntry(const uint64_t entryPos) const
 {
     /// We need to find the index / page that the entryPos belongs to.
-    return findIdx(entryPos).and_then([pages = this->pages, entryPos = entryPos](const size_t index) -> std::optional<uint64_t>
-    {
-        /// We need to subtract the cumulative sum before our found index to get the position on the page
-        const auto cumulativeSumBefore = (index == 0) ? 0 : pages.at(index - 1).cumulativeSum;
-        return entryPos - cumulativeSumBefore;
-    });
+    return findIdx(entryPos).and_then(
+        [&](const size_t index) -> std::optional<uint64_t>
+        {
+            /// We need to subtract the cumulative sum before our found index to get the position on the page
+            const auto cumulativeSumBefore = (index == 0) ? 0 : pages.at(index - 1).cumulativeSum;
+            return entryPos - cumulativeSumBefore;
+        });
 }
 
 uint64_t PagedVector::getTotalNumberOfEntries() const

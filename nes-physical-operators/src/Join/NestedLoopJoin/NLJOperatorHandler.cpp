@@ -12,12 +12,15 @@
     limitations under the License.
 */
 
+#include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+
+#include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -91,7 +94,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
     /// Dispatching the buffer to the probe operator via the task queue.
     pipelineCtx->emitBuffer(tupleBuffer);
 
-    NES_TRACE(
+    NES_DEBUG(
         "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",
         bufferMemory->leftSliceEnd,
@@ -105,16 +108,4 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
         windowInfo.windowEnd);
 }
 
-Nautilus::Interface::PagedVector*
-getNLJPagedVectorProxy(const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
-{
-    PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-    switch (joinBuildSide)
-    {
-        case JoinBuildSideType::Left:
-            return nljSlice->getPagedVectorRefLeft(workerThreadId);
-        case JoinBuildSideType::Right:
-            return nljSlice->getPagedVectorRefRight(workerThreadId);
-    }
-}
 }
