@@ -16,6 +16,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <Execution/Operators/SliceStore/FileBackedTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
@@ -43,7 +44,10 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
 {
     WindowBasedOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
-    sliceAndWindowStore->setWorkerThreads(numberOfWorkerThreads);
+    if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(sliceAndWindowStore.get()))
+    {
+        sliceStore->setWorkerThreads(numberOfWorkerThreads);
+    }
 }
 
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)
@@ -100,5 +104,4 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
-
 }

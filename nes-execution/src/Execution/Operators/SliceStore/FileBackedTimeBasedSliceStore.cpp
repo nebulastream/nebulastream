@@ -24,7 +24,6 @@
 #include <Execution/Operators/SliceStore/WatermarkPredictor/KalmanBasedWindowTriggerPredictor.hpp>
 #include <Execution/Operators/SliceStore/WatermarkPredictor/RLSBasedWatermarkPredictor.hpp>
 #include <Execution/Operators/SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
-#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
@@ -40,12 +39,10 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
     MemoryControllerInfo memoryControllerInfo,
     const WatermarkPredictorType watermarkPredictorType,
     const std::vector<OriginId>& inputOrigins)
-    : watermarkProcessor(std::make_shared<Operators::MultiOriginWatermarkProcessor>(inputOrigins))
+    : DefaultTimeBasedSliceStore(windowSize, windowSlide, inputOrigins.size())
+    , watermarkProcessor(std::make_shared<Operators::MultiOriginWatermarkProcessor>(inputOrigins))
     , numberOfWorkerThreads(0)
     , memoryControllerInfo(std::move(memoryControllerInfo))
-    , sliceAssigner(windowSize, windowSlide)
-    , sequenceNumber(SequenceNumber::INITIAL)
-    , numberOfActiveOrigins(inputOrigins.size())
 {
     for (const auto origin : inputOrigins)
     {
@@ -69,7 +66,8 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore& other)
-    : watermarkProcessor(other.watermarkProcessor)
+    : DefaultTimeBasedSliceStore(other)
+    , watermarkProcessor(other.watermarkProcessor)
     , watermarkPredictors(other.watermarkPredictors)
     , writeExecTimeFunction(other.writeExecTimeFunction)
     , readExecTimeFunction(other.readExecTimeFunction)
@@ -77,16 +75,9 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , alteredSlicesPerThread(other.alteredSlicesPerThread)
     , numberOfWorkerThreads(other.numberOfWorkerThreads)
     , memoryControllerInfo(other.memoryControllerInfo)
-    , sliceAssigner(other.sliceAssigner)
-    , sequenceNumber(other.sequenceNumber.load())
-    , numberOfActiveOrigins(other.numberOfActiveOrigins)
 {
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
     const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
-    *slicesWriteLocked = *otherSlicesWriteLocked;
-    *windowsWriteLocked = *otherWindowsWriteLocked;
     *slicesInMemoryLocked = *otherSlicesInMemoryLocked;
 
     for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
@@ -96,7 +87,8 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
 }
 
 FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBasedSliceStore&& other) noexcept
-    : watermarkProcessor(std::move(other.watermarkProcessor))
+    : DefaultTimeBasedSliceStore(std::move(other))
+    , watermarkProcessor(std::move(other.watermarkProcessor))
     , watermarkPredictors(std::move(other.watermarkPredictors))
     , writeExecTimeFunction(std::move(other.writeExecTimeFunction))
     , readExecTimeFunction(std::move(other.readExecTimeFunction))
@@ -105,27 +97,17 @@ FileBackedTimeBasedSliceStore::FileBackedTimeBasedSliceStore(FileBackedTimeBased
     , numberOfWorkerThreads(std::move(other.numberOfWorkerThreads))
     , memoryControllerInfo(std::move(other.memoryControllerInfo))
     , watermarkPredictorUpdateCnt(std::move(other.watermarkPredictorUpdateCnt))
-    , sliceAssigner(std::move(other.sliceAssigner))
-    , sequenceNumber(std::move(other.sequenceNumber.load()))
-    , numberOfActiveOrigins(std::move(other.numberOfActiveOrigins))
 {
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
     const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
-    *slicesWriteLocked = std::move(*otherSlicesWriteLocked);
-    *windowsWriteLocked = std::move(*otherWindowsWriteLocked);
     *slicesInMemoryLocked = std::move(*otherSlicesInMemoryLocked);
 }
 
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore& other)
 {
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    auto [otherSlicesReadLocked, otherWindowsReadLocked] = acquireLocked(other.slices, other.windows);
+    DefaultTimeBasedSliceStore::operator=(other);
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
     const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
-    *slicesWriteLocked = *otherSlicesReadLocked;
-    *windowsWriteLocked = *otherWindowsReadLocked;
     *slicesInMemoryLocked = *otherSlicesInMemoryLocked;
 
     for (const auto& [origin, count] : other.watermarkPredictorUpdateCnt)
@@ -141,20 +123,14 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     alteredSlicesPerThread = other.alteredSlicesPerThread;
     numberOfWorkerThreads = other.numberOfWorkerThreads;
     memoryControllerInfo = other.memoryControllerInfo;
-    sliceAssigner = other.sliceAssigner;
-    sequenceNumber = other.sequenceNumber.load();
-    numberOfActiveOrigins = other.numberOfActiveOrigins;
     return *this;
 }
 
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore&& other) noexcept
 {
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-    auto [otherSlicesWriteLocked, otherWindowsWriteLocked] = acquireLocked(other.slices, other.windows);
+    DefaultTimeBasedSliceStore::operator=(other);
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
     const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
-    *slicesWriteLocked = std::move(*otherSlicesWriteLocked);
-    *windowsWriteLocked = std::move(*otherWindowsWriteLocked);
     *slicesInMemoryLocked = std::move(*otherSlicesInMemoryLocked);
 
     watermarkProcessor = std::move(other.watermarkProcessor);
@@ -166,32 +142,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
     numberOfWorkerThreads = std::move(other.numberOfWorkerThreads);
     memoryControllerInfo = std::move(other.memoryControllerInfo);
     watermarkPredictorUpdateCnt = std::move(other.watermarkPredictorUpdateCnt);
-    sliceAssigner = std::move(other.sliceAssigner);
-    sequenceNumber = std::move(other.sequenceNumber.load());
-    numberOfActiveOrigins = std::move(other.numberOfActiveOrigins);
     return *this;
-}
-
-std::vector<WindowInfo> FileBackedTimeBasedSliceStore::getAllWindowInfosForSlice(const Slice& slice) const
-{
-    std::vector<WindowInfo> allWindows;
-
-    const auto sliceStart = slice.getSliceStart().getRawValue();
-    const auto sliceEnd = slice.getSliceEnd().getRawValue();
-    const auto windowSize = sliceAssigner.getWindowSize();
-    const auto windowSlide = sliceAssigner.getWindowSlide();
-
-    /// Taking the max out of sliceEnd and windowSize, allows us to not create windows, such as 0-5 for slide 5 and size 100.
-    /// In our window model, a window is always the size of the window size.
-    const auto firstWindowEnd = std::max(sliceEnd, windowSize);
-    const auto lastWindowEnd = sliceStart + windowSize;
-
-    for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
-    {
-        allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
-    }
-
-    return allWindows;
 }
 
 FileBackedTimeBasedSliceStore::~FileBackedTimeBasedSliceStore()
@@ -206,71 +157,15 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
     const auto threadId = WorkerThreadId(workerThreadId % numberOfWorkerThreads);
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-
-    const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
-    const auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
-
-    if (slicesWriteLocked->contains(sliceEnd))
+    const auto& slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, workerThreadId, joinBuildSide, createNewSlice);
+    for (const auto& slice : slicesVec)
     {
-        const auto slice = slicesWriteLocked->find(sliceEnd)->second;
         alteredSlicesPerThread[{threadId, joinBuildSide}].emplace_back(slice);
-        return {slice};
+        const auto slicesInMemoryLocked = slicesInMemory.wlock();
+        slicesInMemoryLocked->insert({{slice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Left}, true});
+        slicesInMemoryLocked->insert({{slice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Right}, true});
     }
-
-    /// We assume that only one slice is created per timestamp
-    const auto newSlices = createNewSlice(sliceStart, sliceEnd);
-    INVARIANT(newSlices.size() == 1, "We assume that only one slice is created per timestamp for our file-backed time-based slice store.");
-    auto newSlice = newSlices[0];
-    slicesWriteLocked->emplace(sliceEnd, newSlice);
-
-    /// Update the state of all windows that contain this slice as we have to expect new tuples
-    for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
-    {
-        auto& [windowSlices, windowState] = (*windowsWriteLocked)[windowInfo];
-        INVARIANT(
-            windowState != WindowInfoState::EMITTED_TO_PROBE, "We should not add slices to a window that has already been triggered.");
-        windowState = WindowInfoState::WINDOW_FILLING;
-        windowSlices.emplace_back(newSlice);
-    }
-
-    alteredSlicesPerThread[{threadId, joinBuildSide}].emplace_back(newSlice);
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Left}, true});
-    slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Right}, true});
-
-    return {newSlice};
-}
-
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-FileBackedTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWatermark)
-{
-    /// We are iterating over all windows and check if they can be triggered
-    /// A window can be triggered if both sides have been filled and the window end is smaller than the new global watermark
-    const auto windowsWriteLocked = windows.wlock();
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
-    for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
-    {
-        if (windowInfo.windowEnd >= globalWatermark)
-        {
-            /// As the windows are sorted (due to std::map), we can break here as we will not find any windows with a smaller window end
-            break;
-        }
-        if (windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
-        {
-            /// This window has already been triggered
-            continue;
-        }
-
-        windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
-        /// As the windows are sorted, we can simply increment the sequence number here.
-        const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
-        for (auto& slice : windowSlicesAndState.windowSlices)
-        {
-            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
-        }
-    }
-    return windowsToSlices;
+    return slicesVec;
 }
 
 std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceBySliceEnd(
@@ -279,75 +174,12 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
+    const auto& slice = DefaultTimeBasedSliceStore::getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, joinBuildSide);
+    if (slice.has_value())
     {
-        auto slice = slicesReadLocked->find(sliceEnd)->second;
-        readSliceFromFiles(slice, bufferProvider, memoryLayout, joinBuildSide);
-        return slice;
+        readSliceFromFiles(slice.value(), bufferProvider, memoryLayout, joinBuildSide);
     }
-    return {};
-}
-
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> FileBackedTimeBasedSliceStore::getAllNonTriggeredSlices()
-{
-    /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows
-    const auto windowsWriteLocked = windows.wlock();
-
-    /// numberOfActiveOrigins is guarded by the windows lock.
-    /// If this method gets called, we know that an origin has terminated.
-    INVARIANT(numberOfActiveOrigins > 0, "Method should not be called if all origin have terminated.");
-    --numberOfActiveOrigins;
-
-    /// Creating a lambda to add all slices to the return map windowsToSlices
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
-    auto addAllSlicesToReturnMap = [&windowsToSlices, this](const WindowInfo& windowInfo, SlicesAndState& windowSlicesAndState)
-    {
-        const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
-        for (auto& slice : windowSlicesAndState.windowSlices)
-        {
-            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
-        }
-        windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
-    };
-
-    /// We are iterating over all windows and check if they can be triggered
-    for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
-    {
-        switch (windowSlicesAndState.windowState)
-        {
-            case WindowInfoState::EMITTED_TO_PROBE:
-                continue;
-            case WindowInfoState::WINDOW_FILLING: {
-                /// If we are waiting on more than one origin to terminate, we can not trigger the window yet
-                if (numberOfActiveOrigins > 0)
-                {
-                    windowSlicesAndState.windowState = WindowInfoState::WAITING_ON_TERMINATION;
-                    NES_TRACE(
-                        "Waiting on termination for window end {} and number of origins terminated {}",
-                        windowInfo.windowEnd,
-                        numberOfActiveOrigins);
-                    break;
-                }
-                addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
-                break;
-            }
-            case WindowInfoState::WAITING_ON_TERMINATION: {
-                /// Checking if all origins have terminated (i.e., the number of origins terminated is 0, as we will decrement it during fetch_sub)
-                NES_TRACE(
-                    "Checking if all origins have terminated for window with window end {} and number of origins terminated {}",
-                    windowInfo.windowEnd,
-                    numberOfActiveOrigins);
-                if (numberOfActiveOrigins > 0)
-                {
-                    continue;
-                }
-                addAllSlicesToReturnMap(windowInfo, windowSlicesAndState);
-                break;
-            }
-        }
-    }
-
-    return windowsToSlices;
+    return slice;
 }
 
 void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
@@ -405,18 +237,11 @@ void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timesta
 
 void FileBackedTimeBasedSliceStore::deleteState()
 {
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
+    DefaultTimeBasedSliceStore::deleteState();
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    slicesWriteLocked->clear();
-    windowsWriteLocked->clear();
     slicesInMemoryLocked->clear();
     alteredSlicesPerThread.clear();
     // TODO delete memCtrl and state from ssd if there is any
-}
-
-uint64_t FileBackedTimeBasedSliceStore::getWindowSize() const
-{
-    return sliceAssigner.getWindowSize();
 }
 
 void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWorkerThreads)

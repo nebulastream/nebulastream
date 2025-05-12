@@ -88,8 +88,5 @@ public:
 
     /// Returns the window size
     [[nodiscard]] virtual uint64_t getWindowSize() const = 0;
-
-    /// Sets number of worker threads. Needs to be called before working with the slice store
-    virtual void setWorkerThreads(uint64_t) { }
 };
 }

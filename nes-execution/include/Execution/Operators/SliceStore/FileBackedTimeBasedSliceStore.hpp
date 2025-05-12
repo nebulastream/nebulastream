@@ -23,9 +23,7 @@
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/MemoryController/MemoryController.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
-#include <Execution/Operators/SliceStore/SliceAssigner.hpp>
 #include <Execution/Operators/SliceStore/WatermarkPredictor/AbstractWatermarkPredictor.hpp>
-#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
@@ -54,8 +52,7 @@ struct SliceStoreMetaData
     BufferMetaData bufferMetaData;
 };
 
-// TODO inherit from DefaultTimeBasedSliceStore
-class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
+class FileBackedTimeBasedSliceStore final : public DefaultTimeBasedSliceStore
 {
 public:
     //static constexpr std::array<size_t, 10> USE_TEST_DATA_SIZES = {4096, 16384, 65536, 131072, 524288, 1048576, 134217728, 536870912, 1073741824, 2147483648};
@@ -88,9 +85,6 @@ public:
         WorkerThreadId workerThreadId,
         QueryCompilation::JoinBuildSideType joinBuildSide,
         const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-    getTriggerableWindowSlices(Timestamp globalWatermark) override;
-    std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(
         SliceEnd sliceEnd,
         Memory::AbstractBufferProvider* bufferProvider,
@@ -98,9 +92,11 @@ public:
         QueryCompilation::JoinBuildSideType joinBuildSide) override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
-    uint64_t getWindowSize() const override;
-    void setWorkerThreads(uint64_t numberOfWorkerThreads) override;
 
+    /// Sets number of worker threads. Needs to be called before working with the slice store
+    void setWorkerThreads(uint64_t numberOfWorkerThreads);
+
+    /// TODO
     void updateSlices(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
@@ -139,9 +135,6 @@ private:
         return (counter & counter + 1) == 0;
     }
 
-    /// Retrieves all window identifiers that correspond to this slice
-    std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
-
     /// The watermark processor and predictors are used to predict when a slice should be written out or read back during the build phase.
     std::shared_ptr<Operators::MultiOriginWatermarkProcessor> watermarkProcessor;
     std::map<OriginId, std::shared_ptr<AbstractWatermarkPredictor>> watermarkPredictors;
@@ -160,21 +153,6 @@ private:
     uint64_t numberOfWorkerThreads;
     MemoryControllerInfo memoryControllerInfo;
     std::map<OriginId, std::atomic<uint64_t>> watermarkPredictorUpdateCnt;
-
-    /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
-    /// while we need to access windows during the triggering of windows.
-    folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windows;
-    folly::Synchronized<std::map<SliceEnd, std::shared_ptr<Slice>>> slices;
-    Operators::SliceAssigner sliceAssigner;
-
-    /// We need to store the sequence number for the triggerable window infos. This is necessary, as we have to ensure that the sequence number is unique
-    /// and increases for each window info.
-    std::atomic<SequenceNumber::Underlying> sequenceNumber;
-
-    /// Depending on the number of origins, we have to handle the slices differently.
-    /// For example, in getAllNonTriggeredSlices(), we have to wait until all origins have called this method to ensure correctness
-    /// The numberOfActiveOrigins shall be guarded by the windows Mutex.
-    uint64_t numberOfActiveOrigins;
 };
 
 }

@@ -39,7 +39,7 @@ struct SlicesAndState
     WindowInfoState windowState;
 };
 
-class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
+class DefaultTimeBasedSliceStore : public WindowSlicesStoreInterface
 {
 public:
     DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins);
@@ -66,7 +66,7 @@ public:
     void deleteState() override;
     uint64_t getWindowSize() const override;
 
-private:
+protected:
     /// Retrieves all window identifiers that correspond to this slice
     std::vector<WindowInfo> getAllWindowInfosForSlice(const Slice& slice) const;
 
