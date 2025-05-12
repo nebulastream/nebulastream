@@ -36,7 +36,8 @@ public:
         std::shared_ptr<PhysicalType> resultType,
         std::unique_ptr<Functions::Function> inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier,
-        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector);
+        std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector,
+        bool includeNullValues);
     void lift(
         const nautilus::val<AggregationState*>& aggregationState,
         PipelineMemoryProvider& pipelineMemoryProvider,
@@ -53,6 +54,7 @@ public:
 
 private:
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector;
+    bool includeNullValues;
 };
 
 }

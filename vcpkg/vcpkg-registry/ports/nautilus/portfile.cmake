@@ -6,9 +6,10 @@ vcpkg_from_github(
 		PATCHES
 		0001_fixes_clang_tidy.patch
 		0002_cache_mangled_names.patch
-		0003_llvm_v20.patch
-		0004-disable-ubsan-function-call-check.patch
-		0005-disable-mlir-multithreading.patch
+		0003_increase_tracing_performance.patch
+		0004_llvm_v20.patch
+		0005_disable_ubsan_function_call_check.patch
+		0006_disable_mlir_multithreading.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

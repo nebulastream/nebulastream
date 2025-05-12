@@ -54,7 +54,7 @@ void MaxAggregationFunction::lift(
 
     /// Reading the old max value from the aggregation state.
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType);
+    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, *inputType);
 
     /// Updating the max value with the new value, if the new value is larger
     if (value > max)
@@ -70,11 +70,11 @@ void MaxAggregationFunction::combine(
 {
     /// Reading the max value from the first aggregation state
     const auto memAreaMax1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto max1 = Nautilus::VarVal::readVarValFromMemory(memAreaMax1, inputType);
+    const auto max1 = Nautilus::VarVal::readVarValFromMemory(memAreaMax1, *inputType);
 
     /// Reading the max value from the second aggregation state
     const auto memAreaMax2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto max2 = Nautilus::VarVal::readVarValFromMemory(memAreaMax2, inputType);
+    const auto max2 = Nautilus::VarVal::readVarValFromMemory(memAreaMax2, *inputType);
 
     /// Updating the max value with the new value, if the new value is larger
     if (max2 > max1)
@@ -87,7 +87,7 @@ Nautilus::Record MaxAggregationFunction::lower(const nautilus::val<AggregationSt
 {
     /// Reading the max value from the aggregation state
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, inputType);
+    const auto max = Nautilus::VarVal::readVarValFromMemory(memAreaMax, *inputType);
 
     /// Creating a record with the max value
     Nautilus::Record record;

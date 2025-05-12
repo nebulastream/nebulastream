@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <type_traits>
+#include <typeinfo>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <fmt/format.h>
@@ -162,61 +163,60 @@ VarVal VarVal::castToType(const std::shared_ptr<PhysicalType>& type) const
     }
 }
 
-VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const std::shared_ptr<PhysicalType>& type)
+VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalType& type)
 {
-    if (const auto basicType = std::static_pointer_cast<BasicPhysicalType>(type))
-    {
+    try {
+        const auto basicType = dynamic_cast<const BasicPhysicalType&>(type);
         /// Depending on the type, we have to read a boolean after the memRef that stores the null value
         nautilus::val<bool> null = false;
-        if (type->type->nullable)
+        if (type.type->nullable)
         {
-            const auto memRefNull = memRef + nautilus::val<uint64_t>(type->getRawSizeInBytes());
+            const auto memRefNull = memRef + nautilus::val<uint64_t>(type.getRawSizeInBytes());
             null = Util::readValueFromMemRef<bool>(memRefNull);
         }
-        switch (basicType->nativeType)
+        switch (basicType.nativeType)
         {
             case BasicPhysicalType::NativeType::BOOLEAN: {
-                return {Util::readValueFromMemRef<bool>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<bool>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::INT_8: {
-                return {Util::readValueFromMemRef<int8_t>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<int8_t>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::INT_16: {
-                return {Util::readValueFromMemRef<int16_t>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<int16_t>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::INT_32: {
-                return {Util::readValueFromMemRef<int32_t>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<int32_t>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::INT_64: {
-                return {Util::readValueFromMemRef<int64_t>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<int64_t>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::UINT_8: {
-                const auto varVal = VarVal{Util::readValueFromMemRef<uint8_t>(memRef), null, type->type->nullable};
+                const auto varVal = VarVal{Util::readValueFromMemRef<uint8_t>(memRef), null, type.type->nullable};
                 return varVal;
             };
             case BasicPhysicalType::NativeType::UINT_16: {
-                return {Util::readValueFromMemRef<uint16_t>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<uint16_t>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::UINT_32: {
-                return {Util::readValueFromMemRef<uint32_t>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<uint32_t>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::UINT_64: {
-                return {Util::readValueFromMemRef<uint64_t>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<uint64_t>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::FLOAT: {
-                return {Util::readValueFromMemRef<float>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<float>(memRef), null, type.type->nullable};
             };
             case BasicPhysicalType::NativeType::DOUBLE: {
-                return {Util::readValueFromMemRef<double>(memRef), null, type->type->nullable};
+                return {Util::readValueFromMemRef<double>(memRef), null, type.type->nullable};
             };
             default: {
-                throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", type->toString()));
+                throw UnsupportedOperation(fmt::format("Physical Type: {} is currently not supported", type.toString()));
             };
         }
     }
-    else
-    {
-        throw UnsupportedOperation(fmt::format("Type: {} is not a basic type", type->toString()));
+    catch (const std::bad_cast&) {
+        throw UnsupportedOperation(fmt::format("Type: {} is not a basic type", type.toString()));
     }
 }
 
