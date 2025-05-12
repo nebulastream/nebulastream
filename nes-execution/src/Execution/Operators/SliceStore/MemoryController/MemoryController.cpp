@@ -63,6 +63,7 @@ MemoryController::~MemoryController()
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
+    /// TODO don't construct path every time, just use std::tuple for map
     const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
 
     /// Search for matching fileWriter to avoid attempting to open a file twice
