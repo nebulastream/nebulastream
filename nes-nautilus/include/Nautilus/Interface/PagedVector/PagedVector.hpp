@@ -33,8 +33,8 @@ class PagedVector
 public:
     struct TupleBufferWithCumulativeSum
     {
-        explicit TupleBufferWithCumulativeSum(const Memory::TupleBuffer& buffer) : cumulativeSum(0), buffer(buffer) { }
-        size_t cumulativeSum;
+        explicit TupleBufferWithCumulativeSum(Memory::TupleBuffer buffer) : buffer(std::move(buffer)) { }
+        size_t cumulativeSum{0};
         Memory::TupleBuffer buffer;
     };
 

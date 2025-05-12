@@ -11,17 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 
-#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
-
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -57,6 +54,11 @@ const Memory::TupleBuffer* getTupleBufferForEntryProxy(const PagedVector* pagedV
 uint64_t getBufferPosForEntryProxy(const PagedVector* pagedVector, const uint64_t entryPos)
 {
     return pagedVector->getBufferPosForEntry(entryPos).value_or(0);
+}
+
+nautilus::val<uint64_t> PagedVectorRef::getNumberOfTuples() const
+{
+    return nautilus::invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
 }
 
 PagedVectorRef::PagedVectorRef(

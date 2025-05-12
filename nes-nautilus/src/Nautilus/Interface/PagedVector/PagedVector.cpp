@@ -11,11 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <ranges>
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
@@ -56,7 +63,7 @@ void PagedVector::PagesWrapper::updateCumulativeSumLastItem()
 
 void PagedVector::PagesWrapper::updateCumulativeSumAllPages()
 {
-    auto curCumulativeSum = 0;
+    size_t curCumulativeSum = 0;
     for (auto& page : pages)
     {
         page.cumulativeSum = page.buffer.getNumberOfTuples() + curCumulativeSum;
@@ -162,7 +169,7 @@ uint64_t PagedVector::PagesWrapper::getTotalNumberOfEntries() const
 {
     /// We can not ensure that the last cumulative sum is up-to-date. Therefore, we need to add the penultimate sum + no. tuples of last page
     const auto penultimateCumulativeSum = (pages.size() > 1) ? pages.rbegin()[1].cumulativeSum : 0;
-    const auto lastNumberOfTuples = (pages.size() > 0) ? pages.rbegin()[0].buffer.getNumberOfTuples() : 0;
+    const auto lastNumberOfTuples = (not pages.empty()) ? pages.rbegin()[0].buffer.getNumberOfTuples() : 0;
     return penultimateCumulativeSum + lastNumberOfTuples;
 }
 

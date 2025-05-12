@@ -39,21 +39,14 @@ public:
         OperatorHandlerId operatorHandlerId, PhysicalFunction joinFunction, WindowMetaData windowMetaData, JoinSchema joinSchema);
 
 protected:
-    /// Creates a joined record out of the left and right record, but it only uses the provided projection
+    /// Creates a joined record out of the outer and inner record
     Record createJoinedRecord(
-        const Record& leftRecord,
-        const Record& rightRecord,
+        const Record& outerRecord,
+        const Record& innerRecord,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd,
-        const std::vector<Record::RecordFieldIdentifier>& projectionsLeft,
-        const std::vector<Record::RecordFieldIdentifier>& projectionsRight) const;
-
-    /// Creates a joined record out of the left and right record
-    Record createJoinedRecord(
-        const Record& leftRecord,
-        const Record& rightRecord,
-        const nautilus::val<Timestamp>& windowStart,
-        const nautilus::val<Timestamp>& windowEnd) const;
+        const std::vector<Record::RecordFieldIdentifier>& projectionsOuter,
+        const std::vector<Record::RecordFieldIdentifier>& projectionsInner) const;
 
     PhysicalFunction joinFunction;
     JoinSchema joinSchema;

@@ -41,41 +41,37 @@ StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
 }
 
 Record StreamJoinProbePhysicalOperator::createJoinedRecord(
-    const Record& leftRecord,
-    const Record& rightRecord,
+    const Record& outerRecord,
+    const Record& innerRecord,
     const nautilus::val<Timestamp>& windowStart,
     const nautilus::val<Timestamp>& windowEnd,
-    const std::vector<Record::RecordFieldIdentifier>& projectionsLeft,
-    const std::vector<Record::RecordFieldIdentifier>& projectionsRight) const
+    const std::vector<Record::RecordFieldIdentifier>& projectionsOuter,
+    const std::vector<Record::RecordFieldIdentifier>& projectionsInner) const
 {
     Record joinedRecord;
 
     /// Writing the window start, end, and key field
-    joinedRecord.write(this->windowMetaData.windowStartFieldName, windowStart.convertToValue());
-    joinedRecord.write(this->windowMetaData.windowEndFieldName, windowEnd.convertToValue());
+    joinedRecord.write(windowMetaData.windowStartFieldName, windowStart.convertToValue());
+    joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
 
-    /// Writing the rightSchema fields, expect the join schema to have the fields in the same order then the right schema
-    for (const auto& fieldName : nautilus::static_iterable(projectionsRight))
+    /// Writing the outerSchema fields, expect the join schema to have the fields in the same order then the outer schema
+    for (const auto& fieldName : nautilus::static_iterable(projectionsOuter))
     {
-        joinedRecord.write(fieldName, rightRecord.read(fieldName));
+        joinedRecord.write(fieldName, outerRecord.read(fieldName));
     }
 
-    /// Writing the leftSchema fields, expect the join schema to have the fields in the same order then the left schema
-    for (const auto& fieldName : nautilus::static_iterable(projectionsLeft))
+    /// Writing the innerSchema fields, expect the join schema to have the fields in the same order then the inner schema
+    for (const auto& fieldName : nautilus::static_iterable(projectionsInner))
     {
-        joinedRecord.write(fieldName, leftRecord.read(fieldName));
+        joinedRecord.write(fieldName, innerRecord.read(fieldName));
+    }
+
+    /// Writing the outerSchema fields, expect the join schema to have the fields in the same order then the outer schema
+    for (const auto& fieldName : nautilus::static_iterable(projectionsOuter))
+    {
+        joinedRecord.write(fieldName, outerRecord.read(fieldName));
     }
 
     return joinedRecord;
-}
-
-Record StreamJoinProbePhysicalOperator::createJoinedRecord(
-    const Record& leftRecord,
-    const Record& rightRecord,
-    const nautilus::val<Timestamp>& windowStart,
-    const nautilus::val<Timestamp>& windowEnd) const
-{
-    return createJoinedRecord(
-        leftRecord, rightRecord, windowStart, windowEnd, joinSchema.leftSchema.getFieldNames(), joinSchema.rightSchema.getFieldNames());
 }
 }

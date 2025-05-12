@@ -43,7 +43,6 @@ struct EmittedNLJWindowTrigger
 class NLJOperatorHandler final : public StreamJoinOperatorHandler
 {
 public:
-    static constexpr int64_t windowSizeRollingAverage = 10;
     NLJOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
@@ -61,8 +60,4 @@ private:
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
 };
-
-/// Proxy function that returns the pointer to the correct PagedVector
-Nautilus::Interface::PagedVector*
-getNLJPagedVectorProxy(const NLJSlice* nljSlice, WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide);
 }
