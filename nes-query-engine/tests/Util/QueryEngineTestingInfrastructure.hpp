@@ -416,7 +416,7 @@ struct TestingHarness
     std::unordered_map<QueryId, std::shared_future<void>> queryTerminationFutures;
     std::unordered_map<QueryId, std::unique_ptr<std::promise<void>>> queryRunning;
     std::unordered_map<QueryId, std::shared_future<void>> queryRunningFutures;
-    std::unordered_map<std::shared_ptr<Sources::SourceDescriptor>, std::unique_ptr<Sources::SourceHandle>> unusedSources;
+    std::unordered_map<std::shared_ptr<SourceDescriptor>, std::unique_ptr<Sources::SourceHandle>> unusedSources;
 
     std::unordered_map<QueryPlanBuilder::identifier_t, OriginId> sourceIds;
     std::unordered_map<QueryPlanBuilder::identifier_t, PipelineId> pipelineIds;

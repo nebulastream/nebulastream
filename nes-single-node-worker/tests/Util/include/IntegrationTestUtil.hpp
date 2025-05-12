@@ -25,6 +25,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest-assertion-result.h>
@@ -99,13 +100,15 @@ void removeFile(std::string_view filepath);
 /// Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
 bool loadFile(SerializableQueryPlan& queryPlan, const std::string_view queryFileName);
 
-void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, const std::string& newInputFileName);
+void replaceInputFileInFileSources(
+    SerializableQueryPlan& decomposedQueryPlan, const std::string& newInputFileName, SourceCatalog& sourceCatalog);
 
 /// Iterates over a decomposed query plan and replaces all CSV sink file paths to ensure expected behavior.
 void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::string& filePathNew);
 
 /// @brief Iterates over a decomposed query plan and replaces all sockets with the a free port generated for the mocked tcp server.
-void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, uint16_t mockTcpServerPort, int sourceNumber);
+void replacePortInTCPSources(
+    SerializableQueryPlan& decomposedQueryPlan, uint16_t mockTcpServerPort, int sourceNumber, SourceCatalog& sourceCatalog);
 
 std::string getUniqueTestIdentifier();
 

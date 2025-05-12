@@ -19,11 +19,13 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 
+#include <Sources/SourceCatalog.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <boost/asio.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -58,7 +60,7 @@ public:
         Logger::setupLogging("SingleNodeIntegrationTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup SingleNodeIntegrationTest test class.");
     }
-
+    SourceCatalog sourceCatalog;
     const std::string idFieldName = "tcp_source$id";
 };
 
@@ -132,7 +134,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
     {
         auto mockTCPServer = SyncedMockTcpServer::create(numInputTuplesToProduceByTCPMockServer);
         auto mockTCPServerPort = mockTCPServer->getPort();
-        IntegrationTestUtil::replacePortInTCPSources(queryPlan, mockTCPServerPort, tcpSourceNumber);
+        IntegrationTestUtil::replacePortInTCPSources(queryPlan, mockTCPServerPort, tcpSourceNumber, sourceCatalog);
         mockedTcpServers.emplace_back(std::move(mockTCPServer));
     }
 

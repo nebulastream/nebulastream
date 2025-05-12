@@ -7,7 +7,7 @@ restIp: localhost
 # ~~ Processing Configurations ~~
 worker:
   # Number buffers in source local buffer pool
-  numberOfBuffersInSourceLocalBufferPool: 128
+  numberOfBuffersInSourceLocalPools: 128
 
   # Size of buffer to pass data through the system
   bufferSizeInBytes: 1024

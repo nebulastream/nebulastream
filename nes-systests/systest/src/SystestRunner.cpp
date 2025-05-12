@@ -56,6 +56,7 @@
 namespace NES::Systest
 {
 
+/// NOLINTBEGIN(readability-function-cognitive-complexity)
 std::vector<LoadedQueryPlan> loadFromSLTFile(
     const std::filesystem::path& testFilePath,
     const std::filesystem::path& workingDir,
@@ -100,7 +101,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
                 .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
+                .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInLocalPool", "-1"}}});
             sourceNamesToFilepath[source.name] = source.csvFilePath;
         });
 
@@ -126,7 +127,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
                 .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
+                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInLocalPool", "-1"}}});
             {
                 std::ofstream testFile(sourceFile);
                 if (!testFile.is_open())
@@ -227,8 +228,8 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
             for (const auto& logicalSource : NES::getOperatorByType<SourceDescriptorLogicalOperator>(*plan))
             {
-                const auto sourceName = logicalSource.getSourceDescriptor()->logicalSourceName;
-                if (sourceNamesToFilepath.contains(sourceName))
+                if (const auto sourceName = logicalSource.getSourceDescriptor().getLogicalSource().getLogicalSourceName();
+                    sourceNamesToFilepath.contains(sourceName))
                 {
                     auto& entry = sourceNamesToFilepathAndCountForQuery[sourceName];
                     entry = {sourceNamesToFilepath.at(sourceName), entry.second + 1};
@@ -251,6 +252,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     }
     return plans;
 }
+/// NOLINTEND(readability-function-cognitive-complexity)
 
 std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<Query>& queries,

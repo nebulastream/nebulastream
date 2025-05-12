@@ -12,9 +12,16 @@
     limitations under the License.
 */
 
+#include <compare>
+#include <cstdint>
+#include <ostream>
 #include <sstream>
-#include <DataTypes/Schema.hpp>
+#include <string>
+#include <utility>
+#include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Strings.hpp>
@@ -22,40 +29,60 @@
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
 
-namespace NES::Sources
+namespace NES
 {
 
 SourceDescriptor::SourceDescriptor(
-    const Schema& schema,
-    std::string logicalSourceName,
+    LogicalSource logicalSource,
+    const uint64_t physicalSourceId,
+    const WorkerId workerId,
     std::string sourceType,
-    const int numberOfBuffersInSourceLocalBufferPool,
-    ParserConfig parserConfig,
-    Configurations::DescriptorConfig::Config&& config)
+    const int numberOfBuffersInLocalPool,
+    Configurations::DescriptorConfig::Config&& config,
+    ParserConfig parserConfig)
     : Descriptor(std::move(config))
-    , schema(std::move(schema))
-    , logicalSourceName(std::move(logicalSourceName))
+    , physicalSourceId(physicalSourceId)
+    , logicalSource(std::move(logicalSource))
+    , workerId(workerId)
     , sourceType(std::move(sourceType))
-    , numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool)
     , parserConfig(std::move(parserConfig))
+    , numberOfBuffersInLocalPool(numberOfBuffersInLocalPool)
 {
 }
 
-std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
+LogicalSource SourceDescriptor::getLogicalSource() const
 {
-    const auto schemaString = fmt::format("{}", sourceDescriptor.schema);
-    const auto parserConfigString = fmt::format(
-        "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
-        sourceDescriptor.parserConfig.parserType,
-        Util::escapeSpecialCharacters(sourceDescriptor.parserConfig.tupleDelimiter),
-        Util::escapeSpecialCharacters(sourceDescriptor.parserConfig.fieldDelimiter));
-    return out << fmt::format(
-               "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
-               sourceDescriptor.logicalSourceName,
-               sourceDescriptor.sourceType,
-               schemaString,
-               parserConfigString,
-               sourceDescriptor.toStringConfig());
+    return logicalSource;
+}
+
+std::string SourceDescriptor::getSourceType() const
+{
+    return sourceType;
+}
+
+ParserConfig SourceDescriptor::getParserConfig() const
+{
+    return parserConfig;
+}
+
+WorkerId SourceDescriptor::getWorkerId() const
+{
+    return workerId;
+}
+
+uint64_t SourceDescriptor::getPhysicalSourceId() const
+{
+    return physicalSourceId;
+}
+
+int32_t SourceDescriptor::getBuffersInLocalPool() const
+{
+    return numberOfBuffersInLocalPool;
+}
+
+std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
+{
+    return lhs.physicalSourceId <=> rhs.physicalSourceId;
 }
 
 std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
@@ -63,49 +90,42 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
     std::stringstream stringstream;
     if (verbosity == ExplainVerbosity::Debug)
     {
-        const auto schemaString = schema;
-        const auto parserConfigString = fmt::format(
-            "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
-            parserConfig.parserType,
-            Util::escapeSpecialCharacters(parserConfig.tupleDelimiter),
-            Util::escapeSpecialCharacters(parserConfig.fieldDelimiter));
-        stringstream << fmt::format(
-            "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
-            logicalSourceName,
-            sourceType,
-            schemaString,
-            parserConfigString,
-            toStringConfig());
+        stringstream << this;
     }
     else if (verbosity == ExplainVerbosity::Short)
     {
-        stringstream << fmt::format("{}", logicalSourceName);
+        stringstream << fmt::format("{}", logicalSource.getLogicalSourceName());
     }
     return stringstream.str();
 }
-
-bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
+std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 {
-    return lhs.schema == rhs.schema && lhs.sourceType == rhs.sourceType && lhs.config == rhs.config;
+    return out << fmt::format(
+               "SourceDescriptor(sourceType: {}, logicalSource:{}, parserConfig: {{type: {}, tupleDelimiter: {}, stringDelimiter: {} }})",
+               descriptor.getSourceType(),
+               descriptor.getLogicalSource(),
+               descriptor.getParserConfig().parserType,
+               Util::escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
+               Util::escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
 }
 
 SerializableSourceDescriptor SourceDescriptor::serialize() const
 {
     SerializableSourceDescriptor serializableSourceDescriptor;
-    SchemaSerializationUtil::serializeSchema(schema, serializableSourceDescriptor.mutable_sourceschema());
-    serializableSourceDescriptor.set_logicalsourcename(logicalSourceName);
+    SchemaSerializationUtil::serializeSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
+    serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
     serializableSourceDescriptor.set_sourcetype(sourceType);
-    serializableSourceDescriptor.set_numberofbuffersinsourcelocalbufferpool(numberOfBuffersInSourceLocalBufferPool);
+    serializableSourceDescriptor.set_numberofbuffersinlocalpool(numberOfBuffersInLocalPool);
 
     /// Serialize parser config.
-    auto* const serializedParserConfig = NES::ParserConfig().New();
+    auto* const serializedParserConfig = NES::SerializableParserConfig().New();
     serializedParserConfig->set_type(parserConfig.parserType);
     serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
     serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);
     serializableSourceDescriptor.set_allocated_parserconfig(serializedParserConfig);
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : config)
+    for (const auto& [key, value] : getConfig())
     {
         auto* kv = serializableSourceDescriptor.mutable_config();
         kv->emplace(key, descriptorConfigTypeToProto(value));

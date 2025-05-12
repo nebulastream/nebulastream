@@ -28,6 +28,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES::Configurations
@@ -160,7 +161,7 @@ public:
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)
         {
-            if (key != SOURCE_TYPE_CONFIG and key != NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL
+            if (key != SOURCE_TYPE_CONFIG and key != NUMBER_OF_BUFFERS_IN_LOCAL_POOL
                 and not SpecificConfiguration::parameterMap.contains(key))
             {
                 throw InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key));
@@ -340,12 +341,13 @@ struct Descriptor
         return std::nullopt;
     }
 
-    const DescriptorConfig::Config config;
+    [[nodiscard]] DescriptorConfig::Config getConfig() const { return config; }
 
 protected:
     std::string toStringConfig() const;
 
 private:
+    DescriptorConfig::Config config;
     friend std::ostream& operator<<(std::ostream& out, const DescriptorConfig::Config& config);
 };
 

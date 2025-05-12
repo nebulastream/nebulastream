@@ -18,6 +18,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -25,11 +26,14 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
@@ -102,9 +106,9 @@ getEmitFunction(ThreadSafeVector<NES::Memory::TupleBuffer>& resultBuffers)
     };
 }
 
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
 {
-    auto validParserConfig = Sources::ParserConfig{};
+    auto validParserConfig = ParserConfig{};
     if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
     {
         validParserConfig.parserType = parserType->second;
@@ -137,6 +141,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 }
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
+    SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
@@ -144,16 +149,17 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
 {
     std::unordered_map<std::string, std::string> fileSourceConfiguration{{"filePath", filePath}};
     auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
-
-    const auto sourceDescriptor = Sources::SourceDescriptor(
-        std::move(schema),
-        "TestSource",
+    const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
+    INVARIANT(logicalSource.has_value(), "TestSource already existed");
+    const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
+        logicalSource.value(),
+        INITIAL<WorkerId>,
         "File",
         numberOfLocalBuffersInSource,
-        Sources::ParserConfig{},
-        std::move(validatedSourceConfiguration));
-
-    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), -1);
+        std::move(validatedSourceConfiguration),
+        ParserConfig{});
+    INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
+    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor.value(), std::move(sourceBufferPool), -1);
 }
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
 {
