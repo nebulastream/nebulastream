@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/OriginIdInferencePhase.hpp>
 
 #include <utility>
 #include <vector>
@@ -24,7 +24,7 @@
 #include <Traits/Trait.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 namespace
@@ -66,14 +66,14 @@ void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(read
         {
             assigner = assigner.withInputOriginIds({{OriginId(++originIdCounter)}});
             auto inferredAssigner = assigner.withOutputOriginIds({OriginId(originIdCounter)});
-            auto replaceResult = replaceOperator(queryPlan, assigner, inferredAssigner);
+            auto replaceResult = replaceOperator(queryPlan, assigner.getId(), inferredAssigner);
             INVARIANT(replaceResult.has_value(), "replaceOperator failed");
             queryPlan = std::move(replaceResult.value());
         }
         else
         {
             auto inferredAssigner = assigner.withOutputOriginIds({OriginId(++originIdCounter)});
-            auto replaceResult = replaceOperator(queryPlan, assigner, inferredAssigner);
+            auto replaceResult = replaceOperator(queryPlan, assigner.getId(), inferredAssigner);
             INVARIANT(replaceResult.has_value(), "replaceOperator failed");
             queryPlan = std::move(replaceResult.value());
         }
@@ -81,11 +81,11 @@ void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(read
 
     /// propagate origin ids through the complete query plan
     std::vector<LogicalOperator> newSinks;
-    newSinks.reserve(queryPlan.rootOperators.size());
-    for (auto& sinkOperator : queryPlan.rootOperators)
+    newSinks.reserve(queryPlan.getRootOperators().size());
+    for (auto& sinkOperator : queryPlan.getRootOperators())
     {
         newSinks.push_back(propagateOriginIds(sinkOperator));
     }
-    queryPlan.rootOperators = newSinks;
+    queryPlan.setRootOperators(newSinks);
 }
 }

@@ -35,6 +35,7 @@
 #include <ErrorHandling.hpp>
 #include <Generator.hpp>
 #include <GeneratorFields.hpp>
+#include "Util/Expected.hpp"
 
 namespace NES::Sources
 {
@@ -56,7 +57,7 @@ public:
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
-    void open() override;
+    void open(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) override;
     void close() override;
 
     static NES::Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -79,29 +80,27 @@ struct ConfigParametersGenerator
         SEQUENCE_STOPS_GENERATOR{
             "stopGeneratorWhenSequenceFinishes",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
+            [](const std::unordered_map<std::string, std::string>& config) -> Expected<Configurations::EnumWrapper>
             {
-                const auto optToken = Configurations::DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config);
-                if (!optToken.has_value() || !optToken.value().asEnum<GeneratorStop>().has_value())
-                {
-                    NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
-                    throw NES::InvalidConfigParameter(
-                        "Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"));
-                }
-                switch (optToken.value().asEnum<GeneratorStop>().value())
-                {
-                    case GeneratorStop::ALL: {
-                        return std::optional(Configurations::EnumWrapper(GeneratorStop::ALL));
-                    }
-                    case GeneratorStop::ONE: {
-                        return std::optional(Configurations::EnumWrapper(GeneratorStop::ONE));
-                    }
-                    default: {
-                        NES_ERROR("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"))
-                        throw NES::InvalidConfigParameter(
-                            "Cannot validate stopGeneratorWhenSequenceFinishes: {}!", config.at("stopGeneratorWhenSequenceFinishes"));
-                    }
-                }
+                return Configurations::DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config)
+                    .and_then(
+                        [](const Configurations::EnumWrapper& stop) -> Expected<Configurations::EnumWrapper>
+                        {
+                            if (not stop.asEnum<GeneratorStop>().has_value())
+                            {
+                                return unexpected("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", stop);
+                            }
+                            switch (stop.asEnum<GeneratorStop>().value())
+                            {
+                                case GeneratorStop::ALL:
+                                    return Configurations::EnumWrapper(GeneratorStop::ALL);
+                                case GeneratorStop::ONE:
+                                    return Configurations::EnumWrapper(GeneratorStop::ONE);
+                                default: {
+                                    return unexpected("Cannot validate stopGeneratorWhenSequenceFinishes: {}!", stop);
+                                }
+                            }
+                        });
             }};
 
     static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> SEED{

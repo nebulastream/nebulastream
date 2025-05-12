@@ -128,8 +128,7 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
     const auto physicalSourceId = sourceDescriptor.physicalsourceid();
     const auto& sourceType = sourceDescriptor.sourcetype();
-    const auto workerIdInt = sourceDescriptor.workerid();
-    const auto workerId = WorkerId{workerIdInt};
+    const auto& workerId = sourceDescriptor.workerid();
     const auto buffersInLocalPool = sourceDescriptor.numberofbuffersinlocalpool();
 
     /// Deserialize the parser config.

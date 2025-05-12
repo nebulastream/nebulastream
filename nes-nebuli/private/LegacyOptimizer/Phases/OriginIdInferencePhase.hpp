@@ -14,12 +14,10 @@
 
 #pragma once
 
+#include <Plans/LogicalPlan.hpp>
+
 namespace NES
 {
-class LogicalPlan;
-namespace LegacyOptimizer
-{
-
 
 /**
  * @brief The OriginIdInferencePhase traverses the operator tree and assigns origin ids to operators.
@@ -39,5 +37,4 @@ public:
 
     void apply(LogicalPlan& queryPlan) const; /// NOLINT(readability-convert-member-functions-to-static)
 };
-}
 }

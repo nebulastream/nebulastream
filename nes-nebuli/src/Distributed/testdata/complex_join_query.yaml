@@ -1,0 +1,91 @@
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream2) ON id1 = id2 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream3) ON id2 = id3 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+sink:
+  name: sink
+  type: Print
+  host: "sink-node"
+  config:
+    inputFormat: CSV
+logicalSources:
+  - name: stream0
+    schema:
+      - name: ts
+        dataType: UINT64
+      - name: id0
+        dataType: INT32
+  - name: stream1
+    schema:
+      - name: ts
+        dataType: UINT64
+      - name: id1
+        dataType: INT32
+  - name: stream2
+    schema:
+      - name: ts
+        dataType: UINT64
+      - name: id2
+        dataType: INT32
+  - name: stream3
+    schema:
+      - name: ts
+        dataType: UINT64
+      - name: id3
+        dataType: INT32
+physicalSources:
+  - logicalSource: stream0
+    host: "source-node0"
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: File
+      filePath: "[MOCKED]"
+  - logicalSource: stream1
+    host: "source-node0"
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: File
+      filePath: "[MOCKED]"
+  - logicalSource: stream2
+    host: "source-node1"
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: File
+      filePath: "[MOCKED]"
+  - logicalSource: stream3
+    host: "source-node2"
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: File
+      filePath: "[MOCKED]"
+workerNodes:
+  - host: "source-node0"
+    grpc: "source-node0-grpc"
+    capacity: 3
+    downstreamNodes:
+      - "sink-node"
+  - host: "source-node1"
+    grpc: "source-node1-grpc"
+    capacity: 1
+    downstreamNodes:
+      - "intermediate-node0"
+  - host: "source-node2"
+    grpc: "source-node2-grpc"
+    capacity: 0
+    downstreamNodes:
+      - "intermediate-node1"
+  - host: "intermediate-node0"
+    grpc: "intermediate-node0-grpc"
+    capacity: 0
+    downstreamNodes:
+      - "sink-node"
+  - host: "intermediate-node1"
+    grpc: "intermediate-node1-grpc"
+    capacity: 1
+    downstreamNodes:
+      - "sink-node"
+  - host: "sink-node"
+    grpc: "sink-node-grpc"
+    capacity: 2

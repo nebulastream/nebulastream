@@ -1,0 +1,40 @@
+query: |
+  SELECT * FROM stream INTO sink
+sink:
+  name: sink
+  type: Print
+  host: "sink-node"
+  config:
+    inputFormat: CSV
+logicalSources:
+  - name: stream
+    schema:
+      - name: ts
+        dataType: UINT64
+physicalSources:
+  - logicalSource: stream
+    host: "source-node"
+    parserConfig:
+      type: CSV
+    sourceConfig:
+      type: File
+      filePath: "[MOCKED]"
+workerNodes:
+  - host: "source-node"
+    grpc: "source-node-grpc"
+    capacity: 0
+    downstreamNodes:
+      - "intermediate-node0"
+  - host: "intermediate-node0"
+    grpc: "intermediate-node0-grpc"
+    capacity: 0
+    downstreamNodes:
+      - "intermediate-node1"
+  - host: "intermediate-node1"
+    grpc: "intermediate-node1-grpc"
+    capacity: 0
+    downstreamNodes:
+      - "sink-node"
+  - host: "sink-node"
+    grpc: "sink-node-grpc"
+    capacity: 0

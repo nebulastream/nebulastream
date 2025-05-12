@@ -12,20 +12,25 @@
     limitations under the License.
 */
 
+#include <BackpressureChannel.hpp>
+
 #include <condition_variable>
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <stop_token>
 #include <utility>
-#include <BackpressureChannel.hpp>
+
 #include <ErrorHandling.hpp>
 
+/// Represents the state of the backpressure channel guarded by a mutex and communicated to the listener via the condition variable.
+/// The channel is initially open.
 struct Channel
 {
     enum State : uint8_t
     {
         OPEN,
-        CLOSE,
+        CLOSED,
         DESTROYED,
     };
 
@@ -34,6 +39,7 @@ struct Channel
     std::condition_variable_any change;
 };
 
+/// Notify threads before destruction of the valve so they can unblock.
 Valve::~Valve()
 {
     if (channel)
@@ -45,9 +51,11 @@ Valve::~Valve()
         channel->change.notify_all();
     }
 }
+
 Valve::Valve(Valve&& other) noexcept : channel(std::move(other.channel))
 {
 }
+
 Valve& Valve::operator=(Valve&& other) noexcept
 {
     if (this == &other)
@@ -57,17 +65,19 @@ Valve& Valve::operator=(Valve&& other) noexcept
     channel = std::move(other.channel);
     return *this;
 }
-bool Valve::apply_pressure()
+
+bool Valve::applyPressure()
 {
-    auto old = Channel::CLOSE;
+    auto old = Channel::CLOSED;
     {
         const std::scoped_lock lock(channel->guard);
         old = channel->state;
-        channel->state = Channel::CLOSE;
+        channel->state = Channel::CLOSED;
     }
     return old == Channel::OPEN;
 }
-bool Valve::release_pressure()
+
+bool Valve::releasePressure()
 {
     auto old = Channel::OPEN;
     {
@@ -75,29 +85,32 @@ bool Valve::release_pressure()
         old = channel->state;
         channel->state = Channel::OPEN;
     }
-    if (old == Channel::CLOSE)
+    if (old == Channel::CLOSED)
     {
         channel->change.notify_all();
         return true;
     }
     return false;
 }
+
 void Ingestion::wait(const std::stop_token& stopToken) const
 {
     std::unique_lock lock(channel->guard);
+    /// If the channel is open, ingestion can proceed
     if (channel->state == Channel::State::OPEN)
     {
         return;
     }
+
     bool destroyed = false;
+    /// Wait for the channel state to change
     channel->change.wait(
         lock,
         stopToken,
-        [&]()
+        [&destroyed, this] -> bool
         {
-            const auto state = channel->state;
-            destroyed = state == Channel::DESTROYED;
-            return destroyed || state == Channel::OPEN;
+            destroyed = channel->state == Channel::DESTROYED;
+            return destroyed || channel->state == Channel::OPEN;
         });
 
     INVARIANT(!destroyed, "Valve was destroyed before the Ingestion");
@@ -105,6 +118,6 @@ void Ingestion::wait(const std::stop_token& stopToken) const
 
 std::pair<Valve, Ingestion> Backpressure()
 {
-    auto channel = std::make_shared<Channel>();
+    const auto channel = std::make_shared<Channel>();
     return {Valve{channel}, Ingestion{channel}};
 }

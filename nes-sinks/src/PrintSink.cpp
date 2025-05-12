@@ -29,6 +29,7 @@
 #include <SinksParsing/CSVFormat.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>

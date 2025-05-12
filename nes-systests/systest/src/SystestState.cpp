@@ -53,12 +53,12 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <LegacyOptimizer/LegacyOptimizer.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <NebuLI.hpp>
 #include <SystestParser.hpp>
 #include <SystestRunner.hpp>
 
@@ -70,10 +70,9 @@ optimizeQueryPlanIfErrorFree(const NES::Systest::LoadedQueryPlan& loadedQueryPla
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
     if (loadedQueryPlan.queryPlan.has_value())
     {
-        const NES::CLI::LegacyOptimizer optimizer{loadedQueryPlan.sourceCatalog};
-        auto optimizedPlan = optimizer.optimize(loadedQueryPlan.queryPlan.value());
+        auto optimizedPlan = NES::LegacyOptimizer::optimize(loadedQueryPlan.queryPlan.value(), loadedQueryPlan.sourceCatalog);
         std::ranges::for_each(
-            NES::getOperatorByType<NES::SourceDescriptorLogicalOperator>(optimizedPlan),
+            NES::getOperatorByType<NES::SourceDescriptorLogicalOperator>(optimizedPlan.plan),
             [&loadedQueryPlan, &sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
                 if (const auto path = loadedQueryPlan.sourcesToFilePaths.find(logicalSourceOperator.getSourceDescriptor());
@@ -88,7 +87,7 @@ optimizeQueryPlanIfErrorFree(const NES::Systest::LoadedQueryPlan& loadedQueryPla
                     throw NES::CannotLoadConfig("SourceName \"{}\" does not have an associated file path");
                 }
             });
-        return {optimizedPlan, sourceNamesToFilepathAndCountForQuery};
+        return {optimizedPlan.plan, sourceNamesToFilepathAndCountForQuery};
     }
     return {loadedQueryPlan.queryPlan, sourceNamesToFilepathAndCountForQuery};
 }
@@ -570,7 +569,7 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
             {
                 if (const auto sourceDescriptor = sourceCatalog->addPhysicalSource(
                         logicalSource.value(),
-                        INITIAL<WorkerId>,
+                        "localhost",
                         attachSource.sourceType,
                         -1,
                         Sources::SourceValidationProvider::provide(attachSource.sourceType, sourceConfig),
@@ -676,10 +675,10 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
             try
             {
                 auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-                auto sinkOperators = plan.rootOperators;
+                auto sinkOperators = plan.getRootOperators();
                 auto sinkOperator = [](const LogicalPlan& queryPlan)
                 {
-                    const auto rootOperators = queryPlan.rootOperators;
+                    const auto rootOperators = queryPlan.getRootOperators();
                     if (rootOperators.size() != 1)
                     {
                         throw QueryInvalid(
@@ -700,8 +699,8 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
                         fmt::join(std::views::keys(sinks), ","));
                 }
                 sinkOperator.sinkDescriptor = sink;
-                INVARIANT(!plan.rootOperators.empty(), "Plan has no root operators");
-                plan.rootOperators.at(0) = sinkOperator;
+                INVARIANT(!plan.getRootOperators().empty(), "Plan has no root operators");
+                plan.setRootOperators({sinkOperator});
                 plans.emplace_back(plan, sourceCatalog, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourcesToFilePaths);
             }
             catch (Exception& e)

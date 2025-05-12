@@ -14,12 +14,12 @@
 
 #pragma once
 
-#include <cstddef>
+#include <chrono>
 #include <memory>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <grpcpp/client_context.h>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 namespace NES
@@ -30,11 +30,12 @@ class GRPCClient
 
 public:
     explicit GRPCClient(const std::shared_ptr<grpc::Channel>& channel);
-    [[nodiscard]] QueryId registerQuery(const NES::LogicalPlan& plan) const;
+    [[nodiscard]] QueryId registerQuery(const LogicalPlan& plan) const;
     void stop(QueryId queryId) const;
 
-    [[nodiscard]] NES::QuerySummary status(QueryId queryId) const;
+    [[nodiscard]] QuerySummary status(QueryId queryId) const;
     void start(QueryId queryId) const;
     void unregister(QueryId queryId) const;
+    WorkerStatusResponse summary(const std::chrono::system_clock::time_point after) const;
 };
 }

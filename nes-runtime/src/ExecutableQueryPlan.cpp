@@ -31,6 +31,7 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Overloaded.hpp>
+#include <BackpressureChannel.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ExecutablePipelineStage.hpp>
 
@@ -93,7 +94,7 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[id], std::back_inserter(successors));
         instantiatedSources.emplace_back(
-            NES::Sources::SourceProvider::lower(id, ingestion, descriptor, poolProvider, numberOfBuffersInSourceLocalBufferPool),
+            NES::Sources::SourceProvider::lower(id, ingestion, descriptor, poolProvider, numberOfBuffersInSourceLocalPools),
             std::move(successors));
     }
 

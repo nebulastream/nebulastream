@@ -15,15 +15,12 @@
 #pragma once
 
 #include <memory>
-#include <set>
-#include <unordered_map>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
+
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
 
-
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 /**

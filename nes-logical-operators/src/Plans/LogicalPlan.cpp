@@ -38,7 +38,7 @@ QueryId LogicalPlan::getQueryId() const
     return queryId;
 }
 
-const std::string& LogicalPlan::getOriginalSql() const
+std::string LogicalPlan::getOriginalSql() const
 {
     return originalSql;
 }
@@ -53,27 +53,81 @@ void LogicalPlan::setQueryId(QueryId id)
     queryId = id;
 }
 
+std::vector<LogicalOperator> LogicalPlan::getRootOperators() const
+{
+    return rootOperators;
+}
+
+void LogicalPlan::setRootOperators(const std::vector<LogicalOperator>& operators)
+{
+    rootOperators = operators;
+}
+
+LogicalPlan::LogicalPlan(const LogicalPlan& other) : queryId(other.queryId), originalSql(other.originalSql)
+{
+    for (const auto& op : other.rootOperators)
+    {
+        rootOperators.push_back(op);
+    }
+}
+
+LogicalPlan& LogicalPlan::operator=(const LogicalPlan& other)
+{
+    if (this != &other)
+    {
+        queryId = other.queryId;
+        originalSql = other.originalSql;
+        rootOperators.clear();
+        for (const auto& op : other.rootOperators)
+        {
+            rootOperators.push_back(op);
+        }
+    }
+    return *this;
+}
+
+LogicalPlan::LogicalPlan(LogicalPlan&& other) noexcept
+    : queryId(other.queryId), rootOperators(std::move(other.rootOperators)), originalSql(std::move(other.originalSql))
+{
+}
+
+LogicalPlan& LogicalPlan::operator=(LogicalPlan&& other) noexcept
+{
+    if (this != &other)
+    {
+        rootOperators = std::move(other.rootOperators);
+        originalSql = std::move(other.originalSql);
+        queryId = other.queryId;
+    }
+    return *this;
+}
+
 LogicalPlan::LogicalPlan(LogicalOperator rootOperator) : queryId(INVALID_QUERY_ID)
 {
     rootOperators.push_back(std::move(rootOperator));
 }
 
 LogicalPlan::LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators)
-    : rootOperators(std::move(rootOperators)), queryId(queryId)
+    : queryId(queryId), rootOperators(std::move(rootOperators))
+{
+}
+
+LogicalPlan::LogicalPlan(const QueryId queryId, std::vector<LogicalOperator> rootOperators, std::string originalSql)
+    : queryId(queryId), rootOperators(std::move(rootOperators)), originalSql(std::move(originalSql))
 {
 }
 
 LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot)
 {
-    auto root = newRoot.withChildren(plan.rootOperators);
+    auto root = newRoot.withChildren(plan.getRootOperators());
     return LogicalPlan(plan.getQueryId(), {std::move(root)});
 }
 
 namespace
 {
-bool replaceOperatorRecursion(LogicalOperator& current, const LogicalOperator& target, LogicalOperator& replacement)
+bool replaceOperatorRecursion(LogicalOperator& current, const OperatorId target, LogicalOperator& replacement)
 {
-    if (current.getId() == target.getId())
+    if (current.getId() == target)
     {
         replacement = replacement.withChildren(current.getChildren());
         current = replacement;
@@ -96,13 +150,13 @@ bool replaceOperatorRecursion(LogicalOperator& current, const LogicalOperator& t
 }
 }
 
-std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, const LogicalOperator& target, LogicalOperator replacement)
+std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, const OperatorId target, LogicalOperator replacement)
 {
     bool replaced = false;
     std::vector<LogicalOperator> newRoots;
-    for (auto root : plan.rootOperators)
+    for (auto root : plan.getRootOperators())
     {
-        if (root.getId() == target.getId())
+        if (root.getId() == target)
         {
             replacement = replacement.withChildren(root.getChildren());
             newRoots.push_back(replacement);
@@ -116,16 +170,16 @@ std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, const Logica
     }
     if (replaced)
     {
-        return LogicalPlan(plan.getQueryId(), std::move(newRoots));
+        return LogicalPlan(plan.getQueryId(), std::move(newRoots), plan.getOriginalSql());
     }
     return std::nullopt;
 }
 
 namespace
 {
-bool replaceSubtreeRecursion(LogicalOperator& current, const LogicalOperator& target, const LogicalOperator& replacement)
+bool replaceSubtreeRecursion(LogicalOperator& current, const OperatorId target, const LogicalOperator& replacement)
 {
-    if (current.getId() == target.getId())
+    if (current.getId() == target)
     {
         current = replacement;
         return true;
@@ -147,13 +201,13 @@ bool replaceSubtreeRecursion(LogicalOperator& current, const LogicalOperator& ta
 }
 }
 
-std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, const LogicalOperator& target, const LogicalOperator& replacement)
+std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, const OperatorId target, const LogicalOperator& replacement)
 {
     bool replaced = false;
-    std::vector<LogicalOperator> newRoots = plan.rootOperators;
+    std::vector<LogicalOperator> newRoots = plan.getRootOperators();
     for (auto& root : newRoots)
     {
-        if (root.getId() == target.getId())
+        if (root.getId() == target)
         {
             root = replacement;
             replaced = true;
@@ -165,7 +219,7 @@ std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, const Logical
     }
     if (replaced)
     {
-        return LogicalPlan(plan.getQueryId(), std::move(newRoots));
+        return LogicalPlan(plan.getQueryId(), std::move(newRoots), plan.getOriginalSql());
     }
     return std::nullopt;
 }
@@ -188,7 +242,7 @@ void getParentsHelper(const LogicalOperator& current, const LogicalOperator& tar
 std::vector<LogicalOperator> getParents(const LogicalPlan& plan, const LogicalOperator& target)
 {
     std::vector<LogicalOperator> parents;
-    for (const auto& root : plan.rootOperators)
+    for (const auto& root : plan.getRootOperators())
     {
         getParentsHelper(root, target, parents);
     }
@@ -206,7 +260,7 @@ std::string explain(const LogicalPlan& plan, ExplainVerbosity verbosity)
     else
     {
         auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false);
-        for (const auto& rootOperator : plan.rootOperators)
+        for (const auto& rootOperator : plan.getRootOperators())
         {
             dumpHandler.dump({rootOperator});
         }
@@ -220,7 +274,7 @@ std::vector<LogicalOperator> getLeafOperators(const LogicalPlan& plan)
     std::vector<LogicalOperator> leafOperators;
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::set<OperatorId> visitedOpIds;
-    for (const auto& rootOperator : plan.rootOperators)
+    for (const auto& rootOperator : plan.getRootOperators())
     {
         for (auto itr : BFSRange<LogicalOperator>(rootOperator))
         {
@@ -239,11 +293,27 @@ std::vector<LogicalOperator> getLeafOperators(const LogicalPlan& plan)
     return leafOperators;
 }
 
+
+std::optional<LogicalOperator> getOperatorById(const LogicalPlan& plan, OperatorId operatorId)
+{
+    for (const auto& rootOp : plan.getRootOperators())
+    {
+        for (const auto& op : BFSRange(rootOp))
+        {
+            if (op.getId() == operatorId)
+            {
+                return op;
+            }
+        }
+    }
+    return std::nullopt;
+}
+
 std::unordered_set<LogicalOperator> flatten(const LogicalPlan& plan)
 {
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<LogicalOperator> visitedOperators;
-    for (const auto& rootOperator : plan.rootOperators)
+    for (const auto& rootOperator : plan.getRootOperators())
     {
         for (auto itr : BFSRange(rootOperator))
         {

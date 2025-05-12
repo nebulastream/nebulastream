@@ -25,8 +25,8 @@ namespace NES::Configuration
 class SingleNodeWorkerConfiguration final : public NES::Configurations::BaseConfiguration
 {
 public:
-    Configurations::StringOption connection = {"connection", "", "Connection name. This is the {Hostname}:{PORT}"};
-    Configurations::StringOption bind
+    NES::Configurations::StringOption connection = {"connection", "", "Connection name. This is the {Hostname}:{PORT}"};
+    NES::Configurations::StringOption bind
         = {"bind", "", "Address port combo the receiver server is listening binding to. Cannot be a dns name!"};
 
     /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080

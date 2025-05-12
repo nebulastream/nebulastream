@@ -56,7 +56,7 @@ bool SelectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) con
     {
         return predicate == rhsOperator->predicate && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 };
@@ -96,7 +96,14 @@ LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema>
 
 TraitSet SelectionLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
+}
+
+LogicalOperator SelectionLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator SelectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

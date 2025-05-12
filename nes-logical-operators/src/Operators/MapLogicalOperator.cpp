@@ -58,10 +58,11 @@ bool MapLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     {
         return this->mapFunction == other->mapFunction && getOutputSchema() == other->getOutputSchema()
             && getInputSchemas() == other->getInputSchemas() && getInputOriginIds() == other->getInputOriginIds()
-            && getOutputOriginIds() == other->getOutputOriginIds() && getChildren() == other->getChildren();
+            && getOutputOriginIds() == other->getOutputOriginIds() && getChildren() == other->getChildren()
+            && getTraitSet() == other->getTraitSet();
     }
     return false;
-};
+}
 
 LogicalOperator MapLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
@@ -106,13 +107,20 @@ LogicalOperator MapLogicalOperator::withInferredSchema(std::vector<Schema> input
 
 TraitSet MapLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
 }
 
 LogicalOperator MapLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
     auto copy = *this;
     copy.children = children;
+    return copy;
+}
+
+LogicalOperator MapLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
     return copy;
 }
 

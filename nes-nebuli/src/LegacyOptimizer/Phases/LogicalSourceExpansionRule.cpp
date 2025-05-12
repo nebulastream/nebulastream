@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+#include <LegacyOptimizer/Phases/LogicalSourceExpansionRule.hpp>
 
 #include <ranges>
 #include <string>
@@ -26,7 +26,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
@@ -74,7 +74,7 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
                 children.emplace_back(SourceDescriptorLogicalOperator{entry});
             }
             auto newParent = parent.withChildren(std::move(children));
-            auto replaceResult = replaceSubtree(queryPlan, parent, newParent);
+            auto replaceResult = replaceSubtree(queryPlan, parent.getId(), newParent);
             INVARIANT(
                 replaceResult.has_value(),
                 "Failed to replace operator {} with {}",

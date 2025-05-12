@@ -50,8 +50,7 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(std::string logicalSourceName)
 {
     NES_TRACE("LogicalPlanBuilder: create query plan for input source  {}", logicalSourceName);
     const NES::Configurations::DescriptorConfig::Config sourceDescriptorConfig{};
-    auto queryPlan = LogicalPlan(SourceNameLogicalOperator(logicalSourceName));
-    return queryPlan;
+    return LogicalPlan(SourceNameLogicalOperator(logicalSourceName));
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(std::vector<LogicalFunction> functions, const LogicalPlan& queryPlan)
@@ -86,7 +85,7 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs,
     std::vector<FieldAccessLogicalFunction> onKeys)
 {
-    PRECONDITION(not queryPlan.rootOperators.empty(), "invalid query plan, as the root operator is empty");
+    PRECONDITION(not queryPlan.getRootOperators().empty(), "invalid query plan, as the root operator is empty");
 
     if (auto* timeBasedWindowType = dynamic_cast<Windowing::TimeBasedWindowType*>(windowType.get()))
     {
@@ -109,7 +108,7 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
         throw NotImplemented("Only TimeBasedWindowType is supported for now");
     }
 
-    auto inputSchema = queryPlan.rootOperators[0].getOutputSchema();
+    auto inputSchema = queryPlan.getRootOperators().front().getOutputSchema();
     return promoteOperatorToRoot(queryPlan, WindowedAggregationLogicalOperator(std::move(onKeys), std::move(windowAggs), windowType));
 }
 
@@ -160,9 +159,9 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     }
 
 
-    INVARIANT(!rightLogicalPlan.rootOperators.empty(), "RootOperators of rightLogicalPlan are empty");
-    auto rootOperatorRhs = rightLogicalPlan.rootOperators[0];
-    auto leftJoinType = leftLogicalPlan.rootOperators[0].getOutputSchema();
+    INVARIANT(!rightLogicalPlan.getRootOperators().empty(), "RootOperators of rightLogicalPlan are empty");
+    auto rootOperatorRhs = rightLogicalPlan.getRootOperators().front();
+    auto leftJoinType = leftLogicalPlan.getRootOperators().front().getOutputSchema();
     auto rightLogicalPlanJoinType = rootOperatorRhs.getOutputSchema();
 
     /// check if query contain watermark assigner, and add if missing (as default behaviour)
@@ -207,7 +206,9 @@ LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const st
 LogicalPlan LogicalPlanBuilder::addBinaryOperatorAndUpdateSource(
     const LogicalOperator& operatorNode, LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan)
 {
-    leftLogicalPlan.rootOperators.push_back(rightLogicalPlan.rootOperators[0]);
+    std::vector<LogicalOperator> joined = leftLogicalPlan.getRootOperators();
+    joined.push_back(rightLogicalPlan.getRootOperators().front());
+    leftLogicalPlan.setRootOperators(joined);
     return promoteOperatorToRoot(leftLogicalPlan, operatorNode);
 }
 }

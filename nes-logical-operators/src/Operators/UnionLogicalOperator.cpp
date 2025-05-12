@@ -44,7 +44,7 @@ bool UnionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
     {
         return leftInputSchema == rhsOperator->leftInputSchema && rightInputSchema == rhsOperator->rightInputSchema
             && getOutputSchema() == rhsOperator->getOutputSchema() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -112,7 +112,14 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inp
 
 TraitSet UnionLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
+}
+
+LogicalOperator UnionLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator UnionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

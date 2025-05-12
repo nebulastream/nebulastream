@@ -85,7 +85,8 @@ bool ProjectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
         }
 
         return getOutputSchema() == rhsOperator->getOutputSchema() && getInputSchemas() == rhsOperator->getInputSchemas()
-            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds()
+            && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 };
@@ -169,7 +170,14 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema
 
 TraitSet ProjectionLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
+}
+
+LogicalOperator ProjectionLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator ProjectionLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

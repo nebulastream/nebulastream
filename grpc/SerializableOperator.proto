@@ -37,7 +37,7 @@ message SerializableSourceDescriptor
   uint64 physicalSourceId = 1;
   string logicalSourceName = 2;
   SerializableSchema sourceSchema = 3;
-  uint64 workerId = 4;
+  string workerId = 4;
   string sourceType = 5;
   int32 numberOfBuffersInLocalPool = 6;
   SerializableParserConfig parserConfig = 7;

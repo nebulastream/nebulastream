@@ -108,7 +108,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
     for (auto& summary : summaries)
     {
         INVARIANT(!summary.runs.empty(), "Query should at least contain a single run");
-        if (summary.currentStatus == Runtime::Execution::QueryStatus::Running)
+        if (summary.currentStatus == QueryStatus::Running)
         {
             INVARIANT(summary.runs.back().running.has_value(), "If query is running it should have a running timestamp");
             if (summary.runs.back().running.value() >= after)
@@ -116,7 +116,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
                 status.activeQueries.emplace_back(summary.queryId, summary.runs.back().running.value());
             }
         }
-        else if (summary.currentStatus == Runtime::Execution::QueryStatus::Stopped)
+        else if (summary.currentStatus == QueryStatus::Stopped)
         {
             INVARIANT(summary.runs.back().running.has_value(), "If query is stopped it should have a running timestamp");
             INVARIANT(summary.runs.back().stop.has_value(), "If query is stopped it should have a stopped timestamp");

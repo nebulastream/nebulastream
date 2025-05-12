@@ -53,6 +53,11 @@ LogicalOperator LogicalOperator::withChildren(std::vector<LogicalOperator> child
     return self->withChildren(std::move(children));
 }
 
+LogicalOperator LogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    return self->withTraitSet(std::move(traitSet));
+}
+
 OperatorId LogicalOperator::getId() const
 {
     return self->id;

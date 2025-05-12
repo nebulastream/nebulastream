@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <LegacyOptimizer/Phases/SourceInferencePhase.hpp>
 
 #include <algorithm>
 #include <ranges>
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
-#include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
@@ -56,7 +56,7 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
                     throw CannotInferSchema("Could not rename non-existing field: {}", field.name);
                 }
             });
-        auto result = replaceOperator(queryPlan, source, source.withSchema(schema));
+        auto result = replaceOperator(queryPlan, source.id, source.withSchema(schema));
         INVARIANT(result.has_value(), "replaceOperator failed");
         queryPlan = std::move(*result);
     }

@@ -10,15 +10,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-optimizer
-        Topology.cpp
-        Placement.cpp
+add_source_files(nes-legacy-optimizer
+        DistributedQueryId.cpp
+        NetworkTopology.cpp
+        OperatorPlacement.cpp
+        QueryDecomposition.cpp
+        WorkerStatus.cpp
 )
 
-add_nes_common_test("TopologyTest" TopologyTest.cpp)
-target_link_libraries(TopologyTest nes-nebuli)
-target_include_directories(TopologyTest PRIVATE ../../private)
+add_nes_common_test("NetworkTopologyTest" NetworkTopologyTest.cpp)
+target_link_libraries(NetworkTopologyTest nes-nebuli)
+target_include_directories(NetworkTopologyTest PRIVATE ../../private)
 
-add_nes_common_test("PlacementTest" PlacementTest.cpp)
-target_link_libraries(PlacementTest nes-nebuli nes-sql-parser)
-target_include_directories(PlacementTest PRIVATE ../../private)
+add_nes_common_test("DistributedPlanningTest" DistributedPlanningTest.cpp)
+target_link_libraries(DistributedPlanningTest nes-nebuli nes-sql-parser)
+target_include_directories(DistributedPlanningTest PRIVATE ../../private)

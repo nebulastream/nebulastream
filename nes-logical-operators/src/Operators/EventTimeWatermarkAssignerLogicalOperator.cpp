@@ -75,7 +75,7 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperator
     {
         return onField == rhsOperator->onField && unit == rhsOperator->unit && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
-            && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getOutputOriginIds() == rhsOperator->getOutputOriginIds() && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -102,7 +102,14 @@ LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withOutputOriginIds(s
 
 TraitSet EventTimeWatermarkAssignerLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
+}
+
+LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
 }
 
 LogicalOperator EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
