@@ -21,13 +21,14 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/Execution.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-/// Performs the second phase of the join. The tuples are joined via two nested loops. The left stream is the outer loop, and the right stream is the inner loop.
+/// Performs the second phase of the join. The tuples are joined via two nested loops.
 class NLJProbe final : public StreamJoinProbe
 {
 public:
@@ -42,6 +43,15 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 protected:
+    void performNLJ(
+        const Interface::PagedVectorRef& outerPagedVector,
+        const Interface::PagedVectorRef& innerPagedVector,
+        Interface::MemoryProvider::TupleBufferMemoryProvider& outerMemoryProvider,
+        Interface::MemoryProvider::TupleBufferMemoryProvider& innerMemoryProvider,
+        ExecutionContext& executionCtx,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd) const; const
+
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider;
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider;
 };

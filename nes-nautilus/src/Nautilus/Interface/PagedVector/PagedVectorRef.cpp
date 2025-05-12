@@ -58,6 +58,11 @@ uint64_t getBufferPosForEntryProxy(const PagedVector* pagedVector, const uint64_
     return pagedVector->getBufferPosForEntry(entryPos).value_or(0);
 }
 
+nautilus::val<uint64_t> PagedVectorRef::getNumberOfTuples() const
+{
+    return nautilus::invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
+}
+
 PagedVectorRef::PagedVectorRef(
     const nautilus::val<PagedVector*>& pagedVectorRef,
     const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,

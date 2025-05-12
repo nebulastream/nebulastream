@@ -56,6 +56,7 @@ public:
     [[nodiscard]] PagedVectorRefIter begin(const std::vector<Record::RecordFieldIdentifier>& projections) const;
     [[nodiscard]] PagedVectorRefIter end(const std::vector<Record::RecordFieldIdentifier>& projections) const;
     nautilus::val<bool> operator==(const PagedVectorRef& other) const;
+    nautilus::val<uint64_t> getNumberOfTuples() const;
 
 private:
     nautilus::val<PagedVector*> pagedVectorRef;

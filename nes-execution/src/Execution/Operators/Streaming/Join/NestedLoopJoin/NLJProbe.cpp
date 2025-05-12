@@ -91,6 +91,41 @@ NLJProbe::NLJProbe(
 {
 }
 
+void NLJProbe::performNLJ(
+    const Interface::PagedVectorRef& outerPagedVector,
+    const Interface::PagedVectorRef& innerPagedVector,
+    Interface::MemoryProvider::TupleBufferMemoryProvider& outerMemoryProvider,
+    Interface::MemoryProvider::TupleBufferMemoryProvider& innerMemoryProvider,
+    ExecutionContext& executionCtx,
+    const nautilus::val<Timestamp>& windowStart,
+    const nautilus::val<Timestamp>& windowEnd) const
+{
+    const auto outerKeyFields = outerMemoryProvider.getMemoryLayout()->getKeyFieldNames();
+    const auto innerKeyFields = innerMemoryProvider.getMemoryLayout()->getKeyFieldNames();
+    const auto outerFields = outerMemoryProvider.getMemoryLayout()->getSchema()->getFieldNames();
+    const auto innerFields = innerMemoryProvider.getMemoryLayout()->getSchema()->getFieldNames();
+
+    nautilus::val<uint64_t> outerItemPos(0);
+    for (auto outerIt = outerPagedVector.begin(outerKeyFields); outerIt != outerPagedVector.end(outerKeyFields); ++outerIt)
+    {
+        nautilus::val<uint64_t> innerItemPos(0);
+        for (auto innerIt = innerPagedVector.begin(innerKeyFields); innerIt != innerPagedVector.end(innerKeyFields); ++innerIt)
+        {
+            auto joinedKeyFields = createJoinedRecord(*outerIt, *innerIt, windowStart, windowEnd, outerKeyFields, innerKeyFields);
+            if (joinFunction->execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
+            {
+                auto outerRecord = outerPagedVector.readRecord(outerItemPos, outerFields);
+                auto innerRecord = innerPagedVector.readRecord(innerItemPos, innerFields);
+                auto joinedRecord = createJoinedRecord(outerRecord, innerRecord, windowStart, windowEnd, outerFields, innerFields);
+                child->execute(executionCtx, joinedRecord);
+            }
+
+            ++innerItemPos;
+        }
+        ++outerItemPos;
+    }
+}
+
 void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
@@ -137,30 +172,17 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
         leftPagedVectorRef, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
     const Interface::PagedVectorRef rightPagedVector(
         rightPagedVectorRef, rightMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const auto numberOfTuplesLeft = leftPagedVector.getNumberOfTuples();
+    const auto numberOfTuplesRight = rightPagedVector.getNumberOfTuples();
 
-    const auto leftKeyFields = leftMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto rightKeyFields = rightMemoryProvider->getMemoryLayout()->getKeyFieldNames();
-    const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
-    const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
-
-    nautilus::val<uint64_t> leftItemPos = 0UL;
-    for (auto leftIt = leftPagedVector.begin(leftKeyFields); leftIt != leftPagedVector.end(leftKeyFields); ++leftIt)
+    /// Outer loop should have more no. tuples
+    if (numberOfTuplesLeft < numberOfTuplesRight)
     {
-        nautilus::val<uint64_t> rightItemPos = 0UL;
-        for (auto rightIt = rightPagedVector.begin(rightKeyFields); rightIt != rightPagedVector.end(rightKeyFields); ++rightIt)
-        {
-            auto joinedKeyFields = createJoinedRecord(*leftIt, *rightIt, windowStart, windowEnd, leftKeyFields, rightKeyFields);
-            if (joinFunction->execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
-            {
-                auto leftRecord = leftPagedVector.readRecord(leftItemPos, leftFields);
-                auto rightRecord = rightPagedVector.readRecord(rightItemPos, rightFields);
-                auto joinedRecord = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd);
-                child->execute(executionCtx, joinedRecord);
-            }
-
-            ++rightItemPos;
-        }
-        ++leftItemPos;
+        performNLJ(leftPagedVector, rightPagedVector, *leftMemoryProvider, *rightMemoryProvider, executionCtx, windowStart, windowEnd);
+    }
+    else
+    {
+        performNLJ(rightPagedVector, leftPagedVector, *rightMemoryProvider, *leftMemoryProvider, executionCtx, windowStart, windowEnd);
     }
 }
 
