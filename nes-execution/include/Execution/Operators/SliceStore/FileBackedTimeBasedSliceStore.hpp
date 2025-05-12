@@ -54,6 +54,7 @@ struct SliceStoreMetaData
     BufferMetaData bufferMetaData;
 };
 
+// TODO inherit from DefaultTimeBasedSliceStore
 class FileBackedTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
@@ -151,10 +152,10 @@ private:
     std::pair<double, double> readExecTimeFunction;
 
     /// The Memory Controller manages the creation and destruction of FileReader and FileWriter instances and controls the internal memory
-    /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory.
+    /// pool used by them. It also stores the FileLayout used for each file. The map keeps track of whether slices are in main memory. TODO
     std::shared_ptr<MemoryController> memoryController;
     folly::Synchronized<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, bool>> slicesInMemory;
-    std::map<WorkerThreadId, std::map<QueryCompilation::JoinBuildSideType, std::vector<std::shared_ptr<Slice>>>> alteredSlicesPerThread;
+    std::map<std::pair<WorkerThreadId, QueryCompilation::JoinBuildSideType>, std::vector<std::shared_ptr<Slice>>> alteredSlicesPerThread;
 
     uint64_t numberOfWorkerThreads;
     MemoryControllerInfo memoryControllerInfo;

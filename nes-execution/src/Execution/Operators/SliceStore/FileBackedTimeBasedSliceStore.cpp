@@ -214,7 +214,7 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
     if (slicesWriteLocked->contains(sliceEnd))
     {
         const auto slice = slicesWriteLocked->find(sliceEnd)->second;
-        alteredSlicesPerThread[threadId][joinBuildSide].emplace_back(slice);
+        alteredSlicesPerThread[{threadId, joinBuildSide}].emplace_back(slice);
         return {slice};
     }
 
@@ -234,7 +234,7 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
         windowSlices.emplace_back(newSlice);
     }
 
-    alteredSlicesPerThread[threadId][joinBuildSide].emplace_back(newSlice);
+    alteredSlicesPerThread[{threadId, joinBuildSide}].emplace_back(newSlice);
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
     slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Left}, true});
     slicesInMemoryLocked->insert({{newSlice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Right}, true});
@@ -426,8 +426,8 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     /// Initialise maps to keep track of altered slices
     for (auto i = 0UL; i < numberOfWorkerThreads; ++i)
     {
-        alteredSlicesPerThread[WorkerThreadId(i)][QueryCompilation::JoinBuildSideType::Left];
-        alteredSlicesPerThread[WorkerThreadId(i)][QueryCompilation::JoinBuildSideType::Right];
+        alteredSlicesPerThread[{WorkerThreadId(i), QueryCompilation::JoinBuildSideType::Left}];
+        alteredSlicesPerThread[{WorkerThreadId(i), QueryCompilation::JoinBuildSideType::Right}];
     }
 
     /// Initialise memory controller and measure execution times for reading and writing
@@ -456,8 +456,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
 
     /// Write and read all selected slices to and from disk
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    const auto& slicesToUpdate = getSlicesToUpdate(memoryLayout, joinBuildSide, threadId);
-    for (const auto& [slice, operation, fileLayout] : slicesToUpdate)
+    for (const auto& [slice, operation, fileLayout] : getSlicesToUpdate(memoryLayout, joinBuildSide, threadId))
     {
         /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
@@ -471,20 +470,27 @@ void FileBackedTimeBasedSliceStore::updateSlices(
             switch (operation)
             {
                 case READ: {
-                    auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
-                    pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout);
-                    memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
+                    // TODO investigate why numTuples and numPages can be zero
+                    if (const auto numTuplesOnDisk = pagedVector->getNumberOfTuplesOnDisk(); numTuplesOnDisk > 0)
+                    {
+                        auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
+                        pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout);
+                        memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
+                    }
                     break;
                 }
                 case WRITE: {
-                    const auto slicesInMemoryLocked = slicesInMemory.wlock();
-                    (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = false;
+                    if (const auto numPagesInMemory = pagedVector->getNumberOfPages(); numPagesInMemory > 0)
+                    {
+                        const auto slicesInMemoryLocked = slicesInMemory.wlock();
+                        (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = false;
 
-                    auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide);
-                    pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
-                    pagedVector->truncate(fileLayout);
-                    // TODO force flush FileWriter?
-                    fileWriter->flushAndDeallocateBuffer();
+                        auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide);
+                        pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
+                        pagedVector->truncate(fileLayout);
+                        // TODO force flush FileWriter?
+                        fileWriter->flushAndDeallocateBuffer();
+                    }
                     break;
                 }
             }
@@ -501,7 +507,7 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
     const WorkerThreadId threadId)
 {
     std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> slicesToUpdate;
-    for (const auto& slice : alteredSlicesPerThread[threadId][joinBuildSide])
+    for (const auto& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
     {
         // TODO state sizes do not include size of variable sized data
         const auto sliceEnd = slice->getSliceEnd();
@@ -538,7 +544,7 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
         }
         /// Slice should not be written out or read back in any other case
     }
-    alteredSlicesPerThread[threadId][joinBuildSide].clear();
+    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
     return slicesToUpdate;
 }
 
