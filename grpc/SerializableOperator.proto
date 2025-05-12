@@ -69,12 +69,14 @@ message SerializableOperator {
 
     /* Source Descriptor Definition */
     message SourceDescriptor {
-        SerializableSchema sourceSchema = 1;
+        uint64 physicalSourceID = 1;
         string logicalSourceName = 2;
-        string sourceType = 3;
-        int32 numberOfBuffersInSourceLocalBufferPool = 4;
-        ParserConfig parserConfig = 5;
-        map<string, SerializableVariantDescriptor> config = 6;
+        SerializableSchema sourceSchema = 3;
+        uint64 workerID = 4;
+        string sourceType = 5;
+        int32 buffersInLocalPool = 6;
+        ParserConfig parserConfig = 7;
+        map<string, SerializableVariantDescriptor> config = 8;
     }
 
     uint64 sourceOriginId = 1;

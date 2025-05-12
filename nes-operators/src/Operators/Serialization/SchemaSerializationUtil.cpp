@@ -24,7 +24,7 @@ namespace NES
 {
 
 std::shared_ptr<SerializableSchema>
-SchemaSerializationUtil::serializeSchema(const std::shared_ptr<Schema>& schema, SerializableSchema* serializedSchema)
+SchemaSerializationUtil::serializeSchema(const std::shared_ptr<const Schema>& schema, SerializableSchema* serializedSchema)
 {
     NES_DEBUG("SchemaSerializationUtil:: serialize schema {}", schema->toString());
     /// serialize all field in schema

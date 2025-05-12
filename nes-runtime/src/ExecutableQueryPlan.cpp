@@ -89,7 +89,7 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
     {
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[id], std::back_inserter(successors));
         instantiatedSources.emplace_back(
-            NES::Sources::SourceProvider::lower(id, *descriptor, poolProvider, numberOfBuffersInSourceLocalBufferPool),
+            NES::Sources::SourceProvider::lower(id, descriptor, poolProvider, numberOfBuffersInSourceLocalBufferPool),
             std::move(successors));
     }
 

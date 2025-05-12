@@ -28,10 +28,10 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtil.hpp>
 #include <TestTaskQueue.hpp>
-#include "Util/Logger/Logger.hpp"
-#include "Util/TestTupleBuffer.hpp"
 
 
 namespace NES::InputFormatterTestUtil
@@ -144,6 +144,7 @@ getEmitFunction(ThreadSafeVector<NES::Memory::TupleBuffer>& resultBuffers);
 Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
+    Catalogs::Source::SourceCatalog& sourceCatalog,
     const std::string& filePath,
     std::shared_ptr<Schema> schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,

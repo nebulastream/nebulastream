@@ -20,8 +20,9 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::Optimizer
@@ -68,12 +69,13 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
         /// source descriptor form the catalog.
         auto logicalSourceName = source->getLogicalSourceName();
         std::shared_ptr<Schema> schema = Schema::create();
-        if (!sourceCatalog->containsLogicalSource(logicalSourceName))
+        auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
+        if (!logicalSource.has_value())
         {
             NES_ERROR("Source name: {} not registered.", logicalSourceName);
             throw LogicalSourceNotFoundInQueryDescription(fmt::format("Logical source not registered. Source Name: {}", logicalSourceName));
         }
-        auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
+        auto originalSchema = logicalSource->getSchema();
         schema = schema->copyFields(originalSchema);
         schema->setLayoutType(originalSchema->getLayoutType());
         auto qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;

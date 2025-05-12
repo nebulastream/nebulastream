@@ -17,9 +17,12 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <string>
 #include <vector>
 #include <API/AttributeField.hpp>
+#include <fmt/base.h>
+#include <fmt/ostream.h>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
@@ -65,7 +68,7 @@ public:
     /// @brief Copy all fields of otherSchema into this schema.
     /// @param otherSchema
     /// @return a copy of this schema.
-    std::shared_ptr<Schema> copyFields(const std::shared_ptr<Schema>& otherSchema);
+    std::shared_ptr<Schema> copyFields(const std::shared_ptr<const Schema>& otherSchema);
 
     /// @brief appends a AttributeField to the schema and returns a copy of this schema.
     /// @param attribute
@@ -162,14 +165,24 @@ public:
 
     /// @brief Get the field names as a vector of strings.
     /// @return std::vector<std::string> fieldNames
-    std::vector<std::string> getFieldNames() const;
+    [[nodiscard]] std::vector<std::string> getFieldNames() const;
 
-    auto begin() const { return std::begin(fields); }
-    auto end() const { return std::end(fields); }
+    [[nodiscard]] std::vector<std::shared_ptr<AttributeField>>::const_iterator begin() const { return std::begin(fields); }
+    [[nodiscard]] std::vector<std::shared_ptr<AttributeField>>::const_iterator end() const { return std::end(fields); }
+
+    friend std::ostream& operator<<(std::ostream& os, const Schema& schema) { return os << schema.toString(); }
 
 private:
     std::vector<std::shared_ptr<AttributeField>> fields;
     MemoryLayoutType layoutType;
 };
 
+}
+
+namespace fmt
+{
+template <>
+struct fmt::formatter<NES::Schema> : ostream_formatter
+{
+};
 }

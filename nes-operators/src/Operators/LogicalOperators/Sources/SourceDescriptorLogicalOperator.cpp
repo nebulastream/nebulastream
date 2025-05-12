@@ -12,11 +12,16 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <ostream>
 #include <utility>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -24,13 +29,12 @@
 
 namespace NES
 {
-SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OperatorId id)
+SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor, const OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OperatorId id, const OriginId originId)
+    Sources::SourceDescriptor sourceDescriptor, const OperatorId id, const OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
@@ -45,35 +49,38 @@ bool SourceDescriptorLogicalOperator::equal(const std::shared_ptr<Node>& rhs) co
     if (Util::instanceOf<SourceDescriptorLogicalOperator>(rhs))
     {
         const auto sourceOperator = Util::as<SourceDescriptorLogicalOperator>(rhs);
-        return sourceOperator->getSourceDescriptorRef() == *sourceDescriptor;
+        return sourceOperator->getSourceDescriptor() == sourceDescriptor;
     }
     return false;
 }
 
 std::ostream& SourceDescriptorLogicalOperator::toDebugString(std::ostream& os) const
 {
-    return os << fmt::format("SOURCE(opId: {}, originid: {}, {})", id, originId, *sourceDescriptor);
+    return os << fmt::format("SOURCE(opId: {}, originid: {}, {})", id, originId, sourceDescriptor);
 }
 
 std::ostream& SourceDescriptorLogicalOperator::toQueryPlanString(std::ostream& os) const
 {
-    return os << fmt::format("SOURCE({}, type: {})", sourceDescriptor->logicalSourceName, sourceDescriptor->sourceType);
+    return os << fmt::format(
+               "SOURCE({}, type: {})", sourceDescriptor.getLogicalSource().getLogicalSourceName(), sourceDescriptor.getSourceType());
 }
 
-const Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const
-{
-    return *sourceDescriptor;
-}
-
-std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getSourceDescriptor() const
+Sources::SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 {
     return sourceDescriptor;
 }
 
 bool SourceDescriptorLogicalOperator::inferSchema()
 {
-    inputSchema = sourceDescriptor->schema;
-    outputSchema = sourceDescriptor->schema;
+    const auto schema = sourceDescriptor.getLogicalSource().getSchema();
+    inputSchema = std::make_shared<Schema>(*schema);
+    outputSchema = std::make_shared<Schema>(schema->getLayoutType());
+    for (const std::shared_ptr<AttributeField>& field : *schema)
+    {
+        outputSchema->addField(
+            sourceDescriptor.getLogicalSource().getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR + field->getName(),
+            field->getDataType());
+    }
     return true;
 }
 

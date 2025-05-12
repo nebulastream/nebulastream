@@ -37,7 +37,8 @@ public:
      * @param serializedSchema The corresponding protobuff object, which is used to capture the state of the object.
      * @return the modified serializedSchema
      */
-    static std::shared_ptr<SerializableSchema> serializeSchema(const std::shared_ptr<Schema>& schema, SerializableSchema* serializedSchema);
+    static std::shared_ptr<SerializableSchema>
+    serializeSchema(const std::shared_ptr<const Schema>& schema, SerializableSchema* serializedSchema);
 
     /**
     * @brief De-serializes the SerializableSchema and all its fields to a std::shared_ptr<Schema>

@@ -14,9 +14,12 @@
 
 #pragma once
 
+#include <memory>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES
@@ -30,13 +33,11 @@ namespace NES
 class SourceDescriptorLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
+    explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor, OperatorId id);
 
-    explicit SourceDescriptorLogicalOperator(
-        std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
+    explicit SourceDescriptorLogicalOperator(Sources::SourceDescriptor sourceDescriptor, OperatorId id, OriginId originId);
 
-    const Sources::SourceDescriptor& getSourceDescriptorRef() const;
-    std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
+    Sources::SourceDescriptor getSourceDescriptor() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -53,7 +54,7 @@ protected:
     [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
 private:
-    const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    Sources::SourceDescriptor sourceDescriptor;
 };
 
 }

@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <string>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -20,7 +21,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -62,7 +63,7 @@ void SemanticQueryValidation::validate(const std::shared_ptr<QueryPlan>& queryPl
     }
     catch (std::exception& e)
     {
-        std::string errorMessage = e.what();
+        const std::string errorMessage = e.what();
         throw QueryInvalid(errorMessage);
     }
 
@@ -126,13 +127,22 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     const std::shared_ptr<QueryPlan>& queryPlan, const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog)
 {
     /// Identify the source operators
-    auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
+    const auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
     std::vector<std::string> invalidLogicalSourceNames;
-    for (auto sourceOperator : sourceOperators)
+    for (const auto& sourceOperator : sourceOperators)
     {
-        if (sourceCatalog->getPhysicalSources(sourceOperator->getLogicalSourceName()).empty())
+        if (const auto logicalSource = sourceCatalog->getLogicalSource(sourceOperator->getLogicalSourceName());
+            not logicalSource.has_value())
         {
             invalidLogicalSourceNames.emplace_back(sourceOperator->getLogicalSourceName());
+        }
+        else
+        {
+            if (const auto physicalSourcesOpt = sourceCatalog->getPhysicalSources(logicalSource.value());
+                not physicalSourcesOpt.has_value() || physicalSourcesOpt->empty())
+            {
+                invalidLogicalSourceNames.emplace_back(sourceOperator->getLogicalSourceName());
+            }
         }
     }
 

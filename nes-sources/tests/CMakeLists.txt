@@ -21,3 +21,4 @@ function(add_nes_source_test)
 endfunction()
 
 add_nes_source_test(source-thread-test SourceThreadTest.cpp)
+add_nes_source_test(source-catalog-test SourceCatalogTest.cpp)

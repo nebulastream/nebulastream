@@ -73,7 +73,7 @@ uint64_t Schema::getSchemaSizeInBytes() const
     return size;
 }
 
-std::shared_ptr<Schema> Schema::copyFields(const std::shared_ptr<Schema>& otherSchema)
+std::shared_ptr<Schema> Schema::copyFields(const std::shared_ptr<const Schema>& otherSchema)
 {
     for (const std::shared_ptr<AttributeField>& attribute : otherSchema->fields)
     {

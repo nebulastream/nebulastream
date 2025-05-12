@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #include <fstream>
+#include <memory>
+#include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -650,12 +652,12 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
 }
 
 void OperatorSerializationUtil::serializeSourceOperator(
-    SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator)
+    const SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator)
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to SourceNameLogicalOperator");
 
     auto sourceDetails = SerializableOperator_SourceDescriptorLogicalOperator();
-    const auto& sourceDescriptor = sourceOperator.getSourceDescriptorRef();
+    const auto sourceDescriptor = sourceOperator.getSourceDescriptor();
     serializeSourceDescriptor(sourceDescriptor, sourceDetails);
     sourceDetails.set_sourceoriginid(sourceOperator.getOriginId().getRawValue());
 
@@ -944,20 +946,23 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     const auto serializedSourceDescriptor
         = SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor().New(); /// cleaned up by protobuf
 
-    SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, serializedSourceDescriptor->mutable_sourceschema());
-    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.logicalSourceName);
-    serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
-    serializedSourceDescriptor->set_numberofbuffersinsourcelocalbufferpool(sourceDescriptor.numberOfBuffersInSourceLocalBufferPool);
+    SchemaSerializationUtil::serializeSchema(
+        sourceDescriptor.getLogicalSource().getSchema(), serializedSourceDescriptor->mutable_sourceschema());
+    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.getLogicalSource().getLogicalSourceName());
+    serializedSourceDescriptor->set_physicalsourceid(sourceDescriptor.getPhysicalSourceId());
+    serializedSourceDescriptor->set_workerid(sourceDescriptor.getWorkerId().getRawValue());
+    serializedSourceDescriptor->set_sourcetype(sourceDescriptor.getSourceType());
+    serializedSourceDescriptor->set_buffersinlocalpool(sourceDescriptor.buffersInLocalPool);
 
     /// Serialize parser config.
     auto* const serializedParserConfig = ParserConfig().New();
-    serializedParserConfig->set_type(sourceDescriptor.parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(sourceDescriptor.parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(sourceDescriptor.parserConfig.fieldDelimiter);
+    serializedParserConfig->set_type(sourceDescriptor.getParserConfig().parserType);
+    serializedParserConfig->set_tupledelimiter(sourceDescriptor.getParserConfig().tupleDelimiter);
+    serializedParserConfig->set_fielddelimiter(sourceDescriptor.getParserConfig().fieldDelimiter);
     serializedSourceDescriptor->set_allocated_parserconfig(serializedParserConfig);
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : sourceDescriptor.config)
+    for (const auto& [key, value] : sourceDescriptor.getConfig())
     {
         auto* kv = serializedSourceDescriptor->mutable_config();
         kv->emplace(key, descriptorConfigTypeToProto(value));
@@ -996,14 +1001,20 @@ Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const S
             throw CannotSerialize("Unknown variant type.");
     }
 }
-std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializeSourceDescriptor(
+Sources::SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(
     const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor)
 {
     /// Declaring variables outside of SourceDescriptor for readability/debuggability.
     auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
-    auto logicalSourceName = sourceDescriptor.logicalsourcename();
-    auto sourceType = sourceDescriptor.sourcetype();
-    auto numberOfBuffersInSourceLocalBufferPool = sourceDescriptor.numberofbuffersinsourcelocalbufferpool();
+    const auto& logicalSourceName = sourceDescriptor.logicalsourcename();
+    const LogicalSource logicalSource{logicalSourceName, std::make_shared<Schema>(*schema)};
+
+    /// Ideally, the serializer would also a catalog to register/create source descriptors/logical sources
+    const auto physicalSourceID = sourceDescriptor.physicalsourceid();
+    const auto& sourceType = sourceDescriptor.sourcetype();
+    const auto workerIDInt = sourceDescriptor.workerid();
+    const auto workerID = WorkerId{workerIDInt};
+    auto buffersInLocalPool = sourceDescriptor.buffersinlocalpool();
 
     /// Deserialize the parser config.
     const auto& serializedParserConfig = sourceDescriptor.parserconfig();
@@ -1013,19 +1024,20 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     deserializedParserConfig.fieldDelimiter = serializedParserConfig.fielddelimiter();
 
     /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
-    Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
+    Configurations::DescriptorConfig::Config sourceDescriptorConfig{};
     for (const auto& [key, value] : sourceDescriptor.config())
     {
-        SourceDescriptorConfig[key] = protoToDescriptorConfigType(value);
+        sourceDescriptorConfig[key] = protoToDescriptorConfigType(value);
     }
 
-    return std::make_unique<Sources::SourceDescriptor>(
-        std::move(schema),
-        std::move(logicalSourceName),
-        std::move(sourceType),
-        numberOfBuffersInSourceLocalBufferPool,
-        std::move(deserializedParserConfig),
-        std::move(SourceDescriptorConfig));
+    return Sources::SourceDescriptor{
+        logicalSource,
+        physicalSourceID,
+        workerID,
+        sourceType,
+        buffersInLocalPool,
+        (std::move(sourceDescriptorConfig)),
+        deserializedParserConfig};
 }
 
 void OperatorSerializationUtil::serializeSinkDescriptor(
@@ -1037,7 +1049,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(
     serializedSinkDescriptor->set_sinktype(sinkDescriptor.sinkType);
     serializedSinkDescriptor->set_addtimestamp(sinkDescriptor.addTimestamp);
     /// Iterate over SinkDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : sinkDescriptor.config)
+    for (const auto& [key, value] : sinkDescriptor.getConfig())
     {
         auto* kv = serializedSinkDescriptor->mutable_config();
         kv->emplace(key, descriptorConfigTypeToProto(value));
