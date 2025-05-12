@@ -77,8 +77,10 @@ EXCEPTION(OperatorNotFound, 2205, "operator not found")
 EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
 
 /// 23XX NebuLI Distributed
-EXCEPTION(NoPath, 2300, "could not find path between source and sink")
-EXCEPTION(PlacementFailed, 2301, "could not place all operators")
+EXCEPTION(NoPathFound, 2300, "could not find path between source and sink")
+EXCEPTION(PlacementFailure, 2301, "could not place all operators")
+EXCEPTION(InvalidQueryPlan, 2302, "cannot place plans containing operators with more than two children")
+EXCEPTION(InvalidTopology, 2303, "node with same id added twice to topology")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")

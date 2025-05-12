@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+#include <LegacyOptimizer/Phases/LogicalSourceExpansionPhase.hpp>
 
 #include <ranges>
 #include <string>
@@ -26,14 +26,14 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
-void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
+LogicalPlan LogicalSourceExpansionPhase::apply(LogicalPlan&& inputPlan, std::shared_ptr<const SourceCatalog> sourceCatalog)
 {
-    auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(queryPlan);
+    LogicalPlan plan = std::move(inputPlan);
 
-    for (const auto& sourceOp : sourceOperators)
+    for (auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(plan); const auto& sourceOp : sourceOperators)
     {
         const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp.getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
@@ -56,7 +56,7 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
         auto sourceDescriptorOperators = entries | std::ranges::to<std::vector>();
 
         /// Replace the source name logical operator with the source descriptor operators
-        for (auto parents = getParents(queryPlan, sourceOp); const auto& parent : parents)
+        for (auto parents = getParents(plan, sourceOp); const auto& parent : parents)
         {
             auto children = parent.getChildren()
                 | std::views::filter(
@@ -74,15 +74,16 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
                 children.emplace_back(SourceDescriptorLogicalOperator{entry});
             }
             auto newParent = parent.withChildren(std::move(children));
-            auto replaceResult = replaceSubtree(queryPlan, parent, newParent);
+            auto replaceResult = replaceSubtree(plan, parent.getId(), newParent);
             INVARIANT(
                 replaceResult.has_value(),
                 "Failed to replace operator {} with {}",
                 parent.explain(ExplainVerbosity::Debug),
                 newParent.explain(ExplainVerbosity::Debug));
-            queryPlan = std::move(replaceResult.value());
+            plan = std::move(replaceResult.value());
         }
     }
+    return plan;
 }
 
 }

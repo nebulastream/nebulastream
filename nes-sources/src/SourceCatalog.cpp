@@ -65,7 +65,7 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
 
 std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
-    WorkerId workerId,
+    const std::string& workerId,
     const std::string& sourceType,
     const int buffersInLocalPool,
     Configurations::DescriptorConfig::Config&& descriptorConfig,

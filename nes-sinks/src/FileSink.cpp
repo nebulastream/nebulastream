@@ -23,6 +23,10 @@
 #include <system_error>
 #include <unordered_map>
 #include <utility>
+
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
+
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -30,8 +34,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -65,14 +68,13 @@ std::ostream& FileSink::toString(std::ostream& str) const
 void FileSink::start(PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up file sink: {}", *this);
-    auto stream = outputFileStream.wlock();
+    const auto stream = outputFileStream.wlock();
     /// Remove an existing file unless the isAppend mode is isAppend.
     if (!isAppend)
     {
         if (std::filesystem::exists(outputFilePath.c_str()))
         {
-            std::error_code ec;
-            if (!std::filesystem::remove(outputFilePath.c_str(), ec))
+            if (std::error_code ec; !std::filesystem::remove(outputFilePath.c_str(), ec))
             {
                 isOpen = false;
                 throw CannotOpenSink("Could not remove existing output file: filePath={} ", outputFilePath);
@@ -99,6 +101,7 @@ void FileSink::start(PipelineExecutionContext&)
         stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
 }
+
 void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
@@ -108,23 +111,24 @@ void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExec
         auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
         NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
         {
-            auto wlocked = outputFileStream.wlock();
+            const auto wlocked = outputFileStream.wlock();
             wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
             wlocked->flush();
         }
     }
 }
+
 void FileSink::stop(PipelineExecutionContext&)
 {
     NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
-    auto stream = outputFileStream.wlock();
+    const auto stream = outputFileStream.wlock();
     stream->flush();
     stream->close();
 }
 
 Configurations::DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
+    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
 SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)

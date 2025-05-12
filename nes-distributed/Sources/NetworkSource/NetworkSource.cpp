@@ -60,19 +60,14 @@ size_t NetworkSource::fillTupleBuffer(Memory::TupleBuffer& tupleBuffer, const st
     {
         return 1; /// Received one buffer
     }
-    else
-    {
-        return 0; /// End of Stream
-    }
+    return 0; /// End of Stream
 }
-
 
 void NetworkSource::close()
 {
     INVARIANT(channel.has_value(), "Network Source was closed multiple times");
     close_receiver_channel(std::move(*channel));
 }
-
 
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterNetworkSource(SourceRegistryArguments sourceRegistryArguments)
 {

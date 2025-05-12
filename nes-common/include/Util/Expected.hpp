@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
+
 #include <expected>
 #include <optional>
 #include <string>
@@ -38,6 +38,7 @@ struct is_expected
 {
     static constexpr bool value = false;
 };
+
 template <class T>
 struct is_expected<std::expected<T, std::string>>
 {
@@ -47,7 +48,7 @@ struct is_expected<std::expected<T, std::string>>
 
 /// Test if T is an Expected type
 template <class T>
-static constexpr bool is_expected_v = detail::is_expected<T>::value;
+static constexpr bool is_expected_v = NES::detail::is_expected<T>::value;
 
 template <class T>
 concept ExpectedT = is_expected_v<T>;
@@ -76,7 +77,6 @@ auto toExpected(std::optional<T> opt, fmt::format_string<Args...> fmt_msg, Args&
         return Expected<T>(*std::optional<T>(opt));
     }
 }
-
 
 /// Usage: intput: Expected<uint32_t>
 ///        auto inputValue = valueOrThrow(input, InvalidConfiguration);

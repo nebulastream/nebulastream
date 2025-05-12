@@ -46,7 +46,8 @@ bool SourceNameLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
     {
         return this->getSchema() == rhsOperator->getSchema() && this->getName() == rhsOperator->getName()
             && getOutputSchema() == rhsOperator->getOutputSchema() && getInputSchemas() == rhsOperator->getInputSchemas()
-            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds()
+            && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -86,6 +87,7 @@ Schema SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
+
 LogicalOperator SourceNameLogicalOperator::withSchema(const Schema& schema) const
 {
     auto copy = *this;
@@ -93,9 +95,23 @@ LogicalOperator SourceNameLogicalOperator::withSchema(const Schema& schema) cons
     return copy;
 }
 
+LogicalOperator SourceNameLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
+}
+
+LogicalOperator SourceNameLogicalOperator::withAdditionalTraits(TraitSet traitSet) const
+{
+    auto copy = *this;
+    std::ranges::copy(traitSet, std::back_inserter(copy.traitSet));
+    return copy;
+}
+
 TraitSet SourceNameLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
 }
 
 LogicalOperator SourceNameLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

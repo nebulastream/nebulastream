@@ -72,7 +72,7 @@ public:
     [[nodiscard]] std::string getSourceType() const;
     [[nodiscard]] ParserConfig getParserConfig() const;
 
-    [[nodiscard]] WorkerId getWorkerId() const;
+    [[nodiscard]] std::string getWorkerId() const;
     [[nodiscard]] uint64_t getPhysicalSourceId() const;
     [[nodiscard]] int32_t getBuffersInLocalPool() const;
 
@@ -84,7 +84,7 @@ private:
     friend OperatorSerializationUtil;
     uint64_t physicalSourceId;
     LogicalSource logicalSource;
-    WorkerId workerId;
+    std::string workerId;
     std::string sourceType;
     ParserConfig parserConfig;
     int32_t numberOfBuffersInLocalPool;
@@ -93,7 +93,7 @@ private:
     explicit SourceDescriptor(
         LogicalSource logicalSource,
         uint64_t physicalSourceId,
-        WorkerId workerId,
+        std::string workerId,
         std::string sourceType,
         int32_t numberOfBuffersInLocalPool,
         NES::Configurations::DescriptorConfig::Config&& config,

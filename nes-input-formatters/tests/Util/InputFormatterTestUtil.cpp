@@ -167,12 +167,7 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
-        logicalSource.value(),
-        INITIAL<WorkerId>,
-        "File",
-        numberOfLocalBuffersInSource,
-        std::move(validatedSourceConfiguration),
-        ParserConfig{});
+        logicalSource.value(), "localhost", "File", numberOfLocalBuffersInSource, std::move(validatedSourceConfiguration), ParserConfig{});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [_, ingestion] = Backpressure();
     return Sources::SourceProvider::lower(NES::OriginId(1), ingestion, sourceDescriptor.value(), std::move(sourceBufferPool), -1);

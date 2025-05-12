@@ -38,15 +38,14 @@ class BackpressureHandler
     struct State
     {
         bool hasBackpressure = false;
-        std::deque<Memory::TupleBuffer> buffered{};
+        std::deque<Memory::TupleBuffer> buffered;
         SequenceNumber pendingSequenceNumber = INVALID<SequenceNumber>;
         ChunkNumber pendingChunkNumber = INVALID<ChunkNumber>;
     };
-    folly::Synchronized<State> stateLock{};
+    folly::Synchronized<State> stateLock;
 
 public:
     std::optional<Memory::TupleBuffer> onFull(Memory::TupleBuffer buffer, Valve& valve);
-
     std::optional<Memory::TupleBuffer> onSuccess(Valve& valve);
 };
 
@@ -60,10 +59,10 @@ public:
     NetworkSink& operator=(const NetworkSink&) = delete;
     NetworkSink(NetworkSink&&) = delete;
     NetworkSink& operator=(NetworkSink&&) = delete;
-    void start(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void
-    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
-    void stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext& pec) override;
+    void stop(PipelineExecutionContext& pec) override;
 
     static std::unique_ptr<Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string>&& config);
@@ -73,13 +72,13 @@ protected:
 
 private:
     size_t tupleSize;
-    folly::Synchronized<std::vector<Memory::TupleBuffer>> buffers;
-    BackpressureHandler backpressureHandler{};
-    std::optional<rust::Box<SenderServer>> server{};
-    std::optional<rust::Box<SenderChannel>> channel{};
-    std::string channelIdentifier{};
-    std::string connectionIdentifier;
-    std::atomic<size_t> buffersSend = 0;
+    folly::Synchronized<std::vector<Memory::TupleBuffer>> bufferBacklog;
+    BackpressureHandler backpressureHandler;
+    std::optional<rust::Box<SenderServer>> server;
+    std::optional<rust::Box<SenderChannel>> channel;
+    std::string channelId;
+    std::string connectionId;
+    std::atomic<size_t> buffersSent = 0;
 };
 
 

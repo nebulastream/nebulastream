@@ -12,14 +12,16 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/TypeInferencePhase.hpp>
+#include <LegacyOptimizer/Phases/TypeInferencePhase.hpp>
 
+#include <utility>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
 static LogicalOperator propagateSchema(const LogicalOperator& op)
@@ -44,15 +46,15 @@ static LogicalOperator propagateSchema(const LogicalOperator& op)
     return updatedOperator.withInferredSchema(childSchemas);
 }
 
-void TypeInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+LogicalPlan TypeInferencePhase::apply(LogicalPlan&& inputPlan)
 {
+    const LogicalPlan plan = std::move(inputPlan);
     std::vector<LogicalOperator> newRoots;
-    for (const auto& sink : queryPlan.rootOperators)
+    for (const auto& sink : plan.getRootOperators())
     {
-        const LogicalOperator inferredRoot = propagateSchema(sink);
-        newRoots.push_back(inferredRoot);
+        newRoots.push_back(propagateSchema(sink));
     }
-    queryPlan.rootOperators = newRoots;
+    return plan.withRootOperators(newRoots);
 }
 
 }

@@ -12,6 +12,8 @@
 
 add_source_files(nes-query-optimizer
         Trait.cpp
-        OriginIdAssignerTrait.cpp)
+        OriginIdAssignerTrait.cpp
+        PlacementTrait.cpp
+)
 
 add_plugin(OriginIdAssigner Trait nes-query-optimizer OriginIdAssignerTrait.cpp)

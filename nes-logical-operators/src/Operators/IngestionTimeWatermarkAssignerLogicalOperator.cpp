@@ -56,7 +56,8 @@ bool IngestionTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOper
     if (const auto* const rhsOperator = dynamic_cast<const IngestionTimeWatermarkAssignerLogicalOperator*>(&rhs))
     {
         return getOutputSchema() == rhsOperator->getOutputSchema() && getInputSchemas() == rhsOperator->getInputSchemas()
-            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds();
+            && getInputOriginIds() == rhsOperator->getInputOriginIds() && getOutputOriginIds() == rhsOperator->getOutputOriginIds()
+            && getTraitSet() == rhsOperator->getTraitSet();
     }
     return false;
 }
@@ -73,7 +74,21 @@ LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withInferredSchem
 
 TraitSet IngestionTimeWatermarkAssignerLogicalOperator::getTraitSet() const
 {
-    return {};
+    return traitSet;
+}
+
+LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withTraitSet(TraitSet traitSet) const
+{
+    auto copy = *this;
+    copy.traitSet = traitSet;
+    return copy;
+}
+
+LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withAdditionalTraits(TraitSet traitSet) const
+{
+    auto copy = *this;
+    std::ranges::copy(traitSet, std::back_inserter(copy.traitSet));
+    return copy;
 }
 
 LogicalOperator IngestionTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOperator> children) const

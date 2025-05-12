@@ -11,30 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <LegacyOptimizer/Phases/SourceInferencePhase.hpp>
 
 #include <algorithm>
 #include <ranges>
 #include <utility>
+#include <memory>
 
 #include <DataTypes/Schema.hpp>
-#include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::LegacyOptimizer
+namespace NES
 {
 
-void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
+LogicalPlan SourceInferencePhase::apply(LogicalPlan&& inputPlan, const std::shared_ptr<const SourceCatalog> sourceCatalog)
 {
-    auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(queryPlan);
+    LogicalPlan result = std::move(inputPlan);
+    auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(result);
 
     PRECONDITION(not sourceOperators.empty(), "Query plan did not contain sources during type inference.");
 
     for (auto& source : sourceOperators)
     {
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
-        /// source descriptor form the catalog.
+        /// source descriptor from the catalog.
         auto schema = Schema();
         auto logicalSourceOpt = sourceCatalog->getLogicalSource(source.getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
@@ -56,9 +59,9 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
                     throw CannotInferSchema("Could not rename non-existing field: {}", field.name);
                 }
             });
-        auto result = replaceOperator(queryPlan, source, source.withSchema(schema));
-        INVARIANT(result.has_value(), "replaceOperator failed");
-        queryPlan = std::move(*result);
+        result = *replaceOperator(result, source.id, source.withSchema(schema));
     }
+    return result;
 }
+
 }
