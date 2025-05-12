@@ -108,9 +108,8 @@ NES::Runtime::QuerySummary GRPCClient::status(size_t queryId) const
         }
     }
     /// First, we need to cast the gRPC enum value to an int and then to the C++ enum
-    const NES::Runtime::Execution::QueryStatus queryStatus(
-        static_cast<NES::Runtime::Execution::QueryStatus>(static_cast<uint8_t>(response.status())));
-    NES::Runtime::QuerySummary querySummary = {NES::QueryId(response.queryid()), queryStatus, runs};
+    const auto queryStatus(static_cast<NES::Runtime::Execution::QueryStatus>(static_cast<uint8_t>(response.status())));
+    NES::Runtime::QuerySummary querySummary = {.queryId = NES::QueryId(response.queryid()), .currentStatus = queryStatus, .runs = runs};
     return querySummary;
 }
 
