@@ -1,0 +1,163 @@
+logical:
+  #  SourceCSV stream UINT64 id UINT64 value UINT64 timestamp TESTDATA/small/stream.csv
+  - name: stream
+    schema:
+      - type: UINT64
+        name: id
+      - type: UINT64
+        name: value
+      - type: UINT64
+        name: timestamp
+  #  SourceCSV stream2 UINT64 id2 UINT64 value2 UINT64 timestamp TESTDATA/small/stream2.csv
+  - name: stream2
+    schema:
+      - type: UINT64
+        name: id2
+      - type: UINT64
+        name: value2
+      - type: UINT64
+        name: timestamp
+  - name: tcp_source
+    schema:
+      - name: id
+        type: UINT64
+      - name: value
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+  - name: nexmark_bid
+    schema:
+      - type: UINT64
+        name: timestamp
+      - type: INT32
+        name: auction
+      - type: INT32
+        name: bidder
+      - type: INT64
+        name: datetime
+      - type: FLOAT64
+        name: price
+  - name: nexmark_auction
+    schema:
+      - type: UINT64
+        name: timestamp
+      - type: INT32
+        name: id
+      - type: INT32
+        name: initialbid
+      - type: INT32
+        name: reserve
+      - type: INT64
+        name: expires
+      - type: INT32
+        name: seller
+      - type: INT32
+        name: category
+  - name: join_csv2
+    schema:
+      - type: UINT64
+        name: id2
+      - type: UINT64
+        name: value2
+      - type: UINT64
+        name: timestamp2
+  - name: join_csv
+    schema:
+      - type: UINT64
+        name: id
+      - type: UINT64
+        name: value
+      - type: UINT64
+        name: timestamp
+  - name: tcp-gen-3
+    schema:
+      - name: value
+        type: UINT64
+      - name: timestamp
+        type: UINT64
+      - name: seq
+        type: UINT64
+  - name: tcp-gen-2
+    schema:
+      - name: timestamp
+        type: UINT64
+      - name: seq
+        type: UINT64
+nodes:
+  - connection: 127.0.0.1:8080
+    grpc: 127.0.0.1:9090
+    capacity: 100
+    cpus: 4
+    buffers: 200000
+    sinks:
+      - name: fast_csv_sink
+        type: Print
+        config:
+          ingestion: 100
+          inputFormat: CSV
+      - name: slow_csv_sink
+        type: Print
+        config:
+          ingestion: 1000
+          inputFormat: CSV
+  - connection: 127.0.0.1:8082
+    capacity: 100
+    grpc: 127.0.0.1:9092
+    cpus: 1
+    links:
+      downstreams:
+        - 127.0.0.1:8080
+      upstreams:
+        - 127.0.0.1:8084
+  - connection: 127.0.0.1:8081
+    grpc: 127.0.0.1:9091
+    capacity: 100
+    cpus: 1
+    links:
+      downstreams:
+        - 127.0.0.1:8080
+      upstreams:
+        - 127.0.0.1:8083
+
+  - connection: 127.0.0.1:8084
+    grpc: 127.0.0.1:9094
+    capacity: 0
+    cpus: 1
+    physical:
+      - logical: stream
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          type: File
+          filePath: TESTDATA/small/stream.csv
+      - logical: nexmark_bid
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          type: File
+          filePath: TESTDATA/large/nexmark/bid.csv
+
+  - connection: 127.0.0.1:8083
+    grpc: 127.0.0.1:9093
+    capacity: 0
+    cpus: 1
+    physical:
+      - logical: tcp_source
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          socketHost: 127.0.0.1
+          socketPort: 6666
+          type: TCP
+      - logical: stream2
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          type: File
+          filePath: TESTDATA/small/stream.csv
+      - logical: nexmark_auction
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          type: File
+          filePath: TESTDATA/large/nexmark/auction_modified.csv

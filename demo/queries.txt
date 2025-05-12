@@ -1,0 +1,3 @@
+SELECT * FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON (id = id2 AND value = value2) WINDOW TUMBLING (timestamp, size 1 sec) INTO fast_csv_sink;
+SELECT start, end, timestamp, auction, bidder, datetime, price, initialbid, reserve, expires, seller, category FROM (SELECT * FROM nexmark_bid) INNER JOIN (SELECT * FROM nexmark_auction) ON auction = id WINDOW TUMBLING (timestamp, size 100 sec) INTO fast_csv_sink;
+SELECT * FROM tcp_source INTO slow_csv_sink;
