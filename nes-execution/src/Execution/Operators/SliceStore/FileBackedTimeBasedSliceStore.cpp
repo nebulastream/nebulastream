@@ -461,7 +461,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
     {
         /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
-        nljSlice->acquireCombinePagedVectorsSharedLock();
+        nljSlice->acquireCombinePagedVectorsLock();
 
         /// If the pagedVectors have been combined then the slice was already emitted to probe and is being joined momentarily
         if (!nljSlice->pagedVectorsCombined())
@@ -490,7 +490,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
             }
         }
 
-        nljSlice->releaseCombinePagedVectorsSharedLock();
+        nljSlice->releaseCombinePagedVectorsLock();
     }
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
 }

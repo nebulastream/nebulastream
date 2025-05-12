@@ -42,23 +42,25 @@ public:
 
     Interface::FileBackedPagedVector* getPagedVectorRef(QueryCompilation::JoinBuildSideType joinBuildSide, WorkerThreadId threadId) const;
 
-    /// Moves all tuples in this slice to the PagedVector at 0th index on both sides. Acquires a unique lock for combinePagedVectorsMutex.
+    /// Moves all tuples in this slice to the PagedVector at 0th index on both sides. Acquires a write lock for combinePagedVectorsMutex.
     void combinePagedVectors();
 
-    /// Acquires and releases a shared lock for combinePagedVectorsMutex.
-    void acquireCombinePagedVectorsSharedLock();
-    void releaseCombinePagedVectorsSharedLock();
+    /// Acquires and releases a write lock for combinePagedVectorsMutex.
+    void acquireCombinePagedVectorsLock();
+    void releaseCombinePagedVectorsLock();
 
-    /// Returns true if both pagedVector vectors have a size of one. This does not acquire a lock for combinePagedVectorsMutex.
+    /// Returns true if combinePagedVectors() method has already been called. This does not acquire a lock for combinePagedVectorsMutex.
     bool pagedVectorsCombined() const;
 
-    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a shared lock for combinePagedVectorsMutex.
+    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a write lock for combinePagedVectorsMutex.
+    /// Returns zero if paged vectors were already combined.
     size_t getStateSizeInMemoryForThreadId(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
         WorkerThreadId threadId);
 
-    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a shared lock for combinePagedVectorsMutex.
+    /// Returns the size of the pages in the left and right PagedVectors in bytes. Acquires a write lock for combinePagedVectorsMutex.
+    /// Returns zero if paged vectors were already combined.
     size_t getStateSizeOnDiskForThreadId(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,

@@ -112,12 +112,12 @@ void NLJSlice::combinePagedVectors()
     }
 }
 
-void NLJSlice::acquireCombinePagedVectorsSharedLock()
+void NLJSlice::acquireCombinePagedVectorsLock()
 {
     combinePagedVectorsMutex.lock();
 }
 
-void NLJSlice::releaseCombinePagedVectorsSharedLock()
+void NLJSlice::releaseCombinePagedVectorsLock()
 {
     combinePagedVectorsMutex.unlock();
 }
@@ -133,6 +133,10 @@ size_t NLJSlice::getStateSizeInMemoryForThreadId(
     const WorkerThreadId threadId)
 {
     const std::scoped_lock lock(combinePagedVectorsMutex);
+    if (combinedPagedVectors)
+    {
+        return 0;
+    }
     const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
     const auto pageSize = memoryLayout->getBufferSize();
     const auto numPages = pagedVector->getNumberOfPages();
@@ -145,8 +149,14 @@ size_t NLJSlice::getStateSizeOnDiskForThreadId(
     const WorkerThreadId threadId)
 {
     const std::scoped_lock lock(combinePagedVectorsMutex);
+    if (combinedPagedVectors)
+    {
+        return 0;
+    }
     const auto* const pagedVector = getPagedVectorRef(joinBuildSide, threadId);
-    return pagedVector->getStateSizeOnDisk(memoryLayout);
+    const auto entrySize = memoryLayout->getTupleSize();
+    const auto numTuples = pagedVector->getNumberOfTuplesOnDisk();
+    return entrySize * numTuples;
 }
 
 }

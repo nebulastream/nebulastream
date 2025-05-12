@@ -175,9 +175,9 @@ uint64_t FileBackedPagedVector::getNumberOfPages() const
     return pages.size() + keyPages.size();
 }
 
-size_t FileBackedPagedVector::getStateSizeOnDisk(const Memory::MemoryLayouts::MemoryLayout* memoryLayout) const
+uint64_t FileBackedPagedVector::getNumberOfTuplesOnDisk() const
 {
-    return numTuplesOnDisk * memoryLayout->getTupleSize();
+    return numTuplesOnDisk;
 }
 
 void FileBackedPagedVector::appendKeyPageIfFull(
