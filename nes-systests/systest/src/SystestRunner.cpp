@@ -37,6 +37,7 @@
 #include <grpcpp/security/credentials.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include <yaml-cpp/node/parse.h>
 
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
@@ -55,7 +56,8 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     const std::filesystem::path& testFilePath,
     const std::filesystem::path& workingDir,
     std::string_view testFileName,
-    const std::filesystem::path& testDataDir)
+    const std::filesystem::path& testDataDir,
+    const std::filesystem::path& configDir)
 {
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
@@ -66,6 +68,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
           {DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Checksum"}}}};
 
     parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = testDataDir; }});
+    parser.registerSubstitutionRule({"CONFIG", [&](std::string& substitute) { substitute = configDir; }});
     if (!parser.loadFile(testFilePath))
     {
         throw TestException("Could not successfully load test file://{}", testFilePath.string());
@@ -79,65 +82,82 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&& source)
         {
-            config.logical.emplace_back(CLI::LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
+            config.logical.emplace_back(
+                CLI::LogicalSource{
+                    .name = source.name,
+                    .schema = [&source]()
                     {
-                        schema.emplace_back(name, type);
-                    }
-                    return schema;
-                }()});
+                        std::vector<CLI::SchemaField> schema;
+                        for (const auto& [type, name] : source.fields)
+                        {
+                            schema.emplace_back(name, type);
+                        }
+                        return schema;
+                    }()});
 
-            config.physical.emplace_back(CLI::PhysicalSource{
-                .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
+            config.physical.emplace_back(
+                CLI::PhysicalSource{
+                    .logical = source.name,
+                    .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
+                    .sourceConfig
+                    = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
         });
 
     parser.registerOnSLTSourceCallback(
         [&](SystestParser::SLTSource&& source)
         {
-            static uint64_t sourceIndex = 0;
-
-            config.logical.emplace_back(CLI::LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
+            // Todo: need to add source to config like below
+            config.logical.emplace_back(
+                CLI::LogicalSource{
+                    .name = source.name,
+                    .schema = [&source]()
                     {
-                        schema.emplace_back(name, type);
-                    }
-                    return schema;
-                }()});
-
-            const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
-            config.physical.emplace_back(CLI::PhysicalSource{
-                .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
-
-
-            {
-                std::ofstream testFile(sourceFile);
-                if (!testFile.is_open())
-                {
-                    throw TestException("Could not open source file \"{}\"", sourceFile);
-                }
-
-                for (const auto& tuple : source.tuples)
-                {
-                    testFile << tuple << "\n";
-                }
-                testFile.flush();
-            }
-
-            NES_INFO("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
+                        std::vector<CLI::SchemaField> schema;
+                        for (const auto& [type, name] : source.fields)
+                        {
+                            schema.emplace_back(name, type);
+                        }
+                        return schema;
+                    }()});
         });
+    parser.registerOnAttachSourceCallback(
+        [&](SystestParser::AttachSource&& attachSource) //Todo: don't force move
+        {
+            static uint64_t sourceIndex = 0;
+            try
+            {
+                auto physicalSource = CLI::loadFromYAMLSource(attachSource.configurationPath);
 
+                if (attachSource.tuples.has_value())
+                {
+                    const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
+                    /// Replace any occurences of 'INLINE' with the actual filepath
+                    for (const auto& [key, value] : physicalSource.sourceConfig) {
+                        if (Util::toUpperCase(value) == "INLINE")
+                        {
+                            physicalSource.sourceConfig[key] = sourceFile;
+                        }
+                    }
+                    std::ofstream testFile(sourceFile);
+                    if (!testFile.is_open())
+                    {
+                        throw TestException("Could not open source file \"{}\"", sourceFile);
+                    }
+
+                    for (const auto& tuple : attachSource.tuples.value())
+                    {
+                        testFile << tuple << "\n";
+                    }
+                    testFile.flush();
+                    NES_INFO("Written in file: {}. Number of Tuples: {}", sourceFile, attachSource.tuples.value().size());
+                }
+                config.physical.emplace_back(physicalSource);
+            }
+            catch (const std::exception& e)
+            {
+                throw CannotLoadConfig("Failed to parse source: {}", e.what());
+            }
+        });
     /// We create a new query plan from our config when finding a query
     parser.registerOnQueryCallback(
         [&](SystestParser::Query&& query)

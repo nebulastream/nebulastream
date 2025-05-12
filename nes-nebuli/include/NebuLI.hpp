@@ -65,6 +65,7 @@ struct QueryConfig
 };
 
 std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& file);
+PhysicalSource loadFromYAMLSource(const std::filesystem::path& file);
 std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream);
 std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
 }

@@ -2,7 +2,12 @@
 # description: Simple tests that contain map and filter
 # groups: [Filter, Map]
 
+
+# Logical Source name (and schema definition)
 Source stream INT64 id INT64 value UINT64 timestamp
+
+# Attach File TESTDATA/config/csv/default.csv stream INLINE
+Attach File stream INLINE
 1,1,1000
 2,1,1001
 3,11,1002

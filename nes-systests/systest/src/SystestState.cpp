@@ -55,9 +55,13 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     return testFiles;
 }
 
-void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir)
+void loadQueriesFromTestFile(
+    TestFile& testfile,
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    const std::filesystem::path& configDir)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
+    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir, configDir);
     uint64_t queryIdInFile = 0;
     std::unordered_set<uint64_t> foundQueries;
 
@@ -127,7 +131,11 @@ TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQ
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) { };
 
-std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir)
+std::vector<Query> loadQueries(
+    TestFileMap& testmap,
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    const std::filesystem::path& configDir)
 {
     std::vector<Query> queries;
     uint64_t loadedFiles = 0;
@@ -136,7 +144,7 @@ std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path
         std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
         try
         {
-            loadQueriesFromTestFile(testfile, workingDir, testDataDir);
+            loadQueriesFromTestFile(testfile, workingDir, testDataDir, configDir);
             for (auto& query : testfile.queries)
             {
                 queries.emplace_back(std::move(query));

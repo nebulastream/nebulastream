@@ -304,4 +304,23 @@ std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
         throw QueryDescriptionNotParsable("{}", pex.what());
     }
 }
+
+// Todo: template errors if trying to move function outside, probably, because PhysicalSource is not defined yet
+PhysicalSource loadFromYAMLSource(const std::filesystem::path& filePath)
+{
+    std::ifstream file(filePath);
+    if (!file)
+    {
+        throw QueryDescriptionNotReadable(std::strerror(errno));
+    }
+
+    try
+    {
+        return YAML::Load(file).as<PhysicalSource>();
+    }
+    catch (const YAML::ParserException& pex)
+    {
+        throw QueryDescriptionNotParsable("{}", pex.what());
+    }
+}
 }

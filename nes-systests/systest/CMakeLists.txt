@@ -30,6 +30,7 @@ target_compile_definitions(nes-systest-lib PRIVATE
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
         TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata"
+        TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 
 # Find required packages
@@ -41,6 +42,7 @@ target_compile_definitions(systest PRIVATE
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
         TEST_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../testdata"
+        TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)

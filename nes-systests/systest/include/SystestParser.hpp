@@ -34,6 +34,7 @@ enum class TokenType : uint8_t
     INVALID,
     CSV_SOURCE,
     SLT_SOURCE,
+    ATTACH_SOURCE,
     SINK,
     QUERY,
     RESULT_DELIMITER,
@@ -82,8 +83,15 @@ public:
     {
         std::string name;
         Schema fields;
-        std::vector<std::string> tuples;
         bool operator==(const SLTSource& other) const = default;
+    };
+
+    struct AttachSource
+    {
+        std::string configurationPath;
+        std::string logicalSourceName;
+        std::optional<std::vector<std::string>> tuples;
+        bool operator==(const AttachSource& other) const = default;
     };
 
     struct Sink
@@ -99,6 +107,7 @@ public:
     using QueryCallback = std::function<void(Query&&)>;
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
+    using AttachSourceCallback = std::function<void(AttachSource&& attachSource)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
     using SinkCallback = std::function<void(Sink&&)>;
 
@@ -106,6 +115,7 @@ public:
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
+    void registerOnAttachSourceCallback(AttachSourceCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
 
@@ -125,6 +135,7 @@ private:
     [[nodiscard]] bool moveToNextToken();
 
     [[nodiscard]] SLTSource expectSLTSource();
+    [[nodiscard]] AttachSource expectAttachSource();
     [[nodiscard]] CSVSource expectCSVSource() const;
     [[nodiscard]] Sink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
@@ -133,6 +144,7 @@ private:
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
+    AttachSourceCallback onAttachSourceCallback;
     CSVSourceCallback onCSVSourceCallback;
     SinkCallback onSinkCallback;
 

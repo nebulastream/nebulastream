@@ -1,0 +1,6 @@
+logical: stream
+parserConfig:
+  type: CSV
+sourceConfig:
+  type: File
+  filePath: INLINE

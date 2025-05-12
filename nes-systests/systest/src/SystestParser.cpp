@@ -40,13 +40,15 @@ namespace NES::Systest
 {
 static constexpr auto CSVSourceToken = "SourceCSV"s;
 static constexpr auto SLTSourceToken = "Source"s;
+static constexpr auto AttachSourceToken = "Attach"s;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 
-static const std::array<std::pair<std::string_view, TokenType>, 5> stringToToken
+static constexpr std::array<std::pair<std::string_view, TokenType>, 6> stringToToken
     = {{{CSVSourceToken, TokenType::CSV_SOURCE},
         {SLTSourceToken, TokenType::SLT_SOURCE},
+        {AttachSourceToken, TokenType::ATTACH_SOURCE},
         {QueryToken, TokenType::QUERY},
         {SinkToken, TokenType::SINK},
         {ResultDelimiter, TokenType::RESULT_DELIMITER}}};
@@ -160,6 +162,10 @@ void SystestParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
 {
     this->onSLTSourceCallback = std::move(callback);
 }
+void SystestParser::registerOnAttachSourceCallback(AttachSourceCallback callback)
+{
+    this->onAttachSourceCallback = std::move(callback);
+}
 
 void SystestParser::registerOnSinkCallBack(SinkCallback callback)
 {
@@ -191,6 +197,15 @@ void SystestParser::parse()
             if (onSLTSourceCallback)
             {
                 onSLTSourceCallback(std::move(source));
+            }
+        }
+        else if (token == TokenType::ATTACH_SOURCE)
+        {
+            // Todo move function call into arg below to guarantee copy elision
+            auto attachSource = expectAttachSource();
+            if (onAttachSourceCallback)
+            {
+                onAttachSourceCallback(std::move(attachSource));
             }
         }
         else if (token == TokenType::SINK)
@@ -346,6 +361,7 @@ SystestParser::Sink SystestParser::expectSink() const
 
 SystestParser::SLTSource SystestParser::expectSLTSource()
 {
+    // Todo: highjack SLT logic
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
 
     SLTSource source;
@@ -376,10 +392,54 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
     /// After the source definition line we expect schema fields
     source.fields = parseSchemaFields(arguments);
 
-    /// After the source definition line, we expect the tuples
-    source.tuples = expectTuples(true);
-
+    // Todo: removed logic that expects inline tuples
     return source;
+}
+
+SystestParser::AttachSource SystestParser::expectAttachSource()
+{
+    INVARIANT(currentLine < lines.size(), "current parse line should exist");
+    AttachSource attachSource;
+    const auto& line = lines[currentLine];
+    std::istringstream stream(line);
+
+    /// Read and discard the first word as it is always CSVSource
+    std::string discard;
+    if (!(stream >> discard))
+    {
+        throw SLTUnexpectedToken("failed to read the first word in: " + line);
+    }
+    INVARIANT(discard == AttachSourceToken, "Expected first word to be `{}` for csv source statement", AttachSourceToken);
+
+    // Todo: real work begins here
+
+    // Attach LOGICAL_SOURCE_NAME PATH_TO_SOURCE_CONFIG (INLINE)
+    /// Read the source name and check if successful
+    if (!(stream >> attachSource.logicalSourceName))
+    {
+        throw SLTUnexpectedToken("failed to parse logical source name in: " + line);
+    }
+    if (!(stream >> attachSource.configurationPath))
+    {
+        throw SLTUnexpectedToken("failed to parse source configuration path in: " + line);
+    }
+    const auto readInlineTuples = [](std::istringstream& stream)
+    {
+        std::string inlineTuples;
+        if (not (stream >> inlineTuples))
+        {
+            return false;
+        }
+        return Util::toUpperCase(inlineTuples) == "INLINE";
+    }(stream);
+
+    if (readInlineTuples)
+    {
+        // Todo: check if we can set optional like this
+        attachSource.tuples = {expectTuples(true)};
+    }
+
+    return attachSource;
 }
 
 
