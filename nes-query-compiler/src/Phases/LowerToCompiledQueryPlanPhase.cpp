@@ -95,10 +95,10 @@ void processSource(
 
     const std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
     auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-        sourceOperator.getDescriptor()->parserConfig.parserType,
-        sourceOperator.getDescriptor()->schema,
-        sourceOperator.getDescriptor()->parserConfig.tupleDelimiter,
-        sourceOperator.getDescriptor()->parserConfig.fieldDelimiter);
+        sourceOperator.getDescriptor().getParserConfig().parserType,
+        *sourceOperator.getDescriptor().getLogicalSource().getSchema(),
+        sourceOperator.getDescriptor().getParserConfig().tupleDelimiter,
+        sourceOperator.getDescriptor().getParserConfig().fieldDelimiter);
     auto inputFormatterTask
         = std::make_unique<InputFormatters::InputFormatterTask>(sourceOperator.getOriginId(), std::move(inputFormatter));
 

@@ -41,9 +41,8 @@
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SourceCatalogs/PhysicalSource.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
-#include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -128,19 +127,18 @@ struct convert<NES::CLI::QueryConfig>
 };
 }
 
-namespace NES::CLI
+namespace
 {
-
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+NES::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
 {
-    auto validParserConfig = Sources::ParserConfig{};
+    auto validParserConfig = NES::ParserConfig{};
     if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
     {
         validParserConfig.parserType = parserType->second;
     }
     else
     {
-        throw InvalidConfigParameter("Parser configuration must contain: type");
+        throw NES::InvalidConfigParameter("Parser configuration must contain: type");
     }
     if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
     {
@@ -165,43 +163,47 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
     return validParserConfig;
 }
 
-Sources::SourceDescriptor createSourceDescriptor(
-    std::string logicalSourceName,
-    const Schema& schema,
+NES::SourceDescriptor createSourceDescriptor(
+    const NES::LogicalSource& logicalSource,
+    const NES::WorkerId workerId,
     const std::unordered_map<std::string, std::string>& parserConfig,
-    std::unordered_map<std::string, std::string> sourceConfiguration)
+    std::unordered_map<std::string, std::string> sourceConfiguration,
+    NES::SourceCatalog& sourceCatalog)
 {
     PRECONDITION(
-        sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG),
+        sourceConfiguration.contains(NES::Configurations::SOURCE_TYPE_CONFIG),
         "Missing `Configurations::SOURCE_TYPE_CONFIG` in source configuration");
-    const auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
-    const auto numberOfBuffersInSourceLocalBufferPool = [](const std::unordered_map<std::string, std::string>& sourceConfig)
+    const auto sourceType = sourceConfiguration.at(NES::Configurations::SOURCE_TYPE_CONFIG);
+    const auto buffersInLocalPool = [](const std::unordered_map<std::string, std::string>& sourceConfig)
     {
         /// Initialize with invalid value and overwrite with configured value if given
-        auto numSourceLocalBuffers = Sources::SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL;
+        auto numberOfBuffersInLocalPool = NES::SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL;
 
-        if (const auto configuredNumSourceLocalBuffers = sourceConfig.find(Configurations::NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL);
-            configuredNumSourceLocalBuffers != sourceConfig.end())
+        if (const auto configuredNumberOfBuffersInLocalPool = sourceConfig.find(NES::Configurations::NUMBER_OF_BUFFERS_IN_LOCAL_POOL);
+            configuredNumberOfBuffersInLocalPool != sourceConfig.end())
         {
-            if (const auto customNumSourceLocalBuffers = Util::from_chars<int>(configuredNumSourceLocalBuffers->second))
+            if (const auto customNumberOfBuffersInLocalPool = NES::Util::from_chars<int>(configuredNumberOfBuffersInLocalPool->second))
             {
-                numSourceLocalBuffers = customNumSourceLocalBuffers.value();
+                numberOfBuffersInLocalPool = customNumberOfBuffersInLocalPool.value();
             }
         }
-        return numSourceLocalBuffers;
+        return numberOfBuffersInLocalPool;
     }(sourceConfiguration);
 
-    auto validParserConfig = validateAndFormatParserConfig(parserConfig);
-    auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
-    return Sources::SourceDescriptor(
-        std::move(schema),
-        std::move(logicalSourceName),
-        sourceType,
-        numberOfBuffersInSourceLocalBufferPool,
-        std::move(validParserConfig),
-        std::move(validSourceConfig));
+    const auto validParserConfig = validateAndFormatParserConfig(parserConfig);
+    auto validSourceConfig = NES::Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
+    const auto physicalSourceOpt = sourceCatalog.addPhysicalSource(
+        logicalSource, workerId, sourceType, buffersInLocalPool, std::move(validSourceConfig), validParserConfig);
+    if (physicalSourceOpt)
+    {
+        return physicalSourceOpt.value();
+    }
+    throw NES::UnknownSource("{}", logicalSource.getLogicalSourceName());
+}
 }
 
+namespace NES::CLI
+{
 static void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config)
 {
     auto sinkOperators = getOperatorByType<SinkLogicalOperator>(query);
@@ -230,7 +232,7 @@ static void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig&
 
 std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
 
 
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
@@ -242,20 +244,24 @@ std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& co
         {
             schema = schema.addField(name, type);
         }
-        sourceCatalog->addLogicalSource(logicalSourceName, schema);
+        if (const auto created = sourceCatalog->addLogicalSource(logicalSourceName, schema); not created.has_value())
+        {
+            throw SourceAlreadyExists("{}", logicalSourceName);
+        }
     }
 
     /// Add physical sources to corresponding logical sources.
     for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
     {
-        auto sourceDescriptor = createSourceDescriptor(
-            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
-        sourceCatalog->addPhysicalSource(
-            logicalSourceName,
-            Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceDescriptor)),
-                sourceCatalog->getLogicalSource(logicalSourceName),
-                INITIAL<WorkerId>));
+        if (const auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName); logicalSource.has_value())
+        {
+            auto sourceDescriptor
+                = createSourceDescriptor(logicalSource.value(), INITIAL<WorkerId>, parserConfig, std::move(sourceConfig), *sourceCatalog);
+        }
+        else
+        {
+            throw UnknownSource("{}", logicalSourceName);
+        }
     }
 
     auto queryplan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);

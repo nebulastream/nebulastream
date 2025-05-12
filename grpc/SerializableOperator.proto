@@ -18,7 +18,7 @@ import "SerializableSchema.proto";
 import "SerializableTrait.proto";
 package NES;
 
-message ParserConfig {
+message SerializableParserConfig {
   string type = 1;
   string tupleDelimiter = 2;
   string fieldDelimiter = 3;
@@ -34,12 +34,14 @@ message SerializableSinkDescriptor
 
 message SerializableSourceDescriptor
 {
-  SerializableSchema sourceSchema = 1;
+  uint64 physicalSourceId = 1;
   string logicalSourceName = 2;
-  string sourceType = 3;
-  uint32 numberOfBuffersInSourceLocalBufferPool = 4;
-  ParserConfig parserConfig = 5;
-  map<string, SerializableVariantDescriptor> config = 6;
+  SerializableSchema sourceSchema = 3;
+  uint64 workerId = 4;
+  string sourceType = 5;
+  int32 numberOfBuffersInLocalPool = 6;
+  SerializableParserConfig parserConfig = 7;
+  map<string, SerializableVariantDescriptor> config = 8;
 }
 
 message SerializableSourceDescriptorLogicalOperator

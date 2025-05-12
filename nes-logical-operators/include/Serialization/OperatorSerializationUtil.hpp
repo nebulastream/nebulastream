@@ -33,7 +33,7 @@ public:
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
     static LogicalOperator deserializeOperator(const SerializableOperator& serializedOperator);
-    static std::unique_ptr<Sources::SourceDescriptor> deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor);
+    static SourceDescriptor deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor);
     static std::unique_ptr<Sinks::SinkDescriptor> deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor);
     static std::shared_ptr<WindowAggregationLogicalFunction>
     deserializeWindowAggregationFunction(const SerializableAggregationFunction& serializedFunction);

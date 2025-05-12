@@ -18,10 +18,12 @@
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <gtest/gtest.h>
@@ -35,19 +37,23 @@ protected:
     {
         /// Create some test operators
         sourceOp = SourceNameLogicalOperator("Source");
-        auto dummySchema = Schema();
-        auto dummyParserConfig = Sources::ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
-        auto dummySourceDescriptor = std::make_shared<Sources::SourceDescriptor>(
-            dummySchema,
-            "Source2",
-            "CSV",
-            Sources::SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL,
-            dummyParserConfig,
-            Configurations::DescriptorConfig::Config{});
+        auto dummySchema = Schema{};
+        auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value(); /// NOLINT
+        auto dummyParserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+        auto dummySourceDescriptor = sourceCatalog /// NOLINT
+                                         .addPhysicalSource(
+                                             logicalSource,
+                                             INITIAL<WorkerId>,
+                                             "CSV",
+                                             SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_LOCAL_POOL,
+                                             Configurations::DescriptorConfig::Config{},
+                                             dummyParserConfig)
+                                         .value();
         sourceOp2 = SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor));
         selectionOp = SelectionLogicalOperator(FieldAccessLogicalFunction("logicalfunction"));
     }
 
+    SourceCatalog sourceCatalog;
     LogicalOperator sourceOp;
     LogicalOperator sourceOp2;
     LogicalOperator selectionOp;

@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <thread>
 #include <utility>
@@ -32,6 +33,7 @@
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/FileSink.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -43,6 +45,9 @@
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
+
+#include <Configurations/Descriptor.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -418,7 +423,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
     if (descriptor->sinkType == Sinks::FileSink::NAME)
     {
         const auto deserializedOutputSchema = SchemaSerializationUtil::deserializeSchema(rootOperator.sink().sinkdescriptor().sinkschema());
-        auto configCopy = descriptor->config;
+        auto configCopy = descriptor->getConfig();
         configCopy.at(Sinks::ConfigParametersFile::FILEPATH) = filePathNew;
         auto sinkDescriptorUpdated
             = std::make_unique<Sinks::SinkDescriptor>(descriptor->sinkType, std::move(configCopy), descriptor->addTimestamp);
@@ -436,7 +441,8 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
     }
 }
 
-void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, const std::string& newInputFileName)
+void replaceInputFileInFileSources(
+    SerializableQueryPlan& decomposedQueryPlan, const std::string& newInputFileName, SourceCatalog& sourceCatalog)
 {
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
@@ -445,20 +451,46 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, c
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor = deserializedSourceOperator.get<SourceDescriptorLogicalOperator>().getSourceDescriptor();
-            if (sourceDescriptor->sourceType == "File")
+            if (sourceDescriptor.getSourceType() == "File")
             {
-                /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
-                NES::Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor->config;
+                ///Copy out the old config map
+                NES::Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.getConfig();
                 configUpdated.at("filePath") = newInputFileName;
-                auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
-                    sourceDescriptor->schema,
-                    sourceDescriptor->logicalSourceName,
-                    sourceDescriptor->sourceType,
-                    sourceDescriptor->numberOfBuffersInSourceLocalBufferPool,
-                    sourceDescriptor->parserConfig,
-                    std::move(configUpdated));
+                auto logicalSource = sourceDescriptor.getLogicalSource();
+                if (not sourceCatalog.containsLogicalSource(logicalSource))
+                {
+                    Schema newSchema{};
+                    for (const auto& field : logicalSource.getSchema()->getFields())
+                    {
+                        auto nameParts = field.name | std::views::split(std::string{Schema::ATTRIBUTE_NAME_SEPARATOR})
+                            | std::ranges::to<std::vector<std::string>>();
+                        newSchema.addField(nameParts.back(), field.dataType);
+                    }
+                    if (const auto logicalSourceOpt = sourceCatalog.addLogicalSource(logicalSource.getLogicalSourceName(), newSchema))
+                    {
+                        logicalSource = logicalSourceOpt.value();
+                    }
+                    else
+                    {
+                        throw SourceAlreadyExists("{}", logicalSource.getLogicalSourceName());
+                    }
+                }
 
-                auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdated))
+                auto sourceDescriptorUpdatedOpt = sourceCatalog.addPhysicalSource(
+                    logicalSource,
+                    INITIAL<WorkerId>,
+                    sourceDescriptor.getSourceType(),
+                    sourceDescriptor.getBuffersInLocalPool(),
+                    std::move(configUpdated),
+                    sourceDescriptor.getParserConfig());
+
+                if (not sourceDescriptorUpdatedOpt.has_value())
+                {
+                    throw UnknownSource(
+                        "Logical Source \"{}\" was probably unregistered concurrently", logicalSource.getLogicalSourceName());
+                }
+
+                auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(sourceDescriptorUpdatedOpt.value())
                                                                   .withOutputOriginIds(deserializedSourceOperator.getOutputOriginIds());
                 auto serializedOperator = sourceDescriptorLogicalOperatorUpdated.serialize();
 
@@ -470,7 +502,9 @@ void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, c
     }
 }
 
-void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
+/// NOLINTBEGIN(readability-function-cognitive-complexity)
+void replacePortInTCPSources(
+    SerializableQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber, SourceCatalog& sourceCatalog)
 {
     int queryPlanTCPSourceCounter = 0;
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
@@ -480,22 +514,47 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor = deserializedSourceOperator.get<SourceDescriptorLogicalOperator>().getSourceDescriptor();
-            if (sourceDescriptor->sourceType == "TCP")
+            if (sourceDescriptor.getSourceType() == "TCP")
             {
                 if (sourceNumber == queryPlanTCPSourceCounter)
                 {
-                    /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct port.
-                    NES::Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor->config;
+                    /// Copy out the old config map
+                    NES::Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.getConfig();
                     configUpdated.at("socketPort") = static_cast<uint32_t>(mockTcpServerPort);
-                    auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
-                        sourceDescriptor->schema,
-                        sourceDescriptor->logicalSourceName,
-                        sourceDescriptor->sourceType,
-                        sourceDescriptor->numberOfBuffersInSourceLocalBufferPool,
-                        sourceDescriptor->parserConfig,
-                        std::move(configUpdated));
+                    auto logicalSource = sourceDescriptor.getLogicalSource();
+                    if (not sourceCatalog.containsLogicalSource(logicalSource))
+                    {
+                        Schema newSchema{};
+                        for (const auto& field : logicalSource.getSchema()->getFields())
+                        {
+                            auto nameParts = field.name | std::views::split(std::string{Schema::ATTRIBUTE_NAME_SEPARATOR})
+                                | std::ranges::to<std::vector<std::string>>();
+                            newSchema.addField(nameParts.back(), field.dataType);
+                        }
+                        if (const auto logicalSourceOpt = sourceCatalog.addLogicalSource(logicalSource.getLogicalSourceName(), newSchema))
+                        {
+                            logicalSource = logicalSourceOpt.value();
+                        }
+                        else
+                        {
+                            throw SourceAlreadyExists("{}", logicalSource.getLogicalSourceName());
+                        }
+                    }
+                    auto sourceDescriptorUpdatedOpt = sourceCatalog.addPhysicalSource(
+                        logicalSource,
+                        INITIAL<WorkerId>,
+                        sourceDescriptor.getSourceType(),
+                        sourceDescriptor.getBuffersInLocalPool(),
+                        std::move(configUpdated),
+                        sourceDescriptor.getParserConfig());
+                    if (not sourceDescriptorUpdatedOpt.has_value())
+                    {
+                        throw UnknownSource(
+                            "Logical Source \"{}\" was probably unregistered concurrently", logicalSource.getLogicalSourceName());
+                    }
 
-                    auto sourceDescriptorLogicalOperatorUpdated = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdated));
+                    auto sourceDescriptorLogicalOperatorUpdated
+                        = SourceDescriptorLogicalOperator(std::move(sourceDescriptorUpdatedOpt.value()));
                     auto serializedOperator
                         = sourceDescriptorLogicalOperatorUpdated.withOutputOriginIds(deserializedSourceOperator.getOutputOriginIds())
                               .serialize();
@@ -510,6 +569,7 @@ void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const u
         }
     }
 }
+/// NOLINTEND(readability-function-cognitive-complexity)
 
 std::string getUniqueTestIdentifier()
 {

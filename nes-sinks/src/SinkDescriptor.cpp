@@ -58,7 +58,8 @@ std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor
 
 bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 {
-    return lhs.sinkType == rhs.sinkType and lhs.config == rhs.config and lhs.addTimestamp == rhs.addTimestamp and lhs.schema == rhs.schema;
+    return lhs.sinkType == rhs.sinkType and lhs.getConfig() == rhs.getConfig() and lhs.addTimestamp == rhs.addTimestamp
+        and lhs.schema == rhs.schema;
 }
 
 SerializableSinkDescriptor SinkDescriptor::serialize() const
@@ -68,7 +69,7 @@ SerializableSinkDescriptor SinkDescriptor::serialize() const
     serializedSinkDescriptor.set_sinktype(sinkType);
     serializedSinkDescriptor.set_addtimestamp(addTimestamp);
     /// Iterate over SinkDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : config)
+    for (const auto& [key, value] : getConfig())
     {
         auto* kv = serializedSinkDescriptor.mutable_config();
         kv->emplace(key, descriptorConfigTypeToProto(value));

@@ -44,7 +44,7 @@ public:
         std::shared_ptr<SystemEventListener> systemEventListener,
         std::shared_ptr<QueryLog> queryLog,
         std::unique_ptr<QueryEngine> queryEngine,
-        int numberOfBuffersInSourceLocalBufferPool);
+        int numberOfBuffersInSourceLocalPools);
 
     [[nodiscard]] QueryId registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
     void unregisterQuery(QueryId queryId);
@@ -63,6 +63,6 @@ private:
     std::shared_ptr<SystemEventListener> systemEventListener;
     std::unique_ptr<QueryEngine> queryEngine;
     std::unique_ptr<QueryTracker> queryTracker;
-    int numberOfBuffersInSourceLocalBufferPool;
+    int numberOfBuffersInSourceLocalPools;
 };
 }

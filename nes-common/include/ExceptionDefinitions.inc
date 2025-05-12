@@ -63,6 +63,8 @@ EXCEPTION(UnknownOperation, 2120, "tried to execute an unsupported operation")
 EXCEPTION(UnknownParserType, 2121, "unknown parser type")
 EXCEPTION(UnknownOptimizerRule, 2122, "unknown optimizer rule")
 EXCEPTION(UnknownDataType, 2123, "unknown data type")
+EXCEPTION(UnknownSource, 2124, "Unknown source")
+EXCEPTION(SourceAlreadyExists, 2125, "source already exists")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")

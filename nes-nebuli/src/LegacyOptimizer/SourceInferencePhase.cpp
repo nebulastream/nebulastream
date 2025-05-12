@@ -36,13 +36,14 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto schema = Schema();
-        if (!sourceCatalog->containsLogicalSource(source.getLogicalSourceName()))
+        auto logicalSourceOpt = sourceCatalog->getLogicalSource(source.getLogicalSourceName());
+        if (not logicalSourceOpt.has_value())
         {
-            throw LogicalSourceNotFoundInQueryDescription("Logical source not registered. Source Name: {}", source.getLogicalSourceName());
+            throw UnknownSource("Logical source not registered. Source Name: {}", source.getLogicalSourceName());
         }
-        auto originalSchema = sourceCatalog->getSchemaForLogicalSource(source.getLogicalSourceName());
-        schema.appendFieldsFromOtherSchema(originalSchema);
-        schema.memoryLayoutType = originalSchema.memoryLayoutType;
+        const auto& logicalSource = logicalSourceOpt.value();
+        schema.appendFieldsFromOtherSchema(*logicalSource.getSchema());
+        schema.memoryLayoutType = logicalSource.getSchema()->memoryLayoutType;
         auto qualifierName = source.getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
         std::ranges::for_each(

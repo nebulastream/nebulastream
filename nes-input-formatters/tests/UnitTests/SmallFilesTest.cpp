@@ -27,6 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -70,6 +71,7 @@ class SmallFilesTest : public Testing::BaseUnitTest
              .fileName = "Spacecraft_Telemetry_1000_Lines.csv",
              .endsWithNewline = true,
              .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
+    SourceCatalog sourceCatalog;
 
 public:
     static void SetUpTestCase()
@@ -102,7 +104,7 @@ public:
         const auto numberOfExpectedRawBuffers = (fileSizeInBytes / testConfig.sizeOfRawBuffers)
             + static_cast<unsigned long>(fileSizeInBytes % testConfig.sizeOfRawBuffers != 0);
         /// Sources sometimes need an extra buffer (reason currently unknown)
-        const size_t numberOfRequiredSourceBuffers = numberOfExpectedRawBuffers + 1;
+        const auto numberOfRequiredSourceBuffers = static_cast<uint16_t>(numberOfExpectedRawBuffers + 1);
 
         /// Create vector for result buffers and create emit function to collect buffers from source
         InputFormatterTestUtil::ThreadSafeVector<NES::Memory::TupleBuffer> rawBuffers;
@@ -111,15 +113,15 @@ public:
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
         std::shared_ptr<Memory::BufferManager> sourceBufferPool
             = Memory::BufferManager::create(testConfig.sizeOfRawBuffers, numberOfRequiredSourceBuffers);
-        const auto fileSource
-            = InputFormatterTestUtil::createFileSource(testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
+        const auto fileSource = InputFormatterTestUtil::createFileSource(
+            sourceCatalog, testFilePath, schema, std::move(sourceBufferPool), numberOfRequiredSourceBuffers);
         fileSource->start(InputFormatterTestUtil::getEmitFunction(rawBuffers));
         rawBuffers.waitForSize(numberOfExpectedRawBuffers);
         ASSERT_EQ(rawBuffers.size(), numberOfExpectedRawBuffers);
         ASSERT_EQ(fileSource->tryStop(std::chrono::milliseconds(1000)), Sources::SourceReturnType::TryStopResult::SUCCESS);
 
         /// We assume that we don't need more than two times the number of buffers to represent the formatted data than we need to represent the raw data
-        const auto numberOfRequiredFormattedBuffers = rawBuffers.size() * 2;
+        const auto numberOfRequiredFormattedBuffers = static_cast<uint32_t>(rawBuffers.size() * 2);
         for (size_t i = 0; i < testConfig.numberOfIterations; ++i)
         {
             auto testBufferManager = Memory::BufferManager::create(testConfig.sizeOfFormattedBuffers, numberOfRequiredFormattedBuffers);

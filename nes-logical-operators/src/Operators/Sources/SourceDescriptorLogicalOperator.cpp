@@ -31,7 +31,7 @@
 
 namespace NES
 {
-SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
+SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(SourceDescriptor sourceDescriptor)
     : sourceDescriptor(std::move(sourceDescriptor))
 {
 }
@@ -51,9 +51,7 @@ bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& r
 {
     if (const auto* const rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs))
     {
-        const bool descriptorsEqual = (sourceDescriptor == nullptr && rhsOperator->sourceDescriptor == nullptr)
-            || (sourceDescriptor != nullptr && rhsOperator->sourceDescriptor != nullptr
-                && *sourceDescriptor == *rhsOperator->sourceDescriptor);
+        const bool descriptorsEqual = sourceDescriptor == rhsOperator->sourceDescriptor;
 
         return descriptorsEqual && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
@@ -66,10 +64,9 @@ std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity)
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format(
-            "SOURCE(opId: {}, originid: {}, {})", id, fmt::join(outputOriginIds, ", "), sourceDescriptor->explain(verbosity));
+        return fmt::format("SOURCE(opId: {}, originid: {}, {})", id, fmt::join(outputOriginIds, ", "), sourceDescriptor.explain(verbosity));
     }
-    return fmt::format("SOURCE({})", sourceDescriptor->explain(verbosity));
+    return fmt::format("SOURCE({})", sourceDescriptor.explain(verbosity));
 }
 
 TraitSet SourceDescriptorLogicalOperator::getTraitSet() const
@@ -86,12 +83,12 @@ LogicalOperator SourceDescriptorLogicalOperator::withChildren(std::vector<Logica
 
 std::vector<Schema> SourceDescriptorLogicalOperator::getInputSchemas() const
 {
-    return {sourceDescriptor->schema};
+    return {*sourceDescriptor.getLogicalSource().getSchema()};
 };
 
 Schema SourceDescriptorLogicalOperator::getOutputSchema() const
 {
-    return sourceDescriptor->schema;
+    return {*sourceDescriptor.getLogicalSource().getSchema()};
 }
 
 std::vector<std::vector<OriginId>> SourceDescriptorLogicalOperator::getInputOriginIds() const
@@ -125,14 +122,9 @@ std::vector<LogicalOperator> SourceDescriptorLogicalOperator::getChildren() cons
     return children;
 }
 
-std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getSourceDescriptor() const
+SourceDescriptor SourceDescriptorLogicalOperator::getSourceDescriptor() const
 {
     return sourceDescriptor;
-}
-
-Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const
-{
-    return *sourceDescriptor;
 }
 
 [[nodiscard]] SerializableOperator SourceDescriptorLogicalOperator::serialize() const
@@ -140,7 +132,7 @@ Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorR
     SerializableSourceDescriptorLogicalOperator proto;
     INVARIANT(outputOriginIds.size() == 1, "Expected one output originId, got '{}' instead", outputOriginIds.size());
     proto.set_sourceoriginid(outputOriginIds[0].getRawValue());
-    proto.mutable_sourcedescriptor()->CopyFrom(sourceDescriptor->serialize());
+    proto.mutable_sourcedescriptor()->CopyFrom(sourceDescriptor.serialize());
 
     SerializableOperator serializableOperator;
     serializableOperator.set_operator_id(id.getRawValue());

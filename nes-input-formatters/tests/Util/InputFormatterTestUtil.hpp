@@ -21,6 +21,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -79,7 +80,7 @@ struct TestConfig
 {
     size_t numRequiredBuffers{};
     uint64_t bufferSize{};
-    Sources::ParserConfig parserConfig;
+    ParserConfig parserConfig;
     std::vector<TestDataTypes> testSchema;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
     std::vector<WorkerThreadResults<TupleSchemaTemplate>> expectedResults;
@@ -143,9 +144,10 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes);
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
 getEmitFunction(ThreadSafeVector<Memory::TupleBuffer>& resultBuffers);
 
-Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
+ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
 std::unique_ptr<Sources::SourceHandle> createFileSource(
+    SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
     std::shared_ptr<Memory::BufferManager> sourceBufferPool,
