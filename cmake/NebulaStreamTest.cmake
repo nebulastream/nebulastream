@@ -1,7 +1,5 @@
 include(GoogleTest)
-if (NES_CODE_COVERAGE)
-    set(CODE_COVERAGE ON)
-endif ()
+
 # Target to build all integration tests
 add_custom_target(integration_tests)
 # Target to build all e2e tests
@@ -49,10 +47,4 @@ function(add_nes_integration_test)
     target_link_libraries(${TARGET_NAME} nes-coordinator-test-util)
     gtest_discover_tests(${TARGET_NAME} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR}  DISCOVERY_MODE PRE_TEST DISCOVERY_TIMEOUT 30)
     message(STATUS "Added it test ${TARGET_NAME}")
-endfunction()
-
-function(enable_extra_test_features)
-    if (CODE_COVERAGE)
-        add_code_coverage_all_targets(EXCLUDE ${CMAKE_BINARY_DIR}/* tests/*)
-    endif ()
 endfunction()
