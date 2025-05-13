@@ -26,6 +26,11 @@ HashFunction::HashValue MurMur3HashFunction::init() const
     return SEED;
 }
 
+std::unique_ptr<HashFunction> MurMur3HashFunction::clone() const
+{
+    return std::make_unique<MurMur3HashFunction>(*this);
+}
+
 /// Hash Function that implements murmurhas3 by Robin-Hood-Hashing:
 /// https://github.com/martinus/robin-hood-hashing/blob/fb1483621fda28d4afb31c0097c1a4a457fdd35b/src/include/robin_hood.h#L748
 VarVal hashVarVal(const VarVal& input)
@@ -119,11 +124,6 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 {
                     const auto& varSizedContent = val;
                     return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getContentSize());
-                }
-                else if constexpr (std::is_same_v<T, nautilus::val<double>> || std::is_same_v<T, nautilus::val<float>>)
-                {
-                    /// For floating points, we do not support the >> operator, as it is not defined for floats.
-                    throw UnsupportedOperation("Cannot hash floating point values.");
                 }
                 else
                 {

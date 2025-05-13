@@ -35,6 +35,7 @@ public:
     /// This function performs a lookup to the hash map with a record.
     /// If the recordKey is found the entry is returned.
     /// If the key was not found a new entry for the set of keys is inserted and the onInsert function is called.
+    /// Before the onInsert function is called, the key is copied to the hash map
     /// After the onInsert function is called, the newly-created entry is returned.
     virtual nautilus::val<AbstractHashMapEntry*> findOrCreateEntry(
         const Nautilus::Record& recordKey,
@@ -43,9 +44,15 @@ public:
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
         = 0;
 
+    /// This function performs a lookup to the hash map with a record
+    /// It returns either the entry or a nullptr, depending on if the record key is in the hash map or not
+    virtual nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) = 0;
+
+
     /// This function inserts an already existing entry from another hash map to this hash map.
     /// To this end, we assume that both hash maps use the same hash function.
     /// If an entry with the same key already exists the onUpdate function is called and allows to merge both entries.
+    /// Before the onInsert function is called, the key is copied to the hash map
     virtual void insertOrUpdateEntry(
         const nautilus::val<AbstractHashMapEntry*>& otherEntry,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onUpdate,

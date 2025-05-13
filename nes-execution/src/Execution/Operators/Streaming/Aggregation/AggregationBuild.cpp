@@ -20,9 +20,9 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuild.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
+#include <Execution/Operators/Streaming/HashMapOptions.hpp>
+#include <Execution/Operators/Streaming/HashMapSlice.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -38,9 +38,7 @@
 
 namespace NES::Runtime::Execution::Operators
 {
-namespace
-{
-Interface::HashMap* getHashMapProxy(
+Interface::HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
@@ -49,17 +47,18 @@ Interface::HashMap* getHashMapProxy(
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
-    /// If a new aggregation slice is created, we need to set the cleanup function for the aggregation states
+    /// If a new hashmap slice is created, we need to set the cleanup function for the aggregation states
     auto wrappedCreateFunction(
         [createFunction = operatorHandler->getCreateNewSlicesFunction(),
+        cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction,
          buildOperator](const SliceStart sliceStart, const SliceEnd sliceEnd)
         {
             const auto createdSlices = createFunction(sliceStart, sliceEnd);
             for (const auto& slice : createdSlices)
             {
-                const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
+                const auto aggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(slice);
                 INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-                aggregationSlice->setCleanupFunction(buildOperator->getStateCleanupFunction());
+                aggregationSlice->setCleanupFunction(buildOperator->getSliceCleanupFunction(cleanupStateNautilusFunction));
             }
             return createdSlices;
         });
@@ -72,10 +71,50 @@ Interface::HashMap* getHashMapProxy(
         hashMap.size());
 
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
-    const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
+    const auto aggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-    return aggregationSlice->getHashMapPtr(workerThreadId);
+    const CreateNewHashMapSliceArgs hashMapSliceArgs{
+        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets};
+    return aggregationSlice->getHashMapPtrOrCreate(workerThreadId, hashMapSliceArgs);
 }
+
+void AggregationBuild::setup(ExecutionContext& executionCtx) const
+{
+    WindowOperatorBuild::setup(executionCtx);
+
+    /// Creating the cleanup function for the slice of current stream
+    nautilus::invoke(
+        +[](AggregationOperatorHandler* operatorHandler, const AggregationBuild* buildOperator)
+        {
+            nautilus::engine::Options options;
+            options.setOption("engine.Compilation", true);
+            const nautilus::engine::NautilusEngine nautilusEngine(options);
+            const auto cleanupStateNautilusFunction
+                = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(
+                std::function(
+                    [copyOfFieldKeys = buildOperator->fieldKeys,
+                     copyOfFieldValues = buildOperator->fieldValues,
+                     copyOfEntriesPerPage = buildOperator->entriesPerPage,
+                     copyOfEntrySize = buildOperator->entrySize,
+                     copyOfAggregationFunctions = buildOperator->aggregationFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
+                    {
+                        const Interface::ChainedHashMapRef hashMapRef(
+                            hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                        for (const auto entry : hashMapRef)
+                        {
+                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
+                            auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
+                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                            {
+                                aggFunction->cleanup(state);
+                                state = state + aggFunction->getSizeOfStateInBytes();
+                            }
+                        }
+                    })));
+            operatorHandler->cleanupStateNautilusFunction = std::move(cleanupStateNautilusFunction);
+        },
+        executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
+        nautilus::val<const AggregationBuild*>(this));
 }
 
 void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
@@ -83,7 +122,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getHashMapProxy,
+        getAggHashMapProxy,
         ctx.getGlobalOperatorHandler(operatorHandlerIndex),
         timestamp,
         ctx.getWorkerThreadId(),
@@ -127,54 +166,18 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     }
 }
 
-std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> AggregationBuild::getStateCleanupFunction() const
-{
-    return [copyOfFieldKeys = this->fieldKeys,
-            copyOfFieldValues = this->fieldValues,
-            copyOfAggregationFunctions = this->aggregationFunctions,
-            copyOfEntriesPerPage = this->entriesPerPage,
-            copyOfEntrySize = this->entrySize](const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>& hashMaps)
-    {
-        nautilus::engine::Options options;
-        options.setOption("engine.Compilation", true);
-        const nautilus::engine::NautilusEngine nautilusEngine(options);
-        static auto cleanupStateNautilusFunc = nautilusEngine.registerFunction(
-            std::function(
-                [copyOfFieldKeys, copyOfFieldValues, copyOfAggregationFunctions, copyOfEntriesPerPage, copyOfEntrySize](
-                    nautilus::val<Nautilus::Interface::HashMap*> hashMap)
-                {
-                    const Interface::ChainedHashMapRef hashMapRef(
-                        hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-                    for (const auto entry : hashMapRef)
-                    {
-                        const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
-                        auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
-                        for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
-                        {
-                            aggFunction->cleanup(state);
-                            state = state + aggFunction->getSizeOfStateInBytes();
-                        }
-                    }
-                }));
-
-        for (const auto& hashMap :
-             hashMaps | std::views::filter([](const auto& hashMapPtr) { return hashMapPtr->getNumberOfTuples() > 0; }))
-        {
-            /// Calling the compiled nautilus function
-            cleanupStateNautilusFunc(hashMap.get());
-        }
-    };
-}
-
 AggregationBuild::AggregationBuild(
     const uint64_t operatorHandlerIndex,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::vector<std::unique_ptr<Functions::Function>> keyFunctions,
-    WindowAggregationOperator windowAggregationOperator)
-    : WindowAggregationOperator(std::move(windowAggregationOperator))
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+    HashMapOptions hashMapOptions)
+    : HashMapOptions(std::move(hashMapOptions))
     , WindowOperatorBuild(operatorHandlerIndex, std::move(timeFunction))
-    , keyFunctions(std::move(keyFunctions))
+    , aggregationFunctions(std::move(aggregationFunctions))
 {
+    PRECONDITION(
+        this->aggregationFunctions.size() == this->fieldValues.size(),
+        "The number of aggregation functions must match the number of field values");
 }
 
 }

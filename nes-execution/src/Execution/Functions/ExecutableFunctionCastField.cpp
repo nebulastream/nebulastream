@@ -12,16 +12,17 @@
     limitations under the License.
 */
 
-#pragma once
+#include <Execution/Functions/ExecutableFunctionCastField.hpp>
 
-#include <cstdint>
+namespace NES::Runtime::Execution::Functions {
 
-namespace NES::QueryCompilation::Configurations
+ExecutableFunctionCastField::ExecutableFunctionCastField(std::unique_ptr<Function> childFunction, std::shared_ptr<PhysicalType> castToType) : castToType(std::move(castToType)), childFunction(std::move(childFunction))
 {
+}
 
-enum class StreamJoinStrategy : uint8_t
+VarVal ExecutableFunctionCastField::execute(const Record& record, ArenaRef& arena) const
 {
-    NESTED_LOOP_JOIN,
-    HASH_JOIN,
-};
+    const auto value = childFunction->execute(record, arena);
+    return value.castToType(castToType);
+}
 }

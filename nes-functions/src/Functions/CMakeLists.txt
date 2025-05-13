@@ -22,6 +22,7 @@ add_source_files(nes-functions
         NodeFunctionUnary.cpp
         NodeFunctionWhen.cpp
         NodeFunctionConcat.cpp
+        NodeFunctionCastToType.cpp
 )
 add_subdirectory(LogicalFunctions)
 add_subdirectory(ArithmeticalFunctions)

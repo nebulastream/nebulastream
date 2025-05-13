@@ -13,25 +13,21 @@
 */
 
 #pragma once
-#include <vector>
+#include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
-namespace NES::Nautilus::Interface
-{
+namespace NES::Runtime::Execution::Functions {
 
-/// Interface for hash function on Nautilus values.
-/// Subclasses can provide specific hash algorithms.
-class HashFunction
-{
+class ExecutableFunctionCastField : public Function {
 public:
-    using HashValue = nautilus::val<uint64_t>;
-    [[nodiscard]] HashValue calculate(const VarVal& value) const;
-    [[nodiscard]] HashValue calculate(const std::vector<VarVal>& values) const;
-    virtual ~HashFunction() = default;
-    virtual std::unique_ptr<HashFunction> clone() const = 0;
+    explicit ExecutableFunctionCastField(std::unique_ptr<Function> childFunction, std::shared_ptr<PhysicalType> castToType);
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
-protected:
-    [[nodiscard]] virtual HashValue init() const = 0;
-    virtual HashValue calculate(HashValue& hash, const VarVal& value) const = 0;
+private:
+    std::shared_ptr<PhysicalType> castToType;
+    const std::unique_ptr<Function> childFunction;
 };
+
 }

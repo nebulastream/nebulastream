@@ -51,6 +51,32 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
     return capacity;
 }
 
+ChainedHashMap::ChainedHashMap(uint64_t entrySize, const uint64_t numberOfBuckets, uint64_t pageSize)
+    : numberOfTuples(0)
+    , pageSize(pageSize)
+    , entrySize(entrySize)
+    , entriesPerPage(pageSize / entrySize)
+    , numberOfChains(calcCapacity(numberOfBuckets, assumedLoadFactor))
+    , entries(nullptr)
+    , mask(numberOfChains - 1)
+    , destructorCallBack(nullptr)
+{
+    PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
+    PRECONDITION(
+        entriesPerPage > 0,
+        "At least one entry has to fit on a page. Pagesize is set to small for pageSize {} and entry size {}",
+        pageSize,
+        entrySize);
+    PRECONDITION(
+        numberOfChains > 0,
+        "Number of chains has to be greater than 0. Number of chains is set to small for number of chains {}",
+        numberOfChains);
+    PRECONDITION(
+        (numberOfChains & (numberOfChains - 1)) == 0,
+        "Number of chains has to be a power of 2. Number of chains is set to small for number of chains {}",
+        numberOfChains);
+}
+
 ChainedHashMap::ChainedHashMap(const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
     : numberOfTuples(0)
     , pageSize(pageSize)
@@ -85,6 +111,11 @@ ChainedHashMap::~ChainedHashMap()
 void ChainedHashMap::setDestructorCallback(const std::function<void(ChainedHashMapEntry*)>& callback)
 {
     destructorCallBack = callback;
+}
+
+std::unique_ptr<ChainedHashMap> ChainedHashMap::createNewMapWithSameConfiguration(const ChainedHashMap& other)
+{
+    return std::make_unique<ChainedHashMap>(other.entrySize, other.numberOfChains, other.pageSize);
 }
 
 ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::raw_type hash) const

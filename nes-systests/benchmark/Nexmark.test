@@ -42,7 +42,7 @@ INNER JOIN (SELECT auctionId, MAX(num_ids) AS max_tmp, start, end
                      GROUP BY auctionId
                      WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
               WINDOW TUMBLING(start, SIZE 2 SEC))
-ON num >= max_tmp
+ON num = max_tmp
 WINDOW TUMBLING(start, SIZE 2 SEC)
 INTO CHECKSUM;
 ----

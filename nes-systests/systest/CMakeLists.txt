@@ -89,7 +89,8 @@ endif (NOT CODE_COVERAGE)
 #        endforeach ()
 #    endforeach ()
 #endif ()
-# TODO let the systest also run with different params, such as sortBufferByTimestamps, numberOfEntriesSliceCaches, or sliceCaches
+# TODO let the systest also run with different params, such as sortBufferByTimestamps, numberOfEntriesSliceCaches, sliceCaches, join variants (NLJ, HJ)
+# We need to create more group names as to only run what we actually want/need. For example, changing the join variant for non-join queries makes no sense
 if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(TEST_DATA_LARGE
             NAME systest_large
@@ -119,20 +120,24 @@ if (NOT CODE_COVERAGE)
     set(sortBufferByTimestamps false true)
     set(numberOfEntriesSliceCaches 1 10 100 1000)
     set(workerThreads 1 2 4 8)
+    set(joinStrategies NESTED_LOOP_JOIN HASH_JOIN)
     foreach (sortBufferByTimestamp IN LISTS sortBufferByTimestamps)
         foreach (sliceCache IN LISTS sliceCaches)
             foreach (cacheSize IN LISTS numberOfEntriesSliceCaches)
                 foreach (workerThreads IN LISTS workerThreads)
-                    ExternalData_Add_Test(TEST_DATA
-                            NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_interpreter
-                            COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_interpreter_join --data ${SMALL_DATA}
-                            --
-                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp})
-                    ExternalData_Add_Test(TEST_DATA
-                            NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_compiler
-                            COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_compiler_join --data ${SMALL_DATA}
-                            --
-                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp})
+                    foreach (joinStrategy IN LISTS joinStrategies)
+                        ExternalData_Add_Test(TEST_DATA
+                                NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy}_interpreter
+                                COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy}_interpreter_join --data ${SMALL_DATA}
+                                --
+                                --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp} --worker.queryCompiler.joinStrategy=${joinStrategy})
+                        ExternalData_Add_Test(TEST_DATA
+                                NAME systest_join_${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy}_compiler
+                                COMMAND systest -n 6 --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy}_compiler_join --data ${SMALL_DATA}
+                                --
+                                --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp} --worker.queryCompiler.joinStrategy=${joinStrategy})
+                    endforeach ()
+
                     ExternalData_Add_Test(TEST_DATA
                             NAME systest_agg_${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_interpreter
                             COMMAND systest -n 6 --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_interpreter_aggregation --data ${SMALL_DATA}

@@ -35,9 +35,10 @@ void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvide
 
     if (pages.empty() || pages.back().buffer.getNumberOfTuples() >= memoryLayout->getCapacity())
     {
-        if (const auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
+        if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
         {
             updateCumulativeSumLastItem();
+            // std::memset(page.value().getBuffer(), 0, page.value().getBufferSize());
             pages.emplace_back(page.value());
         }
         else

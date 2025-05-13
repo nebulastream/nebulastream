@@ -30,6 +30,7 @@
 namespace NES::QueryCompilation::Configurations
 {
 static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
+static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
 static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
 
 class QueryCompilerConfiguration final : public NES::Configurations::BaseConfiguration
@@ -52,6 +53,11 @@ public:
            std::to_string(DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES),
            "Partitions in a hash table",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
+    NES::Configurations::UIntOption numberOfRecordsPerKey
+        = {"numberOfRecordsPerKey",
+           std::to_string(DEFAULT_NUMBER_OF_RECORDS_PER_KEY),
+           "Expected number of records per key, for example in a hash join",
+           {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::UIntOption pageSize
         = {"pageSize",
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
@@ -60,8 +66,8 @@ public:
     NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
         = {"joinStrategy",
            StreamJoinStrategy::NESTED_LOOP_JOIN,
-           "WindowingStrategy"
-           "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
+           "JoinStrategy"
+           "[NESTED_LOOP_JOIN|HASH_JOIN]. "};
     NES::Configurations::StringOption pipelinesTxtFilePath = {"pipelinesTxtFilePath", "pipelines.txt", "Path to dump pipeline details."};
     NES::Configurations::EnumOption<SliceCacheType> sliceCacheType
         = {"sliceCacheType",
@@ -84,6 +90,7 @@ private:
             &nautilusBackend,
             &pageSize,
             &numberOfPartitions,
+            &numberOfRecordsPerKey,
             &joinStrategy,
             &pipelinesTxtFilePath,
             &sliceCacheType,

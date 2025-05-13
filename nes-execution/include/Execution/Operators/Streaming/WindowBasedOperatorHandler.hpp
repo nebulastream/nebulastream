@@ -30,6 +30,27 @@
 
 namespace NES::Runtime::Execution::Operators
 {
+
+struct CreateNewSlicesArguments
+{
+    virtual ~CreateNewSlicesArguments() = default;
+};
+
+
+struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
+{
+    CreateNewHashMapSliceArgs() = default;
+    CreateNewHashMapSliceArgs(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets)
+        : keySize(keySize), valueSize(valueSize), pageSize(pageSize), numberOfBuckets(numberOfBuckets)
+    {
+    }
+    ~CreateNewHashMapSliceArgs() override = default;
+    std::optional<uint64_t> keySize;
+    std::optional<uint64_t> valueSize;
+    std::optional<uint64_t> pageSize;
+    std::optional<uint64_t> numberOfBuckets;
+};
+
 /// This is the base class for all window-based operator handlers, e.g., join and aggregation.
 /// It assumes that they have a build and a probe phase.
 /// The build phase is the phase where the operator adds tuples to window(s) / the state.
@@ -63,7 +84,8 @@ public:
 
     /// Gives the specific operator handler the chance to provide a function that creates new slices
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
-    [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const = 0;
+    [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+    getCreateNewSlicesFunction() const = 0;
 
 
     virtual void
@@ -87,6 +109,6 @@ protected:
 
     /// This vector stores the start of the cache entries for each worker thread.
     std::vector<Memory::TupleBuffer> sliceCacheEntriesBufferForWorkerThreads;
-    std::atomic<bool> hasSliceCacheCreated{false};
+    std::atomic<bool> wasSliceCacheCreated{false};
 };
 }

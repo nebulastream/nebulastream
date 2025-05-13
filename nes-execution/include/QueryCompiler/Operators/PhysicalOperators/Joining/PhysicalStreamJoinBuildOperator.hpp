@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -28,6 +29,14 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
+struct FieldNamesExtension
+{
+    std::string oldName;
+    std::string newName;
+    std::shared_ptr<DataType> oldDataType;
+    std::shared_ptr<DataType> newDataType;
+};
+
 /// This class represents the physical stream join build operator and gets translated to a join build operator
 class PhysicalStreamJoinBuildOperator : public PhysicalUnaryOperator, public AbstractEmitOperator
 {
@@ -37,8 +46,8 @@ public:
         const std::shared_ptr<Schema>& outputSchema,
         const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
         Configurations::StreamJoinStrategy joinStrategy,
-        const std::vector<std::string>& joinFieldNames,
-        TimestampField timestampField,
+        const std::vector<FieldNamesExtension>& joinFields,
+        TimestampField timeStampField,
         JoinBuildSideType buildSide,
         OperatorId id = getNextOperatorId());
 
@@ -48,13 +57,14 @@ public:
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& getJoinOperatorHandler() const;
     Configurations::StreamJoinStrategy getJoinStrategy() const;
     std::vector<std::string> getJoinFieldNames() const;
+    std::vector<FieldNamesExtension> getJoinFields() const;
     const TimestampField& getTimeStampField() const;
     JoinBuildSideType getBuildSide() const;
 
 private:
     std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
     Configurations::StreamJoinStrategy joinStrategy;
-    std::vector<std::string> joinFieldNames;
+    std::vector<FieldNamesExtension> joinFields;
     TimestampField timeStampField;
     JoinBuildSideType buildSide;
 };

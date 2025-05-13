@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
+#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 
@@ -28,32 +29,32 @@ namespace NES::Runtime::Execution
 /// This class represents a single slice for the (keyed) aggregation. It stores the aggregation state in a hashmap.
 /// If it is a global aggregation, each hashmap contains a single entry for the keyValue = 0.
 /// In our current implementation, we have one hashmap per worker thread.
-class AggregationSlice final : public Slice
+class HashMapSlice : public Slice
 {
 public:
-    explicit AggregationSlice(
-        uint64_t keySize,
-        uint64_t valueSize,
-        uint64_t numberOfBuckets,
-        uint64_t pageSize,
-        SliceStart sliceStart,
-        SliceEnd sliceEnd,
-        uint64_t numberOfHashMaps);
+    explicit HashMapSlice(SliceStart sliceStart, SliceEnd sliceEnd, uint64_t numberOfHashMaps);
 
-    ~AggregationSlice() override;
+    ~HashMapSlice() override;
 
     /// Returns the pointer to the underlying hashmap.
     /// IMPORTANT: This method should only be used for passing the hashmap to the nautilus executable.
-    [[nodiscard]] Nautilus::Interface::HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] virtual Nautilus::Interface::HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] virtual Nautilus::Interface::HashMap*
+    getHashMapPtrOrCreate(WorkerThreadId workerThreadId, const Operators::CreateNewHashMapSliceArgs& hashMapArgs);
+
 
     /// In our current implementation, we expect one hashmap per worker thread. Thus, we return the number of hashmaps == number of worker threads.
     [[nodiscard]] uint64_t getNumberOfHashMaps() const;
 
     [[nodiscard]] uint64_t getNumberOfTuples() const;
-    void setCleanupFunction(const std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)>& cleanupFunction);
+    virtual void
+    setCleanupFunction(const std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)>& cleanupFunction);
+
+protected:
+    std::vector<std::unique_ptr<Nautilus::Interface::HashMap>> hashMaps;
+    uint64_t numberOfHashMaps;
 
 private:
-    std::vector<std::unique_ptr<Nautilus::Interface::HashMap>> hashMaps;
     std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> cleanupFunction;
 };
 

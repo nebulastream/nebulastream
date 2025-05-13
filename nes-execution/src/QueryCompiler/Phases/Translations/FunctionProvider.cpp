@@ -19,9 +19,11 @@
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
 #include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
+#include <Execution/Functions/ExecutableFunctionCastField.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/NodeFunctionCastToType.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
@@ -51,7 +53,7 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<
         childFunction.emplace_back(lowerFunction(NES::Util::as<NodeFunction>(child)));
     }
 
-    /// 3. The field access and constant value nodes are special as they require a different treatment,
+    /// 3. The field access, constant value nodes and cast-to-type are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
     if (const auto fieldAccessNode = NES::Util::as_if<NodeFunctionFieldAccess>(nodeFunction); fieldAccessNode != nullptr)
     {
@@ -60,6 +62,11 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<
     if (const auto constantValueNode = NES::Util::as_if<NodeFunctionConstantValue>(nodeFunction); constantValueNode != nullptr)
     {
         return lowerConstantFunction(constantValueNode);
+    }
+    if (const auto castToTypeNode = NES::Util::as_if<NodeFunctionCastToType>(nodeFunction); castToTypeNode != nullptr)
+    {
+        const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(castToTypeNode->getCastToType());
+        return std::make_unique<ExecutableFunctionCastField>(std::move(childFunction[0]), physicalType);
     }
 
     /// 4. Calling the registry to create an executable function.
