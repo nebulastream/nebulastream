@@ -19,6 +19,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdlib>
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -33,17 +34,26 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/color.h>
 #include <fmt/core.h>
 #include <fmt/ostream.h>
+#include <fmt/ranges.h>
 #include <fmt/std.h>
 #include <folly/MPMCQueue.h>
 #include <nlohmann/json.hpp>
@@ -54,7 +64,6 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
-#include <SystestGrpc.hpp>
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
@@ -63,20 +72,22 @@ namespace NES::Systest
 {
 
 /// NOLINTBEGIN(readability-function-cognitive-complexity)
-std::vector<LoadedQueryPlan> loadFromSLTFile(
+std::vector<LoadedQueryPlan> SystestBinder::loadFromSLTFile(
     const std::filesystem::path& testFilePath,
     const std::filesystem::path& workingDir,
     std::string_view testFileName,
     const std::filesystem::path& testDataDir)
 {
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
     std::vector<LoadedQueryPlan> plans{};
-    CLI::QueryConfig config{};
+    std::unordered_map<std::string, std::shared_ptr<Sinks::SinkDescriptor>> sinks;
     SystestParser parser{};
-    std::unordered_map<std::string, std::filesystem::path> sourceNamesToFilepath;
-    std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema{
-        {"CHECKSUM",
-         {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "S$Count"},
-          {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "S$Checksum"}}}};
+    std::unordered_map<SourceDescriptor, std::filesystem::path> sourcesToFilePaths;
+
+    std::unordered_map<std::string, Schema> sinkNamesToSchema{};
+    auto [checksumSinkPair, success] = sinkNamesToSchema.emplace("CHECKSUM", Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
+    checksumSinkPair->second.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    checksumSinkPair->second.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
 
     parser.registerSubstitutionRule({.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
     if (!parser.loadFile(testFilePath))
@@ -85,55 +96,53 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     }
 
     /// We create a map from sink names to their schema
-    parser.registerOnSinkCallBack([&](SystestParser::Sink&& sinkParsed)
-                                  { sinkNamesToSchema.insert_or_assign(sinkParsed.name, sinkParsed.fields); });
+    parser.registerOnSinkCallBack(
+        [&](const SystestParser::Sink& sinkParsed)
+        {
+            auto [sinkPair, success] = sinkNamesToSchema.emplace(sinkParsed.name, Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
+            if (not success)
+            {
+                throw SourceAlreadyExists("{}", sinkParsed.name);
+            }
+            for (const auto& [type, name] : sinkParsed.fields)
+            {
+                sinkPair->second.addField(name, type);
+            }
+        });
 
     /// We add new found sources to our config
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&& source)
         {
-            config.logical.emplace_back(CLI::LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
-                    {
-                        schema.emplace_back(name, type);
-                    }
-                    return schema;
-                }()});
+            Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+            for (const auto& [type, name] : source.fields)
+            {
+                schema.addField(name, type);
+            }
+            const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema);
+            if (not logicalSource.has_value())
+            {
+                throw SourceAlreadyExists("{}", source.name);
+            }
 
-            config.physical.emplace_back(CLI::PhysicalSource{
-                .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInLocalPool", "-1"}}});
-            sourceNamesToFilepath[source.name] = source.csvFilePath;
+            auto sourceConfig = Sources::SourceValidationProvider::provide(
+                "File", std::unordered_map<std::string, std::string>{{"filePath", source.csvFilePath}});
+            const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+
+            const auto physicalSource = sourceCatalog->addPhysicalSource(
+                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
+            if (not physicalSource.has_value())
+            {
+                NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
+                throw UnknownSource("{}", source.name);
+            }
+            sourcesToFilePaths[physicalSource.value()] = source.csvFilePath;
         });
 
     parser.registerOnSLTSourceCallback(
         [&](SystestParser::SLTSource&& source)
         {
-            static uint64_t sourceIndex = 0;
-
-            config.logical.emplace_back(CLI::LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<CLI::SchemaField> schema;
-                    for (const auto& [type, name] : source.fields)
-                    {
-                        schema.emplace_back(name, type);
-                    }
-                    return schema;
-                }()});
-
             const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
-            sourceNamesToFilepath[source.name] = sourceFile;
-            config.physical.emplace_back(CLI::PhysicalSource{
-                .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                .sourceConfig = {{"type", "File"}, {"filePath", sourceFile}, {"numberOfBuffersInLocalPool", "-1"}}});
             {
                 std::ofstream testFile(sourceFile);
                 if (!testFile.is_open())
@@ -146,9 +155,32 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     testFile << tuple << "\n";
                 }
                 testFile.flush();
+                NES_INFO("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
             }
 
-            NES_INFO("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
+            Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+            for (const auto& [type, name] : source.fields)
+            {
+                schema.addField(name, type);
+            }
+            const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema);
+            if (not logicalSource.has_value())
+            {
+                throw SourceAlreadyExists("{}", source.name);
+            }
+
+            auto sourceConfig = Sources::SourceValidationProvider::provide(
+                "File", std::unordered_map<std::string, std::string>{{"filePath", sourceFile}});
+            const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+
+            const auto physicalSource = sourceCatalog->addPhysicalSource(
+                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
+            if (not physicalSource.has_value())
+            {
+                NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
+                throw UnknownSource("{}", source.name);
+            }
+            sourcesToFilePaths[physicalSource.value()] = sourceFile;
         });
 
     /// We create a new query plan from our config when finding a query
@@ -157,9 +189,6 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
         {
             /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
             /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
-            static size_t currentQueryNumber = 0;
-            static std::string currentTestFileName;
-
             /// We reset the current query number once we see a new test file
             if (currentTestFileName != testFileName)
             {
@@ -213,44 +242,57 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
 
             /// Adding the sink to the sink config, such that we can create a fully specified query plan
             const auto resultFile = Query::resultFile(workingDir, testFileName, currentQueryNumber);
-
+            std::shared_ptr<Sinks::SinkDescriptor> sink;
             if (sinkName == "CHECKSUM")
             {
-                auto sink = CLI::Sink{.name = sinkName, .type = "Checksum", .config = {std::make_pair("filePath", resultFile)}};
-                config.sinks.emplace(sinkForQuery, std::move(sink));
+                auto validatedSinkConfig
+                    = Sinks::SinkDescriptor::validateAndFormatConfig("Checksum", {std::make_pair("filePath", resultFile)});
+                sink = std::make_shared<Sinks::SinkDescriptor>("Checksum", std::move(validatedSinkConfig), false);
             }
             else
             {
-                auto sinkCLI = CLI::Sink{
-                    .name = sinkForQuery,
-                    .type = "File",
-                    .config
-                    = {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
-                config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
+                auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(
+                    "File",
+                    {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")});
+                sink = std::make_shared<Sinks::SinkDescriptor>("File", std::move(validatedSinkConfig), false);
             }
+            sinks.emplace(sinkForQuery, sink);
 
-            config.query = query;
             try
             {
-                auto plan = createFullySpecifiedQueryPlan(config);
-                std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
-                for (const auto& logicalSource : NES::getOperatorByType<SourceDescriptorLogicalOperator>(*plan))
+                auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+                auto sinkOperators = plan.rootOperators;
+                auto sinkOperator = [](const LogicalPlan& queryPlan)
                 {
-                    if (const auto sourceName = logicalSource.getSourceDescriptor().getLogicalSource().getLogicalSourceName();
-                        sourceNamesToFilepath.contains(sourceName))
+                    const auto rootOperators = queryPlan.rootOperators;
+                    if (rootOperators.size() != 1)
                     {
-                        auto& entry = sourceNamesToFilepathAndCountForQuery[sourceName];
-                        entry = {sourceNamesToFilepath.at(sourceName), entry.second + 1};
-                        continue;
+                        throw QueryInvalid(
+                            "NebulaStream currently only supports a single sink per query, but the query contains: {}",
+                            rootOperators.size());
                     }
-                    throw CannotLoadConfig("SourceName {} does not exist in sourceNamesToFilepathAndCount!");
+                    const auto sinkOp = rootOperators.at(0).tryGet<SinkLogicalOperator>();
+                    INVARIANT(sinkOp.has_value(), "Root operator in plan was not sink");
+                    return sinkOp.value();
+                }(plan);
+
+
+                if (const auto sinkIter = sinks.find(sinkOperator.sinkName); sinkIter == sinks.end())
+                {
+                    throw UnknownSinkType(
+                        "Sinkname {} not specified in the configuration {}",
+                        sinkOperator.sinkName,
+                        fmt::join(std::views::keys(sinks), ","));
                 }
-                INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
-                plans.emplace_back(*plan, query, sinkNamesToSchema[sinkName], sourceNamesToFilepathAndCountForQuery);
+                sinkOperator.sinkDescriptor = sink;
+                INVARIANT(!plan.rootOperators.empty(), "Plan has no root operators");
+                plan.rootOperators.at(0) = sinkOperator;
+
+                plans.emplace_back(plan, sourceCatalog, query, sinkNamesToSchema[sinkName], sourcesToFilePaths);
             }
             catch (Exception& e)
             {
-                plans.emplace_back(std::unexpected(e), query, sinkNamesToSchema[sinkName]);
+                plans.emplace_back(std::unexpected(e), sourceCatalog, query, sinkNamesToSchema[sinkName]);
             }
         });
 

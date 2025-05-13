@@ -26,6 +26,8 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/base.h>
+#include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
@@ -99,6 +101,7 @@ public:
         {
             return this->validateFunc(config);
         }
+        friend std::ostream& operator<<(std::ostream& os, const ConfigParameter& obj) { return os << "name: " << obj.name; }
 
         static constexpr bool isEnumWrapper() { return not(std::is_same_v<U, void>); }
     };
@@ -357,3 +360,9 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
 }
 
 FMT_OSTREAM(NES::Configurations::Descriptor);
+
+
+template <typename T>
+struct fmt::formatter<NES::Configurations::DescriptorConfig::ConfigParameter<T>> : ostream_formatter
+{
+};

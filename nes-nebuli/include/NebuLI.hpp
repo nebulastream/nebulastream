@@ -14,61 +14,45 @@
 
 #pragma once
 
-#include <filesystem>
-#include <istream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <experimental/propagate_const>
+#include <GRPCClient.hpp>
 
 namespace NES
 {
 class LogicalPlan;
 }
 
+
 namespace NES::CLI
 {
 
-struct SchemaField
+class LegacyOptimizer
 {
-    SchemaField(std::string name, const std::string& typeName);
-    SchemaField(std::string name, NES::DataType type);
-    SchemaField() = default;
+    std::shared_ptr<const SourceCatalog> sourceCatalog;
 
-    std::string name;
-    NES::DataType type;
+public:
+    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
+    LegacyOptimizer() = default;
+    explicit LegacyOptimizer(const std::shared_ptr<const SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog) { }
 };
-
-struct Sink
+class Nebuli
 {
-    std::string name;
-    std::string type;
-    std::unordered_map<std::string, std::string> config;
-};
+    std::experimental::propagate_const<std::shared_ptr<GRPCClient>> grpcClient;
 
-struct LogicalSource
-{
-    std::string name;
-    std::vector<SchemaField> schema;
-};
+public:
+    explicit Nebuli(const std::shared_ptr<GRPCClient>& grpcClient) : grpcClient(grpcClient) { }
 
-struct PhysicalSource
-{
-    std::string logical;
-    std::unordered_map<std::string, std::string> parserConfig;
-    std::unordered_map<std::string, std::string> sourceConfig;
+    QueryId registerQuery(const LogicalPlan& plan);
+    void startQuery(QueryId queryId);
+    void stopQuery(QueryId queryId);
+    void unregisterQuery(QueryId queryId);
 };
-
-struct QueryConfig
-{
-    std::string query;
-    std::unordered_map<std::string, Sink> sinks;
-    std::vector<LogicalSource> logical;
-    std::vector<PhysicalSource> physical;
-};
-
-std::unique_ptr<LogicalPlan> loadFromYAMLFile(const std::filesystem::path& file);
-std::unique_ptr<LogicalPlan> loadFrom(std::istream& inputStream);
-std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
 }

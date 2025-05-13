@@ -105,24 +105,24 @@ std::expected<QueryId, Exception> RemoteWorkerQuerySubmitter::registerQuery(cons
 {
     return QueryId(client.registerQuery(plan));
 }
-void RemoteWorkerQuerySubmitter::startQuery(QueryId query)
+void RemoteWorkerQuerySubmitter::startQuery(const QueryId query)
 {
-    client.start(query.getRawValue());
+    client.start(query);
 }
-void RemoteWorkerQuerySubmitter::stopQuery(QueryId query)
+void RemoteWorkerQuerySubmitter::stopQuery(const QueryId query)
 {
-    client.stop(query.getRawValue());
+    client.stop(query);
 }
-void RemoteWorkerQuerySubmitter::unregisterQuery(QueryId query)
+void RemoteWorkerQuerySubmitter::unregisterQuery(const QueryId query)
 {
-    client.unregister(query.getRawValue());
+    client.unregister(query);
 }
-QuerySummary RemoteWorkerQuerySubmitter::waitForQueryTermination(QueryId query)
+QuerySummary RemoteWorkerQuerySubmitter::waitForQueryTermination(const QueryId query)
 {
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
-        const auto summary = client.status(query.getRawValue());
+        const auto summary = client.status(query);
         if (summary.currentStatus == QueryStatus::Stopped)
         {
             return summary;
@@ -136,7 +136,7 @@ std::vector<QuerySummary> RemoteWorkerQuerySubmitter::finishedQueries()
         std::vector<QuerySummary> results;
         for (auto id : ids)
         {
-            auto summary = client.status(id.getRawValue());
+            auto summary = client.status(id);
             if (summary.currentStatus == QueryStatus::Failed || summary.currentStatus == QueryStatus::Stopped)
             {
                 results.emplace_back(summary);

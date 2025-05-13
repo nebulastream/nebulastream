@@ -10,11 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-systest-lib
-        SystestParser.cpp
-        SystestRunner.cpp
-        SystestState.cpp
-        SystestResultCheck.cpp
-        SystestConfiguration.cpp
-        QuerySubmitter.cpp
+add_source_files(nes-yaml-binder
+        YAMLBinder.cpp
 )

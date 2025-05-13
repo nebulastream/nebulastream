@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
@@ -105,7 +106,7 @@ bool compareStringAsTypeWithError(const std::string& left, const std::string& ri
 
 struct QueryResult
 {
-    SystestParser::Schema fields;
+    Schema fields;
     std::vector<std::string> result;
 };
 

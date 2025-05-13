@@ -250,7 +250,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
         }
     };
 
-    std::jthread removalThread{logicalRemoveThreadFunction};
+    const std::jthread removalThread{logicalRemoveThreadFunction};
     for (uint32_t i = 0; i < numPhysicalAddThreads; ++i)
     {
         threads.at(i) = std::jthread{physicalAddThreadFunction, i};
