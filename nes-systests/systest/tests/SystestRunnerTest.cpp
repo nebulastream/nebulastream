@@ -81,7 +81,7 @@ using ::testing::Return;
 static Query makeQuery(const LogicalPlan& plan, std::optional<ExpectedError> expected = std::nullopt)
 {
     return Query{
-        "test_query", "SELECT * FROM test", TEST_DATA_DIR "filter.dummy", plan, 0, PATH_TO_BINARY_DIR, {}, {}, std::move(expected)};
+        "test_query", "SELECT * FROM test", TEST_DATA_DIR "filter.dummy", plan, 0, PATH_TO_BINARY_DIR, {}, Schema{}, std::move(expected)};
 }
 /// Overload for parse‑time error
 static Query makeQuery(const std::unexpected<Exception>& parseErr, const ExpectedError& expected)
@@ -94,7 +94,7 @@ static Query makeQuery(const std::unexpected<Exception>& parseErr, const Expecte
         0,
         PATH_TO_BINARY_DIR,
         {},
-        {},
+        Schema{},
         expected};
 }
 

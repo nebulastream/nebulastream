@@ -32,6 +32,6 @@ public:
     /// 2. Propagate the input and output schemas from source operators to the sink operators.
     /// 3. If a operator contains expression, we infer the result dataType of this operators.
     /// @throws TypeInferenceException if inferring the data types into the query failed
-    static void apply(LogicalPlan& queryPlan);
+    void apply(LogicalPlan& queryPlan) const; /// NOLINT(readability-convert-member-functions-to-static)
 };
 }

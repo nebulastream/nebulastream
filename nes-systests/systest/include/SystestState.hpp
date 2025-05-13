@@ -29,6 +29,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -42,6 +43,7 @@
 
 namespace NES::Systest
 {
+class SystestBinder;
 using TestName = std::string;
 using TestGroup = std::string;
 
@@ -59,7 +61,7 @@ struct Query
         uint64_t queryIdInFile,
         std::filesystem::path workingDir,
         std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
-        SystestParser::Schema sinkSchema,
+        const Schema& sinkSchema,
         std::optional<ExpectedError> expectedError);
 
     [[nodiscard]] std::filesystem::path resultFile() const;
@@ -71,7 +73,7 @@ struct Query
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
-    SystestParser::Schema expectedSinkSchema;
+    Schema expectedSinkSchema;
     std::optional<ExpectedError> expectedError;
 };
 
@@ -111,7 +113,11 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
 
 /// returns a vector of queries to run derived for our testfilemap
-std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir);
+std::vector<Query> loadQueries(
+    TestFileMap& testmap,
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    Systest::SystestBinder& systestBinder);
 }
 
 template <>

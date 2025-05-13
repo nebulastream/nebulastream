@@ -20,6 +20,7 @@
 #include <functional>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -44,6 +45,7 @@ struct ParserConfig
     std::string tupleDelimiter;
     std::string fieldDelimiter;
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
+    static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
 };
 
 class SourceDescriptor final : public NES::Configurations::Descriptor

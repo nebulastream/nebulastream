@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Serialization/OperatorSerializationUtil.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -22,7 +24,6 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -122,8 +123,7 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const Serializabl
 SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor)
 {
     auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
-    const auto& logicalSourceName = sourceDescriptor.logicalsourcename();
-    const LogicalSource logicalSource{logicalSourceName, std::make_shared<Schema>(schema)};
+    const LogicalSource logicalSource{sourceDescriptor.logicalsourcename(), std::make_shared<Schema>(schema)};
 
     /// TODO #815 the serializer would also a catalog to register/create source descriptors/logical sources
     const auto physicalSourceId = sourceDescriptor.physicalsourceid();

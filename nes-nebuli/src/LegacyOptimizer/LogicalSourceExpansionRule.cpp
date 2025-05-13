@@ -12,15 +12,18 @@
     limitations under the License.
 */
 
+#include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+
 #include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
-#include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::LegacyOptimizer
@@ -72,7 +75,11 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
             }
             auto newParent = parent.withChildren(std::move(children));
             auto replaceResult = replaceSubtree(queryPlan, parent, newParent);
-            INVARIANT(replaceResult.has_value(), "replaceOperator failed");
+            INVARIANT(
+                replaceResult.has_value(),
+                "Failed to replace operator {} with {}",
+                parent.explain(ExplainVerbosity::Debug),
+                newParent.explain(ExplainVerbosity::Debug));
             queryPlan = std::move(replaceResult.value());
         }
     }
