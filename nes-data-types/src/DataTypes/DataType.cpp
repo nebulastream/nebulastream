@@ -292,48 +292,53 @@ std::optional<DataType> inferNumericDataType(const DataType& left, const DataTyp
     return {};
 }
 
-DataType DataType::join(const DataType& otherDataType) const
+std::optional<DataType> DataType::join(const DataType& otherDataType) const
 {
     if (this->type == Type::UNDEFINED or this->type == Type::VARSIZED)
     {
-        return DataTypeProvider::provideDataType(Type::UNDEFINED);
+        return {DataTypeProvider::provideDataType(Type::UNDEFINED)};
     }
 
     if (this->isNumeric())
     {
         if (otherDataType.type == Type::UNDEFINED)
         {
-            return DataType{};
+            return {DataType{}};
         }
 
         if (not otherDataType.isNumeric())
         {
-            throw DifferentFieldTypeExpected("Cannot join {} and {}", "*this", otherDataType);
+            NES_WARNING("Cannot join {} and {}", *this, otherDataType);
+            return std::nullopt;
         }
 
         if (const auto newDataType = inferNumericDataType(*this, otherDataType); newDataType.has_value())
         {
-            return newDataType.value();
+            return {newDataType.value()};
         }
-        throw DifferentFieldTypeExpected("Cannot join {} and {}", "*this", otherDataType);
+        NES_WARNING("Cannot join {} and {}", *this, otherDataType);
+        return std::nullopt;
     }
     if (this->type == Type::CHAR)
     {
         if (otherDataType.type == Type::CHAR)
         {
-            return DataTypeProvider::provideDataType(Type::CHAR);
+            return {DataTypeProvider::provideDataType(Type::CHAR)};
         }
-        return DataTypeProvider::provideDataType(Type::UNDEFINED);
+        return {DataTypeProvider::provideDataType(Type::UNDEFINED)
+    };
     }
     if (this->type == Type::BOOLEAN)
     {
         if (otherDataType.type == Type::BOOLEAN)
         {
-            return DataTypeProvider::provideDataType(Type::BOOLEAN);
+            return {DataTypeProvider::provideDataType(Type::BOOLEAN)};
         }
-        return DataTypeProvider::provideDataType(Type::UNDEFINED);
+        return {DataTypeProvider::provideDataType(Type::UNDEFINED)
+    };
     }
-    throw DifferentFieldTypeExpected("Cannot join {} and {}", "*this", otherDataType);
+    NES_WARNING("Cannot join {} and {}", *this, otherDataType);
+    return std::nullopt;
 }
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)
