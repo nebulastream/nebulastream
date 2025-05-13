@@ -22,8 +22,9 @@
 #include <Listeners/QueryLog.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestGrpc.hpp>
 #include <SystestState.hpp>
+
+#include <GRPCClient.hpp>
 
 namespace NES::Systest
 {

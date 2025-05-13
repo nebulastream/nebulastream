@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -55,7 +56,7 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
 }
 }
 
-void OriginIdInferencePhase::apply(LogicalPlan& queryPlan)
+void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = INITIAL_ORIGIN_ID.getRawValue();

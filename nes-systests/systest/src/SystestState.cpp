@@ -32,12 +32,15 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
 #include <ErrorHandling.hpp>
+#include <NebuLI.hpp>
 #include <SystestParser.hpp>
 #include <SystestRunner.hpp>
 
@@ -77,7 +80,7 @@ Query::Query(
     const uint64_t queryIdInFile,
     std::filesystem::path workingDir,
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
-    SystestParser::Schema sinkSchema,
+    const Schema& sinkSchema,
     std::optional<ExpectedError> expectedError)
     : name(std::move(name))
     , queryDefinition(std::move(queryDefinition))
@@ -124,28 +127,66 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     return testFiles;
 }
 
-void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir)
+static void loadQueriesFromTestFile(
+    TestFile& testfile,
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    Systest::SystestBinder& systestBinder)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
+    auto loadedPlans = systestBinder.loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
     uint64_t queryIdInFile = 0;
     std::unordered_set<uint64_t> foundQueries;
 
-    for (const auto& [decomposedPlan, queryDefinition, sinkSchema, sourceNamesToFilepath, expectedError] : loadedPlans)
+    for (auto& [boundPlan, sourceCatalog, queryDefinition, sinkSchema, sourcesToFilePaths, expectedError] : loadedPlans)
     {
-        if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
+        if (boundPlan.has_value())
         {
-            for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber
-                     | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
+            const CLI::LegacyOptimizer optimizer{sourceCatalog};
+            auto optimizedPlan = optimizer.optimize(boundPlan.value());
+            std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
+            for (const auto& logicalSourceOperator : NES::getOperatorByType<SourceDescriptorLogicalOperator>(optimizedPlan))
             {
-                foundQueries.insert(queryIdInFile + 1);
+                if (const auto path = sourcesToFilePaths.find(logicalSourceOperator.getSourceDescriptor());
+                    path != sourcesToFilePaths.end())
+                {
+                    auto& entry = sourceNamesToFilepathAndCountForQuery
+                        [logicalSourceOperator.getSourceDescriptor().getLogicalSource().getLogicalSourceName()];
+                    entry = {path->second, entry.second + 1};
+                }
+                else
+                {
+                    throw CannotLoadConfig("SourceName \"{}\" does not have an associated file path");
+                }
+            }
+            INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
+            if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
+            {
+                for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber
+                         | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
+                {
+                    foundQueries.insert(queryIdInFile + 1);
+                    testfile.queries.emplace_back(
+                        testfile.name(),
+                        queryDefinition,
+                        testfile.file,
+                        optimizedPlan,
+                        queryIdInFile,
+                        workingDir,
+                        sourceNamesToFilepathAndCountForQuery,
+                        sinkSchema,
+                        expectedError);
+                }
+            }
+            else
+            {
                 testfile.queries.emplace_back(
                     testfile.name(),
                     queryDefinition,
                     testfile.file,
-                    decomposedPlan,
+                    optimizedPlan,
                     queryIdInFile,
                     workingDir,
-                    sourceNamesToFilepath,
+                    sourceNamesToFilepathAndCountForQuery,
                     sinkSchema,
                     expectedError);
             }
@@ -156,10 +197,10 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
                 testfile.name(),
                 queryDefinition,
                 testfile.file,
-                decomposedPlan,
+                boundPlan,
                 queryIdInFile,
                 workingDir,
-                sourceNamesToFilepath,
+                std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>>{},
                 sinkSchema,
                 expectedError);
         }
@@ -212,7 +253,11 @@ TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQ
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) { };
 
-std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir)
+std::vector<Query> loadQueries(
+    TestFileMap& testmap,
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    Systest::SystestBinder& systestBinder)
 {
     std::vector<Query> queries;
     uint64_t loadedFiles = 0;
@@ -221,7 +266,7 @@ std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path
         std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
         try
         {
-            loadQueriesFromTestFile(testfile, workingDir, testDataDir);
+            loadQueriesFromTestFile(testfile, workingDir, testDataDir, systestBinder);
             for (auto& query : testfile.queries)
             {
                 queries.emplace_back(std::move(query));

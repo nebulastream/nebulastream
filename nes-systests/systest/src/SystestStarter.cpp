@@ -427,7 +427,8 @@ int main(int argc, const char** argv)
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto testMap = Systest::loadTestFileMap(config);
-        auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue());
+        auto systestBinder = Systest::SystestBinder{};
+        auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue(), systestBinder);
         if (queries.empty())
         {
             std::stringstream outputMessage;

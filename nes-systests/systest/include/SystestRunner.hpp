@@ -22,11 +22,14 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestParser.hpp>
 
 namespace NES::Systest
 {
@@ -44,9 +47,10 @@ struct ExpectedError
 struct LoadedQueryPlan
 {
     std::expected<LogicalPlan, Exception> queryPlan;
+    std::shared_ptr<SourceCatalog> sourceCatalog;
     std::string queryName;
-    SystestParser::Schema sinkSchema;
-    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
+    Schema sinkSchema;
+    std::unordered_map<SourceDescriptor, std::filesystem::path> sourcesToFilePaths;
     std::optional<ExpectedError> expectedError;
 };
 
@@ -57,13 +61,23 @@ static constexpr auto padSizeQueryNumber = 2;
 /// We pad to a maximum of 4 digits ---> maximum value that is correctly padded is 999 queries in total
 static constexpr auto padSizeQueryCounter = 3;
 
-/// Load query plan objects by parsing an SLT file for queries and lowering it
-/// Returns a triplet of the lowered query plan, the query name and the schema of the sink
-[[nodiscard]] std::vector<LoadedQueryPlan> loadFromSLTFile(
-    const std::filesystem::path& testFilePath,
-    const std::filesystem::path& workingDir,
-    std::string_view testFileName,
-    const std::filesystem::path& testDataDir);
+class SystestBinder
+{
+public:
+    SystestBinder() = default;
+    /// Load query plan objects by parsing an SLT file for queries and lowering it
+    /// Returns a triplet of the lowered query plan, the query name and the schema of the sink
+    [[nodiscard]] std::vector<LoadedQueryPlan> loadFromSLTFile(
+        const std::filesystem::path& testFilePath,
+        const std::filesystem::path& workingDir,
+        std::string_view testFileName,
+        const std::filesystem::path& testDataDir);
+
+private:
+    uint64_t sourceIndex = 0;
+    uint64_t currentQueryNumber = 0;
+    std::string currentTestFileName;
+};
 
 /// Runs queries
 /// @return returns a collection of failed queries

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <DataTypes/Schema.hpp>
+
 #include <cstddef>
 #include <iostream>
 #include <optional>
@@ -21,7 +23,6 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
@@ -192,6 +193,14 @@ size_t Schema::getSizeOfSchemaInBytes() const
 bool Schema::hasFields() const
 {
     return not fields.empty();
+}
+auto Schema::begin() const -> decltype(std::declval<std::vector<Field>>().cbegin())
+{
+    return fields.cbegin();
+}
+auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
+{
+    return fields.cend();
 }
 
 }

@@ -109,6 +109,9 @@ public:
     /// Public members that we get and set.
     MemoryLayoutType memoryLayoutType{MemoryLayoutType::ROW_LAYOUT};
 
+    [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<Field>>().cbegin());
+    [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<Field>>().cend());
+
 private:
     /// Manipulating fields requires us to update the size of the schema (in bytes) and the 'nameToFieldMap', which maps names of fields to
     /// their corresponding indexes in the 'fields' vector. Thus, the below three members are private to prevent accidental manipulation.
