@@ -19,28 +19,43 @@
 #include <memory>
 #include <vector>
 #include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
+#include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
+#include <Execution/Operators/Streaming/HashMapOptions.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 
+
 namespace NES::Runtime::Execution::Operators
 {
+class AggregationBuild;
+Interface::HashMap* getAggHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const AggregationBuild* buildOperator);
 
-class AggregationBuild final : public WindowAggregationOperator, public WindowOperatorBuild
+
+class AggregationBuild final : public HashMapOptions, public WindowOperatorBuild
 {
 public:
+
+    friend Interface::HashMap* getAggHashMapProxy(
+        const AggregationOperatorHandler* operatorHandler,
+        const Timestamp timestamp,
+        const WorkerThreadId workerThreadId,
+        const AggregationBuild* buildOperator);
     AggregationBuild(
         uint64_t operatorHandlerIndex,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::vector<std::unique_ptr<Functions::Function>> keyFunctions,
-        WindowAggregationOperator windowAggregationOperator);
+        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+        HashMapOptions hashMapOptions);
+    void setup(ExecutionContext& executionCtx) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-    /// Method that gets called, once an aggregation slice gets destroyed.
-    [[nodiscard]] std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> getStateCleanupFunction() const;
-
 private:
-    const std::vector<std::unique_ptr<Functions::Function>> keyFunctions;
+    /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 
 }

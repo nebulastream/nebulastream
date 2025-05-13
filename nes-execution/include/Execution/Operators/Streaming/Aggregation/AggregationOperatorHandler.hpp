@@ -25,6 +25,7 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Execution.hpp>
+#include <Engine.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -48,24 +49,20 @@ public:
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
-
-    /// We do not wish to set the hash map specific params during the lowering from the logical to physical
-    /// TODO #409 This might change after the [DD] Operator Representations has been implemented
-    void setHashMapParams(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets);
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
     void allocateSliceCacheEntries(
         const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider) override;
     const int8_t* getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId) const;
 
+
+    /// shared_ptr as multiple slices need access to it
+    using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;
+    std::shared_ptr<NautilusCleanupExec> cleanupStateNautilusFunction;
 protected:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) override;
 
-    uint64_t keySize{};
-    uint64_t valueSize{};
-    uint64_t pageSize{};
-    uint64_t numberOfBuckets{};
 };
 
 }

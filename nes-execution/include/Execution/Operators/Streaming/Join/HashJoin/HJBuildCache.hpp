@@ -13,55 +13,50 @@
 */
 
 #pragma once
-#include <cstdint>
-#include <memory>
-#include <vector>
-#include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
-#include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
-#include <Execution/Operators/SliceCache/SliceCacheSecondChance.hpp>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/HashMapOptions.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <QueryCompiler/Configurations/Enums/WindowManagement.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-class AggregationBuildCache;
-int8_t* createNewAggregationSliceProxy(
+class HJBuildCache;
+int8_t* createNewHJSliceProxy(
     SliceCacheEntry* sliceCacheEntry,
     OperatorHandler* ptrOpHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
-    const AggregationBuildCache* buildOperator);
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const HJBuildCache* buildOperator);
 
-
-class AggregationBuildCache final : public HashMapOptions, public WindowOperatorBuild
+class HJBuildCache final : public HashMapOptions, public StreamJoinBuild
 {
 public:
-    friend int8_t* createNewAggregationSliceProxy(
+    friend int8_t* createNewHJSliceProxy(
         SliceCacheEntry* sliceCacheEntry,
         OperatorHandler* ptrOpHandler,
         const Timestamp timestamp,
         const WorkerThreadId workerThreadId,
-        const AggregationBuildCache* buildOperator);
-    AggregationBuildCache(
+        const QueryCompilation::JoinBuildSideType joinBuildSide,
+        const HJBuildCache* buildOperator);
+    HJBuildCache(
         uint64_t operatorHandlerIndex,
+        QueryCompilation::JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+        const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
         HashMapOptions hashMapOptions,
         QueryCompilation::Configurations::SliceCacheOptions sliceCacheOptions);
+
 
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 
+
 private:
-    /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()
-    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
-
-
     /// This might not be the best place to store it, but it is an easy way to use them in this PoC branch
     QueryCompilation::Configurations::SliceCacheOptions sliceCacheOptions;
 };

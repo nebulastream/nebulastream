@@ -23,7 +23,7 @@
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregation/AggregationSlice.hpp>
+#include <Execution/Operators/Streaming/HashMapSlice.hpp>
 #include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -45,19 +45,10 @@ AggregationOperatorHandler::AggregationOperatorHandler(
 {
 }
 
-void AggregationOperatorHandler::setHashMapParams(
-    const uint64_t keySize, const uint64_t valueSize, const uint64_t pageSize, const uint64_t numberOfBuckets)
-{
-    this->keySize = keySize;
-    this->valueSize = valueSize;
-    this->pageSize = pageSize;
-    this->numberOfBuckets = numberOfBuckets;
-}
-
 const int8_t* AggregationOperatorHandler::getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId) const
 {
     PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
-    PRECONDITION(hasSliceCacheCreated, "Before accessing the slice cache, it needs to be created first");
+    PRECONDITION(wasSliceCacheCreated, "Before accessing the slice cache, it needs to be created first");
     const auto pos = workerThreadId % sliceCacheEntriesBufferForWorkerThreads.size();
     INVARIANT(
         pos < sliceCacheEntriesBufferForWorkerThreads.size(),
@@ -69,7 +60,7 @@ void AggregationOperatorHandler::allocateSliceCacheEntries(
     const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
 {
     /// If the slice cache has already been created, we simply return
-    if (hasSliceCacheCreated.exchange(true))
+    if (wasSliceCacheCreated.exchange(true))
     {
         return;
     }
@@ -95,16 +86,11 @@ std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> Aggrega
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
     return std::function(
-        [keySize = keySize,
-         valueSize = valueSize,
-         numberOfBuckets = numberOfBuckets,
-         pageSize = pageSize,
-         outputOriginId = outputOriginId,
+        [outputOriginId = outputOriginId,
          numberOfWorkerThreads = numberOfWorkerThreads](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             NES_TRACE("Creating new aggregation slice with for slice {}-{} for output origin {}", sliceStart, sliceEnd, outputOriginId);
-            return {std::make_shared<AggregationSlice>(
-                keySize, valueSize, numberOfBuckets, pageSize, sliceStart, sliceEnd, numberOfWorkerThreads)};
+            return {std::make_shared<HashMapSlice>(sliceStart, sliceEnd, numberOfWorkerThreads)};
         });
 }
 
@@ -115,17 +101,23 @@ void AggregationOperatorHandler::triggerSlices(
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
         /// Getting all hashmaps for each slice that has at least one tuple
+        std::unique_ptr<Nautilus::Interface::ChainedHashMap> finalHashMap;
         std::vector<Interface::HashMap*> allHashMaps;
         uint64_t totalNumberOfTuples = 0;
         for (const auto& slice : allSlices)
         {
-            const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
+            const auto aggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(slice);
             for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
             {
-                if (auto* hashmap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx)); hashmap->getNumberOfTuples() > 0)
+                if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx)); hashMap and hashMap->getNumberOfTuples() > 0)
                 {
-                    allHashMaps.emplace_back(hashmap);
-                    totalNumberOfTuples += hashmap->getNumberOfTuples();
+                    allHashMaps.emplace_back(hashMap);
+                    totalNumberOfTuples += hashMap->getNumberOfTuples();
+                    if (not finalHashMap)
+                    {
+                        finalHashMap = Nautilus::Interface::ChainedHashMap::createNewMapWithSameConfiguration(
+                            *dynamic_cast<Nautilus::Interface::ChainedHashMap*>(hashMap));
+                    }
                 }
             }
         }
@@ -136,20 +128,13 @@ void AggregationOperatorHandler::triggerSlices(
         /// - a new hashmap for the probe operator, so that we are not overwriting the thread local hashmaps
         /// - size of EmittedAggregationWindow
         const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(Interface::HashMap*));
-        Memory::TupleBuffer tupleBuffer;
-        if (pipelineCtx->getBufferManager()->getBufferSize() >= neededBufferSize)
+        const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
+        if (not tupleBufferVal.has_value())
         {
-            tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+            throw CannotAllocateBuffer("Could not get a buffer of size {} for the aggregation window trigger", neededBufferSize);
         }
-        else
-        {
-            const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
-            if (not tupleBufferVal.has_value())
-            {
-                throw CannotAllocateBuffer("Could not get a buffer of size {} for the aggregation window trigger", neededBufferSize);
-            }
-            tupleBuffer = tupleBufferVal.value();
-        }
+        auto tupleBuffer = tupleBufferVal.value();
+
         /// It might be that the buffer is not zeroed out.
         std::memset(tupleBuffer.getBuffer(), 0, neededBufferSize);
 
@@ -167,7 +152,7 @@ void AggregationOperatorHandler::triggerSlices(
         auto* bufferMemory = tupleBuffer.getBuffer<EmittedAggregationWindow>();
         bufferMemory->windowInfo = windowInfo.windowInfo;
         bufferMemory->numberOfHashMaps = allHashMaps.size();
-        bufferMemory->finalHashMap = std::make_unique<Interface::ChainedHashMap>(keySize, valueSize, numberOfBuckets, pageSize);
+        bufferMemory->finalHashMap = std::move(finalHashMap);
         auto* addressFirstHashMapPtr = reinterpret_cast<int8_t*>(bufferMemory) + sizeof(EmittedAggregationWindow);
         bufferMemory->hashMaps = reinterpret_cast<Interface::HashMap**>(addressFirstHashMapPtr);
         std::memcpy(addressFirstHashMapPtr, allHashMaps.data(), allHashMaps.size() * sizeof(Interface::HashMap*));

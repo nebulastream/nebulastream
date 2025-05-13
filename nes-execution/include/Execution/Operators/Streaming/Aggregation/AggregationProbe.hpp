@@ -16,7 +16,8 @@
 
 #include <cstdint>
 #include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
+#include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
+#include <Execution/Operators/Streaming/HashMapOptions.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
@@ -24,11 +25,19 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-class AggregationProbe final : public WindowAggregationOperator, public WindowOperatorProbe
+class AggregationProbe final : public HashMapOptions, public WindowOperatorProbe
 {
 public:
-    AggregationProbe(WindowAggregationOperator windowAggregationOperator, uint64_t operatorHandlerIndex, WindowMetaData windowMetaData);
+    AggregationProbe(
+        HashMapOptions hashMapOptions,
+        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+        uint64_t operatorHandlerIndex,
+        WindowMetaData windowMetaData);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+
+private:
+    // TODO maybe this can be unique pointers...
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 
 }

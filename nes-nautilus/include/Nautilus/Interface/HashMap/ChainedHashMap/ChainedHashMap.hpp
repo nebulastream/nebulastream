@@ -64,6 +64,7 @@ class ChainedHashMap final : public HashMap
 public:
     static constexpr auto DEFAULT_PAGE_SIZE = 8024;
 
+    ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
     ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
     ~ChainedHashMap() override;
     [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;
@@ -79,6 +80,9 @@ public:
     /// The passed method is being executed, once the destructor is called. This is necessary as the value type of this hash map
     /// might allocate its own memory. Thus, the destructor of the value type should be called to release the memory.
     void setDestructorCallback(const std::function<void(ChainedHashMapEntry*)>& callback);
+
+    /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
+    static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(const ChainedHashMap& other);
 
 private:
     friend class ChainedHashMapRef;

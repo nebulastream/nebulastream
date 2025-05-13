@@ -11,11 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        StreamJoinBuild.cpp
-        StreamJoinOperatorHandler.cpp
-        StreamJoinProbe.cpp
-        StreamJoinUtil.cpp
+        HJBuild.cpp
+        HJBuildCache.cpp
+        HJOperatorHandler.cpp
+        HJProbe.cpp
+        HJSlice.cpp
 )
-
-add_subdirectory(HashJoin)
-add_subdirectory(NestedLoopJoin)

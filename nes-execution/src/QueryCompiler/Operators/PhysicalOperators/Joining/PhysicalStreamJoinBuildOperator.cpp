@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
@@ -32,7 +33,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     const std::shared_ptr<Schema>& outputSchema,
     const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>& operatorHandler,
     const Configurations::StreamJoinStrategy joinStrategy,
-    const std::vector<std::string>& joinFieldNames,
+    const std::vector<FieldNamesExtension>& joinFields,
     TimestampField timeStampField,
     const JoinBuildSideType buildSide,
     const OperatorId id)
@@ -40,7 +41,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     , PhysicalUnaryOperator(id, inputSchema, outputSchema)
     , streamJoinOperatorHandler(operatorHandler)
     , joinStrategy(joinStrategy)
-    , joinFieldNames(joinFieldNames)
+    , joinFields(joinFields)
     , timeStampField(std::move(timeStampField))
     , buildSide(buildSide)
 {
@@ -49,7 +50,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
 std::shared_ptr<Operator> PhysicalStreamJoinBuildOperator::copy()
 {
     auto result = std::make_shared<PhysicalStreamJoinBuildOperator>(
-        inputSchema, outputSchema, streamJoinOperatorHandler, joinStrategy, joinFieldNames, timeStampField, buildSide, id);
+        inputSchema, outputSchema, streamJoinOperatorHandler, joinStrategy, joinFields, timeStampField, buildSide, id);
     result->addAllProperties(properties);
     return result;
 }
@@ -67,7 +68,14 @@ Configurations::StreamJoinStrategy PhysicalStreamJoinBuildOperator::getJoinStrat
 
 std::vector<std::string> PhysicalStreamJoinBuildOperator::getJoinFieldNames() const
 {
-    return joinFieldNames;
+    const auto fieldNamesView = joinFields | std::views::transform([](const FieldNamesExtension& item) { return item.newName; });
+    std::vector<std::string> fieldNames(fieldNamesView.begin(), fieldNamesView.end());
+    return fieldNames;
+}
+
+std::vector<FieldNamesExtension> PhysicalStreamJoinBuildOperator::getJoinFields() const
+{
+    return joinFields;
 }
 
 const TimestampField& PhysicalStreamJoinBuildOperator::getTimeStampField() const

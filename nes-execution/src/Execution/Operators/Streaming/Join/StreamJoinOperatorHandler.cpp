@@ -47,7 +47,7 @@ const int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(
     const WorkerThreadId& workerThreadId, const QueryCompilation::JoinBuildSideType& joinBuildSide) const
 {
     PRECONDITION(numberOfWorkerThreads > 0, "Number of worker threads should be set before calling this method");
-    PRECONDITION(hasSliceCacheCreated, "Before accessing the slice cache, it needs to be created first");
+    PRECONDITION(wasSliceCacheCreated, "Before accessing the slice cache, it needs to be created first");
     const auto pos
         = workerThreadId % sliceCacheEntriesBufferForWorkerThreads.size() + numberOfWorkerThreads * static_cast<uint64_t>(joinBuildSide);
     INVARIANT(
@@ -60,7 +60,7 @@ void StreamJoinOperatorHandler::allocateSliceCacheEntries(
     const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
 {
     /// If the slice cache has already been created, we simply return
-    if (hasSliceCacheCreated.exchange(true))
+    if (wasSliceCacheCreated.exchange(true))
     {
         return;
     }

@@ -82,20 +82,43 @@ void ChainedHashMapRef::ChainedEntryRef::updateEntryRef(const nautilus::val<Chai
 
 nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() const
 {
+    PRECONDITION(
+        not memoryProviderKeys.getAllFields().empty() or not memoryProviderValues.getAllFields().empty(),
+        "At least keys or values need to be present to call this method!");
+
     /// We call this method solely, if we actually need the value memory area and not a VarVal.
     /// Therefore, we do not store the valueOffset in the ChainedEntryRef or the ChainedEntryMemoryProvider
-    /// During tracing the minKeyOffset is calculated and should be stored as a constant in the compiled code
-    nautilus::static_val<uint64_t> minKeyOffset = std::numeric_limits<uint64_t>::max();
-    for (const auto& field : nautilus::static_iterable(memoryProviderValues.getAllFields()))
+    /// During tracing the offset is calculated and should be stored as a constant in the compiled code
+    nautilus::static_val<uint64_t> valueMemAreaOffset(0);
+    if (memoryProviderValues.getAllFields().empty())
     {
-        const auto offset = field.fieldOffset;
-        if (minKeyOffset > offset)
+        /// We take the max offset of the keys
+        valueMemAreaOffset = std::numeric_limits<uint64_t>::min();
+        for (const auto& field : nautilus::static_iterable(memoryProviderKeys.getAllFields()))
         {
-            minKeyOffset = offset;
+            const auto offset = field.fieldOffset;
+            const auto fieldSize = field.type->size();
+            if (valueMemAreaOffset < offset + fieldSize)
+            {
+                valueMemAreaOffset = offset + fieldSize;
+            }
+        }
+    }
+    else
+    {
+        /// We take the min offset of the values
+        valueMemAreaOffset = std::numeric_limits<uint64_t>::max();
+        for (const auto& field : nautilus::static_iterable(memoryProviderValues.getAllFields()))
+        {
+            const auto offset = field.fieldOffset;
+            if (valueMemAreaOffset > offset)
+            {
+                valueMemAreaOffset = offset;
+            }
         }
     }
     auto castedMemArea = static_cast<nautilus::val<int8_t*>>(entryRef);
-    auto valueMemArea = castedMemArea + minKeyOffset;
+    auto valueMemArea = castedMemArea + valueMemAreaOffset;
     return valueMemArea;
 }
 
@@ -157,6 +180,15 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findEntry(const ChainedEn
     return findKey(otherEntryRef.getKey(), otherEntryRef.getHash());
 }
 
+nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry)
+{
+    /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
+    const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
+    const ChainedEntryRef otherEntryRef(chainEntry, fieldKeys, fieldValues);
+    const  auto entryRef = findEntry(otherEntryRef);
+        return entryRef;
+}
+
 nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     const Nautilus::Record& recordKey,
     const HashFunction& hashFunction,
@@ -172,7 +204,6 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
         const auto& keyValue = recordKey.read(fieldIdentifier);
         keyValues.emplace_back(keyValue);
     }
-
 
     ///  If entry contains nullptr, there does not exist a key with the same values.
     const auto hashValue = hashFunction.calculate(keyValues);
@@ -291,10 +322,6 @@ ChainedHashMapRef::ChainedHashMapRef(
     /// Furthermore, there is a debate if we should support this in the future, as other systems usually have a fixed size for floats.
     for (const auto& field : nautilus::static_iterable(fieldKeys))
     {
-        if (std::dynamic_pointer_cast<Float>(field.type->type))
-        {
-            throw NotImplemented("Float32 and Float64 are not supported in the key fields for the chained hash map.");
-        }
         if (std::dynamic_pointer_cast<VariableSizedDataType>(field.type->type))
         {
             throw NotImplemented("Variable sized data types are not supported in the key fields for the chained hash map.");

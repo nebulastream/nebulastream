@@ -31,7 +31,10 @@
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationProbe.hpp>
-#include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
+#include <Execution/Operators/Streaming/HashMapOptions.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJBuild.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJBuildCache.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuildCache.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
@@ -173,7 +176,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             [](const auto& sum, const auto& function) { return sum + function->getSizeOfStateInBytes(); });
 
         /// Lowering the key functions
-        std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>> keyFunctions;
+        std::vector<std::shared_ptr<Runtime::Execution::Functions::Function>> keyFunctions;
         uint64_t keySize = 0;
         auto keyFunctionLogical = windowDefinition->getKeys();
         for (const auto& nodeFunctionKey : keyFunctionLogical)
@@ -184,24 +187,30 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
         }
         const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
-        const auto entriesPerPage = queryCompilerConfig.pageSize.getValue() / entrySize;
+        const auto pageSize = queryCompilerConfig.pageSize.getValue();
+        const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
+        const auto entriesPerPage = pageSize / entrySize;
         const auto& [fieldKeyNames, fieldValueNames] = buildOperator->getKeyAndValueFields();
         const auto& [fieldKeys, fieldValues] = Nautilus::Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
             *buildOperator->getInputSchema(), fieldKeyNames, fieldValueNames);
 
-        Runtime::Execution::Operators::WindowAggregationOperator windowAggregationOperator(
-            std::move(aggregationFunctions),
+        Runtime::Execution::Operators::HashMapOptions hashMapOptions(
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+            std::move(keyFunctions),
             fieldKeys,
             fieldValues,
             entriesPerPage,
-            entrySize);
+            entrySize,
+            keySize,
+            valueSize,
+            pageSize,
+            numberOfBuckets);
         const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
             = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
         if (queryCompilerConfig.sliceCacheType == Configurations::SliceCacheType::NONE)
         {
             const auto executableAggregationBuild = std::make_shared<Runtime::Execution::Operators::AggregationBuild>(
-                handlerIndex, std::move(timeFunction), std::move(keyFunctions), std::move(windowAggregationOperator));
+                handlerIndex, std::move(timeFunction), std::move(aggregationFunctions), std::move(hashMapOptions));
             parentOperator->setChild(executableAggregationBuild);
             return executableAggregationBuild;
         }
@@ -210,8 +219,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             const auto executableAggregationBuild = std::make_shared<Runtime::Execution::Operators::AggregationBuildCache>(
                 handlerIndex,
                 std::move(timeFunction),
-                std::move(keyFunctions),
-                std::move(windowAggregationOperator),
+                std::move(aggregationFunctions),
+                std::move(hashMapOptions),
                 Configurations::SliceCacheOptions{
                     queryCompilerConfig.sliceCacheType.getValue(), queryCompilerConfig.numberOfEntriesSliceCache.getValue()});
             parentOperator->setChild(executableAggregationBuild);
@@ -245,7 +254,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             [](const auto& sum, const auto& function) { return sum + function->getSizeOfStateInBytes(); });
 
         /// Lowering the key functions
-        std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>> keyFunctions;
+        std::vector<std::shared_ptr<Runtime::Execution::Functions::Function>> keyFunctions;
         uint64_t keySize = 0;
         for (const auto& nodeFunctionKey : windowDefinition->getKeys())
         {
@@ -261,30 +270,30 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         const auto& [fieldKeyNames, fieldValueNames] = probeOperator->getKeyAndValueFields();
         const auto& [fieldKeys, fieldValues] = Nautilus::Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
             *probeOperator->getInputSchema(), fieldKeyNames, fieldValueNames);
-        std::dynamic_pointer_cast<Runtime::Execution::Operators::AggregationOperatorHandler>(probeOperator->getOperatorHandler())
-            ->setHashMapParams(keySize, valueSize, pageSize, numberOfBuckets);
 
-        Runtime::Execution::Operators::WindowAggregationOperator windowAggregationOperator(
-            std::move(aggregationFunctions),
+        Runtime::Execution::Operators::HashMapOptions hashMapOptions(
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+            std::move(keyFunctions),
             fieldKeys,
             fieldValues,
             entriesPerPage,
-            entrySize);
+            entrySize,
+            keySize,
+            valueSize,
+            pageSize,
+            numberOfBuckets);
         const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction
             = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
         const auto executableAggregationProbe = std::make_shared<Runtime::Execution::Operators::AggregationProbe>(
-            std::move(windowAggregationOperator), handlerIndex, windowMetaData);
+            std::move(hashMapOptions), std::move(aggregationFunctions), handlerIndex, windowMetaData);
         pipeline.setRootOperator(executableAggregationProbe);
         return executableAggregationProbe;
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode))
     {
         const auto buildOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode);
-
         operatorHandlers.push_back(buildOperator->getJoinOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
-
         auto memoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
             queryCompilerConfig.pageSize.getValue(), buildOperator->getInputSchema());
         memoryProvider->getMemoryLayout()->setKeyFieldNames(buildOperator->getJoinFieldNames());
@@ -311,7 +320,72 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                             queryCompilerConfig.sliceCacheType.getValue(), queryCompilerConfig.numberOfEntriesSliceCache.getValue()});
                 }
                 break;
-            };
+            }
+            case Configurations::StreamJoinStrategy::HASH_JOIN: {
+                /// For now we assume that the hash join does not have any chained functions for getting the left and right join keys
+                auto createHashMapOptions
+                    = [queryCompilerConfig = queryCompilerConfig](const std::vector<std::string>& joinFieldNames, const Schema& inputSchema)
+                {
+                    /// For now we assume that the hash join does not have any chained functions for getting the left and right join keys
+                    /// TODO #409 This might change after the [DD] Operator Representations has been implemented
+                    /// TODO this should not be merged into the main like this. for the main, we should iterate over the join function and detect left and right function
+                    std::vector<std::shared_ptr<Runtime::Execution::Functions::Function>> keyFunctions;
+                    uint64_t keySize = 0;
+                    constexpr auto valueSize = sizeof(Nautilus::Interface::PagedVector);
+
+                    for (const auto& fieldName : joinFieldNames)
+                    {
+                        const DefaultPhysicalTypeFactory typeFactory;
+                        const auto nodeFunctionKey
+                            = NodeFunctionFieldAccess::create(inputSchema.getFieldByName(fieldName).value()->getDataType(), fieldName);
+                        const auto loweredFunctionType = nodeFunctionKey->getStamp();
+                        keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
+                        keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+                    }
+                    const auto pageSize = queryCompilerConfig.pageSize.getValue();
+                    const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
+                    const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
+                    const auto entriesPerPage = pageSize / entrySize;
+                    const auto& fieldKeyNames = joinFieldNames;
+
+                    /// As we are using a paged vector, we do not need to set the fieldNameValues for the chained hashmap
+                    const auto& [fieldKeys, fieldValues]
+                        = Nautilus::Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
+                            inputSchema, fieldKeyNames, {});
+                    Runtime::Execution::Operators::HashMapOptions hashMapOptions(
+                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+                        std::move(keyFunctions),
+                        fieldKeys,
+                        fieldValues,
+                        entriesPerPage,
+                        entrySize,
+                        keySize,
+                        valueSize,
+                        pageSize,
+                        numberOfBuckets);
+                    return hashMapOptions;
+                };
+
+                if (queryCompilerConfig.sliceCacheType == QueryCompilation::Configurations::SliceCacheType::NONE)
+                {
+                    auto hashMapOptions = createHashMapOptions(buildOperator->getJoinFieldNames(), *buildOperator->getInputSchema());
+                    joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::HJBuild>(
+                        handlerIndex, buildOperator->getBuildSide(), std::move(timeFunction), memoryProvider, std::move(hashMapOptions));
+                }
+                else
+                {
+                    auto hashMapOptions = createHashMapOptions(buildOperator->getJoinFieldNames(), *buildOperator->getInputSchema());
+                    joinBuildNautilus = std::make_shared<Runtime::Execution::Operators::HJBuildCache>(
+                        handlerIndex,
+                        buildOperator->getBuildSide(),
+                        std::move(timeFunction),
+                        memoryProvider,
+                        std::move(hashMapOptions),
+                        Configurations::SliceCacheOptions{
+                            queryCompilerConfig.sliceCacheType.getValue(), queryCompilerConfig.numberOfEntriesSliceCache.getValue()});
+                }
+                break;
+            }
         }
 
         parentOperator->setChild(joinBuildNautilus);
@@ -344,6 +418,68 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                     leftMemoryProvider,
                     rightMemoryProvider);
                 break;
+            case Configurations::StreamJoinStrategy::HASH_JOIN: {
+                /// TODO #409 This will change after the [DD] Operator Representations has been implemented
+                /// As the PR is currently under review, we will not spent any time on making this code look beautiful
+                auto createHashMapOptions
+                    = [queryCompilerConfig = queryCompilerConfig](const std::vector<std::string>& joinFieldNames, const Schema& inputSchema)
+                {
+                    /// For now we assume that the hash join does not have any chained functions for getting the left and right join keys
+                    /// TODO #409 This might change after the [DD] Operator Representations has been implemented
+                    /// TODO this should not be merged into the main like this. for the main, we should iterate over the join function and detect left and right function
+                    std::vector<std::shared_ptr<Runtime::Execution::Functions::Function>> keyFunctions;
+                    uint64_t keySize = 0;
+                    constexpr auto valueSize = sizeof(Nautilus::Interface::PagedVector);
+
+                    for (const auto& fieldName : joinFieldNames)
+                    {
+                        const DefaultPhysicalTypeFactory typeFactory;
+                        const auto nodeFunctionKey
+                            = NodeFunctionFieldAccess::create(inputSchema.getFieldByName(fieldName).value()->getDataType(), fieldName);
+                        const auto loweredFunctionType = nodeFunctionKey->getStamp();
+                        keyFunctions.emplace_back(FunctionProvider::lowerFunction(nodeFunctionKey));
+                        keySize += typeFactory.getPhysicalType(loweredFunctionType)->size();
+                    }
+                    const auto pageSize = queryCompilerConfig.pageSize.getValue();
+                    const auto numberOfBuckets = queryCompilerConfig.numberOfPartitions.getValue();
+                    const auto entrySize = sizeof(Nautilus::Interface::ChainedHashMapEntry) + keySize + valueSize;
+                    const auto entriesPerPage = pageSize / entrySize;
+                    const auto& fieldKeyNames = joinFieldNames;
+
+                    /// As we are using a paged vector, we do not need to set the fieldNameValues for the chained hashmap
+                    const auto& [fieldKeys, fieldValues]
+                        = Nautilus::Interface::MemoryProvider::ChainedEntryMemoryProvider::createFieldOffsets(
+                            inputSchema, fieldKeyNames, {});
+                    Runtime::Execution::Operators::HashMapOptions hashMapOptions(
+                        std::make_unique<Nautilus::Interface::MurMur3HashFunction>(),
+                        std::move(keyFunctions),
+                        fieldKeys,
+                        fieldValues,
+                        entriesPerPage,
+                        entrySize,
+                        keySize,
+                        valueSize,
+                        pageSize,
+                        numberOfBuckets);
+                    return hashMapOptions;
+                };
+
+                Runtime::Execution::Operators::HashMapOptions leftHashMapBasedOperator(
+                    createHashMapOptions(probeOperator->getJoinFieldNameLeft(), *probeOperator->getLeftInputSchema()));
+                Runtime::Execution::Operators::HashMapOptions rightHashMapBasedOperator(
+                    createHashMapOptions(probeOperator->getJoinFieldNameRight(), *probeOperator->getRightInputSchema()));
+
+                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::HJProbe>(
+                    handlerIndex,
+                    probeOperator->getJoinFunction(),
+                    probeOperator->getWindowMetaData(),
+                    probeOperator->getJoinSchema(),
+                    leftMemoryProvider,
+                    rightMemoryProvider,
+                    std::move(leftHashMapBasedOperator),
+                    std::move(rightHashMapBasedOperator));
+            }
+            break;
         }
 
         pipeline.setRootOperator(joinProbeNautilus);

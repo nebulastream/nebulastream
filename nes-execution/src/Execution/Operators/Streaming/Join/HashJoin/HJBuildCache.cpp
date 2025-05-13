@@ -11,55 +11,47 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <cstdint>
-#include <memory>
+
 #include <ranges>
-#include <utility>
-#include <vector>
-#include <Execution/Operators/Streaming/HashMapSlice.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheSecondChance.hpp>
-#include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
-#include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJBuildCache.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Time/Timestamp.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <nautilus/val_enum.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <Engine.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
-AggregationBuildCache::AggregationBuildCache(
+
+HJBuildCache::HJBuildCache(
     const uint64_t operatorHandlerIndex,
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider,
     HashMapOptions hashMapOptions,
     QueryCompilation::Configurations::SliceCacheOptions sliceCacheOptions)
     : HashMapOptions(std::move(hashMapOptions))
-    , WindowOperatorBuild(operatorHandlerIndex, std::move(timeFunction))
-    , aggregationFunctions(std::move(aggregationFunctions))
+    , StreamJoinBuild(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider)
     , sliceCacheOptions(std::move(sliceCacheOptions))
 
 {
 }
 
-void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
+void HJBuildCache::setup(ExecutionContext& executionCtx) const
 {
-    WindowOperatorBuild::setup(executionCtx);
+    StreamJoinBuild::setup(executionCtx);
+
     /// I know that we should not set the numberOfWorkerThreads in the build operator, due to a race condition.
     /// However, we need to set it here, as we need to know the number of worker threads to allocate the slice cache entries.
     /// This should/is fine for this PoC
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     nautilus::invoke(
-        +[](AggregationOperatorHandler* opHandler, const PipelineExecutionContext* pipelineExecutionContext)
+        +[](HJOperatorHandler* opHandler, const PipelineExecutionContext* pipelineExecutionContext)
         { opHandler->setWorkerThreads(pipelineExecutionContext->getNumberOfWorkerThreads()); },
         globalOperatorHandler,
         executionCtx.pipelineContext);
@@ -82,7 +74,7 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
             break;
     }
     nautilus::invoke(
-        +[](AggregationOperatorHandler* opHandler,
+        +[](HJOperatorHandler* opHandler,
             Memory::AbstractBufferProvider* bufferProvider,
             const uint64_t sizeOfEntry,
             const uint64_t numberOfEntries) { opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider); },
@@ -92,51 +84,58 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
         numberOfEntries);
 
     /// Creating the cleanup function for the slice of current stream
-     nautilus::invoke(
-        +[](AggregationOperatorHandler* operatorHandler, const AggregationBuildCache* buildOperator)
+    nautilus::invoke(
+        +[](HJOperatorHandler* operatorHandler, const HJBuildCache* buildOperator, const QueryCompilation::JoinBuildSideType buildSide)
         {
             nautilus::engine::Options options;
             options.setOption("engine.Compilation", true);
             const nautilus::engine::NautilusEngine nautilusEngine(options);
             const auto cleanupStateNautilusFunction
-                = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(
-                std::function(
-                    [copyOfFieldKeys = buildOperator->fieldKeys,
-                     copyOfFieldValues = buildOperator->fieldValues,
-                     copyOfEntriesPerPage = buildOperator->entriesPerPage,
-                     copyOfEntrySize = buildOperator->entrySize,
-                     copyOfAggregationFunctions = buildOperator->aggregationFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
-                    {
-                        const Interface::ChainedHashMapRef hashMapRef(
-                            hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-                        for (const auto entry : hashMapRef)
+                = std::make_shared<HJOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(
+                    std::function(
+                        [copyOfFieldKeys = buildOperator->fieldKeys,
+                         copyOfFieldValues = buildOperator->fieldValues,
+                         copyOfEntriesPerPage = buildOperator->entriesPerPage,
+                         copyOfEntrySize = buildOperator->entrySize](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
                         {
-                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
-                            auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
-                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                            const Interface::ChainedHashMapRef hashMapRef(
+                                hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                            for (const auto entry : hashMapRef)
                             {
-                                aggFunction->cleanup(state);
-                                state = state + aggFunction->getSizeOfStateInBytes();
+                                const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                                    entry, copyOfFieldKeys, copyOfFieldValues);
+                                const auto state = entryRefReset.getValueMemArea();
+                                nautilus::invoke(
+                                    +[](int8_t* pagedVectorMemArea) -> void
+                                    {
+                                        /// Calls the destructor of the PagedVector
+                                        auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(
+                                            pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                                        pagedVector->~PagedVector();
+                                    },
+                                    state);
                             }
-                        }
-                    })));
-            operatorHandler->cleanupStateNautilusFunction = std::move(cleanupStateNautilusFunction);
+                        })));
+            operatorHandler->setNautilusCleanupExec(std::move(cleanupStateNautilusFunction), buildSide);
         },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
-        nautilus::val<const AggregationBuildCache*>(this));
+        nautilus::val<const HJBuildCache*>(this),
+        nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
 }
 
-void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+
+void HJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    WindowOperatorBuild::open(executionCtx, recordBuffer);
+    StreamJoinBuild::open(executionCtx, recordBuffer);
 
     /// Creating the local state for the slice cache, so that we can use it in the execute method
     const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto startOfSliceEntries = nautilus::invoke(
-        +[](AggregationOperatorHandler* opHandler, const WorkerThreadId workerThreadId)
-        { return opHandler->getStartOfSliceCacheEntries(workerThreadId); },
+        +[](HJOperatorHandler* opHandler, const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
+        { return opHandler->getStartOfSliceCacheEntries(workerThreadId, joinBuildSide); },
         globalOperatorHandler,
-        executionCtx.getWorkerThreadId());
+        executionCtx.getWorkerThreadId(),
+        nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
     const auto hitsRef = startOfSliceEntries;
     const auto missesRef = hitsRef + nautilus::val<uint64_t>(sizeof(uint64_t));
     const auto sliceCacheEntries = startOfSliceEntries + nautilus::val<uint64_t>(sizeof(HitsAndMisses));
@@ -188,54 +187,38 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
     }
 }
 
-int8_t* createNewAggregationSliceProxy(
+int8_t* createNewHJSliceProxy(
     SliceCacheEntry* sliceCacheEntry,
     OperatorHandler* ptrOpHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
-    const AggregationBuildCache* buildOperator)
+    const QueryCompilation::JoinBuildSideType buildSide,
+    const HJBuildCache* buildOperator)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    const auto* operatorHandler = dynamic_cast<AggregationOperatorHandler*>(ptrOpHandler);
-    /// If a new aggregation slice is created, we need to set the cleanup function for the aggregation states
-    auto wrappedCreateFunction(
-        [createFunction = operatorHandler->getCreateNewSlicesFunction(),
-        cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction,
-         buildOperator](const SliceStart sliceStart, const SliceEnd sliceEnd)
-        {
-            const auto createdSlices = createFunction(sliceStart, sliceEnd);
-            for (const auto& slice : createdSlices)
-            {
-                const auto aggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(slice);
-                INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-                aggregationSlice->setCleanupFunction(buildOperator->getSliceCleanupFunction(cleanupStateNautilusFunction));
-            }
-            return createdSlices;
-        });
-
-    const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, wrappedCreateFunction);
-    INVARIANT(
-        hashMap.size() == 1,
-        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support "
-        "slicing");
-
+    PRECONDITION(buildOperator != nullptr, "build operator should not be null!");
+    const auto* opHandler = dynamic_cast<HJOperatorHandler*>(ptrOpHandler);
+    const auto createFunction = opHandler->getCreateNewSlicesFunction();
+    const auto newHJSlice
+        = dynamic_cast<HJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
 
     /// Updating the slice cache entry with the new slice
-    const auto newAggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(hashMap[0]);
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets};
-    sliceCacheEntry->sliceStart = newAggregationSlice->getSliceStart();
-    sliceCacheEntry->sliceEnd = newAggregationSlice->getSliceEnd();
-    sliceCacheEntry->dataStructure = reinterpret_cast<int8_t*>(newAggregationSlice->getHashMapPtrOrCreate(workerThreadId, hashMapSliceArgs));
+    newHJSlice->setCleanupFunction(buildOperator->getSliceCleanupFunction(opHandler->getNautilusCleanupExec(buildSide)), buildSide);
+    const CreateNewHashMapSliceArgs hashMapSliceArgs{
+        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets};
+    sliceCacheEntry->sliceStart = newHJSlice->getSliceStart();
+    sliceCacheEntry->sliceEnd = newHJSlice->getSliceEnd();
+    sliceCacheEntry->dataStructure
+        = reinterpret_cast<int8_t*>(newHJSlice->getHashMapPtrOrCreate(workerThreadId, buildSide, hashMapSliceArgs));
     return sliceCacheEntry->dataStructure;
 }
 
-
-void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& record) const
+void HJBuildCache::execute(ExecutionContext& executionCtx, Record& record) const
 {
     /// Getting the slice cache from the local state
-    auto sliceCache = dynamic_cast<SliceCache*>(executionCtx.getLocalState(this));
+    const auto sliceCache = dynamic_cast<SliceCache*>(executionCtx.getLocalState(this));
 
-    /// Getting the current hash map that we have to insert/update the record into
+    /// Getting the current hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     const auto hashMapPtr = sliceCache->getDataStructureRef(
         timestamp,
@@ -243,15 +226,16 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
         {
             const auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
             return nautilus::invoke(
-                createNewAggregationSliceProxy,
+                createNewHJSliceProxy,
                 sliceCacheEntryToReplace,
                 globalOperatorHandler,
                 timestamp,
                 executionCtx.getWorkerThreadId(),
-                nautilus::val<const AggregationBuildCache*>(this));
+                nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide),
+                nautilus::val<const HJBuildCache*>(this));
         });
-    Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
+    Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
     /// Calling the key functions to add/update the keys to the record
     for (nautilus::static_val<uint64_t> i = 0; i < fieldKeys.size(); ++i)
@@ -268,25 +252,25 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
         *hashFunction,
         [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
         {
-            /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
+            /// If the entry for the provided keys does not exist, we need to create a new one and initialize the underyling paged vector
             const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, fieldKeys, fieldValues);
-            auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
-            for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
-            {
-                aggFunction->reset(state, executionCtx.pipelineMemoryProvider);
-                state = state + aggFunction->getSizeOfStateInBytes();
-            }
+            const auto state = entryRefReset.getValueMemArea();
+            nautilus::invoke(
+                +[](int8_t* pagedVectorMemArea) -> void
+                {
+                    /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
+                    auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(pagedVectorMemArea);
+                    new (pagedVector) Nautilus::Interface::PagedVector();
+                },
+                state);
         },
         executionCtx.pipelineMemoryProvider.bufferProvider);
 
-
-    /// Updating the aggregation states
+    /// Inserting the tuple into the corresponding hash entry
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
-    auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
-    for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
-    {
-        aggFunction->lift(state, executionCtx.pipelineMemoryProvider, record);
-        state = state + aggFunction->getSizeOfStateInBytes();
-    }
+    auto entryMemArea = entryRef.getValueMemArea();
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(
+        entryMemArea, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

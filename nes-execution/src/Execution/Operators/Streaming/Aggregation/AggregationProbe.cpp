@@ -21,7 +21,7 @@
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationProbe.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Execution/Operators/Streaming/Aggregation/WindowAggregationOperator.hpp>
+#include <Execution/Operators/Streaming/HashMapOptions.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorProbe.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
@@ -79,7 +79,6 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
         for (const auto entry : currentMap)
         {
             const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
-            const auto tmpRecordKey = entryRef.getKey();
 
             /// Inserting the record key into the final/global hash map. If an entry for the key already exists, we have to combine the aggregation states
             /// We do this by iterating over the aggregation functions and combining all aggregation states into a global state.
@@ -154,9 +153,15 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
 }
 
 AggregationProbe::AggregationProbe(
-    WindowAggregationOperator windowAggregationOperator, const uint64_t operatorHandlerIndex, WindowMetaData windowMetaData)
-    : WindowAggregationOperator(std::move(windowAggregationOperator)), WindowOperatorProbe(operatorHandlerIndex, std::move(windowMetaData))
+    HashMapOptions hashMapOptions,
+    std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions,
+    const uint64_t operatorHandlerIndex,
+    WindowMetaData windowMetaData)
+    : HashMapOptions(std::move(hashMapOptions))
+    , WindowOperatorProbe(operatorHandlerIndex, std::move(windowMetaData))
+    , aggregationFunctions(std::move(aggregationFunctions))
 {
+    PRECONDITION(this->aggregationFunctions.size() > 0, "Aggregation functions must not be empty");
 }
 
 }

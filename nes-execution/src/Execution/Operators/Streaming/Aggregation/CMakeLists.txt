@@ -15,7 +15,6 @@ add_source_files(nes-execution
         AggregationBuildCache.cpp
         AggregationProbe.cpp
         AggregationOperatorHandler.cpp
-        AggregationSlice.cpp
 )
 
 add_subdirectory(Function)

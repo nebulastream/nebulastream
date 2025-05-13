@@ -13,6 +13,7 @@
 add_source_files(nes-execution
         ExecutableFunctionReadField.cpp
         ExecutableFunctionConstantValueVariableSize.cpp
+        ExecutableFunctionCastField.cpp
         )
 
 add_plugin(Concat ExecutableFunction nes-execution ExecutableFunctionConcat.cpp)

@@ -14,15 +14,18 @@
 
 #include <algorithm>
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionCastToType.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -67,6 +70,7 @@
 #include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -244,34 +248,90 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
     const auto& joinDefinition = joinOperator->getJoinDefinition();
 
-    auto getJoinFieldNames = [](const std::shared_ptr<Schema>& inputSchema, const std::shared_ptr<NodeFunction>& joinFunction)
+    auto getJoinFieldNamesLeftRight = [](const Schema& leftInputSchema, const Schema& rightInputSchema, NodeFunction& joinFunction)
+        -> std::pair<std::vector<PhysicalOperators::FieldNamesExtension>, std::vector<PhysicalOperators::FieldNamesExtension>>
     {
-        std::vector<std::string> joinFieldNames;
-        std::vector<std::string> fieldNamesInJoinFunction;
+        /// Tuple  of left, right join fields and the combined data type, e.g., i32 and i8 --> i32
+        std::vector<PhysicalOperators::FieldNamesExtension> leftJoinNames;
+        std::vector<PhysicalOperators::FieldNamesExtension> rightJoinNames;
+        std::set<std::shared_ptr<Node>> visitedParents;
+        uint64_t counter = 0;
         std::ranges::for_each(
-            joinFunction->getAndFlattenAllChildren(false),
-            [&fieldNamesInJoinFunction](const auto& child)
+            joinFunction.getAllLeafNodes(),
+            [leftInputSchema, rightInputSchema, &leftJoinNames, &rightJoinNames, &counter, &visitedParents](const auto& leaf)
             {
-                if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
+                DefaultPhysicalTypeFactory typeFactory;
+                /// We expect a leaf has a parent that is a binary node for a join function.
+                if (const auto fieldNodeAccessLeaf = dynamic_cast<NodeFunctionFieldAccess*>(leaf.get()))
                 {
-                    fieldNamesInJoinFunction.push_back(NES::Util::as<NodeFunctionFieldAccess>(child)->getFieldName());
+                    const auto parent = fieldNodeAccessLeaf->getParents()[0];
+                    if (not visitedParents.emplace(parent).second)
+                    {
+                        /// We have already seen/visited the node
+                        return;
+                    }
+
+                    const auto children = NES::Util::as<NodeFunction>(parent)->getChildren();
+                    std::optional<std::shared_ptr<AttributeField>> leftField, rightField;
+                    std::optional<std::shared_ptr<NodeFunctionFieldAccess>> leftFieldAccess, rightFieldAccess;
+                    for (const auto& child : children)
+                    {
+                        const auto fieldName = NES::Util::as<NodeFunctionFieldAccess>(child)->getFieldName();
+                        leftField = leftField.has_value() ? leftField : leftInputSchema.getFieldByName(fieldName);
+                        rightField = rightField.has_value() ? rightField : rightInputSchema.getFieldByName(fieldName);
+                        if (not leftFieldAccess.has_value())
+                        {
+                            if (leftField.has_value())
+                            {
+                                leftFieldAccess = NES::Util::as<NodeFunctionFieldAccess>(child);
+                            }
+                        }
+                        if (not rightFieldAccess.has_value())
+                        {
+                            if (rightField.has_value())
+                            {
+                                rightFieldAccess = NES::Util::as<NodeFunctionFieldAccess>(child);
+                            }
+                        }
+                    }
+                    INVARIANT(leftField.has_value() and rightField.has_value(), "Could not find left and right leaves");
+                    INVARIANT(leftFieldAccess.has_value() and rightFieldAccess.has_value(), "Could not find left and right leaves field access");
+
+                    /// We are now converting the fields to a physical data type and then joining them together
+                    const auto joinedDataType = leftField.value()->getDataType()->join(rightField.value()->getDataType());
+                    const auto leftFieldNewName = leftField.value()->getName() + "_" + std::to_string(counter++);
+                    const auto rightFieldNewName = rightField.value()->getName() + "_" + std::to_string(counter++);
+                    leftFieldAccess.value()->updateFieldName(leftFieldNewName);
+                    rightFieldAccess.value()->updateFieldName(rightFieldNewName);
+                    leftJoinNames.emplace_back(
+                        PhysicalOperators::FieldNamesExtension{
+                            leftField.value()->getName(),
+                            leftFieldNewName,
+                            leftField.value()->getDataType(),
+                            joinedDataType});
+                    rightJoinNames.emplace_back(
+                        PhysicalOperators::FieldNamesExtension{
+                            rightField.value()->getName(),
+                            rightFieldNewName,
+                            rightField.value()->getDataType(),
+                            joinedDataType});
                 }
             });
 
-        for (const auto& field : *inputSchema)
-        {
-            if (std::ranges::find(fieldNamesInJoinFunction, field->getName()) != fieldNamesInJoinFunction.end())
-            {
-                joinFieldNames.push_back(field->getName());
-            }
-        }
-
-        return joinFieldNames;
+        return {leftJoinNames, rightJoinNames};
     };
 
+    /// We have now access to the mapping of old to new fields. So basically what fields do we need to change so that the join gets all
+    /// fields with the correct data type.
+    const auto& [leftJoinFields, rightJoinFields] = getJoinFieldNamesLeftRight(
+        *joinDefinition->getLeftSourceType(), *joinDefinition->getRightSourceType(), *joinDefinition->getJoinFunction());
+    const auto leftFieldNamesView
+        = leftJoinFields | std::views::transform([](const PhysicalOperators::FieldNamesExtension& item) { return item.newName; });
+    const auto rightFieldNamesView
+        = rightJoinFields | std::views::transform([](const PhysicalOperators::FieldNamesExtension& item) { return item.newName; });
+    std::vector<std::string> leftJoinFieldNames(leftFieldNamesView.begin(), leftFieldNamesView.end());
+    std::vector<std::string> rightJoinFieldNames(rightFieldNamesView.begin(), rightFieldNamesView.end());
 
-    const auto& joinFieldNameLeft = getJoinFieldNames(joinDefinition->getLeftSourceType(), joinDefinition->getJoinFunction());
-    const auto& joinFieldNameRight = getJoinFieldNames(joinDefinition->getRightSourceType(), joinDefinition->getJoinFunction());
 
     const auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
     const auto& windowSize = windowType->getSize().getTime();
@@ -282,15 +342,56 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         windowType->toString());
 
     const auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(joinOperator, windowType);
-    const auto leftInputOperator
-        = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
-    const auto rightInputOperator
+    auto leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
+    auto rightInputOperator
         = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
     const auto joinStrategy = queryCompilerConfig.joinStrategy;
 
+
+    /// Now we need to create for each field a map operator that has as its function a cast to the correct data type
+    auto addMapOperators = [](const std::shared_ptr<Schema>& inputSchemaOfJoin,
+                              const std::vector<PhysicalOperators::FieldNamesExtension>& fieldNameExtensions,
+                              const std::shared_ptr<NES::Operator>& inputOperator)
+    {
+        const std::shared_ptr<Schema> inputSchemaOfMap = Schema::create(inputSchemaOfJoin->getLayoutType());
+        inputSchemaOfMap->copyFields(inputSchemaOfJoin);
+        auto workingCopyOfInputOperator = inputOperator;
+        for (const auto& [oldName, newName, oldDataType, newDataType] : fieldNameExtensions)
+        {
+            auto nodeFieldAccessOldField = NodeFunctionFieldAccess::create(oldDataType, oldName);
+            auto nodeFieldAccessNewField = NodeFunctionFieldAccess::create(newDataType, newName);
+            auto nodeFunctionCast = NodeFunctionCastToType::create(newDataType);
+            nodeFunctionCast->addChild(nodeFieldAccessOldField);
+            auto nodeFunctionFieldAssignment
+                = NodeFunctionFieldAssignment::create(NES::Util::as<NodeFunctionFieldAccess>(nodeFieldAccessNewField), nodeFunctionCast);
+
+            /// Get a copy of the current input schema
+            const auto copyOfInputSchemaOfMap = Schema::create(inputSchemaOfJoin->getLayoutType());
+            copyOfInputSchemaOfMap->copyFields(inputSchemaOfMap);
+            /// Add to the inputSchemaOfMap the newly added fields
+            inputSchemaOfMap->addField(newName, newDataType);
+
+            /// Create a new map operator with the cast as its function and add it before the join operator
+            auto physicalMap
+                = PhysicalOperators::PhysicalMapOperator::create(copyOfInputSchemaOfMap, inputSchemaOfMap, nodeFunctionFieldAssignment);
+            workingCopyOfInputOperator->insertBetweenThisAndParentNodes(physicalMap);
+            workingCopyOfInputOperator = physicalMap;
+        }
+        return inputSchemaOfMap;
+    };
+    auto newLeftInputSchema = addMapOperators(joinOperator->getLeftInputSchema(), leftJoinFields, leftInputOperator);
+    auto newRightInputSchema = addMapOperators(joinOperator->getRightInputSchema(), rightJoinFields, rightInputOperator);
+    joinOperator->getLeftInputSchema()->clear();
+    joinOperator->getRightInputSchema()->clear();
+    joinOperator->getLeftInputSchema()->copyFields(newLeftInputSchema);
+    joinOperator->getRightInputSchema()->copyFields(newRightInputSchema);
+
+
+    leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
+    rightInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
     StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(
-        joinFieldNameLeft, joinFieldNameRight, windowSize, windowSlide, timeStampFieldLeft, timeStampFieldRight, joinStrategy);
+        leftJoinFieldNames, rightJoinFieldNames, windowSize, windowSlide, timeStampFieldLeft, timeStampFieldRight, joinStrategy);
 
     std::shared_ptr<StreamJoinOperatorHandler> joinOperatorHandler;
     switch (joinStrategy)
@@ -298,11 +399,34 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
         case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN:
             joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
             break;
+        case Configurations::StreamJoinStrategy::HASH_JOIN: {
+            auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+                queryCompilerConfig.pageSize.getValue(), joinOperator->getLeftInputSchema());
+            leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
+            auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
+                queryCompilerConfig.pageSize.getValue(), joinOperator->getRightInputSchema());
+            rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
+            NES_DEBUG(
+                "Created left and right memory provider for StreamJoin with page size {}--{}",
+                leftMemoryProvider->getMemoryLayout()->getBufferSize(),
+                rightMemoryProvider->getMemoryLayout()->getBufferSize());
+
+            std::unique_ptr<Runtime::Execution::WindowSlicesStoreInterface> sliceAndWindowStore
+                = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
+                    streamJoinConfig.windowSize, streamJoinConfig.windowSlide, joinOperator->getAllInputOriginIds().size());
+            joinOperatorHandler = std::make_shared<HJOperatorHandler>(
+                joinOperator->getAllInputOriginIds(),
+                joinOperator->getOutputOriginIds()[0],
+                std::move(sliceAndWindowStore),
+                leftMemoryProvider,
+                rightMemoryProvider);
+            break;
+        }
             std::unreachable();
     }
 
     auto createBuildOperator = [&](const std::shared_ptr<Schema>& inputSchema,
-                                   const std::vector<std::string>& joinFieldNames,
+                                   const std::vector<PhysicalOperators::FieldNamesExtension>& joinFields,
                                    JoinBuildSideType buildSideType,
                                    const TimestampField& timeStampField)
     {
@@ -311,21 +435,15 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
             joinOperator->getOutputSchema(),
             joinOperatorHandler,
             queryCompilerConfig.joinStrategy,
-            joinFieldNames,
+            joinFields,
             timeStampField,
             buildSideType);
     };
     auto joinFunctionLowered = FunctionProvider::lowerFunction(joinOperator->getJoinFunction());
     const auto leftJoinBuildOperator = createBuildOperator(
-        joinOperator->getLeftInputSchema(),
-        streamJoinConfig.joinFieldNamesLeft,
-        JoinBuildSideType::Left,
-        streamJoinConfig.timeStampFieldLeft);
+        joinOperator->getLeftInputSchema(), leftJoinFields, JoinBuildSideType::Left, streamJoinConfig.timeStampFieldLeft);
     const auto rightJoinBuildOperator = createBuildOperator(
-        joinOperator->getRightInputSchema(),
-        streamJoinConfig.joinFieldNamesRight,
-        JoinBuildSideType::Right,
-        streamJoinConfig.timeStampFieldRight);
+        joinOperator->getRightInputSchema(), rightJoinFields, JoinBuildSideType::Right, streamJoinConfig.timeStampFieldRight);
     const auto joinProbeOperator = std::make_shared<PhysicalOperators::PhysicalStreamJoinProbeOperator>(
         joinOperator->getLeftInputSchema(),
         joinOperator->getRightInputSchema(),
