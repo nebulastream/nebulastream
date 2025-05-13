@@ -128,7 +128,7 @@ FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBack
 
 FileBackedTimeBasedSliceStore& FileBackedTimeBasedSliceStore::operator=(FileBackedTimeBasedSliceStore&& other) noexcept
 {
-    DefaultTimeBasedSliceStore::operator=(other);
+    DefaultTimeBasedSliceStore::operator=(std::move(other));
     const auto slicesInMemoryLocked = slicesInMemory.wlock();
     const auto otherSlicesInMemoryLocked = other.slicesInMemory.wlock();
     *slicesInMemoryLocked = std::move(*otherSlicesInMemoryLocked);
@@ -158,12 +158,14 @@ std::vector<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSlicesOrCr
 {
     const auto threadId = WorkerThreadId(workerThreadId % numberOfWorkerThreads);
     const auto& slicesVec = DefaultTimeBasedSliceStore::getSlicesOrCreate(timestamp, workerThreadId, joinBuildSide, createNewSlice);
+    const auto slicesInMemoryLocked = slicesInMemory.wlock();
     for (const auto& slice : slicesVec)
     {
         alteredSlicesPerThread[{threadId, joinBuildSide}].emplace_back(slice);
-        const auto slicesInMemoryLocked = slicesInMemory.wlock();
-        slicesInMemoryLocked->insert({{slice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Left}, true});
-        slicesInMemoryLocked->insert({{slice->getSliceEnd(), QueryCompilation::JoinBuildSideType::Right}, true});
+        if (const auto sliceEnd = slice->getSliceEnd(); !slicesInMemoryLocked->contains({sliceEnd, joinBuildSide}))
+        {
+            (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = true;
+        }
     }
     return slicesVec;
 }
