@@ -72,44 +72,6 @@ checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::Tupl
     return (sameTupleIndices.size() == leftBuffer.getNumberOfTuples());
 }
 
-inline std::string dynamicTupleToString(
-    Memory::MemoryLayouts::TestTupleBuffer& buffer, const Memory::MemoryLayouts::DynamicTuple& dynamicTuple, const Schema& schema)
-{
-    std::stringstream ss;
-    for (uint32_t i = 0; i < schema.getFieldCount(); ++i)
-    {
-        const auto dataType = schema.getFieldByIndex(i)->getDataType();
-        Memory::MemoryLayouts::DynamicField currentField = dynamicTuple.operator[](i);
-        if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
-        {
-            const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
-            const auto string = Memory::MemoryLayouts::readVarSizedData(buffer.getBuffer(), index);
-            ss << string << ",";
-        }
-        else
-        {
-            ss << currentField.toString() << (i == schema.getFieldCount() - 1 ? "" : ",");
-        }
-    }
-    return ss.str();
-}
-
-inline std::string testTupleBufferToString(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema)
-{
-    auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-    if (testTupleBuffer.getBuffer().getNumberOfTuples() == 0)
-    {
-        return "";
-    }
-
-    std::stringstream str;
-    for (const auto tupleIterator : testTupleBuffer)
-    {
-        str << dynamicTupleToString(testTupleBuffer, tupleIterator, *schema) << '\n';
-    }
-    return str.str();
-}
-
 inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer)
 {
     PRECONDITION(
@@ -120,22 +82,6 @@ inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view ra
     std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
     tupleBuffer.setNumberOfTuples(rawData.size());
     return tupleBuffer;
-}
-
-/// Called by 'createTestTupleBufferFromTuples' to create a tuple from values.
-template <bool containsVarSized = false, typename... Values>
-void createTuple(Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer, Memory::BufferManager& bufferManager, const Values&... values)
-{
-    /// Iterate over all values in the current tuple and add them to the expected KV pairs.
-    auto testTuple = std::make_tuple(values...);
-    if constexpr (containsVarSized)
-    {
-        testTupleBuffer->pushRecordToBuffer(testTuple, &bufferManager);
-    }
-    else
-    {
-        testTupleBuffer->pushRecordToBuffer(testTuple);
-    }
 }
 
 /// Takes a schema, a buffer manager and tuples.
