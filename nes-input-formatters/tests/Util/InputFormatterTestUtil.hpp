@@ -207,8 +207,8 @@ checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::Tupl
                 continue;
             }
 
-            const auto startPosBuffer1 = leftBuffer.getBuffer() + (schemaSizeInByte * idxBuffer1);
-            const auto startPosBuffer2 = rightBuffer.getBuffer() + (schemaSizeInByte * idxBuffer2);
+            const auto* const startPosBuffer1 = leftBuffer.getBuffer() + (schemaSizeInByte * idxBuffer1);
+            const auto* const startPosBuffer2 = rightBuffer.getBuffer() + (schemaSizeInByte * idxBuffer2);
             if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0)
             {
                 sameTupleIndices.insert(idxBuffer2);
@@ -247,9 +247,9 @@ inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view ra
 ///     SchemaPtr schema = Schema::create()->addField("INT", BasicType::INT32)->addField("BOOL", BasicType::BOOLEAN);
 ///     auto testTupleBuffer = TestUtil::createTupleBufferFromTuples(schema, *bufferManager,
 ///         TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
-template <typename TupleSchema, bool containsVarSized = false, bool PrintDebug = false>
-Memory::TupleBuffer
-createTupleBufferFromTuples(std::shared_ptr<Schema> schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
+template <typename TupleSchema, bool ContainsVarSized = false, bool PrintDebug = false>
+Memory::TupleBuffer createTupleBufferFromTuples(
+    const std::shared_ptr<Schema>& schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
     PRECONDITION(schema != nullptr, "Cannot create a test tuple buffer from a schema that is null");
     PRECONDITION(bufferManager.getAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
@@ -258,7 +258,7 @@ createTupleBufferFromTuples(std::shared_ptr<Schema> schema, Memory::BufferManage
 
     for (const auto& testTuple : tuples)
     {
-        if constexpr (containsVarSized)
+        if constexpr (ContainsVarSized)
         {
             testTupleBuffer->pushRecordToBuffer(testTuple, &bufferManager);
         }
