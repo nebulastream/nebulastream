@@ -36,6 +36,8 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
+#include <SystestAdaptorRegistry.hpp>
+
 namespace NES::Systest
 {
 static constexpr auto CSVSourceToken = "SourceCSV"s;
@@ -201,6 +203,10 @@ void SystestParser::parse()
         }
         else if (token == TokenType::ATTACH_SOURCE)
         {
+            // Todo: use registry to execute logic below
+            // -> determine the adaptor type of attach source, e.g., 'FileSourceInline'
+            // Todo:
+            // -> use adaptor type as key to registry
             // Todo move function call into arg below to guarantee copy elision
             auto attachSource = expectAttachSource();
             if (onAttachSourceCallback)
@@ -407,37 +413,47 @@ SystestParser::AttachSource SystestParser::expectAttachSource()
     std::string discard;
     if (!(stream >> discard))
     {
-        throw SLTUnexpectedToken("failed to read the first word in: " + line);
+        throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
     INVARIANT(discard == AttachSourceToken, "Expected first word to be `{}` for csv source statement", AttachSourceToken);
 
-    // Todo: real work begins here
 
     // Attach LOGICAL_SOURCE_NAME PATH_TO_SOURCE_CONFIG (INLINE)
     /// Read the source name and check if successful
     if (!(stream >> attachSource.logicalSourceName))
     {
-        throw SLTUnexpectedToken("failed to parse logical source name in: " + line);
+        throw SLTUnexpectedToken("failed to parse logical source name in: {}", line);
     }
     if (!(stream >> attachSource.configurationPath))
     {
-        throw SLTUnexpectedToken("failed to parse source configuration path in: " + line);
+        throw SLTUnexpectedToken("failed to parse source configuration path in: {}", line);
     }
-    const auto readInlineTuples = [](std::istringstream& stream)
+
+    // Todo: use registry to execute logic below
+    // -> determine the adaptor type of attach source, e.g., 'FileSourceInline'
+    // Todo:
+    // -> use adaptor type as key to registry
+    // Todo: do we need the 'adaptor'? what functionality could it provide that the systest needs?
+    const auto adaptor = [](std::istringstream& stream)
     {
-        std::string inlineTuples;
-        if (not (stream >> inlineTuples))
+        std::string adaptorType;
+        if (not(stream >> adaptorType))
         {
-            return false;
+            throw SLTUnexpectedToken("Adaptor type {} not found.", adaptorType);
         }
-        return Util::toUpperCase(inlineTuples) == "INLINE";
+        const auto theArgs = SystestAdaptorRegistryArguments{};
+        if (auto adaptorOptional = SystestAdaptorRegistry::instance().tryCreate(adaptorType, theArgs))
+        {
+            return std::move(adaptorOptional.value());
+        }
+        throw SLTUnexpectedToken("Adaptor type {} not found.", adaptorType);
     }(stream);
 
-    if (readInlineTuples)
-    {
-        // Todo: check if we can set optional like this
-        attachSource.tuples = {expectTuples(true)};
-    }
+    // if (readInlineTuples)
+    // {
+    //     // Todo: check if we can set optional like this
+    //     attachSource.tuples = {expectTuples(true)};
+    // }
 
     return attachSource;
 }

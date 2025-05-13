@@ -4,4 +4,4 @@ parserConfig:
   fieldDelimiter: '|'
 sourceConfig:
   type: File
-  filePath: "/tmp/nebulastream-public/nes-systests/testdata/theTestData.csv"
+  filePath: "TESTDATA/theTestData.csv"

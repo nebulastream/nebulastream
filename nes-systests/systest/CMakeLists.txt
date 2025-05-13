@@ -23,7 +23,8 @@ set(ExternalData_TIMEOUT_ABSOLUTE 600)
 
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
-add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
+add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES}
+        src/SystestFileAdaptors.cpp)
 target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-lib nes-single-node-worker-lib)
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_definitions(nes-systest-lib PRIVATE
@@ -139,5 +140,7 @@ function(add_nes_test_systest)
     target_include_directories(${TARGET_NAME}
             PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
 endfunction()
+
+create_registry_for_component_specific(nes-systest-lib SystestAdaptor)
 
 add_tests_if_enabled(tests)

@@ -23,7 +23,11 @@ Attach stream CONFIG/sources/file_manual_path.yaml
 #       - could model as buffer adaptor by writing config into buffer, but is hacky
 #       - could model both as configuration, optional(data) pair
 #           - configuration as part of CONFIG/sources/...config?
-Attach stream CONFIG/sources/file_default.yaml INLINE
+# Idea: Registry for 'Servers/Adaptors'
+#   - provide {sourceType, adaptorType}, e.g., {File, INTERNAL}
+#   - get adaptor if available
+#   - provide arguments to adaptor
+Attach stream CONFIG/sources/file_default.yaml FileSourceInline
 5|19|19000
 6|20|20000
 7|21|21000

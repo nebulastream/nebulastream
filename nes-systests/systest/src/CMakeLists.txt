@@ -18,3 +18,6 @@ add_source_files(nes-systest-lib
         SystestResultCheck.cpp
         SystestConfiguration.cpp
 )
+
+add_plugin(FileSourceInline SystestAdaptor nes-systest-lib SystestFileAdaptors.cpp)
+add_plugin(FileSourceFile SystestAdaptor nes-systest-lib SystestFileAdaptors.cpp)

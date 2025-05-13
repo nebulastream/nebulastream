@@ -123,6 +123,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     parser.registerOnAttachSourceCallback(
         [&](SystestParser::AttachSource&& attachSource) //Todo: don't force move
         {
+            // Todo: use registry to execute logic below
             static uint64_t sourceIndex = 0;
             try
             {
