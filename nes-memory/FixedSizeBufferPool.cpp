@@ -151,7 +151,7 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
     throw UnknownOperation("This function is not supported here");
 }
-std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t bufferSize)
+std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(const size_t bufferSize)
 {
     return bufferManager->getUnpooledBuffer(bufferSize);
 }
