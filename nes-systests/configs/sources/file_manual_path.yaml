@@ -1,0 +1,7 @@
+logical: stream
+parserConfig:
+  type: CSV
+  fieldDelimiter: '|'
+sourceConfig:
+  type: File
+  filePath: "/tmp/nebulastream-public/nes-systests/testdata/theTestData.csv"
