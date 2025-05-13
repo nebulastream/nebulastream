@@ -14,6 +14,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 using namespace std::string_literals;
 
@@ -26,10 +27,10 @@ enum class InputFormat : uint8_t
 };
 
 ///Coordinator Configuration Names
-const std::string CONFIG_PATH = "configPath";
+constexpr std::string_view CONFIG_PATH = "configPath";
 
 ///Configuration names for source types (Descriptor(.hpp) must support these in 'validateAndFormat()')
-const std::string SOURCE_TYPE_CONFIG = "type";
-const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL = "numberOfBuffersInSourceLocalBufferPool";
+constexpr std::string_view SOURCE_TYPE_CONFIG = "type";
+constexpr std::string_view BUFFERS_IN_LOCAL_POOL = "buffersInLocalPool";
 
 }

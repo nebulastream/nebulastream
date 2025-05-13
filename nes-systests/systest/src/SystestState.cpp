@@ -22,6 +22,8 @@
 #include <vector>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
+
+#include <NebuLI.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
@@ -57,12 +59,14 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
 
 void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
+    auto loadedPlans = SystestBinder::loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
     uint64_t queryIdInFile = 0;
     std::unordered_set<uint64_t> foundQueries;
 
-    for (const auto& [decomposedPlan, queryDefinition, sinkSchema] : loadedPlans)
+    for (auto& [queryPlan, sourceCatalog, queryDefinition, sinkSchema] : loadedPlans)
     {
+        CLI::Optimizer optimizer{sourceCatalog};
+        auto decomposedPlan = optimizer.optimize(queryPlan);
         if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
         {
             for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber

@@ -12,8 +12,6 @@
     limitations under the License.
 */
 #include <fstream>
-#include <memory>
-#include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>

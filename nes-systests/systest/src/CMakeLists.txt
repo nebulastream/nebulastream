@@ -13,7 +13,6 @@
 add_source_files(nes-systest-lib
         SystestParser.cpp
         SystestRunner.cpp
-        SystestGrpc.cpp
         SystestState.cpp
         SystestResultCheck.cpp
         SystestConfiguration.cpp

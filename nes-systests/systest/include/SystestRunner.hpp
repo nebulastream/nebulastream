@@ -21,10 +21,11 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <API/Schema.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
-#include <SystestParser.hpp>
 
 namespace NES::Systest
 {
@@ -34,9 +35,10 @@ struct RunningQuery;
 
 struct LoadedQueryPlan
 {
-    std::shared_ptr<DecomposedQueryPlan> queryPlan;
+    std::shared_ptr<QueryPlan> queryPlan;
+    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
     std::string queryName;
-    SystestParser::Schema sinkSchema;
+    Schema sinkSchema;
 };
 
 /// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
@@ -46,13 +48,21 @@ static constexpr auto padSizeQueryNumber = 2;
 /// We pad to a maximum of 4 digits ---> maximum value that is correctly padded is 999 queries in total
 static constexpr auto padSizeQueryCounter = 3;
 
-/// Load query plan objects by parsing an SLT file for queries and lowering it
-/// Returns a triplet of the lowered query plan, the query name and the schema of the sink
-[[nodiscard]] std::vector<LoadedQueryPlan> loadFromSLTFile(
-    const std::filesystem::path& testFilePath,
-    const std::filesystem::path& workingDir,
-    std::string_view testFileName,
-    const std::filesystem::path& testDataDir);
+class SystestBinder
+{
+    inline static uint64_t sourceIndex = 0;
+    inline static uint64_t currentQueryNumber = 0;
+    inline static std::string currentTestFileName;
+
+public:
+    /// Load query plan objects by parsing an SLT file for queries and lowering it
+    /// Returns a triplet of the lowered query plan, the query name and the schema of the sink
+    [[nodiscard]] static std::vector<LoadedQueryPlan> loadFromSLTFile(
+        const std::filesystem::path& testFilePath,
+        const std::filesystem::path& workingDir,
+        std::string_view testFileName,
+        const std::filesystem::path& testDataDir);
+};
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return false if one query result is incorrect

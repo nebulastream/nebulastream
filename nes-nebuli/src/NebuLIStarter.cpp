@@ -12,16 +12,23 @@
     limitations under the License.
 */
 
+#include <cerrno>
+#include <cstring>
 #include <fstream>
 #include <initializer_list>
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <YAML/YAMLBinder.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/text_format.h>
@@ -29,125 +36,10 @@
 #include <grpcpp/security/credentials.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
+#include <GRPCClient.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
-using namespace std::literals;
-
-
-class GRPCClient
-{
-public:
-    explicit GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel)) { }
-    std::unique_ptr<WorkerRPCService::Stub> stub;
-
-    size_t registerQuery(const NES::DecomposedQueryPlan& plan) const
-    {
-        grpc::ClientContext context;
-        RegisterQueryReply reply;
-        RegisterQueryRequest request;
-        NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(plan, request.mutable_decomposedqueryplan());
-        auto status = stub->RegisterQuery(&context, request, &reply);
-        if (status.ok())
-        {
-            NES_DEBUG("Registration was successful.");
-        }
-        else
-        {
-            throw NES::QueryRegistrationFailed(
-                "Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details());
-        }
-        return reply.queryid();
-    }
-
-    void stop(size_t queryId) const
-    {
-        grpc::ClientContext context;
-        StopQueryRequest request;
-        request.set_queryid(queryId);
-        request.set_terminationtype(StopQueryRequest::HardStop);
-        google::protobuf::Empty response;
-        auto status = stub->StopQuery(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Stopping was successful.");
-        }
-        else
-        {
-            throw NES::QueryStopFailed(
-                "Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details());
-        }
-    }
-
-    void status(size_t queryId) const
-    {
-        grpc::ClientContext context;
-        QuerySummaryRequest request;
-        request.set_queryid(queryId);
-        QuerySummaryReply response;
-        auto status = stub->RequestQuerySummary(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Status was successful.");
-        }
-        else
-        {
-            throw NES::QueryStatusFailed(
-                "Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details());
-        }
-    }
-
-    void start(size_t queryId) const
-    {
-        grpc::ClientContext context;
-        StartQueryRequest request;
-        google::protobuf::Empty response;
-        request.set_queryid(queryId);
-        auto status = stub->StartQuery(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Starting was successful.");
-        }
-        else
-        {
-            throw NES::QueryStartFailed(
-                "Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details());
-        }
-    }
-
-    void unregister(size_t queryId) const
-    {
-        grpc::ClientContext context;
-        UnregisterQueryRequest request;
-        google::protobuf::Empty response;
-        request.set_queryid(queryId);
-        auto status = stub->UnregisterQuery(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Unregister was successful.");
-        }
-        else
-        {
-            throw NES::QueryUnregistrationFailed(
-                "Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details());
-        }
-    }
-};
 
 int main(int argc, char** argv)
 {
@@ -195,16 +87,19 @@ int main(int argc, char** argv)
         }
 
         bool handled = false;
-        for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (GRPCClient::*)(size_t) const>>{
-                 {"start", &GRPCClient::start}, {"unregister", &GRPCClient::unregister}, {"stop", &GRPCClient::stop}})
+        for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (NES::CLI::Nebuli::*)(NES::QueryId)>>{
+                 {"start", &NES::CLI::Nebuli::startQuery},
+                 {"unregister", &NES::CLI::Nebuli::unregisterQuery},
+                 {"stop", &NES::CLI::Nebuli::stopQuery}})
         {
             if (program.is_subcommand_used(name))
             {
                 auto& parser = program.at<ArgumentParser>(name);
                 auto serverUri = parser.get<std::string>("-s");
-                GRPCClient client(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-                auto queryId = parser.get<size_t>("queryId");
-                (client.*fn)(queryId);
+                auto client = std::make_shared<const GRPCClient>(CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
+                NES::CLI::Nebuli nebuli{client};
+                auto queryId = NES::QueryId{parser.get<size_t>("queryId")};
+                (nebuli.*fn)(queryId);
                 handled = true;
                 break;
             }
@@ -215,17 +110,28 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        std::shared_ptr<NES::DecomposedQueryPlan> decomposedQueryPlan;
+        auto sourceCatalog = std::make_shared<NES::Catalogs::Source::SourceCatalog>();
+        auto yamlBinder = NES::CLI::YAMLBinder{sourceCatalog};
+        auto optimizer = NES::CLI::Optimizer{sourceCatalog};
+
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
+        NES::CLI::BoundQueryConfig boundConfig;
         if (input == "-")
         {
-            decomposedQueryPlan = NES::CLI::loadFrom(std::cin);
+            boundConfig = yamlBinder.parseAndBind(std::cin);
         }
         else
         {
-            decomposedQueryPlan = NES::CLI::loadFromYAMLFile(input);
+            std::ifstream file{input};
+            if (!file)
+            {
+                throw NES::QueryDescriptionNotReadable(std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
+            }
+            boundConfig = yamlBinder.parseAndBind(file);
         }
+
+        const std::shared_ptr<NES::DecomposedQueryPlan> decomposedQueryPlan = optimizer.optimize(boundConfig.plan);
 
         std::string output;
         NES::SerializableDecomposedQueryPlan serialized;
@@ -266,13 +172,15 @@ int main(int argc, char** argv)
         else if (program.is_subcommand_used("register"))
         {
             auto& registerArgs = program.at<ArgumentParser>("register");
-            const GRPCClient client(grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
-            auto queryId = client.registerQuery(*decomposedQueryPlan);
+            auto client = std::make_shared<const GRPCClient>(
+                grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
+            NES::CLI::Nebuli nebuli{client};
+            auto queryId = nebuli.registerQuery(decomposedQueryPlan);
             if (registerArgs.is_used("-x"))
             {
-                client.start(queryId);
+                nebuli.startQuery(queryId);
             }
-            std::cout << queryId;
+            std::cout << queryId.getRawValue();
         }
 
         return 0;

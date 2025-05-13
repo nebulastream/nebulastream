@@ -10,8 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Optimizer)
-add_subdirectory(QueryValidation)
-add_subdirectory(YAML)
-
-add_source_files(nes-coordinator GRPCClient.cpp)
+add_source_files(nes-yaml-binder
+        YAMLBinder.cpp
+)

@@ -21,6 +21,7 @@
 #include <ostream>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
@@ -51,6 +52,7 @@ struct ParserConfig
     std::string fieldDelimiter;
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs);
     friend bool operator!=(const ParserConfig& lhs, const ParserConfig& rhs);
+    static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
 };
 static_assert(std::is_copy_assignable_v<ParserConfig>);
 

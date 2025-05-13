@@ -18,6 +18,7 @@
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
@@ -63,7 +64,7 @@ public:
     UIntOption bufferSizeInBytes = {"bufferSizeInBytes", "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
 
     QueryCompilation::Configurations::QueryCompilerConfiguration queryCompiler = {"queryCompiler", "Configuration for the query compiler"};
-    StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
+    StringOption configPath = {std::string{CONFIG_PATH}, "", "Path to configuration file."};
 
 private:
     std::vector<Configurations::BaseOption*> getOptions() override

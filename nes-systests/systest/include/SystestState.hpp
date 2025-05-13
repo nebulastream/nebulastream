@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -78,7 +79,7 @@ struct Query
         std::shared_ptr<DecomposedQueryPlan> queryPlan,
         const uint64_t queryIdInFile,
         std::filesystem::path workingDir,
-        SystestParser::Schema sinkSchema)
+        Schema sinkSchema)
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
         , sqlLogicTestFile(std::move(sqlLogicTestFile))
@@ -97,7 +98,7 @@ struct Query
     std::shared_ptr<DecomposedQueryPlan> queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
-    SystestParser::Schema expectedSinkSchema;
+    Schema expectedSinkSchema;
 };
 
 struct QueryExecutionInfo

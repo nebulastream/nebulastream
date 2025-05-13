@@ -54,7 +54,7 @@ std::optional<T> loadConfiguration(const int argc, const char** argv)
     T config;
 
     /// Read options from the YAML file.
-    const auto configPathCLIParam = "--" + CONFIG_PATH;
+    const auto configPathCLIParam = "--" + std::string{CONFIG_PATH};
     if (const auto configPath = commandLineParams.find(configPathCLIParam); configPath != commandLineParams.end())
     {
         config.overwriteConfigWithYAMLFileInput(configPath->second);

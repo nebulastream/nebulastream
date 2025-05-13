@@ -17,8 +17,9 @@ get_source(nes-catalogs CATALOG_SOURCE_FILES)
 get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
 get_source(nes-operators OPERATORS_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
+get_source(nes-yaml-binder YAML_BINDER_SOURCE_FILES)
 
-add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${OPERATORS_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES} ${YAML_BINDER_SOURCE_FILES})
 
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
@@ -35,11 +36,14 @@ target_link_libraries(nes-nebuli-lib
 add_executable(nes-nebuli src/NebuLIStarter.cpp)
 # Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
 set_property(TARGET nes-nebuli PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse)
+target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp)
 target_include_directories(nes-nebuli
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
 )
 
+target_include_directories(nes-nebuli
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 function(add_nes_test_nebuli)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})

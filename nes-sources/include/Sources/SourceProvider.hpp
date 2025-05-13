@@ -37,7 +37,7 @@ public:
         OriginId originId,
         const SourceDescriptor& sourceDescriptor,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-        int numberOfBuffersInSourceLocalBufferPool);
+        int buffersInLocalPool);
 
     ~SourceProvider() = default;
 };

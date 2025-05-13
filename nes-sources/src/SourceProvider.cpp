@@ -34,7 +34,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
     const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<Memory::AbstractPoolProvider> bufferPool,
-    const int numberOfBuffersInSourceLocalBufferPool)
+    const int buffersInLocalPool)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
@@ -42,8 +42,8 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     {
         /// The source-specific configuration of buffersInLocalPool stakes priority.
         /// If not specified (-1), we take the NodeEngine-wide configuration.
-        auto numberOfSourceLocalBuffers = (sourceDescriptor.getBuffersInLocalPool() < 0) ? numberOfBuffersInSourceLocalBufferPool
-                                                                                         : sourceDescriptor.getBuffersInLocalPool();
+        auto numberOfSourceLocalBuffers
+            = (sourceDescriptor.getBuffersInLocalPool() < 0) ? buffersInLocalPool : sourceDescriptor.getBuffersInLocalPool();
         return std::make_unique<SourceHandle>(
             std::move(originId), std::move(bufferPool), numberOfSourceLocalBuffers, std::move(source.value()));
     }

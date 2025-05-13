@@ -24,7 +24,7 @@ set(ExternalData_TIMEOUT_ABSOLUTE 600)
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
-target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-lib nes-single-node-worker-lib)
+target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-lib nes-single-node-worker-lib nes-sql-parser)
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_definitions(nes-systest-lib PRIVATE
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"

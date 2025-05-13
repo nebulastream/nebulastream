@@ -51,26 +51,27 @@ std::shared_ptr<QueryPlan> LogicalSourceExpansionRule::apply(std::shared_ptr<Que
         {
             throw UnregisteredSource("{}", logicalSourceName);
         }
-        const auto physicalSources = sourceCatalog->getPhysicalSources(logicalSource.value());
-        if (not physicalSources.has_value())
+        const auto physicalSourcesOpt = sourceCatalog->getPhysicalSources(logicalSource.value());
+        if (not physicalSourcesOpt.has_value())
         {
             throw UnregisteredSource("{}", logicalSourceName);
         }
-        NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", physicalSources.value().size());
-        if (physicalSources.value().empty())
+        const auto& physicalSources = physicalSourcesOpt.value();
+        NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", physicalSources.size());
+        if (physicalSources.empty())
         {
             throw PhysicalSourceNotFoundInQueryDescription(
                 "LogicalSourceExpansionRule: Unable to find physical source locations for the logical source: {}", logicalSourceName);
         }
 
         /// Replace the SourceNameLogicalOperator with the SourceDescriptorLogicalOperator corresponding to the first entry.
-        auto firstSourceDescriptor = *physicalSources.value().begin();
+        auto firstSourceDescriptor = *physicalSources.begin();
         auto firstOperatorSourceLogicalDescriptor
             = std::make_shared<SourceDescriptorLogicalOperator>(std::move(firstSourceDescriptor), sourceOperator->getId());
         sourceOperator->replace(firstOperatorSourceLogicalDescriptor, sourceOperator);
 
         /// Iterate over all subsequent entries, create the corresponding SourceDescriptorLogicalOperators and add them to the query plan.
-        for (const auto& physicalSource : physicalSources.value() | std::views::drop(1))
+        for (const auto& physicalSource : physicalSources | std::views::drop(1))
         {
             auto sourceDescriptor = physicalSource;
             auto operatorSourceLogicalDescriptor

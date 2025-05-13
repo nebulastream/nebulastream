@@ -22,11 +22,11 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Systest
@@ -106,7 +106,7 @@ bool compareStringAsTypeWithError(const std::string& left, const std::string& ri
 
 struct QueryResult
 {
-    SystestParser::Schema fields;
+    Schema fields;
     std::vector<std::string> result;
 };
 

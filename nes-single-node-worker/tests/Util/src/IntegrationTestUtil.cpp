@@ -19,7 +19,6 @@
 #include <fstream>
 #include <memory>
 #include <thread>
-#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>

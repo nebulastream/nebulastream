@@ -17,14 +17,17 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sources
 {
@@ -76,6 +79,39 @@ int32_t SourceDescriptor::getBuffersInLocalPool() const
     return buffersInLocalPool;
 }
 
+ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> configMap)
+{
+    ParserConfig created{};
+    if (const auto parserType = configMap.find("type"); parserType != configMap.end())
+    {
+        created.parserType = parserType->second;
+    }
+    else
+    {
+        throw InvalidConfigParameter("Parser configuration must contain: type");
+    }
+    if (const auto tupleDelimiter = configMap.find("tupleDelimiter"); tupleDelimiter != configMap.end())
+    {
+        /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
+        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
+        created.tupleDelimiter = tupleDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
+        created.tupleDelimiter = '\n';
+    }
+    if (const auto fieldDelimiter = configMap.find("fieldDelimiter"); fieldDelimiter != configMap.end())
+    {
+        created.fieldDelimiter = fieldDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
+        created.fieldDelimiter = ",";
+    }
+    return created;
+}
 bool operator==(const ParserConfig& lhs, const ParserConfig& rhs)
 {
     return lhs.parserType == rhs.parserType && lhs.tupleDelimiter == rhs.tupleDelimiter && lhs.fieldDelimiter == rhs.fieldDelimiter;

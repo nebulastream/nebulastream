@@ -41,7 +41,7 @@ public:
     /// 2. Propagate the input and output schemas from source operators to the sink operators.
     /// 3. If a operator contains expression, we infer the result stamp of this operators.
     /// @throws TypeInferenceException if inferring the data types into the query failed
-    static std::shared_ptr<QueryPlan> performTypeInferenceQuery(std::shared_ptr<QueryPlan> queryPlan);
+    std::shared_ptr<QueryPlan> performTypeInferenceQuery(std::shared_ptr<QueryPlan> queryPlan);
 
 private:
     std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;

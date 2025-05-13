@@ -14,57 +14,48 @@
 
 #pragma once
 
-#include <filesystem>
-#include <istream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <GRPCClient.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
+
+namespace NES
+{
+class QueryPlan;
+}
+namespace NES::Catalogs::Source
+{
+class SourceCatalog;
+}
 namespace NES::CLI
 {
 
-struct SchemaField
+class Optimizer
 {
-    SchemaField(std::string name, const std::string& typeName);
-    SchemaField(std::string name, std::shared_ptr<NES::DataType> type);
-    SchemaField() = default;
+    std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
 
-    std::string name;
-    std::shared_ptr<NES::DataType> type;
+public:
+    std::shared_ptr<DecomposedQueryPlan> optimize(std::shared_ptr<QueryPlan>& plan);
+    Optimizer() = default;
+    explicit Optimizer(const std::shared_ptr<NES::Catalogs::Source::SourceCatalog>& sourceCatalog) : sourceCatalog(sourceCatalog) { }
 };
-
-struct Sink
+class Nebuli
 {
-    std::string name;
-    std::string type;
-    std::unordered_map<std::string, std::string> config;
-};
+    std::shared_ptr<const GRPCClient> grpcClient;
 
-struct LogicalSource
-{
-    std::string name;
-    std::vector<SchemaField> schema;
-};
+public:
+    explicit Nebuli(const std::shared_ptr<const GRPCClient>& grpcClient) : grpcClient(grpcClient) { }
 
-struct PhysicalSource
-{
-    std::string logical;
-    std::unordered_map<std::string, std::string> parserConfig;
-    std::unordered_map<std::string, std::string> sourceConfig;
+    QueryId registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan);
+    void startQuery(QueryId queryId);
+    void stopQuery(QueryId queryId);
+    void unregisterQuery(QueryId queryId);
 };
-
-struct QueryConfig
-{
-    std::string query;
-    std::unordered_map<std::string, Sink> sinks;
-    std::vector<LogicalSource> logical;
-    std::vector<PhysicalSource> physical;
-};
-
-std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& file);
-std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream);
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
 }

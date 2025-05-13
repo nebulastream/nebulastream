@@ -24,7 +24,6 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
 #include <API/Schema.hpp>
@@ -271,7 +270,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
         done.wait(false);
     }
 
-    const auto stopped = stopSource.request_stop();
+    auto stopped = stopSource.request_stop();
     ASSERT_TRUE(stopped);
 
     for (unsigned int i = 0; i < numPhysicalAddThreads; ++i)

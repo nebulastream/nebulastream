@@ -25,6 +25,7 @@
 #include <utility>
 #include <vector>
 
+#include <API/Schema.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -43,14 +44,13 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 
-namespace NES::Systest
+namespace
 {
-
-SystestParser::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
+NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
 {
     /// Assumes the field and type to be similar to
     /// window$val_i8_i8:INT32, window$val_i8_i8_plus_1:INT16
-    SystestParser::Schema fields;
+    NES::Schema schema;
     for (auto field : std::ranges::split_view(fieldNamesRawLine, ',')
              | std::views::transform([](auto splittedNameAndType)
                                      { return std::string_view(splittedNameAndType.begin(), splittedNameAndType.end()); })
@@ -65,29 +65,33 @@ SystestParser::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         {
             fieldAndType.emplace_back(subrange.begin(), subrange.end());
         }
-        const auto nameTrimmed = Util::trimWhiteSpaces(fieldAndType[0]);
-        const auto typeTrimmed = Util::trimWhiteSpaces(fieldAndType[1]);
-        std::shared_ptr<DataType> dataType;
-        if (auto type = magic_enum::enum_cast<BasicType>(typeTrimmed); type.has_value())
+        const auto nameTrimmed = NES::Util::trimWhiteSpaces(fieldAndType[0]);
+        const auto typeTrimmed = NES::Util::trimWhiteSpaces(fieldAndType[1]);
+        std::shared_ptr<NES::DataType> dataType;
+        if (auto type = magic_enum::enum_cast<NES::BasicType>(typeTrimmed); type.has_value())
         {
-            dataType = DataTypeProvider::provideBasicType(type.value());
+            dataType = NES::DataTypeProvider::provideBasicType(type.value());
         }
         else if (NES::Util::toLowerCase(typeTrimmed) == "varsized")
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
+            dataType = NES::DataTypeProvider::provideDataType(NES::LogicalType::VARSIZED);
         }
         else
         {
-            throw SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
+            throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
         }
-        fields.emplace_back(dataType, std::string(nameTrimmed));
+        schema.addField(std::string(nameTrimmed), dataType);
     }
-    return fields;
+    return schema;
 }
+}
+namespace NES::Systest
+{
+
 
 std::pair<std::vector<MapFieldNameToValue>, std::vector<MapFieldNameToValue>> parseResultTuples(
-    const SystestParser::Schema& schemaExpected,
-    const SystestParser::Schema& queryResultFields,
+    const Schema& schemaExpected,
+    const Schema& queryResultFields,
     const SystestParser::ResultTuples& expectedResultLines,
     const SystestParser::ResultTuples& queryResultLines)
 {
@@ -97,15 +101,15 @@ std::pair<std::vector<MapFieldNameToValue>, std::vector<MapFieldNameToValue>> pa
 
     /// Lambda for creating the field values from a line with the schema. For example, "1 2 3" with schema "field1:INT32, field2:FLOAT32, field3:INT64"
     /// would be converted to {"field1": {INT32, "1"}, "field2": {FLOAT32, "2"}, "field3": {INT64, "3"}}
-    auto createFieldValues = [](const SystestParser::Schema& schema, const std::string& line) -> MapFieldNameToValue
+    auto createFieldValues = [](const Schema& schema, const std::string& line) -> MapFieldNameToValue
     {
         MapFieldNameToValue fieldValues;
         std::stringstream lineAsStream(line);
         std::string value;
-        for (const auto& [type, name] : schema)
+        for (const auto& attribute : schema)
         {
             std::getline(lineAsStream, value, ' ');
-            fieldValues[name] = {.type = type, .valueAsString = value};
+            fieldValues[attribute->getName()] = {.type = attribute->getDataType(), .valueAsString = value};
         }
         return fieldValues;
     };
@@ -126,9 +130,10 @@ std::pair<std::vector<MapFieldNameToValue>, std::vector<MapFieldNameToValue>> pa
     return std::pair{queryResultExpected, queryResultActual};
 }
 
+/// NOLINTBEGIN(readability-function-cognitive-complexity)
 static void populateErrorStream(
     std::stringstream& errorMessages,
-    const SystestParser::Schema& schemaExpected,
+    const Schema& schemaExpected,
     const std::vector<MapFieldNameToValue>& queryResultExpected,
     const std::vector<MapFieldNameToValue>& queryResultActual,
     const uint64_t seenResultTupleSections)
@@ -137,9 +142,9 @@ static void populateErrorStream(
     errorMessages << "[#Line: Expected Result | #Line: Query Result]\n";
 
     /// Writing the schema fields
-    for (const auto& [_, name] : schemaExpected)
+    for (const auto& attribute : schemaExpected)
     {
-        errorMessages << name + " ";
+        errorMessages << attribute->getName() + " ";
     }
     errorMessages << "\n";
 
@@ -157,14 +162,14 @@ static void populateErrorStream(
             {
                 const auto& expectedMap = queryResultExpected[i];
                 expectedStr << std::to_string(i) << ": ";
-                for (const auto& [_, name] : schemaExpected)
+                for (const auto& attribute : schemaExpected)
                 {
-                    if (not expectedMap.contains(name))
+                    if (not expectedMap.contains(attribute->getName()))
                     {
                         expectedStr << "(missing) ";
                         continue;
                     }
-                    expectedStr << expectedMap.at(name).valueAsString + " ";
+                    expectedStr << expectedMap.at(attribute->getName()).valueAsString + " ";
                 }
             }
 
@@ -173,14 +178,14 @@ static void populateErrorStream(
             {
                 gotStr << std::to_string(i) << ": ";
                 const auto& queryResultMap = queryResultActual[i];
-                for (const auto& [_, name] : schemaExpected)
+                for (const auto& attribute : schemaExpected)
                 {
-                    if (not queryResultMap.contains(name))
+                    if (not queryResultMap.contains(attribute->getName()))
                     {
                         gotStr << "(missing) ";
                         continue;
                     }
-                    gotStr << queryResultMap.at(name).valueAsString + " ";
+                    gotStr << queryResultMap.at(attribute->getName()).valueAsString + " ";
                 }
             }
 
@@ -191,6 +196,7 @@ static void populateErrorStream(
         }
     }
 }
+/// NOLINTEND(readability-function-cognitive-complexity)
 
 std::optional<QueryResult> loadQueryResult(const Query& query)
 {

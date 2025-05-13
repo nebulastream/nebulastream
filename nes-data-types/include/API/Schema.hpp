@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 #include <API/AttributeField.hpp>
-#include <fmt/base.h>
 #include <fmt/ostream.h>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
