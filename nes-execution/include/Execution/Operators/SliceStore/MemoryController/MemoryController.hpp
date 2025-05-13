@@ -22,15 +22,14 @@
 namespace NES::Runtime::Execution
 {
 
-using FileWriterId = std::tuple<SliceEnd, WorkerThreadId, QueryCompilation::JoinBuildSideType>;
-
 class MemoryController
 {
 public:
     MemoryController(
         size_t bufferSize,
-        uint64_t numWriteBuffers,
         uint64_t numReadBuffers,
+        uint64_t numWriteBuffers,
+        uint64_t numWorkerThreads,
         std::filesystem::path workingDir,
         QueryId queryId,
         OriginId originId);
@@ -52,10 +51,11 @@ private:
     /// We need a multiple of 2 buffers as we might need to separate keys and payload depending on the used FileLayout
     static constexpr auto POOL_SIZE_MULTIPLIER = 2UL;
 
-    std::string constructFilePath(SliceEnd sliceEnd, QueryCompilation::JoinBuildSideType joinBuildSide) const;
     std::string constructFilePath(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide) const;
 
-    void removeFileSystem(std::map<std::string, std::shared_ptr<FileWriter>>::iterator it);
+    void removeFileSystem(
+        std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, std::shared_ptr<FileWriter>>::iterator it,
+        WorkerThreadId threadId);
 
     char* allocateWriteBuffer();
     void deallocateWriteBuffer(char* buffer);
@@ -74,12 +74,13 @@ private:
     std::condition_variable readMemoryPoolCondition;
     std::mutex readMemoryPoolMutex;
 
-    // TODO build vector around maps to structure by WorkerThreadId (use less locks)
-    std::map<std::string, std::shared_ptr<FileWriter>> fileWriters;
-    std::mutex fileWritersMutex;
+    /// FileWriters are grouped by thread id thus removing the necessity of locks altogether. TODO what about deleteSliceFiles()
+    std::vector<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, std::shared_ptr<FileWriter>>> fileWriters;
+    //std::vector<std::mutex> fileWriterMutexes;
 
-    std::map<FileWriterId, FileLayout> fileLayouts;
-    std::mutex fileLayoutsMutex;
+    /// FileLayouts are grouped by thread id thus reducing the wait time to acquire locks
+    std::vector<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, FileLayout>> fileLayouts;
+    std::vector<std::mutex> fileLayoutMutexes;
 
     std::filesystem::path workingDir;
     QueryId queryId;

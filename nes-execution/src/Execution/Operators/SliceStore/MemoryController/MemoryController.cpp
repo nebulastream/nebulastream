@@ -19,8 +19,9 @@ namespace NES::Runtime::Execution
 
 MemoryController::MemoryController(
     const size_t bufferSize,
-    const uint64_t numWriteBuffers,
     const uint64_t numReadBuffers,
+    const uint64_t numWriteBuffers,
+    const uint64_t numWorkerThreads,
     std::filesystem::path workingDir,
     const QueryId queryId,
     const OriginId originId)
@@ -42,53 +43,53 @@ MemoryController::MemoryController(
             freeReadBuffers.push_back(readMemoryPool.data() + i * bufferSize);
         }
     }
+
+    fileWriters.resize(numWorkerThreads + 1);
+    //fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
+    fileLayouts.resize(numWorkerThreads);
+    fileLayoutMutexes = std::vector<std::mutex>(numWorkerThreads);
 }
 
 MemoryController::~MemoryController()
 {
     // TODO investigate why destructor is never called
-    const std::lock_guard writersLock(fileWritersMutex);
-    for (auto it = fileWriters.begin(); it != fileWriters.end(); ++it)
+    for (auto i = 0UL; i < fileWriters.size(); ++i)
     {
-        removeFileSystem(it);
-    }
-
-    const std::lock_guard layoutsLock(fileLayoutsMutex);
-    for (auto it = fileLayouts.begin(); it != fileLayouts.end(); ++it)
-    {
-        fileLayouts.erase(it);
+        for (auto mapIt = fileWriters[i].begin(); mapIt != fileWriters[i].end(); ++mapIt)
+        {
+            removeFileSystem(mapIt, WorkerThreadId(i));
+        }
     }
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    /// TODO don't construct path every time, just use std::tuple for map
-    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
-
     /// Search for matching fileWriter to avoid attempting to open a file twice
-    const std::lock_guard lock(fileWritersMutex);
-    if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
+    auto& writerMap = fileWriters[threadId.getRawValue()];
+    //const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
+    if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
     {
         return it->second;
     }
 
+    const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
     auto fileWriter = std::make_shared<FileWriter>(
         filePath, [this] { return allocateWriteBuffer(); }, [this](char* buf) { deallocateWriteBuffer(buf); }, bufferSize);
-    fileWriters[filePath] = fileWriter;
+    writerMap[{sliceEnd, joinBuildSide}] = fileWriter;
     return fileWriter;
 }
 
 std::shared_ptr<FileReader> MemoryController::getFileReader(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
-
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
-    const std::lock_guard lock(fileWritersMutex);
-    if (const auto it = fileWriters.find(filePath); it != fileWriters.end())
+    auto& writerMap = fileWriters[threadId.getRawValue()];
+    //const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
+    if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
     {
-        fileWriters.erase(it);
+        writerMap.erase(it);
+        const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
         return std::make_shared<FileReader>(
             filePath, [this] { return allocateReadBuffer(); }, [this](char* buf) { deallocateReadBuffer(buf); }, bufferSize);
     }
@@ -102,76 +103,73 @@ void MemoryController::setFileLayout(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const FileLayout fileLayout)
 {
-    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
-
-    /// Insert or override
-    const std::lock_guard lock(fileLayoutsMutex);
-    fileLayouts.insert_or_assign({sliceEnd, threadId, joinBuildSide}, fileLayout);
+    auto& layoutMap = fileLayouts[threadId.getRawValue()];
+    const std::scoped_lock lock(fileLayoutMutexes[threadId.getRawValue()]);
+    layoutMap[{sliceEnd, joinBuildSide}] = fileLayout;
 }
 
 std::optional<FileLayout> MemoryController::getFileLayout(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
-
-    const std::lock_guard lock(fileLayoutsMutex);
-    if (const auto it = fileLayouts.find({sliceEnd, threadId, joinBuildSide}); it != fileLayouts.end())
+    const auto& layoutMap = fileLayouts[threadId.getRawValue()];
+    const std::scoped_lock lock(fileLayoutMutexes[threadId.getRawValue()]);
+    if (const auto it = layoutMap.find({sliceEnd, joinBuildSide}); it != layoutMap.end())
     {
         return it->second;
     }
-
     return {};
 }
 
 void MemoryController::deleteFileLayout(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
 {
-    const auto filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
-
-    const std::lock_guard lock(fileLayoutsMutex);
-    if (const auto it = fileLayouts.find({sliceEnd, threadId, joinBuildSide}); it != fileLayouts.end())
+    auto& layoutMap = fileLayouts[threadId.getRawValue()];
+    const std::scoped_lock lock(fileLayoutMutexes[threadId.getRawValue()]);
+    if (const auto it = layoutMap.find({sliceEnd, joinBuildSide}); it != layoutMap.end())
     {
-        fileLayouts.erase(it);
+        layoutMap.erase(it);
     }
 }
 
 void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
 {
     // TODO delete from layout map as well
-    const std::lock_guard lock(fileWritersMutex);
-
-    for (const auto& joinBuildSide : {QueryCompilation::JoinBuildSideType::Left, QueryCompilation::JoinBuildSideType::Right})
+    for (auto i = 0UL; i < fileWriters.size(); ++i)
     {
-        const auto filePathPrefix = constructFilePath(sliceEnd, joinBuildSide);
-        const auto end = fileWriters.upper_bound(filePathPrefix + "\xFF");
-        auto it = fileWriters.lower_bound(filePathPrefix);
-        while (it != end)
+        auto& writerMap = fileWriters[i];
+        //const std::scoped_lock lock(fileWriterMutexes[i]);
+        for (const auto& joinBuildSide : {QueryCompilation::JoinBuildSideType::Left, QueryCompilation::JoinBuildSideType::Right})
         {
-            removeFileSystem(it++);
+            if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
+            {
+                removeFileSystem(it, WorkerThreadId(i));
+            }
         }
     }
-}
-
-std::string MemoryController::constructFilePath(const SliceEnd sliceEnd, const QueryCompilation::JoinBuildSideType joinBuildSide) const
-{
-    const std::string sideStr = joinBuildSide == QueryCompilation::JoinBuildSideType::Left ? "left" : "right";
-    return (workingDir
-            / std::filesystem::path(fmt::format(
-                "memory_controller_{}_{}_{}_{}_", queryId.getRawValue(), originId.getRawValue(), sideStr, sliceEnd.getRawValue())))
-        .string();
 }
 
 std::string MemoryController::constructFilePath(
     const SliceEnd sliceEnd, const WorkerThreadId threadId, const QueryCompilation::JoinBuildSideType joinBuildSide) const
 {
-    return constructFilePath(sliceEnd, joinBuildSide) + std::to_string(threadId.getRawValue());
+    const std::string sideStr = joinBuildSide == QueryCompilation::JoinBuildSideType::Left ? "left" : "right";
+    return (workingDir
+            / std::filesystem::path(fmt::format(
+                "memory_controller_{}_{}_{}_{}_{}",
+                queryId.getRawValue(),
+                originId.getRawValue(),
+                sideStr,
+                sliceEnd.getRawValue(),
+                threadId.getRawValue())))
+        .string();
 }
 
-void MemoryController::removeFileSystem(const std::map<std::string, std::shared_ptr<FileWriter>>::iterator it)
+void MemoryController::removeFileSystem(
+    const std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, std::shared_ptr<FileWriter>>::iterator it,
+    const WorkerThreadId threadId)
 {
     /// Files are deleted in FileReader destructor
-    const auto filePath = it->first;
-    fileWriters.erase(it);
+    const auto filePath = constructFilePath(it->first.first, threadId, it->first.second);
+    fileWriters[threadId.getRawValue()].erase(it);
     const FileReader fileReader(filePath, [] { return nullptr; }, [](char*) {}, 0);
 }
 

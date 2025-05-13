@@ -258,6 +258,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     /// Initialise memory controller and measure execution times for reading and writing
     memoryController = std::make_shared<MemoryController>(
         USE_BUFFER_SIZE,
+        numberOfWorkerThreads,
         USE_NUM_WRITE_BUFFERS,
         numberOfWorkerThreads,
         memoryControllerInfo.workingDir,
@@ -427,12 +428,12 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         const auto start = std::chrono::high_resolution_clock::now();
 
         const auto fileWriter = memoryController->getFileWriter(
-            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
+            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left);
         fileWriter->write(data.data(), dataSize);
         const auto write = std::chrono::high_resolution_clock::now();
 
         const auto fileReader = memoryController->getFileReader(
-            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(WorkerThreadId::INVALID), QueryCompilation::JoinBuildSideType::Left);
+            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left);
         fileReader->read(data.data(), dataSize);
         const auto read = std::chrono::high_resolution_clock::now();
 
