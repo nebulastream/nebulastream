@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <ostream>
+#include <optional>
 #include <string>
 #include <Util/Logger/Formatter.hpp>
 
@@ -106,8 +107,8 @@ struct DataType final
     uint32_t getSizeInBytes() const;
     /// Determines common data type for this and other data type. Returns @Type::UNDEFINED if it cannot find a common type.
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'
-    DataType join(const DataType& otherDataType) const;
-    std::string formattedBytesToString(const void* data) const;
+    [[nodiscard]] std::optional<DataType> join(const DataType& otherDataType) const;
+    [[nodiscard]] std::string formattedBytesToString(const void* data) const;
 
     [[nodiscard]] bool isType(Type type) const;
     [[nodiscard]] bool isInteger() const;
