@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -78,7 +79,7 @@ struct Query
         const uint64_t queryIdInFile,
         std::filesystem::path workingDir,
         std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
-        SystestParser::Schema sinkSchema)
+        const Schema& sinkSchema)
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
         , sqlLogicTestFile(std::move(sqlLogicTestFile))
@@ -99,7 +100,7 @@ struct Query
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
-    SystestParser::Schema expectedSinkSchema;
+    Schema expectedSinkSchema;
 };
 
 

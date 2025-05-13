@@ -193,5 +193,21 @@ bool Schema::hasFields() const
 {
     return not fields.empty();
 }
+auto Schema::begin() const -> decltype(std::declval<std::vector<Field>>().cbegin())
+{
+    return fields.cbegin();
+}
+auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
+{
+    return fields.cend();
+}
+auto Schema::begin() -> decltype(std::declval<std::vector<Field>>().begin())
+{
+    return fields.begin();
+}
+auto Schema::end() -> decltype(std::declval<std::vector<Field>>().end())
+{
+    return fields.end();
+}
 
 }

@@ -17,20 +17,57 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
 
 namespace NES
 {
+
+ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> configMap)
+{
+    ParserConfig created{};
+    if (const auto parserType = configMap.find("type"); parserType != configMap.end())
+    {
+        created.parserType = parserType->second;
+    }
+    else
+    {
+        throw InvalidConfigParameter("Parser configuration must contain: type");
+    }
+    if (const auto tupleDelimiter = configMap.find("tupleDelimiter"); tupleDelimiter != configMap.end())
+    {
+        /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
+        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
+        created.tupleDelimiter = tupleDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
+        created.tupleDelimiter = '\n';
+    }
+    if (const auto fieldDelimiter = configMap.find("fieldDelimiter"); fieldDelimiter != configMap.end())
+    {
+        created.fieldDelimiter = fieldDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
+        created.fieldDelimiter = ",";
+    }
+    return created;
+}
 
 SourceDescriptor::SourceDescriptor(
     LogicalSource logicalSource,

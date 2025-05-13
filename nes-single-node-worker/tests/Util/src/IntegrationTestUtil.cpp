@@ -21,7 +21,6 @@
 #include <ranges>
 #include <thread>
 #include <utility>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>

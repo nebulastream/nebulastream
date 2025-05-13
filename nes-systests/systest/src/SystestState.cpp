@@ -18,12 +18,19 @@
 #include <iostream>
 #include <ostream>
 #include <ranges>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
+
+#include <Plans/LogicalPlan.hpp>
+#include <ErrorHandling.hpp>
+#include <NebuLI.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
@@ -59,12 +66,29 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
 
 void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
+    auto loadedPlans = SystestBinder::loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
     uint64_t queryIdInFile = 0;
     std::unordered_set<uint64_t> foundQueries;
 
-    for (const auto& [decomposedPlan, queryDefinition, sinkSchema, sourceNamesToFilepath] : loadedPlans)
+    for (auto& [parsedPlan, sourceCatalog, queryDefinition, sinkSchema, sourcesToFilePaths] : loadedPlans)
     {
+        CLI::NebuliOptimizer optimizer{sourceCatalog};
+        auto optimizedPlan = optimizer.optimize(parsedPlan);
+        std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
+        for (const auto& logicalSourceOperator : NES::getOperatorByType<SourceDescriptorLogicalOperator>(optimizedPlan))
+        {
+            if (const auto path = sourcesToFilePaths.find(logicalSourceOperator.getSourceDescriptor()); path != sourcesToFilePaths.end())
+            {
+                auto& entry = sourceNamesToFilepathAndCountForQuery
+                    [logicalSourceOperator.getSourceDescriptor().getLogicalSource().getLogicalSourceName()];
+                entry = {path->second, entry.second + 1};
+            }
+            else
+            {
+                throw CannotLoadConfig("SourceName {} does not have an associated file path");
+            }
+        }
+        INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
         if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
         {
             for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber
@@ -75,10 +99,10 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
                     testfile.name(),
                     queryDefinition,
                     testfile.file,
-                    decomposedPlan,
+                    optimizedPlan,
                     queryIdInFile,
                     workingDir,
-                    sourceNamesToFilepath,
+                    sourceNamesToFilepathAndCountForQuery,
                     sinkSchema);
             }
         }
@@ -88,10 +112,10 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
                 testfile.name(),
                 queryDefinition,
                 testfile.file,
-                decomposedPlan,
+                optimizedPlan,
                 queryIdInFile,
                 workingDir,
-                sourceNamesToFilepath,
+                sourceNamesToFilepathAndCountForQuery,
                 sinkSchema);
         }
         ++queryIdInFile;

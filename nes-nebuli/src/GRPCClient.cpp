@@ -12,27 +12,30 @@
     limitations under the License.
 */
 
-
 #include <cstddef>
+#include <memory>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <google/protobuf/empty.pb.h>
 #include <grpcpp/channel.h>
+#include <grpcpp/client_context.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestGrpc.hpp>
+#include <GRPCClient.hpp>
+#include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <SingleNodeWorkerRPCService.pb.h>
 
-GRPCClient::GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel))
+GRPCClient::GRPCClient(const std::shared_ptr<grpc::Channel>& channel) : stub(WorkerRPCService::NewStub(channel))
 {
 }
-
-size_t GRPCClient::registerQuery(const NES::LogicalPlan& queryPlan) const
+size_t GRPCClient::registerQuery(const NES::LogicalPlan& plan) const
 {
     grpc::ClientContext context;
     RegisterQueryReply reply;
     RegisterQueryRequest request;
-    request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(queryPlan));
+    request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(plan));
     auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
     {
@@ -49,14 +52,13 @@ size_t GRPCClient::registerQuery(const NES::LogicalPlan& queryPlan) const
     return reply.queryid();
 }
 
-void GRPCClient::start(size_t queryId) const
+void GRPCClient::start(const size_t queryId) const
 {
     grpc::ClientContext context;
     StartQueryRequest request;
     google::protobuf::Empty response;
     request.set_queryid(queryId);
-    auto status = stub->StartQuery(&context, request, &response);
-    if (status.ok())
+    if (const auto status = stub->StartQuery(&context, request, &response); status.ok())
     {
         NES_DEBUG("Starting was successful.");
     }
@@ -70,16 +72,16 @@ void GRPCClient::start(size_t queryId) const
     }
 }
 
-NES::QuerySummary GRPCClient::status(size_t queryId) const
+
+NES::QuerySummary GRPCClient::status(const size_t queryId) const
 {
     grpc::ClientContext context;
     QuerySummaryRequest request;
     request.set_queryid(queryId);
     QuerySummaryReply response;
-    auto status = stub->RequestQuerySummary(&context, request, &response);
-    if (status.ok())
+    if (const auto status = stub->RequestQuerySummary(&context, request, &response); status.ok())
     {
-        NES_DEBUG("Stopping was successful.");
+        NES_DEBUG("Status was successful.");
     }
     else
     {
@@ -122,14 +124,34 @@ void GRPCClient::unregister(size_t queryId) const
     UnregisterQueryRequest request;
     google::protobuf::Empty response;
     request.set_queryid(queryId);
-    auto status = stub->UnregisterQuery(&context, request, &response);
-    if (status.ok())
+    if (const auto status = stub->UnregisterQuery(&context, request, &response); status.ok())
     {
         NES_DEBUG("Unregister was successful.");
     }
     else
     {
         throw NES::QueryUnregistrationFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
+            magic_enum::enum_name(status.error_code()),
+            status.error_message(),
+            status.error_details());
+    }
+}
+
+void GRPCClient::stop(const size_t queryId) const
+{
+    grpc::ClientContext context;
+    StopQueryRequest request;
+    request.set_queryid(queryId);
+    request.set_terminationtype(StopQueryRequest::Graceful);
+    google::protobuf::Empty response;
+    if (const auto status = stub->StopQuery(&context, request, &response); status.ok())
+    {
+        NES_DEBUG("Stopping was successful.");
+    }
+    else
+    {
+        throw NES::QueryStopFailed(
             "Status: {}\nMessage: {}\nDetail: {}",
             magic_enum::enum_name(status.error_code()),
             status.error_message(),
