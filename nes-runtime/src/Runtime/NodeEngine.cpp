@@ -111,9 +111,23 @@ bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanP
     }
     NES_DEBUG("Runtime::deployExecutableQueryPlan: successfully register query");
 
-    bool successStart = startDecomposedQueryPlan(executableQueryPlan->getSharedQueryId(),
-                                                 executableQueryPlan->getDecomposedQueryId(),
-                                                 executableQueryPlan->getDecomposedQueryVersion());
+    bool successStart = false;
+    auto timeout = std::chrono::milliseconds(10);
+    while (true) {
+        try {
+            successStart = startDecomposedQueryPlan(executableQueryPlan->getSharedQueryId(),
+                                                    executableQueryPlan->getDecomposedQueryId(),
+                                                    executableQueryPlan->getDecomposedQueryVersion());
+        } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
+            NES_ERROR("Successor with version {} already exists for query plan {}, retrying after {} ms",
+                      executableQueryPlan->getDecomposedQueryVersion(),
+                      executableQueryPlan->getDecomposedQueryId(),
+                      timeout.count());
+            std::this_thread::sleep_for(timeout);
+            continue;
+        }
+        break;
+    }
     if (!successStart) {
         NES_ERROR("Runtime::deployExecutableQueryPlan: failed to start query");
         return false;
@@ -984,12 +998,12 @@ bool NodeEngine::addReconfigureMarker(SharedQueryId,
                         }
                     }
                 } else if (event->reconfigurationMetadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
-//                    for (const auto& source : qep->getSources()) {
-//                        if (source) {
-//                            source->handleReconfigurationMarker(reconfigurationMarker);
-//                            addedMarker = true;
-//                        }
-//                    }
+                    //                    for (const auto& source : qep->getSources()) {
+                    //                        if (source) {
+                    //                            source->handleReconfigurationMarker(reconfigurationMarker);
+                    //                            addedMarker = true;
+                    //                        }
+                    //                    }
                     // TODO: REMOVE PROPAGATION OF EOS FROM UPSTREAM
                     return true;
                 }
@@ -1073,7 +1087,8 @@ std::shared_ptr<const Execution::ExecutableQueryPlan>
 NodeEngine::getExecutableQueryPlan(DecomposedQueryIdWithVersion idWithVersion) const {
     return getExecutableQueryPlan(idWithVersion.id, idWithVersion.version);
 }
-void NodeEngine::notifyCheckpoints(SharedQueryId sharedQueryId, std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> newWatermarks) {
+void NodeEngine::notifyCheckpoints(SharedQueryId sharedQueryId,
+                                   std::vector<std::tuple<std::tuple<uint64_t, uint64_t>, uint64_t>> newWatermarks) {
     nesWorker->notifyCheckpointToCoordinator(sharedQueryId, newWatermarks);
 }
 
@@ -1093,7 +1108,6 @@ folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::WLockedPtr NodeEngi
     }
     lastWrites.insert({sinkName, folly::Synchronized(std::unordered_map<uint64_t, uint64_t>())});
     return lastWrites.at(sinkName).wlock();
-
 }
 
 folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::TryWLockedPtr NodeEngine::tryLockLastWritten(std::string sinkName) {
@@ -1101,7 +1115,7 @@ folly::Synchronized<std::unordered_map<uint64_t, uint64_t>>::TryWLockedPtr NodeE
     if (lastWrites.contains(sinkName)) {
         return lastWrites.at(sinkName).tryWLock();
     }
-        lastWrites.insert({sinkName, folly::Synchronized(std::unordered_map<uint64_t, uint64_t>())});
+    lastWrites.insert({sinkName, folly::Synchronized(std::unordered_map<uint64_t, uint64_t>())});
     return lastWrites.at(sinkName).tryWLock();
 }
 
@@ -1142,12 +1156,13 @@ uint64_t NodeEngine::getLastSavedMinWatermark(SharedQueryId sharedQueryId, std::
     }
 }
 
-void NodeEngine::updateLastSavedMinWatermark(SharedQueryId sharedQueryId, std::tuple<uint64_t, uint64_t> key, uint64_t newMinWatermark) {
+void NodeEngine::updateLastSavedMinWatermark(SharedQueryId sharedQueryId,
+                                             std::tuple<uint64_t, uint64_t> key,
+                                             uint64_t newMinWatermark) {
     std::unique_lock lock(lastSavedWatermarkMutex);
     // NES_ERROR("saving new min watermark {} for key ({}, {}) for query {}", newMinWatermark, std::get<0>(key), std::get<1>(key), sharedQueryId);
     lastSavedWatermarkMap[{sharedQueryId, key}] = newMinWatermark;
 }
-
 
 std::vector<std::pair<std::tuple<uint64_t, uint64_t>, uint64_t>> NodeEngine::getAllSavedWatermarks(SharedQueryId sharedQueryId) {
     std::unique_lock lock(lastSavedWatermarkMutex);

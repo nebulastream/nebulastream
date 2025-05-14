@@ -413,10 +413,19 @@ void ExecutableQueryPlan::setSourcesToReuse(std::vector<OperatorId> sourcesToReu
 }
 
 bool ExecutableQueryPlan::addSuccessorPlan(ExecutableQueryPlanPtr successor) {
+    // TODO: use this code if we want to allow concurrent flow of markers of different versions
+    //    {
+    //        auto lockedSuccessor = this->successor.wlock();
+    //        if (*lockedSuccessor != nullptr && successor->decomposedQueryVersion != (*lockedSuccessor)->decomposedQueryVersion) {
+    //            return (*lockedSuccessor)->addSuccessorPlan(successor);
+    //        }
+    //        *lockedSuccessor = successor;
+    //    }
+
     {
         auto lockedSuccessor = this->successor.wlock();
         if (*lockedSuccessor != nullptr && successor->decomposedQueryVersion != (*lockedSuccessor)->decomposedQueryVersion) {
-            return (*lockedSuccessor)->addSuccessorPlan(successor);
+            throw SuccessorAlreadySetException();
         }
         *lockedSuccessor = successor;
     }
@@ -442,25 +451,25 @@ void ExecutableQueryPlan::transferSourcesToSuccessor(const ReconfigurationMarker
         NES_DEBUG("Cannot transfer sources to successor because no successor was registered");
         return;
     }
-//    NES_ERROR("Transfer sources to successor for plan with id {} of query {} from version {} to {}", decomposedQueryId, sharedQueryId, decomposedQueryVersion, (*lockedSuccessor)->decomposedQueryVersion);
+    //    NES_ERROR("Transfer sources to successor for plan with id {} of query {} from version {} to {}", decomposedQueryId, sharedQueryId, decomposedQueryVersion, (*lockedSuccessor)->decomposedQueryVersion);
     auto sourcesToReuseBySuccessorPlan = (*lockedSuccessor)->getSourcesToReuse();
 
     auto sources = getSources();
 
-//    NES_ERROR("Sources in old plan")
-//    for (auto source : sources) {
-//        NES_ERROR("{}", source->toString())
-//    }
-//
-//    NES_ERROR("Sources in new plan")
-//    for (auto source : (*lockedSuccessor)->getSources()) {
-//        NES_ERROR("{}", source->toString())
-//    }
-//
-//    NES_ERROR("Id's of sources to reuse in new plan")
-//    for (auto id : sourcesToReuseBySuccessorPlan) {
-//        NES_ERROR("{}", id)
-//    }
+    //    NES_ERROR("Sources in old plan")
+    //    for (auto source : sources) {
+    //        NES_ERROR("{}", source->toString())
+    //    }
+    //
+    //    NES_ERROR("Sources in new plan")
+    //    for (auto source : (*lockedSuccessor)->getSources()) {
+    //        NES_ERROR("{}", source->toString())
+    //    }
+    //
+    //    NES_ERROR("Id's of sources to reuse in new plan")
+    //    for (auto id : sourcesToReuseBySuccessorPlan) {
+    //        NES_ERROR("{}", id)
+    //    }
 
     for (auto successorSource : (*lockedSuccessor)->getSources()) {
         auto sourceId = successorSource->getOperatorId();

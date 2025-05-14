@@ -50,6 +50,10 @@ enum class ExecutableQueryPlanResult : uint8_t {
     Fail
 };
 
+//Exception that signals that a successor has already been set on this plan
+class SuccessorAlreadySetException : public std::exception {};
+
+
 /**
  * @brief Represents an executable plan of an particular query.
  * Each executable query plan contains a set of sources, pipelines, and sinks.

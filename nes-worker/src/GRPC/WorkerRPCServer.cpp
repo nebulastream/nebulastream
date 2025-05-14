@@ -22,6 +22,7 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Reconfiguration/ReconfigurationMarkerSerializationUtil.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -59,7 +60,21 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
         NES_ASSERT(decomposedQueryPlan->getState() != QueryState::MARKED_FOR_REDEPLOYMENT,
                    "Plan marked for redeployment should not be registered again");
         NES_DEBUG("registered decomposed query plan")
-        success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan, request->replaydata());
+
+        auto timeout = std::chrono::milliseconds(10);
+        while (true) {
+            try {
+                success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan, request->replaydata());
+            } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
+                NES_ERROR("Successor with version {} already exists for query plan {}, retrying after {} ms",
+                          decomposedQueryPlan->getVersion(),
+                          decomposedQueryPlan->getDecomposedQueryId(),
+                          timeout.count());
+                std::this_thread::sleep_for(timeout);
+                continue;
+            }
+            break;
+        }
     } catch (std::exception& error) {
         NES_DEBUG("Register query crashed: {}", error.what());
         success = false;
@@ -96,7 +111,8 @@ Status WorkerRPCServer::StartDecomposedQuery(ServerContext*,
     NES_DEBUG("WorkerRPCServer::StartQuery: got request for {}", request->sharedqueryid());
     NES_DEBUG("Start query, count = {}", request->count())
     bool success = nodeEngine->startDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
-                                                        DecomposedQueryId(request->decomposedqueryid()), request->count());
+                                                        DecomposedQueryId(request->decomposedqueryid()),
+                                                        request->count());
     if (success) {
         NES_DEBUG("WorkerRPCServer::StartQuery: success");
         NES_DEBUG("Start query success , count = {}", request->count())
@@ -136,8 +152,9 @@ Status WorkerRPCServer::AddReconfigurationMarker(ServerContext*,
     auto serializableReconfigurationMarker = request->serializablereconfigurationmarker();
     ReconfigurationMarkerSerializationUtil::deserialize(serializableReconfigurationMarker, reconfigurationMarker);
     NES_INFO("Received reconfiguration marker");
-    auto status = nodeEngine->addReconfigureMarker(sharedQueryId, decomposedQueryId, reconfigurationMarker, request->count()) ? Status::OK
-                                                                                                            : Status::CANCELLED;
+    auto status = nodeEngine->addReconfigureMarker(sharedQueryId, decomposedQueryId, reconfigurationMarker, request->count())
+        ? Status::OK
+        : Status::CANCELLED;
     return status;
 }
 
@@ -283,9 +300,9 @@ Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsReq
 
 Status WorkerRPCServer::SendCheckpointToSource(ServerContext*, const CheckPointList* request, CheckPointRespone* reply) {
     NES_DEBUG("request to replay received at worker")
-//    //todo
-//    (void) request;
-//    (void) reply;
+    //    //todo
+    //    (void) request;
+    //    (void) reply;
     // auto id = request->sharedqueryid();
     auto keys = request->checkpointkeylist();
     auto watermarks = request->checkpointwatermarklist();
