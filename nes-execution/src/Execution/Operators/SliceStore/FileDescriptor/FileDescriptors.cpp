@@ -13,6 +13,9 @@
 */
 
 #include <Execution/Operators/SliceStore/FileDescriptor/FileDescriptors.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/detached.hpp>
+#include <boost/asio/use_awaitable.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -22,8 +25,9 @@ FileWriter::FileWriter(
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
-    : file(filePath + ".dat", std::ios::out | std::ios::trunc | std::ios::binary)
-    , keyFile(filePath + "_key.dat", std::ios::out | std::ios::trunc | std::ios::binary)
+    : workGuard(boost::asio::make_work_guard(io))
+    , file(io)
+    , keyFile(io)
     , writeBuffer(allocate())
     , writeKeyBuffer(nullptr)
     , writeBufferPos(0)
@@ -32,91 +36,126 @@ FileWriter::FileWriter(
     , allocate(allocate)
     , deallocate(deallocate)
 {
-    if (!file.is_open())
+    const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0666);
+    const auto keyFd = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0666);
+    if (fd < 0 || keyFd < 0)
     {
-        throw std::ios_base::failure("Failed to open file for writing");
+        throw std::runtime_error("Failed to open file or key file for writing");
     }
-    if (!keyFile.is_open())
-    {
-        throw std::ios_base::failure("Failed to open key file for writing");
-    }
+
+    file.assign(fd);
+    keyFile.assign(keyFd);
+
+    ioThread = std::thread([this] { runContext(); });
 }
 
 FileWriter::~FileWriter()
 {
-    flushAndDeallocateBuffer();
-    file.close();
-    keyFile.close();
+    /// Buffer needs to be flushed manually before calling the destructor
+    // TODO add synchronous flush
+    workGuard.reset();
+    io.stop();
+    if (ioThread.joinable())
+    {
+        ioThread.join();
+    }
+
+    deallocateBuffers();
 }
 
-void FileWriter::write(const void* data, const size_t size)
+boost::asio::awaitable<void> FileWriter::write(const void* data, const size_t size)
 {
     if (writeBuffer == nullptr)
     {
         writeBuffer = allocate();
     }
 
-    write(data, size, writeBuffer, writeBufferPos, file);
+    co_await bufferedWrite(file, writeBuffer, writeBufferPos, data, size);
+    co_return;
 }
 
-void FileWriter::writeKey(const void* data, const size_t size)
+boost::asio::awaitable<void> FileWriter::writeKey(const void* data, const size_t size)
 {
     if (writeKeyBuffer == nullptr)
     {
         writeKeyBuffer = allocate();
     }
 
-    write(data, size, writeKeyBuffer, writeKeyBufferPos, keyFile);
+    co_await bufferedWrite(keyFile, writeKeyBuffer, writeKeyBufferPos, data, size);
+    co_return;
 }
 
-void FileWriter::flushAndDeallocateBuffer()
+boost::asio::awaitable<void> FileWriter::flush()
 {
-    writeToFile(writeBuffer, writeBufferPos, file);
-    if (writeKeyBuffer != nullptr)
+    if (bufferSize == 0)
     {
-        writeToFile(writeKeyBuffer, writeKeyBufferPos, keyFile);
+        co_return;
     }
 
-    /// We need to deallocate all buffers as this FileWriter might not be used for a while but would otherwise still own buffers,
-    /// resulting in a deadlock
-    // TODO create new deallocateBuffers() method and call from MemoryController (also create new function)
-    deallocate(writeBuffer);
-    deallocate(writeKeyBuffer);
+    if (writeBufferPos > 0)
+    {
+        co_await flushStream(file, writeBuffer, writeBufferPos);
+        writeBufferPos = 0;
+    }
+    if (writeKeyBufferPos > 0)
+    {
+        co_await flushStream(keyFile, writeKeyBuffer, writeKeyBufferPos);
+        writeKeyBufferPos = 0;
+    }
+    co_return;
 }
 
-void FileWriter::write(const void* data, size_t dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const
+void FileWriter::deallocateBuffers()
+{
+    deallocate(writeBuffer);
+    writeBuffer = nullptr;
+    deallocate(writeKeyBuffer);
+    writeKeyBuffer = nullptr;
+}
+
+boost::asio::awaitable<void>
+FileWriter::bufferedWrite(boost::asio::posix::stream_descriptor& stream, char* buf, size_t& bufferPos, const void* data, size_t size) const
 {
     const auto* dataPtr = static_cast<const char*>(data);
     if (bufferSize == 0)
     {
-        return writeToFile(dataPtr, dataSize, fileStream);
+        co_await flushStream(stream, dataPtr, size);
+        co_return;
     }
 
-    while (dataSize > 0)
+    while (size > 0)
     {
-        const auto copySize = std::min(dataSize, bufferSize - bufferPos);
-        std::memcpy(buffer + bufferPos, dataPtr, copySize);
+        const auto copySize = std::min(size, bufferSize - bufferPos);
+        std::memcpy(buf + bufferPos, dataPtr, copySize);
         bufferPos += copySize;
         dataPtr += copySize;
-        dataSize -= copySize;
+        size -= copySize;
 
         if (bufferPos == bufferSize)
         {
-            writeToFile(buffer, bufferPos, fileStream);
+            co_await flushStream(stream, buf, bufferPos);
+            bufferPos = 0;
         }
     }
+    co_return;
 }
 
-void FileWriter::writeToFile(const char* buffer, size_t& bufferPos, std::ofstream& fileStream)
+boost::asio::awaitable<void> FileWriter::flushStream(boost::asio::posix::stream_descriptor& stream, const char* buffer, const size_t size)
 {
-    if (bufferPos > 0)
+    size_t written = 0;
+    while (written < size)
     {
-        if (!fileStream.write(buffer, bufferPos))
-        {
-            throw std::ios_base::failure("Failed to write to file");
-        }
-        bufferPos = 0;
+        const size_t numBytes
+            = co_await stream.async_write_some(boost::asio::buffer(buffer + written, size - written), boost::asio::use_awaitable);
+        written += numBytes;
     }
+    co_return;
+}
+
+void FileWriter::runContext()
+{
+    boost::asio::co_spawn(io, []() -> boost::asio::awaitable<void> { co_return; }(), boost::asio::detached);
+    io.run();
 }
 
 FileReader::FileReader(

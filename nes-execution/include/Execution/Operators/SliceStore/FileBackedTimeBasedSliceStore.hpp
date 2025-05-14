@@ -97,7 +97,7 @@ public:
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
 
     /// TODO
-    void updateSlices(
+    boost::asio::awaitable<void> updateSlices(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,

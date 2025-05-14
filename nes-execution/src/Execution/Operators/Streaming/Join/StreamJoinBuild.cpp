@@ -22,6 +22,8 @@
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Util/Execution.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/detached.hpp>
 #include <nautilus/val_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -46,12 +48,17 @@ void updateSlicesProxy(
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
     {
-        sliceStore->updateSlices(
-            bufferProvider,
-            memoryLayout,
-            joinBuildSide,
-            SliceStoreMetaData(
-                workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId)));
+        boost::asio::io_context io;
+        boost::asio::co_spawn(
+            io,
+            sliceStore->updateSlices(
+                bufferProvider,
+                memoryLayout,
+                joinBuildSide,
+                SliceStoreMetaData(
+                    workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))),
+            boost::asio::detached);
+        io.run();
     }
 }
 

@@ -29,6 +29,8 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Locks.hpp>
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/detached.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
@@ -269,7 +271,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     measureReadAndWriteExecTimes(USE_TEST_DATA_SIZES);
 }
 
-void FileBackedTimeBasedSliceStore::updateSlices(
+boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
@@ -314,10 +316,10 @@ void FileBackedTimeBasedSliceStore::updateSlices(
                         (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = false;
 
                         auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide);
-                        pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
+                        co_await pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
+                        co_await fileWriter->flush();
                         pagedVector->truncate(fileLayout);
-                        // TODO force flush FileWriter?
-                        fileWriter->flushAndDeallocateBuffer();
+                        fileWriter->deallocateBuffers();
                     }
                     break;
                 }
@@ -327,6 +329,7 @@ void FileBackedTimeBasedSliceStore::updateSlices(
         nljSlice->releaseCombinePagedVectorsLock();
     }
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
+    co_return;
 }
 
 std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
@@ -429,9 +432,11 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         std::vector<char> data(dataSize);
         const auto start = std::chrono::high_resolution_clock::now();
 
+        boost::asio::io_context io;
         const auto fileWriter = memoryController->getFileWriter(
             SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left);
-        fileWriter->write(data.data(), dataSize);
+        boost::asio::co_spawn(io, fileWriter->write(data.data(), dataSize), boost::asio::detached);
+        io.run();
         const auto write = std::chrono::high_resolution_clock::now();
 
         const auto fileReader = memoryController->getFileReader(

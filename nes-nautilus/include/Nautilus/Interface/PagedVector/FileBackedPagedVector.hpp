@@ -30,7 +30,7 @@ public:
     void copyFrom(const PagedVector& other) override;
 
     /// Writes the projected fields of all tuples to fileStorage.
-    void writeToFile(
+    boost::asio::awaitable<void> writeToFile(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Runtime::Execution::FileWriter& fileWriter,
@@ -55,10 +55,10 @@ private:
     /// Appends a new page to the keyPages vector if the last page is full.
     void appendKeyPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
 
-    void
+    boost::asio::awaitable<void>
     writePayloadAndKeysToSeparateFiles(const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter);
 
-    void writePayloadOnlyToFile(
+    boost::asio::awaitable<void> writePayloadOnlyToFile(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
         Runtime::Execution::FileWriter& fileWriter);

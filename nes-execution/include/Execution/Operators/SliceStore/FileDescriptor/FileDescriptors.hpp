@@ -16,6 +16,9 @@
 
 #include <fstream>
 #include <functional>
+#include <thread>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/posix/stream_descriptor.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -38,17 +41,24 @@ public:
         size_t bufferSize);
     ~FileWriter();
 
-    void write(const void* data, size_t size);
-    void writeKey(const void* data, size_t size);
+    boost::asio::awaitable<void> write(const void* data, size_t size);
+    boost::asio::awaitable<void> writeKey(const void* data, size_t size);
 
-    void flushAndDeallocateBuffer();
+    boost::asio::awaitable<void> flush();
+    void deallocateBuffers();
 
 private:
-    void write(const void* data, size_t dataSize, char* buffer, size_t& bufferPos, std::ofstream& fileStream) const;
-    static void writeToFile(const char* buffer, size_t& bufferPos, std::ofstream& fileStream);
+    boost::asio::awaitable<void>
+    bufferedWrite(boost::asio::posix::stream_descriptor& stream, char* buf, size_t& bufferPos, const void* data, size_t size) const;
+    static boost::asio::awaitable<void> flushStream(boost::asio::posix::stream_descriptor& stream, const char* buffer, size_t size);
+    void runContext();
 
-    std::ofstream file;
-    std::ofstream keyFile;
+    boost::asio::io_context io;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard;
+    std::thread ioThread;
+
+    boost::asio::posix::stream_descriptor file;
+    boost::asio::posix::stream_descriptor keyFile;
 
     char* writeBuffer;
     char* writeKeyBuffer;

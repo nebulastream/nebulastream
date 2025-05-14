@@ -39,7 +39,7 @@ void FileBackedPagedVector::copyFrom(const PagedVector& other)
     }
 }
 
-void FileBackedPagedVector::writeToFile(
+boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     Runtime::Execution::FileWriter& fileWriter,
@@ -64,22 +64,23 @@ void FileBackedPagedVector::writeToFile(
         case Runtime::Execution::NO_SEPARATION: {
             for (const auto& page : pages)
             {
-                fileWriter.write(page.getBuffer(), page.getNumberOfTuples() * memoryLayout->getTupleSize());
+                co_await fileWriter.write(page.getBuffer(), page.getNumberOfTuples() * memoryLayout->getTupleSize());
                 numTuplesOnDisk += page.getNumberOfTuples();
             }
             break;
         }
         /// Write only payload to file and append key field data to designated pagedVectorKeys
         case Runtime::Execution::SEPARATE_PAYLOAD: {
-            writePayloadOnlyToFile(memoryLayout, bufferProvider, fileWriter);
+            co_await writePayloadOnlyToFile(memoryLayout, bufferProvider, fileWriter);
             break;
         }
         /// Write designated pagedVectorKeys to key file first and then remaining payload and key field data to separate files
         case Runtime::Execution::SEPARATE_KEYS: {
-            writePayloadAndKeysToSeparateFiles(memoryLayout, fileWriter);
+            co_await writePayloadAndKeysToSeparateFiles(memoryLayout, fileWriter);
             break;
         }
     }
+    co_return;
 }
 
 void FileBackedPagedVector::readFromFile(
@@ -201,7 +202,7 @@ void FileBackedPagedVector::appendKeyPageIfFull(
     }
 }
 
-void FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
+boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter)
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
@@ -211,7 +212,7 @@ void FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
 
     for (const auto& keyPage : keyPages)
     {
-        fileWriter.writeKey(keyPage.getBuffer(), keyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize());
+        co_await fileWriter.writeKey(keyPage.getBuffer(), keyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize());
     }
 
     for (const auto& page : pages)
@@ -224,19 +225,20 @@ void FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
             {
                 if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
                 {
-                    fileWriter.writeKey(pagePtr, fieldSize);
+                    co_await fileWriter.writeKey(pagePtr, fieldSize);
                 }
                 else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
                 {
-                    fileWriter.write(pagePtr, fieldSize);
+                    co_await fileWriter.write(pagePtr, fieldSize);
                 }
                 pagePtr += fieldSize;
             }
         }
     }
+    co_return;
 }
 
-void FileBackedPagedVector::writePayloadOnlyToFile(
+boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     Memory::AbstractBufferProvider* bufferProvider,
     Runtime::Execution::FileWriter& fileWriter)
@@ -267,13 +269,14 @@ void FileBackedPagedVector::writePayloadOnlyToFile(
                 }
                 else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
                 {
-                    fileWriter.write(pagePtr, fieldSize);
+                    co_await fileWriter.write(pagePtr, fieldSize);
                 }
                 pagePtr += fieldSize;
             }
             lastKeyPage.setNumberOfTuples(numTuplesLastKeyPage + 1);
         }
     }
+    co_return;
 }
 
 void FileBackedPagedVector::readSeparatelyFromFiles(
