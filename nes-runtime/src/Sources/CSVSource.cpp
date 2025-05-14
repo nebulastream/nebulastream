@@ -293,26 +293,25 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     NES_DEBUG("TCPSource::fillBuffer: {} bytes read", bytesRead);
                     if (bytesRead == 0) {
                         if (byteOffset < incomingTupleSize) {
-                            //NES_ERROR("Read timed out before complete tuple was read");
-                            //return std::nullopt;
-                            //                                buffer.setNumberOfTuples(0);
-                            //                                return buffer.getBuffer();
-                            if (running) {
-                                break;
-                            } else {
-                                return std::nullopt;
-                            }
-                            // buffer.setNumberOfTuples(0);
-                            // return buffer.getBuffer();
+//                            if (running) {
+//                                break;
+//                            } else {
+//                                return std::nullopt;
+//                            }
                         }
-                        //flushIntervalPassed = true;
                     } else if (bytesRead < 0) {
-                        // NES_ERROR("TCPSource::fillBuffer: error while reading from socket");
-                        if (running) {
-                            break;
-                        } else {
-                            return std::nullopt;
-                        }
+//                        if (running) {
+//                            break;
+//                        } else {
+//                            return std::nullopt;
+//                        }
+                    }
+
+                    //because the above cases were commented out to stop the source once no more bytes come in,
+                    //we need the following condition to emit an underfilled buffer on the end of the query if the
+                    //tuple count is not dividable by the amount of tuples per buffer
+                    if (bytesRead == 0 && byteOffset > incomingTupleSize) {
+                        break;
                     }
                     byteOffset += bytesRead;
                 }
