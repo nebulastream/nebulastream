@@ -291,15 +291,17 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                     int bytesRead =
                         read(sourceInfo->sockfd, &sourceInfo->incomingBuffer[byteOffset], bytesPerBuffer - byteOffset);
                     NES_DEBUG("TCPSource::fillBuffer: {} bytes read", bytesRead);
-                    if (bytesRead == 0) {
+                    //add generated = 0 to only use this before query is started
+                    if (bytesRead == 0 && generatedTuples == 0) {
                         if (byteOffset < incomingTupleSize) {
-//                            if (running) {
-//                                break;
-//                            } else {
-//                                return std::nullopt;
-//                            }
+                            if (running) {
+                                break;
+                            } else {
+                                return std::nullopt;
+                            }
                         }
-                    } else if (bytesRead < 0) {
+                    //add generated = 0 to only use this before query is started
+                    } else if (bytesRead < 0 && generatedTuples == 0) {
 //                        if (running) {
 //                            break;
 //                        } else {
