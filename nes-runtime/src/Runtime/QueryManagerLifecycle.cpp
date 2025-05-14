@@ -291,27 +291,27 @@ bool AbstractQueryManager::startExecutableQueryPlan(const Execution::ExecutableQ
             }
 
             auto sourcesToReuse = qep->getSourcesToReuse();
-            bool registeredAsSuccessor = false;
+//            bool registeredAsSuccessor = false;
 
             // 3a. pre-start net sources
             for (const auto& source : netSources) {
 
                 //check if source is an existing source to be reused
                 if (std::find(sourcesToReuse.begin(), sourcesToReuse.end(), source->getUniqueId()) != sourcesToReuse.end()) {
-                    if (!registeredAsSuccessor) {
-                        auto predecessorPlans = sourceToQEPMapping[source->getOperatorId()];
-
-                        if (predecessorPlans.size() > 1) {
-                            NES_FATAL_ERROR(
-                                "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
-                                source->getOperatorId());
-                        }
-
-                        auto predecessorPlan = predecessorPlans.front();
-
-                        predecessorPlan->addSuccessorPlan(qep);
-                        registeredAsSuccessor = true;
-                    }
+//                    if (!registeredAsSuccessor) {
+//                        auto predecessorPlans = sourceToQEPMapping[source->getOperatorId()];
+//
+//                        if (predecessorPlans.size() > 1) {
+//                            NES_FATAL_ERROR(
+//                                "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
+//                                source->getOperatorId());
+//                        }
+//
+//                        auto predecessorPlan = predecessorPlans.front();
+//
+//                        predecessorPlan->addSuccessorPlan(qep);
+//                        registeredAsSuccessor = true;
+//                    }
 
                     //do not bind
                     continue;
