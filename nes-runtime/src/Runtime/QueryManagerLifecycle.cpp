@@ -216,6 +216,7 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
 
 
 std::vector<Execution::ExecutableQueryPlanPtr> AbstractQueryManager::getQepsForSource(std::shared_ptr<DataSource> source) {
+    std::scoped_lock lock(queryMutex);
     return sourceToQEPMapping[source->getOperatorId()];
 }
 
