@@ -13,10 +13,11 @@
 */
 
 #pragma once
-#include <NebuLI.hpp>
 #include "ModelLoader.hpp"
 
 #include <ranges>
+#include <unordered_map>
+#include <NebuLI.hpp>
 
 namespace NES::Nebuli::Inference
 {
@@ -47,8 +48,6 @@ inline Model ModelCatalog::load(const std::string modelName) const
         auto result = Inference::load(it->second.path, {});
         if (result)
         {
-            result->inputSizeInBytes = 4 * std::accumulate(result->shape.begin(), result->shape.end(), 1, std::multiplies<int>());
-
             result->inputs = it->second.inputs;
             result->outputs = it->second.outputs
                 | std::views::transform([](const auto& schemaField)

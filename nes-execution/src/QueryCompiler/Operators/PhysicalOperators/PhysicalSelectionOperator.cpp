@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <ostream>
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
@@ -49,13 +50,16 @@ std::shared_ptr<PhysicalOperator> PhysicalSelectionOperator::create(
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(function));
 }
 
-std::string PhysicalSelectionOperator::toString() const
+std::ostream& PhysicalSelectionOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalSelectionOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+    os << "\nPhysicalSelectionOperator:\n";
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalSelectionOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalSelectionOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalSelectionOperator::copy()

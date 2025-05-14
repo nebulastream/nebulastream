@@ -17,7 +17,9 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
+
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -83,7 +85,7 @@ std::shared_ptr<Schema> createSchema(const std::vector<TestDataTypes>& testDataT
 }
 
 std::function<void(OriginId, Sources::SourceReturnType::SourceReturnType)>
-getEmitFunction(std::vector<NES::Memory::TupleBuffer>& resultBuffers)
+getEmitFunction(ThreadSafeVector<NES::Memory::TupleBuffer>& resultBuffers)
 {
     return [&resultBuffers](const OriginId, Sources::SourceReturnType::SourceReturnType returnType)
     {
@@ -140,9 +142,14 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
     auto validatedSourceConfiguration = Sources::SourceValidationProvider::provide("File", std::move(fileSourceConfiguration));
 
     const auto sourceDescriptor = Sources::SourceDescriptor(
-        std::move(schema), "TestSource", "File", Sources::ParserConfig{}, std::move(validatedSourceConfiguration));
+        std::move(schema),
+        "TestSource",
+        "File",
+        numberOfLocalBuffersInSource,
+        Sources::ParserConfig{},
+        std::move(validatedSourceConfiguration));
 
-    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), numberOfLocalBuffersInSource);
+    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), -1);
 }
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
 {

@@ -12,15 +12,14 @@
     limitations under the License.
 */
 
-#include <utility>
 #include <memory>
+#include <utility>
 #include <Operators/LogicalOperators/Inference/LogicalInferModelNameOperator.hpp>
 #include <Operators/LogicalOperators/Inference/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/ModelInferenceCompilationRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include "Operators/Operator.hpp"
-#include "ModelCatalog.hpp"
+#include <ModelCatalog.hpp>
 
 namespace NES::Optimizer
 {
@@ -38,7 +37,8 @@ std::shared_ptr<QueryPlan> ModelInferenceCompilationRule::apply(std::shared_ptr<
     {
         auto name = modelNameOperator->getModelName();
         auto model = catalog->load(name);
-        modelNameOperator->replace(std::make_shared<InferModel::LogicalInferModelOperator>(getNextOperatorId(), model, modelNameOperator->getInputFields()));
+        modelNameOperator->replace(
+            std::make_shared<InferModel::LogicalInferModelOperator>(getNextOperatorId(), model, modelNameOperator->getInputFields()));
     }
 
     NES_DEBUG("ModelInferenceCompilationRule: Plan after\n{}", queryPlan->toString());

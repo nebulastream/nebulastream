@@ -181,37 +181,36 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    return nautilusEngine->registerFunction(
-        std::function(
-            [this](
-                nautilus::val<Memory::TupleBuffer*> keyBufferRef,
-                nautilus::val<Memory::TupleBuffer*> outputBufferForValues,
-                nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
-                nautilus::val<Interface::HashMap*> hashMapVal)
+    return nautilusEngine->registerFunction(std::function(
+        [this](
+            nautilus::val<Memory::TupleBuffer*> keyBufferRef,
+            nautilus::val<Memory::TupleBuffer*> outputBufferForValues,
+            nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
+            nautilus::val<Interface::HashMap*> hashMapVal)
+        {
+            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            const RecordBuffer recordBufferKey(keyBufferRef);
+            for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
             {
-                Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
-                const RecordBuffer recordBufferKey(keyBufferRef);
-                for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
-                {
-                    auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, i);
-                    auto foundEntry = hashMapRef.findOrCreateEntry(
-                        recordKey, *NautilusTestUtils::getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
+                auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, i);
+                auto foundEntry = hashMapRef.findOrCreateEntry(
+                    recordKey, *NautilusTestUtils::getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
-                    const auto castedEntry = static_cast<nautilus::val<Interface::ChainedHashMapEntry*>>(foundEntry);
-                    const Interface::ChainedHashMapRef::ChainedEntryRef entry(castedEntry, fieldKeys, fieldValues);
+                const auto castedEntry = static_cast<nautilus::val<Interface::ChainedHashMapEntry*>>(foundEntry);
+                const Interface::ChainedHashMapRef::ChainedEntryRef entry(castedEntry, fieldKeys, fieldValues);
 
-                    /// Writing the read value from the chained hash map into the buffer.
-                    Record outputRecord;
-                    const auto keyRecord = entry.getKey();
-                    const auto valueRecord = entry.getValue();
-                    outputRecord.reassignFields(keyRecord);
-                    outputRecord.reassignFields(valueRecord);
+                /// Writing the read value from the chained hash map into the buffer.
+                Record outputRecord;
+                const auto keyRecord = entry.getKey();
+                const auto valueRecord = entry.getValue();
+                outputRecord.reassignFields(keyRecord);
+                outputRecord.reassignFields(valueRecord);
 
-                    RecordBuffer recordBufferOutput(outputBufferForValues);
-                    memoryProviderInputBuffer->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
-                    recordBufferOutput.setNumRecords(i + 1);
-                }
-            }));
+                RecordBuffer recordBufferOutput(outputBufferForValues);
+                memoryProviderInputBuffer->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
+                recordBufferOutput.setNumRecords(i + 1);
+            }
+        }));
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
@@ -221,30 +220,29 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    return nautilusEngine->registerFunction(
-        std::function(
-            [this](
-                nautilus::val<Memory::TupleBuffer*> bufferOutput,
-                nautilus::val<Memory::AbstractBufferProvider*> bufferProvider,
-                nautilus::val<Interface::HashMap*> hashMapVal)
+    return nautilusEngine->registerFunction(std::function(
+        [this](
+            nautilus::val<Memory::TupleBuffer*> bufferOutput,
+            nautilus::val<Memory::AbstractBufferProvider*> bufferProvider,
+            nautilus::val<Interface::HashMap*> hashMapVal)
+        {
+            const Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            RecordBuffer recordBufferOutput(bufferOutput);
+            nautilus::val<uint64_t> outputBufferIndex(0);
+            for (auto entry : hashMapRef)
             {
-                const Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
-                RecordBuffer recordBufferOutput(bufferOutput);
-                nautilus::val<uint64_t> outputBufferIndex(0);
-                for (auto entry : hashMapRef)
-                {
-                    /// Writing the read value from the chained hash map into the buffer.
-                    Record outputRecord;
-                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
-                    const auto keyRecord = entryRef.getKey();
-                    const auto valueRecord = entryRef.getValue();
-                    outputRecord.reassignFields(keyRecord);
-                    outputRecord.reassignFields(valueRecord);
-                    memoryProviderInputBuffer->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
-                    outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
-                    recordBufferOutput.setNumRecords(outputBufferIndex);
-                }
-            }));
+                /// Writing the read value from the chained hash map into the buffer.
+                Record outputRecord;
+                const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
+                const auto keyRecord = entryRef.getKey();
+                const auto valueRecord = entryRef.getValue();
+                outputRecord.reassignFields(keyRecord);
+                outputRecord.reassignFields(valueRecord);
+                memoryProviderInputBuffer->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
+                outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
+                recordBufferOutput.setNumRecords(outputBufferIndex);
+            }
+        }));
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
@@ -253,32 +251,31 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    return nautilusEngine->registerFunction(
-        std::function(
-            /// ReSharper disable once CppPassValueParameterByConstReference
-            [this](
-                nautilus::val<Memory::TupleBuffer*> inputBufferRef,
-                nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
-                nautilus::val<Interface::HashMap*> hashMapVal)
+    return nautilusEngine->registerFunction(std::function(
+        /// ReSharper disable once CppPassValueParameterByConstReference
+        [this](
+            nautilus::val<Memory::TupleBuffer*> inputBufferRef,
+            nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
+            nautilus::val<Interface::HashMap*> hashMapVal)
+        {
+            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            const RecordBuffer recordBuffer(inputBufferRef);
+            for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
             {
-                Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
-                const RecordBuffer recordBuffer(inputBufferRef);
-                for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
-                {
-                    auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBuffer, i);
-                    auto recordValue = memoryProviderInputBuffer->readRecord(projectionValues, recordBuffer, i);
-                    auto foundEntry = hashMapRef.findOrCreateEntry(
-                        recordKey,
-                        *NautilusTestUtils::getMurMurHashFunction(),
-                        [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
-                        {
-                            const auto castedEntry = static_cast<nautilus::val<Interface::ChainedHashMapEntry*>>(entry);
-                            const Interface::ChainedHashMapRef::ChainedEntryRef ref(castedEntry, fieldKeys, fieldValues);
-                            ref.copyValuesToEntry(recordValue);
-                        },
-                        bufferManagerVal);
-                }
-            }));
+                auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBuffer, i);
+                auto recordValue = memoryProviderInputBuffer->readRecord(projectionValues, recordBuffer, i);
+                auto foundEntry = hashMapRef.findOrCreateEntry(
+                    recordKey,
+                    *NautilusTestUtils::getMurMurHashFunction(),
+                    [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+                    {
+                        const auto castedEntry = static_cast<nautilus::val<Interface::ChainedHashMapEntry*>>(entry);
+                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(castedEntry, fieldKeys, fieldValues);
+                        ref.copyValuesToEntry(recordValue);
+                    },
+                    bufferManagerVal);
+            }
+        }));
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
@@ -289,42 +286,41 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
-    return nautilusEngine->registerFunction(
-        std::function(
-            [this](
-                nautilus::val<Memory::TupleBuffer*> keyBufferRef,
-                nautilus::val<Memory::TupleBuffer*> valueBufferUpdatedRef,
-                nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
-                nautilus::val<Interface::HashMap*> hashMapVal)
-            {
-                Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
-                const RecordBuffer recordBufferKey(keyBufferRef);
-                const RecordBuffer recordBufferValue(valueBufferUpdatedRef);
+    return nautilusEngine->registerFunction(std::function(
+        [this](
+            nautilus::val<Memory::TupleBuffer*> keyBufferRef,
+            nautilus::val<Memory::TupleBuffer*> valueBufferUpdatedRef,
+            nautilus::val<Memory::AbstractBufferProvider*> bufferManagerVal,
+            nautilus::val<Interface::HashMap*> hashMapVal)
+        {
+            Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
+            const RecordBuffer recordBufferKey(keyBufferRef);
+            const RecordBuffer recordBufferValue(valueBufferUpdatedRef);
 
-                for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
-                {
-                    auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, i);
-                    auto recordValue = memoryProviderInputBuffer->readRecord(projectionValues, recordBufferValue, i);
-                    auto foundEntry = hashMapRef.findOrCreateEntry(
-                        recordKey,
-                        *NautilusTestUtils::getMurMurHashFunction(),
-                        [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
-                        {
-                            const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, fieldKeys, fieldValues);
-                            ref.copyValuesToEntry(recordValue);
-                        },
-                        bufferManagerVal);
-                    hashMapRef.insertOrUpdateEntry(
-                        foundEntry,
-                        [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
-                        {
-                            const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, fieldKeys, fieldValues);
-                            ref.copyValuesToEntry(recordValue);
-                        },
-                        ASSERT_VIOLATION_FOR_ON_INSERT,
-                        bufferManagerVal);
-                }
-            }));
+            for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
+            {
+                auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, i);
+                auto recordValue = memoryProviderInputBuffer->readRecord(projectionValues, recordBufferValue, i);
+                auto foundEntry = hashMapRef.findOrCreateEntry(
+                    recordKey,
+                    *NautilusTestUtils::getMurMurHashFunction(),
+                    [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+                    {
+                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, fieldKeys, fieldValues);
+                        ref.copyValuesToEntry(recordValue);
+                    },
+                    bufferManagerVal);
+                hashMapRef.insertOrUpdateEntry(
+                    foundEntry,
+                    [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
+                    {
+                        const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, fieldKeys, fieldValues);
+                        ref.copyValuesToEntry(recordValue);
+                    },
+                    ASSERT_VIOLATION_FOR_ON_INSERT,
+                    bufferManagerVal);
+            }
+        }));
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 

@@ -13,6 +13,8 @@
 */
 
 #include <algorithm>
+#include <cstddef>
+#include <ostream>
 #include <ranges>
 #include <utility>
 #include <API/AttributeField.hpp>
@@ -64,10 +66,17 @@ bool LogicalProjectionOperator::isIdentical(const std::shared_ptr<Node>& rhs) co
 
 bool LogicalProjectionOperator::equal(const std::shared_ptr<Node>& rhs) const
 {
-    if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
+    if (const auto projection = NES::Util::as_if<LogicalProjectionOperator>(rhs);
+        (projection != nullptr) and (this->functions.size() == projection->getFunctions().size()))
     {
-        const auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
-        return (*outputSchema == *projection->outputSchema);
+        for (size_t i = 0; const auto& function : this->functions)
+        {
+            if (not function->equal(projection->getFunctions()[i++]))
+            {
+                return false;
+            }
+        }
+        return *outputSchema == *projection->outputSchema;
     }
     return false;
 };
@@ -82,17 +91,29 @@ std::string getFieldName(const NodeFunction& function)
     return dynamic_cast<const NodeFunctionFieldAssignment*>(&function)->getField()->getFieldName();
 }
 
-std::string LogicalProjectionOperator::toString() const
+std::ostream& LogicalProjectionOperator::toDebugString(std::ostream& os) const
 {
     PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
     if (not outputSchema->getFieldNames().empty())
     {
-        return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema->toString());
+        return os << fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema->toString());
     }
-    return fmt::format(
-        "PROJECTION(opId: {}, fields: [{}])",
-        id,
-        fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(*function); }), ", "));
+    return os << fmt::format(
+               "PROJECTION(opId: {}, fields: [{}])",
+               id,
+               fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(*function); }), ", "));
+}
+
+std::ostream& LogicalProjectionOperator::toQueryPlanString(std::ostream& os) const
+{
+    PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
+    if (not outputSchema->getFieldNames().empty())
+    {
+        return os << fmt::format("PROJECTION(schema={})", outputSchema->toString());
+    }
+    return os << fmt::format(
+               "PROJECTION(fields: [{}])",
+               fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(*function); }), ", "));
 }
 
 bool LogicalProjectionOperator::inferSchema()
@@ -101,7 +122,7 @@ bool LogicalProjectionOperator::inferSchema()
     {
         return false;
     }
-    NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), toString());
+    NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), *this);
     outputSchema->clear();
     for (const auto& function : functions)
     {

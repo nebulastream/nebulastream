@@ -54,6 +54,16 @@ jobs:
       ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
+  check-format:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    name: "Check format"
+    uses: ./.github/workflows/format.yml
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      # since there is no merge base to compare against, just check last 10 commits
+      number_of_commits: 10
+
   build-and-test:
     name: "Run build and test"
     needs: [ fetch-current-main-commit, get-dev-images ]
@@ -67,7 +77,7 @@ jobs:
     runs-on: [ self-hosted, linux, X64, Build ]
     name: "Build and tests: ${{matrix.cmake_args.name}}"
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
         - ccache:/ccache
       env:
@@ -83,6 +93,7 @@ jobs:
           - name: tupleBuffer_debugging
             arg: -DCMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS=ON
         stdlib: [ libcxx, libstdcxx ]
+        sanitizer: [ none, address, undefined, thread ]
         build_type: [ RelWithDebInfo, Debug ]
     steps:
       - uses: actions/checkout@v4

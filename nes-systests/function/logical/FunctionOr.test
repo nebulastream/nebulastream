@@ -13,10 +13,10 @@ SINK sink5Booleans BOOLEAN stream$a BOOLEAN stream$b BOOLEAN stream$c BOOLEAN st
 
 # Check if the or operator works for no nested functions
 SELECT
-    (i8 == 2) or (i16 == 2) AS a,
-    (i32 == 2) or (i64 == 1) AS b,
-    (u8 == 2) or (i64 == 2) AS c,
-    (u8 == 2) or (u16 == 2) AS d
+    (i8 == INT32(2)) or (i16 == INT32(2)) AS a,
+    (i32 == INT32(2)) or (i64 == INT32(1)) AS b,
+    (u8 == INT32(2)) or (i64 == INT32(2)) AS c,
+    (u8 == INT32(2)) or (u16 == INT32(2)) AS d
 FROM stream INTO sink4Booleans
 ----
 0,1,1,1
@@ -24,11 +24,11 @@ FROM stream INTO sink4Booleans
 
 # Check if the or operator works for simple nested functions
 SELECT
-    (i8 == 2) or ((i16 == 2) or (u32 == 1)) AS a,
-    (i32 == 2) or ((i64 == 2) or (u8 == 2)) AS b,
-    (u8 == 2) or ((u16 == 1) or (u32 == 1)) AS c,
-    (u8 == 2) or ((u16 == 1) or (u32 == 1)) AS d,
-    (i8 == 1) or not ((i16 == 2) or (i32 == 1)) AS e
+    (i8 == INT32(2)) or ((i16 == INT32(2)) or (u32 == INT32(1))) AS a,
+    (i32 == INT32(2)) or ((i64 == INT32(2)) or (u8 == INT32(2))) AS b,
+    (u8 == INT32(2)) or ((u16 == INT32(1)) or (u32 == INT32(1))) AS c,
+    (u8 == INT32(2)) or ((u16 == INT32(1)) or (u32 == INT32(1))) AS d,
+    (i8 == INT32(1)) or not ((i16 == INT32(2)) or (i32 == INT32(1))) AS e
 FROM stream INTO sink5Booleans
 ----
 0,1,1,1,1
@@ -36,11 +36,11 @@ FROM stream INTO sink5Booleans
 
 # Check if the or operator works together with comparison functions
 SELECT
-    (i8 == 2) or (i16 < 0) AS a,
-    (i32 == 2) or (i64 > 0) AS b,
-    (u8 == 2) or (u16 <= 2) AS c,
-    (u8 == 2) or (u16 >= 2) AS d,
-    (i8 == 1) or not (i16 == 2) AS e
+    (i8 == INT32(2)) or (i16 < INT32(0)) AS a,
+    (i32 == INT32(2)) or (i64 > INT32(0)) AS b,
+    (u8 == INT32(2)) or (u16 <= INT32(2)) AS c,
+    (u8 == INT32(2)) or (u16 >= INT32(2)) AS d,
+    (i8 == INT32(1)) or not (i16 == INT32(2)) AS e
 FROM stream INTO sink5Booleans
 ----
 0,1,1,1,1
@@ -48,11 +48,11 @@ FROM stream INTO sink5Booleans
 
 # Check if the or operator works together with comparison functions and nested functions
 SELECT
-    (i8 == 2) or ((i16 < 0) or (i32 == 2)) AS a,
-    (i32 == 2) or ((i64 > 0) or (u8 == 2)) AS b,
-    (u8 == 2) or ((u16 <= 2) or (u32 == 1)) AS c,
-    (u8 == 2) or ((u16 >= 2) or (u32 == 1)) AS d,
-    (i8 == 1) or not ((i16 == 2) or (i32 == 1)) AS e
+    (i8 == INT32(2)) or ((i16 < INT32(0)) or (i32 == INT32(2))) AS a,
+    (i32 == INT32(2)) or ((i64 > INT32(0)) or (u8 == INT32(2))) AS b,
+    (u8 == INT32(2)) or ((u16 <= INT32(2)) or (u32 == INT32(1))) AS c,
+    (u8 == INT32(2)) or ((u16 >= INT32(2)) or (u32 == INT32(1))) AS d,
+    (i8 == INT32(1)) or not ((i16 == INT32(2)) or (i32 == INT32(1))) AS e
 FROM stream INTO sink5Booleans
 ----
 0,1,1,1,1

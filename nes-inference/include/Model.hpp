@@ -16,11 +16,16 @@
 
 #include <memory>
 #include <vector>
+#include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
+
 #include <SerializableOperator.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Nebuli::Inference
 {
+struct ModelLoadError;
+struct ModelOptions;
 
 class Model
 {
@@ -37,10 +42,13 @@ class Model
     };
 
     RefCountedByteBuffer byteCode;
-    std::vector<int> shape;
+    std::vector<size_t> shape;
+    std::vector<size_t> outputShape;
     std::string functionName;
     size_t dims = 0;
+    size_t outputDims = 0;
     size_t inputSizeInBytes = 0;
+    size_t outputSizeInBytes = 0;
     std::vector<std::shared_ptr<NES::DataType>> inputs;
     std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>> outputs;
 
@@ -53,19 +61,19 @@ public:
 
     bool operator==(const Model&) const = default;
 
-    void setFunctionName(std::string moduleName) { this->functionName = moduleName; }
-    void setInputShape(std::vector<int> inputShape)
-    {
-        this->shape = inputShape;
-        this->dims = inputShape.size();
-    }
+    const std::vector<size_t>& getInputShape() { return shape; }
+    const std::vector<size_t>& getOutputShape() { return outputShape; }
 
-    const std::vector<int>& getInputShape() { return shape; }
     size_t getNDim() { return dims; }
+    size_t getOutputDims() { return outputDims; }
+
     size_t inputSize() { return inputSizeInBytes; }
+    size_t outputSize() { return outputSizeInBytes; }
+
     const std::string& getFunctionName() { return functionName; }
 
     friend class ModelCatalog;
+    friend std::expected<Model, ModelLoadError> load(const std::filesystem::path& path, const ModelOptions& options);
     friend Model deserializeModel(const SerializableOperator_Model& grpcModel);
     friend void serializeModel(const Model& model, SerializableOperator_Model& target);
 };

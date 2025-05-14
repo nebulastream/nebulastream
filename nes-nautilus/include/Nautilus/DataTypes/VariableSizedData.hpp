@@ -16,6 +16,7 @@
 
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <nautilus/std/sstream.h>
+#include <nautilus/val.hpp>
 
 namespace NES::Nautilus
 {
@@ -30,6 +31,7 @@ nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableS
 class VariableSizedData
 {
 public:
+    /// @param bufferBacked: If set to true the VariableSizedData object is backed by a tuple buffer.
     explicit VariableSizedData(const nautilus::val<int8_t*>& content, const nautilus::val<uint32_t>& size, nautilus::val<bool> ownsBuffer);
     explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData, nautilus::val<bool> ownsBuffer);
     VariableSizedData(const VariableSizedData& other);
@@ -37,7 +39,12 @@ public:
     VariableSizedData(VariableSizedData&& other) noexcept;
     VariableSizedData& operator=(VariableSizedData&& other) noexcept;
 
-    [[nodiscard]] nautilus::val<uint32_t> getSize() const;
+
+    /// Returns the size of the variable sized data object. This means the size of the size + data
+    [[nodiscard]] nautilus::val<uint32_t> getTotalSize() const;
+
+    /// Returns the size of the variable sized data content.
+    [[nodiscard]] nautilus::val<uint32_t> getContentSize() const;
     /// Returns the content of the variable sized data, this means the pointer to the actual variable sized data.
     /// In other words, this returns the pointer to the actual data, not the pointer to the size + data
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;

@@ -27,7 +27,6 @@
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Inference/LogicalInferModelNameOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
@@ -120,9 +119,7 @@ QueryPlanBuilder::addMap(const std::shared_ptr<NodeFunctionFieldAssignment>& map
 }
 
 std::shared_ptr<QueryPlan> QueryPlanBuilder::addInferModel(
-    const std::string& model,
-    const std::vector<std::shared_ptr<NodeFunction>>& inputFields,
-    std::shared_ptr<QueryPlan> queryPlan)
+    const std::string& model, const std::vector<std::shared_ptr<NodeFunction>>& inputFields, std::shared_ptr<QueryPlan> queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add map inferModel to query plan");
     const std::shared_ptr<Operator> op
@@ -148,17 +145,15 @@ std::shared_ptr<QueryPlan> QueryPlanBuilder::addWindowAggregation(
         switch (timeBasedWindowType->getTimeCharacteristic()->getType())
         {
             case Windowing::TimeCharacteristic::Type::IngestionTime:
-                queryPlan->appendOperatorAsNewRoot(
-                    std::make_shared<WatermarkAssignerLogicalOperator>(
-                        Windowing::IngestionTimeWatermarkStrategyDescriptor::create(), getNextOperatorId()));
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
+                    Windowing::IngestionTimeWatermarkStrategyDescriptor::create(), getNextOperatorId()));
                 break;
             case Windowing::TimeCharacteristic::Type::EventTime:
-                queryPlan->appendOperatorAsNewRoot(
-                    std::make_shared<WatermarkAssignerLogicalOperator>(
-                        Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                            NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->field->getName()),
-                            timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()),
-                        getNextOperatorId()));
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
+                    Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                        NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->field->getName()),
+                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()),
+                    getNextOperatorId()));
                 break;
         }
     }

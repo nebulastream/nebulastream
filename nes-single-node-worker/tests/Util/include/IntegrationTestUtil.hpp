@@ -28,7 +28,6 @@
 
 namespace NES::IntegrationTestUtil
 {
-static inline const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";
 static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
 
 /// Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read

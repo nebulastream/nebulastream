@@ -9,14 +9,14 @@ Source fiveTuples UINT64 field_1
 4
 5
 
-SINK fiveText VARSIZED text
+SINK fiveText VARSIZED fiveTuples$text
 
 # This Query should emit the constant text "text" for each tuple
-SELECT "text" as text FROM fiveTuples INTO fiveText;
+SELECT VARSIZED("text") as text FROM fiveTuples INTO fiveText;
 ----
-"text"
-"text"
-"text"
-"text"
-"text"
+text
+text
+text
+text
+text
 

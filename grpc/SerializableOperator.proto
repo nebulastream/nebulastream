@@ -45,7 +45,7 @@ message ParserConfig {
 };
 
 message SerializableEnumWrapper {
-    string value = 1;
+  string value = 1;
 }
 
 message SerializableVariantDescriptor {
@@ -70,11 +70,12 @@ message SerializableOperator {
 
     /* Source Descriptor Definition */
     message SourceDescriptor {
-        SerializableSchema sourceSchema = 1;
-        string logicalSourceName = 2;
-        string sourceType = 3;
-        ParserConfig parserConfig = 4;
-        map<string, SerializableVariantDescriptor> config = 5;
+      SerializableSchema sourceSchema = 1;
+      string logicalSourceName = 2;
+      string sourceType = 3;
+      int32 numberOfBuffersInSourceLocalBufferPool = 4;
+      ParserConfig parserConfig = 5;
+      map<string, SerializableVariantDescriptor> config = 6;
     }
 
     uint64 sourceOriginId = 1;
@@ -83,10 +84,10 @@ message SerializableOperator {
 
   message SinkLogicalOperator {
     message SerializableSinkDescriptor {
-        SerializableSchema sinkSchema = 1;
-        string sinkType = 2;
-        bool addTimestamp = 3;
-        map<string, SerializableVariantDescriptor> config = 4;
+      SerializableSchema sinkSchema = 1;
+      string sinkType = 2;
+      bool addTimestamp = 3;
+      map<string, SerializableVariantDescriptor> config = 4;
     }
 
     SerializableSinkDescriptor sinkDescriptor = 1;
@@ -107,12 +108,12 @@ message SerializableOperator {
     google.protobuf.Any strategy = 1;
   }
 
-    /**
-      LimitDetails contains properties for the limit operator
-     */
-    message LimitDetails {
-        uint64 limit = 1;
-    }
+  /**
+    LimitDetails contains properties for the limit operator
+   */
+  message LimitDetails {
+    uint64 limit = 1;
+  }
 
   /**
    Map Details contains properties for the map operator, such as the field assignment function
@@ -179,10 +180,13 @@ message SerializableOperator {
     bytes bytecode = 1;
     int32 dims = 2;
     repeated int32 shape = 3;
-    int32 inputSizeInBytes = 4;
-    repeated SerializableDataType inputs = 5;
-    repeated ModelOutputParameter outputs = 6;
-    string functionName = 7;
+    int32 outputDims = 4;
+    repeated int32 outputShape = 5;
+    int32 inputSizeInBytes = 6;
+    int32 outputSizeInBytes = 7;
+    string functionName = 8;
+    repeated SerializableDataType inputs = 9;
+    repeated ModelOutputParameter outputs = 10;
   }
 
   message InferModelDetails {
@@ -190,6 +194,7 @@ message SerializableOperator {
     repeated SerializableFunction outputFields = 2;
     Model model = 3;
   }
+
   /**
     Properties of distribution characteristic
   */
@@ -259,6 +264,7 @@ message SerializableOperator {
         COUNT = 3;
         AVG = 4;
         MEDIAN = 5;
+        MERGE = 6;
       }
       Type type = 1;
       SerializableFunction onField = 2;

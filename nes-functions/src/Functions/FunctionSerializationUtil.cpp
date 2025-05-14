@@ -45,8 +45,10 @@
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 #include <SerializableFunction.pb.h>
 
 namespace NES
@@ -143,7 +145,17 @@ FunctionSerializationUtil::serializeFunction(const std::shared_ptr<NodeFunction>
         serializeFunction(caseNodeFunction->getDefaultExp(), serializedNodeFunction.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedNodeFunction);
     }
-
+    else if (function->isTriviallySerializable())
+    {
+        auto serializedNodeFunction = SerializableFunction_GenericFunction();
+        serializedNodeFunction.set_name(function->getType());
+        for (const auto& child : function->getChildren())
+        {
+            auto* serialized_child = serializedNodeFunction.add_children();
+            serializeFunction(Util::as<NodeFunction>(child), serialized_child);
+        }
+        serializedFunction->mutable_details()->PackFrom(serializedNodeFunction);
+    }
     else
     {
         throw CannotSerialize(fmt::format("function: {}", *function));
@@ -168,6 +180,22 @@ std::shared_ptr<NodeFunction> FunctionSerializationUtil::deserializeFunction(con
     /// 3. if the function was not de-serialized try remaining function types
     if (!nodeFunction)
     {
+        if (serializedFunction.details().Is<SerializableFunction_GenericFunction>())
+        {
+            auto serializedNodeFunction = SerializableFunction_GenericFunction();
+            serializedFunction.details().UnpackTo(&serializedNodeFunction);
+            auto children
+                = std::views::transform(serializedNodeFunction.children(), [](const auto& child) { return deserializeFunction(child); })
+                | std::ranges::to<std::vector>();
+            if (auto function
+                = LogicalFunctionRegistry::instance().create(serializedNodeFunction.name(), LogicalFunctionRegistryArguments{children}))
+            {
+                return *function;
+            }
+
+            throw CannotDeserialize("Could not deserialize generic function: `{}`", serializedNodeFunction.name());
+        }
+
         if (serializedFunction.details().Is<SerializableFunction_FunctionConcat>())
         {
             /// de-serialize CONCAT function node.

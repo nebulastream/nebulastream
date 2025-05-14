@@ -13,12 +13,14 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -50,9 +52,19 @@ bool SourceNameLogicalOperator::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string SourceNameLogicalOperator::toString() const
+std::ostream& SourceNameLogicalOperator::toDebugString(std::ostream& os) const
 {
-    return fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
+    return os << fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
+}
+
+std::ostream& SourceNameLogicalOperator::toQueryPlanString(std::ostream& os) const
+{
+    std::string originIds;
+    if (!inputOriginIds.empty())
+    {
+        originIds = fmt::format(", {}", fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
+    }
+    return os << fmt::format("SOURCE({}{})", logicalSourceName, originIds);
 }
 
 bool SourceNameLogicalOperator::inferSchema()

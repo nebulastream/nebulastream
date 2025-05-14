@@ -13,14 +13,15 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 NodeFunctionMul::NodeFunctionMul(std::shared_ptr<DataType> stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mul") { };
@@ -48,11 +49,10 @@ bool NodeFunctionMul::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionMul::toString() const
+std::ostream& NodeFunctionMul::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << *children[0] << "*" << *children[1];
-    return ss.str();
+    PRECONDITION(children.size() == 2, "Cannot print function without exactly 2 children.");
+    return os << *children.at(0) << " * " << *children.at(1);
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionMul::deepCopy()

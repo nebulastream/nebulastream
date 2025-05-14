@@ -6,7 +6,15 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: $0 [-l|--local]"
+    echo "Usage: $0 [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--asan|--tsan|--ubsan|--no-sanitizer]"
+    echo "Options:"
+    echo "  -l, --local          Build all Docker images locally"
+    echo "  -r, --rootless       Force rootless Docker mode"
+    echo "  --libstdcxx          Use libstdcxx standard library"
+    echo "  --libcxx             Use libcxx standard library"
+    echo "  --address               Enable Address Sanitizer"
+    echo "  --thread               Enable Thread Sanitizer"
+    echo "  --undefined              Enable Undefined Behavior Sanitizer"
     exit 1
 }
 
@@ -14,6 +22,8 @@ usage() {
 BUILD_LOCAL=0
 FORCE_ROOTLESS=0
 STDLIB=""
+SANITIZER="none"
+
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -l|--local)
@@ -33,6 +43,24 @@ while [[ "$#" -gt 0 ]]; do
             echo "Set the standard library to libcxx"
             STDLIB=libcxx
             shift
+            ;;
+        --address)
+            echo "Enabling Address Sanitizer"
+            SANITIZER="address"
+            shift
+            ;;
+        --thread)
+            echo "Enabling Thread Sanitizer"
+            SANITIZER="thread"
+            shift
+            ;;
+        --undefined)
+            echo "Enabling Undefined Behavior Sanitizer"
+            SANITIZER="undefined"
+            shift
+            ;;
+        -h|--help)
+            usage
             ;;
         -*)
             echo "Unknown option: $1"
@@ -58,24 +86,25 @@ if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
         exit 1
         ;;
     esac
-  fi
+fi
 
-read -p "Building with ${STDLIB} standard library. Is this correct? [Y/n] " -r
+# Ask for confirmation of settings
+echo "Build configuration:"
+echo "- Standard library: ${STDLIB}"
+echo "- Sanitizer: ${SANITIZER}"
+read -p "Is this configuration correct? [Y/n] " -r
 echo # Move to a new line after input
 input=${REPLY:-Y}
 if [[ ! $input =~ ^([yY][eE][sS]|[yY])$ ]]; then
-  echo "Please re-run the script with the correct option."
+  echo "Please re-run the script with the correct options."
   exit 1
 fi
 
 cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
-TAG=${HASH}
-if [[ $STDLIB != 'libcxx' ]]; then
-    TAG=${TAG}-libstdcxx
-fi
+TAG=${HASH}-${STDLIB}-${SANITIZER}
 
-# Docker on macOS appears to always enable the mapping from the container root user to the hosts current 
+# Docker on macOS appears to always enable the mapping from the container root user to the hosts current
 # user
 if [[ $OSTYPE == 'darwin'* ]]; then
   FORCE_ROOTLESS=1
@@ -118,6 +147,7 @@ if [ $BUILD_LOCAL -eq 1 ]; then
           --build-arg TAG=local \
           --build-arg STDLIB=${STDLIB} \
           --build-arg ARCH=${ARCH} \
+          --build-arg SANITIZER=${SANITIZER} \
           -t nebulastream/nes-development-dependency:local .
 
   docker build -f docker/dependency/Development.dockerfile \

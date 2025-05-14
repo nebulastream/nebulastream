@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <ostream>
 #include <sstream>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
@@ -20,13 +21,10 @@ PhysicalOperator::PhysicalOperator(OperatorId id) : Operator(id)
 {
 }
 
-std::string PhysicalOperator::toString() const
+std::ostream& PhysicalOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalOperator:\n";
-    out << Operator::toString();
-    return out.str();
+    os << "\nPhysicalOperator:\n";
+    return Operator::toDebugString(os);
 }
 std::optional<std::reference_wrapper<const std::string>> PhysicalOperator::registryType() const
 {

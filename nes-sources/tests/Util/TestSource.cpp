@@ -41,7 +41,7 @@
 
 namespace
 {
-constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(1000);
+constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(10000);
 constexpr std::chrono::milliseconds IMMEDIATELY = std::chrono::milliseconds(0);
 constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 4;
 }
@@ -68,7 +68,11 @@ bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> cond
 bool NES::Sources::TestSourceControl::injectEoS()
 {
     PRECONDITION(!failed, "Should not be called on a failed source");
-    return tryIngestionUntil(queue, EoS{}, [this] { return wasClosed(); });
+    if (tryIngestionUntil(queue, EoS{}, [this] { return wasClosed(); }))
+    {
+        return true;
+    }
+    throw TestException("Sources::TestSourceControl::injectEoS failed, maybe source has already been stopped");
 }
 bool NES::Sources::TestSourceControl::injectData(std::vector<std::byte> data, size_t numberOfTuples)
 {
@@ -78,7 +82,11 @@ bool NES::Sources::TestSourceControl::injectData(std::vector<std::byte> data, si
 bool NES::Sources::TestSourceControl::injectError(std::string error)
 {
     failed = true;
-    return tryIngestionUntil(queue, Error{std::move(error)}, [this] { return wasClosed(); });
+    if (tryIngestionUntil(queue, Error{std::move(error)}, [this] { return wasClosed(); }))
+    {
+        return true;
+    }
+    throw TestException("Sources::TestSourceControl::injectError failed, maybe source has already been stopped");
 }
 
 testing::AssertionResult assertFutureStatus(std::future_status status)
@@ -152,7 +160,7 @@ size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tuple
             [](const TestSourceControl::Error& error) -> std::optional<TestSourceControl::Data>
             {
                 NES_DEBUG("Test Source is injecting error");
-                throw std::runtime_error(error.error);
+                throw TestException(error.error);
             },
             [](TestSourceControl::Data data)
             {
@@ -181,7 +189,7 @@ void NES::Sources::TestSource::open()
     if (control->fail_during_open)
     {
         std::this_thread::sleep_for(control->fail_during_open_duration.load());
-        throw std::runtime_error("I should throw here");
+        throw TestException("I should throw here");
     }
 }
 void NES::Sources::TestSource::close()
@@ -190,7 +198,7 @@ void NES::Sources::TestSource::close()
     if (control->fail_during_close)
     {
         std::this_thread::sleep_for(control->fail_during_close_duration.load());
-        throw std::runtime_error("I should throw here");
+        throw TestException("I should throw here");
     }
 }
 std::ostream& NES::Sources::TestSource::toString(std::ostream& str) const

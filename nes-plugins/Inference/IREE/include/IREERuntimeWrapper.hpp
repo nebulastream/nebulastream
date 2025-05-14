@@ -14,8 +14,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #pragma once
 
-#include <iree/runtime/api.h>
 #include <vector>
+#include <iree/runtime/api.h>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -25,12 +25,13 @@ class IREERuntimeWrapper
 public:
     IREERuntimeWrapper() = default;
     void setup(iree_const_byte_span_t compiledModel);
-    float* execute(std::string functionName, void* inputData, size_t inputSize, float* outputData);
-    void setInputShape(std::vector<int> inputShape);
-    void setNDim(int nDim);
+    void execute(std::string functionName, void* inputData, size_t inputSize, void* outputData);
+    void setInputShape(std::vector<size_t> inputShape);
+    void setNDim(size_t nDim);
+
 private:
-    std::vector<int> inputShape;
-    int nDim;
+    std::vector<size_t> inputShape;
+    size_t nDim;
     iree_runtime_instance_t* instance;
     iree_runtime_session_t* session;
     iree_hal_device_t* device;

@@ -73,8 +73,9 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
     set(REGISTER_FUNCTION_DECLARATIONS "")
     set(REGISTER_ALL_FUNCTION_CALLS "")
     foreach (reg_func IN LISTS plugin_registry_plugin_names_final)
+        STRING(TOLOWER ${reg_func} lower_case_reg_func)
         list(APPEND REGISTER_FUNCTION_DECLARATIONS "${plugin_registry}RegistryReturnType Register${reg_func}${plugin_registry}(${plugin_registry}RegistryArguments)")
-        list(APPEND REGISTER_ALL_FUNCTION_CALLS "registry.addEntry(\"${reg_func}\", Register${reg_func}${plugin_registry})")
+        list(APPEND REGISTER_ALL_FUNCTION_CALLS "registry.addEntry(\"${lower_case_reg_func}\", Register${reg_func}${plugin_registry})")
     endforeach ()
 
     # link all plugin libraries against the component that the plugin registry belongs to, this makes the implementation
@@ -103,4 +104,14 @@ function(generate_plugin_registrars plugin_registry_component)
                 cmake_language(DEFER DIRECTORY [[${PROJECT_SOURCE_DIR}]] CALL generate_plugin_registrar [[${CMAKE_CURRENT_SOURCE_DIR}]] [[${CMAKE_CURRENT_BINARY_DIR}]] [[${plugin_registry}]] [[${plugin_registry_component}]])
         ")
     endforeach ()
+endfunction()
+
+# Provide the names of all registries that the component creates as ARGS
+# Registries are typically located in the 'registry' directory of the component, e.g., 'nes-sources/registry'
+function(create_registries_for_component)
+    get_filename_component(COMPONENT_NAME "${CMAKE_CURRENT_LIST_DIR}" NAME)
+    set(registries_library ${COMPONENT_NAME}-registry)
+    create_plugin_registry_library(${registries_library} ${COMPONENT_NAME})
+    target_link_libraries(${COMPONENT_NAME} PRIVATE ${registries_library})
+    generate_plugin_registrars(${COMPONENT_NAME} ${ARGN})
 endfunction()

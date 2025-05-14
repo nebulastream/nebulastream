@@ -29,14 +29,8 @@ class LogicalInferModelNameOperator : public LogicalUnaryOperator
     std::vector<std::shared_ptr<NodeFunction>> inputFields;
 
 public:
-    LogicalInferModelNameOperator(
-        OperatorId id,
-        std::string modelName,
-        std::vector<std::shared_ptr<NodeFunction>> inputFields)
-        : Operator(id)
-        , LogicalUnaryOperator(id)
-        , modelName(std::move(modelName))
-        , inputFields(std::move(inputFields))
+    LogicalInferModelNameOperator(OperatorId id, std::string modelName, std::vector<std::shared_ptr<NodeFunction>> inputFields)
+        : Operator(id), LogicalUnaryOperator(id), modelName(std::move(modelName)), inputFields(std::move(inputFields))
     {
     }
 
@@ -49,8 +43,5 @@ public:
     bool inferSchema() override;
     void inferStringSignature() override;
     const std::vector<std::shared_ptr<NodeFunction>>& getInputFields() const;
-
-protected:
-    std::string toString() const override;
 };
 }

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
@@ -39,6 +40,8 @@ public:
         SliceEnd sliceEnd,
         uint64_t numberOfHashMaps);
 
+    ~AggregationSlice() override;
+
     /// Returns the pointer to the underlying hashmap.
     /// IMPORTANT: This method should only be used for passing the hashmap to the nautilus executable.
     [[nodiscard]] Nautilus::Interface::HashMap* getHashMapPtr(WorkerThreadId workerThreadId) const;
@@ -47,9 +50,11 @@ public:
     [[nodiscard]] uint64_t getNumberOfHashMaps() const;
 
     [[nodiscard]] uint64_t getNumberOfTuples() const;
+    void setCleanupFunction(const std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)>& cleanupFunction);
 
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::HashMap>> hashMaps;
+    std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> cleanupFunction;
 };
 
 }

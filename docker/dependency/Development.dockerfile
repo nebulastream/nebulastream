@@ -4,14 +4,15 @@ FROM nebulastream/nes-development-dependency:${TAG}
 
 ARG ANTLR4_VERSION=4.13.2
 
-RUN apt update -y \
-    && apt install clang-format-${LLVM_TOOLCHAIN_VERSION} clang-tidy-${LLVM_TOOLCHAIN_VERSION} lldb-${LLVM_TOOLCHAIN_VERSION} gdb jq -y
-
-RUN apt-get update && apt-get install -y \
-        default-jre-headless \
-        python3              \
-        python3-venv         \
-        python3-bs4          \
+RUN apt-get update -y && apt-get install -y \
+        clang-format-${LLVM_TOOLCHAIN_VERSION} \
+        clang-tidy-${LLVM_TOOLCHAIN_VERSION} \
+        lldb-${LLVM_TOOLCHAIN_VERSION} \
+        gdb \
+        jq \
+        python3 \
+        python3-venv \
+        python3-bs4 \
         linux-tools-generic
 
 ENV PIPX_HOME=/opt/pipx \
@@ -19,7 +20,15 @@ ENV PIPX_HOME=/opt/pipx \
     PATH=$PIPX_BIN_DIR:$PATH
 
 RUN pipx ensurepath
-RUN pipx install iree-base-compiler && pipx inject iree-base-compiler onnx
+RUN pipx install iree-base-compiler==3.3.0 && pipx inject iree-base-compiler onnx
+
+# install alternative more recent JRE until 21.0.7 is packaged for Noble 24.04
+# then it should be replaced with openjdk-21-jre-headless
+# https://bugs.openjdk.org/browse/JDK-8345296
+RUN wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add - \
+    && echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" > /etc/apt/sources.list.d/adoptium.list \
+    && apt-get update -y \
+    && apt-get install -y temurin-21-jre
 
 # The vcpkg port of antlr requires the jar to be available somewhere
 ADD --checksum=sha256:eae2dfa119a64327444672aff63e9ec35a20180dc5b8090b7a6ab85125df4d76 --chmod=744 \

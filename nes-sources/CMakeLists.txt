@@ -25,10 +25,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sources REUSE_FROM nes-common)
 endif ()
 
-# Create library for the registries, and privately link it against nes-sources so that nes-sources can access its registries.
-create_plugin_registry_library(nes-sources-registry nes-sources)
-target_link_libraries(nes-sources PRIVATE nes-sources-registry)
-# Generate a registrar for every registry in nes-sources
-generate_plugin_registrars(nes-sources Source SourceValidation)
+create_registries_for_component(Source SourceValidation)
 
 add_tests_if_enabled(tests)

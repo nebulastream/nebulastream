@@ -45,16 +45,13 @@ MedianAggregationFunction::MedianAggregationFunction(
 }
 
 void MedianAggregationFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState,
-    PipelineMemoryProvider& pipelineMemoryProvider,
-    const Nautilus::Record& record)
+    const nautilus::val<AggregationState*>& aggregationState, ExecutionContext& executionContext, const Nautilus::Record& record)
 {
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(memArea, memProviderPagedVector, pipelineMemoryProvider.bufferProvider);
-    Execution::ExecutionContext ctx(nullptr, nullptr);
-    ctx.pipelineMemoryProvider = pipelineMemoryProvider;
-    pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(
+        memArea, memProviderPagedVector, executionContext.pipelineMemoryProvider.bufferProvider);
+    pagedVectorRef.writeRecord(record, executionContext.pipelineMemoryProvider.bufferProvider);
 }
 
 void MedianAggregationFunction::combine(
@@ -164,6 +161,19 @@ void MedianAggregationFunction::reset(const nautilus::val<AggregationState*> agg
             /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
             auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(pagedVectorMemArea);
             new (pagedVector) Nautilus::Interface::PagedVector();
+        },
+        aggregationState);
+}
+
+void MedianAggregationFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
+{
+    nautilus::invoke(
+        +[](AggregationState* pagedVectorMemArea) -> void
+        {
+            /// Calls the destructor of the PagedVector
+            auto* pagedVector = reinterpret_cast<Nautilus::Interface::PagedVector*>(
+                pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            pagedVector->~PagedVector();
         },
         aggregationState);
 }

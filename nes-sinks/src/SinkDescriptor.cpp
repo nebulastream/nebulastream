@@ -42,9 +42,13 @@ SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unorde
 
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
-    return out << "SinkDescriptor:" << "\nSink type: " << sinkDescriptor.sinkType << "\nadd timestamp: " << sinkDescriptor.addTimestamp
-               << "\nConfig:\n"
-               << sinkDescriptor.toStringConfig();
+    fmt::println(
+        out,
+        "SinkDescriptor: (type: {}, add_timestamp: {}, Config: {})",
+        sinkDescriptor.sinkType,
+        sinkDescriptor.addTimestamp,
+        sinkDescriptor.toStringConfig());
+    return out;
 }
 
 bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)

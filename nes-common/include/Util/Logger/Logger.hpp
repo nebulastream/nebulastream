@@ -36,6 +36,8 @@ constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 3;
 constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 2;
 #elif defined(NES_LOGLEVEL_NONE)
 constexpr uint64_t NES_COMPILE_TIME_LOG_LEVEL = 1;
+#else
+    #error no loglevel defined
 #endif
 
 

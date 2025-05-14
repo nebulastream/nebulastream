@@ -56,7 +56,7 @@ public:
     UIntOption numberOfBuffersInSourceLocalBufferPool
         = {"numberOfBuffersInSourceLocalBufferPool",
            "64",
-           "Number buffers in source local buffer pool.",
+           "Number buffers in source local buffer pool. May be overwritten by a source-specific configuration (see SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
     /// Configures the buffer size of individual TupleBuffers in bytes. This property has to be the same over a whole deployment.

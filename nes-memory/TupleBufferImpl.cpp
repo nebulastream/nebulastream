@@ -52,10 +52,10 @@ MemorySegment::MemorySegment(
 {
     INVARIANT(this->ptr, "invalid pointer");
     INVARIANT(this->size, "invalid size={}", this->size);
+    INVARIANT(this->controlBlock, "invalid control block");
 }
 
-MemorySegment::MemorySegment(
-    uint8_t* ptr, const uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool)
+MemorySegment::MemorySegment(uint8_t* ptr, const uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
     : ptr(ptr), size(size)
 {
     INVARIANT(this->ptr, "invalid pointer");

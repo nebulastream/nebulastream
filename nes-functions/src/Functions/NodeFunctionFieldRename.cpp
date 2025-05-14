@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <string>
+#include <ostream>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -21,6 +21,7 @@
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
@@ -58,10 +59,16 @@ std::string NodeFunctionFieldRename::getNewFieldName() const
     return newFieldName;
 }
 
-std::string NodeFunctionFieldRename::toString() const
+std::ostream& NodeFunctionFieldRename::toDebugString(std::ostream& os) const
 {
     auto node = getOriginalField();
-    return "FieldRenameFunction(" + fmt::format("{}", *node) + " => " + newFieldName + " : " + stamp->toString() + ")";
+    return os << fmt::format("FieldRenameFunction({} => {} : {})", *node, newFieldName, stamp->toString());
+}
+
+std::ostream& NodeFunctionFieldRename::toQueryPlanString(std::ostream& os) const
+{
+    auto node = getOriginalField();
+    return os << fmt::format("FieldRename({:q} => {})", *node, newFieldName);
 }
 
 void NodeFunctionFieldRename::inferStamp(const Schema& schema)

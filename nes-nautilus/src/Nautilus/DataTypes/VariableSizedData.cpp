@@ -110,7 +110,12 @@ nautilus::val<bool> VariableSizedData::operator!() const
     return !isValid();
 }
 
-[[nodiscard]] nautilus::val<uint32_t> VariableSizedData::getSize() const
+nautilus::val<uint32_t> VariableSizedData::getTotalSize() const
+{
+    return getContentSize() + nautilus::val<uint32_t>(sizeof(uint32_t));
+}
+
+[[nodiscard]] nautilus::val<uint32_t> VariableSizedData::getContentSize() const
 {
     return size;
 }

@@ -189,23 +189,21 @@ public:
 
     MemorySegment() noexcept = default;
 
+    /// Constructor for the memory Segment that sets the tag pointer of the control block to the native type
+    /// This constructor should be used if the memory of the buffer is managed by the BufferManager
     explicit MemorySegment(
         uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, uint8_t* controlBlock);
+
+    /// Constructor for the memory Segment that sets the tag pointer of the control block to the wrapped type
+    /// This constructor should be used if the memory of the buffer is managed externally
+    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction);
 
     ~MemorySegment();
 
     uint8_t* getPointer() const { return ptr; }
 
-private:
-    /**
-     * @brief Private constructor for the memory Segment
-     * @param ptr
-     * @param size of the segment
-     * @param recycler
-     * @param recycleFunction
-     */
-    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool);
 
+private:
     /**
      * @return true if the segment has a reference counter equals to zero
      */

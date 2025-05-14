@@ -51,10 +51,12 @@ if ($CACHE{DOCKER_DEV_IMAGE})
         )
     endif ()
 
+    # Overwriting stdlib and sanitizer option based on docker image
     if ($ENV{VCPKG_STDLIB} STREQUAL "libstdcxx")
         SET(USE_LIBCXX_IF_AVAILABLE OFF)
     endif()
 
+    SET(SANITIZER_OPTION $ENV{VCPKG_SANITIZER})
     unset(VCPKG_MANIFEST_DIR) # prevents vcpkg from finding the vcpkg.json and building dependencies
     SET(CMAKE_TOOLCHAIN_FILE $ENV{NES_PREBUILT_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 elseif (DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -103,28 +105,10 @@ else ()
     SET(VCPKG_ENV_PASSTHROUGH "MLIR_DIR")
 endif ()
 
-### Determine the VCPKG Target and Host Triplet
-# - Depending on the Sanitizers and stdlib we choose different toolchains variants to build vcpkg dependencies
-# - The system architecture is normally set in CMAKE_HOST_SYSTEM_PROCESSOR,
-#    which is set by the PROJECT command. However, we cannot call PROJECT
-#    at this point because we want to use a custom toolchain file.
-# - Currently only linux is supported.
-# - Cross compilation is not possible, target and host triplets are always identical
-SET(VCPKG_VARIANT_SANITIZER "none")
-if (NES_ENABLE_THREAD_SANITIZER)
-    SET(VCPKG_VARIANT_SANITIZER "tsan")
-elseif (NES_ENABLE_UB_SANITIZER)
-    SET(VCPKG_VARIANT_SANITIZER "ubsan")
-elseif (NES_ENABLE_ADDRESS_SANITIZER)
-    SET(VCPKG_VARIANT_SANITIZER "asan")
-endif ()
-
-SET(VCPKG_VARIANT_STDLIB "libcxx")
+SET(VCPKG_STDLIB "libcxx")
 if (NOT USE_LIBCXX_IF_AVAILABLE)
-    SET(VCPKG_VARIANT_STDLIB "local")
+    SET(VCPKG_STDLIB "local")
 endif ()
-
-SET(VCPKG_VARIANT "${VCPKG_VARIANT_SANITIZER}-${VCPKG_VARIANT_STDLIB}")
 
 execute_process(COMMAND uname -m OUTPUT_VARIABLE VCPKG_HOST_PROCESSOR)
 if (VCPKG_HOST_PROCESSOR MATCHES "x86_64")
@@ -140,8 +124,8 @@ if (NOT VCPKG_HOST_OS MATCHES "Linux")
     message(FATAL_ERROR "Only linux is supported. Use the nebulastream/nes-development:latest docker image, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
 endif ()
 
-SET(VCPKG_TARGET_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-${VCPKG_VARIANT}")
-SET(VCPKG_HOST_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-${VCPKG_VARIANT}")
+SET(VCPKG_TARGET_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-${SANITIZER_OPTION}-${VCPKG_STDLIB}")
+SET(VCPKG_HOST_TRIPLET "${VCPKG_HOST_PROCESSOR}-linux-none-${VCPKG_STDLIB}")
 
 message(STATUS "VPCKG target triplet: ${VCPKG_TARGET_TRIPLET}")
 message(STATUS "VPCKG host triplet: ${VCPKG_HOST_TRIPLET}")

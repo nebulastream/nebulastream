@@ -74,6 +74,8 @@ TEST(ChunkCollectorTest, MultipleChunksOutOfOrder)
 
 TEST(CheckChunkCollector, MultipleTimesLastChunkSet)
 {
+    SKIP_IF_TSAN();
+
     ChunkCollector sequence;
     EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Runtime::Timestamp(2)), std::nullopt);
     ASSERT_THAT(

@@ -13,15 +13,14 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
-
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -52,11 +51,10 @@ bool NodeFunctionAdd::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionAdd::toString() const
+std::ostream& NodeFunctionAdd::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << *children[0] << "+" << *children[1];
-    return ss.str();
+    PRECONDITION(children.size() == 2, "Cannot print function without exactly 2 children.");
+    return os << *children.at(0) << " + " << *children.at(1);
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionAdd::deepCopy()

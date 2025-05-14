@@ -27,9 +27,15 @@ NES::Nebuli::Inference::Model NES::Nebuli::Inference::deserializeModel(const Ser
 
     Model model{modelByteCodeBuffer, modelByteCodeSize};
 
+    model.functionName = grpcModel.functionname();
     model.dims = grpcModel.dims();
     model.shape.assign(grpcModel.shape().begin(), grpcModel.shape().end());
+
+    model.outputDims = grpcModel.outputdims();
+    model.outputShape.assign(grpcModel.outputshape().begin(), grpcModel.outputshape().end());
+
     model.inputSizeInBytes = grpcModel.inputsizeinbytes();
+    model.outputSizeInBytes = grpcModel.outputsizeinbytes();
     model.inputs = grpcModel.inputs()
         | std::views::transform([](const auto& serializedDataType)
                                 { return DataTypeSerializationUtil::deserializeDataType(serializedDataType); })
@@ -44,8 +50,6 @@ NES::Nebuli::Inference::Model NES::Nebuli::Inference::deserializeModel(const Ser
                         })
         | std::ranges::to<std::vector>();
 
-    model.functionName = grpcModel.functionname();
-
     return model;
 }
 
@@ -58,7 +62,16 @@ void NES::Nebuli::Inference::serializeModel(const Model& model, SerializableOper
     {
         target.add_shape(shape);
     }
+
+    target.set_outputdims(model.outputDims);
+    for (int shape : model.outputShape)
+    {
+        target.add_outputshape(shape);
+    }
+
+    target.set_functionname(model.functionName);
     target.set_inputsizeinbytes(model.inputSizeInBytes);
+    target.set_outputsizeinbytes(model.outputSizeInBytes);
     for (auto& input : model.inputs)
     {
         DataTypeSerializationUtil::serializeDataType(input, target.add_inputs());
@@ -70,6 +83,4 @@ void NES::Nebuli::Inference::serializeModel(const Model& model, SerializableOper
         output->set_name(name);
         DataTypeSerializationUtil::serializeDataType(type, output->mutable_type());
     }
-
-    target.set_functionname(model.functionName);
 }

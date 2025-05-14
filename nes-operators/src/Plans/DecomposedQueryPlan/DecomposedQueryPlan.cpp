@@ -25,7 +25,7 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/QueryConsoleDumpHandler.hpp>
+#include <Util/LogicalQueryDumpHelper.hpp>
 #include <ErrorHandling.hpp>
 
 
@@ -287,10 +287,10 @@ std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlan::copy() const
 std::string DecomposedQueryPlan::toString() const
 {
     std::stringstream ss;
-    auto dumpHandler = QueryConsoleDumpHandler::create(ss);
+    auto dumpHandler = LogicalQueryDumpHelper(ss);
     for (const auto& rootOperator : rootOperators)
     {
-        dumpHandler->dump(rootOperator);
+        dumpHandler.dump({rootOperator});
     }
     return ss.str();
 }

@@ -11,6 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        QueryConsoleDumpHandler.cpp
+        LogicalQueryDumpHelper.cpp
         OperatorsUtil.cpp
 )

@@ -19,6 +19,7 @@
 #include <fstream>
 #include <istream>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <regex>
 #include <stdexcept>
@@ -44,12 +45,13 @@
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/ranges.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
-#include "ModelCatalog.hpp"
 
 namespace YAML
 {
@@ -133,7 +135,10 @@ struct convert<NES::CLI::QueryConfig>
         rhs.sinks.emplace(sink.name, sink);
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
-        rhs.models = node["models"].as<std::vector<NES::CLI::Model>>();
+        if (node["models"].IsDefined())
+        {
+            rhs.models = node["models"].as<std::vector<NES::CLI::Model>>();
+        }
         rhs.query = node["query"].as<std::string>();
         return true;
     }
@@ -186,13 +191,32 @@ Sources::SourceDescriptor createSourceDescriptor(
     PRECONDITION(
         sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG),
         "Missing `Configurations::SOURCE_TYPE_CONFIG` in source configuration");
-    auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
-    NES_DEBUG("Source type is: {}", sourceType);
+    const auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
+    const auto numberOfBuffersInSourceLocalBufferPool = [](const std::unordered_map<std::string, std::string>& sourceConfig)
+    {
+        /// Initialize with invalid value and overwrite with configured value if given
+        auto numSourceLocalBuffers = Sources::SourceDescriptor::INVALID_NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL;
+
+        if (const auto configuredNumSourceLocalBuffers = sourceConfig.find(Configurations::NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL);
+            configuredNumSourceLocalBuffers != sourceConfig.end())
+        {
+            if (const auto customNumSourceLocalBuffers = Util::from_chars<int>(configuredNumSourceLocalBuffers->second))
+            {
+                numSourceLocalBuffers = customNumSourceLocalBuffers.value();
+            }
+        }
+        return numSourceLocalBuffers;
+    }(sourceConfiguration);
 
     auto validParserConfig = validateAndFormatParserConfig(parserConfig);
     auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
     return Sources::SourceDescriptor(
-        std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
+        std::move(schema),
+        std::move(logicalSourceName),
+        sourceType,
+        numberOfBuffersInSourceLocalBufferPool,
+        std::move(validParserConfig),
+        std::move(validSourceConfig));
 }
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)

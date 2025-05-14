@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <utility>
 #include <variant>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -144,7 +145,8 @@ public:
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)
         {
-            if (key != "type" and not SpecificConfiguration::parameterMap.contains(key))
+            if (key != SOURCE_TYPE_CONFIG and key != NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL
+                and not SpecificConfiguration::parameterMap.contains(key))
             {
                 throw InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key));
             }

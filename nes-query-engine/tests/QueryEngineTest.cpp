@@ -80,17 +80,17 @@ TEST_F(QueryEngineTest, singleQueryWithShutdown)
     {
         test.startQuery(std::move(query));
 
-        EXPECT_TRUE(ctrl->waitUntilOpened());
+        ASSERT_TRUE(ctrl->waitUntilOpened());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
-        test.sinkControls[pipeline]->waitForNumberOfReceivedBuffers(4);
+        test.sinkControls[pipeline]->waitForNumberOfReceivedBuffersOrMore(4);
     }
     test.stop();
 
-    EXPECT_TRUE(ctrl->waitUntilDestroyed());
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
     EXPECT_TRUE(ctrl->wasOpened());
     EXPECT_TRUE(ctrl->wasClosed());
 }
@@ -103,6 +103,7 @@ TEST_F(QueryEngineTest, singleQueryWithSystemShutdown)
     auto source = builder.addSource();
     auto sink = builder.addSink({builder.addPipeline({source})});
     auto query = test.addNewQuery(std::move(builder));
+    auto id = query->queryId;
 
     auto ctrl = test.sourceControls[source];
     auto sinkCtrl = test.sinkControls[sink];
@@ -115,13 +116,14 @@ TEST_F(QueryEngineTest, singleQueryWithSystemShutdown)
         ExpectStats::TaskExecutionComplete(8),
         ExpectStats::TaskEmit(4));
 
-    test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running});
+    test.expectQueryStatusEvents(id, {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running});
 
     test.start();
     {
         test.startQuery(std::move(query));
 
-        EXPECT_TRUE(ctrl->waitUntilOpened());
+        ASSERT_TRUE(ctrl->waitUntilOpened());
+        ASSERT_TRUE(test.waitForQepRunning(id, DEFAULT_LONG_AWAIT_TIMEOUT));
         EXPECT_FALSE(ctrl->wasClosed());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -129,14 +131,14 @@ TEST_F(QueryEngineTest, singleQueryWithSystemShutdown)
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
 
-        EXPECT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffers(4));
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(4));
     }
 
     auto buffers = sinkCtrl->takeBuffers();
     EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
     test.stop();
 
-    EXPECT_TRUE(ctrl->waitUntilDestroyed());
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
     EXPECT_TRUE(ctrl->wasOpened());
     EXPECT_TRUE(ctrl->wasClosed());
 }
@@ -173,7 +175,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
     {
         test.startQuery(std::move(query));
 
-        EXPECT_TRUE(ctrl->waitUntilOpened());
+        ASSERT_TRUE(ctrl->waitUntilOpened());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -181,13 +183,13 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectEoS();
 
-        sinkCtrl->waitForNumberOfReceivedBuffers(4);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(4));
     }
-    EXPECT_TRUE(sinkCtrl->waitForShutdown(DEFAULT_AWAIT_TIMEOUT));
-    EXPECT_TRUE(ctrl->waitUntilDestroyed());
+    ASSERT_TRUE(sinkCtrl->waitForShutdown(DEFAULT_LONG_AWAIT_TIMEOUT));
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
     EXPECT_TRUE(ctrl->wasOpened());
     EXPECT_TRUE(ctrl->wasClosed());
-    EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+    ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
     test.stop();
 
     auto buffers = sinkCtrl->takeBuffers();
@@ -226,7 +228,7 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
     {
         test.startQuery(std::move(query));
 
-        EXPECT_TRUE(ctrl->waitUntilOpened());
+        ASSERT_TRUE(ctrl->waitUntilOpened());
         EXPECT_FALSE(ctrl->wasClosed());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -235,15 +237,15 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
 
         /// Race between Source Data and System Stop
-        sinkCtrl->waitForNumberOfReceivedBuffers(1);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         test.stopQuery(QueryId(1));
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
     }
     test.stop();
 
-    EXPECT_TRUE(sinkCtrl->waitForShutdown(DEFAULT_AWAIT_TIMEOUT));
-    EXPECT_TRUE(ctrl->waitUntilDestroyed());
+    ASSERT_TRUE(sinkCtrl->waitForShutdown(DEFAULT_LONG_AWAIT_TIMEOUT));
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
     EXPECT_TRUE(ctrl->wasOpened());
     EXPECT_TRUE(ctrl->wasClosed());
 
@@ -262,15 +264,16 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
 
     auto ctrl = test.sourceControls[source];
     auto sinkCtrl = test.sinkControls[sink];
-    test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running});
-    EXPECT_CALL(*test.status, logQueryFailure(QueryId(1), ::testing::_, ::testing::_));
+    test.expectQueryStatusEvents(
+        QueryId(1),
+        {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Failed});
     test.expectSourceTermination(QueryId(1), source, Runtime::QueryTerminationType::Failure);
 
     test.start();
     {
         test.startQuery(std::move(query));
 
-        EXPECT_TRUE(ctrl->waitUntilOpened());
+        ASSERT_TRUE(ctrl->waitUntilOpened());
         EXPECT_FALSE(ctrl->waitUntilClosed());
 
         ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -278,13 +281,13 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
 
-        sinkCtrl->waitForNumberOfReceivedBuffers(1);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
         ctrl->injectError("Source Failed");
-        test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT);
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
     }
     test.stop();
 
-    EXPECT_TRUE(ctrl->waitUntilDestroyed());
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
     EXPECT_TRUE(ctrl->wasOpened());
     EXPECT_TRUE(ctrl->wasClosed());
 
@@ -324,25 +327,25 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesShutdown)
     {
         test.startQuery(std::move(query));
 
-        EXPECT_TRUE(ctrl1->waitUntilOpened());
+        ASSERT_TRUE(ctrl1->waitUntilOpened());
         EXPECT_FALSE(ctrl1->wasClosed());
 
-        EXPECT_TRUE(ctrl2->waitUntilOpened());
+        ASSERT_TRUE(ctrl2->waitUntilOpened());
         EXPECT_FALSE(ctrl2->wasClosed());
 
         ctrl1->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl1->injectData(identifiableData(2), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl2->injectData(identifiableData(3), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl2->injectData(identifiableData(4), NUMBER_OF_TUPLES_PER_BUFFER);
-        sinkCtrl->waitForNumberOfReceivedBuffers(4);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(4));
     }
 
 
     auto buffers = sinkCtrl->takeBuffers();
     test.stop();
 
-    EXPECT_TRUE(ctrl1->waitUntilDestroyed());
-    EXPECT_TRUE(ctrl2->waitUntilDestroyed());
+    ASSERT_TRUE(ctrl1->waitUntilDestroyed());
+    ASSERT_TRUE(ctrl2->waitUntilDestroyed());
 }
 
 TEST_F(QueryEngineTest, failureDuringPipelineStop)
@@ -364,12 +367,12 @@ TEST_F(QueryEngineTest, failureDuringPipelineStop)
     test.start();
     {
         test.startQuery(std::move(query));
-        EXPECT_TRUE(test.waitForQepRunning(id, DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepRunning(id, DEFAULT_LONG_AWAIT_TIMEOUT));
         test.sourceControls[source]->injectEoS();
-        EXPECT_TRUE(test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepTermination(id, DEFAULT_LONG_AWAIT_TIMEOUT));
 
-        EXPECT_TRUE(test.pipelineControls[failingPipeline]->waitForStop()) << "Pipeline should be stopped";
-        EXPECT_FALSE(test.pipelineControls[pipeline]->waitForStop()) << "Successors of failing pipelines should not be stopped";
+        ASSERT_TRUE(test.pipelineControls[failingPipeline]->waitForStop()) << "Pipeline should be stopped";
+        EXPECT_TRUE(test.pipelineControls[pipeline]->keepRunning()) << "Successors of failing pipelines should not be stopped";
     }
     test.stop();
 }
@@ -397,17 +400,17 @@ TEST_F(QueryEngineTest, failureDuringPipelineStopMultipleSources)
     test.start();
     {
         test.startQuery(std::move(query));
-        EXPECT_TRUE(test.waitForQepRunning(id, DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepRunning(id, DEFAULT_LONG_AWAIT_TIMEOUT));
         test.sourceControls[source2]->injectEoS();
-        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStop())
+        ASSERT_TRUE(test.pipelineControls[pipeline]->waitForStop())
             << "Pipeline should be stopped after its predecessor source has been stopped";
         EXPECT_FALSE(test.sinkControls[sink]->waitForShutdown(DEFAULT_AWAIT_TIMEOUT))
             << "Sink should not have been stopped as it is kept alive by the other predecessor";
 
         test.sourceControls[source1]->injectEoS();
-        EXPECT_TRUE(test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.pipelineControls[failingPipeline]->waitForStop()) << "Pipeline should be stopped";
-        EXPECT_FALSE(test.pipelineControls[failingPipelineSuccessor]->waitForStop())
+        ASSERT_TRUE(test.waitForQepTermination(id, DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.pipelineControls[failingPipeline]->waitForStop()) << "Pipeline should be stopped";
+        EXPECT_TRUE(test.pipelineControls[failingPipelineSuccessor]->keepRunning())
             << "Successors of failing pipelines should not be stopped";
         EXPECT_FALSE(test.sinkControls[sink]->waitForShutdown(DEFAULT_AWAIT_TIMEOUT))
             << "Successors of failing pipelines should not be stopped";
@@ -489,10 +492,10 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
     {
         test.startQuery(std::move(query));
 
-        EXPECT_TRUE(ctrl1->waitUntilOpened());
+        ASSERT_TRUE(ctrl1->waitUntilOpened());
         EXPECT_FALSE(ctrl1->wasClosed());
 
-        EXPECT_TRUE(ctrl2->waitUntilOpened());
+        ASSERT_TRUE(ctrl2->waitUntilOpened());
         EXPECT_FALSE(ctrl2->wasClosed());
 
         ASSERT_TRUE(ctrl1->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER + 0));
@@ -501,21 +504,21 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
         ASSERT_TRUE(ctrl2->injectData(identifiableData(4), NUMBER_OF_TUPLES_PER_BUFFER + 3));
         ASSERT_TRUE(ctrl1->injectEoS());
 
-        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffers(4));
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(4));
 
         ASSERT_TRUE(ctrl2->injectData(identifiableData(5), NUMBER_OF_TUPLES_PER_BUFFER + 4));
-        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffers(5));
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(5));
         ASSERT_TRUE(ctrl2->injectData(identifiableData(6), NUMBER_OF_TUPLES_PER_BUFFER + 5));
-        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffers(6));
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(6));
         ASSERT_TRUE(ctrl2->injectEoS());
 
-        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
     }
     test.stop();
 
     auto buffers = sinkCtrl->takeBuffers();
-    EXPECT_TRUE(ctrl1->waitUntilDestroyed());
-    EXPECT_TRUE(ctrl2->waitUntilDestroyed());
+    ASSERT_TRUE(ctrl1->waitUntilDestroyed());
+    ASSERT_TRUE(ctrl2->waitUntilDestroyed());
 }
 
 TEST_F(QueryEngineTest, singleQueryWithManySources)
@@ -555,10 +558,10 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
         test.startQuery(std::move(query));
         DataGenerator dataGenerator;
         dataGenerator.start(std::move(sourcesCtrls));
-        sinkCtrl->waitForNumberOfReceivedBuffers(numberOfBuffersBeforeTermination);
+        sinkCtrl->waitForNumberOfReceivedBuffersOrMore(numberOfBuffersBeforeTermination);
         dataGenerator.stop();
 
-        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
     }
     test.stop();
 }
@@ -599,7 +602,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
 
         DataGenerator<FailAfter<numberOfBuffersBeforeFailure, 0>> dataGenerator;
         dataGenerator.start(sourcesCtrls);
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
         dataGenerator.stop();
     }
 
@@ -663,21 +666,21 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
 
         for (auto queryId : queryIds)
         {
-            EXPECT_TRUE(test.waitForQepRunning(queryId, DEFAULT_AWAIT_TIMEOUT));
+            ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
 
-        sinkCtrls[0]->waitForNumberOfReceivedBuffers(2);
+        sinkCtrls[0]->waitForNumberOfReceivedBuffersOrMore(2);
         dataGenerator.stop();
 
         for (auto queryId : queryIds)
         {
-            EXPECT_TRUE(test.waitForQepTermination(queryId, DEFAULT_AWAIT_TIMEOUT));
+            ASSERT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
     }
 
     for (const auto& testSourceControl : sourcesCtrls)
     {
-        EXPECT_TRUE(testSourceControl->waitUntilDestroyed());
+        ASSERT_TRUE(testSourceControl->waitUntilDestroyed());
     }
     test.stop();
 }
@@ -754,11 +757,11 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
         {
             auto queryId = query->queryId;
             test.startQuery(std::move(query));
-            EXPECT_TRUE(test.waitForQepRunning(queryId, DEFAULT_AWAIT_TIMEOUT));
+            ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
 
         /// Expect Query 1 to be terminated by the failure.
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
         /// Expect all other queries to be still running
         for (size_t queryId = 2; auto& query : queryPlans | std::ranges::views::drop(1))
         {
@@ -768,20 +771,20 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
 
         /// Internally stop Query 2 and wait for termination
         test.stopQuery(QueryId(2));
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(2), std::chrono::milliseconds(1000)));
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(2), DEFAULT_LONG_AWAIT_TIMEOUT));
 
         /// Externally stop all other queries via EoS from the datagenerator
         dataGenerator.stop();
         for (size_t queryId = 3; auto& query : queryPlans | std::ranges::views::drop(2))
         {
-            EXPECT_TRUE(test.waitForQepTermination(QueryId(queryId), DEFAULT_AWAIT_TIMEOUT));
+            ASSERT_TRUE(test.waitForQepTermination(QueryId(queryId), DEFAULT_LONG_AWAIT_TIMEOUT));
             queryId++;
         }
     }
 
     for (const auto& testSourceControl : sourcesCtrls)
     {
-        EXPECT_TRUE(testSourceControl->waitUntilDestroyed());
+        ASSERT_TRUE(testSourceControl->waitUntilDestroyed());
     }
     test.stop();
 }
@@ -805,17 +808,17 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourceExternalStop)
     test.start();
     {
         test.startQuery(std::move(query));
-        EXPECT_TRUE(test.sourceControls[source1]->waitUntilOpened());
-        EXPECT_TRUE(test.sourceControls[source2]->waitUntilOpened());
+        ASSERT_TRUE(test.sourceControls[source1]->waitUntilOpened());
+        ASSERT_TRUE(test.sourceControls[source2]->waitUntilOpened());
 
         test.sourceControls[source1]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source1]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source2]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
-        EXPECT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffers(3));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffersOrMore(3));
         test.stopQuery(QueryId(1));
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.sourceControls[source1]->waitUntilDestroyed());
-        EXPECT_TRUE(test.sourceControls[source2]->waitUntilDestroyed());
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sourceControls[source1]->waitUntilDestroyed());
+        ASSERT_TRUE(test.sourceControls[source2]->waitUntilDestroyed());
     }
     test.stop();
 }
@@ -847,9 +850,9 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringEngineTerminatio
     test.start();
     {
         test.startQuery(std::move(query));
-        EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStart());
-        EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.pipelineControls[pipeline]->waitForStart());
+        ASSERT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
     }
     test.stop();
 }
@@ -873,7 +876,7 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermina
         ExpectStats::TaskExecutionComplete(0),
         ExpectStats::TaskEmit(0));
 
-    test.sourceControls[source]->failDuringOpen(DEFAULT_AWAIT_TIMEOUT);
+    test.sourceControls[source]->failDuringOpen(DEFAULT_LONG_AWAIT_TIMEOUT);
     test.expectQueryStatusEvents(
         query->queryId,
         {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
@@ -881,12 +884,12 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermina
     test.start();
     {
         test.startQuery(std::move(query));
-        EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStart());
-        EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.pipelineControls[pipeline]->waitForStart());
+        ASSERT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
         test.stopQuery(QueryId(1));
         /// Termination only happens after the source has failed so we have to wait at least as long
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), 2 * DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), 2 * DEFAULT_LONG_AWAIT_TIMEOUT));
     }
     test.stop();
 }
@@ -914,16 +917,16 @@ TEST_F(QueryEngineTest, singleQueryWithPipelineFailure)
     test.start();
     {
         test.startQuery(std::move(query));
-        EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStart());
-        EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.pipelineControls[pipeline]->waitForStart());
+        ASSERT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
 
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
         EXPECT_THAT(test.pipelineControls[pipeline]->invocations.load(), IsInInclusiveRange(2, 4));
 
         /// There is a race between tasks emitted from pipeline 1 to be processed by the sink pipeline and the query termination
@@ -953,8 +956,8 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessors)
     test.start();
     {
         test.startQuery(std::move(query));
-        EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
 
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -962,9 +965,9 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessors)
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source]->injectEoS();
 
-        EXPECT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffers(4 * 3));
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
+        ASSERT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffersOrMore(4 * 3));
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
         EXPECT_TRUE(test.pipelineControls[pipeline1]->wasStopped());
         EXPECT_TRUE(test.pipelineControls[pipeline2]->wasStopped());
         EXPECT_TRUE(test.pipelineControls[pipeline3]->wasStopped());
@@ -1020,8 +1023,8 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessorsSourceFailure)
     test.start();
     {
         test.startQuery(std::move(query));
-        EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
 
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
@@ -1029,8 +1032,8 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessorsSourceFailure)
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source]->injectError("I should fail here!");
 
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+        ASSERT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
         EXPECT_FALSE(test.pipelineControls[pipeline1]->wasStopped());
         EXPECT_FALSE(test.pipelineControls[pipeline2]->wasStopped());
         EXPECT_FALSE(test.pipelineControls[pipeline3]->wasStopped());
@@ -1107,27 +1110,28 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
         {
             auto queryId = query->queryId;
             test.startQuery(std::move(query));
-            EXPECT_TRUE(test.waitForQepRunning(queryId, DEFAULT_AWAIT_TIMEOUT));
+            ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
 
         /// Expect all other queries to have failed
         for (size_t queryId = 2; auto& query : queryPlans | std::ranges::views::drop(1))
         {
-            EXPECT_TRUE(test.waitForQepTermination(QueryId(queryId), std::chrono::milliseconds(1000)));
+            ASSERT_TRUE(test.waitForQepTermination(QueryId(queryId), DEFAULT_LONG_AWAIT_TIMEOUT));
             queryId++;
         }
 
-        /// Expect Query 1 to be terminated by end of stream.
-        EXPECT_FALSE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        /// Query 1 should be alive
+        ASSERT_FALSE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
 
         /// Externally stop all other queries via EoS from the datagenerator
         dataGenerator.stop();
-        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        /// Expect Query 1 to be terminated by end of stream.
+        ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
     }
 
     for (const auto& testSourceControl : sourcesCtrls)
     {
-        EXPECT_TRUE(testSourceControl->waitUntilDestroyed());
+        ASSERT_TRUE(testSourceControl->waitUntilDestroyed());
     }
     test.stop();
 }

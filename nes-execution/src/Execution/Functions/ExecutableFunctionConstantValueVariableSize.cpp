@@ -17,11 +17,13 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <string_view>
 #include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Functions
 {
 

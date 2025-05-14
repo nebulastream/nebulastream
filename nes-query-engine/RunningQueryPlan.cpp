@@ -129,6 +129,14 @@ std::optional<CallbackRef> CallbackOwner::getRef() const
     return {};
 }
 
+/// The RunningQueryPlanNodeDeleter ensures that a RunningQueryPlan Node properly stopped.
+/// If a node has been started the requiresTermination flag will be set. In a graceful stop this requires
+/// the engine to stop the pipeline. Since a pipeline stop is potentially an expensive operation this is moved into
+/// the task queue.
+/// Because we use shared ptr to implement the reference counting, we can create a custom deleter, that instead of deleting the
+/// resource of the shared_ptr rescues it in a unique_ptr. At this point there cannot be references onto the pipeline only the PipelineStop
+/// task keeps the Node alive. The node however keeps all of its successors alive. If the pipeline stop has been performed the onSuccess
+/// callback emits PendingPipelineStops for all successors and is destroyed.
 void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryPlanNode* ptr)
 {
     std::unique_ptr<RunningQueryPlanNode> node(ptr);
@@ -373,20 +381,8 @@ std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::sto
         "Invalid State, the pipeline expiration callback should not have been triggered while attempting to stop the query");
     internal.pipelines.clear();
 
-
     /// Source stop will emit a the PendingPipelineStop which stops a pipeline once no more tasks are depending on it.
-    /// The blocking nature of waiting for all sources to be stopped introduces a potential deadlock, if the source is blocked
-    /// waiting on submitting work into the TaskQueue, while all WorkerThreads are waiting for the source to terminate.
-    auto sources = internal.sources | std::views::values | std::ranges::to<std::vector>();
-    auto pendingSourceStops
-        = sources | std::views::filter([](auto& source) { return source->attemptUnregister(); }) | std::ranges::to<std::vector>();
-    for (const auto& pendingSourceStop : pendingSourceStops)
-    {
-        /// We need to wait for the source to be unregistered, as the source may be blocked on submitting work into the AdmissionQueue
-        while (not pendingSourceStop->attemptUnregister())
-        {
-        }
-    }
+    internal.sources.clear();
 
     return {
         std::make_unique<StoppingQueryPlan>(

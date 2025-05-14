@@ -15,11 +15,10 @@
 #pragma once
 
 #include <memory>
-
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include "Execution/Operators/ExecutionContext.hpp"
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
@@ -43,7 +42,7 @@ public:
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const override;
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const override;
 
 private:
     [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;

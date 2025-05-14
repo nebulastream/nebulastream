@@ -20,21 +20,21 @@
 #include <expected>
 #include <filesystem>
 #include <ios>
+#include <iostream>
 #include <iterator>
+#include <optional>
 #include <ranges>
+#include <regex>
 #include <span>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <Util/Logger/Logger.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graphviz.hpp>
 #include <boost/process.hpp>
 #include <boost/process/search_path.hpp>
-#include <boost/graph/graphviz.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <regex>
-#include <sstream>
-#include <iostream>
-#include <optional>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp>
@@ -64,6 +64,13 @@ struct ModelMetadataGraph
         std::string shape;
     };
 
+    struct ModelMetadata
+    {
+        std::vector<size_t> inputShape;
+        std::vector<size_t> outputShape;
+        std::string functionName;
+    };
+
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, VertexProps> Graph;
     Graph graph;
 
@@ -77,12 +84,11 @@ struct ModelMetadataGraph
         boost::read_graphviz(in, graph, dp);
     }
 
-    std::vector<int> parseInputShape(const std::string& label)
+    std::vector<size_t> parseTensorShape(const std::string& label)
     {
         std::regex tensor_regex(R"(tensor<([?0-9x]+)f32>)");
         std::smatch match;
-        std::vector<int> result;
-
+        std::vector<size_t> result;
         if (std::regex_search(label, match, tensor_regex))
         {
             std::string shape_str = match[1];
@@ -114,10 +120,32 @@ struct ModelMetadataGraph
         return {};
     }
 
-    std::pair<std::vector<int>, std::string> getModelMetadata()
+    /// Function to get next node label if there's exactly one outgoing edge
+    std::optional<std::string> findLabelOfUnambiguousSuccessor(auto v, const auto& g)
     {
-        std::pair<std::vector<int>, std::string> metadata;
-        while (metadata.first.empty() || metadata.second.empty())
+        auto [ai, ai_end] = adjacent_vertices(v, g);
+        /// Check if there's at least one adjacent vertex
+        if (ai == ai_end)
+        {
+            return std::nullopt; // No outgoing edges
+        }
+
+        /// Check if there's more than one adjacent vertex
+        auto next_vertex = *ai;
+        ++ai;
+        if (ai != ai_end)
+        {
+            return std::nullopt; // More than one outgoing edge
+        }
+
+        /// There's exactly one outgoing edge. Get the label of the target vertex
+        return g[next_vertex].label;
+    }
+
+    ModelMetadata getModelMetadata()
+    {
+        ModelMetadata metadata;
+        while (metadata.functionName.empty() || metadata.inputShape.empty() || metadata.outputShape.empty())
         {
             for (auto v : boost::make_iterator_range(boost::vertices(graph)))
             {
@@ -125,17 +153,22 @@ struct ModelMetadataGraph
 
                 if (label.find("hal.tensor.import") != std::string::npos)
                 {
-                    metadata.first = parseInputShape(label);
+                    metadata.inputShape = parseTensorShape(label);
                 }
-                else if(label.find("flow.dispatch") != std::string::npos)
+                else if (label.find("flow.dispatch") != std::string::npos)
                 {
-                    metadata.second = parseFunctionName(label);
+                    metadata.functionName = parseFunctionName(label);
+                }
+                else if (findLabelOfUnambiguousSuccessor(v, graph)
+                             .transform([](const auto& label) { return label.find("hal.tensor.export") != std::string::npos; })
+                             .value_or(false))
+                {
+                    metadata.outputShape = parseTensorShape(label);
                 }
             }
         }
         return metadata;
     }
-
 };
 
 auto format_as(const Tool& tool)
@@ -258,10 +291,13 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
     try
     {
         bp::pipe mlir_pipe;
+        bp::ipstream import_error;
+        bp::ipstream compile_error;
         bp::ipstream model_stream;
         std::vector<bp::child> process;
-        process.emplace_back(bp::search_path("iree-import-onnx"), importArgs, bp::std_out > mlir_pipe);
-        process.emplace_back(bp::search_path("iree-compile"), compileArgs, bp::std_in<mlir_pipe, bp::std_out> model_stream);
+        process.emplace_back(bp::search_path("iree-import-onnx"), importArgs, bp::std_out > mlir_pipe, bp::std_err > import_error);
+        process.emplace_back(
+            bp::search_path("iree-compile"), compileArgs, bp::std_in<mlir_pipe, bp::std_out> model_stream, bp::std_err > compile_error);
 
         /// Read output of iree-compile into a byte buffer
         std::vector<std::byte> modelVmfb;
@@ -292,16 +328,28 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
 
             ModelMetadataGraph modelGraph(graphPath);
             auto metadata = modelGraph.getModelMetadata();
-            std::vector<int> inputShape = metadata.first;
-            std::string functionName = metadata.second;
 
             Model model = Model{std::move(modelVmfb1), modelVmfb.size()};
-            model.setFunctionName("module." + functionName);
-            model.setInputShape(inputShape);
+            model.functionName = "module." + metadata.functionName;
+            model.shape = metadata.inputShape;
+            model.dims = metadata.inputShape.size();
+            model.inputSizeInBytes = 4 * std::accumulate(model.shape.begin(), model.shape.end(), 1, std::multiplies<int>());
+
+            model.outputShape = metadata.outputShape;
+            model.outputDims = metadata.outputShape.size();
+            model.outputSizeInBytes = 4 * std::accumulate(model.outputShape.begin(), model.outputShape.end(), 1, std::multiplies<int>());
 
             std::filesystem::remove_all(graphDir);
             return model;
         }
+        NES_ERROR(
+            "Errors during Model Import:\nIree Import Error:\n{} {}\n```\n{}```\nIree Compile Error:\n{} {}\n```\n{}```",
+            bp::search_path("iree-import-onnx").string(),
+            fmt::join(importArgs, " "),
+            std::string{std::istreambuf_iterator(import_error), std::istreambuf_iterator<char>()},
+            bp::search_path("iree-compile").string(),
+            fmt::join(compileArgs, " "),
+            std::string{std::istreambuf_iterator(compile_error), std::istreambuf_iterator<char>()});
         return std::unexpected(ModelLoadError("Model Import was not successful: Non Zero Exit Code."));
     }
     catch (bp::process_error& bpe)

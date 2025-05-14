@@ -38,10 +38,4 @@ endif ()
 
 add_tests_if_enabled(tests)
 
-# Create library for the registries, and privately link it against nes-execution so that nes-execution can access its registries
-create_plugin_registry_library(nes-execution-registry nes-execution)
-target_link_libraries(nes-execution PRIVATE nes-execution-registry)
-
-# Generate a registrar for each registry in nes-executions
-generate_plugin_registrars(nes-execution ExecutableFunction)
-generate_plugin_registrars(nes-execution ExecutableOperator)
+create_registries_for_component(ExecutableFunction ExecutableOperator)

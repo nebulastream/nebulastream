@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -57,9 +58,9 @@ std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> ExecutableOper
     return operatorHandlers;
 }
 
-std::string ExecutableOperator::toString() const
+std::ostream& ExecutableOperator::toDebugString(std::ostream& os) const
 {
-    return "ExecutableOperator";
+    return os << "\nExecutableOperator";
 }
 
 std::shared_ptr<Operator> ExecutableOperator::copy()

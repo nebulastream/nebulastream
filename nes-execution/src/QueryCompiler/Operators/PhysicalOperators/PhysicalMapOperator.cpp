@@ -12,13 +12,14 @@
     limitations under the License.
 */
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -54,18 +55,28 @@ std::shared_ptr<PhysicalOperator> PhysicalMapOperator::create(
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(mapFunction));
 }
 
-std::string PhysicalMapOperator::toString() const
+std::ostream& PhysicalMapOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalMapOperator:\n";
-    out << PhysicalUnaryOperator::toString();
+    os << "\nPhysicalMapOperator:\n";
+    os << VerbosityLevel::Debug;
     if (mapFunction != nullptr)
     {
-        out << "mapFunction: " << *mapFunction;
+        os << "mapFunction: " << *mapFunction;
     }
-    out << std::endl;
-    return out.str();
+    os << '\n';
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalMapOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalMapOperator(";
+    os << VerbosityLevel::QueryPlan;
+    if (mapFunction != nullptr)
+    {
+        os << *mapFunction;
+    }
+    os << ')';
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalMapOperator::copy()

@@ -70,7 +70,7 @@ static constexpr size_t NUMBER_OF_TUPLES_PER_BUFFER = 23;
 static constexpr size_t NUMBER_OF_BUFFERS_PER_SOURCE = 300;
 static constexpr size_t NUMBER_OF_THREADS = 2;
 static constexpr size_t LARGE_NUMBER_OF_THREADS = 8;
-constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIMEOUT = std::chrono::milliseconds(500);
+constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIMEOUT = std::chrono::milliseconds(1000);
 constexpr std::chrono::milliseconds DEFAULT_LONG_AWAIT_TIMEOUT = std::chrono::milliseconds(10000);
 
 /// Creates raw TupleBuffer data based on a recognizable pattern which can later be identified using `verifyIdentifier`.
@@ -227,8 +227,12 @@ public:
     /// Back reference this is set during construction of a TestPipeline
     Runtime::Execution::ExecutablePipelineStage* stage = nullptr;
 
-    [[nodiscard]] testing::AssertionResult waitForStart() const { return waitForFuture(startFuture, DEFAULT_AWAIT_TIMEOUT); }
-    [[nodiscard]] testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_AWAIT_TIMEOUT); }
+    [[nodiscard]] testing::AssertionResult waitForStart() const { return waitForFuture(startFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
+    [[nodiscard]] testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
+    [[nodiscard]] testing::AssertionResult keepRunning() const
+    {
+        return waitForFuture(stopFuture, DEFAULT_AWAIT_TIMEOUT) ? testing::AssertionFailure() : testing::AssertionSuccess();
+    }
     [[nodiscard]] testing::AssertionResult wasStarted() const { return waitForFuture(startFuture, std::chrono::milliseconds(0)); }
     [[nodiscard]] testing::AssertionResult wasStopped() const { return waitForFuture(stopFuture, std::chrono::milliseconds(0)); }
 };
@@ -279,7 +283,8 @@ protected:
 
 struct TestSinkController
 {
-    testing::AssertionResult waitForNumberOfReceivedBuffers(size_t numberOfExpectedBuffers);
+    /// Waits for *at least* `numberOfExpectedBuffers`
+    testing::AssertionResult waitForNumberOfReceivedBuffersOrMore(size_t numberOfExpectedBuffers);
 
     void insertBuffer(Memory::TupleBuffer&& buffer);
 

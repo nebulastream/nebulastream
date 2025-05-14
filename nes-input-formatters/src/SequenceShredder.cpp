@@ -27,6 +27,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+
+#include <ErrorHandling.hpp>
 #include <SequenceShredder.hpp>
 
 namespace NES::InputFormatters
@@ -228,7 +230,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             break;
         }
         case WrappingMode::CHECK_WRAPPING_TO_LOWER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
+            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
             auto [spanningTupleEnd, isEndValid] = tryGetSpanningTupleEnd(
                 sequenceNumberBitIndex,
                 sequenceNumberBitmapOffset,
@@ -251,7 +253,7 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             break;
         }
         case WrappingMode::CHECK_WRAPPING_TO_HIGHER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
+            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
             auto [spanningTupleStart, isStartValid] = tryGetSpanningTupleStart(
                 sequenceNumberBitIndex,
                 sequenceNumberBitmapOffset,
@@ -530,6 +532,7 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWitho
     const size_t sequenceNumberIndex = sequenceNumber - spanningTuple.spanStart;
     return SpanningTupleBuffers{.indexOfProcessedSequenceNumber = sequenceNumberIndex, .stagedBuffers = std::move(spanningTupleBuffers)};
 }
+
 SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithTupleDelimiter(
     SpanningTuple spanningTuple,
     const SequenceNumberType sequenceNumber,
@@ -553,7 +556,8 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
     std::vector<StagedBuffer> returnBuffers{};
     const auto startIndex = (spanningTuple.isStartValid) ? spanningTuple.spanStart : sequenceNumber;
     const auto endIndex = (spanningTuple.isEndValid) ? spanningTuple.spanEnd : sequenceNumber;
-    const auto returningMoreThanOnlyBufferOfSequenceNumber = startIndex < endIndex;
+    const auto usingBufferForLeadingSpanningTuple = static_cast<int8_t>(startIndex < sequenceNumber);
+    const auto usingBufferForTrailingSpanningTuple = static_cast<int8_t>(sequenceNumber < endIndex);
     const auto numberOfBitmapsSnapshot = numberOfBitmapsModuloSnapshot + 1;
     const auto stagedBufferSizeModulo = (numberOfBitmapsSnapshot * SIZE_OF_BITMAP_IN_BITS) - 1;
 
@@ -577,11 +581,14 @@ SequenceShredder::SpanningTupleBuffers SequenceShredder::checkSpanningTupleWithT
         for (auto spanningTupleIndex = startIndex; spanningTupleIndex <= endIndex; ++spanningTupleIndex)
         {
             const auto adjustedSpanningTupleIndex = spanningTupleIndex & stagedBufferSizeModulo;
-            /// A buffer with a tuple delimiter has two uses. One for starting and one for ending a SpanningTuple.
-            const auto uses = static_cast<uint8_t>(spanningTupleIndex == sequenceNumber)
-                + static_cast<uint8_t>(returningMoreThanOnlyBufferOfSequenceNumber);
+            /// A buffer with a tuple delimiter has up to three uses:
+            /// 1. Formatting the tuples in the buffer, 2. Formatting the leading spanning tuple, 3. Formatting the trailing spanning tuple
+            const int8_t uses = (spanningTupleIndex != sequenceNumber)
+                ? static_cast<int8_t>(1)
+                : static_cast<int8_t>(1) + usingBufferForLeadingSpanningTuple + usingBufferForTrailingSpanningTuple;
             this->stagedBufferUses[adjustedSpanningTupleIndex] -= uses;
             const auto newUses = this->stagedBufferUses[adjustedSpanningTupleIndex];
+            INVARIANT(newUses >= 0, "Uses can never be negative");
             auto returnBuffer = (newUses == 0) ? std::move(this->stagedBuffers[adjustedSpanningTupleIndex])
                                                : this->stagedBuffers[adjustedSpanningTupleIndex];
             returnBuffers.emplace_back(std::move(returnBuffer));

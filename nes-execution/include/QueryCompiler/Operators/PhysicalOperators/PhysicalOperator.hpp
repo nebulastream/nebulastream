@@ -31,7 +31,7 @@ class PhysicalOperator : public virtual Operator
 protected:
     explicit PhysicalOperator(OperatorId id);
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 
 public:
     /// If an operator is accessiable via a plugin it has to implement the `registryType` function.

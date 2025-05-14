@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <ostream>
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
@@ -30,11 +31,8 @@ PhysicalBinaryOperator::PhysicalBinaryOperator(
     BinaryOperator::setOutputSchema(std::move(outputSchema));
 }
 
-std::string PhysicalBinaryOperator::toString() const
+std::ostream& PhysicalBinaryOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << BinaryOperator::toString();
-    return out.str();
+    return BinaryOperator::toDebugString(os);
 }
-
 }

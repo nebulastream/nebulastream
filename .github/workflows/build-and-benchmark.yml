@@ -17,11 +17,12 @@ on:
 
 jobs:
   build-and-benchmark:
-    runs-on: [ self-hosted, linux, Build ]
+    runs-on: bc58-nes-public
     container:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
       volumes:
         - ccache:/ccache
+        - test-file-cache:/test-file-cache
       env:
         CCACHE_DIR: /ccache
         MOLD_JOBS: 1
@@ -33,17 +34,17 @@ jobs:
         CONBENCH_RUN_REASON: ${{ inputs.run_reason }}
         CONBENCH_MACHINE_INFO_NAME: "Github Runner"
       options: --user root
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
       - name: build systest
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --target systest -j -- -k 0
+          cmake -GNinja -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache
+          cmake --build build -j
       - name: run Benchmarks
         run: |
-          ./build/nes-systests/systest/systest -b -- --worker.numberOfBuffersInGlobalBufferManager=20000 
+          ./build/nes-systests/systest/systest -b -g benchmark -- --worker.numberOfBuffersInGlobalBufferManager=20000 
           python3 ./scripts/benchmarking/benchmark.py --systest
 

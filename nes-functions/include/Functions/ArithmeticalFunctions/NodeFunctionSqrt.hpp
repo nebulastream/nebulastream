@@ -34,7 +34,7 @@ public:
 protected:
     explicit NodeFunctionSqrt(NodeFunctionSqrt* other);
 
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 };
 
 }

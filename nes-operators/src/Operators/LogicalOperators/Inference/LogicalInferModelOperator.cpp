@@ -14,8 +14,8 @@
 
 #include <filesystem>
 #include <memory>
+#include <ostream>
 #include <ranges>
-#include <string>
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
@@ -31,19 +31,13 @@
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 #include <Model.hpp>
-#include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::InferModel
 {
 
 LogicalInferModelOperator::LogicalInferModelOperator(
-    OperatorId id,
-    Nebuli::Inference::Model model,
-    std::vector<std::shared_ptr<NodeFunction>> inputFields)
-    : Operator(id)
-    , LogicalUnaryOperator(id)
-    , model(std::move(model))
-    , inputFields(std::move(inputFields))
+    OperatorId id, Nebuli::Inference::Model model, std::vector<std::shared_ptr<NodeFunction>> inputFields)
+    : Operator(id), LogicalUnaryOperator(id), model(std::move(model)), inputFields(std::move(inputFields))
 {
 }
 
@@ -59,19 +53,22 @@ std::string getFieldName(const NodeFunction& function)
 }
 }
 
-std::string LogicalInferModelOperator::toString() const
+std::ostream& LogicalInferModelOperator::toDebugString(std::ostream& os) const
 {
     PRECONDITION(not model.getByteCode().empty(), "Inference operator must contain a path to the model.");
     PRECONDITION(not inputFields.empty(), "Inference operator must contain at least 1 input field.");
 
     if (not outputSchema->getFieldNames().empty())
     {
-        return fmt::format("INFER_MODEL(opId: {}, schema={})", id, outputSchema->toString());
+        fmt::println(os, "INFER_MODEL(opId: {}, schema={})", id, outputSchema->toString());
+        return os;
     }
-    return fmt::format(
+    fmt::println(
+        os,
         "INFER_MODEL(opId: {}, inputFields: [{}])",
         id,
         fmt::join(std::views::transform(inputFields, [](const auto& field) { return getFieldName(*field); }), ", "));
+    return os;
 }
 
 std::shared_ptr<Operator> LogicalInferModelOperator::copy()
@@ -148,7 +145,8 @@ bool LogicalInferModelOperator::inferSchema()
 
         if (*inputFunction->getStamp() != *expectedType)
         {
-            throw CannotInferSchema("Model Expected '{}', but received {}", expectedType->toString(), inputFunction->getStamp()->toString());
+            throw CannotInferSchema(
+                "Model Expected '{}', but received {}", expectedType->toString(), inputFunction->getStamp()->toString());
         }
 
         auto fieldName = inputFunction->getFieldName();

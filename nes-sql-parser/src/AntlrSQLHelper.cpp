@@ -51,7 +51,7 @@ void AntlrSQLHelper::addHavingClause(const std::shared_ptr<NES::NodeFunction>& e
 {
     this->havingClauses.emplace_back(expressionNode);
 }
-void AntlrSQLHelper::addProjectionField(const std::shared_ptr<NES::NodeFunction>& expressionNode)
+void AntlrSQLHelper::addProjectionField(const std::shared_ptr<NES::NodeFunctionFieldAccess>& expressionNode)
 {
     this->projectionFields.push_back(expressionNode);
 }

@@ -1,0 +1,63 @@
+# name: window/VarsizedAggregation.test
+# description: Test window aggregations into a varsized
+# groups: [Aggregation, WindowOperators]
+
+
+Source stream UINT64 timestamp UINT8 character
+0,72
+1,101
+2,108
+3,108
+4,111
+5,87
+6,111
+7,114
+8,108
+9,100
+10,72
+11,101
+12,108
+13,108
+14,111
+15,87
+16,111
+17,114
+18,108
+19,100
+20,72
+21,101
+22,108
+23,108
+24,111
+25,87
+26,111
+27,114
+28,108
+29,100
+
+SINK sinkStream UINT64 stream$start UINT64 stream$end VARSIZED stream$text
+
+
+# Tests Merge Aggregation using characters
+SELECT MERGE(character) as text
+FROM stream WINDOW TUMBLING(timestamp, size 10 ms) INTO sinkStream
+----
+0,10,HelloWorld
+10,20,HelloWorld
+20,30,HelloWorld
+
+
+Source stream8ByteStream UINT64 timestamp UINT64 character
+0,8245905578810697032
+1,8307297884220712044
+2,8388331938618102849
+3,8382157055477956968
+4,3761405301554571634
+
+SINK sinkStream8Byte UINT64 stream8ByteStream$start UINT64 stream8ByteStream$end VARSIZED stream8ByteStream$text
+
+# Tests Merge Aggregation using 8 byte integers. Note this test only works on small endian machines
+SELECT MERGE(character) as text
+FROM stream8ByteStream WINDOW TUMBLING(timestamp, size 5 ms) INTO sinkStream8Byte
+----
+0,5,HelloWorldThisIsATestWithALongString1234

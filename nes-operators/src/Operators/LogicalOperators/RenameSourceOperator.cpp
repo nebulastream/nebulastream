@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
@@ -20,6 +21,7 @@
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 
 
 namespace NES
@@ -45,11 +47,14 @@ bool RenameSourceOperator::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 };
 
-std::string RenameSourceOperator::toString() const
+std::ostream& RenameSourceOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "RENAME_STREAM(" << id << ", newSourceName=" << newSourceName << ")";
-    return ss.str();
+    return os << fmt::format("RENAME_SOURCE({}, newSourceName={})", id, newSourceName);
+}
+
+std::ostream& RenameSourceOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << fmt::format("RENAME_SOURCE({})", newSourceName);
 }
 
 bool RenameSourceOperator::inferSchema()

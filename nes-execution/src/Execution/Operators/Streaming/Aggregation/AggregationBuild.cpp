@@ -37,30 +37,56 @@
 
 namespace NES::Runtime::Execution::Operators
 {
-
-Interface::HashMap*
-getHashMapProxy(const AggregationOperatorHandler* operatorHandler, const Timestamp timestamp, const WorkerThreadId workerThreadId)
+namespace
+{
+Interface::HashMap* getHashMapProxy(
+    const AggregationOperatorHandler* operatorHandler,
+    const Timestamp timestamp,
+    const WorkerThreadId workerThreadId,
+    const AggregationBuild* buildOperator)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
+    PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
-    const auto createFunction = operatorHandler->getCreateNewSlicesFunction();
-    const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction);
+    /// If a new aggregation slice is created, we need to set the cleanup function for the aggregation states
+    auto wrappedCreateFunction(
+        [createFunction = operatorHandler->getCreateNewSlicesFunction(),
+         buildOperator](const SliceStart sliceStart, const SliceEnd sliceEnd)
+        {
+            const auto createdSlices = createFunction(sliceStart, sliceEnd);
+            for (const auto& slice : createdSlices)
+            {
+                const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
+                INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
+                aggregationSlice->setCleanupFunction(buildOperator->getStateCleanupFunction());
+            }
+            return createdSlices;
+        });
+
+    const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, wrappedCreateFunction);
     INVARIANT(
         hashMap.size() == 1,
-        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support slicing");
+        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support "
+        "slicing, but got {}",
+        hashMap.size());
 
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
     return aggregationSlice->getHashMapPtr(workerThreadId);
 }
-
+}
 
 void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
 {
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(getHashMapProxy, ctx.getGlobalOperatorHandler(operatorHandlerIndex), timestamp, ctx.getWorkerThreadId());
+    const auto hashMapPtr = invoke(
+        getHashMapProxy,
+        ctx.getGlobalOperatorHandler(operatorHandlerIndex),
+        timestamp,
+        ctx.getWorkerThreadId(),
+        nautilus::val<const AggregationBuild*>(this));
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
     /// Calling the key functions to add/update the keys to the record
@@ -95,9 +121,39 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
     auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions))
     {
-        aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
+        aggFunction->lift(state, ctx, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
+}
+
+std::function<void(const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>&)> AggregationBuild::getStateCleanupFunction() const
+{
+    return [copyOfFieldKeys = fieldKeys,
+            copyOfFieldValues = fieldValues,
+            copyOfAggregationFunctions = aggregationFunctions,
+            copyOfEntriesPerPage = entriesPerPage,
+            copyOfEntrySize = entrySize](const std::vector<std::unique_ptr<Nautilus::Interface::HashMap>>& hashMaps)
+    {
+        for (const auto& hashMap :
+             hashMaps | std::views::filter([](const auto& hashMapPtr) { return hashMapPtr->getNumberOfTuples() > 0; }))
+        {
+            {
+                /// Using here the .get() is fine, as we are not moving the hashMap pointer.
+                const Interface::ChainedHashMapRef hashMapRef(
+                    hashMap.get(), copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                for (const auto entry : hashMapRef)
+                {
+                    const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
+                    auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
+                    for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                    {
+                        aggFunction->cleanup(state);
+                        state = state + aggFunction->getSizeOfStateInBytes();
+                    }
+                }
+            }
+        }
+    };
 }
 
 AggregationBuild::AggregationBuild(

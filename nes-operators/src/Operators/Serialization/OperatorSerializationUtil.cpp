@@ -39,6 +39,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/MergeAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
@@ -345,6 +346,10 @@ deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetail
         else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN)
         {
             aggregation.emplace_back(Windowing::MedianAggregationDescriptor::create(onField, asField));
+        }
+        else if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_MERGE)
+        {
+            aggregation.emplace_back(Windowing::MergeAggregationDescriptor::create(onField, asField));
         }
         else
         {
@@ -854,6 +859,9 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
             case Median:
                 windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MEDIAN);
                 break;
+            case Merge:
+                windowAggregation->set_type(SerializableOperator_WindowDetails_Aggregation_Type_MERGE);
+                break;
             default:
                 NES_FATAL_ERROR("OperatorSerializationUtil: could not cast aggregation type");
         }
@@ -975,6 +983,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, serializedSourceDescriptor->mutable_sourceschema());
     serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.logicalSourceName);
     serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
+    serializedSourceDescriptor->set_numberofbuffersinsourcelocalbufferpool(sourceDescriptor.numberOfBuffersInSourceLocalBufferPool);
 
     /// Serialize parser config.
     auto* const serializedParserConfig = ParserConfig().New();
@@ -1030,6 +1039,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
     auto logicalSourceName = sourceDescriptor.logicalsourcename();
     auto sourceType = sourceDescriptor.sourcetype();
+    auto numberOfBuffersInSourceLocalBufferPool = sourceDescriptor.numberofbuffersinsourcelocalbufferpool();
 
     /// Deserialize the parser config.
     const auto& serializedParserConfig = sourceDescriptor.parserconfig();
@@ -1049,6 +1059,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
         std::move(schema),
         std::move(logicalSourceName),
         std::move(sourceType),
+        numberOfBuffersInSourceLocalBufferPool,
         std::move(deserializedParserConfig),
         std::move(SourceDescriptorConfig));
 }

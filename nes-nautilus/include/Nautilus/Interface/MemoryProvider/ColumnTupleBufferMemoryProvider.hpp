@@ -41,7 +41,7 @@ public:
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const override;
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const override;
 
 private:
     nautilus::val<int8_t*>

@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -24,6 +25,8 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -74,9 +77,24 @@ NodeFunctionConcat::create(const std::shared_ptr<NodeFunction>& left, const std:
     return concatNode;
 }
 
-std::string NodeFunctionConcat::toString() const
+std::ostream& NodeFunctionConcat::toDebugString(std::ostream& os) const
 {
-    return fmt::format("Concat({} ({}, {}))", this->stamp->toString(), *getLeft(), *getRight());
+    return os << fmt::format("CONCAT({} ({}, {}))", this->stamp->toString(), *getLeft(), *getRight());
 }
 
+}
+
+namespace NES::LogicalFunctionGeneratedRegistrar
+{
+/// declaration of register functions for 'LogicalFunctions'
+LogicalFunctionRegistryReturnType RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    if (arguments.childFunctions.size() != 2)
+    {
+        throw TypeInferenceException("Function Expects 2 Arguments");
+    }
+
+    auto function = NodeFunctionConcat::create(arguments.childFunctions[0], arguments.childFunctions[1]);
+    return function;
+}
 }

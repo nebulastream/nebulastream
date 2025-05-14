@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
@@ -39,11 +40,43 @@
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
-
+namespace
+{
 const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
 {
     auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
     return childBuffer.getBuffer<uint8_t>();
+}
+
+uint32_t storeAssociatedTextValueProxy(
+    const Memory::TupleBuffer* tupleBuffer,
+    Memory::AbstractBufferProvider* bufferProvider,
+    int8_t* textValue,
+    const uint32_t size,
+    const bool ownsBuffer)
+{
+    PRECONDITION(*std::bit_cast<uint32_t*>(textValue) == size, "VarSized size does not match the expected size.");
+    auto varSizeBuffer = [&]
+    {
+        if (ownsBuffer)
+        {
+            /// If the VariableSizedData has already been allocated in an exclusive buffer we can reuse the allocation.
+            return Memory::TupleBuffer::reinterpretAsTupleBuffer(textValue);
+        }
+        /// If the VariableSizedData does not own its buffer we cannot reuse the owning tuple buffer and thus have
+        /// to create a new alloction where the VariableSizedData owns the buffer again.
+        auto newBuffer = bufferProvider->getUnpooledBuffer(size + sizeof(uint32_t));
+        if (!newBuffer)
+        {
+            throw BufferAllocationFailure("Could not allocate unpooled buffer, when storing variable sized data.");
+        }
+        *newBuffer.value().getBuffer<uint32_t>() = size;
+        memcpy(newBuffer.value().getBuffer<int8_t>() + sizeof(uint32_t), textValue + sizeof(uint32_t), size);
+        return *newBuffer;
+    }();
+
+    return tupleBuffer->storeChildBuffer(varSizeBuffer);
+}
 }
 
 VarVal TupleBufferMemoryProvider::loadValue(
@@ -62,33 +95,13 @@ VarVal TupleBufferMemoryProvider::loadValue(
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
-uint32_t storeAssociatedTextValueProxy(
-    const Memory::TupleBuffer* tupleBuffer,
-    const uint32_t size,
-    const int8_t* textValue,
-    bool ownsBuffer,
-    Memory::AbstractBufferProvider* bufferProvider)
-{
-    if (ownsBuffer)
-    {
-        auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer(const_cast<int8_t*>(textValue));
-        return tupleBuffer->storeChildBuffer(textBuffer);
-    }
-    else
-    {
-        auto buffer = bufferProvider->getUnpooledBuffer(size + 4);
-        *buffer.value().getBuffer<uint32_t>() = size;
-        memcpy(buffer.value().getBuffer<int8_t>() + 4, textValue + 4, size);
-        return tupleBuffer->storeChildBuffer(buffer.value());
-    }
-}
 
 VarVal TupleBufferMemoryProvider::storeValue(
     const std::shared_ptr<PhysicalType>& type,
     const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
-    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider)
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -105,7 +118,13 @@ VarVal TupleBufferMemoryProvider::storeValue(
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
         const auto textValue = value.cast<VariableSizedData>();
-        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getSize(), textValue.getReference(), textValue.ownsBuffer(), bufferProvider);
+        const auto childIndex = nautilus::invoke(
+            storeAssociatedTextValueProxy,
+            recordBuffer.getReference(),
+            bufferProvider,
+            textValue.getReference(),
+            textValue.getContentSize(),
+            textValue.ownsBuffer());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;

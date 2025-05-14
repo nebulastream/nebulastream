@@ -15,7 +15,7 @@ SINK streamSink INT64 stream$id INT64 stream$value INT64 stream$timestamp
 SINK streamSinkWithNew INT64 stream$id INT64 stream$value INT64 stream$timestamp INT64 stream$new
 
 # Map with div function touches one field
-SELECT id / 5 AS id, value, timestamp FROM stream INTO streamSink
+SELECT id / UINT32(5) AS id, value, timestamp FROM stream INTO streamSink
 ----
 1,1,1000
 2,1,1001
@@ -48,7 +48,7 @@ SELECT id, value, timestamp, id / value AS new FROM stream INTO streamSinkWithNe
 35,21,21000,1
 
 # Two maps after each other that both touch the same fields
-SELECT id / 5 AS id, value / id AS value, timestamp FROM stream INTO streamSink
+SELECT id / UINT32(5) AS id, value / id AS value, timestamp FROM stream INTO streamSink
 ----
 1,1,1000
 2,0,1001

@@ -39,7 +39,8 @@ public:
     void inferStringSignature() override;
 
 protected:
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
 private:
     std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor;

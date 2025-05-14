@@ -69,7 +69,7 @@ void RowTupleBufferMemoryProvider::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    nautilus::val<Memory::AbstractBufferProvider*> bufferProvider) const
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
 {
     auto tupleSize = rowMemoryLayout->getTupleSize();
     const auto bufferAddress = recordBuffer.getBuffer();

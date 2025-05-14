@@ -59,6 +59,8 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
 {
     auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
     uint64_t queryIdInFile = 0;
+    std::unordered_set<uint64_t> foundQueries;
+
     for (const auto& [decomposedPlan, queryDefinition, sinkSchema] : loadedPlans)
     {
         if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
@@ -66,6 +68,7 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
             for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber
                      | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
             {
+                foundQueries.insert(queryIdInFile + 1);
                 testfile.queries.emplace_back(
                     testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
             }
@@ -76,6 +79,16 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
                 testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
         }
         ++queryIdInFile;
+    }
+
+    /// After processing all queries, warn if any specified query number was not found
+    for (auto testNumber : testfile.onlyEnableQueriesWithTestQueryNumber)
+    {
+        if (not foundQueries.contains(testNumber))
+        {
+            std::cerr << "Warning: Query number " << testNumber << " specified via command line argument but not found in file://"
+                      << testfile.file.string() << "\n";
+        }
     }
 }
 

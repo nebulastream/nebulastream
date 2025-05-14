@@ -113,11 +113,7 @@ inlineTable
     ;
 
 tableAlias
-    : (AS? strictIdentifier identifierList?)?
-    ;
-
-multipartIdentifierList
-    : multipartIdentifier (',' multipartIdentifier)*
+    : (AS? identifier identifierList?)?
     ;
 
 multipartIdentifier
@@ -125,20 +121,15 @@ multipartIdentifier
     ;
 
 namedExpression
-    : expression (AS? (name=errorCapturingIdentifier | identifierList))?
+    : expression AS name=identifier
+    | expression
     ;
 
-identifier
-    : strictIdentifier
-    | {!SQL_standard_keyword_behavior}? strictNonReserved
-    ;
+identifier: strictIdentifier;
 
 strictIdentifier
-    : IDENTIFIER              #unquotedIdentifier
-    | quotedIdentifier        #quotedIdentifierAlternative
-    | {SQL_standard_keyword_behavior}? ansiNonReserved #unquotedIdentifier
-    | {!SQL_standard_keyword_behavior}? nonReserved    #unquotedIdentifier
-    ;
+    : IDENTIFIER #unquotedIdentifier
+    | quotedIdentifier #quotedIdentifierAlternative;
 
 quotedIdentifier
     : BACKQUOTED_IDENTIFIER
@@ -243,7 +234,7 @@ timeUnit: MS
 
 timestampParameter: IDENTIFIER;
 
-functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
+functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN | MERGE;
 
 sinkClause: INTO sink (',' sink)*;
 
@@ -313,31 +304,13 @@ primaryExpression
 
 inferModelInputFields: primaryExpression;
 
-/*
-functionName
-    : qualifiedName
-    ;
-*/
-
 qualifiedName
     : identifier ('.' identifier)*
     ;
 
 number
-    : {!legacy_exponent_literal_as_decimal_enabled}? MINUS? EXPONENT_VALUE #exponentLiteral
-    | {!legacy_exponent_literal_as_decimal_enabled}? MINUS? DECIMAL_VALUE  #decimalLiteral
-    | {legacy_exponent_literal_as_decimal_enabled}? MINUS? (EXPONENT_VALUE | DECIMAL_VALUE) #legacyDecimalLiteral
-    | MINUS? INTEGER_VALUE              #integerLiteral
-    | MINUS? BIGINT_LITERAL             #bigIntLiteral
-    | MINUS? SMALLINT_LITERAL           #smallIntLiteral
-    | MINUS? TINYINT_LITERAL            #tinyIntLiteral
-    | MINUS? UNSIGNED_INTEGER_VALUE     #unsignedIntegerLiteral
-    | MINUS? UNSIGNED_BIGINT_LITERAL    #unsignedBigIntLiteral
-    | MINUS? UNSIGNED_SMALLINT_LITERAL  #unsignedSmallIntLiteral
-    | MINUS? UNSIGNED_TINYINT_LITERAL   #unsignedTinyIntLiteral
-    | MINUS? DOUBLE_LITERAL             #doubleLiteral
+    : MINUS? INTEGER_VALUE              #integerLiteral
     | MINUS? FLOAT_LITERAL              #floatLiteral
-    | MINUS? BIGDECIMAL_LITERAL         #bigDecimalLiteral
     ;
 
 constant
@@ -352,102 +325,6 @@ booleanValue
     : TRUE | FALSE
     ;
 
-/// can not be used as stream alias
-strictNonReserved
-    : FULL
-    | INNER
-    | JOIN
-    | LEFT
-    | NATURAL
-    | ON
-    | RIGHT
-    | UNION
-    | USING
-    ;
-
-ansiNonReserved
-///--ANSI-NON-RESERVED-START
-    : ASC
-    | AT
-    | BETWEEN
-    | BY
-    | CUBE
-    | DELETE
-    | DESC
-    | DIV
-    | DROP
-    | EXISTS
-    | FIRST
-    | GROUPING
-    | INSERT
-    | LAST
-    | LIKE
-    | LIMIT
-    | MERGE
-    | NULLS
-    | QUERY
-    | RLIKE
-    | ROLLUP
-    | SETS
-    | TRUE
-    | TYPE
-    | VALUES
-    | WINDOW
-///--ANSI-NON-RESERVED-END
-    ;
-
-nonReserved
-///--DEFAULT-NON-RESERVED-START
-    : ASC
-    | AT
-    | BETWEEN
-    | CUBE
-    | BY
-    | DELETE
-    | DESC
-    | DIV
-    | DROP
-    | EXISTS
-    | FIRST
-    | GROUPING
-    | INSERT
-    | LAST
-    | LIKE
-    | LIMIT
-    | MERGE
-    | NULLS
-    | QUERY
-    | RLIKE
-    | ROLLUP
-    | SETS
-    | TRUE
-    | TYPE
-    | VALUES
-    | WINDOW
-	| ALL
-	| AND
-	| ANY
-	| AS
-	| DISTINCT
-	| ESCAPE
-	| FALSE
-	| FROM
-	| GROUP
-	| HAVING
-	| IN
-	| INTO
-	| IS
-	| NOT
-	| NULLTOKEN
-	| OR
-	| ORDER
-	| SELECT
-	| SOME
-	| TABLE
-	| WHERE
-	| WITH
-///--DEFAULT-NON-RESERVED-END
-    ;
 
 ALL: 'ALL' | 'all';
 AND: 'AND' | 'and';
@@ -547,6 +424,8 @@ AT_LEAST_ONCE : 'AT_LEAST_ONCE';
 /// End of the keywords list
 ///****************************
 
+
+
 BOOLEAN_VALUE: 'true' | 'false';
 EQ  : '=' | '==';
 NSEQ: '<=>';
@@ -573,56 +452,13 @@ STRING
     | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
     ;
 
-/// Signed integer literals.
-BIGINT_LITERAL
-    : DIGIT+ '_L'
-    ;
-SMALLINT_LITERAL
-    : DIGIT+ '_S'
-    ;
-TINYINT_LITERAL
-    : DIGIT+ '_Y'
-    ;
 INTEGER_VALUE
     : DIGIT+
     ;
 
-/// Unsigned integer literals.
-UNSIGNED_SMALLINT_LITERAL
-    : DIGIT+ '_US'
-    ;
-UNSIGNED_TINYINT_LITERAL
-    : DIGIT+ '_UY'
-    ;
-UNSIGNED_INTEGER_VALUE
-    : DIGIT+ '_U'
-    ;
-UNSIGNED_BIGINT_LITERAL
-    : DIGIT+ '_UL'
-    ;
-
-EXPONENT_VALUE
-    : DIGIT+ EXPONENT
-    | DECIMAL_DIGITS EXPONENT {isValidDecimal()}?
-    ;
-
-DECIMAL_VALUE
-    : DECIMAL_DIGITS {isValidDecimal()}?
-    ;
-
 FLOAT_LITERAL
-    : DIGIT+ EXPONENT? '_F'
-    | DECIMAL_DIGITS EXPONENT? '_F' {isValidDecimal()}?
-    ;
-
-DOUBLE_LITERAL
-    : DIGIT+ EXPONENT? '_D'
-    | DECIMAL_DIGITS EXPONENT? '_D' {isValidDecimal()}?
-    ;
-
-BIGDECIMAL_LITERAL
-    : DIGIT+ EXPONENT? '_BD'
-    | DECIMAL_DIGITS EXPONENT? '_BD' {isValidDecimal()}?
+    : DIGIT+ EXPONENT?
+    | DECIMAL_DIGITS EXPONENT? {isValidDecimal()}?
     ;
 
 IDENTIFIER
@@ -646,25 +482,24 @@ fragment LETTER
     : ('a'..'z'|'A'..'Z'|'_')
     ;
 
-SIMPLE_COMMENT
-    : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
-    ;
-
-BRACKETED_COMMENT
-    : '/*' {!isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
-    ;
-
 WS
     : [ \r\n\t]+ -> channel(HIDDEN)
     ;
-
-
-FOUR_OCTETS: OCTET '.' OCTET '.' OCTET '.' OCTET;
-OCTET: [0-2][0-9]?[0-9]?;
 
 /// Catch-all for anything we can't recognize.
 /// We use this to be able to ignore and recover all the text
 /// when splitting statements with DelimiterLexer
 UNRECOGNIZED
     : .
+    ;
+
+//Make sure that you add lexer rules for keywords before the identifier rule,
+//otherwise it will take priority and your grammars will not work
+
+SIMPLE_COMMENT
+    : '--' ('\\\n' | ~[\r\n])* '\r'? '\n'? -> channel(HIDDEN)
+    ;
+
+BRACKETED_COMMENT
+    : '/*' {!isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
     ;

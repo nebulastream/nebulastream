@@ -16,7 +16,7 @@ SINK streamSinkWithNew INT64 stream$id INT64 stream$value INT64 stream$timestamp
 
 
 # Map with sub function touches one field
-SELECT id - 1 AS id, value, timestamp FROM stream INTO streamSink
+SELECT id - UINT32(1) AS id, value, timestamp FROM stream INTO streamSink
 ----
 0,1,1000
 1,1,1001
@@ -49,7 +49,7 @@ SELECT id, value, timestamp, id - value AS new FROM stream INTO streamSinkWithNe
 7,21,21000,-14
 
 # Two maps after each other that both touch the same fields
-SELECT id - 1 AS id, value - id AS value, timestamp FROM stream INTO streamSink
+SELECT id - UINT32(1) AS id, value - id AS value, timestamp FROM stream INTO streamSink
 ----
 0,1,1000
 1,0,1001

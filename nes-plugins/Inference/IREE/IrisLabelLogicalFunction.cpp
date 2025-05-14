@@ -74,9 +74,16 @@ public:
     }
 
 protected:
-    [[nodiscard]] std::string toString() const override
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override
     {
-        return fmt::format("IRIS_LABEL({},{},{})", *children.at(0), *children.at(1), *children.at(2));
+        fmt::println(os, "IRIS_LABEL({},{},{})", *children.at(0), *children.at(1), *children.at(2));
+        return os;
+    }
+
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override
+    {
+        fmt::println(os, "IRIS_LABEL()");
+        return os;
     }
 };
 

@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionExp.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-
 
 namespace NES
 {
@@ -50,11 +50,10 @@ bool NodeFunctionExp::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionExp::toString() const
+std::ostream& NodeFunctionExp::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "EXP(" << *children[0] << ")";
-    return ss.str();
+    PRECONDITION(children.size() == 1, "Cannot print function without exactly one child.");
+    return os << fmt::format("EXP({})", *children.front());
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionExp::deepCopy()

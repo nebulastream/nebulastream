@@ -36,7 +36,7 @@ protected:
     explicit NodeFunctionArithmeticalUnary(std::shared_ptr<DataType> stamp, std::string name);
     explicit NodeFunctionArithmeticalUnary(NodeFunctionArithmeticalUnary* other);
     ~NodeFunctionArithmeticalUnary() noexcept override = default;
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 };
 
 }

@@ -106,17 +106,22 @@ RunningSource::~RunningSource()
     if (source)
     {
         ENGINE_LOG_DEBUG("Stopping Running Source");
-        source->stop();
+        if (source->tryStop(std::chrono::milliseconds(0)) == Sources::SourceReturnType::TryStopResult::TIMEOUT)
+        {
+            ENGINE_LOG_DEBUG("Source was requested to stop. Stop will happen asynchronously.");
+        }
     }
 }
 bool RunningSource::attemptUnregister()
 {
-    auto successful = tryUnregister(std::move(this->successors));
-    if (not successful)
+    if (tryUnregister(std::move(this->successors)))
     {
-        INVARIANT(!this->successors.empty(), "A failed attempt for unregistration should not move the sources successors");
+        /// Since we moved the content of the successors vector out of the successors vector above,
+        /// we clear it to avoid accidentally working with null values
+        this->successors.clear();
+        return true;
     }
-    return successful;
+    return false;
 }
 
 Sources::SourceReturnType::TryStopResult RunningSource::tryStop() const

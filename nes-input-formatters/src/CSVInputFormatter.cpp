@@ -258,7 +258,7 @@ private:
     size_t tupleSizeInBytes{0};
     uint64_t numSchemaFields{0};
     std::string_view tupleBufferRawSV;
-    std::string_view partialTuple{};
+    std::string_view partialTuple;
     NES::Memory::TupleBuffer tupleBufferFormatted;
 
     size_t findIndexOfNextTuple() const { return tupleBufferRawSV.find(tupleDelimiter, currentTupleStartrawTB); }
@@ -571,8 +571,11 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(
         "Partial tuple is larger {} than buffer size {}",
         sizeOfLeadingPartialTuple,
         firstBuffer.buffer.getBufferSize());
-    const std::string_view firstBytesOfPartialTuple = std::string_view(
-        firstBuffer.buffer.getBuffer<const char>() + (firstBuffer.offsetOfLastTupleDelimiter + 1), sizeOfLeadingPartialTuple);
+
+    const std::string_view firstBytesOfPartialTuple = firstBuffer.buffer.getBuffer()
+        ? std::string_view(
+              firstBuffer.buffer.getBuffer<const char>() + (firstBuffer.offsetOfLastTupleDelimiter + 1), sizeOfLeadingPartialTuple)
+        : std::string_view();
 
     std::string partialTuple(firstBytesOfPartialTuple);
     /// 2. Process all buffers in-between the first and the last

@@ -15,8 +15,8 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 
+#include <Util/Logger/LogLevel.hpp>
 #include <ModelLoader.hpp>
-#include "Util/Logger/LogLevel.hpp"
 
 TEST(ModelLoaderTest, TestInferenceSupport)
 {

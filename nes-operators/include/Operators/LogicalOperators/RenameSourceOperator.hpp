@@ -51,7 +51,8 @@ public:
     std::string getNewSourceName() const;
 
 protected:
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
 private:
     const std::string newSourceName;

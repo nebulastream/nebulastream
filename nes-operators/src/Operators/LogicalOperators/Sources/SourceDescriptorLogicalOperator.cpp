@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
-#include <sstream>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -49,12 +50,14 @@ bool SourceDescriptorLogicalOperator::equal(const std::shared_ptr<Node>& rhs) co
     return false;
 }
 
-std::string SourceDescriptorLogicalOperator::toString() const
+std::ostream& SourceDescriptorLogicalOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << *sourceDescriptor << ")";
+    return os << fmt::format("SOURCE(opId: {}, originid: {}, {})", id, originId, *sourceDescriptor);
+}
 
-    return ss.str();
+std::ostream& SourceDescriptorLogicalOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << fmt::format("SOURCE({}, type: {})", sourceDescriptor->logicalSourceName, sourceDescriptor->sourceType);
 }
 
 const Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const

@@ -15,10 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <set>
-#include <unordered_map>
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <ModelCatalog.hpp>
 

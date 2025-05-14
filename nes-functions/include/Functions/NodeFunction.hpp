@@ -54,6 +54,8 @@ public:
     /// Create a deep copy of this function node.
     virtual std::shared_ptr<NodeFunction> deepCopy() = 0;
 
+    virtual bool isTriviallySerializable() { return false; }
+
 protected:
     explicit NodeFunction(const NodeFunction* other);
 

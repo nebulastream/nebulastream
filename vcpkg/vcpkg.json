@@ -29,7 +29,6 @@
   "dependencies": [
     "antlr4",
     "argparse",
-    "benchmark",
     "boost-asio",
     "boost-system",
     "boost-filesystem",

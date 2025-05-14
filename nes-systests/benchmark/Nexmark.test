@@ -3,8 +3,8 @@
 # groups: [milestone, benchmark, large]
 
 # Source definitions
-SourceCSV bid UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetime FLOAT64 price TESTDATA/nexmark/bid.csv
-SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/nexmark/auction_modified.csv
+SourceCSV bid UINT64 timestamp INT32 auctionId INT32 bidder INT64 datetime FLOAT64 price TESTDATA/large/nexmark/bid.csv
+SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/nexmark/auction_modified.csv
 
 # Query 0
 SELECT * FROM bid INTO CHECKSUM;
@@ -12,12 +12,12 @@ SELECT * FROM bid INTO CHECKSUM;
 18106394 33146443404
 
 # Query 1
-SELECT price * 89 / 100 AS price FROM bid INTO CHECKSUM;
+SELECT price * FLOAT64(89) / FLOAT64(100) AS price FROM bid INTO CHECKSUM;
 ----
 18106394 5431093917
 
 # Query 2
-SELECT * FROM bid WHERE auctionId % 123 = 0 INTO CHECKSUM;
+SELECT * FROM bid WHERE auctionId % INT32(123) = INT32(0) INTO CHECKSUM;
 ----
 146516 268224796
 

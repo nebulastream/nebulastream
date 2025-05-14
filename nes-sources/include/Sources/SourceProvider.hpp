@@ -28,9 +28,6 @@ namespace NES::Sources
 /// The Source is owned by the SourceThread. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
 class SourceProvider
 {
-    /// Todo #237: reevaluate whether we still need num source local buffers, and potentially use new configuration approach.
-    static constexpr int NUM_SOURCE_LOCAL_BUFFERS = 64;
-
 public:
     SourceProvider() = default;
     static std::unique_ptr<SourceProvider> create();
@@ -40,7 +37,7 @@ public:
         OriginId originId,
         const SourceDescriptor& sourceDescriptor,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-        int numberOfLocalBuffersInSource = NUM_SOURCE_LOCAL_BUFFERS);
+        int numberOfBuffersInSourceLocalBufferPool);
 
     ~SourceProvider() = default;
 };
