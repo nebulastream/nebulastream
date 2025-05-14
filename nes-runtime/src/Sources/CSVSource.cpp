@@ -302,11 +302,11 @@ std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
                         }
                     //add generated = 0 to only use this before query is started
                     } else if (bytesRead < 0 && generatedTuples == 0) {
-//                        if (running) {
-//                            break;
-//                        } else {
-//                            return std::nullopt;
-//                        }
+                        if (running) {
+                            break;
+                        } else {
+                            return std::nullopt;
+                        }
                     }
 
                     //because the above cases were commented out to stop the source once no more bytes come in,
