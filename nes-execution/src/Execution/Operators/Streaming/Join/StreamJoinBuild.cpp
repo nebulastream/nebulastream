@@ -48,7 +48,7 @@ void updateSlicesProxy(
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
     {
-        boost::asio::io_context io;
+        auto& io = getIoContext();
         boost::asio::co_spawn(
             io,
             sliceStore->updateSlices(

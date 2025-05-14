@@ -23,6 +23,8 @@
 namespace NES::Runtime::Execution
 {
 
+boost::asio::io_context& getIoContext();
+
 enum FileLayout : uint8_t
 {
     NO_SEPARATION_KEEP_KEYS,
@@ -42,28 +44,21 @@ public:
     ~FileWriter();
 
     boost::asio::awaitable<void> write(const void* data, size_t size);
-    boost::asio::awaitable<void> writeKey(const void* data, size_t size);
+    boost::asio::awaitable<void> writeKey(const void*, size_t) { co_return; }
 
     boost::asio::awaitable<void> flush();
     void deallocateBuffers();
 
 private:
-    boost::asio::awaitable<void>
-    bufferedWrite(boost::asio::posix::stream_descriptor& stream, char* buf, size_t& bufferPos, const void* data, size_t size) const;
-    static boost::asio::awaitable<void> flushStream(boost::asio::posix::stream_descriptor& stream, const char* buffer, size_t size);
-    void runContext();
-
-    boost::asio::io_context io;
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard;
-    std::thread ioThread;
+    boost::asio::awaitable<void> flushBuffer();
 
     boost::asio::posix::stream_descriptor file;
-    boost::asio::posix::stream_descriptor keyFile;
+    //boost::asio::posix::stream_descriptor keyFile;
 
     char* writeBuffer;
-    char* writeKeyBuffer;
+    //char* writeKeyBuffer;
     size_t writeBufferPos;
-    size_t writeKeyBufferPos;
+    //size_t writeKeyBufferPos;
     size_t bufferSize;
 
     std::function<char*()> allocate;

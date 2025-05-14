@@ -432,10 +432,11 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         std::vector<char> data(dataSize);
         const auto start = std::chrono::high_resolution_clock::now();
 
-        boost::asio::io_context io;
+        auto& io = getIoContext();
         const auto fileWriter = memoryController->getFileWriter(
             SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left);
         boost::asio::co_spawn(io, fileWriter->write(data.data(), dataSize), boost::asio::detached);
+        boost::asio::co_spawn(io, fileWriter->flush(), boost::asio::detached);
         io.run();
         const auto write = std::chrono::high_resolution_clock::now();
 
