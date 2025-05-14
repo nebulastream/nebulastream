@@ -49,6 +49,10 @@
 #include <SystestState.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
+#include <SystestInlineSourceRegistry.hpp>
+
+#include "SystestFileSourceRegistry.hpp"
+
 namespace NES::Systest
 {
 
@@ -67,6 +71,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
          {{DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Count"},
           {DataTypeProvider::provideDataType(LogicalType::UINT64), "S$Checksum"}}}};
 
+    // Todo: make TESTDATA static constexpr somewhere and accessible?
     parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = testDataDir; }});
     parser.registerSubstitutionRule({"CONFIG", [&](std::string& substitute) { substitute = configDir; }});
     if (!parser.loadFile(testFilePath))
@@ -123,40 +128,46 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     parser.registerOnAttachSourceCallback(
         [&](SystestParser::AttachSource&& attachSource) //Todo: don't force move
         {
-            // Todo: use registry to execute logic below
             static uint64_t sourceIndex = 0;
-            try
-            {
-                auto physicalSource = CLI::loadFromYAMLSource(attachSource.configurationPath);
 
-                if (attachSource.tuples.has_value())
+            const auto initialPhysicalSourceConfig = [](const std::string& path)
+            {
+                try
                 {
-                    const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
-                    /// Replace any occurences of 'INLINE' with the actual filepath
-                    for (const auto& [key, value] : physicalSource.sourceConfig) {
-                        if (Util::toUpperCase(value) == "INLINE")
-                        {
-                            physicalSource.sourceConfig[key] = sourceFile;
-                        }
-                    }
-                    std::ofstream testFile(sourceFile);
-                    if (!testFile.is_open())
-                    {
-                        throw TestException("Could not open source file \"{}\"", sourceFile);
-                    }
-
-                    for (const auto& tuple : attachSource.tuples.value())
-                    {
-                        testFile << tuple << "\n";
-                    }
-                    testFile.flush();
-                    NES_INFO("Written in file: {}. Number of Tuples: {}", sourceFile, attachSource.tuples.value().size());
+                    return CLI::loadFromYAMLSource(path);
                 }
-                config.physical.emplace_back(physicalSource);
-            }
-            catch (const std::exception& e)
+                catch (const std::exception& e)
+                {
+                    throw CannotLoadConfig("Failed to parse source: {}", e.what());
+                }
+            }(attachSource.configurationPath);
+
+            switch (attachSource.testDataType)
             {
-                throw CannotLoadConfig("Failed to parse source: {}", e.what());
+                case SystestParser::TestDataType::INLINE: {
+                    if (attachSource.tuples.has_value())
+                    {
+                        const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
+
+                        const auto theArgs = SystestInlineSourceRegistryArguments{initialPhysicalSourceConfig, attachSource, sourceFile};
+                        if (auto physicalSourceConfig = SystestInlineSourceRegistry::instance().create(attachSource.sourceType, theArgs))
+                        {
+                            config.physical.emplace_back(physicalSourceConfig.value());
+                            return;
+                        }
+                        throw InvalidConfigParameter("Source type {} not found.", attachSource.sourceType);
+                    }
+                    throw CannotLoadConfig("A SystestInlineSource must have tuples, but tuples was null.");
+                }
+                case SystestParser::TestDataType::FILE: {
+                    const auto theArgs = SystestFileSourceRegistryArguments{initialPhysicalSourceConfig, attachSource, testDataDir};
+                    if (auto physicalSourceConfig = SystestFileSourceRegistry::instance().create(attachSource.sourceType, theArgs))
+                    {
+                        config.physical.emplace_back(physicalSourceConfig.value());
+                        return;
+                    }
+                    throw InvalidConfigParameter("Source type {} not found.", attachSource.sourceType);
+                }
             }
         });
     /// We create a new query plan from our config when finding a query

@@ -86,10 +86,18 @@ public:
         bool operator==(const SLTSource& other) const = default;
     };
 
+    enum class TestDataType : uint8_t
+    {
+        INLINE,
+        FILE
+    };
+
     struct AttachSource
     {
         std::string configurationPath;
         std::string logicalSourceName;
+        std::string sourceType;
+        TestDataType testDataType;
         std::optional<std::vector<std::string>> tuples;
         bool operator==(const AttachSource& other) const = default;
     };

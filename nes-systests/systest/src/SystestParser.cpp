@@ -36,7 +36,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
-#include <SystestAdaptorRegistry.hpp>
+#include <SystestInlineSourceRegistry.hpp>
 
 namespace NES::Systest
 {
@@ -410,50 +410,58 @@ SystestParser::AttachSource SystestParser::expectAttachSource()
     std::istringstream stream(line);
 
     /// Read and discard the first word as it is always CSVSource
-    std::string discard;
-    if (!(stream >> discard))
+    const auto discard = [](std::istringstream& stream, const std::string line)
     {
+        if (std::string discardString; stream >> discardString)
+        {
+            INVARIANT(discardString == AttachSourceToken, "Expected first word to be `{}` for csv source statement", AttachSourceToken);
+            return discardString;
+        }
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
+    }(stream, line);
+
+    attachSource.sourceType = [](std::istringstream& stream)
+    {
+        if (std::string testSourceTypeString; stream >> testSourceTypeString)
+        {
+            return testSourceTypeString;
+        }
+        throw SLTUnexpectedToken("failed to parse source configuration path in: {}", stream.str());
+    }(stream);
+
+    attachSource.testDataType = [this](std::istringstream& stream, AttachSource& attachSource)
+    {
+        if (const auto testDataTypeString =
+                [](std::istringstream& stream)
+            {
+                std::string streamOutput;
+                stream >> streamOutput;
+                return Util::toLowerCase(streamOutput);
+            }(stream);
+            not(testDataTypeString.empty()))
+        {
+            if (testDataTypeString == Util::toLowerCase("SystestInlineSource"))
+            {
+                attachSource.tuples = {expectTuples(true)};
+                return TestDataType::INLINE;
+            }
+            if (testDataTypeString == Util::toLowerCase("SystestFileSource"))
+            {
+                return TestDataType::FILE;
+            }
+        }
+        throw SLTUnexpectedToken("failed to parse the test data type in: {}", stream.str());
+    }(stream, attachSource);
+
+    if (not(stream >> attachSource.configurationPath))
+    {
+        throw SLTUnexpectedToken("failed to configuration path in: {}", line);
     }
-    INVARIANT(discard == AttachSourceToken, "Expected first word to be `{}` for csv source statement", AttachSourceToken);
 
-
-    // Attach LOGICAL_SOURCE_NAME PATH_TO_SOURCE_CONFIG (INLINE)
-    /// Read the source name and check if successful
-    if (!(stream >> attachSource.logicalSourceName))
+    if (not(stream >> attachSource.logicalSourceName))
     {
         throw SLTUnexpectedToken("failed to parse logical source name in: {}", line);
     }
-    if (!(stream >> attachSource.configurationPath))
-    {
-        throw SLTUnexpectedToken("failed to parse source configuration path in: {}", line);
-    }
-
-    // Todo: use registry to execute logic below
-    // -> determine the adaptor type of attach source, e.g., 'FileSourceInline'
-    // Todo:
-    // -> use adaptor type as key to registry
-    // Todo: do we need the 'adaptor'? what functionality could it provide that the systest needs?
-    const auto adaptor = [](std::istringstream& stream)
-    {
-        std::string adaptorType;
-        if (not(stream >> adaptorType))
-        {
-            throw SLTUnexpectedToken("Adaptor type {} not found.", adaptorType);
-        }
-        const auto theArgs = SystestAdaptorRegistryArguments{};
-        if (auto adaptorOptional = SystestAdaptorRegistry::instance().tryCreate(adaptorType, theArgs))
-        {
-            return std::move(adaptorOptional.value());
-        }
-        throw SLTUnexpectedToken("Adaptor type {} not found.", adaptorType);
-    }(stream);
-
-    // if (readInlineTuples)
-    // {
-    //     // Todo: check if we can set optional like this
-    //     attachSource.tuples = {expectTuples(true)};
-    // }
 
     return attachSource;
 }

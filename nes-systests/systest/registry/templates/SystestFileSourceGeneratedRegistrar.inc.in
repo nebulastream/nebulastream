@@ -15,17 +15,16 @@
 #pragma once
 
 /// NOLINT(clang-diagnostic-error)
-#ifndef INCLUDED_FROM_SYSTEST_ADAPTOR_REGISTRY
-#    error "This file should not be included directly! Include instead include SystestAdaptorRegistry.hpp"
+#ifndef INCLUDED_FROM_SYSTEST_FILE_SOURCE_REGISTRY
+#    error "This file should not be included directly! Include instead include SystestFileSourceRegistry.hpp"
 #endif
 
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <SystestAdaptors/SystestAdaptor.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::SystestAdaptorGeneratedRegistrar
+namespace NES::SystestFileSourceGeneratedRegistrar
 {
 
 /// declarations of register functions for 'SystestAdaptors'
@@ -35,10 +34,10 @@ namespace NES::SystestAdaptorGeneratedRegistrar
 namespace NES
 {
 template <>
-inline void Registrar<SystestAdaptorRegistry, std::string, SystestAdaptorRegistryReturnType, SystestAdaptorRegistryArguments>::registerAll(
+inline void Registrar<SystestFileSourceRegistry, std::string, SystestFileSourceRegistryReturnType, SystestFileSourceRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::SystestAdaptorGeneratedRegistrar;
+    using namespace NES::SystestFileSourceGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

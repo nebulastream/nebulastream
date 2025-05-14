@@ -25,23 +25,22 @@
 namespace NES
 {
 
-using SystestAdaptorRegistryReturnType = std::unique_ptr<SystestAdaptor>;
-struct SystestAdaptorRegistryArguments
+using SystestFileSourceRegistryReturnType = CLI::PhysicalSource;
+struct SystestFileSourceRegistryArguments
 {
     CLI::PhysicalSource physicalSourceConfig;
     Systest::SystestParser::AttachSource attachSource;
-    std::optional<std::filesystem::path> testFilePath;
-    std::optional<std::filesystem::path> testDataDir;
+    std::filesystem::path testDataDir;
 
 };
 
-class SystestAdaptorRegistry
-    : public BaseRegistry<SystestAdaptorRegistry, std::string, SystestAdaptorRegistryReturnType, SystestAdaptorRegistryArguments>
+class SystestFileSourceRegistry
+    : public BaseRegistry<SystestFileSourceRegistry, std::string, SystestFileSourceRegistryReturnType, SystestFileSourceRegistryArguments>
 {
 };
 
 }
 
-#define INCLUDED_FROM_SYSTEST_ADAPTOR_REGISTRY
-#include <SystestAdaptorGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SYSTEST_ADAPTOR_REGISTRY
+#define INCLUDED_FROM_SYSTEST_FILE_SOURCE_REGISTRY
+#include <SystestFileSourceGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_SYSTEST_FILE_SOURCE_REGISTRY
