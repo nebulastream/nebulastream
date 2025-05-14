@@ -18,15 +18,15 @@
 
 
 #include <SystestAdaptor.hpp>
-#include <InlineDataSourceRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 #include <SystestState.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-InlineDataSourceRegistryReturnType
-InlineDataSourceGeneratedRegistrar::RegisterFileInlineDataSource(InlineDataSourceRegistryArguments systestAdaptorArguments)
+InlineDataRegistryReturnType
+InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
     if (systestAdaptorArguments.attachSource.tuples and not(systestAdaptorArguments.attachSource.tuples.value().empty()))
     {

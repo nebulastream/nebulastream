@@ -15,8 +15,8 @@
 #pragma once
 
 /// NOLINT(clang-diagnostic-error)
-#ifndef INCLUDED_FROM_SYSTEST_FILE_DATA_SOURCE_REGISTRY
-#    error "This file should not be included directly! Include instead include FileDataSourceRegistry.hpp"
+#ifndef INCLUDED_FROM_SYSTEST_INLINE_DATA_REGISTRY
+#    error "This file should not be included directly! Include instead include InlineDataRegistry.hpp"
 #endif
 
 #include <memory>
@@ -24,7 +24,7 @@
 #include <API/Schema.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::FileDataSourceGeneratedRegistrar
+namespace NES::InlineDataGeneratedRegistrar
 {
 
 /// declarations of register functions for 'SystestAdaptors'
@@ -34,10 +34,10 @@ namespace NES::FileDataSourceGeneratedRegistrar
 namespace NES
 {
 template <>
-inline void Registrar<FileDataSourceRegistry, std::string, FileDataSourceRegistryReturnType, FileDataSourceRegistryArguments>::registerAll(
+inline void Registrar<InlineDataRegistry, std::string, InlineDataRegistryReturnType, InlineDataRegistryArguments>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::FileDataSourceGeneratedRegistrar;
+    using namespace NES::InlineDataGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

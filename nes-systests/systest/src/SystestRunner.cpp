@@ -49,9 +49,9 @@
 #include <SystestState.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
-#include <InlineDataSourceRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 
-#include "FileDataSourceRegistry.hpp"
+#include "FileDataRegistry.hpp"
 
 namespace NES::Systest
 {
@@ -149,19 +149,19 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     {
                         const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
 
-                        const auto theArgs = InlineDataSourceRegistryArguments{initialPhysicalSourceConfig, attachSource, sourceFile};
-                        if (auto physicalSourceConfig = InlineDataSourceRegistry::instance().create(attachSource.sourceType, theArgs))
+                        const auto theArgs = InlineDataRegistryArguments{initialPhysicalSourceConfig, attachSource, sourceFile};
+                        if (auto physicalSourceConfig = InlineDataRegistry::instance().create(attachSource.sourceType, theArgs))
                         {
                             config.physical.emplace_back(physicalSourceConfig.value());
                             return;
                         }
                         throw InvalidConfigParameter("Source type {} not found.", attachSource.sourceType);
                     }
-                    throw CannotLoadConfig("A InlineDataSource must have tuples, but tuples was null.");
+                    throw CannotLoadConfig("A InlineData must have tuples, but tuples was null.");
                 }
                 case SystestParser::TestDataType::FILE: {
-                    const auto theArgs = FileDataSourceRegistryArguments{initialPhysicalSourceConfig, attachSource, testDataDir};
-                    if (auto physicalSourceConfig = FileDataSourceRegistry::instance().create(attachSource.sourceType, theArgs))
+                    const auto theArgs = FileDataRegistryArguments{initialPhysicalSourceConfig, attachSource, testDataDir};
+                    if (auto physicalSourceConfig = FileDataRegistry::instance().create(attachSource.sourceType, theArgs))
                     {
                         config.physical.emplace_back(physicalSourceConfig.value());
                         return;

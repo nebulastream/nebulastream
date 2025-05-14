@@ -142,6 +142,6 @@ function(add_nes_test_systest)
             PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>)
 endfunction()
 
-create_registry_for_component_specific(nes-systest-lib FileDataSource InlineDataSource)
+create_registry_for_component_specific(nes-systest-lib FileData InlineData)
 
 add_tests_if_enabled(tests)

@@ -36,7 +36,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
-#include <InlineDataSourceRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 
 namespace NES::Systest
 {
@@ -440,12 +440,12 @@ SystestParser::AttachSource SystestParser::expectAttachSource()
             }(stream);
             not(testDataTypeString.empty()))
         {
-            if (testDataTypeString == Util::toLowerCase("InlineDataSource"))
+            if (testDataTypeString == Util::toLowerCase("InlineData"))
             {
                 attachSource.tuples = {expectTuples(true)};
                 return TestDataType::INLINE;
             }
-            if (testDataTypeString == Util::toLowerCase("FileDataSource"))
+            if (testDataTypeString == Util::toLowerCase("FileData"))
             {
                 return TestDataType::FILE;
             }
