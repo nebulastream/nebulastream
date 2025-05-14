@@ -414,7 +414,12 @@ void ExecutableQueryPlan::setSourcesToReuse(std::vector<OperatorId> sourcesToReu
 
 bool ExecutableQueryPlan::hasDifferenSuccessor(DecomposedQueryPlanVersion successorVersion) {
     auto lockedSuccessor = this->successor.wlock();
-    return !(*lockedSuccessor != nullptr && successorVersion != (*lockedSuccessor)->decomposedQueryVersion);
+    //return !(*lockedSuccessor != nullptr && successorVersion != (*lockedSuccessor)->decomposedQueryVersion);
+    if (*lockedSuccessor != nullptr && successorVersion != (*lockedSuccessor)->decomposedQueryVersion) {
+        NES_ERROR("hasDifferenSuccessor: successor version {} is not equal to {} ", successorVersion, (*lockedSuccessor)->decomposedQueryVersion);
+        return true;
+    }
+    return false;
 }
 
 bool ExecutableQueryPlan::addSuccessorPlan(ExecutableQueryPlanPtr successor) {
