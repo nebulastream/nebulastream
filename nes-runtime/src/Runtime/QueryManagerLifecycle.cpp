@@ -165,6 +165,7 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
                     }
 
                     auto predecessorPlan = predecessorPlans.front();
+                    NES_ERROR("Found predecessor {} for plan {}", predecessorPlans.front()->getDecomposedQueryId(), predecessorPlans.front()->getDecomposedQueryVersion());
 
                     predecessorPlan->addSuccessorPlan(executableQueryPlan);
                     registeredAsSuccessor = true;

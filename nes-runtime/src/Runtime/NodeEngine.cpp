@@ -142,6 +142,7 @@ bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQ
                         "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
                         source->getOperatorId());
                 }
+                NES_ERROR("Found predecessor {} for plan {}", predecessorPlans.front()->getDecomposedQueryId(), predecessorPlans.front()->getDecomposedQueryVersion());
 
                 auto predecessorPlan = predecessorPlans.front();
                 return predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
