@@ -185,14 +185,14 @@ bool BufferControlBlock::release()
             child->controlBlock->release();
         }
         children.clear();
-        auto recycler = std::move(owningBufferRecycler);
-        recycleCallback(owner, recycler.get());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
             owningThreads.clear();
         }
 #endif
+        auto recycler = std::move(owningBufferRecycler);
+        recycleCallback(owner, recycler.get());
         return true;
     }
     else
