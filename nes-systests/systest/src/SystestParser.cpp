@@ -175,6 +175,20 @@ void SystestParser::registerOnSinkCallBack(SinkCallback callback)
 
 /// Here we model the structure of the test file by what we `expect` to see.
 /// If we encounter something unexpected, we return false.
+void SystestParser::parseResultLines()
+{
+    auto token = nextToken();
+    while (token != TokenType::RESULT_DELIMITER)
+    {
+        token = nextToken();
+    }
+    auto tuples = expectTuples();
+    if (onResultTuplesCallback)
+    {
+        onResultTuplesCallback(std::move(tuples));
+    }
+}
+
 void SystestParser::parse()
 {
     while (auto token = nextToken())
@@ -194,10 +208,9 @@ void SystestParser::parse()
             // Todo:
             // -> use adaptor type as key to registry
             // Todo move function call into arg below to guarantee copy elision
-            auto attachSource = expectAttachSource();
             if (onAttachSourceCallback)
             {
-                onAttachSourceCallback(std::move(attachSource));
+                onAttachSourceCallback(expectAttachSource());
             }
         }
         else if (token == TokenType::SINK)
@@ -216,15 +229,7 @@ void SystestParser::parse()
                 onQueryCallback(std::move(query));
             }
             token = nextToken();
-            if (token == TokenType::RESULT_DELIMITER)
-            {
-                auto tuples = expectTuples();
-                if (onResultTuplesCallback)
-                {
-                    onResultTuplesCallback(std::move(tuples));
-                }
-            }
-            else
+            if (token != TokenType::RESULT_DELIMITER)
             {
                 throw SLTUnexpectedToken("expected result delimiter `{}` after query", ResultDelimiter);
             }

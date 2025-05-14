@@ -177,7 +177,8 @@ std::vector<Query> loadQueries(
     TestFileMap& testmap,
     const std::filesystem::path& workingDir,
     const std::filesystem::path& testDataDir,
-    const std::filesystem::path& configDir);
+    const std::filesystem::path& configDir,
+    std::shared_ptr<std::vector<std::jthread>>& serverThreads);
 }
 
 template <>

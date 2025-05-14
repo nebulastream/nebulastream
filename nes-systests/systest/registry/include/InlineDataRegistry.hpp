@@ -31,7 +31,6 @@ struct InlineDataRegistryArguments
     CLI::PhysicalSource physicalSourceConfig;
     Systest::SystestParser::AttachSource attachSource;
     std::filesystem::path testFilePath;
-
 };
 
 class InlineDataRegistry

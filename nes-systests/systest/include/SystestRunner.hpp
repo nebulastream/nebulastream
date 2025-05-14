@@ -53,7 +53,8 @@ static constexpr auto padSizeQueryCounter = 3;
     const std::filesystem::path& workingDir,
     std::string_view testFileName,
     const std::filesystem::path& testDataDir,
-    const std::filesystem::path& configDir);
+    const std::filesystem::path& configDir,
+    std::shared_ptr<std::vector<std::jthread>>& serverThreads);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return false if one query result is incorrect

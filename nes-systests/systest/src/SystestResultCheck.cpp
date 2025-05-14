@@ -330,7 +330,7 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
 
     try
     {
-        parser.parse();
+        parser.parseResultLines();
     }
     catch (const Exception& e)
     {

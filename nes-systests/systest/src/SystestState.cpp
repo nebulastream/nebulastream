@@ -59,9 +59,10 @@ void loadQueriesFromTestFile(
     TestFile& testfile,
     const std::filesystem::path& workingDir,
     const std::filesystem::path& testDataDir,
-    const std::filesystem::path& configDir)
+    const std::filesystem::path& configDir,
+    std::shared_ptr<std::vector<std::jthread>>& serverThreads)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir, configDir);
+    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir, configDir, serverThreads);
     uint64_t queryIdInFile = 0;
     std::unordered_set<uint64_t> foundQueries;
 
@@ -135,7 +136,8 @@ std::vector<Query> loadQueries(
     TestFileMap& testmap,
     const std::filesystem::path& workingDir,
     const std::filesystem::path& testDataDir,
-    const std::filesystem::path& configDir)
+    const std::filesystem::path& configDir,
+    std::shared_ptr<std::vector<std::jthread>>& serverThreads)
 {
     std::vector<Query> queries;
     uint64_t loadedFiles = 0;
@@ -144,7 +146,7 @@ std::vector<Query> loadQueries(
         std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
         try
         {
-            loadQueriesFromTestFile(testfile, workingDir, testDataDir, configDir);
+            loadQueriesFromTestFile(testfile, workingDir, testDataDir, configDir, serverThreads);
             for (auto& query : testfile.queries)
             {
                 queries.emplace_back(std::move(query));

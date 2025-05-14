@@ -61,7 +61,8 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     const std::filesystem::path& workingDir,
     std::string_view testFileName,
     const std::filesystem::path& testDataDir,
-    const std::filesystem::path& configDir)
+    const std::filesystem::path& configDir,
+    std::shared_ptr<std::vector<std::jthread>>& serverThreads)
 {
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
@@ -102,9 +103,11 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     }()});
         });
     parser.registerOnAttachSourceCallback(
-        [&](SystestParser::AttachSource&& attachSource) //Todo: don't force move
+        [&](SystestParser::AttachSource attachSource)
         {
             static uint64_t sourceIndex = 0;
+            // Todo: pass to parser.parse() instead? (std::shared_ptr<std::vector<std::jthread>>)
+            attachSource.serverThreads = serverThreads;
 
             const auto initialPhysicalSourceConfig = [](const std::string& path)
             {
@@ -123,7 +126,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                 case SystestParser::TestDataIngestionType::INLINE: {
                     if (attachSource.tuples.has_value())
                     {
-                        const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
+                        const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++); //Todo: potentially move into register?
 
                         const auto theArgs = InlineDataRegistryArguments{initialPhysicalSourceConfig, attachSource, sourceFile};
                         if (auto physicalSourceConfig = InlineDataRegistry::instance().create(attachSource.sourceType, theArgs))

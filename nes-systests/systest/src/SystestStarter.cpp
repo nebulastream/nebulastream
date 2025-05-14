@@ -355,7 +355,8 @@ int main(int argc, const char** argv)
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto testMap = Systest::loadTestFileMap(config);
-        const auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue());
+        auto serverThreads = std::make_shared<std::vector<std::jthread>>();
+        const auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue(), serverThreads);
         std::cout << std::format("Running a total of {} queries.", queries.size()) << '\n';
         if (queries.empty())
         {

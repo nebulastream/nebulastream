@@ -91,6 +91,7 @@ public:
         FILE
     };
 
+    // Todo: make class and make sure it is initialized correctly and destructed
     struct AttachSource
     {
         std::string configurationPath;
@@ -98,6 +99,8 @@ public:
         std::string sourceType;
         TestDataIngestionType testDataIngestionType;
         std::optional<std::vector<std::string>> tuples;
+        std::shared_ptr<std::vector<std::jthread>> serverThreads;
+
         bool operator==(const AttachSource& other) const = default;
     };
 
@@ -114,7 +117,7 @@ public:
     using QueryCallback = std::function<void(Query&&)>;
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
-    using AttachSourceCallback = std::function<void(AttachSource&& attachSource)>;
+    using AttachSourceCallback = std::function<void(AttachSource attachSource)>;
     using SinkCallback = std::function<void(Sink&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
@@ -126,6 +129,7 @@ public:
 
 
     void parse();
+    void parseResultLines();
 
 private:
     /// Substitution rules ///
@@ -149,7 +153,7 @@ private:
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
-    AttachSourceCallback onAttachSourceCallback;
+    AttachSourceCallback onAttachSourceCallback; //Todo: does this keep the serve threads alive?
     SinkCallback onSinkCallback;
 
     bool firstToken = true;

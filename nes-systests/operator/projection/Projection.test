@@ -4,9 +4,15 @@
 
 Source stream UINT64 id UINT64 value UINT64 timestamp
 
-Attach File FileData CONFIG/sources/file_file_theTestData.yaml stream
+# Todo: make work
 
 Attach File InlineData CONFIG/sources/file_inline_default.yaml stream
+1|1|1000
+2|1|1001
+3|1|1002
+4|2|2000
+
+Attach TCP InlineData CONFIG/sources/tcp_inline_default.yaml stream
 5|19|19000
 6|20|20000
 7|21|21000
