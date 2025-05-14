@@ -112,22 +112,13 @@ bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanP
     NES_DEBUG("Runtime::deployExecutableQueryPlan: successfully register query");
 
     bool successStart = false;
-    auto timeout = std::chrono::milliseconds(10);
-    while (true) {
         try {
             successStart = startDecomposedQueryPlan(executableQueryPlan->getSharedQueryId(),
                                                     executableQueryPlan->getDecomposedQueryId(),
                                                     executableQueryPlan->getDecomposedQueryVersion());
         } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
-            NES_ERROR("Successor with version {} already exists for query plan {}, retrying after {} ms",
-                      executableQueryPlan->getDecomposedQueryVersion(),
-                      executableQueryPlan->getDecomposedQueryId(),
-                      timeout.count());
-            std::this_thread::sleep_for(timeout);
-            continue;
+            throw error;
         }
-        break;
-    }
     if (!successStart) {
         NES_ERROR("Runtime::deployExecutableQueryPlan: failed to start query");
         return false;
@@ -183,6 +174,9 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
             executablePlan->setSourcesToReuse(sourcesToReuse);
         }
         return registerExecutableQueryPlan(executablePlan, replayData);
+
+    } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
+        throw error;
     } catch (std::exception const& error) {
         NES_ERROR("Error while building query execution plan: {}", error.what());
         return false;
@@ -285,6 +279,8 @@ bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
                     NES_DEBUG("start of QEP  {}.{}  failed", planIdWithVersion.id, planIdWithVersion.version);
                     return false;
                 }
+            } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
+                throw error;
             } catch (std::exception const& exception) {
                 NES_ERROR("Got exception while starting query {}", exception.what());
             }
@@ -1073,6 +1069,8 @@ bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId,
                 NES_DEBUG("start of QEP  {}.{}  failed", decomposedQueryId, decomposedQueryVersion);
                 return false;
             }
+        } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
+            throw error;
         } catch (std::exception const& exception) {
             NES_ERROR("Got exception while starting query {}", exception.what());
         }

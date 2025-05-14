@@ -110,9 +110,22 @@ Status WorkerRPCServer::StartDecomposedQuery(ServerContext*,
                                              StartDecomposedQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::StartQuery: got request for {}", request->sharedqueryid());
     NES_DEBUG("Start query, count = {}", request->count())
-    bool success = nodeEngine->startDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
-                                                        DecomposedQueryId(request->decomposedqueryid()),
-                                                        request->count());
+    bool success = false;
+    auto timeout = std::chrono::milliseconds(10);
+    while (true) {
+        try {
+            success = nodeEngine->startDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
+                                                           DecomposedQueryId(request->decomposedqueryid()),
+                                                           request->count());
+        } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
+            NES_ERROR("Successor already exists for query plan {}, retrying after {} ms",
+                      request->decomposedqueryid(),
+                      timeout.count());
+            std::this_thread::sleep_for(timeout);
+            continue;
+        }
+        break;
+    }
     if (success) {
         NES_DEBUG("WorkerRPCServer::StartQuery: success");
         NES_DEBUG("Start query success , count = {}", request->count())
