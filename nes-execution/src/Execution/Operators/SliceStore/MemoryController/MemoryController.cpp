@@ -45,7 +45,7 @@ MemoryController::MemoryController(
     }
 
     fileWriters.resize(numWorkerThreads + 1);
-    //fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
+    fileWriterMutexes = std::vector<std::mutex>(numWorkerThreads + 1);
     fileLayouts.resize(numWorkerThreads);
     fileLayoutMutexes = std::vector<std::mutex>(numWorkerThreads);
 }
@@ -67,7 +67,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
 {
     /// Search for matching fileWriter to avoid attempting to open a file twice
     auto& writerMap = fileWriters[threadId.getRawValue()];
-    //const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
+    const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
     if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
     {
         return it->second;
@@ -85,7 +85,7 @@ std::shared_ptr<FileReader> MemoryController::getFileReader(
 {
     /// Erase matching fileWriter as the data must not be amended after being read. This also enforces reading data only once
     auto& writerMap = fileWriters[threadId.getRawValue()];
-    //const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
+    const std::scoped_lock lock(fileWriterMutexes[threadId.getRawValue()]);
     if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())
     {
         writerMap.erase(it);
@@ -137,7 +137,7 @@ void MemoryController::deleteSliceFiles(const SliceEnd sliceEnd)
     for (auto i = 0UL; i < fileWriters.size(); ++i)
     {
         auto& writerMap = fileWriters[i];
-        //const std::scoped_lock lock(fileWriterMutexes[i]);
+        const std::scoped_lock lock(fileWriterMutexes[i]);
         for (const auto& joinBuildSide : {QueryCompilation::JoinBuildSideType::Left, QueryCompilation::JoinBuildSideType::Right})
         {
             if (const auto it = writerMap.find({sliceEnd, joinBuildSide}); it != writerMap.end())

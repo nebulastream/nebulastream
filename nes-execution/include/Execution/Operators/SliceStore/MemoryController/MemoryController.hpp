@@ -76,7 +76,7 @@ private:
 
     /// FileWriters are grouped by thread id thus removing the necessity of locks altogether. TODO what about deleteSliceFiles()
     std::vector<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, std::shared_ptr<FileWriter>>> fileWriters;
-    //std::vector<std::mutex> fileWriterMutexes;
+    std::vector<std::mutex> fileWriterMutexes;
 
     /// FileLayouts are grouped by thread id thus reducing the wait time to acquire locks
     std::vector<std::map<std::pair<SliceEnd, QueryCompilation::JoinBuildSideType>, FileLayout>> fileLayouts;
