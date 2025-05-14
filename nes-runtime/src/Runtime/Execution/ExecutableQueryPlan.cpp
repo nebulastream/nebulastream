@@ -435,6 +435,7 @@ bool ExecutableQueryPlan::addSuccessorPlan(ExecutableQueryPlanPtr successor) {
     {
         auto lockedSuccessor = this->successor.wlock();
         if (*lockedSuccessor != nullptr && successor->decomposedQueryVersion != (*lockedSuccessor)->decomposedQueryVersion) {
+            NES_ERROR("successor version {} is not equal to {} ", successor->decomposedQueryVersion, (*lockedSuccessor)->decomposedQueryVersion);
             throw SuccessorAlreadySetException();
         }
         *lockedSuccessor = successor;
