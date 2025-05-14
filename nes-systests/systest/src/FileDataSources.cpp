@@ -17,7 +17,7 @@
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestAdaptor.hpp>
-#include <SystestFileSourceRegistry.hpp>
+#include <FileDataSourceRegistry.hpp>
 #include <SystestState.hpp>
 
 
@@ -41,8 +41,8 @@ std::string replaceRootPath(const std::string& originalPath, const std::filesyst
 
 namespace NES
 {
-SystestFileSourceRegistryReturnType
-SystestFileSourceGeneratedRegistrar::RegisterFileSystestFileSource(SystestFileSourceRegistryArguments systestAdaptorArguments)
+FileDataSourceRegistryReturnType
+FileDataSourceGeneratedRegistrar::RegisterFileFileDataSource(FileDataSourceRegistryArguments systestAdaptorArguments)
 {
     /// Check that the test data dir is defined and that the 'filePath' parameter is set
     /// Replace the 'TESTDATA' placeholder in the filepath

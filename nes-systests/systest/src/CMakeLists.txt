@@ -19,5 +19,5 @@ add_source_files(nes-systest-lib
         SystestConfiguration.cpp
 )
 
-add_plugin(File SystestInlineSource nes-systest-lib SystestInlineSources.cpp)
-add_plugin(File SystestFileSource nes-systest-lib SystestFileSources.cpp)
+add_plugin(File InlineDataSource nes-systest-lib InlineDataSources.cpp)
+add_plugin(File FileDataSource nes-systest-lib FileDataSources.cpp)

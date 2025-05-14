@@ -25,8 +25,8 @@
 namespace NES
 {
 
-using SystestFileSourceRegistryReturnType = CLI::PhysicalSource;
-struct SystestFileSourceRegistryArguments
+using FileDataSourceRegistryReturnType = CLI::PhysicalSource;
+struct FileDataSourceRegistryArguments
 {
     CLI::PhysicalSource physicalSourceConfig;
     Systest::SystestParser::AttachSource attachSource;
@@ -34,13 +34,13 @@ struct SystestFileSourceRegistryArguments
 
 };
 
-class SystestFileSourceRegistry
-    : public BaseRegistry<SystestFileSourceRegistry, std::string, SystestFileSourceRegistryReturnType, SystestFileSourceRegistryArguments>
+class FileDataSourceRegistry
+    : public BaseRegistry<FileDataSourceRegistry, std::string, FileDataSourceRegistryReturnType, FileDataSourceRegistryArguments>
 {
 };
 
 }
 
-#define INCLUDED_FROM_SYSTEST_FILE_SOURCE_REGISTRY
-#include <SystestFileSourceGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SYSTEST_FILE_SOURCE_REGISTRY
+#define INCLUDED_FROM_SYSTEST_FILE_DATA_SOURCE_REGISTRY
+#include <FileDataSourceGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_SYSTEST_FILE_DATA_SOURCE_REGISTRY
