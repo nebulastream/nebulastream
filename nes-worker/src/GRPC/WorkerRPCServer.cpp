@@ -82,6 +82,12 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
         //            }
         //            break;
         //        }
+    } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
+        NES_ERROR("Successor with version {} already exists for query plan {}, propagating error",
+                  decomposedQueryPlan->getVersion(),
+                  decomposedQueryPlan->getDecomposedQueryId(),
+                  timeout.count());
+        success = false;
     } catch (std::exception& error) {
         NES_DEBUG("Register query crashed: {}", error.what());
         success = false;
