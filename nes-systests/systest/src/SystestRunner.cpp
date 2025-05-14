@@ -84,30 +84,6 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                                   { sinkNamesToSchema.insert_or_assign(sinkParsed.name, sinkParsed.fields); });
 
     /// We add new found sources to our config
-    parser.registerOnCSVSourceCallback(
-        [&](SystestParser::CSVSource&& source)
-        {
-            config.logical.emplace_back(
-                CLI::LogicalSource{
-                    .name = source.name,
-                    .schema = [&source]()
-                    {
-                        std::vector<CLI::SchemaField> schema;
-                        for (const auto& [type, name] : source.fields)
-                        {
-                            schema.emplace_back(name, type);
-                        }
-                        return schema;
-                    }()});
-
-            config.physical.emplace_back(
-                CLI::PhysicalSource{
-                    .logical = source.name,
-                    .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
-                    .sourceConfig
-                    = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
-        });
-
     parser.registerOnSLTSourceCallback(
         [&](SystestParser::SLTSource&& source)
         {
@@ -142,9 +118,9 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                 }
             }(attachSource.configurationPath);
 
-            switch (attachSource.testDataType)
+            switch (attachSource.testDataIngestionType)
             {
-                case SystestParser::TestDataType::INLINE: {
+                case SystestParser::TestDataIngestionType::INLINE: {
                     if (attachSource.tuples.has_value())
                     {
                         const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
@@ -159,7 +135,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     }
                     throw CannotLoadConfig("A InlineData must have tuples, but tuples was null.");
                 }
-                case SystestParser::TestDataType::FILE: {
+                case SystestParser::TestDataIngestionType::FILE: {
                     const auto theArgs = FileDataRegistryArguments{initialPhysicalSourceConfig, attachSource, testDataDir};
                     if (auto physicalSourceConfig = FileDataRegistry::instance().create(attachSource.sourceType, theArgs))
                     {

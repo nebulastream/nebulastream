@@ -32,7 +32,6 @@ using namespace std::literals;
 enum class TokenType : uint8_t
 {
     INVALID,
-    CSV_SOURCE,
     SLT_SOURCE,
     ATTACH_SOURCE,
     SINK,
@@ -86,7 +85,7 @@ public:
         bool operator==(const SLTSource& other) const = default;
     };
 
-    enum class TestDataType : uint8_t
+    enum class TestDataIngestionType : uint8_t
     {
         INLINE,
         FILE
@@ -97,7 +96,7 @@ public:
         std::string configurationPath;
         std::string logicalSourceName;
         std::string sourceType;
-        TestDataType testDataType;
+        TestDataIngestionType testDataIngestionType;
         std::optional<std::vector<std::string>> tuples;
         bool operator==(const AttachSource& other) const = default;
     };
@@ -116,7 +115,6 @@ public:
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using AttachSourceCallback = std::function<void(AttachSource&& attachSource)>;
-    using CSVSourceCallback = std::function<void(CSVSource&&)>;
     using SinkCallback = std::function<void(Sink&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
@@ -124,7 +122,6 @@ public:
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
     void registerOnAttachSourceCallback(AttachSourceCallback callback);
-    void registerOnCSVSourceCallback(CSVSourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
 
 
@@ -153,7 +150,6 @@ private:
     ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
     AttachSourceCallback onAttachSourceCallback;
-    CSVSourceCallback onCSVSourceCallback;
     SinkCallback onSinkCallback;
 
     bool firstToken = true;

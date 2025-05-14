@@ -48,8 +48,7 @@ static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 
 static constexpr std::array<std::pair<std::string_view, TokenType>, 6> stringToToken
-    = {{{CSVSourceToken, TokenType::CSV_SOURCE},
-        {SLTSourceToken, TokenType::SLT_SOURCE},
+    = {{{SLTSourceToken, TokenType::SLT_SOURCE},
         {AttachSourceToken, TokenType::ATTACH_SOURCE},
         {QueryToken, TokenType::QUERY},
         {SinkToken, TokenType::SINK},
@@ -174,26 +173,13 @@ void SystestParser::registerOnSinkCallBack(SinkCallback callback)
     this->onSinkCallback = std::move(callback);
 }
 
-void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
-{
-    this->onCSVSourceCallback = std::move(callback);
-}
-
 /// Here we model the structure of the test file by what we `expect` to see.
 /// If we encounter something unexpected, we return false.
 void SystestParser::parse()
 {
     while (auto token = nextToken())
     {
-        if (token == TokenType::CSV_SOURCE)
-        {
-            auto source = expectCSVSource();
-            if (onCSVSourceCallback)
-            {
-                onCSVSourceCallback(std::move(source));
-            }
-        }
-        else if (token == TokenType::SLT_SOURCE)
+        if (token == TokenType::SLT_SOURCE)
         {
             auto source = expectSLTSource();
             if (onSLTSourceCallback)
@@ -429,7 +415,7 @@ SystestParser::AttachSource SystestParser::expectAttachSource()
         throw SLTUnexpectedToken("failed to parse source configuration path in: {}", stream.str());
     }(stream);
 
-    attachSource.testDataType = [this](std::istringstream& stream, AttachSource& attachSource)
+    attachSource.testDataIngestionType = [this](std::istringstream& stream, AttachSource& attachSource)
     {
         if (const auto testDataTypeString =
                 [](std::istringstream& stream)
@@ -443,11 +429,11 @@ SystestParser::AttachSource SystestParser::expectAttachSource()
             if (testDataTypeString == Util::toLowerCase("InlineData"))
             {
                 attachSource.tuples = {expectTuples(true)};
-                return TestDataType::INLINE;
+                return TestDataIngestionType::INLINE;
             }
             if (testDataTypeString == Util::toLowerCase("FileData"))
             {
-                return TestDataType::FILE;
+                return TestDataIngestionType::FILE;
             }
         }
         throw SLTUnexpectedToken("failed to parse the test data type in: {}", stream.str());
