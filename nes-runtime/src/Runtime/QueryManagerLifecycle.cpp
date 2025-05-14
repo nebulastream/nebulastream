@@ -214,6 +214,11 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
     return true;
 }
 
+
+std::vector<Execution::ExecutableQueryPlanPtr> AbstractQueryManager::getQepsForSource(std::shared_ptr<DataSource> source) {
+    return sourceToQEPMapping[source->getOperatorId()];
+}
+
 bool MultiQueueQueryManager::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep, bool replay) {
     auto ret = AbstractQueryManager::registerExecutableQueryPlan(qep, replay);
     std::scoped_lock lock(queryMutex);

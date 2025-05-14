@@ -54,27 +54,34 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
               decomposedQueryPlan->getSharedQueryId(),
               decomposedQueryPlan->getDecomposedQueryId(),
               decomposedQueryPlan->toString());
+    auto timeout = std::chrono::milliseconds(10);
+    while (nodeEngine->hasDifferentSuccessor(decomposedQueryPlan)) {
+        NES_ERROR("Successor with version {} already exists for query plan {}, retrying after {} ms",
+                  decomposedQueryPlan->getVersion(),
+                  decomposedQueryPlan->getDecomposedQueryId(),
+                  timeout.count());
+        std::this_thread::sleep_for(timeout);
+    }
     bool success = false;
     try {
         //check if the plan is reconfigured
         NES_ASSERT(decomposedQueryPlan->getState() != QueryState::MARKED_FOR_REDEPLOYMENT,
                    "Plan marked for redeployment should not be registered again");
         NES_DEBUG("registered decomposed query plan")
-
-        auto timeout = std::chrono::milliseconds(10);
-        while (true) {
-            try {
-                success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan, request->replaydata());
-            } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
-                NES_ERROR("Successor with version {} already exists for query plan {}, retrying after {} ms",
-                          decomposedQueryPlan->getVersion(),
-                          decomposedQueryPlan->getDecomposedQueryId(),
-                          timeout.count());
-                std::this_thread::sleep_for(timeout);
-                continue;
-            }
-            break;
-        }
+        success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan, request->replaydata());
+        //        while (true) {
+        //            try {
+        //                success = nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan, request->replaydata());
+        //            } catch (Runtime::Execution::SuccessorAlreadySetException& error) {
+        //                NES_ERROR("Successor with version {} already exists for query plan {}, retrying after {} ms",
+        //                          decomposedQueryPlan->getVersion(),
+        //                          decomposedQueryPlan->getDecomposedQueryId(),
+        //                          timeout.count());
+        //                std::this_thread::sleep_for(timeout);
+        //                continue;
+        //            }
+        //            break;
+        //        }
     } catch (std::exception& error) {
         NES_DEBUG("Register query crashed: {}", error.what());
         success = false;

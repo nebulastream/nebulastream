@@ -128,6 +128,29 @@ bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanP
     return true;
 }
 
+bool NodeEngine::hasDifferentSuccessor(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+    for (auto src : decomposedQueryPlan->getSourceOperators()) {
+        auto networkSourceDescriptor = src->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
+        if (networkSourceDescriptor) {
+            NES_DEBUG("Found existing network source with id {}", networkSourceDescriptor->getNesPartition());
+            auto source = networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition());
+            if (source) {
+                auto predecessorPlans = queryManager->getQepsForSource(source);
+
+                if (predecessorPlans.size() > 1) {
+                    NES_FATAL_ERROR(
+                        "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
+                        source->getOperatorId());
+                }
+
+                auto predecessorPlan = predecessorPlans.front();
+                return predecessorPlan->hasDifferenSuccessor(decomposedQueryPlan->getVersion());
+            }
+        }
+    }
+    return false;
+}
+
 bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan, bool replayData) {
     NES_INFO("Creating ExecutableQueryPlan for shared query plan {}, decomposed query plan {}, version {} ",
              decomposedQueryPlan->getSharedQueryId(),

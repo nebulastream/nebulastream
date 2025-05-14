@@ -412,6 +412,11 @@ void ExecutableQueryPlan::setSourcesToReuse(std::vector<OperatorId> sourcesToReu
     this->sourcesToReuse = std::move(sourcesToReuse);
 }
 
+bool ExecutableQueryPlan::hasDifferenSuccessor(DecomposedQueryPlanVersion successorVersion) {
+    auto lockedSuccessor = this->successor.wlock();
+    return !(*lockedSuccessor != nullptr && successorVersion != (*lockedSuccessor)->decomposedQueryVersion);
+}
+
 bool ExecutableQueryPlan::addSuccessorPlan(ExecutableQueryPlanPtr successor) {
     // TODO: use this code if we want to allow concurrent flow of markers of different versions
     //    {

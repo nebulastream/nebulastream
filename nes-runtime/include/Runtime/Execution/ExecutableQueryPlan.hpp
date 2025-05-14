@@ -247,6 +247,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     bool addSuccessorPlan(ExecutableQueryPlanPtr successor);
     bool shouldDelayStart();
+    bool hasDifferenSuccessor(DecomposedQueryPlanVersion successorVersion);
 
   protected:
     /**
@@ -286,6 +287,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      * @param marker the reconfiguration marker to be propagated through the old plan
      */
     void transferSourcesToSuccessor(const ReconfigurationMarkerPtr& marker);
+
 
   private:
     const SharedQueryId sharedQueryId;
