@@ -16,14 +16,10 @@
 
 #include <fstream>
 #include <functional>
-#include <thread>
-#include <boost/asio/awaitable.hpp>
-#include <boost/asio/posix/stream_descriptor.hpp>
+#include <boost/asio.hpp>
 
 namespace NES::Runtime::Execution
 {
-
-boost::asio::io_context& getIoContext();
 
 enum FileLayout : uint8_t
 {
@@ -37,6 +33,7 @@ class FileWriter
 {
 public:
     FileWriter(
+        boost::asio::io_context& ioContext,
         const std::string& filePath,
         const std::function<char*()>& allocate,
         const std::function<void(char*)>& deallocate,

@@ -13,8 +13,6 @@
 */
 
 #include <Execution/Operators/SliceStore/FileDescriptor/FileDescriptors.hpp>
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/write.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -26,11 +24,12 @@ boost::asio::io_context& getIoContext()
 }
 
 FileWriter::FileWriter(
+    boost::asio::io_context& ioContext,
     const std::string& filePath,
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
-    : file(getIoContext())
+    : file(ioContext)
     , writeBuffer(allocate())
     //, writeKeyBuffer(nullptr)
     , writeBufferPos(0)
@@ -52,7 +51,6 @@ FileWriter::~FileWriter()
 {
     /// Buffer needs to be flushed manually before calling the destructor
     // TODO add synchronous flush
-    getIoContext().run();
     deallocateBuffers();
     file.close();
 }
@@ -84,7 +82,7 @@ boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
             co_await flushBuffer();
         }
     }
-    //co_return;
+    co_return;
 }
 
 boost::asio::awaitable<void> FileWriter::flush()
@@ -94,11 +92,11 @@ boost::asio::awaitable<void> FileWriter::flush()
         co_return;
     }
 
-    if (writeBufferPos > 0)
+    if (writeBuffer != nullptr && writeBufferPos > 0)
     {
         co_await flushBuffer();
     }
-    //co_return;
+    co_return;
 }
 
 void FileWriter::deallocateBuffers()
@@ -115,6 +113,7 @@ boost::asio::awaitable<void> FileWriter::flushBuffer()
     co_await boost::asio::async_write(file, boost::asio::buffer(buffer.get(), writeBufferPos), boost::asio::use_awaitable);
 
     writeBufferPos = 0;
+    co_return;
 }
 
 FileReader::FileReader(
@@ -151,9 +150,9 @@ FileReader::~FileReader()
     deallocate(readBuffer);
     std::filesystem::remove(filePath + ".dat");
 
-    keyFile.close();
+    //keyFile.close();
     deallocate(readKeyBuffer);
-    std::filesystem::remove(filePath + "_key.dat");
+    //std::filesystem::remove(filePath + "_key.dat");
 }
 
 size_t FileReader::read(void* dest, const size_t size)

@@ -272,10 +272,11 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
 }
 
 boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
+    boost::asio::io_context& ioContext,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
-    const SliceStoreMetaData& metaData)
+    const SliceStoreMetaData metaData)
 {
     const auto& [watermark, seqNumber, originId] = metaData.bufferMetaData;
     watermarkProcessor->updateWatermark(watermark, seqNumber, originId);
@@ -286,8 +287,12 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
 
     /// Write and read all selected slices to and from disk
     const auto threadId = WorkerThreadId(metaData.threadId % numberOfWorkerThreads);
-    for (const auto& [slice, operation, fileLayout] : getSlicesToUpdate(memoryLayout, joinBuildSide, threadId))
+    //for (const auto& [slice, operation, fileLayout] : getSlicesToUpdate(memoryLayout, joinBuildSide, threadId))
+    for (const auto& slice : alteredSlicesPerThread[{threadId, joinBuildSide}])
     {
+        constexpr auto operation = WRITE;
+        constexpr auto fileLayout = USE_FILE_LAYOUT;
+
         /// Prevent other threads from combining pagedVectors to preserve data integrity as pagedVectors are not thread-safe
         const auto nljSlice = std::dynamic_pointer_cast<NLJSlice>(slice);
         nljSlice->acquireCombinePagedVectorsLock();
@@ -303,8 +308,8 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                     // TODO investigate why numTuples and numPages can be zero
                     if (const auto numTuplesOnDisk = pagedVector->getNumberOfTuplesOnDisk(); numTuplesOnDisk > 0)
                     {
-                        auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
-                        pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout);
+                        //auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
+                        //pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout);
                         memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
                     }
                     break;
@@ -312,14 +317,32 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                 case WRITE: {
                     if (const auto numPagesInMemory = pagedVector->getNumberOfPages(); numPagesInMemory > 0)
                     {
+                        //boost::asio::io_context ioContext;
+                        //std::cout << "writing out\n";
                         const auto slicesInMemoryLocked = slicesInMemory.wlock();
-                        (*slicesInMemoryLocked)[{sliceEnd, joinBuildSide}] = false;
+                        (*slicesInMemoryLocked)[{slice->getSliceEnd(), joinBuildSide}] = false;
 
-                        auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide);
-                        co_await pagedVector->writeToFile(bufferProvider, memoryLayout, *fileWriter, fileLayout);
-                        co_await fileWriter->flush();
+                        //std::cout << "writing 1\n";
+                        memoryController->setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
+                        //std::cout << "writing 2\n";
+                        const auto fileWriter = memoryController->getFileWriter(ioContext, sliceEnd, threadId, joinBuildSide);
+                        //std::cout << "writing 3\n";
+                        co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, fileLayout);
+                        /*boost::asio::co_spawn(
+                            ioContext,
+                            pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, fileLayout),
+                            boost::asio::detached);*/
+                        //ioContext.run();
+                        //std::cout << "writing 4\n";
+                        //co_await fileWriter->flush();
+                        //boost::asio::co_spawn(ioContext, fileWriter->flush(), boost::asio::detached);
+                        //ioContext.run();
+                        //std::cout << "writing 5\n";
+                        //ioContext.run();
                         pagedVector->truncate(fileLayout);
+                        //std::cout << "writing 6\n";
                         fileWriter->deallocateBuffers();
+                        //std::cout << "written out\n";
                     }
                     break;
                 }
@@ -329,7 +352,8 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
         nljSlice->releaseCombinePagedVectorsLock();
     }
     // TODO can we also already read back slices (left and right) as a whole? probably not because other threads might still be writing to them
-    co_return;
+    alteredSlicesPerThread[{threadId, joinBuildSide}].clear();
+    //co_return;
 }
 
 std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileBackedTimeBasedSliceStore::getSlicesToUpdate(
@@ -432,12 +456,12 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         std::vector<char> data(dataSize);
         const auto start = std::chrono::high_resolution_clock::now();
 
-        auto& io = getIoContext();
+        boost::asio::io_context ioContext;
         const auto fileWriter = memoryController->getFileWriter(
-            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left);
-        boost::asio::co_spawn(io, fileWriter->write(data.data(), dataSize), boost::asio::detached);
-        boost::asio::co_spawn(io, fileWriter->flush(), boost::asio::detached);
-        io.run();
+            ioContext, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left);
+        boost::asio::co_spawn(ioContext, fileWriter->write(data.data(), dataSize), boost::asio::detached);
+        boost::asio::co_spawn(ioContext, fileWriter->flush(), boost::asio::detached);
+        ioContext.run();
         const auto write = std::chrono::high_resolution_clock::now();
 
         const auto fileReader = memoryController->getFileReader(

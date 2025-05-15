@@ -33,7 +33,7 @@ public:
     boost::asio::awaitable<void> writeToFile(
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-        Runtime::Execution::FileWriter& fileWriter,
+        std::shared_ptr<Runtime::Execution::FileWriter> fileWriter,
         Runtime::Execution::FileLayout fileLayout);
 
     /// Reads the projected fields of all tuples from fileStorage.
@@ -55,13 +55,13 @@ private:
     /// Appends a new page to the keyPages vector if the last page is full.
     void appendKeyPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
 
-    boost::asio::awaitable<void>
-    writePayloadAndKeysToSeparateFiles(const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter);
+    boost::asio::awaitable<void> writePayloadAndKeysToSeparateFiles(
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout, std::shared_ptr<Runtime::Execution::FileWriter> fileWriter);
 
     boost::asio::awaitable<void> writePayloadOnlyToFile(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         Memory::AbstractBufferProvider* bufferProvider,
-        Runtime::Execution::FileWriter& fileWriter);
+        std::shared_ptr<Runtime::Execution::FileWriter> fileWriter);
 
     void readSeparatelyFromFiles(
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,

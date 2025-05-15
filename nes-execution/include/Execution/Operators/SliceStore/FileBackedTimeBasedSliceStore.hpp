@@ -64,7 +64,7 @@ public:
         = 0UL; /// slices with state sice less than 0B for a given ThreadId are not read back from external storage
     static constexpr auto USE_TIME_DELTA_MS = 0UL; /// time delta in ms added to estimated read and write timestamps
     static constexpr auto USE_BUFFER_SIZE = 1024 * 4UL; /// 4 KB size of file write and read buffers
-    static constexpr auto USE_NUM_WRITE_BUFFERS = 128UL; /// num file write buffers
+    static constexpr auto USE_NUM_WRITE_BUFFERS = 128 * 1024 * 4UL; /// num file write buffers
     static constexpr auto USE_MAX_NUM_SEQ_NUMBERS = UINT64_MAX; /// max number of data points for predictions
     static constexpr auto USE_NUM_GAPS_ALLOWED = 10UL; /// number of gaps allowed in data points of sequence numbers
 
@@ -98,10 +98,11 @@ public:
 
     /// TODO
     boost::asio::awaitable<void> updateSlices(
+        boost::asio::io_context& ioContext,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,
-        const SliceStoreMetaData& metaData);
+        SliceStoreMetaData metaData);
 
 private:
     std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> getSlicesToUpdate(

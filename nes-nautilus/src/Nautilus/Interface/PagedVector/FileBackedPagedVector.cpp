@@ -42,7 +42,7 @@ void FileBackedPagedVector::copyFrom(const PagedVector& other)
 boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
-    Runtime::Execution::FileWriter& fileWriter,
+    const std::shared_ptr<Runtime::Execution::FileWriter> fileWriter,
     Runtime::Execution::FileLayout fileLayout)
 {
     // TODO remove once fileLayout is chosen adaptively
@@ -64,7 +64,8 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
         case Runtime::Execution::NO_SEPARATION: {
             for (const auto& page : pages)
             {
-                co_await fileWriter.write(page.getBuffer(), page.getNumberOfTuples() * memoryLayout->getTupleSize());
+                co_await fileWriter->write(page.getBuffer(), page.getNumberOfTuples() * memoryLayout->getTupleSize());
+                co_await fileWriter->flush();
                 numTuplesOnDisk += page.getNumberOfTuples();
             }
             break;
@@ -203,7 +204,7 @@ void FileBackedPagedVector::appendKeyPageIfFull(
 }
 
 boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparateFiles(
-    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, Runtime::Execution::FileWriter& fileWriter)
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout, const std::shared_ptr<Runtime::Execution::FileWriter> fileWriter)
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
     const auto keyFieldsOnlyMemoryLayout
@@ -212,7 +213,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparat
 
     for (const auto& keyPage : keyPages)
     {
-        co_await fileWriter.writeKey(keyPage.getBuffer(), keyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize());
+        co_await fileWriter->writeKey(keyPage.getBuffer(), keyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize());
     }
 
     for (const auto& page : pages)
@@ -225,11 +226,11 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparat
             {
                 if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::KEY)
                 {
-                    co_await fileWriter.writeKey(pagePtr, fieldSize);
+                    co_await fileWriter->writeKey(pagePtr, fieldSize);
                 }
                 else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
                 {
-                    co_await fileWriter.write(pagePtr, fieldSize);
+                    co_await fileWriter->write(pagePtr, fieldSize);
                 }
                 pagePtr += fieldSize;
             }
@@ -241,7 +242,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparat
 boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     Memory::AbstractBufferProvider* bufferProvider,
-    Runtime::Execution::FileWriter& fileWriter)
+    const std::shared_ptr<Runtime::Execution::FileWriter> fileWriter)
 {
     const auto keyFieldsOnlySchema = memoryLayout->createKeyFieldsOnlySchema();
     const auto keyFieldsOnlyMemoryLayout
@@ -269,7 +270,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
                 }
                 else if (fieldType == Memory::MemoryLayouts::MemoryLayout::FieldType::PAYLOAD)
                 {
-                    co_await fileWriter.write(pagePtr, fieldSize);
+                    co_await fileWriter->write(pagePtr, fieldSize);
                 }
                 pagePtr += fieldSize;
             }

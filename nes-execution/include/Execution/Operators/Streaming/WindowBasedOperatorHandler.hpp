@@ -27,6 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
+#include <boost/asio.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -42,7 +43,18 @@ public:
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
-    ~WindowBasedOperatorHandler() override = default;
+    ~WindowBasedOperatorHandler() override;
+
+    template <typename T>
+    T runSingleAwaitable(boost::asio::awaitable<T> task)
+    {
+        auto future = boost::asio::co_spawn(ioContext, std::move(task), boost::asio::use_future);
+        while (future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
+        {
+            ioContext.poll();
+        }
+        return future.get();
+    }
 
     /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
@@ -50,6 +62,7 @@ public:
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
+    boost::asio::io_context& getIoContext();
 
     /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore
     void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
@@ -72,6 +85,9 @@ protected:
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx)
         = 0;
+
+    boost::asio::io_context ioContext;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard;
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;

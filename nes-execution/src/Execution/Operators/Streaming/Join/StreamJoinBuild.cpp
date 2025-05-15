@@ -45,20 +45,35 @@ void updateSlicesProxy(
     PRECONDITION(bufferProvider != nullptr, "buffer provider should not be null!");
     PRECONDITION(memoryLayout != nullptr, "memory layout should not be null!");
 
-    const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+    auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
     {
-        auto& io = getIoContext();
-        boost::asio::co_spawn(
-            io,
-            sliceStore->updateSlices(
-                bufferProvider,
-                memoryLayout,
-                joinBuildSide,
-                SliceStoreMetaData(
-                    workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))),
-            boost::asio::detached);
-        io.run();
+        /*boost::asio::io_context ioContext;
+            boost::asio::co_spawn(
+                ioContext,
+                sliceStore->updateSlices(
+                    ioContext,
+                    bufferProvider,
+                    memoryLayout,
+                    joinBuildSide,
+                    SliceStoreMetaData(
+                        workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))),
+                boost::asio::detached);
+            ioContext.run();*/
+        /*sliceStore->updateSlices(
+            opHandler->getIoContext(),
+            bufferProvider,
+            memoryLayout,
+            joinBuildSide,
+            SliceStoreMetaData(
+                workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId)));*/
+        opHandler->runSingleAwaitable(sliceStore->updateSlices(
+            opHandler->getIoContext(),
+            bufferProvider,
+            memoryLayout,
+            joinBuildSide,
+            SliceStoreMetaData(
+                workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
     }
 }
 
