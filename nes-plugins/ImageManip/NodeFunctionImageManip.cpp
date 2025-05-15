@@ -103,6 +103,7 @@ const static std::unordered_map<std::string_view, std::shared_ptr<ImageManipFunc
     = {{"FromBase64", std::make_shared<ImageManipFunctionImpl<NES::VariableSizedDataType, NES::VariableSizedDataType>>("FromBase64")},
        {"ToBase64", std::make_shared<ImageManipFunctionImpl<NES::VariableSizedDataType, NES::VariableSizedDataType>>("ToBase64")},
        {"Mono16ToGray", std::make_shared<ImageManipFunctionImpl<NES::VariableSizedDataType, NES::VariableSizedDataType>>("Mono16ToGray")},
+       {"FaceDetection", std::make_shared<ImageManipFunctionImpl<NES::VariableSizedDataType, NES::VariableSizedDataType>>("FaceDetection")},
        {"DrawRectangle",
         std::make_shared<ImageManipFunctionImpl<
             NES::VariableSizedDataType,
@@ -209,6 +210,7 @@ namespace NES::LogicalFunctionGeneratedRegistrar
 ImageManipFunction(ToBase64);
 ImageManipFunction(FromBase64);
 ImageManipFunction(Mono16ToGray);
+ImageManipFunction(FaceDetection);
 ImageManipFunction(DrawRectangle);
 
 }

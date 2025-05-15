@@ -24,6 +24,16 @@
           ]
         }
       ]
+    },
+    "video": {
+      "description": "video queries",
+      "dependencies": [
+        {
+          "name": "opencv4",
+          "default-features": false,
+          "features": ["calib3d"]
+        }
+      ]
     }
   },
   "dependencies": [
@@ -48,6 +58,7 @@
     "ireeruntime"
   ],
   "default-features": [
+    "video",
     "mqtt"
   ]
 }

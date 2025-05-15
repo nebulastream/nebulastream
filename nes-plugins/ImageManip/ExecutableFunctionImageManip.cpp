@@ -16,13 +16,35 @@
 #include <numeric>
 #include <ranges>
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
+#include <battery/embed.hpp>
 #include <netinet/in.h>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
 #include <ExecutableFunctionRegistry.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
+
+namespace
+{
+cv::CascadeClassifier& get()
+{
+    thread_local cv::CascadeClassifier cache = [] -> cv::CascadeClassifier
+    {
+        cv::CascadeClassifier b;
+        auto content = b::embed<"Cascade.xml">().str();
+        cv::FileStorage fs(content, cv::FileStorage::READ | cv::FileStorage::MEMORY | cv::FileStorage::FORMAT_XML);
+        b.read(fs.getFirstTopLevelNode());
+        return b;
+    }();
+    return cache;
+}
+static auto a = get();
+}
 
 class ExecutableFunctionImageManip final : public Function
 {
@@ -230,13 +252,50 @@ VariableSizedData mono16ToGray(VariableSizedData input, ArenaRef& arena)
         +[](uint32_t input_length, int8_t* data, int8_t* dest)
         {
             const std::span mono16{std::bit_cast<uint16_t*>(data), input_length / 2};
-            std::ranges::copy(std::views::transform(mono16, [](auto p) { return static_cast<uint8_t>(p); }), dest);
+            std::ranges::copy(std::views::transform(mono16, [](auto p) { return cv::saturate_cast<uint8_t>(p); }), dest);
         },
         input.getContentSize(),
         input.getContent(),
         grayScaleImage.getContent());
 
     return grayScaleImage;
+}
+
+VariableSizedData faceDetection(VariableSizedData input, ArenaRef& arena)
+{
+    auto imageWithFace = arena.allocateVariableSizedData(input.getContentSize());
+    nautilus::invoke(
+        +[](uint8_t* data, size_t size, uint8_t* dest)
+        {
+            INVARIANT(size == DEFAULT_IMAGE_WIDTH * DEFAULT_IMAGE_HEIGHT * 2, "Image size is not correct");
+            const cv::Mat input(DEFAULT_IMAGE_HEIGHT, DEFAULT_IMAGE_WIDTH, CV_8UC2, data);
+            cv::Mat output(DEFAULT_IMAGE_HEIGHT, DEFAULT_IMAGE_WIDTH, CV_8UC2, dest);
+
+            cv::Mat gray;
+            cv::cvtColor(input, gray, cv::COLOR_YUV2GRAY_YUYV);
+            std::vector<cv::Rect> faces;
+            get().detectMultiScale(gray, faces);
+
+            if (!faces.empty())
+            {
+                cv::Mat bgr_image;
+                cv::cvtColor(input, bgr_image, cv::COLOR_YUV2BGR_YUYV);
+                for (auto& face : faces)
+                {
+                    cv::rectangle(bgr_image, face, cv::Scalar(0, 255, 0), 2);
+                }
+                cv::cvtColor(bgr_image, output, cv::COLOR_BGR2YUV_YUYV);
+            }
+            else
+            {
+                input.copyTo(output);
+            }
+        },
+        input.getContent(),
+        input.getContentSize(),
+        imageWithFace.getContent());
+
+    return imageWithFace;
 }
 
 VarVal ExecutableFunctionImageManip::execute(const Record& record, ArenaRef& arena) const
@@ -252,6 +311,10 @@ VarVal ExecutableFunctionImageManip::execute(const Record& record, ArenaRef& are
     else if (functionName == "Mono16ToGray")
     {
         return mono16ToGray(childFunctions[0]->execute(record, arena).cast<VariableSizedData>(), arena);
+    }
+    else if (functionName == "FaceDetection")
+    {
+        return faceDetection(childFunctions[0]->execute(record, arena).cast<VariableSizedData>(), arena);
     }
     else if (functionName == "DrawRectangle")
     {
@@ -280,6 +343,7 @@ ExecutableFunctionImageManip::ExecutableFunctionImageManip(std::string functionN
 
 ImageManipFunction(ToBase64);
 ImageManipFunction(FromBase64);
+ImageManipFunction(FaceDetection);
 ImageManipFunction(Mono16ToGray);
 ImageManipFunction(DrawRectangle);
 

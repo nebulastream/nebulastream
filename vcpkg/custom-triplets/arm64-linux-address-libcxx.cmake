@@ -24,6 +24,10 @@ if (PORT STREQUAL "boost-context")
     SET(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_SYSTEM_PROCESSOR=aarch64)
 endif ()
 
+if (PORT STREQUAL "libpng")
+    SET(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_SYSTEM_PROCESSOR=aarch64)
+endif ()
+
 # Building LLVM with the `-fsanitize=address` flag causes the sanitizer itself to be built sanitized which is not
 # possible. In general if the port supports sanitization via a CMake Option this should be the preferred way, to avoid
 # incompatibilities.
