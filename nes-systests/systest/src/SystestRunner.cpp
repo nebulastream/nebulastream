@@ -241,7 +241,8 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     throw CannotLoadConfig("SourceName {} does not exist in sourceNamesToFilepathAndCount!");
                 }
                 INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
-                plans.emplace_back(*plan, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourceNamesToFilepathAndCountForQuery);
+                plans.emplace_back(
+                    *plan, query, sinkNamesToSchema[sinkName], currentQueryNumberInTest, sourceNamesToFilepathAndCountForQuery);
             }
             catch (Exception& e)
             {
@@ -296,7 +297,8 @@ bool passes(const std::shared_ptr<RunningQuery>& runningQuery)
 
 }
 
-std::vector<RunningQuery> runQueries(const std::vector<Query>& queries, size_t maxConcurrency, QuerySubmitter& submitter, QueryResultMap& queryResultMap)
+std::vector<RunningQuery>
+runQueries(const std::vector<SystestQuery>& queries, size_t maxConcurrency, QuerySubmitter& submitter, QueryResultMap& queryResultMap)
 {
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)

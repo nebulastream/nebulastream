@@ -71,8 +71,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     bool csvSourceCallbackCalled = false;
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](SystestParser::Query&&) { queryCallbackCalled = true; });
-    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&&) { resultCallbackCalled = true; });
+    parser.registerOnQueryCallback([&](std::string&&, size_t) { queryCallbackCalled = true; });
     parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&&) { sltSourceCallbackCalled = true; });
     parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&&) { csvSourceCallbackCalled = true; });
 
@@ -287,7 +286,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
 
     SystestParser parser{};
     parser.registerOnQueryCallback(
-        [&](SystestParser::Query&& query)
+        [&](std::string&& query, size_t)
         {
             ASSERT_EQ(query, expectQuery);
             queryCallbackCalled = true;

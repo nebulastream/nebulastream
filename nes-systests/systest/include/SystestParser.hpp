@@ -23,8 +23,8 @@
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <SystestState.hpp>
 #include <ErrorHandling.hpp>
+#include <SystestState.hpp>
 
 namespace NES::Systest
 {

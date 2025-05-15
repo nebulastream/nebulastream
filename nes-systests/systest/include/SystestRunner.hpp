@@ -36,12 +36,6 @@ struct SystestQuery;
 struct RunningQuery;
 class QuerySubmitter;
 
-struct ExpectedError
-{
-    ErrorCode code;
-    std::optional<std::string> message;
-};
-
 struct LoadedQueryPlan
 {
     std::expected<LogicalPlan, Exception> queryPlan;

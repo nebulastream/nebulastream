@@ -27,8 +27,10 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -40,6 +42,13 @@
 
 namespace NES::Systest
 {
+
+struct ExpectedError
+{
+    ErrorCode code;
+    std::optional<std::string> message;
+};
+
 using TestName = std::string;
 using TestGroup = std::string;
 
@@ -65,8 +74,8 @@ struct SystestQuery
         std::expected<LogicalPlan, Exception> queryPlan,
         uint64_t queryIdInFile,
         std::filesystem::path workingDir,
-        std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
         SystestSchema sinkSchema,
+        std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
         std::optional<ExpectedError> expectedError);
 
     [[nodiscard]] std::filesystem::path resultFile() const;
@@ -79,7 +88,6 @@ struct SystestQuery
     std::filesystem::path workingDir;
     SystestSchema expectedSinkSchema;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
-    SystestSchema expectedSinkSchema;
     std::optional<ExpectedError> expectedError;
 };
 
@@ -100,13 +108,13 @@ struct RunningQuery
 
 struct TestFile
 {
-    explicit TestFile(std::filesystem::path file);
-    explicit TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber);
+    explicit TestFile(const std::filesystem::path& file);
+    explicit TestFile(const std::filesystem::path& file, std::unordered_set<uint64_t> onlyEnableQueriesWithTestQueryNumber);
     [[nodiscard]] std::string getLogFilePath() const;
     [[nodiscard]] TestName name() const { return file.stem().string(); }
 
     std::filesystem::path file;
-    std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber;
+    std::unordered_set<uint64_t> onlyEnableQueriesWithTestQueryNumber;
     std::vector<TestGroup> groups;
     std::vector<SystestQuery> queries;
 };
