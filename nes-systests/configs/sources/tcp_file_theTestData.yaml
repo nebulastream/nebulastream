@@ -12,3 +12,4 @@ sourceConfig:
   socketBufferSize: 2
   flushIntervalMS: 100
   connectTimeoutSeconds: 60
+  filePath: "TESTDATA/theTestData.csv"

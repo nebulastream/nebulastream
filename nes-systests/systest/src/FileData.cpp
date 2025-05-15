@@ -16,14 +16,15 @@
 
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestAdaptor.hpp>
 #include <FileDataRegistry.hpp>
+#include <SystestAdaptor.hpp>
 #include <SystestState.hpp>
+#include <TCPDataServer.hpp>
 
 
 namespace
 {
-std::string replaceRootPath(const std::string& originalPath, const std::filesystem::path& newRootPath)
+std::filesystem::path replaceRootPath(const std::string& originalPath, const std::filesystem::path& newRootPath)
 {
     if (const std::filesystem::path path(originalPath); path.has_parent_path()) //Todo: check that path is not absolute
     {
@@ -32,7 +33,7 @@ std::string replaceRootPath(const std::string& originalPath, const std::filesyst
             return (newRootPath / path.lexically_relative(*firstDir)).string();
         }
         throw NES::InvalidConfigParameter(
-        "The filepath of a FileSource config must contain begin with 'TESTDATA/', but got {}.", originalPath);
+            "The filepath of a FileSource config must contain begin with 'TESTDATA/', but got {}.", originalPath);
     }
     throw NES::InvalidConfigParameter(
         "The filepath of a FileSource config must contain at least a root directory and a file, but got {}.", originalPath);
@@ -41,8 +42,7 @@ std::string replaceRootPath(const std::string& originalPath, const std::filesyst
 
 namespace NES
 {
-FileDataRegistryReturnType
-FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
     /// Check that the test data dir is defined and that the 'filePath' parameter is set
     /// Replace the 'TESTDATA' placeholder in the filepath
@@ -52,6 +52,38 @@ FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments syste
         filePath->second = replaceRootPath(filePath->second, systestAdaptorArguments.testDataDir);
         return systestAdaptorArguments.physicalSourceConfig;
     }
-    throw InvalidConfigParameter("A FileSource config must contain filePath parameter.");
+    throw InvalidConfigParameter("A FileData config must contain filePath parameter.");
 }
+
+
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
+{
+    if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find("filePath");
+        filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+    {
+        if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(
+                "socketPort"); //TOdo: implement in TCP source to access params?
+            port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            auto mockTCPServer = std::make_unique<TCPDataServer>(replaceRootPath(filePath->second, systestAdaptorArguments.testDataDir));
+            port->second = std::to_string(mockTCPServer->getPort());
+
+            if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find("socketHost");
+                host != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+            {
+                host->second = "localhost";
+                auto serverThread
+                    = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
+
+                systestAdaptorArguments.physicalSourceConfig.sourceConfig.erase("filePath");
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw InvalidConfigParameter("A TCP source config must contain a 'host' parameter");
+        }
+        throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
+    }
+    throw InvalidConfigParameter("A TCP source with FileData config must contain filePath parameter.");
+}
+
 }
