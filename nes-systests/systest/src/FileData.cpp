@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <string>
+#include <thread>
+#include <utility>
 
-#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <SystestAdaptor.hpp>
@@ -26,7 +28,7 @@ namespace
 {
 std::filesystem::path replaceRootPath(const std::string& originalPath, const std::filesystem::path& newRootPath)
 {
-    if (const std::filesystem::path path(originalPath); path.has_parent_path()) //Todo: check that path is not absolute
+    if (const std::filesystem::path path(originalPath); not(path.is_absolute()))
     {
         if (const auto firstDir = path.begin(); *firstDir == std::filesystem::path("TESTDATA"))
         {
