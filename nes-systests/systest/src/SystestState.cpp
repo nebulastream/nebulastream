@@ -75,22 +75,11 @@ void loadQueriesFromTestFile(
 
     for (const auto& [decomposedPlan, queryDefinition, sinkSchema, queryIdInFile, sourceNamesToFilepath] : loadedPlans)
     {
-        if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
+        if (testfile.onlyEnableQueriesWithTestQueryNumber.contains(queryIdInFile))
         {
-            for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber
-                     | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
-            {
-                foundQueries.insert(queryIdInFile + 1);
-                testfile.queries.emplace_back(
-                    testfile.name(),
-                    queryDefinition,
-                    testfile.file,
-                    decomposedPlan,
-                    queryIdInFile,
-                    workingDir,
-                    sinkSchema,
-                    sourceNamesToFilepath);
-            }
+            foundQueries.insert(queryIdInFile + 1);
+            testfile.queries.emplace_back(
+                testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema, sourceNamesToFilepath);
         }
         else
         {
@@ -145,9 +134,9 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
     return groups;
 }
 
-TestFile::TestFile(std::filesystem::path file) : file(weakly_canonical(file)), groups(readGroups(*this)) { };
+TestFile::TestFile(const std::filesystem::path& file) : file(weakly_canonical(file)), groups(readGroups(*this)) { };
 
-TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber)
+TestFile::TestFile(const std::filesystem::path& file, std::unordered_set<uint64_t> onlyEnableQueriesWithTestQueryNumber)
     : file(weakly_canonical(file))
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) { };
@@ -226,11 +215,11 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
         else
         { /// case: load a concrete set of tests
             auto scalarTestNumbers = config.testQueryNumbers.getValues();
-            std::vector<uint64_t> testNumbers;
+            std::unordered_set<uint64_t> testNumbers;
             testNumbers.reserve(scalarTestNumbers.size());
             for (const auto& scalarOption : scalarTestNumbers)
             {
-                testNumbers.push_back(scalarOption.getValue());
+                testNumbers.emplace(scalarOption.getValue());
             }
 
             TestFile testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
