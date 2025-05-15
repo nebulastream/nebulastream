@@ -69,6 +69,14 @@ namespace NES::Parsers
 
 LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
+    if (sinkNames.empty())
+    {
+        throw InvalidQuerySyntax("Query does not contain sink");
+    }
+    if (queryPlans.empty())
+    {
+        throw InvalidQuerySyntax("Query could not be parsed");
+    }
     /// Todo #421: support multiple sinks
     return LogicalPlanBuilder::addSink(sinkNames.front(), queryPlans.top());
 }
