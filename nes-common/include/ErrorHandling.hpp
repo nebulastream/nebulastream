@@ -100,7 +100,10 @@ private:
             { \
                 auto trace = cpptrace::generate_trace().to_string(true); \
                 NES_ERROR("Precondition violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
-                NES::Logger::getInstance()->shutdown(); \
+                if (NES::Logger::getInstance()) \
+                { \
+                    NES::Logger::getInstance()->shutdown(); \
+                } \
                 std::terminate(); \
             } \
         } while (false)
@@ -115,7 +118,10 @@ private:
             { \
                 auto trace = cpptrace::generate_trace().to_string(true); \
                 NES_ERROR("Invariant violated: ({}): " formatString "\u001B[0m\n\n{}", #condition __VA_OPT__(, ) __VA_ARGS__, trace); \
-                NES::Logger::getInstance()->shutdown(); \
+                if (NES::Logger::getInstance()) \
+                { \
+                    NES::Logger::getInstance()->shutdown(); \
+                } \
                 std::terminate(); \
             } \
         } while (false)
