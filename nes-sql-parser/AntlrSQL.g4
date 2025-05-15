@@ -42,7 +42,35 @@ DISABLE_WARNING(-Wunused-parameter)
 
 singleStatement: statement ';'* EOF;
 
-statement: query;
+statement: query | createStatement | dropStatement | showStatement;
+
+createStatement: CREATE createDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition;
+createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
+
+createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
+                                TYPE type=identifier
+                                (SET options=namedConfigExpressionSeq)?;
+
+createSinkDefinition: SINK sinkName=identifier schemaDefinition;
+
+
+schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
+columnDefinition: IDENTIFIER typeDefinition;
+
+typeDefinition: DATA_TYPE;
+
+fromQuery: AS query;
+
+dropStatement: DROP dropSubject;
+dropSubject: dropQuery | dropSource;
+dropQuery: QUERY id=INTEGER_VALUE;
+dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
+dropLogicalSourceSubject: LOGICAL SOURCE name=IDENTIFIER;
+dropPhysicalSourceSubject: PHYSICAL SOURCE id=INTEGER_VALUE;
+
+showStatement: SHOW dbObjectType (FORMAT format=('TEXT' | 'JSON'))?;
+
 
 query : queryTerm queryOrganization;
 
@@ -120,6 +148,8 @@ multipartIdentifier
     : parts+=errorCapturingIdentifier ('.' parts+=errorCapturingIdentifier)*
     ;
 
+namedConfigExpression: constant AS name=identifierSeq;
+
 namedExpression
     : expression AS name=identifier
     | expression
@@ -156,6 +186,7 @@ errorCapturingIdentifierExtra
     |                        #realIdent
     ;
 
+namedConfigExpressionSeq: namedConfigExpression (',' namedConfigExpression)*;
 namedExpressionSeq
     : namedExpression (',' namedExpression)*
     ;
@@ -266,7 +297,8 @@ predicate
 
 
 valueExpression
-    : functionName '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
+    : (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
+//    | DATA_TYPE '(' (argument+=expression (',' argument+=expression)*)? ')'               #basicTypeCast
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
     | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
@@ -393,6 +425,7 @@ WHEN: 'WHEN';
 WHERE: 'WHERE' | 'where';
 WINDOW: 'WINDOW' | 'window';
 WITH: 'WITH';
+SET: 'SET';
 TUMBLING: 'TUMBLING' | 'tumbling';
 SLIDING: 'SLIDING' | 'sliding';
 THRESHOLD : 'THRESHOLD'|'threshold';
@@ -423,7 +456,7 @@ AT_LEAST_ONCE : 'AT_LEAST_ONCE';
 
 
 BOOLEAN_VALUE: 'true' | 'false';
-EQ  : '=' | '==';
+EQ  : '=';
 NSEQ: '<=>';
 NEQ : '<>';
 NEQJ: '!=';
@@ -457,9 +490,6 @@ FLOAT_LITERAL
     | DECIMAL_DIGITS EXPONENT? {isValidDecimal()}?
     ;
 
-IDENTIFIER
-    : (LETTER | DIGIT | '_')+
-    ;
 
 fragment DECIMAL_DIGITS
     : DIGIT+ '.' DIGIT*
@@ -482,12 +512,38 @@ WS
     : [ \r\n\t]+ -> channel(HIDDEN)
     ;
 
-/// Catch-all for anything we can't recognize.
-/// We use this to be able to ignore and recover all the text
-/// when splitting statements with DelimiterLexer
-UNRECOGNIZED
-    : .
-    ;
+
+dbObjectType : SOURCES | QUERIES;
+
+SOURCES: (LOGICAL | PHYSICAL) ('SOURCES' | 'sources');
+QUERIES: 'QUERIES' | 'queries';
+
+
+DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
+
+INTEGER_UNSIGNED_TYPE: UNSIGNED_TYPE_QUALIFIER INTEGER_BASES_TYPES | 'UINT8' | 'UINT16' | 'UINT32' | 'UINT64';
+INTEGER_SIGNED_TYPE: INTEGER_BASES_TYPES | 'INT64' | 'INT32' | 'INT16' | 'INT8';
+INTEGER_BASES_TYPES: TINY_INT_TYPE | SMALL_INT_TYPE | NORMAL_INT_TYPE | BIG_INT_TYPE;
+TINY_INT_TYPE: 'TINYINT';
+SMALL_INT_TYPE: 'SMALLINT';
+NORMAL_INT_TYPE: 'INT' | 'INTEGER';
+BIG_INT_TYPE: 'BIGINT';
+FLOATING_POINT_TYPE: 'FLOAT32' | 'FLOAT64';
+CHAR_TYPE: 'CHAR';
+VARSIZED_TYPE: 'VARSIZED';
+BOOLEAN_TYPE: 'BOOLEAN';
+
+UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED';
+
+
+
+SHOW : 'SHOW';
+FORMAT : 'FORMAT';
+CREATE : 'CREATE';
+SOURCE : 'SOURCE';
+LOGICAL: 'LOGICAL';
+PHYSICAL: 'PHYSICAL';
+SINK : 'SINK';
 
 //Make sure that you add lexer rules for keywords before the identifier rule,
 //otherwise it will take priority and your grammars will not work
@@ -498,4 +554,15 @@ SIMPLE_COMMENT
 
 BRACKETED_COMMENT
     : '/*' {!isHint()}? (BRACKETED_COMMENT|.)*? '*/' -> channel(HIDDEN)
+    ;
+
+IDENTIFIER
+    : LETTER (LETTER | DIGIT | '_')*
+    ;
+
+/// Catch-all for anything we can't recognize.
+/// We use this to be able to ignore and recover all the text
+/// when splitting statements with DelimiterLexer
+UNRECOGNIZED
+    : .
     ;

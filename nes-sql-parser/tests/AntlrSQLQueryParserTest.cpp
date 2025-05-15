@@ -78,14 +78,14 @@ TEST_F(AntlrSQLQueryParserTest, multipleFieldsProjectionTest)
 {
     {
         const auto inputQuery = "SELECT "
-                                "(i8 == INT8(1)) and ((i16 == INT16(1)) and (i32 == INT32(1))) AS a, "
-                                "(i32 == INT32(1)) and ((i64 == INT64(1)) and (u8 == UINT8(2))) AS b, "
-                                "(u8 == UINT8(2)) and ((u16 == UINT16(1)) and (u32 == UINT32(2))) AS c, "
-                                "(u8 == UINT8(2)) and ((u16 == UINT16(1)) and (u32 == UINT32(2))) AS d, "
-                                "(i8 == INT8(1)) and not ((i16 == INT16(1)) and (i32 == INT32(1))) AS e, "
-                                "(i32 == INT32(1)) and not ((i64 == INT64(1)) and (u8 == UINT8(2))) AS f, "
-                                "(u8 == UINT8(2)) and not ((u16 == UINT16(1)) and (u32 == UINT32(2))) AS g, "
-                                "(u8 == UINT8(2)) and not ((u16 == UINT16(1)) and (u32 == UINT32(2))) AS h "
+                                "(i8 = INT8(1)) and ((i16 = INT16(1)) and (i32 = INT32(1))) AS a, "
+                                "(i32 = INT32(1)) and ((i64 = INT64(1)) and (u8 = UINT8(2))) AS b, "
+                                "(u8 = UINT8(2)) and ((u16 = UINT16(1)) and (u32 = UINT32(2))) AS c, "
+                                "(u8 = UINT8(2)) and ((u16 = UINT16(1)) and (u32 = UINT32(2))) AS d, "
+                                "(i8 = INT8(1)) and not ((i16 = INT16(1)) and (i32 = INT32(1))) AS e, "
+                                "(i32 = INT32(1)) and not ((i64 = INT64(1)) and (u8 = UINT8(2))) AS f, "
+                                "(u8 = UINT8(2)) and not ((u16 = UINT16(1)) and (u32 = UINT32(2))) AS g, "
+                                "(u8 = UINT8(2)) and not ((u16 = UINT16(1)) and (u32 = UINT32(2))) AS h "
                                 "FROM stream INTO Print"s;
         const auto internalLogicalQuery
             = Query::from("stream")
@@ -130,13 +130,13 @@ TEST_F(AntlrSQLQueryParserTest, multipleFieldsProjectionTest)
 TEST_F(AntlrSQLQueryParserTest, selectionTest)
 {
     {
-        const auto inputQuery = "SELECT f1 FROM StreamName WHERE f1 == INT32(30) INTO Print"s;
+        const auto inputQuery = "SELECT f1 FROM StreamName WHERE f1 = INT32(30) INTO Print"s;
         const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 30).project(Attribute("f1")).sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
 
     {
-        const auto inputQuery = "SELECT f1 + INT32(5) AS f1Plus5 FROM StreamName WHERE f1 == INT32(30) INTO Print"s;
+        const auto inputQuery = "SELECT f1 + INT32(5) AS f1Plus5 FROM StreamName WHERE f1 = INT32(30) INTO Print"s;
         const auto internalLogicalQuery = Query::from("StreamName")
                                               .selection(Attribute("f1") == 30)
                                               .map(Attribute("f1Plus5") = Attribute("f1") + 5)
@@ -146,7 +146,7 @@ TEST_F(AntlrSQLQueryParserTest, selectionTest)
     }
 
     {
-        const auto inputQuery = "select * from StreamName where (f1 == INT32(10) AND f2 != INT32(10)) INTO Print"s;
+        const auto inputQuery = "select * from StreamName where (f1 = INT32(10) AND f2 != INT32(10)) INTO Print"s;
         const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 10 && Attribute("f2") != 10).sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
@@ -166,7 +166,7 @@ TEST_F(AntlrSQLQueryParserTest, selectionTest)
 
     {
         /// Checks implicit creation of field names if the user does not specify 'AS'
-        const auto inputQuery = "SELECT f1 + INT32(1) FROM StreamName WHERE f1 == INT32(30) INTO Print"s;
+        const auto inputQuery = "SELECT f1 + INT32(1) FROM StreamName WHERE f1 = INT32(30) INTO Print"s;
         const auto internalLogicalQuery = Query::from("StreamName")
                                               .selection(Attribute("f1") == 30)
                                               .map(Attribute("f1_0") = Attribute("f1") + 1)
@@ -642,7 +642,7 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
 {
     /// Todo #440: the grammar currently does not support a mixture of '*' and projections, therefore, we opted for using a projection in the test
     const auto inputQueryEventTime
-        = "select (id2 + INT32(1)) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == "
+        = "select (id2 + INT32(1)) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId = "
           "id "
           "window sliding (timestamp, size 10 sec, advance by 5 ms)) where field >= INT32(23) and field2 <= INT32(12) into PRINT"s;
     const auto queryEventTime = Query::from("purchases")
@@ -657,7 +657,7 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
 
     /// Todo #440: the grammar currently does not support a mixture of '*' and projections, therefore, we opted for using a projection in the test
     const auto inputQueryIngestionTime
-        = "select (id2 + INT32(1)) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == "
+        = "select (id2 + INT32(1)) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId = "
           "id "
           "window sliding (size 10 sec, advance by 5 ms)) where field >= INT32(23) or field2 <= INT32(12) into PRINT"s;
     const auto queryIngestionTime = Query::from("purchases")

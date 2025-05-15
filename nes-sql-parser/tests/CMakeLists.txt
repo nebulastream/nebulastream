@@ -11,4 +11,6 @@
 # limitations under the License.
 
 add_nes_unit_test(sql-parser-test "AntlrSQLQueryParserTest.cpp")
+add_nes_unit_test(statement-binder-test "StatementBinderTest.cpp")
 target_link_libraries(sql-parser-test nes-sql-parser)
+target_link_libraries(statement-binder-test nes-sql-parser)
