@@ -107,6 +107,39 @@ struct RunningQuery
     [[nodiscard]] std::string getThroughput() const;
 };
 
+/// Assures that the number of parsed queries matches the number of parsed results
+class SystestQueryNumberAssigner
+{
+public:
+    explicit SystestQueryNumberAssigner() : currentQueryNumber(0), currentQueryResultNumber(0) { }
+
+    size_t getNextQueryNumber()
+    {
+        if (currentQueryNumber != currentQueryResultNumber)
+        {
+            throw SLTUnexpectedToken(
+                "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
+        }
+
+        return currentQueryNumber++;
+    }
+
+    size_t getNextQueryResultNumber()
+    {
+        if (currentQueryNumber != (currentQueryResultNumber + 1))
+        {
+            throw SLTUnexpectedToken(
+                "The number of queries {} must match the number of results {}", currentQueryNumber, currentQueryResultNumber);
+        }
+
+        return currentQueryResultNumber++;
+    }
+
+private:
+    size_t currentQueryNumber = 0;
+    size_t currentQueryResultNumber = 0;
+};
+
 struct TestFile
 {
     explicit TestFile(const std::filesystem::path& file);
