@@ -180,65 +180,62 @@ void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem:
     SystestQueryNumberAssigner queryNumberAssigner{};
     while (auto token = nextToken())
     {
-        if (token == TokenType::CSV_SOURCE)
+        switch (token.value())
         {
-            auto source = expectCSVSource();
-            if (onCSVSourceCallback)
-            {
-                onCSVSourceCallback(std::move(source));
-            }
-        }
-        else if (token == TokenType::SLT_SOURCE)
-        {
-            auto source = expectSLTSource();
-            if (onSLTSourceCallback)
-            {
-                onSLTSourceCallback(std::move(source));
-            }
-        }
-        else if (token == TokenType::SINK)
-        {
-            auto sink = expectSink();
-            if (onSinkCallback)
-            {
-                onSinkCallback(std::move(sink));
-            }
-        }
-        else if (token == TokenType::QUERY)
-        {
-            if (onQueryCallback)
-            {
-                onQueryCallback(expectQuery(), queryNumberAssigner.getNextQueryNumber());
-            }
-        }
-        else if (token == TokenType::RESULT_DELIMITER)
-        {
-            /// Look ahead for error expectation
-            if (auto nxtToken = peekToken(); nxtToken == TokenType::ERROR_EXPECTATION)
-            {
-                token = nextToken(); /// we move savely to the next token (which is ERROR)
-                auto expectation = expectError();
-                if (onErrorExpectationCallback)
+            case TokenType::CSV_SOURCE: {
+                auto source = expectCSVSource();
+                if (onCSVSourceCallback)
                 {
-                    onErrorExpectationCallback(std::move(expectation));
+                    onCSVSourceCallback(std::move(source));
+                }
+                break;
+            }
+            case TokenType::SLT_SOURCE: {
+                auto source = expectSLTSource();
+                if (onSLTSourceCallback)
+                {
+                    onSLTSourceCallback(std::move(source));
+                }
+                break;
+            }
+            case TokenType::SINK: {
+                auto sink = expectSink();
+                if (onSinkCallback)
+                {
+                    onSinkCallback(std::move(sink));
+                }
+                break;
+            }
+            case TokenType::QUERY: {
+                if (onQueryCallback)
+                {
+                    onQueryCallback(expectQuery(), queryNumberAssigner.getNextQueryNumber());
+                }
+                break;
+            }
+            case TokenType::RESULT_DELIMITER: {
+                /// Look ahead for error expectation
+                if (auto nxtToken = peekToken(); nxtToken == TokenType::ERROR_EXPECTATION)
+                {
+                    token = nextToken(); /// we move savely to the next token (which is ERROR)
+                    auto expectation = expectError();
+                    if (onErrorExpectationCallback)
+                    {
+                        onErrorExpectationCallback(std::move(expectation));
+                    }
+                }
+                else
+                {
+                    auto tuples = expectTuples();
+                    /// place the results in the query result map using the unique 'result file path' as key
+                    /// place the results in the query result map using the unique 'result file path' as key
+                    queryResultMap.emplace(
+                        SystestQuery::resultFile(workingDir, testFileName, queryNumberAssigner.getNextQueryResultNumber()), expectTuples());
                 }
             }
-            else
-            {
-                auto tuples = expectTuples();
-                /// place the results in the query result map using the unique 'result file path' as key
-                /// place the results in the query result map using the unique 'result file path' as key
-                queryResultMap.emplace(
-                    SystestQuery::resultFile(workingDir, testFileName, queryNumberAssigner.getNextQueryResultNumber()), expectTuples());
-            }
-        }
-        else if (token == TokenType::ERROR_EXPECTATION)
-        {
-            throw SLTUnexpectedToken("unexpected occurrence of error expectation");
-        }
-        else if (token == TokenType::INVALID)
-        {
-            throw SLTUnexpectedToken("got invalid token in line: {}", lines[currentLine]);
+            case TokenType::INVALID:
+            case TokenType::ERROR_EXPECTATION:
+                throw TestException("Should never run into INVALID or ERROR_EXPECTATIION token");
         }
     }
 }
