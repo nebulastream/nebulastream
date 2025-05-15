@@ -4,4 +4,4 @@ parserConfig:
   fieldDelimiter: '|'
 sourceConfig:
   type: File
-  filePath: "TESTDATA/theTestData.csv"
+  filePath: "TESTDATA/tiny/four_tuples.csv"
