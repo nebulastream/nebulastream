@@ -40,8 +40,9 @@ else ()
     MESSAGE(STATUS "Enabling No Sanitizer")
 endif ()
 
-add_compile_options(-fsanitize=fuzzer-no-link)
-add_link_options(-fsanitize=fuzzer-no-link)
+option(USE_LIBFUZZER "" OFF)
 
-add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
-add_link_options(-fprofile-instr-generate -fcoverage-mapping)
+if (USE_LIBFUZZER)
+    add_compile_options(-fsanitize=fuzzer-no-link)
+    add_link_options(-fsanitize=fuzzer-no-link)
+endif ()
