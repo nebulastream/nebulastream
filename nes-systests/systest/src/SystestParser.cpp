@@ -177,8 +177,7 @@ void SystestParser::registerOnErrorExpectationCallback(ErrorExpectationCallback 
 /// If we encounter something unexpected, we return false.
 void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem::path& workingDir, const std::string_view testFileName)
 {
-    size_t currentQueryNumberInTest = 0;
-    size_t currentResultNumber = 0;
+    SystestQueryNumberAssigner queryNumberAssigner{};
     while (auto token = nextToken())
     {
         if (token == TokenType::CSV_SOURCE)
@@ -209,9 +208,8 @@ void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem:
         {
             if (onQueryCallback)
             {
-                onQueryCallback(expectQuery(), currentQueryNumberInTest);
+                onQueryCallback(expectQuery(), queryNumberAssigner.getNextQueryNumber());
             }
-            ++currentQueryNumberInTest;
         }
         else if (token == TokenType::RESULT_DELIMITER)
         {
@@ -229,13 +227,9 @@ void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem:
             {
                 auto tuples = expectTuples();
                 /// place the results in the query result map using the unique 'result file path' as key
-                queryResultMap.emplace(SystestQuery::resultFile(workingDir, testFileName, currentResultNumber), expectTuples());
-                ++currentResultNumber;
-                INVARIANT(
-                    currentResultNumber == currentQueryNumberInTest,
-                    "Found {} results and {} queries, which does not match.",
-                    currentResultNumber,
-                    currentQueryNumberInTest);
+                /// place the results in the query result map using the unique 'result file path' as key
+                queryResultMap.emplace(
+                    SystestQuery::resultFile(workingDir, testFileName, queryNumberAssigner.getNextQueryResultNumber()), expectTuples());
             }
         }
         else if (token == TokenType::ERROR_EXPECTATION)
