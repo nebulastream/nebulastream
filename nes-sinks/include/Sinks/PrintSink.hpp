@@ -56,7 +56,7 @@ protected:
 
 private:
     folly::Synchronized<std::ostream*> outputStream;
-    std::unique_ptr<CSVFormat> outputParser;
+    std::unique_ptr<Format> outputParser;
 };
 
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)

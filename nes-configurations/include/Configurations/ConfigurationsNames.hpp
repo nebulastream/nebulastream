@@ -22,7 +22,8 @@ namespace NES::Configurations
 
 enum class InputFormat : uint8_t
 {
-    CSV
+    CSV,
+    JSON
 };
 /// NOLINTBEGIN(cert-err58-cpp)
 ///Coordinator Configuration Names

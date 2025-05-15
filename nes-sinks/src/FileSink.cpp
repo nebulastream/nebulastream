@@ -29,6 +29,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/JSONFormat.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
@@ -50,6 +51,9 @@ FileSink::FileSink(const SinkDescriptor& sinkDescriptor)
     {
         case Configurations::InputFormat::CSV:
             formatter = std::make_unique<CSVFormat>(sinkDescriptor.schema);
+            break;
+        case Configurations::InputFormat::JSON:
+            formatter = std::make_unique<JSONFormat>(sinkDescriptor.schema);
             break;
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
