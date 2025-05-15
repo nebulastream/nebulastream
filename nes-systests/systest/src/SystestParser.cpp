@@ -172,46 +172,48 @@ void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem:
     SystestQueryNumberAssigner queryNumberAssigner{};
     while (auto token = nextToken())
     {
-        if (token == TokenType::CSV_SOURCE)
+        switch (token.value())
         {
-            auto source = expectCSVSource();
-            if (onCSVSourceCallback)
-            {
-                onCSVSourceCallback(std::move(source));
+            case TokenType::CSV_SOURCE: {
+                auto source = expectCSVSource();
+                if (onCSVSourceCallback)
+                {
+                    onCSVSourceCallback(std::move(source));
+                }
+                break;
             }
-        }
-        else if (token == TokenType::SLT_SOURCE)
-        {
-            auto source = expectSLTSource();
-            if (onSLTSourceCallback)
-            {
-                onSLTSourceCallback(std::move(source));
+            case TokenType::SLT_SOURCE: {
+                auto source = expectSLTSource();
+                if (onSLTSourceCallback)
+                {
+                    onSLTSourceCallback(std::move(source));
+                }
+                break;
             }
-        }
-        else if (token == TokenType::SINK)
-        {
-            auto sink = expectSink();
-            if (onSinkCallback)
-            {
-                onSinkCallback(std::move(sink));
+            case TokenType::SINK: {
+                auto sink = expectSink();
+                if (onSinkCallback)
+                {
+                    onSinkCallback(std::move(sink));
+                }
+                break;
             }
-        }
-        else if (token == TokenType::QUERY)
-        {
-            if (onQueryCallback)
-            {
-                onQueryCallback(expectQuery(), queryNumberAssigner.getNextQueryNumber());
+            case TokenType::QUERY: {
+                if (onQueryCallback)
+                {
+                    onQueryCallback(expectQuery(), queryNumberAssigner.getNextQueryNumber());
+                }
+                break;
             }
-        }
-        else if (token == TokenType::RESULT_DELIMITER)
-        {
-            /// place the results in the query result map using the unique 'result file path' as key
-            queryResultMap.emplace(
-                SystestQuery::resultFile(workingDir, testFileName, queryNumberAssigner.getNextQueryResultNumber()), expectTuples());
-        }
-        else if (token == TokenType::INVALID)
-        {
-            throw SLTUnexpectedToken("got invalid token in line: {}", lines[currentLine]);
+            case TokenType::RESULT_DELIMITER: {
+                /// place the results in the query result map using the unique 'result file path' as key
+                queryResultMap.emplace(
+                    SystestQuery::resultFile(workingDir, testFileName, queryNumberAssigner.getNextQueryResultNumber()), expectTuples());
+                break;
+            }
+            case TokenType::INVALID: {
+                throw SLTUnexpectedToken("got invalid token in line: {}", lines[currentLine]);
+            }
         }
     }
 }
