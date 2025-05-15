@@ -19,48 +19,41 @@
 #include <ostream>
 #include <string>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Formatter.hpp>
-#include <fmt/core.h>
-#include <fmt/ostream.h>
 
 namespace NES
 {
 
-class CSVFormat : public Format
+class JSONFormat : public Format
 {
 public:
     /// Stores precalculated offsets based on the input schema.
-    /// The CSVFormat class constructs the formatting context during its construction and stores it as a member to speed up
+    /// The JSONFormat class constructs the formatting context during its construction and stores it as a member to speed up
     /// the actual formatting.
     struct FormattingContext
     {
         size_t schemaSizeInBytes{};
         std::vector<size_t> offsets;
+        std::vector<std::string> names;
         std::vector<DataType> physicalTypes;
     };
 
-    explicit CSVFormat(const Schema& schema);
-    explicit CSVFormat(const Schema& schema, bool escapeStrings);
+    explicit JSONFormat(const Schema& schema);
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;
 
-    /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
-    [[nodiscard]] std::string tupleBufferToFormattedCSVString(TupleBuffer tbuffer, const FormattingContext& formattingContext) const;
+    /// Reads a TupleBuffer and uses the supplied 'schema' to format it to JSON. Returns result as a string.
+    static std::string tupleBufferToFormattedJSONString(TupleBuffer tbuffer, const FormattingContext& formattingContext);
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
-    friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
+    friend std::ostream& operator<<(std::ostream& out, const JSONFormat& format);
 
 private:
     FormattingContext formattingContext;
-    bool escapeStrings;
 };
 
 }
-
-FMT_OSTREAM(NES::CSVFormat);

@@ -28,6 +28,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/Format.hpp>
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
@@ -60,8 +61,7 @@ private:
     std::string outputFilePath;
     bool isAppend;
     bool isOpen;
-    /// Todo #417: support abstract/arbitrary formatter
-    std::unique_ptr<CSVFormat> formatter;
+    std::unique_ptr<Format> formatter;
     folly::Synchronized<std::ofstream> outputFileStream;
 };
 
