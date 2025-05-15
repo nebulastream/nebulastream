@@ -33,7 +33,7 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : work_guard(ioContext.get_executor())
+    : workGuard(ioContext.get_executor())
     , sliceAndWindowStore(std::move(sliceAndWindowStore))
     , watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins))
     , watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector(1, outputOriginId)))
@@ -42,9 +42,14 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
 {
 }
 
- WindowBasedOperatorHandler::~WindowBasedOperatorHandler()
+WindowBasedOperatorHandler::~WindowBasedOperatorHandler()
 {
-    work_guard.reset();
+    workGuard.reset();
+}
+
+boost::asio::io_context& WindowBasedOperatorHandler::getIoContext()
+{
+    return ioContext;
 }
 
 void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
@@ -68,11 +73,6 @@ void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionCon
 WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore() const
 {
     return *sliceAndWindowStore;
-}
-
-boost::asio::io_context& WindowBasedOperatorHandler::getIoContext()
-{
-    return ioContext;
 }
 
 void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const

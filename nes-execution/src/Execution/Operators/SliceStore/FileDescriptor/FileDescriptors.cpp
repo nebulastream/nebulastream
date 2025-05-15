@@ -30,21 +30,24 @@ FileWriter::FileWriter(
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
     : file(ioContext)
+    , keyFile(ioContext)
     , writeBuffer(allocate())
-    //, writeKeyBuffer(nullptr)
+    , writeKeyBuffer(nullptr)
     , writeBufferPos(0)
-    //, writeKeyBufferPos(0)
+    , writeKeyBufferPos(0)
     , bufferSize(bufferSize)
     , allocate(allocate)
     , deallocate(deallocate)
 {
     const auto fd = open((filePath + ".dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
-    if (fd == -1)
+    const auto fdKey = open((filePath + "_key.dat").c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    if (fd < 0 || fdKey < 0)
     {
         throw std::runtime_error("Failed to open file or key file for writing");
     }
 
     file.assign(fd);
+    keyFile.assign(fdKey);
 }
 
 FileWriter::~FileWriter()
@@ -53,6 +56,7 @@ FileWriter::~FileWriter()
     // TODO add synchronous flush
     deallocateBuffers();
     file.close();
+    keyFile.close();
 }
 
 boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
@@ -65,7 +69,7 @@ boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
     const auto* dataPtr = static_cast<const char*>(data);
     if (bufferSize == 0)
     {
-        co_await flushBuffer();
+        co_await flushBuffer(file, writeBuffer, writeBufferPos);
         co_return;
     }
 
@@ -79,7 +83,37 @@ boost::asio::awaitable<void> FileWriter::write(const void* data, size_t size)
 
         if (writeBufferPos == bufferSize)
         {
-            co_await flushBuffer();
+            co_await flushBuffer(file, writeBuffer, writeBufferPos);
+        }
+    }
+    co_return;
+}
+
+boost::asio::awaitable<void> FileWriter::writeKey(const void* data, size_t size)
+{
+    if (writeKeyBuffer == nullptr)
+    {
+        writeKeyBuffer = allocate();
+    }
+
+    const auto* dataPtr = static_cast<const char*>(data);
+    if (bufferSize == 0)
+    {
+        co_await flushBuffer(keyFile, writeKeyBuffer, writeKeyBufferPos);
+        co_return;
+    }
+
+    while (size > 0)
+    {
+        const auto copySize = std::min(size, bufferSize - writeKeyBufferPos);
+        std::memcpy(writeKeyBuffer + writeKeyBufferPos, dataPtr, copySize);
+        writeKeyBufferPos += copySize;
+        dataPtr += copySize;
+        size -= copySize;
+
+        if (writeKeyBufferPos == bufferSize)
+        {
+            co_await flushBuffer(keyFile, writeKeyBuffer, writeKeyBufferPos);
         }
     }
     co_return;
@@ -94,7 +128,11 @@ boost::asio::awaitable<void> FileWriter::flush()
 
     if (writeBuffer != nullptr && writeBufferPos > 0)
     {
-        co_await flushBuffer();
+        co_await flushBuffer(file, writeBuffer, writeBufferPos);
+    }
+    if (writeKeyBuffer != nullptr && writeKeyBufferPos > 0)
+    {
+        co_await flushBuffer(keyFile, writeKeyBuffer, writeKeyBufferPos);
     }
     co_return;
 }
@@ -103,16 +141,18 @@ void FileWriter::deallocateBuffers()
 {
     deallocate(writeBuffer);
     writeBuffer = nullptr;
+    deallocate(writeKeyBuffer);
+    writeKeyBuffer = nullptr;
 }
 
-boost::asio::awaitable<void> FileWriter::flushBuffer()
+boost::asio::awaitable<void> FileWriter::flushBuffer(boost::asio::posix::stream_descriptor& stream, const char* buffer, size_t& size)
 {
-    const auto buffer = std::shared_ptr<char>(new char[writeBufferPos], std::default_delete<char[]>());
-    std::memcpy(buffer.get(), writeBuffer, writeBufferPos);
+    const auto newBuffer = std::shared_ptr<char>(new char[size], std::default_delete<char[]>());
+    std::memcpy(newBuffer.get(), buffer, size);
 
-    co_await boost::asio::async_write(file, boost::asio::buffer(buffer.get(), writeBufferPos), boost::asio::use_awaitable);
+    co_await boost::asio::async_write(stream, boost::asio::buffer(newBuffer.get(), size), boost::asio::use_awaitable);
 
-    writeBufferPos = 0;
+    size = 0;
     co_return;
 }
 
@@ -140,7 +180,7 @@ FileReader::FileReader(
     }
     if (!keyFile.is_open())
     {
-        //throw std::ios_base::failure("Failed to open key file for reading");
+        throw std::ios_base::failure("Failed to open key file for reading");
     }
 }
 
@@ -150,9 +190,9 @@ FileReader::~FileReader()
     deallocate(readBuffer);
     std::filesystem::remove(filePath + ".dat");
 
-    //keyFile.close();
+    keyFile.close();
     deallocate(readKeyBuffer);
-    //std::filesystem::remove(filePath + "_key.dat");
+    std::filesystem::remove(filePath + "_key.dat");
 }
 
 size_t FileReader::read(void* dest, const size_t size)

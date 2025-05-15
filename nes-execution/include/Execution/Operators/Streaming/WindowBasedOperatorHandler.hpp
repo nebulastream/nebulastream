@@ -56,13 +56,14 @@ public:
         return future.get();
     }
 
+    boost::asio::io_context& getIoContext();
+
     /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
-    boost::asio::io_context& getIoContext();
 
     /// Updates the corresponding watermark processor, and then garbage collects all slices and windows that are not valid anymore
     void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
@@ -87,7 +88,7 @@ protected:
         = 0;
 
     boost::asio::io_context ioContext;
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard;
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard;
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;

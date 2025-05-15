@@ -41,21 +41,21 @@ public:
     ~FileWriter();
 
     boost::asio::awaitable<void> write(const void* data, size_t size);
-    boost::asio::awaitable<void> writeKey(const void*, size_t) { co_return; }
+    boost::asio::awaitable<void> writeKey(const void* data, size_t size);
 
     boost::asio::awaitable<void> flush();
     void deallocateBuffers();
 
 private:
-    boost::asio::awaitable<void> flushBuffer();
+    static boost::asio::awaitable<void> flushBuffer(boost::asio::posix::stream_descriptor& stream, const char* buffer, size_t& size);
 
     boost::asio::posix::stream_descriptor file;
-    //boost::asio::posix::stream_descriptor keyFile;
+    boost::asio::posix::stream_descriptor keyFile;
 
     char* writeBuffer;
-    //char* writeKeyBuffer;
+    char* writeKeyBuffer;
     size_t writeBufferPos;
-    //size_t writeKeyBufferPos;
+    size_t writeKeyBufferPos;
     size_t bufferSize;
 
     std::function<char*()> allocate;

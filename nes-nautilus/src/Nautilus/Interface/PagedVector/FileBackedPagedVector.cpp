@@ -65,7 +65,6 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
             for (const auto& page : pages)
             {
                 co_await fileWriter->write(page.getBuffer(), page.getNumberOfTuples() * memoryLayout->getTupleSize());
-                co_await fileWriter->flush();
                 numTuplesOnDisk += page.getNumberOfTuples();
             }
             break;
