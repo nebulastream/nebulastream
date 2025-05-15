@@ -24,6 +24,7 @@
 #include <DataTypes/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SinksParsing/Format.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
@@ -35,7 +36,7 @@ CSVFormat::CSVFormat(const Schema& schema) : CSVFormat(schema, false)
 {
 }
 
-CSVFormat::CSVFormat(const Schema& pSchema, const bool escapeStrings) : schema(pSchema), escapeStrings(escapeStrings)
+CSVFormat::CSVFormat(const Schema& pSchema, const bool escapeStrings) : Format(pSchema), escapeStrings(escapeStrings)
 {
     PRECONDITION(schema.getNumberOfFields() != 0, "Formatter expected a non-empty schema");
     size_t offset = 0;
@@ -47,18 +48,6 @@ CSVFormat::CSVFormat(const Schema& pSchema, const bool escapeStrings) : schema(p
         formattingContext.physicalTypes.emplace_back(physicalType);
     }
     formattingContext.schemaSizeInBytes = schema.getSizeOfSchemaInBytes();
-}
-
-std::string CSVFormat::getFormattedSchema() const
-{
-    PRECONDITION(schema.hasFields(), "Encountered schema without fields in CSVFormat.");
-    std::stringstream ss;
-    ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type);
-    for (const auto& field : schema.getFields() | std::views::drop(1))
-    {
-        ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type);
-    }
-    return fmt::format("{}\n", ss.str());
 }
 
 std::string CSVFormat::getFormattedBuffer(const TupleBuffer& inputBuffer) const
