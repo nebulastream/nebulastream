@@ -27,6 +27,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/Format.hpp>
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
@@ -56,7 +57,7 @@ protected:
 
 private:
     folly::Synchronized<std::ostream*> outputStream;
-    std::unique_ptr<CSVFormat> outputParser;
+    std::unique_ptr<Format> outputParser;
 };
 
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)

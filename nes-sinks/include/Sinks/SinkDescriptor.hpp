@@ -41,7 +41,8 @@ namespace NES
 
 enum class InputFormat : uint8_t
 {
-    CSV
+    CSV,
+    JSON
 };
 
 class SinkDescriptor final : public Descriptor
