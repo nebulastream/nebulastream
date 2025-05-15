@@ -53,19 +53,22 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         /// We need to split the fieldName and type by the colon, store the field name and type in a vector.
         /// After that, we can trim the field name and type and store it in the fields vector.
         /// "window$val_i8_i8:INT32 " -> ["window$val_i8_i8", "INT32 "] -> {INT32, "window$val_i8_i8"}
-        std::vector<std::string_view> fieldAndType;
-        for (auto&& subrange : std::ranges::split_view(field, ':'))
+        const auto [nameTrimmed, typeTrimmed] = [](const std::string_view field) -> std::pair<std::string_view, std::string_view>
         {
-            fieldAndType.emplace_back(subrange.begin(), subrange.end());
-        }
-        const auto nameTrimmed = NES::Util::trimWhiteSpaces(fieldAndType[0]);
-        const auto typeTrimmed = NES::Util::trimWhiteSpaces(fieldAndType[1]);
+            std::vector<std::string_view> fieldAndTypeVector;
+            for (const auto subrange : std::ranges::split_view(field, ':'))
+            {
+                fieldAndTypeVector.emplace_back(Util::trimWhiteSpaces(std::string_view(subrange)));
+            }
+            INVARIANT(fieldAndTypeVector.size() == 2, "Field and type pairs should always be pairs of a key and a value");
+            return std::make_pair(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1));
+        }(field);
         NES::DataType dataType;
         if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed); type.has_value())
         {
             dataType = NES::DataTypeProvider::provideDataType(type.value());
         }
-        else if (NES::Util::toLowerCase(typeTrimmed) == "varsized")
+        else if (Util::toLowerCase(typeTrimmed) == "varsized")
         {
             dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED);
         }
