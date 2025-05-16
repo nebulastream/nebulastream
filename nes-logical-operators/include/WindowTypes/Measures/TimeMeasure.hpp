@@ -12,13 +12,26 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Types/ContentBasedWindowType.hpp>
-
+#pragma once
+#include <cstdint>
 namespace NES::Windowing
 {
+/// A time based window measure.
+class TimeMeasure
+{
+public:
+    explicit TimeMeasure(uint64_t milliseconds);
 
-WindowType::WindowType() = default;
+    [[nodiscard]] uint64_t getTime() const;
+
+    std::string toString() const;
+
+    bool operator<(const TimeMeasure& other) const;
+    bool operator<=(const TimeMeasure& other) const;
+    bool operator==(const TimeMeasure& other) const;
+
+private:
+    const uint64_t milliSeconds;
+};
 
 }
