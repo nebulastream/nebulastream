@@ -19,7 +19,7 @@
     #include <Util/Logger/Logger.hpp>
 
 
-namespace NES::Runtime
+namespace NES
 {
 /**
  * @brief A numa aware memory resource
