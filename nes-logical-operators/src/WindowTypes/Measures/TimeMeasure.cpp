@@ -13,7 +13,7 @@
 */
 
 #include <string>
-#include <Measures/TimeMeasure.hpp>
+#include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
@@ -46,11 +46,6 @@ bool TimeMeasure::operator<=(const TimeMeasure& other) const
 bool TimeMeasure::operator==(const TimeMeasure& other) const
 {
     return milliSeconds == other.milliSeconds;
-}
-
-bool TimeMeasure::equals(const TimeMeasure& other) const
-{
-    return this->milliSeconds == other.milliSeconds;
 }
 
 }

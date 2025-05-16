@@ -14,38 +14,28 @@
 
 #pragma once
 #include <memory>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
-#include <Types/TimeBasedWindowType.hpp>
-#include <Types/WindowType.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 namespace NES::Windowing
 {
-/**
- * A SlidingWindow assigns records to multiple overlapping windows.
- */
+
+/// A SlidingWindow assigns records to multiple overlapping windows.
 class SlidingWindow : public TimeBasedWindowType
 {
 public:
-    static std::shared_ptr<WindowType> of(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    static std::shared_ptr<WindowType> of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
 
-    /**
-    * @brief return size of the window
-    * @return size of the window
-    */
     TimeMeasure getSize() override;
-
-    /**
-    * @brief return size of the slide
-    * @return size of the slide
-    */
     TimeMeasure getSlide() override;
 
     std::string toString() const override;
 
-    bool equal(std::shared_ptr<WindowType> otherWindowType) override;
+    bool operator==(const WindowType& otherWindowType) const override;
 
 private:
-    SlidingWindow(std::shared_ptr<TimeCharacteristic> timeCharacteristic, TimeMeasure size, TimeMeasure slide);
+    SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
 };
