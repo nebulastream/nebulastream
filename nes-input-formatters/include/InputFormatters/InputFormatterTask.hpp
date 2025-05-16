@@ -29,7 +29,7 @@ class SequenceShredder;
 
 
 /// Takes tuple buffers with raw bytes (TBRaw/TBR), parses the TBRs and writes the formatted data to formatted tuple buffers (TBFormatted/TBF)
-class InputFormatterTask : public NES::Runtime::Execution::ExecutablePipelineStage
+class InputFormatterTask : public NES::ExecutablePipelineStage
 {
 public:
     explicit InputFormatterTask(OriginId originId, std::unique_ptr<InputFormatter> inputFormatter);
@@ -40,10 +40,9 @@ public:
     InputFormatterTask(InputFormatterTask&&) = delete;
     InputFormatterTask& operator=(InputFormatterTask&&) = delete;
 
-    void start(Runtime::Execution::PipelineExecutionContext&) override { /* noop */ }
-    void stop(Runtime::Execution::PipelineExecutionContext&) override;
-    void
-    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    void start(PipelineExecutionContext&) override { /* noop */ }
+    void stop(PipelineExecutionContext&) override;
+    void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
 
     std::ostream& toString(std::ostream& os) const override;
 
