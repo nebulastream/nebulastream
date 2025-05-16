@@ -181,6 +181,11 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
     /// not for the general function
     if (helper.isJoinRelation)
     {
+        if (helper.joinKeyRelationHelper.size() < 2)
+        {
+            throw InvalidQuerySyntax(
+                "expected two operands for binary op, got {}: {}", helper.joinKeyRelationHelper.size(), context->getText());
+        }
         const auto rightFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
         const auto leftFunction = helper.joinKeyRelationHelper.back();
@@ -193,6 +198,11 @@ void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryCo
     }
     else
     {
+        if (helper.functionBuilder.size() < 2)
+        {
+            throw InvalidQuerySyntax(
+                "expected two operands for binary op, got {}: {}", helper.joinKeyRelationHelper.size(), context->getText());
+        }
         const auto rightFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
         const auto leftFunction = helper.functionBuilder.back();
@@ -253,6 +263,10 @@ void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::Compariso
 }
 void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context)
 {
+    if (helpers.empty())
+    {
+        throw InvalidQuerySyntax("parser is confused at {}", context->getText());
+    }
     auto helper = helpers.top();
     LogicalFunction function;
 
@@ -299,9 +313,17 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
 
 void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context)
 {
+    if (helpers.empty())
+    {
+        throw InvalidQuerySyntax("parser is confused at {}", context->getText());
+    }
     AntlrSQLHelper helper = helpers.top();
     LogicalFunction function;
 
+    if (helper.functionBuilder.empty())
+    {
+        throw InvalidQuerySyntax("Expected unary operator, got nothing: {}", context->getText());
+    }
     const auto innerFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
     auto opTokenType = context->op->getType();
@@ -622,7 +644,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
             throw InvalidQuerySyntax("A named function must have exactly one valid FieldAccessLogicalFunction child.");
         }
         const auto implicitFieldName
-            = fmt::format("{}_{}", fieldAccessFunctions.front().value().getFieldName(), helper.implicitMapCountHelper++);
+            = fmt::format("{}_{}", fieldAccessFunctions.at(0).value().getFieldName(), helper.implicitMapCountHelper++);
         const auto mapFunctionWithFieldAssignment
             = FieldAssignmentLogicalFunction(FieldAccessLogicalFunction(implicitFieldName), mapFunction);
         helper.mapBuilder.push_back(mapFunctionWithFieldAssignment);
@@ -668,7 +690,10 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
 {
     if (auto helper = helpers.top(); helper.isJoinRelation)
     {
-        INVARIANT(helper.joinKeyRelationHelper.size() >= 2, "Requires two functions but got {}", helper.joinKeyRelationHelper.size());
+        if (helper.joinKeyRelationHelper.size() < 2)
+        {
+            throw InvalidQuerySyntax("Requires two functions but got {} at {}", helper.joinKeyRelationHelper.size(), context->getText());
+        }
         const auto rightFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
         const auto leftFunction = helper.joinKeyRelationHelper.back();
@@ -680,7 +705,10 @@ void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext*
     }
     else
     {
-        INVARIANT(helper.functionBuilder.size() >= 2, "Requires two functions");
+        if (helper.functionBuilder.size() < 2)
+        {
+            throw InvalidQuerySyntax("Comparison requires two parameters, got {}", context->getText());
+        }
         const auto rightFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
         const auto leftFunction = helper.functionBuilder.back();
@@ -748,12 +776,20 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     /// we assume that the left query plan is the first element in the queryPlans vector and the right query plan is the second element
     if (helper.queryPlans.size() != 2)
     {
-        throw ParserInvalidState("Join relation requires exactly two subqueries, but got {}", helper.queryPlans.size());
+        throw InvalidQuerySyntax("Join relation requires two subqueries, but got {} at {}", helper.queryPlans.size(), context->getText());
     }
     const auto leftQueryPlan = helper.queryPlans[0];
     const auto rightQueryPlan = helper.queryPlans[1];
     helper.queryPlans.clear();
 
+    if (!helper.joinFunction)
+    {
+        throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
+    }
+    if (!helper.windowType)
+    {
+        throw InvalidQuerySyntax("joinFunction is required but empty at {}", context->getText());
+    }
     const auto queryPlan
         = LogicalPlanBuilder::addJoin(leftQueryPlan, rightQueryPlan, helper.joinFunction.value(), helper.windowType, helper.joinType);
     if (not helpers.empty())
@@ -775,18 +811,34 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
 
 void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext* context)
 {
+    if (helpers.empty())
+    {
+        throw InvalidQuerySyntax("parser is confused at {}", context->getText());
+    }
     AntlrSQLHelper helper = helpers.top();
 
     if (helper.isJoinRelation)
     {
+        if (helper.joinKeyRelationHelper.empty())
+        {
+            throw InvalidQuerySyntax("not expression requires child op at {}", context->getText());
+        }
         const auto innerFunction = helper.joinKeyRelationHelper.back();
         helper.joinKeyRelationHelper.pop_back();
+        if (!helper.joinFunction)
+        {
+            throw InvalidQuerySyntax("not expression requires child op at {}", context->getText());
+        }
         auto negatedFunction = NegateLogicalFunction(helper.joinFunction.value());
-        helper.joinKeyRelationHelper.push_back(negatedFunction);
+        helper.joinKeyRelationHelper.emplace_back(negatedFunction);
         helper.joinFunction = negatedFunction;
     }
     else
     {
+        if (helper.functionBuilder.empty())
+        {
+            throw InvalidQuerySyntax("not expression requires child op at {}", context->getText());
+        }
         const auto innerFunction = helper.functionBuilder.back();
         helper.functionBuilder.pop_back();
         helper.functionBuilder.emplace_back(NegateLogicalFunction(innerFunction));
@@ -798,12 +850,17 @@ void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext*
 void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    INVARIANT(context->children.size() == 1, "When exiting a constant, there must be exactly one children in the context");
+    if (context->children.size() != 1)
+    {
+        throw InvalidQuerySyntax("When exiting a constant, there must be exactly one children in the context {}", context->getText());
+    }
     if (const auto stringLiteralContext = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->children.at(0)))
     {
-        INVARIANT(
-            stringLiteralContext->getText().size() > 2,
-            "A constant string literal must contain at least two quotes and must not be empty.");
+        if (!(stringLiteralContext->getText().size() > 2))
+        {
+            throw InvalidQuerySyntax(
+                "A constant string literal must contain at least two quotes and must not be empty at {}", context->getText());
+        }
         helper.constantBuilder.push_back(context->getText().substr(1, stringLiteralContext->getText().size() - 2));
     }
     else
@@ -822,29 +879,54 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     const auto funcName = Util::toUpperCase(context->children[0]->getText());
     const auto tokenType = context->getStart()->getType();
 
+
     switch (tokenType) /// TODO #619: improve this switch case
     {
         case AntlrSQLLexer::COUNT:
+            if (helper.functionBuilder.empty())
+            {
+                throw InvalidQuerySyntax("aggregation functions requires argument at {}", context->getText());
+            }
             parentHelper.windowAggs.push_back(
                 CountAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::AVG:
+            if (helper.functionBuilder.empty())
+            {
+                throw InvalidQuerySyntax("aggregation functions requires argument at {}", context->getText());
+            }
             parentHelper.windowAggs.push_back(
                 AvgAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::MAX:
+            if (helper.functionBuilder.empty())
+            {
+                throw InvalidQuerySyntax("aggregation functions requires argument at {}", context->getText());
+            }
             parentHelper.windowAggs.push_back(
                 MaxAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::MIN:
+            if (helper.functionBuilder.empty())
+            {
+                throw InvalidQuerySyntax("aggregation functions requires argument at {}", context->getText());
+            }
             parentHelper.windowAggs.push_back(
                 MinAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::SUM:
+            if (helper.functionBuilder.empty())
+            {
+                throw InvalidQuerySyntax("aggregation functions requires argument at {}", context->getText());
+            }
             parentHelper.windowAggs.push_back(
                 SumAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
         case AntlrSQLLexer::MEDIAN:
+            if (helper.functionBuilder.empty())
+            {
+                throw InvalidQuerySyntax("aggregation functions requires argument at {}", context->getText());
+            }
             parentHelper.windowAggs.push_back(
                 MedianAggregationLogicalFunction::create(helper.functionBuilder.back().get<FieldAccessLogicalFunction>()));
             break;
@@ -852,6 +934,10 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
+                if (helper.constantBuilder.empty())
+                {
+                    throw InvalidQuerySyntax("expected constant, got nothing at {}", context->getText());
+                }
                 auto value = std::move(helper.constantBuilder.back());
                 helper.constantBuilder.pop_back();
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
@@ -860,7 +946,11 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             }
             if (funcName == "CONCAT")
             {
-                INVARIANT(helper.functionBuilder.size() == 2, "Concat requires two arguments, but got {}", helper.functionBuilder.size());
+                if (helper.functionBuilder.size() != 2)
+                {
+                    throw InvalidQuerySyntax(
+                        "Concat requires two arguments, but got {} at {}", helper.functionBuilder.size(), context->getText());
+                }
                 const auto rightFunction = helper.functionBuilder.back();
                 helper.functionBuilder.pop_back();
                 const auto leftFunction = helper.functionBuilder.back();
