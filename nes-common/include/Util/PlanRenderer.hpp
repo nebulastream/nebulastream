@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
-#include <ErrorHandling.hpp>
+#include <map>
 #include <memory>
 #include <ostream>
 #include <ranges>
@@ -25,11 +25,11 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <map>
 #include <Identifiers/Identifiers.hpp>
-#include <gtest/gtest_prod.h>
-#include <fmt/format.h>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <gtest/gtest_prod.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -79,12 +79,13 @@ constexpr char PARENT_CHILD_LAST_BRANCH = '}'; /// '┤'
 
 
 /// Dumps query plans to an output stream
-template<typename Plan, typename Operator>
+template <typename Plan, typename Operator>
 class PlanRenderer
 {
 public:
     virtual ~PlanRenderer() = default;
-    explicit PlanRenderer(std::ostream& out, NES::ExplainVerbosity verbosity) : out(out), verbosity(verbosity), processedDag({}), layerCalcQueue({}) { };
+    explicit PlanRenderer(std::ostream& out, NES::ExplainVerbosity verbosity)
+        : out(out), verbosity(verbosity), processedDag({}), layerCalcQueue({}) { };
 
     void dump(const Plan& plan)
     {
@@ -229,8 +230,8 @@ private:
         const std::shared_ptr<PrintNode>& layerNode)
     {
         const uint64_t childId = child.getId().getRawValue();
-        auto queueIt
-            = std::ranges::find_if(layerCalcQueue, [childId](const QueueItem& queueItem) { return childId == queueItem.node.getId().getRawValue(); });
+        auto queueIt = std::ranges::find_if(
+            layerCalcQueue, [childId](const QueueItem& queueItem) { return childId == queueItem.node.getId().getRawValue(); });
         const auto seenIt = alreadySeen.find(childId);
         if (queueIt == layerCalcQueue.end() && seenIt == alreadySeen.end())
         {
@@ -610,17 +611,17 @@ private:
     static std::map<char, std::string> getAsciiToUnicode()
     {
         return {
-                        {CHILD_FIRST_BRANCH, "┌"},
-                        {CHILD_MIDDLE_BRANCH, "┬"},
-                        {CHILD_LAST_BRANCH, "┐"},
-                        {ONLY_CONNECTOR, "│"},
-                        {NO_CONNECTOR_BRANCH, "─"},
-                        {PARENT_FIRST_BRANCH, "└"},
-                        {PARENT_MIDDLE_BRANCH, "┴"},
-                        {PARENT_LAST_BRANCH, "┘"},
-                        {PARENT_CHILD_FIRST_BRANCH, "├"},
-                        {PARENT_CHILD_MIDDLE_BRANCH, "┼"},
-                        {PARENT_CHILD_LAST_BRANCH, "┤"}};
+            {CHILD_FIRST_BRANCH, "┌"},
+            {CHILD_MIDDLE_BRANCH, "┬"},
+            {CHILD_LAST_BRANCH, "┐"},
+            {ONLY_CONNECTOR, "│"},
+            {NO_CONNECTOR_BRANCH, "─"},
+            {PARENT_FIRST_BRANCH, "└"},
+            {PARENT_MIDDLE_BRANCH, "┴"},
+            {PARENT_LAST_BRANCH, "┘"},
+            {PARENT_CHILD_FIRST_BRANCH, "├"},
+            {PARENT_CHILD_MIDDLE_BRANCH, "┼"},
+            {PARENT_CHILD_LAST_BRANCH, "┤"}};
     }
 };
 
