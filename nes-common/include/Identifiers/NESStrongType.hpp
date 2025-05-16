@@ -21,17 +21,15 @@
 
 namespace NES
 {
-/**
- * Identifiers in NebulaStream are based on a Strong Type. This prevents accidental conversion between different Entity Identifiers.
- * In general a Identifier should not expose its underlying Type and no code should depend on specific values. This is the reason why
- * only a limited subset of operations are supported, and it is not default constructible. Identifiers are orderable and hashable to
- * be used as keys in maps.
- * We Introduce overloads for nlohmann, yaml and fmt to make the identifiers feel ergonomic.
- * @tparam T underlying type
- * @tparam Tag a tag type required to distinguish two strong types
- * @tparam invalid The invalid value
- * @tparam initial The initial value used by Identifier generators
- */
+/// Identifiers in NebulaStream are based on a Strong Type. This prevents accidental conversion between different Entity Identifiers.
+/// In general a Identifier should not expose its underlying Type and no code should depend on specific values. This is the reason why
+/// only a limited subset of operations are supported, and it is not default constructible. Identifiers are orderable and hashable to
+/// be used as keys in maps.
+/// We Introduce overloads for nlohmann, yaml and fmt to make the identifiers feel ergonomic.
+/// @tparam T underlying type
+/// @tparam Tag a tag type required to distinguish two strong types
+/// @tparam invalid The invalid value
+/// @tparam initial The initial value used by Identifier generators
 template <typename T, typename Tag, T invalid, T initial>
 class NESStrongType
 {
@@ -48,10 +46,7 @@ public:
 
     [[nodiscard]] std::string toString() const { return std::to_string(v); }
 
-    /**
-     * Serializes the Identifier. Useful for protobuf. Yaml and Json should not require this method.
-     * @return the underlying value for serialization purpose
-     */
+    /// return the underlying value as a value of the underlying type
     [[nodiscard]] constexpr T getRawValue() const { return v; }
 
 private:
