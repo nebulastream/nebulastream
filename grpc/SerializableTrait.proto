@@ -13,31 +13,15 @@
 */
 
 syntax = "proto3";
-import "SerializableDataType.proto";
 package NES;
 
-message SerializableField{
-  string name = 1;
-  SerializableDataType type = 2;
+import "SerializableVariantDescriptor.proto";
+
+message SerializableTrait {
+  string trait_type = 1;
+  map<string, SerializableVariantDescriptor> config = 2;
 }
 
-/**
-The serializable wrapper for a schema object
- */
-message SerializableSchema{
-  repeated SerializableField fields = 1;
-  enum MemoryLayoutType {
-    ROW_LAYOUT = 0;
-    COL_LAYOUT = 1;
-  }
-  MemoryLayoutType layoutType = 2;
-}
-
-/**
-The serializable wrapper for a schema object and its name
- */
-message SerializableNamedSchema{
-
-  string sourceName = 1;
-  SerializableSchema schema = 2;
+message TraitSet {
+  repeated SerializableTrait traits = 1;
 }
