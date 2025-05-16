@@ -119,7 +119,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
     const std::string queryInputFile = fmt::format("{}.bin", queryName);
     IntegrationTestUtil::removeFile(testSpecificResultFileName); /// remove outputFile if exists
 
-    SerializableDecomposedQueryPlan queryPlan;
+    SerializableQueryPlan queryPlan;
     if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, testSpecificDataFileName))
     {
         GTEST_SKIP();
@@ -128,7 +128,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
     IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryOptimizer.executionMode = Nautilus::Configurations::ExecutionMode::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
