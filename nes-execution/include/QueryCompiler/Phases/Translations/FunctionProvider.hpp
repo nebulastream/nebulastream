@@ -28,7 +28,7 @@ class FunctionProvider
 public:
     /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
     ///NodeFunction a NodeFunctionConstantValue, NodeFunctionFieldAccess or FieldAssignment
-    static std::unique_ptr<Runtime::Execution::Functions::Function> lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction);
+    static std::unique_ptr<Runtime::Execution::Functions::Function> lowerFunction(std::shared_ptr<NodeFunction> nodeFunction);
 
 
 private:

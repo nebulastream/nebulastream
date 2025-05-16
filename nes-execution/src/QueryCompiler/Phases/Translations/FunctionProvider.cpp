@@ -38,7 +38,7 @@ namespace NES::QueryCompilation
 {
 using namespace Runtime::Execution::Functions;
 
-std::unique_ptr<Function> FunctionProvider::lowerFunction(const std::shared_ptr<NodeFunction>& nodeFunction)
+std::unique_ptr<Function> FunctionProvider::lowerFunction(std::shared_ptr<NodeFunction> nodeFunction)
 {
     /// 1. Check if the function is valid.
     auto ret = nodeFunction->validateBeforeLowering();
