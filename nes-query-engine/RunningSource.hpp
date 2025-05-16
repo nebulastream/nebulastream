@@ -21,7 +21,7 @@
 #include <ErrorHandling.hpp>
 #include <Interfaces.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 struct RunningQueryPlan;
 struct RunningQueryPlanNode;

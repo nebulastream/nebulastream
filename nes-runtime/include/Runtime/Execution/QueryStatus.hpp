@@ -18,7 +18,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 enum class QueryStatus : uint8_t
 {
@@ -35,4 +35,4 @@ inline std::ostream& operator<<(std::ostream& ostream, const QueryStatus& status
 }
 }
 
-FMT_OSTREAM(NES::Runtime::Execution::QueryStatus);
+FMT_OSTREAM(NES::QueryStatus);
