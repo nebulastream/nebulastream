@@ -24,9 +24,14 @@
 #include <variant>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <google/protobuf/json/json.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <ProtobufHelper.hpp>
+#include <SerializableOperator.pb.h>
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES::Configurations
 {
@@ -52,7 +57,20 @@ concept HasParameterMap = requires(T configuration) {
 class DescriptorConfig
 {
 public:
-    using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, EnumWrapper>;
+    using ConfigType = std::variant<
+        int32_t,
+        uint32_t,
+        int64_t,
+        uint64_t,
+        bool,
+        char,
+        float,
+        double,
+        std::string,
+        EnumWrapper,
+        FunctionList,
+        AggregationFunctionList,
+        WindowInfos>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Tag struct that tags a config key with a type.
@@ -334,15 +352,9 @@ private:
     friend std::ostream& operator<<(std::ostream& out, const DescriptorConfig::Config& config);
 };
 
-}
-
-/// Specializing the fmt ostream_formatter to accept Descriptor objects.
-/// Allows to call fmt::format("Descriptor: {}", descriptorObject); and therefore also works with our logging.
-namespace fmt
-{
-template <>
-struct formatter<NES::Configurations::Descriptor> : ostream_formatter
-{
-};
+SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig::ConfigType& var);
+DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& proto_var);
 
 }
+
+FMT_OSTREAM(NES::Configurations::Descriptor);
