@@ -37,59 +37,43 @@ public:
         COLUMNAR_LAYOUT = 1
     };
 
-    explicit Schema();
-    explicit Schema(MemoryLayoutType layoutType);
-    explicit Schema(const std::shared_ptr<Schema>& schema, MemoryLayoutType layoutType);
+    explicit Schema(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
+    Schema(const Schema& schema, MemoryLayoutType layoutType);
 
     /// @brief Schema qualifier separator
     constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
 
-    /// @brief Factory method to create a new std::shared_ptr<Schema>.
-    /// @return std::shared_ptr<Schema>
-    static std::shared_ptr<Schema> create(MemoryLayoutType layoutType);
-    static std::shared_ptr<Schema> create();
-
     /// @brief Prepends the srcName to the substring after the last occurrence of ATTRIBUTE_NAME_SEPARATOR
     /// in every field name of the schema.
-    /// @param srcName
-    /// @return std::shared_ptr<Schema>
-
-    [[nodiscard]] std::shared_ptr<Schema> updateSourceName(const std::string& srcName) const;
-
-    /// @brief Creates a copy of this schema.
-    /// @note The containing AttributeFields may still reference the same objects.
-    /// @return A copy of the Schema
-
-    [[nodiscard]] std::shared_ptr<Schema> copy() const;
+    Schema updateSourceName(const std::string& srcName);
 
     /// @brief Copy all fields of otherSchema into this schema.
     /// @param otherSchema
     /// @return a copy of this schema.
-    std::shared_ptr<Schema> copyFields(const std::shared_ptr<Schema>& otherSchema);
+    Schema copyFields(const Schema& otherSchema);
 
     /// @brief appends a AttributeField to the schema and returns a copy of this schema.
     /// @param attribute
     /// @return a copy of this schema.
-    std::shared_ptr<Schema> addField(const std::shared_ptr<AttributeField>& attribute);
+    Schema& addField(const AttributeField& attribute);
 
     /// @brief appends a field with a basic type to the schema and returns a copy of this schema.
     /// @param field
     /// @return a copy of this schema.
-    std::shared_ptr<Schema> addField(const std::string& name, const BasicType& type);
+    Schema& addField(const std::string& name, const BasicType& type);
 
     /// @brief appends a field with a data type to the schema and returns a copy of this schema.
     /// @param field
     /// @return a copy of this schema.
-    std::shared_ptr<Schema> addField(const std::string& name, const std::shared_ptr<DataType>& data);
+    Schema& addField(const std::string& name, std::shared_ptr<DataType> data);
 
     /// @brief removes a AttributeField from the schema
-    /// @param field
-    void removeField(const std::shared_ptr<AttributeField>& field);
+    bool removeField(const AttributeField& field);
 
     /// @brief Replaces a field, which is already part of the schema.
     /// @param name of the field we want to replace
     /// @param std::shared_ptr<DataType>
-    void replaceField(const std::string& name, const std::shared_ptr<DataType>& type);
+    void replaceField(const std::string& name, std::shared_ptr<DataType> type);
 
     /// @brief Returns the attribute field based on a qualified or unqualified field name.
     ///
@@ -100,13 +84,13 @@ public:
     //
     /// @param fieldName: Name of the attribute field that should be returned.
     /// @return std::optional<std::shared_ptr<AttributeField>> The attribute field if found, otherwise an empty optional.
-    [[nodiscard]] std::optional<std::shared_ptr<AttributeField>> getFieldByName(const std::string& fieldName) const;
+    std::optional<AttributeField> getFieldByName(const std::string& fieldName) const;
 
     /// @brief Finds a attribute field by index in the schema
     /// @param index
     /// @return AttributeField
     /// @throws FieldNotFound if the field does not exist
-    [[nodiscard]] std::shared_ptr<AttributeField> getFieldByIndex(size_t index) const;
+    AttributeField getFieldByIndex(size_t index) const;
 
     /// @brief Returns the number of fields in the schema.
     /// @return uint64_t
@@ -120,6 +104,10 @@ public:
     /// @param schema
     /// @return boolean
     bool operator==(const Schema& other) const;
+
+    /// Checks if two schemas have the same data types
+    /// @note considers the order (UINT64 UINT8 != UINT64 UINT8)
+    [[nodiscard]] bool hasSameTypes(const Schema& other) const;
 
     /// @brief Checks if the field exists in the schema
     /// @param schema
@@ -167,8 +155,11 @@ public:
     auto begin() const { return std::begin(fields); }
     auto end() const { return std::end(fields); }
 
+    auto begin() { return std::begin(fields); }
+    auto end() { return std::end(fields); }
+
 private:
-    std::vector<std::shared_ptr<AttributeField>> fields;
+    std::vector<AttributeField> fields;
     MemoryLayoutType layoutType;
 };
 
