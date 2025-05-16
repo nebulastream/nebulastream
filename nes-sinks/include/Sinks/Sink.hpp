@@ -21,7 +21,7 @@
 namespace NES::Sinks
 {
 
-class Sink : public Runtime::Execution::ExecutablePipelineStage
+class Sink : public ExecutablePipelineStage
 {
 public:
     ~Sink() override = default;

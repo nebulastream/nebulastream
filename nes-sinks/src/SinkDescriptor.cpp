@@ -17,6 +17,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <SinkValidationRegistry.hpp>
@@ -24,7 +25,7 @@
 namespace NES::Sinks
 {
 
-SinkDescriptor::SinkDescriptor(std::string sinkType, Configurations::DescriptorConfig::Config&& config, bool addTimestamp)
+SinkDescriptor::SinkDescriptor(std::string sinkType, NES::Configurations::DescriptorConfig::Config&& config, bool addTimestamp)
     : Descriptor(std::move(config)), sinkType(std::move(sinkType)), addTimestamp(addTimestamp)
 {
 }
@@ -53,7 +54,22 @@ std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor
 
 bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 {
-    return lhs.sinkType == rhs.sinkType && lhs.config == rhs.config;
+    return lhs.sinkType == rhs.sinkType and lhs.config == rhs.config and lhs.addTimestamp == rhs.addTimestamp and lhs.schema == rhs.schema;
+}
+
+SerializableSinkDescriptor SinkDescriptor::serialize() const
+{
+    SerializableSinkDescriptor serializedSinkDescriptor;
+    SchemaSerializationUtil::serializeSchema(std::move(schema), serializedSinkDescriptor.mutable_sinkschema());
+    serializedSinkDescriptor.set_sinktype(sinkType);
+    serializedSinkDescriptor.set_addtimestamp(addTimestamp);
+    /// Iterate over SinkDescriptor config and serialize all key-value pairs.
+    for (const auto& [key, value] : config)
+    {
+        auto* kv = serializedSinkDescriptor.mutable_config();
+        kv->emplace(key, descriptorConfigTypeToProto(value));
+    }
+    return serializedSinkDescriptor;
 }
 
 }

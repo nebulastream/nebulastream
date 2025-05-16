@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "ChecksumSink.hpp"
+#include <ChecksumSink.hpp>
 
 #include <cstddef>
 #include <filesystem>
@@ -39,12 +39,12 @@ namespace NES::Sinks
 ChecksumSink::ChecksumSink(const SinkDescriptor& sinkDescriptor)
     : isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILEPATH))
-    , schemaSizeInBytes(sinkDescriptor.schema->getSchemaSizeInBytes())
+    , schemaSizeInBytes(sinkDescriptor.schema.getSchemaSizeInBytes())
     , formatter(std::make_unique<CSVFormat>(sinkDescriptor.schema))
 {
 }
 
-void ChecksumSink::start(Runtime::Execution::PipelineExecutionContext&)
+void ChecksumSink::start(PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up checksum sink: {}", *this);
     if (std::filesystem::exists(outputFilePath.c_str()))
@@ -73,7 +73,7 @@ void ChecksumSink::start(Runtime::Execution::PipelineExecutionContext&)
     }
 }
 
-void ChecksumSink::stop(Runtime::Execution::PipelineExecutionContext&)
+void ChecksumSink::stop(PipelineExecutionContext&)
 {
     NES_INFO("Checksum Sink completed. Checksum: {}", fmt::streamed(checksum));
 
@@ -83,7 +83,7 @@ void ChecksumSink::stop(Runtime::Execution::PipelineExecutionContext&)
     isOpen = false;
 }
 
-void ChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
+void ChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     const std::string formatted = formatter->getFormattedBuffer(inputBuffer);
