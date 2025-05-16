@@ -23,9 +23,11 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <SystestSources/SourceTypes.hpp>
 
 namespace NES::Sources
 {
@@ -64,7 +66,7 @@ private:
 struct ConfigParametersCSV
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath",
+        std::string(SYSTEST_FILE_PATH_PARAMETER),
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};

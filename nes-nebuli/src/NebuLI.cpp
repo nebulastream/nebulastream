@@ -99,9 +99,9 @@ struct convert<NES::CLI::LogicalSource>
     }
 };
 template <>
-struct convert<NES::CLI::PhysicalSource>
+struct convert<NES::SystestPhysicalSource>
 {
-    static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
+    static bool decode(const Node& node, NES::SystestPhysicalSource& rhs)
     {
         rhs.logical = node["logical"].as<std::string>();
         rhs.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
@@ -117,7 +117,7 @@ struct convert<NES::CLI::QueryConfig>
         const auto sink = node["sink"].as<NES::CLI::Sink>();
         rhs.sinks.emplace(sink.name, sink);
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
-        rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
+        rhs.physical = node["physical"].as<std::vector<NES::SystestPhysicalSource>>();
         rhs.query = node["query"].as<std::string>();
         return true;
     }
@@ -306,7 +306,7 @@ std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
 }
 
 // Todo: template errors if trying to move function outside, probably, because PhysicalSource is not defined yet
-PhysicalSource loadFromYAMLSource(const std::filesystem::path& filePath)
+SystestPhysicalSource loadFromYAMLSource(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -316,7 +316,7 @@ PhysicalSource loadFromYAMLSource(const std::filesystem::path& filePath)
 
     try
     {
-        return YAML::Load(file).as<PhysicalSource>();
+        return YAML::Load(file).as<SystestPhysicalSource>();
     }
     catch (const YAML::ParserException& pex)
     {

@@ -25,31 +25,6 @@
 namespace NES
 {
 
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
-{
-    if (systestAdaptorArguments.attachSource.tuples and not(systestAdaptorArguments.attachSource.tuples.value().empty()))
-    {
-        if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find("filePath");
-            filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
-        {
-            filePath->second = systestAdaptorArguments.testFilePath;
-            if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
-            {
-                /// Write inline tuples to test file.
-                for (const auto& tuple : systestAdaptorArguments.attachSource.tuples.value())
-                {
-                    testFile << tuple << "\n";
-                }
-                testFile.flush();
-                return systestAdaptorArguments.physicalSourceConfig;
-            }
-            throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
-        }
-        throw InvalidConfigParameter("A FileSource config must contain filePath parameter");
-    }
-    throw TestException("A FileInlineSystestAdaptor requires inline tuples");
-}
-
 InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
     if (systestAdaptorArguments.attachSource.tuples and not(systestAdaptorArguments.attachSource.tuples.value().empty()))

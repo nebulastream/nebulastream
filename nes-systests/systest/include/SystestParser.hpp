@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 #include <Common/DataTypes/DataType.hpp>
+#include <SystestSources/SourceTypes.hpp>
 
 namespace NES::Systest
 {
@@ -85,25 +86,6 @@ public:
         bool operator==(const SLTSource& other) const = default;
     };
 
-    enum class TestDataIngestionType : uint8_t
-    {
-        INLINE,
-        FILE
-    };
-
-    // Todo: make class and make sure it is initialized correctly and destructed
-    struct AttachSource
-    {
-        std::string configurationPath;
-        std::string logicalSourceName;
-        std::string sourceType;
-        TestDataIngestionType testDataIngestionType;
-        std::optional<std::vector<std::string>> tuples;
-        std::shared_ptr<std::vector<std::jthread>> serverThreads;
-
-        bool operator==(const AttachSource& other) const = default;
-    };
-
     struct Sink
     {
         std::string name;
@@ -117,7 +99,7 @@ public:
     using QueryCallback = std::function<void(Query&&)>;
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
-    using AttachSourceCallback = std::function<void(AttachSource attachSource)>;
+    using AttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
     using SinkCallback = std::function<void(Sink&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
@@ -144,7 +126,7 @@ private:
     [[nodiscard]] bool moveToNextToken();
 
     [[nodiscard]] SLTSource expectSLTSource();
-    [[nodiscard]] AttachSource expectAttachSource();
+    [[nodiscard]] SystestAttachSource expectAttachSource();
     [[nodiscard]] CSVSource expectCSVSource() const;
     [[nodiscard]] Sink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);

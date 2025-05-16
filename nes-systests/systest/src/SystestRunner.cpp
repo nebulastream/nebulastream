@@ -48,10 +48,8 @@
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include <Sources/SourceDataProvider.hpp>
 
-#include <InlineDataRegistry.hpp>
-
-#include "FileDataRegistry.hpp"
 
 namespace NES::Systest
 {
@@ -103,10 +101,9 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     }()});
         });
     parser.registerOnAttachSourceCallback(
-        [&](SystestParser::AttachSource attachSource)
+        [&](SystestAttachSource attachSource)
         {
             static uint64_t sourceIndex = 0;
-            // Todo: pass to parser.parse() instead? (std::shared_ptr<std::vector<std::jthread>>)
             attachSource.serverThreads = serverThreads;
 
             const auto initialPhysicalSourceConfig = [](const std::string& path)
@@ -123,29 +120,18 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
 
             switch (attachSource.testDataIngestionType)
             {
-                case SystestParser::TestDataIngestionType::INLINE: {
+                case TestDataIngestionType::INLINE: {
                     if (attachSource.tuples.has_value())
                     {
-                        const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++); //Todo: potentially move into register?
-
-                        const auto theArgs = InlineDataRegistryArguments{initialPhysicalSourceConfig, attachSource, sourceFile};
-                        if (auto physicalSourceConfig = InlineDataRegistry::instance().create(attachSource.sourceType, theArgs))
-                        {
-                            config.physical.emplace_back(physicalSourceConfig.value());
-                            return;
-                        }
-                        throw InvalidConfigParameter("Source type {} not found.", attachSource.sourceType);
+                        const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
+                        config.physical.emplace_back(Sources::SourceDataProvider::provideInlineDataSource(initialPhysicalSourceConfig, attachSource, sourceFile));
+                        break;
                     }
-                    throw CannotLoadConfig("A InlineData must have tuples, but tuples was null.");
+                    throw CannotLoadConfig("An InlineData source must have tuples, but tuples was null.");
                 }
-                case SystestParser::TestDataIngestionType::FILE: {
-                    const auto theArgs = FileDataRegistryArguments{initialPhysicalSourceConfig, attachSource, testDataDir};
-                    if (auto physicalSourceConfig = FileDataRegistry::instance().create(attachSource.sourceType, theArgs))
-                    {
-                        config.physical.emplace_back(physicalSourceConfig.value());
-                        return;
-                    }
-                    throw InvalidConfigParameter("Source type {} not found.", attachSource.sourceType);
+                case TestDataIngestionType::FILE: {
+                    config.physical.emplace_back(Sources::SourceDataProvider::provideFileDataSource(initialPhysicalSourceConfig, attachSource, testDataDir));
+                    break;
                 }
             }
         });

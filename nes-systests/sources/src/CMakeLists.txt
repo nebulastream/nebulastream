@@ -10,20 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-sources
-        SourceThread.cpp
-        SourceDescriptor.cpp
-        Source.cpp
-        SourceHandle.cpp
-        SourceProvider.cpp
-        SourceValidationProvider.cpp
-        SourceDataProvider.cpp
+add_source_files(nes-systest-sources
+    SourceTypes.cpp
 )
-
-# Register plugins
-add_plugin(File Source nes-sources FileSource.cpp)
-add_plugin(File SourceValidation nes-sources FileSource.cpp)
-
-# Systest adaptors
-add_plugin(File InlineData nes-sources FileSource.cpp)
-add_plugin(File FileData nes-sources FileSource.cpp)

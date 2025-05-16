@@ -36,8 +36,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
-#include <InlineDataRegistry.hpp>
-
 namespace NES::Systest
 {
 static constexpr auto CSVSourceToken = "SourceCSV"s;
@@ -393,10 +391,10 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
     return source;
 }
 
-SystestParser::AttachSource SystestParser::expectAttachSource()
+SystestAttachSource SystestParser::expectAttachSource()
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
-    AttachSource attachSource;
+    SystestAttachSource attachSource;
     const auto& line = lines[currentLine];
     std::istringstream stream(line);
 
@@ -420,7 +418,7 @@ SystestParser::AttachSource SystestParser::expectAttachSource()
         throw SLTUnexpectedToken("failed to parse source configuration path in: {}", stream.str());
     }(stream);
 
-    attachSource.testDataIngestionType = [this](std::istringstream& stream, AttachSource& attachSource)
+    attachSource.testDataIngestionType = [this](std::istringstream& stream, SystestAttachSource& attachSource)
     {
         if (const auto testDataTypeString =
                 [](std::istringstream& stream)

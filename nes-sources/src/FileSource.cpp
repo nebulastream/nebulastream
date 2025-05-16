@@ -30,7 +30,29 @@
 #include <ErrorHandling.hpp>
 #include <FileSource.hpp>
 #include <SourceRegistry.hpp>
+#include <FileDataRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+#include <InlineDataRegistry.hpp>
+#include <SystestSources/SourceTypes.hpp>
+
+namespace
+{
+std::filesystem::path replaceRootPath(const std::string& originalPath, const std::filesystem::path& newRootPath)
+{
+    if (const std::filesystem::path path(originalPath); not(path.is_absolute()))
+    {
+        if (const auto firstDir = path.begin(); *firstDir == std::filesystem::path("TESTDATA"))
+        {
+            return (newRootPath / path.lexically_relative(*firstDir)).string();
+        }
+        throw NES::InvalidConfigParameter(
+            "The filepath of a FileSource config must contain begin with 'TESTDATA/', but got {}.", originalPath);
+    }
+    throw NES::InvalidConfigParameter(
+        "The filepath of a FileSource config must contain at least a root directory and a file, but got {}.", originalPath);
+}
+}
 
 namespace NES::Sources
 {
@@ -81,6 +103,46 @@ SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(SourceValidatio
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)
 {
     return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
+}
+
+
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
+{
+    /// Check that the test data dir is defined and that the 'filePath' parameter is set
+    /// Replace the 'TESTDATA' placeholder in the filepath
+    if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
+        filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+    {
+        filePath->second = replaceRootPath(filePath->second, systestAdaptorArguments.testDataDir);
+        return systestAdaptorArguments.physicalSourceConfig;
+    }
+    throw InvalidConfigParameter("A FileSource config must contain filePath parameter.");
+}
+
+
+InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+{
+    if (systestAdaptorArguments.attachSource.tuples and not(systestAdaptorArguments.attachSource.tuples.value().empty()))
+    {
+        if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
+            filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            filePath->second = systestAdaptorArguments.testFilePath;
+            if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
+            {
+                /// Write inline tuples to test file.
+                for (const auto& tuple : systestAdaptorArguments.attachSource.tuples.value())
+                {
+                    testFile << tuple << "\n";
+                }
+                testFile.flush();
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
+        }
+        throw InvalidConfigParameter("A FileSource config must contain filePath parameter");
+    }
+    throw TestException("A FileInlineSystestAdaptor requires inline tuples");
 }
 
 }

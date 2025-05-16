@@ -14,32 +14,28 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
-#include <NebuLI.hpp>
-#include <SystestParser.hpp>
 
-#include <API/Schema.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
-using InlineDataRegistryReturnType = CLI::PhysicalSource;
-struct InlineDataRegistryArguments
+using FileDataRegistryReturnType = SystestPhysicalSource;
+struct FileDataRegistryArguments
 {
-    CLI::PhysicalSource physicalSourceConfig;
-    Systest::SystestParser::AttachSource attachSource;
-    std::filesystem::path testFilePath;
+    SystestPhysicalSource physicalSourceConfig;
+    SystestAttachSource attachSource;
+    std::filesystem::path testDataDir;
 };
 
-class InlineDataRegistry
-    : public BaseRegistry<InlineDataRegistry, std::string, InlineDataRegistryReturnType, InlineDataRegistryArguments>
+class FileDataRegistry : public BaseRegistry<FileDataRegistry, std::string, FileDataRegistryReturnType, FileDataRegistryArguments>
 {
 };
 
 }
 
-#define INCLUDED_FROM_SYSTEST_INLINE_DATA_REGISTRY
-#include <InlineDataGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SYSTEST_INLINE_DATA_REGISTRY
+#define INCLUDED_FROM_SOURCES_FILE_DATA_REGISTRY
+#include <FileDataGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_SOURCES_FILE_DATA_REGISTRY

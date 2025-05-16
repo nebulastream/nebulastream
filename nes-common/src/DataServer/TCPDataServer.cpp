@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <TCPDataServer.hpp>
 
 #include <functional>
 #include <string>
@@ -20,6 +19,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/buffer.hpp>
 
+#include <DataServer/TCPDataServer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES

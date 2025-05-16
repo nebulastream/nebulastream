@@ -18,9 +18,3 @@ add_source_files(nes-systest-lib
         SystestResultCheck.cpp
         SystestConfiguration.cpp
 )
-
-add_plugin(File InlineData nes-systest-lib InlineData.cpp)
-add_plugin(File FileData nes-systest-lib FileData.cpp)
-
-add_plugin(TCP InlineData nes-systest-lib InlineData.cpp)
-add_plugin(TCP FileData nes-systest-lib FileData.cpp)

@@ -17,46 +17,16 @@
 #include <thread>
 #include <utility>
 
+#include <FileDataRegistry.hpp>
 #include <DataServer/TCPDataServer.hpp>
 #include <ErrorHandling.hpp>
-#include <FileDataRegistry.hpp>
 #include <SystestAdaptor.hpp>
 #include <SystestState.hpp>
 
 
-namespace
-{
-std::filesystem::path replaceRootPath(const std::string& originalPath, const std::filesystem::path& newRootPath)
-{
-    if (const std::filesystem::path path(originalPath); not(path.is_absolute()))
-    {
-        if (const auto firstDir = path.begin(); *firstDir == std::filesystem::path("TESTDATA"))
-        {
-            return (newRootPath / path.lexically_relative(*firstDir)).string();
-        }
-        throw NES::InvalidConfigParameter(
-            "The filepath of a FileSource config must contain begin with 'TESTDATA/', but got {}.", originalPath);
-    }
-    throw NES::InvalidConfigParameter(
-        "The filepath of a FileSource config must contain at least a root directory and a file, but got {}.", originalPath);
-}
-}
 
 namespace NES
 {
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
-{
-    /// Check that the test data dir is defined and that the 'filePath' parameter is set
-    /// Replace the 'TESTDATA' placeholder in the filepath
-    if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find("filePath");
-        filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
-    {
-        filePath->second = replaceRootPath(filePath->second, systestAdaptorArguments.testDataDir);
-        return systestAdaptorArguments.physicalSourceConfig;
-    }
-    throw InvalidConfigParameter("A FileData config must contain filePath parameter.");
-}
-
 
 FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
