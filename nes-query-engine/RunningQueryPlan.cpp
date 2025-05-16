@@ -39,7 +39,7 @@
 #include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 std::pair<CallbackOwner, CallbackRef> Callback::create(std::string context)
 {
@@ -172,7 +172,7 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     PipelineId pipelineId,
     WorkEmitter& emitter,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-    std::unique_ptr<Execution::ExecutablePipelineStage> stage,
+    std::unique_ptr<ExecutablePipelineStage> stage,
     std::function<void(Exception)> unregisterWithError,
     CallbackRef planRef,
     CallbackRef setupCallback)
@@ -216,10 +216,10 @@ std::
 {
     std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>> sources;
     std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines;
-    std::unordered_map<Execution::ExecutablePipeline*, std::shared_ptr<RunningQueryPlanNode>> cache;
-    std::function<std::shared_ptr<RunningQueryPlanNode>(Execution::ExecutablePipeline*)> getOrCreate
-        = [&](Execution::ExecutablePipeline* pipeline)
+    std::unordered_map<ExecutablePipeline*, std::shared_ptr<RunningQueryPlanNode>> cache;
+    std::function<std::shared_ptr<RunningQueryPlanNode>(ExecutablePipeline*)> getOrCreate = [&](ExecutablePipeline* pipeline)
     {
+        INVARIANT(pipeline, "Pipeline should not be nullptr");
         if (auto it = cache.find(pipeline); it != cache.end())
         {
             return it->second;
@@ -243,7 +243,6 @@ std::
         return cache[pipeline];
     };
 
-    auto pipelineIdCounter = PipelineId::INITIAL;
     for (auto& [source, successors] : queryPlan.sources)
     {
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successorNodes;
@@ -264,8 +263,8 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
     WorkEmitter& emitter,
     std::shared_ptr<QueryLifetimeListener> listener)
 {
-    PRECONDITION(!plan->pipelines.empty(), "Cannot start an empty Query Plan");
-    PRECONDITION(!plan->sources.empty(), "Cannot start a Query Plan without sources");
+    PRECONDITION(not plan->pipelines.empty(), "Cannot start an empty query plan");
+    PRECONDITION(not plan->sources.empty(), "Cannot start a query plan without sources");
 
     auto [terminationCallbackOwner, terminationCallbackRef] = Callback::create("Termination");
     auto [pipelineSetupCallbackOwner, pipelineSetupCallbackRef] = Callback::create("Pipeline Setup");
