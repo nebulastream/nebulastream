@@ -32,6 +32,11 @@ std::string VariableSizedDataPhysicalType::convertRawToString(const void* data) 
     return convertRawToStringWithoutFill(data);
 }
 
+std::unique_ptr<PhysicalType> VariableSizedDataPhysicalType::clone() const
+{
+    return std::make_unique<VariableSizedDataPhysicalType>(*this);
+}
+
 std::string VariableSizedDataPhysicalType::convertRawToStringWithoutFill(const void* data) const noexcept
 {
     if (!data)

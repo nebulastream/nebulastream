@@ -10,7 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        PhysicalOperatorPipeline.cpp
-        CompiledExecutablePipelineStage.cpp
-)
+function(add_nes_logical_operators_test)
+    add_nes_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-logical-operators)
+endfunction()
+
+add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp")

@@ -12,4 +12,4 @@
 
 add_library(nes-query-manager-test-utils-lib QueryEngineTestingInfrastructure.cpp)
 target_include_directories(nes-query-manager-test-utils-lib PUBLIC . ${CMAKE_SOURCE_DIR}/nes-query-engine/)
-target_link_libraries(nes-query-manager-test-utils-lib PUBLIC nes-common nes-query-engine PRIVATE nes-operators nes-memory-test-utils nes-sources-test-utils)
+target_link_libraries(nes-query-manager-test-utils-lib PUBLIC nes-common nes-query-engine PRIVATE nes-logical-operators nes-memory-test-utils nes-sources-test-utils)
