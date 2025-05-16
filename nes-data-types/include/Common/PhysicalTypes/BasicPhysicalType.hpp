@@ -47,14 +47,10 @@ public:
     /// @param type the data type represented by this physical type
     /// @param nativeType the native type of the nes type.
     BasicPhysicalType(std::shared_ptr<DataType> type, NativeType nativeType);
-
+    BasicPhysicalType(const BasicPhysicalType& other);
     ~BasicPhysicalType() override = default;
 
-    /// Factory function to create a new physical type.
-    /// @param type
-    /// @param nativeType
-    /// @return std::shared_ptr<PhysicalType>
-    static std::shared_ptr<PhysicalType> create(const std::shared_ptr<DataType>& type, NativeType nativeType);
+    static std::unique_ptr<PhysicalType> create(std::shared_ptr<DataType> type, NativeType nativeType);
 
     /// Returns the number of bytes occupied by this data type.
     [[nodiscard]] uint64_t size() const override;
@@ -63,12 +59,13 @@ public:
     /// @param rawData a pointer to the raw value
     std::string convertRawToString(const void* rawData) const noexcept override;
 
+    [[nodiscard]] std::unique_ptr<PhysicalType> clone() const override;
 
     /// Converts the binary representation of this value to a string.
     /// @param rawData a pointer to the raw value
     std::string convertRawToStringWithoutFill(const void* rawData) const noexcept override;
 
-    [[nodiscard]] std::string toString() const noexcept override;
+    [[nodiscard]] std::string toString() const override;
 
     NativeType nativeType;
 };
