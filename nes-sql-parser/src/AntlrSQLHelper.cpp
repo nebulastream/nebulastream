@@ -13,7 +13,11 @@
 */
 
 #include <utility>
+#include <vector>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES::Parsers
 {
@@ -49,9 +53,9 @@ void AntlrSQLHelper::addHavingClause(LogicalFunction expressionNode)
 {
     this->havingClauses.emplace_back(std::move(expressionNode));
 }
-void AntlrSQLHelper::addProjectionField(FieldAccessLogicalFunction expressionNode)
+void AntlrSQLHelper::addProjectionField(const FieldAccessLogicalFunction& expressionNode)
 {
-    this->projectionFields.push_back(std::move(expressionNode));
+    this->projectionFields.emplace_back(expressionNode);
 }
 
 std::shared_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType()
@@ -59,7 +63,7 @@ std::shared_ptr<Windowing::WindowType> AntlrSQLHelper::getWindowType()
     return {};
 }
 
-void AntlrSQLHelper::addMapExpression(FieldAssignmentLogicalFunction expressionNode)
+void AntlrSQLHelper::addMapExpression(const FieldAssignmentLogicalFunction& expressionNode)
 {
     auto pos = this->mapBuilder.begin();
     this->mapBuilder.insert(pos, expressionNode);

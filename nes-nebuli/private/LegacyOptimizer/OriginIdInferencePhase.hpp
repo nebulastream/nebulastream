@@ -37,7 +37,7 @@ class OriginIdInferencePhase
 public:
     explicit OriginIdInferencePhase() = default;
 
-    void apply(LogicalPlan& queryPlan) const;
+    static void apply(LogicalPlan& queryPlan);
 };
 }
 }

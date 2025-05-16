@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <exception>
 #include <map>
 #include <memory>
 #include <ostream>
@@ -25,7 +27,6 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <gtest/gtest_prod.h>
@@ -33,7 +34,6 @@
 
 namespace NES
 {
-
 
 /// Defines the verbosity level for explaining query plans and operators
 enum class ExplainVerbosity : uint8_t
@@ -44,8 +44,6 @@ enum class ExplainVerbosity : uint8_t
     Short
 };
 
-namespace
-{
 /// Branch types for ASCII art rendering
 enum class BranchCase : uint8_t
 {
@@ -75,8 +73,6 @@ constexpr char PARENT_LAST_BRANCH = ']'; /// '┘'
 constexpr char PARENT_CHILD_FIRST_BRANCH = '{'; /// '├'
 constexpr char PARENT_CHILD_MIDDLE_BRANCH = '+'; /// '┼'
 constexpr char PARENT_CHILD_LAST_BRANCH = '}'; /// '┤'
-}
-
 
 /// Dumps query plans to an output stream
 template <typename Plan, typename Operator>
@@ -127,8 +123,8 @@ private:
         std::vector<std::shared_ptr<PrintNode>> children;
         /// If true, this node as actually a "dummy node" (not representing an actual node from the queryplan) and just represents a
         /// vertical branch: '|'.
-        bool verticalBranch;
-        uint64_t id;
+        bool verticalBranch{};
+        uint64_t id{};
     };
 
     /// Holds information on each node of that layer in the dag and its cumulative width.

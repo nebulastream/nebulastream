@@ -12,17 +12,21 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <OperatorState.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -110,7 +114,7 @@ void ExecutionContext::setLocalOperatorState(OperatorId operatorId, std::unique_
     localStateMap.emplace(operatorId, std::move(state));
 }
 
-OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
+static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
 {
     auto handlers = pipelineCtx->getOperatorHandlers();
     return handlers[index].get();

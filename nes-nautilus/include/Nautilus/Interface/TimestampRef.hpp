@@ -63,11 +63,11 @@ class val<NES::Timestamp>
 public:
     using Underlying = uint64_t;
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    val(const Underlying timestamp) : value(timestamp) { }
+    explicit val(const Underlying timestamp) : value(timestamp) { }
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    val(const val<Underlying>& timestamp) : value(timestamp) { }
+    explicit val(const val<Underlying>& timestamp) : value(timestamp) { }
     /// ReSharper disable once CppNonExplicitConvertingConstructor
-    val(const NES::Timestamp timestamp) : value(timestamp.getRawValue()) { }
+    explicit val(const NES::Timestamp timestamp) : value(timestamp.getRawValue()) { }
     explicit val(tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
     val(const val& other) = default;
     val& operator=(const val& other) = default;

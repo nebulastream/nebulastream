@@ -12,18 +12,17 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/PipeliningPhase.hpp>
-#include <Runtime/NodeEngine.hpp>
+#include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 
 namespace NES::QueryCompilation
 {
 
-QueryCompiler::QueryCompiler()
-{
-}
+QueryCompiler::QueryCompiler() = default;
 
 /// This phase should be as dumb as possible and not further decisions should be made here.
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
@@ -31,7 +30,7 @@ std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<Q
     try
     {
         auto pipelinedQueryPlan = PipeliningPhase::apply(request->queryPlan);
-        return LowerToCompiledQueryPlanPhase::apply(std::move(pipelinedQueryPlan));
+        return LowerToCompiledQueryPlanPhase::apply(pipelinedQueryPlan);
     }
     catch (...)
     {

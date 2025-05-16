@@ -56,7 +56,7 @@ void logProxy(const char* message, const LogLevel logLevel)
 
 VarVal createNautilusMinValue(const PhysicalType& physicalType)
 {
-    if (auto basicType = dynamic_cast<const BasicPhysicalType*>(&physicalType))
+    if (const auto* basicType = dynamic_cast<const BasicPhysicalType*>(&physicalType))
     {
         switch (basicType->nativeType)
         {
@@ -90,7 +90,7 @@ VarVal createNautilusMinValue(const PhysicalType& physicalType)
 
 VarVal createNautilusMaxValue(const PhysicalType& physicalType)
 {
-    if (auto basicType = dynamic_cast<const BasicPhysicalType*>(&physicalType))
+    if (const auto* basicType = dynamic_cast<const BasicPhysicalType*>(&physicalType))
     {
         switch (basicType->nativeType)
         {

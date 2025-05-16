@@ -12,7 +12,19 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/ExecutionMode.hpp>
+#include <ErrorHandling.hpp>
+#include <PhysicalOperator.hpp>
+#include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
+#include <SinkPhysicalOperator.hpp>
+#include <SourcePhysicalOperator.hpp>
 
 namespace NES
 {
@@ -35,7 +47,7 @@ void PhysicalPlanBuilder::setExecutionMode(Nautilus::Configurations::ExecutionMo
 PhysicalPlan PhysicalPlanBuilder::finalize() &&
 {
     auto sources = flip(sinks);
-    return PhysicalPlan(queryId, std::move(sources), executionMode);
+    return {queryId, std::move(sources), executionMode};
 }
 
 using PhysicalOpPtr = std::shared_ptr<PhysicalOperatorWrapper>;
@@ -98,7 +110,7 @@ PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(Roots rootOperators)
         node->setChildren(reversedEdges[node.get()]);
     }
 
-    for (auto rootOperator : newRoots)
+    for (const auto& rootOperator : newRoots)
     {
         INVARIANT(
             rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(),

@@ -35,7 +35,7 @@ public:
     [[nodiscard]] Schema getSchema();
 
 private:
-    LogicalSource(std::string logicalSourceName, const Schema& schema);
+    LogicalSource(std::string logicalSourceName, Schema schema);
 
     std::string logicalSourceName;
     Schema schema;

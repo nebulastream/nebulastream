@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>

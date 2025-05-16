@@ -12,11 +12,14 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <API/Schema.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
+#include <ProtobufHelper.hpp> /// NOLINT
 #include <SerializableOperator.pb.h>
 
 namespace NES::Sources
@@ -88,25 +91,25 @@ bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 
 SerializableSourceDescriptor SourceDescriptor::serialize() const
 {
-    SerializableSourceDescriptor SerializableSourceDescriptor;
-    SchemaSerializationUtil::serializeSchema(schema, SerializableSourceDescriptor.mutable_sourceschema());
-    SerializableSourceDescriptor.set_logicalsourcename(logicalSourceName);
-    SerializableSourceDescriptor.set_sourcetype(sourceType);
-    SerializableSourceDescriptor.set_numberofbuffersinsourcelocalbufferpool(numberOfBuffersInSourceLocalBufferPool);
+    SerializableSourceDescriptor serializableSourceDescriptor;
+    SchemaSerializationUtil::serializeSchema(schema, serializableSourceDescriptor.mutable_sourceschema());
+    serializableSourceDescriptor.set_logicalsourcename(logicalSourceName);
+    serializableSourceDescriptor.set_sourcetype(sourceType);
+    serializableSourceDescriptor.set_numberofbuffersinsourcelocalbufferpool(numberOfBuffersInSourceLocalBufferPool);
 
     /// Serialize parser config.
     auto* const serializedParserConfig = NES::ParserConfig().New();
     serializedParserConfig->set_type(parserConfig.parserType);
     serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
     serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);
-    SerializableSourceDescriptor.set_allocated_parserconfig(serializedParserConfig);
+    serializableSourceDescriptor.set_allocated_parserconfig(serializedParserConfig);
 
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
     for (const auto& [key, value] : config)
     {
-        auto* kv = SerializableSourceDescriptor.mutable_config();
+        auto* kv = serializableSourceDescriptor.mutable_config();
         kv->emplace(key, descriptorConfigTypeToProto(value));
     }
-    return SerializableSourceDescriptor;
+    return serializableSourceDescriptor;
 }
 }

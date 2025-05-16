@@ -15,8 +15,11 @@
 #pragma once
 
 #include <ostream>
+#include <string>
 #include <stdint.h>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/base.h>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -52,9 +55,9 @@ namespace fmt
 template <>
 struct formatter<NES::QueryTerminationType> : formatter<std::string>
 {
-    auto format(const NES::QueryTerminationType& termination_type, format_context& ctx) const -> decltype(ctx.out())
+    static auto format(const NES::QueryTerminationType& terminationType, format_context& ctx) -> decltype(ctx.out())
     {
-        switch (termination_type)
+        switch (terminationType)
         {
             case NES::QueryTerminationType::Graceful:
                 return fmt::format_to(ctx.out(), "Graceful");

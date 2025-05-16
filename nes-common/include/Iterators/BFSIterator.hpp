@@ -15,10 +15,11 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstddef>
 #include <iterator>
-#include <memory>
 #include <queue>
+#include <ranges>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -102,7 +103,7 @@ public:
     explicit BFSRange(T root) : root(root) { }
 
     BFSIterator<T> begin() const { return BFSIterator<T>(root); }
-    std::default_sentinel_t end() const noexcept { return {}; }
+    [[nodiscard]] std::default_sentinel_t end() const noexcept { return {}; }
 
 private:
     T root;

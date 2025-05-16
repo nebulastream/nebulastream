@@ -15,8 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 
@@ -35,6 +33,6 @@ public:
     /// 2. Propagate the input and output schemas from source operators to the sink operators.
     /// 3. If a operator contains expression, we infer the result dataType of this operators.
     /// @throws TypeInferenceException if inferring the data types into the query failed
-    void apply(LogicalPlan& queryPlan) const;
+    static void apply(LogicalPlan& queryPlan);
 };
 }

@@ -15,8 +15,9 @@
 #pragma once
 #include <string>
 #include <Configuration/WorkerConfiguration.hpp>
+#include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/PrintingVisitor.hpp>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
+#include <Configurations/ScalarOption.hpp>
 
 namespace NES::Configuration
 {

@@ -12,11 +12,15 @@
     limitations under the License.
 */
 
-#include <Phases/LowerToCompiledQueryPlanPhase.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <ErrorHandling.hpp>
+#include <cstddef>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/ExecutionMode.hpp>
+#include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
-#include <QueryCompiler.hpp>
 
 namespace NES
 {
@@ -24,9 +28,9 @@ namespace NES
 PipelinedQueryPlan::PipelinedQueryPlan(QueryId id, Nautilus::Configurations::ExecutionMode executionMode)
     : queryId(id), executionMode(executionMode) { };
 
-void printPipelineRecursive(const Pipeline* pipeline, std::ostream& os, int indentLevel)
+static void printPipelineRecursive(const Pipeline* pipeline, std::ostream& os, int indentLevel)
 {
-    std::string indent(indentLevel * 2, ' ');
+    const std::string indent(indentLevel * 2, ' ');
     os << indent << *pipeline << "\n";
     for (const auto& succ : pipeline->getSuccessors())
     {

@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include <memory>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <Traits/Trait.hpp>
@@ -56,7 +55,7 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator)
 }
 }
 
-void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const
+void OriginIdInferencePhase::apply(LogicalPlan& queryPlan)
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = INITIAL_ORIGIN_ID.getRawValue();
@@ -81,6 +80,7 @@ void OriginIdInferencePhase::apply(LogicalPlan& queryPlan) const
 
     /// propagate origin ids through the complete query plan
     std::vector<LogicalOperator> newSinks;
+    newSinks.reserve(queryPlan.rootOperators.size());
     for (auto& sinkOperator : queryPlan.rootOperators)
     {
         newSinks.push_back(propagateOriginIds(sinkOperator));

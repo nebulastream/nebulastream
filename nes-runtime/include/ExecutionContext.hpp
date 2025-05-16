@@ -34,7 +34,6 @@
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <OperatorState.hpp>
-#include <PhysicalOperator.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <function.hpp>
 #include <val.hpp>

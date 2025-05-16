@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 
 namespace NES

@@ -37,7 +37,7 @@ public:
 
     static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const Schema& schema);
 
-    virtual std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() const = 0;
+    [[nodiscard]] virtual std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() const = 0;
 
     /// Reads a record from the given bufferAddress and recordIndex.
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available

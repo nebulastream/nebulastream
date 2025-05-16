@@ -12,27 +12,31 @@
     limitations under the License.
 */
 
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <numeric>
 #include <utility>
+#include <vector>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Streaming/Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Streaming/Aggregation/AggregationOperatorHandler.hpp>
 #include <Streaming/Aggregation/AggregationProbePhysicalOperator.hpp>
+#include <Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Streaming/Aggregation/Function/AvgAggregationFunction.hpp>
 #include <Streaming/Aggregation/Function/CountAggregationFunction.hpp>
 #include <Streaming/Aggregation/Function/MaxAggregationFunction.hpp>
@@ -44,6 +48,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
@@ -52,7 +57,7 @@
 namespace NES
 {
 
-std::pair<std::vector<Record::RecordFieldIdentifier>, std::vector<Record::RecordFieldIdentifier>>
+static std::pair<std::vector<Record::RecordFieldIdentifier>, std::vector<Record::RecordFieldIdentifier>>
 getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
 {
     std::vector<Record::RecordFieldIdentifier> fieldKeyNames;
@@ -71,10 +76,10 @@ getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
     return {fieldKeyNames, fieldValueNames};
 }
 
-std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOperator& logicalOperator)
+static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOperator& logicalOperator)
 {
-    const auto timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(logicalOperator.getWindowType().get());
-    if (not timeWindow)
+    auto* const timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(logicalOperator.getWindowType().get());
+    if (timeWindow == nullptr)
     {
         throw UnknownWindowType("Window type is not a time based window type");
     }
@@ -92,7 +97,7 @@ std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOp
         case Windowing::TimeCharacteristic::Type::EventTime: {
             /// For event time fields, we look up the reference field name and create an expression to read the field.
             auto timeCharacteristicField = timeWindow->getTimeCharacteristic().field->getName();
-            auto timeStampField = Functions::FieldAccessPhysicalFunction(timeCharacteristicField);
+            auto timeStampField = FieldAccessPhysicalFunction(timeCharacteristicField);
             return std::make_unique<EventTimeFunction>(timeStampField, timeWindow->getTimeCharacteristic().getTimeUnit());
         }
         default: {
@@ -101,7 +106,7 @@ std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOp
     }
 }
 
-std::vector<std::shared_ptr<AggregationFunction>>
+static std::vector<std::shared_ptr<AggregationFunction>>
 getAggregationFunctions(const WindowedAggregationLogicalOperator& logicalOperator, const NES::Configurations::QueryOptimizerConfiguration&)
 {
     std::vector<std::shared_ptr<AggregationFunction>> aggregationFunctions;
@@ -195,7 +200,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto inputOriginIds = aggregation.getInputOriginIds()[0];
     auto outputOriginId = aggregation.getOutputOriginIds()[0];
     auto timeFunction = getTimeFunction(aggregation);
-    auto windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(aggregation.getWindowType().get());
+    auto* windowType = dynamic_cast<Windowing::TimeBasedWindowType*>(aggregation.getWindowType().get());
     auto aggregationFunctions = getAggregationFunctions(aggregation, conf);
 
     const auto valueSize = std::accumulate(
@@ -205,7 +210,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
         [](const auto& sum, const auto& function) { return sum + function->getSizeOfStateInBytes(); });
 
     uint64_t keySize = 0;
-    std::vector<Functions::PhysicalFunction> keyFunctions;
+    std::vector<PhysicalFunction> keyFunctions;
     for (auto& nodeFunctionKey : aggregation.getGroupingKeys())
     {
         const DefaultPhysicalTypeFactory typeFactory;
@@ -242,11 +247,11 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), buildWrapper);
-    return {probeWrapper, {leafes}};
+    return {.root = probeWrapper, .leafs = {leafes}};
 }
 
 std::unique_ptr<AbstractRewriteRule>
-RewriteRuleGeneratedRegistrar::RegisterWindowedAggregationRewriteRule(RewriteRuleRegistryArguments argument)
+RewriteRuleGeneratedRegistrar::RegisterWindowedAggregationRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalWindowedAggregation>(argument.conf);
 }

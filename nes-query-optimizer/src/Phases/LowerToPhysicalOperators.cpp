@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
-#include <cstddef>
+#include <algorithm>
+#include <exception>
 #include <memory>
+#include <ranges>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -29,7 +32,7 @@
 namespace NES::LowerToPhysicalOperators
 {
 
-RewriteRuleResultSubgraph::SubGraphRoot
+static RewriteRuleResultSubgraph::SubGraphRoot
 lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRuleRegistryArguments& registryArgument)
 {
     /// Try to resolve rewrite rule for the current logical operator
@@ -76,19 +79,20 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
 
     std::ranges::for_each(
         std::views::zip(children, leafs),
-        [&registryArgument](const auto& zipped_pair)
+        [&registryArgument](const auto& zippedPair)
         {
-            const auto& [child, leaf] = zipped_pair;
+            const auto& [child, leaf] = zippedPair;
             auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument);
             leaf->addChild(rootNodeOfLoweredChild);
         });
     return root;
 }
 
-PhysicalPlan apply(LogicalPlan queryPlan, NES::Configurations::QueryOptimizerConfiguration conf)
+PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::QueryOptimizerConfiguration& conf) /// NOLINT
 {
     const auto registryArgument = RewriteRuleRegistryArguments{conf};
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
+    newRootOperators.reserve(queryPlan.rootOperators.size());
     for (const auto& logicalRoot : queryPlan.rootOperators)
     {
         newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));

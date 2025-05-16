@@ -14,11 +14,11 @@
 
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
@@ -26,9 +26,12 @@
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/ExecutionMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutablePipelineStage.hpp>
 #include <Pipeline.hpp>
+#include <PipelinedQueryPlan.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <SourcePhysicalOperator.hpp>
 #include <options.hpp>
@@ -90,7 +93,7 @@ void processSource(
     /// Convert logical source descriptor to actual source descriptor
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
 
-    std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
+    const std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
     auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
         sourceOperator.getDescriptor()->parserConfig.parserType,
         sourceOperator.getDescriptor()->schema,
