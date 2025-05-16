@@ -82,3 +82,13 @@ jobs:
       ref: ${{ github.event.pull_request.head.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       runtime_seconds: '$((1*60))'
+
+  branch-release-image:
+    needs: [ get-dev-images ]
+    name: "Branch docker images"
+    secrets: inherit
+    uses: ./.github/workflows/create_release_image.yml
+    with:
+      ref: ${{ github.head_ref }}
+      dockerhub-tag: ${{ github.head_ref }}
+      dev_image_tag: ${{needs.get-dev-images.outputs.image-tag}}
