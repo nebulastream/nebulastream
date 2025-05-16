@@ -15,51 +15,20 @@
 #pragma once
 #include <sstream>
 #include <Identifiers/Identifiers.hpp>
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES
 {
 
-class SequenceData
+struct SequenceData
 {
-public:
-    /**
-     * @brief Constructs
-     * @param sequenceNumber
-     * @param chunkNumber
-     * @param lastChunk
-     */
     SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk);
     explicit SequenceData();
 
-    [[nodiscard]] std::string toString() const;
+    friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj);
 
-    friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj)
-    {
-        os << "{SeqNumber: " << obj.sequenceNumber << ", ChunkNumber: " << obj.chunkNumber << ", LastChunk: " << obj.lastChunk << "}";
-        return os;
-    }
-
-    bool operator<=(const SequenceData& other) const;
-
-    /**
-     * @brief Overloading the < operator. Checks sequenceNumber, then chunkNumber, then lastChunk
-     * @param other
-     */
-    bool operator<(const SequenceData& other) const;
-
-    /**
-     * @brief Overloading the == operator
-     * @param other
-     * @return True if both structs are equal
-     */
-    bool operator==(const SequenceData& other) const;
-
-    /**
-     * @brief Overloading the != operator
-     * @param other
-     * @return True if both structs are NOT equal
-     */
-    bool operator!=(const SequenceData& other) const;
+    /// Checks sequenceNumber, then chunkNumber, then lastChunk
+    friend auto operator<=>(const SequenceData& lhs, const SequenceData& rhs) = default;
 
     SequenceNumber::Underlying sequenceNumber;
     ChunkNumber::Underlying chunkNumber;
@@ -67,3 +36,4 @@ public:
 };
 
 }
+FMT_OSTREAM(NES::SequenceData);
