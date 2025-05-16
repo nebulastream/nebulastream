@@ -17,9 +17,9 @@
 #include <cstddef>
 #include <memory>
 #include <ostream>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <PipelineExecutionContext.hpp>
-#include "Identifiers/Identifiers.hpp"
 
 namespace NES::InputFormatters
 {
@@ -40,15 +40,15 @@ public:
     /// Must only manipulate the sequenceShredder and otherwise be free of side-effects
     virtual void parseTupleBufferRaw(
         const NES::Memory::TupleBuffer& rawTB,
-        NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        NES::PipelineExecutionContext& pipelineExecutionContext,
         size_t numBytesInRawTB,
         SequenceShredder& sequenceShredder)
         = 0;
 
     /// Since there is no symbol that represents EoF/EoS, the final buffer does not end in a tuple delimiter. We need to 'manually' flush
     /// the final tuple, between the last tuple delimiter of the final buffer and (including) the last byte of the final buffer.
-    virtual void flushFinalTuple(
-        OriginId originId, NES::Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
+    virtual void
+    flushFinalTuple(OriginId originId, NES::PipelineExecutionContext& pipelineExecutionContext, SequenceShredder& sequenceShredder)
         = 0;
 
     virtual size_t getSizeOfTupleDelimiter() = 0;
