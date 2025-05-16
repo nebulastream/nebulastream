@@ -23,8 +23,8 @@
 namespace NES
 {
 PhysicalPlan::PhysicalPlan(
-    QueryId id, std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators, Nautilus::Configurations::ExecutionMode executionMode)
-    : queryId(id), rootOperators(std::move(rootOperators)), executionMode(executionMode)
+    QueryId id, std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators, Nautilus::Configurations::ExecutionMode executionMode, uint64_t operatorBufferSize)
+    : queryId(id), rootOperators(std::move(rootOperators)), executionMode(executionMode), operatorBufferSize(operatorBufferSize)
 {
     for (auto rootOperator : rootOperators)
     {
@@ -56,6 +56,11 @@ const PhysicalPlan::Roots& PhysicalPlan::getRootOperators() const
 Nautilus::Configurations::ExecutionMode PhysicalPlan::getExecutionMode() const
 {
     return executionMode;
+}
+
+uint64_t PhysicalPlan::getOperatorBufferSize() const
+{
+    return operatorBufferSize;
 }
 
 std::ostream& operator<<(std::ostream& os, const PhysicalPlan& plan)
