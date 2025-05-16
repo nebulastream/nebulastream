@@ -37,10 +37,10 @@ template <HasChildren T>
 class BFSIterator
 {
 public:
-    using value_type        = T;
-    using difference_type   = std::ptrdiff_t;
+    using value_type = T;
+    using difference_type = std::ptrdiff_t;
     using iterator_category = std::input_iterator_tag;
-    using iterator_concept  = std::input_iterator_tag;
+    using iterator_concept = std::input_iterator_tag;
 
     BFSIterator& operator++()
     {
@@ -57,20 +57,11 @@ public:
         return *this;
     }
 
-    void operator++(int)
-    {
-        ++(*this);
-    }
+    void operator++(int) { ++(*this); }
 
-    bool operator==(std::default_sentinel_t) const noexcept
-    {
-        return nodeQueue.empty();
-    }
+    bool operator==(std::default_sentinel_t) const noexcept { return nodeQueue.empty(); }
 
-    friend bool operator==(std::default_sentinel_t sentinel, const BFSIterator& iterator) noexcept
-    {
-        return iterator == sentinel;
-    }
+    friend bool operator==(std::default_sentinel_t sentinel, const BFSIterator& iterator) noexcept { return iterator == sentinel; }
 
     [[nodiscard]] value_type operator*() const
     {
@@ -78,8 +69,7 @@ public:
         return nodeQueue.front();
     }
 
-    friend bool operator==(const BFSIterator& lhs,
-                       const BFSIterator& rhs) noexcept
+    friend bool operator==(const BFSIterator& lhs, const BFSIterator& rhs) noexcept
     {
         if (lhs.nodeQueue.empty() and rhs.nodeQueue.empty())
         {
@@ -92,32 +82,25 @@ public:
         return lhs.nodeQueue.front() == rhs.nodeQueue.front();
     }
 
-    friend bool operator!=(const BFSIterator& lhs,
-                           const BFSIterator& rhs) noexcept
-    {
-        return !(lhs == rhs);
-    }
+    friend bool operator!=(const BFSIterator& lhs, const BFSIterator& rhs) noexcept { return !(lhs == rhs); }
 
 private:
     template <typename>
     friend class BFSRange;
     BFSIterator() = default;
-    explicit BFSIterator(T root)
-    {
-        nodeQueue.push(root);
-    }
+    explicit BFSIterator(T root) { nodeQueue.push(root); }
 
     std::queue<T> nodeQueue;
 };
 
 template <typename T>
-class BFSRange  : public std::ranges::view_interface<BFSRange<T>>
+class BFSRange : public std::ranges::view_interface<BFSRange<T>>
 {
 public:
     explicit BFSRange(T root) : root(root) { }
 
     BFSIterator<T> begin() const { return BFSIterator<T>(root); }
-    std::default_sentinel_t end()  const noexcept { return {}; }
+    std::default_sentinel_t end() const noexcept { return {}; }
 
 private:
     T root;
