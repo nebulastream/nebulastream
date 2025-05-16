@@ -12,32 +12,16 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-import "SerializableDataType.proto";
-package NES;
+#pragma once
 
-message SerializableField{
-  string name = 1;
-  SerializableDataType type = 2;
-}
+#include <Functions/LogicalFunction.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 
-/**
-The serializable wrapper for a schema object
- */
-message SerializableSchema{
-  repeated SerializableField fields = 1;
-  enum MemoryLayoutType {
-    ROW_LAYOUT = 0;
-    COL_LAYOUT = 1;
-  }
-  MemoryLayoutType layoutType = 2;
-}
-
-/**
-The serializable wrapper for a schema object and its name
- */
-message SerializableNamedSchema{
-
-  string sourceName = 1;
-  SerializableSchema schema = 2;
+namespace NES::FunctionSerializationUtil
+{
+/// Note: corresponding serialization is implemented as member function of each function
+LogicalFunction deserializeFunction(const SerializableFunction& serializedFunction);
+std::shared_ptr<WindowAggregationLogicalFunction>
+deserializeWindowAggregationFunction(const SerializableAggregationFunction& serializedFunction);
 }
