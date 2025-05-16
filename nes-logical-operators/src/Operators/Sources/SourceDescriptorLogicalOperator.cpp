@@ -15,13 +15,14 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include "Configurations/Descriptor.hpp"
 
 namespace NES
 {
@@ -60,7 +61,8 @@ std::string SourceDescriptorLogicalOperator::explain(ExplainVerbosity verbosity)
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("SOURCE(opId: {}, originid: {}, {})", id, outputOriginIds, sourceDescriptor->explain(verbosity));
+        return fmt::format(
+            "SOURCE(opId: {}, originid: {}, {})", id, fmt::join(outputOriginIds, ", "), sourceDescriptor->explain(verbosity));
     }
     return fmt::format("SOURCE({})", sourceDescriptor->explain(verbosity));
 }

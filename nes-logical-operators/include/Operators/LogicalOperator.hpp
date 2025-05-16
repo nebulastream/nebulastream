@@ -106,27 +106,6 @@ struct LogicalOperatorConcept
 template <typename T>
 concept IsLogicalOperator = std::is_base_of_v<LogicalOperatorConcept, std::remove_cv_t<std::remove_reference_t<T>>>;
 
-/// Enables default construction of LogicalOperator.
-/// Necessary to enable more ergonomic usage in e.g. default constructable of unordered maps etc.
-class NullLogicalOperator : public LogicalOperatorConcept
-{
-public:
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
-    [[nodiscard]] std::vector<LogicalOperator> getChildren() const override;
-    [[nodiscard]] LogicalOperator withChildren(std::vector<LogicalOperator>) const override;
-    [[nodiscard]] bool operator==(const LogicalOperatorConcept&) const override;
-    [[nodiscard]] std::string_view getName() const noexcept override;
-    [[nodiscard]] SerializableOperator serialize() const override;
-    [[nodiscard]] TraitSet getTraitSet() const override;
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override;
-    [[nodiscard]] Schema getOutputSchema() const override;
-    [[nodiscard]] std::vector<std::vector<OriginId>> getInputOriginIds() const override;
-    [[nodiscard]] std::vector<OriginId> getOutputOriginIds() const override;
-    [[nodiscard]] LogicalOperator withInputOriginIds(std::vector<std::vector<OriginId>>) const override;
-    [[nodiscard]] LogicalOperator withOutputOriginIds(std::vector<OriginId>) const override;
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema>) const override;
-};
-
 /// Id is preserved during copy
 struct LogicalOperator
 {
