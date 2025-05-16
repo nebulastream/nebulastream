@@ -18,7 +18,7 @@
 
 namespace NES::Nautilus::Configurations
 {
-enum class NautilusBackend : uint8_t
+enum class ExecutionMode : uint8_t
 {
     /// Uses the interpretation based nautilus backend.
     INTERPRETER,
