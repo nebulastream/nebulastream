@@ -21,11 +21,5 @@ target_include_directories(nes-logical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-# Create library for the registries
-create_plugin_registry_library(nes-logical-operators-registry nes-logical-operators)
-target_link_libraries(nes-logical-operators PRIVATE nes-logical-operators-registry)
-# Generate a registrar for every registry
-generate_plugin_registrars(nes-logical-operators LogicalOperator LogicalFunction AggregationLogicalFunction)
-
+create_registries_for_component(LogicalOperator LogicalFunction AggregationLogicalFunction)
 add_tests_if_enabled(tests)
-
