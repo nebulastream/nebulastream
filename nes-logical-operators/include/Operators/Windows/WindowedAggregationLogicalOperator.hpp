@@ -21,6 +21,7 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <Windowing/WindowMetaData.hpp>
 
 namespace NES
 {
@@ -47,6 +48,7 @@ public:
 
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
+    [[nodiscard]] const WindowMetaData& getWindowMetaData() const;
 
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
@@ -118,8 +120,7 @@ private:
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions;
     std::shared_ptr<Windowing::WindowType> windowType;
     std::vector<FieldAccessLogicalFunction> groupingKey;
-    std::string windowStartFieldName;
-    std::string windowEndFieldName;
+    WindowMetaData windowMetaData;
     OriginIdAssignerTrait originIdTrait;
 
     std::vector<LogicalOperator> children;
