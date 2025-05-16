@@ -22,6 +22,6 @@ message SerializableTrait {
   map<string, SerializableVariantDescriptor> config = 2;
 }
 
-message TraitSet {
+message SerializableTraitSet {
   repeated SerializableTrait traits = 1;
 }
