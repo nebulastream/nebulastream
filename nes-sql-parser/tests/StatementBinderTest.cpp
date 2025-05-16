@@ -13,6 +13,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
+#include "API/Schema.hpp"
 #include "Identifiers/Identifiers.hpp"
 #include "Identifiers/NESStrongType.hpp"
 #include "Sources/SourceDescriptor.hpp"
@@ -71,24 +72,18 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE testSource (attribute1 UINT32, attribute2 VARSIZED)";
     const auto statement1 = binder->parseAndBind(createLogicalSourceStatement);
     ASSERT_TRUE(std::holds_alternative<Binder::CreateLogicalSourceStatement>(statement1));
-    const auto [sourceExp] = std::get<Binder::CreateLogicalSourceStatement>(statement1);
-    ASSERT_TRUE(sourceExp.has_value());
+    const auto [actualSourceExp] = std::get<Binder::CreateLogicalSourceStatement>(statement1);
+    ASSERT_TRUE(actualSourceExp.has_value());
+    const auto& actualSource = actualSourceExp.value();
+    Schema expectedSchema{};
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    expectedColumns.emplace_back("attribute1", DataTypeProvider::provideBasicType(BasicType::UINT32));
-    expectedColumns.emplace_back("attribute2", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
-    ASSERT_EQ(sourceName, "testSource");
-    ASSERT_EQ(expectedColumns, columns);
-    Schema schema{};
-    for (const auto& [name, type] : columns)
-    {
-        schema.addField(name, type);
-    }
-    const auto logicalSourceOpt = sourceCatalog->addLogicalSource(sourceName, schema);
-    ASSERT_TRUE(logicalSourceOpt.has_value());
-    const auto logicalSource = logicalSourceOpt.value();
+    expectedSchema.addField("attribute1", DataTypeProvider::provideBasicType(BasicType::UINT32));
+    expectedSchema.addField("attribute2", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
+    ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
+    ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 
     const std::string createPhysicalSourceStatement
-        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE file SET ('LOCAL' as SOURCE.LOCATION, -1 as SOURCE.POOL_BUFFERS, '/dev/null' AS SOURCE.FILE_PATH, 'CSV' AS PARSER.TYPE, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
+        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE file SET ('LOCAL' as `SOURCE`.LOCATION, -1 as `SOURCE`.POOL_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBind(createPhysicalSourceStatement);
     const Sources::ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\\n", .fieldDelimiter = ","};
     std::unordered_map<std::string, std::string> unvalidatedConfig{{"type", "file"}, {"filePath", "/dev/null"}};
@@ -97,7 +92,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_TRUE(std::holds_alternative<Binder::CreatePhysicalSourceStatement>(statement2));
     const auto [created] = std::get<Binder::CreatePhysicalSourceStatement>(statement2);
     const auto physicalSource = created.value();
-    ASSERT_EQ(physicalSource.getLogicalSource(), logicalSource);
+    ASSERT_EQ(physicalSource.getLogicalSource(), actualSource);
     ASSERT_EQ(physicalSource.getWorkerId(), INITIAL<WorkerId>);
     ASSERT_EQ(physicalSource.getParserConfig(), expectedParserConfig);
     ASSERT_EQ(physicalSource.getBuffersInLocalPool(), -1);

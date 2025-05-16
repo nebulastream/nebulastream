@@ -42,6 +42,17 @@ StatementBinder::StatementBinder(
 {
 }
 
+std::string bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier)
+{
+    if (auto unquotedIdentifier = dynamic_cast<AntlrSQLParser::IdentifierContext*>(strictIdentifier))
+    {
+        return unquotedIdentifier->getText();
+    } else if (auto quotedIdentifier = dynamic_cast<AntlrSQLParser::QuotedIdentifierContext*>(strictIdentifier))
+    {
+        return quotedIdentifier->BACKQUOTED_IDENTIFIER()
+    }
+}
+
 Statement StatementBinder::bind(AntlrSQLParser::StatementContext* statementAST)
 {
     if (statementAST->query() != nullptr)
@@ -96,13 +107,13 @@ Statement StatementBinder::bind(AntlrSQLParser::StatementContext* statementAST)
             for (auto* options = physicalSourceDefAST->options; const auto& option : options->namedConfigExpression())
             {
                 /// TODO use identifer list logic from #764
-                if (option->name->ident.size() != 2)
+                if (option->name->strictIdentifier().size() != 2)
                 {
                     throw InvalidConfigParameter("{}", option->name->getText());
                 }
-                if (option->name->ident.at(0)->identifier()->getText() == "SOURCE")
+                if (option->name->strictIdentifier().at(0)->getText() == "SOURCE")
                 {
-                    auto optionName = option->name->ident.at(1)->identifier()->getText();
+                    auto optionName = option->name->strictIdentifier().at(1)->getText();
                     if (optionName == "BUFFERS_IN_LOCAL_POOL")
                     {
                         optionName = "buffersInLocalPool";

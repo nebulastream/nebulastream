@@ -50,7 +50,7 @@ createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefini
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
                                 TYPE type=identifier
-                                (SET options=namedConfigExpressionSeq)?;
+                                (SET '(' options=namedConfigExpressionSeq ')')?;
 
 createSinkDefinition: SINK sinkName=identifier schemaDefinition;
 
@@ -148,7 +148,7 @@ multipartIdentifier
     : parts+=errorCapturingIdentifier ('.' parts+=errorCapturingIdentifier)*
     ;
 
-namedConfigExpression: constant AS name=identifierSeq;
+namedConfigExpression: constant AS name=identifierChain;
 
 namedExpression
     : expression AS name=identifier
@@ -168,6 +168,8 @@ quotedIdentifier
 BACKQUOTED_IDENTIFIER
     : '`' ( ~'`' | '``' )* '`'
     ;
+
+identifierChain: strictIdentifier ('.' strictIdentifier)*;
 
 identifierList
     : '(' identifierSeq ')'
