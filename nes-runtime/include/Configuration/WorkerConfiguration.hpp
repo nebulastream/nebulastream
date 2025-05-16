@@ -18,11 +18,12 @@
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
+#include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Configurations/WrapOption.hpp>
-#include <QueryCompiler/Configurations/QueryCompilerConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 
 namespace NES::Configurations
@@ -42,7 +43,7 @@ public:
     EnumOption<LogLevel> logLevel
         = {"logLevel", LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
-    Runtime::QueryEngineConfiguration queryEngineConfiguration = {"queryEngine", "Query Engine Configuration"};
+    QueryEngineConfiguration queryEngineConfiguration = {"queryEngine", "Query Engine Configuration"};
 
     /// The number of buffers in the global buffer manager. Controls how much memory is consumed by the system.
     UIntOption numberOfBuffersInGlobalBufferManager
@@ -62,11 +63,11 @@ public:
     /// Configures the buffer size of individual TupleBuffers in bytes. This property has to be the same over a whole deployment.
     UIntOption bufferSizeInBytes = {"bufferSizeInBytes", "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
 
-    QueryCompilation::Configurations::QueryCompilerConfiguration queryCompiler = {"queryCompiler", "Configuration for the query compiler"};
+    QueryOptimizerConfiguration queryOptimizer = {"queryOptimizer", "Configuration for the query optimizer"};
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
 private:
-    std::vector<Configurations::BaseOption*> getOptions() override
+    std::vector<NES::Configurations::BaseOption*> getOptions() override
     {
         return {
             &localWorkerHost,
@@ -77,8 +78,7 @@ private:
             &numberOfBuffersInSourceLocalBufferPool,
             &bufferSizeInBytes,
             &logLevel,
-            &queryCompiler,
-            &configPath,
+            &queryOptimizer,
         };
     }
 };
