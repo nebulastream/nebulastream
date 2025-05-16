@@ -46,7 +46,7 @@ Timestamp MultiOriginWatermarkProcessor::updateWatermark(const Timestamp ts, con
             {
                 const auto now = std::chrono::high_resolution_clock::now();
                 const auto ingestionTimeTicks
-                    = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
+                    = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
 
                 const auto seqNumbersIngestionTimeLocked = seqNumbersIngestionTime.wlock();
                 (*seqNumbersIngestionTimeLocked)[{origin, SequenceNumber(sequenceData.sequenceNumber)}] = ingestionTimeTicks;

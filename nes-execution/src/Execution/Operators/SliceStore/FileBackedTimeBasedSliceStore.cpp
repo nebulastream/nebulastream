@@ -349,7 +349,7 @@ std::vector<std::tuple<std::shared_ptr<Slice>, DiskOperation, FileLayout>> FileB
         const auto stateSizeInMemory = nljSlice->getStateSizeInMemoryForThreadId(memoryLayout, joinBuildSide, threadId);
 
         const auto now = std::chrono::high_resolution_clock::now();
-        const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
+        const auto timeNow = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
 
         if (stateSizeOnDisk > USE_MIN_STATE_SIZE_READ
             && AbstractWatermarkPredictor::getMinPredictedWatermarkForTimestamp(
@@ -448,11 +448,11 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         const auto read = std::chrono::high_resolution_clock::now();
 
         const auto startTicks
-            = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(start.time_since_epoch()).count());
+            = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(start.time_since_epoch()).count());
         const auto writeTicks
-            = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(write.time_since_epoch()).count());
+            = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(write.time_since_epoch()).count());
         const auto readTicks
-            = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(read.time_since_epoch()).count());
+            = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(read.time_since_epoch()).count());
 
         const auto writeExecTime = writeTicks - startTicks;
         sumXWrite += dataSize;
