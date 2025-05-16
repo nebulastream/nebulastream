@@ -19,5 +19,5 @@
 
 namespace NES::LowerToPhysicalOperators
 {
-PhysicalPlan apply(LogicalPlan queryPlan, NES::Configurations::QueryOptimizerConfiguration conf);
+PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::QueryOptimizerConfiguration& conf);
 }

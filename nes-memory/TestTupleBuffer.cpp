@@ -128,7 +128,7 @@ std::string DynamicTuple::toString(const Schema& schema) const
     std::stringstream ss;
     for (uint32_t i = 0; i < schema.getFieldCount(); ++i)
     {
-        const auto fieldEnding = (i < schema.getFieldCount() - 1) ? "|" : "";
+        const auto* const fieldEnding = (i < schema.getFieldCount() - 1) ? "|" : "";
         const auto dataType = schema.getFieldByIndex(i).getDataType();
         DynamicField currentField = this->operator[](i);
         if (nullptr != dynamic_cast<const VariableSizedDataType*>(dataType.get()))
@@ -174,7 +174,7 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
         auto thisDynamicField = (*this)[field.getName()];
         auto otherDynamicField = other[field.getName()];
 
-        if (dynamic_cast<VariableSizedDataType*>(field.getDataType().get()))
+        if (dynamic_cast<VariableSizedDataType*>(field.getDataType().get()) != nullptr)
         {
             const auto thisString = readVarSizedData(buffer, thisDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
             const auto otherString = readVarSizedData(other.buffer, otherDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
@@ -250,7 +250,7 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
     return {tupleIndex, memoryLayout, buffer};
 }
 
-TestTupleBuffer::TestTupleBuffer(std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer)
+TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, const Memory::TupleBuffer& buffer)
     : memoryLayout(memoryLayout), buffer(buffer)
 {
     PRECONDITION(
@@ -318,7 +318,7 @@ std::string TestTupleBuffer::toString(const Schema& schema, PrintMode printMode)
     while (tupleIterator != this->end())
     {
         str << std::endl;
-        DynamicTuple dynamicTuple = (*tupleIterator);
+        const DynamicTuple dynamicTuple = (*tupleIterator);
         str << dynamicTuple.toString(schema);
         ++tupleIterator;
     }
@@ -386,7 +386,7 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(const Memory::TupleBuffer
         auto memoryLayout = std::make_shared<RowLayout>(schema, buffer.getBufferSize());
         return TestTupleBuffer(std::move(memoryLayout), buffer);
     }
-    else if (schema.getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    if (schema.getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto memoryLayout = std::make_shared<ColumnLayout>(schema, buffer.getBufferSize());
         return TestTupleBuffer(std::move(memoryLayout), buffer);

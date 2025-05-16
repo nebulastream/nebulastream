@@ -21,6 +21,7 @@
 #include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -94,11 +95,11 @@ public:
 
     void addWhereClause(LogicalFunction expressionNode);
     void addHavingClause(LogicalFunction expressionNode);
-    void addProjectionField(FieldAccessLogicalFunction expressionNode);
+    void addProjectionField(const FieldAccessLogicalFunction& expressionNode);
     [[nodiscard]] static std::shared_ptr<Windowing::WindowType> getWindowType();
     void setSource(std::string sourceName);
     const std::string getSource() const;
-    void addMapExpression(FieldAssignmentLogicalFunction expressionNode);
+    void addMapExpression(const FieldAssignmentLogicalFunction& expressionNode);
     void setMapExpressions(std::vector<FieldAssignmentLogicalFunction> expressions);
 };
 }

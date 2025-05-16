@@ -14,8 +14,11 @@
 
 #pragma once
 
+#include <memory>
+#include <optional>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryTerminationType.hpp>

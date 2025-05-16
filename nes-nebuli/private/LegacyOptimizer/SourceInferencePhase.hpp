@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 
@@ -24,7 +25,10 @@ namespace NES::LegacyOptimizer
 class SourceInferencePhase
 {
 public:
-    SourceInferencePhase(std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog) : sourceCatalog(sourceCatalog) { }
+    explicit SourceInferencePhase(std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog)
+        : sourceCatalog(std::move(std::move(sourceCatalog)))
+    {
+    }
 
     /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
     /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed

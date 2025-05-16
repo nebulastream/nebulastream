@@ -14,8 +14,9 @@
 
 #pragma once
 
+#include <utility>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 
 namespace NES
@@ -23,7 +24,7 @@ namespace NES
 
 struct LowerToPhysicalSource : AbstractRewriteRule
 {
-    LowerToPhysicalSource(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
+    explicit LowerToPhysicalSource(NES::Configurations::QueryOptimizerConfiguration conf) : conf(std::move(conf)) { }
     RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:

@@ -13,10 +13,14 @@
 */
 #pragma once
 
+#include <memory>
+#include <ostream>
+#include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/NautilusBackend.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/ExecutionMode.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <PhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
 #include <SourcePhysicalOperator.hpp>
@@ -28,19 +32,19 @@ PipelineId getNextPipelineId();
 
 /// @brief Defines a single pipeline, which contains of a query plan of operators.
 /// Each pipeline can have N successor and predecessor pipelines.
-/// We make use of shared_ptr reference counting of Pipelines to track the lifetime of query plans
+/// We make use of shared_ptr reference counting of Pipelines to track the lifetime const of query plans
 struct Pipeline
 {
     explicit Pipeline(PhysicalOperator op);
-    explicit Pipeline(SourcePhysicalOperator op);
-    explicit Pipeline(SinkPhysicalOperator op);
+    explicit Pipeline(const SourcePhysicalOperator& op);
+    explicit Pipeline(const SinkPhysicalOperator& op);
     Pipeline() = delete;
 
     [[nodiscard]] bool isSourcePipeline() const;
     [[nodiscard]] bool isOperatorPipeline() const;
     [[nodiscard]] bool isSinkPipeline() const;
 
-    void appendOperator(PhysicalOperator newOp);
+    void appendOperator(const PhysicalOperator& newOp);
     void prependOperator(PhysicalOperator newOp);
 
     friend std::ostream& operator<<(std::ostream& os, const Pipeline& p);

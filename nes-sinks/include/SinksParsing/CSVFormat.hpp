@@ -41,7 +41,7 @@ public:
         std::vector<std::variant<std::shared_ptr<VariableSizedDataPhysicalType>, std::shared_ptr<BasicPhysicalType>>> physicalTypes;
     };
 
-    explicit CSVFormat(const Schema& schema);
+    explicit CSVFormat(Schema schema);
     virtual ~CSVFormat() noexcept = default;
 
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.

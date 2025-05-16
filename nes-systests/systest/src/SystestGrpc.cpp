@@ -13,6 +13,8 @@
 */
 
 
+#include <cstddef>
+#include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <grpcpp/channel.h>

@@ -12,20 +12,18 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
+#include <vector>
 #include <API/Schema.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::LegacyOptimizer
 {
 
-LogicalOperator propagateSchema(const LogicalOperator& op)
+static LogicalOperator propagateSchema(const LogicalOperator& op)
 {
-    std::vector<LogicalOperator> children = op.getChildren();
+    const std::vector<LogicalOperator> children = op.getChildren();
 
     if (children.empty())
     {
@@ -36,21 +34,21 @@ LogicalOperator propagateSchema(const LogicalOperator& op)
     std::vector<Schema> childSchemas;
     for (const auto& child : children)
     {
-        LogicalOperator childWithSchema = propagateSchema(child);
+        const LogicalOperator childWithSchema = propagateSchema(child);
         childSchemas.push_back(childWithSchema.getOutputSchema());
         newChildren.push_back(childWithSchema);
     }
 
-    LogicalOperator updatedOperator = op.withChildren(newChildren);
+    const LogicalOperator updatedOperator = op.withChildren(newChildren);
     return updatedOperator.withInferredSchema(childSchemas);
 }
 
-void TypeInferencePhase::apply(LogicalPlan& queryPlan) const
+void TypeInferencePhase::apply(LogicalPlan& queryPlan)
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& sink : queryPlan.rootOperators)
     {
-        LogicalOperator inferredRoot = propagateSchema(sink);
+        const LogicalOperator inferredRoot = propagateSchema(sink);
         newRoots.push_back(inferredRoot);
     }
     queryPlan.rootOperators = newRoots;

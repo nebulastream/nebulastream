@@ -21,6 +21,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES::Sinks
 {

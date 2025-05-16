@@ -34,11 +34,12 @@
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/NautilusBackend.hpp>
+
 #include <Nautilus/Util.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
+#include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
 #include <nautilus/Engine.hpp>

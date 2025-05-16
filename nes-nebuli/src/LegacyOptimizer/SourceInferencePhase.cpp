@@ -16,10 +16,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::LegacyOptimizer

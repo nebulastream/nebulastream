@@ -13,13 +13,14 @@
 */
 
 #include <memory>
-#include <Functions/FunctionProvider.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalIngestionTimeWatermarkAssigner.hpp>
 #include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <MapPhysicalOperator.hpp>
+#include <ErrorHandling.hpp>
+#include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 
 namespace NES
@@ -34,11 +35,11 @@ RewriteRuleResultSubgraph LowerToPhysicalIngestionTimeWatermarkAssigner::apply(L
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);
-    return {wrapper, {leafes}};
+    return {.root = wrapper, .leafs = {leafes}};
 }
 
 std::unique_ptr<AbstractRewriteRule>
-RewriteRuleGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerRewriteRule(RewriteRuleRegistryArguments argument)
+RewriteRuleGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalIngestionTimeWatermarkAssigner>(argument.conf);
 }

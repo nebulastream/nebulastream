@@ -50,7 +50,8 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto& fieldValue = field.value();
         auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue.getDataType());
         const auto fieldSize = physicalType->size();
-        fieldsKey.emplace_back(FieldOffsets{fieldValue.getName(), std::move(physicalType), offset});
+        fieldsKey.emplace_back(
+            FieldOffsets{.fieldIdentifier = fieldValue.getName(), .type = std::move(physicalType), .fieldOffset = offset});
         offset += fieldSize;
     }
 
@@ -61,7 +62,8 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto& fieldValue = field.value();
         auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue.getDataType());
         const auto fieldSize = physicalType->size();
-        fieldsValue.emplace_back(FieldOffsets{fieldValue.getName(), std::move(physicalType), offset});
+        fieldsValue.emplace_back(
+            FieldOffsets{.fieldIdentifier = fieldValue.getName(), .type = std::move(physicalType), .fieldOffset = offset});
         offset += fieldSize;
     }
     return {fieldsKey, fieldsValue};

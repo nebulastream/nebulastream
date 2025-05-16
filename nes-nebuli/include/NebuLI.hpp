@@ -15,6 +15,7 @@
 #pragma once
 
 #include <filesystem>
+#include <istream>
 #include <memory>
 #include <string>
 #include <unordered_map>

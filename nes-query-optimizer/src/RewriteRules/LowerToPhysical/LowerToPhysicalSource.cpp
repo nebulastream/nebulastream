@@ -13,9 +13,7 @@
 */
 
 #include <memory>
-#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSource.hpp>
@@ -42,11 +40,12 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     const auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(
         inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
-    const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema());
-    return {wrapper, {}};
+    const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+        physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineEndpoint::None);
+    return {.root = wrapper, .leafs = {}};
 }
 
-RewriteRuleRegistryReturnType RewriteRuleGeneratedRegistrar::RegisterSourceRewriteRule(RewriteRuleRegistryArguments argument)
+RewriteRuleRegistryReturnType RewriteRuleGeneratedRegistrar::RegisterSourceRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalSource>(argument.conf);
 }

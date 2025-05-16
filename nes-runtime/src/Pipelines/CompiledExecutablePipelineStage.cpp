@@ -16,15 +16,19 @@
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
+#include <Pipeline.hpp>
 
 namespace NES
 {

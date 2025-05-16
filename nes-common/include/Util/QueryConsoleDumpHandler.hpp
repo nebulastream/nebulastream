@@ -15,26 +15,24 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
 #include <iostream>
-#include <vector>
+#include <memory>
+#include <string>
+#include <type_traits>
 #include <Util/PlanRenderer.hpp>
 
-namespace
-{
 template <typename T>
-struct is_shared_ptr : std::false_type
+struct IsSharedPtr : std::false_type
 {
 };
 
 template <typename T>
-struct is_shared_ptr<std::shared_ptr<T>> : std::true_type
+struct IsSharedPtr<std::shared_ptr<T>> : std::true_type
 {
 };
 
 template <typename T>
-constexpr bool is_shared_ptr_v = is_shared_ptr<T>::value;
-}
+constexpr bool is_shared_ptr_v = IsSharedPtr<T>::value;
 
 namespace NES
 {
@@ -43,7 +41,7 @@ template <typename Plan, typename Operator>
 class QueryConsoleDumpHandler
 {
 public:
-    explicit QueryConsoleDumpHandler(std::ostream& out, bool multiline = false) : out(out), multiline(multiline) { }
+    explicit QueryConsoleDumpHandler(std::ostream& out, bool multiline) : out(out), multiline(multiline) { }
 
     void dump(const Operator& node) { dumpRecursive(node, 0, out, multiline); }
 

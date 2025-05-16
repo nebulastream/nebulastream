@@ -12,11 +12,20 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <ostream>
 #include <ranges>
 #include <sstream>
+#include <string>
+#include <type_traits>
 #include <variant>
 #include <Configurations/Descriptor.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
+#include <fmt/format.h>
+#include <google/protobuf/json/json.h>
+#include <ErrorHandling.hpp>
+#include <ProtobufHelper.hpp> /// NOLINT
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES::Configurations
 {
@@ -34,23 +43,41 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurati
             /// Remove const, volatile, and reference to simplify type matching
             using U = std::remove_cvref_t<T>;
             if constexpr (std::is_same_v<U, int32_t>)
+            {
                 protoVar.set_int_value(arg);
+            }
             else if constexpr (std::is_same_v<U, uint32_t>)
+            {
                 protoVar.set_uint_value(arg);
+            }
             else if constexpr (std::is_same_v<U, int64_t>)
+            {
                 protoVar.set_long_value(arg);
+            }
             else if constexpr (std::is_same_v<U, uint64_t>)
+            {
                 protoVar.set_ulong_value(arg);
+            }
             else if constexpr (std::is_same_v<U, bool>)
+            {
                 protoVar.set_bool_value(arg);
+            }
             else if constexpr (std::is_same_v<U, char>)
+            {
                 protoVar.set_char_value(arg);
+            }
             else if constexpr (std::is_same_v<U, float>)
+            {
                 protoVar.set_float_value(arg);
+            }
             else if constexpr (std::is_same_v<U, double>)
+            {
                 protoVar.set_double_value(arg);
+            }
             else if constexpr (std::is_same_v<U, std::string>)
+            {
                 protoVar.set_string_value(arg);
+            }
             else if constexpr (std::is_same_v<U, Configurations::EnumWrapper>)
             {
                 protoVar.mutable_enum_value()->set_value(arg.getValue());
@@ -76,41 +103,40 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const NES::Configurati
     return protoVar;
 }
 
-Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& proto_var)
+Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& protoVar)
 {
-    switch (proto_var.value_case())
+    switch (protoVar.value_case())
     {
         case SerializableVariantDescriptor::kIntValue:
-            return proto_var.int_value();
+            return protoVar.int_value();
         case SerializableVariantDescriptor::kUintValue:
-            return proto_var.uint_value();
+            return protoVar.uint_value();
         case SerializableVariantDescriptor::kLongValue:
-            return proto_var.long_value();
+            return protoVar.long_value();
         case SerializableVariantDescriptor::kUlongValue:
-            return proto_var.ulong_value();
+            return protoVar.ulong_value();
         case SerializableVariantDescriptor::kBoolValue:
-            return proto_var.bool_value();
+            return protoVar.bool_value();
         case SerializableVariantDescriptor::kCharValue:
-            return static_cast<char>(proto_var.char_value()); /// Convert (fixed32) ascii number to char.
+            return static_cast<char>(protoVar.char_value()); /// Convert (fixed32) ascii number to char.
         case SerializableVariantDescriptor::kFloatValue:
-            return proto_var.float_value();
+            return protoVar.float_value();
         case SerializableVariantDescriptor::kDoubleValue:
-            return proto_var.double_value();
+            return protoVar.double_value();
         case SerializableVariantDescriptor::kStringValue:
-            return proto_var.string_value();
+            return protoVar.string_value();
         case SerializableVariantDescriptor::kEnumValue:
-            return Configurations::EnumWrapper(proto_var.enum_value().value());
+            return Configurations::EnumWrapper(protoVar.enum_value().value());
         case SerializableVariantDescriptor::kFunctionList:
-            return proto_var.function_list();
+            return protoVar.function_list();
         case SerializableVariantDescriptor::kAggregationFunctionList:
-            return proto_var.aggregation_function_list();
+            return protoVar.aggregation_function_list();
         case SerializableVariantDescriptor::kWindowInfos:
-            return proto_var.window_infos();
+            return protoVar.window_infos();
         default:
             std::string protoVarAsJson;
             /// Log proto variable as json, in exception, if possible.
-            if (const auto conversionResult = google::protobuf::json::MessageToJsonString(proto_var, &protoVarAsJson);
-                conversionResult.ok())
+            if (const auto conversionResult = google::protobuf::json::MessageToJsonString(protoVar, &protoVarAsJson); conversionResult.ok())
             {
                 throw CannotSerialize(fmt::format("Unknown variant type: {}", protoVarAsJson));
             }

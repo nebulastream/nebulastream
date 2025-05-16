@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <fstream>
+#include <iostream>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <argparse/argparse.hpp>
@@ -20,6 +22,7 @@
 #include <google/protobuf/text_format.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
+#include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
@@ -34,7 +37,7 @@ public:
     explicit GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel)) { }
     std::unique_ptr<WorkerRPCService::Stub> stub;
 
-    size_t registerQuery(const NES::LogicalPlan& plan) const
+    [[nodiscard]] size_t registerQuery(const NES::LogicalPlan& plan) const
     {
         grpc::ClientContext context;
         RegisterQueryReply reply;

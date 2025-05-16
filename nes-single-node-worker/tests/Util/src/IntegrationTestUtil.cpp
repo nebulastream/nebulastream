@@ -18,6 +18,7 @@
 #include <fstream>
 #include <memory>
 #include <thread>
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -32,10 +33,15 @@
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 
+#include <Configurations/Descriptor.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <SerializableQueryPlan.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -144,7 +150,7 @@ void writeFieldValueToTupleBuffer(
     /// TODO #371 replace with csv parsing library
     try
     {
-        if (auto basicPhysicalType = dynamic_cast<BasicPhysicalType*>(physicalType.get()))
+        if (auto* basicPhysicalType = dynamic_cast<BasicPhysicalType*>(physicalType.get()))
         {
             switch (basicPhysicalType->nativeType)
             {
@@ -210,7 +216,7 @@ void writeFieldValueToTupleBuffer(
                     NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
         }
-        else if (dynamic_cast<VariableSizedDataPhysicalType*>(physicalType.get()))
+        else if (dynamic_cast<VariableSizedDataPhysicalType*>(physicalType.get()) != nullptr)
         {
             NES_TRACE(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
@@ -232,8 +238,8 @@ void writeFieldValueToTupleBuffer(
 Schema loadSinkSchema(SerializableQueryPlan& queryPlan)
 {
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
-    const auto rootoperator_id = queryPlan.mutable_rootoperatorids()->at(0);
-    auto& rootOperator = queryPlan.mutable_operatormap()->at(rootoperator_id);
+    const auto rootoperatorId = queryPlan.mutable_rootoperatorids()->at(0);
+    auto& rootOperator = queryPlan.mutable_operatormap()->at(rootoperatorId);
     EXPECT_TRUE(rootOperator.has_sink()) << "Redirection expects the single root operator to be a sink operator";
     return SchemaSerializationUtil::deserializeSchema(rootOperator.sink().sinkdescriptor().sinkschema());
 }
@@ -421,8 +427,8 @@ bool loadFile(SerializableQueryPlan& queryPlan, const std::string_view queryFile
 void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::string& filePathNew)
 {
     EXPECT_EQ(decomposedQueryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
-    const auto rootoperator_id = decomposedQueryPlan.mutable_rootoperatorids()->at(0);
-    auto& rootOperator = decomposedQueryPlan.mutable_operatormap()->at(rootoperator_id);
+    const auto rootoperatorId = decomposedQueryPlan.mutable_rootoperatorids()->at(0);
+    auto& rootOperator = decomposedQueryPlan.mutable_operatormap()->at(rootoperatorId);
 
     EXPECT_TRUE(rootOperator.has_sink()) << "Redirection expects the single root operator to be a sink operator";
     const auto deserializedSinkOperator = OperatorSerializationUtil::deserializeOperator(rootOperator).get<SinkLogicalOperator>();
@@ -448,7 +454,7 @@ void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::
     }
 }
 
-void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, std::string newInputFileName)
+void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, const std::string& newInputFileName)
 {
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {

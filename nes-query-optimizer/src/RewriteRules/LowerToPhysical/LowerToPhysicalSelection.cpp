@@ -14,9 +14,11 @@
 
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
+#include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SelectionPhysicalOperator.hpp>
@@ -32,14 +34,18 @@ RewriteRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logica
     auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto physicalOperator = SelectionPhysicalOperator(func);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+        physicalOperator,
+        logicalOperator.getInputSchemas()[0],
+        logicalOperator.getOutputSchema(),
+        PhysicalOperatorWrapper::PipelineEndpoint::None);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);
-    return {wrapper, {leafes}};
+    return {.root = wrapper, .leafs = {leafes}};
 };
 
-std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSelectionRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<AbstractRewriteRule>
+RewriteRuleGeneratedRegistrar::RegisterSelectionRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalSelection>(argument.conf);
 }

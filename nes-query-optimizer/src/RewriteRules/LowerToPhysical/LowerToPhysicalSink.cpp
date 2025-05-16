@@ -17,6 +17,8 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalSink.hpp>
+#include <ErrorHandling.hpp>
+#include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <SinkPhysicalOperator.hpp>
 
@@ -28,14 +30,17 @@ RewriteRuleResultSubgraph LowerToPhysicalSink::apply(LogicalOperator logicalOper
     PRECONDITION(logicalOperator.tryGet<SinkLogicalOperator>(), "Expected a SinkLogicalOperator");
     auto sink = logicalOperator.get<SinkLogicalOperator>();
     auto physicalOperator = SinkPhysicalOperator(sink.sinkDescriptor);
-    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema());
+    auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
+        physicalOperator, sink.getInputSchemas()[0], sink.getOutputSchema(), PhysicalOperatorWrapper::PipelineEndpoint::None);
+    ;
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);
-    return {wrapper, {leafes}};
+    return {.root = wrapper, .leafs = {leafes}};
 }
 
-std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterSinkRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<AbstractRewriteRule>
+RewriteRuleGeneratedRegistrar::RegisterSinkRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalSink>(argument.conf);
 }

@@ -64,7 +64,7 @@ uint64_t MemoryLayout::getFieldSize(const uint64_t fieldIndex) const
     return physicalFieldSizes[fieldIndex];
 }
 
-MemoryLayout::MemoryLayout(const uint64_t bufferSize, const Schema& schema) : bufferSize(bufferSize), schema(schema), recordSize(0)
+MemoryLayout::MemoryLayout(const uint64_t bufferSize, Schema schema) : bufferSize(bufferSize), schema(std::move(schema)), recordSize(0)
 {
     for (size_t fieldIndex = 0; fieldIndex < this->schema.getFieldCount(); fieldIndex++)
     {

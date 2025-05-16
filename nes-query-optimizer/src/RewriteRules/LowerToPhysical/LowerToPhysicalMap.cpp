@@ -14,10 +14,13 @@
 
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalMap.hpp>
+#include <ErrorHandling.hpp>
 #include <MapPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 
 namespace NES
@@ -32,14 +35,17 @@ RewriteRuleResultSubgraph LowerToPhysicalMap::apply(LogicalOperator logicalOpera
     auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(function);
     auto physicalOperator = MapPhysicalOperator(fieldName, physicalFunction);
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, logicalOperator.getInputSchemas()[0], logicalOperator.getOutputSchema());
+        physicalOperator,
+        logicalOperator.getInputSchemas()[0],
+        logicalOperator.getOutputSchema(),
+        PhysicalOperatorWrapper::PipelineEndpoint::None);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);
-    return {wrapper, {leafes}};
+    return {.root = wrapper, .leafs = {leafes}};
 }
 
-std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterMapRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalMap>(argument.conf);
 }

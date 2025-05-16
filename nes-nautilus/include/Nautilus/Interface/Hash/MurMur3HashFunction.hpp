@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 

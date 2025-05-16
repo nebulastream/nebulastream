@@ -15,8 +15,6 @@
 #pragma once
 
 #include <iostream>
-#include <string>
-#include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
