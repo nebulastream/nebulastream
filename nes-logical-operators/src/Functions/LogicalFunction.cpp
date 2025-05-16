@@ -21,68 +21,6 @@
 namespace NES
 {
 
-NullLogicalFunction::NullLogicalFunction()
-{
-}
-
-std::string NullLogicalFunction::explain(ExplainVerbosity) const
-{
-    PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
-    return "";
-}
-
-std::shared_ptr<DataType> NullLogicalFunction::getDataType() const
-{
-    PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
-    return nullptr;
-}
-
-LogicalFunction NullLogicalFunction::withDataType(std::shared_ptr<DataType>) const
-{
-    PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
-    return *this;
-}
-
-LogicalFunction NullLogicalFunction::withInferredDataType(const Schema&) const
-{
-    PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
-    return *this;
-}
-
-std::vector<LogicalFunction> NullLogicalFunction::getChildren() const
-{
-    PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
-    return {};
-}
-
-LogicalFunction NullLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
-{
-    PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
-    return *this;
-}
-
-std::string_view NullLogicalFunction::getType() const
-{
-    PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
-    return "";
-}
-
-SerializableFunction NullLogicalFunction::serialize() const
-{
-    PRECONDITION(false, "Calls in NullLogicalFunction are undefined");
-    return SerializableFunction();
-}
-
-bool NullLogicalFunction::operator==(const NullLogicalFunction&) const
-{
-    return false;
-}
-
-bool NullLogicalFunction::operator==(const LogicalFunctionConcept&) const
-{
-    return false;
-}
-
 LogicalFunction& LogicalFunction::operator=(const LogicalFunction& other)
 {
     if (this != &other)
@@ -97,7 +35,7 @@ bool LogicalFunction::operator==(const LogicalFunction& other) const
     return self->equals(*other.self);
 }
 
-LogicalFunction::LogicalFunction() : self(std::make_unique<Model<NullLogicalFunction>>(NullLogicalFunction{}))
+LogicalFunction::LogicalFunction() : self(nullptr)
 {
 }
 

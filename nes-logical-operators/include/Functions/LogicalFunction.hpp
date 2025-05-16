@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -49,32 +50,6 @@ struct LogicalFunctionConcept
     [[nodiscard]] virtual SerializableFunction serialize() const = 0;
 
     [[nodiscard]] virtual bool operator==(const LogicalFunctionConcept& rhs) const = 0;
-};
-
-/// @brief Null implementation of the LogicalFunctionConcept.
-///
-/// This class serves as a placeholder or default implementation of a logical function.
-/// All operations in this class are undefined and will trigger a runtime precondition failure
-/// if invoked. It is intended solely as a safe default for data structures such as hashmaps
-/// or error state and should not be used for actual logical function implementations.
-class NullLogicalFunction : public LogicalFunctionConcept
-{
-public:
-    NullLogicalFunction();
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
-
-    [[nodiscard]] std::shared_ptr<DataType> getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(std::shared_ptr<DataType>) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
-
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>&) const override;
-
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] SerializableFunction serialize() const override;
-
-    [[nodiscard]] bool operator==(const NullLogicalFunction&) const;
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept&) const override;
 };
 
 /// A type-erased wrapper for logical functions.

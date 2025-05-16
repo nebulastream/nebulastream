@@ -24,6 +24,7 @@
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
@@ -61,7 +62,7 @@ std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
         return fmt::format(
             "Join({}-{}, windowType = {}, joinFunction = {}, windowStartField={}, windowEndField={})",
             id,
-            outputOriginIds,
+            fmt::join(outputOriginIds, ", "),
             getWindowType()->toString(),
             getJoinFunction().explain(verbosity),
             windowMetaData.windowStartFieldName,
