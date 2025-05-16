@@ -81,7 +81,7 @@ void WrapOption<Type, Factory>::parseFromYAMLNode(YAML::Node node)
 
 template <class Type, class Factory>
 requires IsFactory<Type, Factory>
-std::string Configurations::WrapOption<Type, Factory>::toString()
+std::string NES::Configurations::WrapOption<Type, Factory>::toString()
 {
     return "";
 }
