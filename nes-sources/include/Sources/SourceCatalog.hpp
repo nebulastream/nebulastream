@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <any>
 #include <atomic>
 #include <mutex>
 #include <optional>
@@ -58,10 +59,9 @@ public:
     /// @return nullopt if the logical source is not registered anymore, else a source descriptor with an assigned id
     [[nodiscard]] std::optional<Sources::SourceDescriptor> addPhysicalSource(
         const LogicalSource& logicalSource,
-        WorkerId workerId,
         std::string sourceType,
-        int buffersInLocalPool,
-        Configurations::DescriptorConfig::Config&& descriptorConfig,
+        WorkerId workerId,
+        const std::unordered_map<std::string, std::string>& sourceConfig,
         const Sources::ParserConfig& parserConfig);
 
     /// @brief removes a physical source

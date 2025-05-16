@@ -29,6 +29,8 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
+#include "Sources/SourceProvider.hpp"
+#include "Sources/SourceValidationProvider.hpp"
 
 #include <Configurations/Descriptor.hpp>
 #include <ErrorHandling.hpp>
@@ -55,10 +57,9 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
 
 std::optional<Sources::SourceDescriptor> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
-    WorkerId workerId,
     std::string sourceType,
-    const int buffersInLocalPool,
-    Configurations::DescriptorConfig::Config&& descriptorConfig,
+    WorkerId workerId,
+    const std::unordered_map<std::string, std::string>& sourceConfig,
     const Sources::ParserConfig& parserConfig)
 {
     const std::unique_lock lock(catalogMutex);
@@ -69,11 +70,21 @@ std::optional<Sources::SourceDescriptor> SourceCatalog::addPhysicalSource(
         NES_DEBUG("Trying to create physical source for logical source \"{}\" which does not exist", logicalSource.getLogicalSourceName());
         return std::nullopt;
     }
+    auto buffersInLocalPool = Sources::SourceDescriptor::INVALID_BUFFERS_IN_LOCAL_POOL;
+
+    if (const auto buffersInLocalPoolIter = sourceConfig.find("buffersInLocalPool"); buffersInLocalPoolIter != sourceConfig.end())
+    {
+        buffersInLocalPool = std::stoi(buffersInLocalPoolIter->second);
+    }
+
+    /// Copy for now, until the descriptor configs take const references
+    auto descriptorConfigCopy = sourceConfig;
+    auto validatedConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(descriptorConfigCopy));
 
     NES_TRACE("SourceCatalog: trying to create new physical source of type {} on worker {}", sourceType, workerId);
     auto id = nextPhysicaSourceID.fetch_add(1);
     Sources::SourceDescriptor descriptor{
-        logicalSource, id, workerId, sourceType, buffersInLocalPool, (std::move(descriptorConfig)), parserConfig};
+        logicalSource, id, workerId, sourceType, buffersInLocalPool, std::move(validatedConfig), parserConfig};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
     NES_DEBUG(

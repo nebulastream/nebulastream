@@ -71,8 +71,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const std::string createLogicalSourceStatement = "CREATE LOGICAL SOURCE testSource (attribute1 UINT32, attribute2 VARSIZED)";
     const auto statement1 = binder->parseAndBind(createLogicalSourceStatement);
     ASSERT_TRUE(std::holds_alternative<Binder::CreateLogicalSourceStatement>(statement1));
-    const auto [sourceName, columns] = std::get<Binder::CreateLogicalSourceStatement>(statement1);
-
+    const auto [sourceExp] = std::get<Binder::CreateLogicalSourceStatement>(statement1);
+    ASSERT_TRUE(sourceExp.has_value());
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
     expectedColumns.emplace_back("attribute1", DataTypeProvider::provideBasicType(BasicType::UINT32));
     expectedColumns.emplace_back("attribute2", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
@@ -88,7 +88,7 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const auto logicalSource = logicalSourceOpt.value();
 
     const std::string createPhysicalSourceStatement
-        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE file SET ('LOCAL' as source.location, -1 as source.pool_buffers, '/dev/null' AS source.file_path, 'CSV' AS parser.type, '\n' AS tupleDelimiter, ',' AS PARSER.fieldDelimiter ))";
+        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE file SET ('LOCAL' as SOURCE.LOCATION, -1 as SOURCE.POOL_BUFFERS, '/dev/null' AS SOURCE.FILE_PATH, 'CSV' AS PARSER.TYPE, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBind(createPhysicalSourceStatement);
     const Sources::ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\\n", .fieldDelimiter = ","};
     std::unordered_map<std::string, std::string> unvalidatedConfig{{"type", "file"}, {"filePath", "/dev/null"}};
