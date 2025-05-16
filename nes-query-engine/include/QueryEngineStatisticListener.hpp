@@ -19,7 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 using TaskId = NESStrongType<size_t, struct TaskId_, 0, 1>;
 using ChronoClock = std::chrono::system_clock;
