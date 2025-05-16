@@ -65,7 +65,7 @@ jobs:
       - name: Run clang-tidy-pr-comments action
         if: ${{ github.event_name == 'pull_request' }}
         # requires python3-venv
-        uses: platisd/clang-tidy-pr-comments@v1
+        uses: fwc/clang-tidy-pr-comments@master
         with:
           github_token: ${{ github.token }}
           clang_tidy_fixes: clang-tidy-result/fixes.yml
