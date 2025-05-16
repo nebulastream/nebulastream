@@ -72,33 +72,32 @@ if (NOT CODE_COVERAGE)
             COMMAND systest -n 20 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large --data ${SMALL_DATA} -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.taskQueueSize=100000)
 endif (NOT CODE_COVERAGE)
 
-
-#if (ENABLE_LARGE_TESTS)
-#    set(sliceCaches NONE LRU FIFO SECOND_CHANCE)
-#    set(sortBufferByTimestamps false true)
-#    set(numberOfEntriesSliceCaches 1 1000)
-#    foreach (sortBufferByTimestamp IN LISTS sortBufferByTimestamps)
-#        foreach (sliceCache IN LISTS sliceCaches)
-#            foreach (cacheSize IN LISTS numberOfEntriesSliceCaches)
-#                ExternalData_Add_Test(TEST_DATA_LARGE
-#                        NAME systest_large_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}
-#                        # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
-#                        COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${sliceCache}_${cacheSize} --data ${LARGE_DATA} --groups large -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=200000  --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp})
-#                message(STATUS "Large scale tests enabled for ${sliceCache} ${cacheSize} cache size")
-#            endforeach ()
-#        endforeach ()
-#    endforeach ()
-#endif ()
-# TODO let the systest also run with different params, such as sortBufferByTimestamps, numberOfEntriesSliceCaches, sliceCaches, join variants (NLJ, HJ)
-# We need to create more group names as to only run what we actually want/need. For example, changing the join variant for non-join queries makes no sense
 if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(TEST_DATA_LARGE
             NAME systest_large
             # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
-            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data ${LARGE_DATA} --groups large -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=200000)
+            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale --data ${LARGE_DATA} --groups large -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=2000000)
+
+    set(sliceCaches NONE LRU FIFO SECOND_CHANCE)
+    set(sortBufferByTimestamps false)
+    set(numberOfEntriesSliceCaches 1 1000)
+    set(joinStrategies NESTED_LOOP_JOIN HASH_JOIN)
+    foreach (sortBufferByTimestamp IN LISTS sortBufferByTimestamps)
+        foreach (sliceCache IN LISTS sliceCaches)
+            foreach (cacheSize IN LISTS numberOfEntriesSliceCaches)
+                foreach (joinStrategy IN LISTS joinStrategies)
+                    ExternalData_Add_Test(TEST_DATA_LARGE
+                            NAME systest_large_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy}
+                            COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}_${joinStrategy} --data ${LARGE_DATA} --groups Join -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=2000000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp} --worker.queryCompiler.joinStrategy=${joinStrategy})
+                endforeach ()
+                ExternalData_Add_Test(TEST_DATA_LARGE
+                        NAME systest_large_${sliceCache}_${cacheSize}_${sortBufferByTimestamp}
+                        COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${sliceCache}_${cacheSize}_${sortBufferByTimestamp} --data ${LARGE_DATA} --groups Aggregation -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.queryEngine.numberOfWorkerThreads=4 --worker.numberOfBuffersInGlobalBufferManager=2000000 --worker.queryCompiler.sliceCacheType=${sliceCache} --worker.queryCompiler.numberOfEntriesSliceCache=${cacheSize} --worker.queryCompiler.sortBufferByTimestamp=${sortBufferByTimestamp})
+            endforeach ()
+        endforeach ()
+    endforeach ()
     message(STATUS "Large scale tests enabled")
 endif ()
-
 
 
 if (NOT CODE_COVERAGE)
