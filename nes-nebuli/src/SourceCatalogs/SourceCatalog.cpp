@@ -28,7 +28,7 @@
 namespace NES::Catalogs::Source
 {
 
-bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, std::shared_ptr<Schema> schema)
+bool SourceCatalog::addLogicalSource(const std::string& logicalSourceName, Schema schema)
 {
     std::unique_lock lock(catalogMutex);
     /// check if source already exist
@@ -167,7 +167,7 @@ size_t SourceCatalog::removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId)
     return removedElements;
 }
 
-std::shared_ptr<Schema> SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName)
+Schema SourceCatalog::getSchemaForLogicalSource(const std::string& logicalSourceName)
 {
     std::unique_lock lock(catalogMutex);
     if (logicalSourceNameToSchemaMapping.find(logicalSourceName) == logicalSourceNameToSchemaMapping.end())
@@ -256,7 +256,7 @@ std::vector<std::shared_ptr<SourceCatalogEntry>> SourceCatalog::getPhysicalSourc
     return logicalToPhysicalSourceMapping[logicalSourceName];
 }
 
-std::map<std::string, std::shared_ptr<Schema>> SourceCatalog::getAllLogicalSource()
+std::map<std::string, Schema> SourceCatalog::getAllLogicalSource()
 {
     return logicalSourceNameToSchemaMapping;
 }
@@ -265,11 +265,11 @@ std::map<std::string, std::string> SourceCatalog::getAllLogicalSourceAsString()
 {
     std::unique_lock lock(catalogMutex);
     std::map<std::string, std::string> allLogicalSourceAsString;
-    const std::map<std::string, std::shared_ptr<Schema>> allLogicalSource = getAllLogicalSource();
+    const auto allLogicalSource = getAllLogicalSource();
 
     for (const auto& [name, schema] : allLogicalSource)
     {
-        allLogicalSourceAsString[name] = schema->toString();
+        allLogicalSourceAsString[name] = schema.toString();
     }
     return allLogicalSourceAsString;
 }
@@ -286,7 +286,7 @@ bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, st
         return false;
     }
     NES_TRACE("SourceCatalog: create a new schema object and add to the catalog");
-    logicalSourceNameToSchemaMapping[logicalSourceName] = std::move(schema);
+    logicalSourceNameToSchemaMapping[logicalSourceName] = *schema;
     return true;
 }
 
