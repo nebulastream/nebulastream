@@ -14,7 +14,6 @@
 #include <sstream>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Operator.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 
 namespace NES
@@ -44,11 +43,11 @@ const std::string& PhysicalSource::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescriptor(std::shared_ptr<Schema> schema)
+std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescriptor(Schema schema)
 {
     auto copyOfConfig = sourceDescriptor.config;
     return std::make_unique<Sources::SourceDescriptor>(
-        std::move(schema),
+        schema,
         sourceDescriptor.logicalSourceName,
         sourceDescriptor.sourceType,
         sourceDescriptor.numberOfBuffersInSourceLocalBufferPool,
