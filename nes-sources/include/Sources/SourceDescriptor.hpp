@@ -33,7 +33,7 @@ struct ParserConfig
     std::string fieldDelimiter;
 };
 
-struct SourceDescriptor : public Configurations::Descriptor
+struct SourceDescriptor final : public NES::Configurations::Descriptor
 {
     /// Per default, we set an 'invalid' number of buffers in source local buffer pool.
     /// Given an invalid value, the NodeEngine takes its configured value. Otherwise the source-specific configuration takes priority.
@@ -41,7 +41,7 @@ struct SourceDescriptor : public Configurations::Descriptor
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
-        std::shared_ptr<Schema> schema,
+        Schema schema,
         std::string logicalSourceName,
         std::string sourceType,
         int numberOfBuffersInSourceLocalBufferPool,
@@ -49,13 +49,14 @@ struct SourceDescriptor : public Configurations::Descriptor
         Configurations::DescriptorConfig::Config&& config);
 
     ~SourceDescriptor() = default;
-    const std::shared_ptr<Schema> schema;
+    const Schema schema;
     const std::string logicalSourceName;
     const std::string sourceType;
     const int numberOfBuffersInSourceLocalBufferPool;
     /// is const data member, because 'SourceDescriptor' should be immutable and 'const' communicates more clearly then private+getter
     const ParserConfig parserConfig;
 
+    [[nodiscard]] SerializableSourceDescriptor serialize() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);

@@ -13,15 +13,17 @@
 */
 
 #include <API/Schema.hpp>
+#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
+#include <SerializableOperator.pb.h>
 
 namespace NES::Sources
 {
 
 SourceDescriptor::SourceDescriptor(
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     std::string logicalSourceName,
     std::string sourceType,
     const int numberOfBuffersInSourceLocalBufferPool,
@@ -38,7 +40,7 @@ SourceDescriptor::SourceDescriptor(
 
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
-    const auto schemaString = ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL");
+    const auto schemaString = sourceDescriptor.schema.toString();
     const auto parserConfigString = fmt::format(
         "type: {}, tupleDelimiter: '{}', stringDelimiter: '{}'",
         sourceDescriptor.parserConfig.parserType,
@@ -55,7 +57,7 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescri
 
 std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
 {
-    std::stringstream ss;
+    std::stringstream stringstream;
     if (verbosity == ExplainVerbosity::Debug)
     {
         const auto schemaString = schema.toString();
@@ -64,7 +66,7 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
             parserConfig.parserType,
             Util::escapeSpecialCharacters(parserConfig.tupleDelimiter),
             Util::escapeSpecialCharacters(parserConfig.fieldDelimiter));
-        ss << fmt::format(
+        stringstream << fmt::format(
             "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",
             logicalSourceName,
             sourceType,
@@ -74,9 +76,9 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
     }
     else if (verbosity == ExplainVerbosity::Short)
     {
-        ss << fmt::format("{}", logicalSourceName);
+        stringstream << fmt::format("{}", logicalSourceName);
     }
-    return ss.str();
+    return stringstream.str();
 }
 
 bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
@@ -84,4 +86,27 @@ bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
     return lhs.schema == rhs.schema && lhs.sourceType == rhs.sourceType && lhs.config == rhs.config;
 }
 
+SerializableSourceDescriptor SourceDescriptor::serialize() const
+{
+    SerializableSourceDescriptor SerializableSourceDescriptor;
+    SchemaSerializationUtil::serializeSchema(schema, SerializableSourceDescriptor.mutable_sourceschema());
+    SerializableSourceDescriptor.set_logicalsourcename(logicalSourceName);
+    SerializableSourceDescriptor.set_sourcetype(sourceType);
+    SerializableSourceDescriptor.set_numberofbuffersinsourcelocalbufferpool(numberOfBuffersInSourceLocalBufferPool);
+
+    /// Serialize parser config.
+    auto* const serializedParserConfig = NES::ParserConfig().New();
+    serializedParserConfig->set_type(parserConfig.parserType);
+    serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
+    serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);
+    SerializableSourceDescriptor.set_allocated_parserconfig(serializedParserConfig);
+
+    /// Iterate over SourceDescriptor config and serialize all key-value pairs.
+    for (const auto& [key, value] : config)
+    {
+        auto* kv = SerializableSourceDescriptor.mutable_config();
+        kv->emplace(key, descriptorConfigTypeToProto(value));
+    }
+    return SerializableSourceDescriptor;
+}
 }
