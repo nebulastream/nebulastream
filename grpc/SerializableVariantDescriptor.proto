@@ -1,0 +1,87 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+syntax = "proto3";
+import "SerializableDataType.proto";
+package NES;
+
+message WindowInfos {
+    message TimeCharacteristic {
+        enum Type {
+            Event_time = 0;
+            Ingestion_time = 1;
+        }
+        Type type = 1;
+        optional string field = 2;
+        uint64 multiplier = 3;
+    }
+
+    message TumblingWindow {
+        uint64 size = 1;
+    }
+
+    message SlidingWindow {
+        uint64 size = 1;
+        uint64 slide = 2;
+    }
+
+    TimeCharacteristic time_characteristic = 1;
+    oneof window_type {
+        TumblingWindow tumbling_window = 2;
+        SlidingWindow sliding_window = 3;
+    }
+}
+
+message SerializableFunction {
+    repeated SerializableFunction children = 1;
+    string function_type = 2;
+    SerializableDataType data_type = 3;
+    map<string, SerializableVariantDescriptor> config = 4;
+}
+
+message FunctionList {
+  repeated SerializableFunction functions = 1;
+}
+
+message SerializableAggregationFunction {
+    string type = 1;
+    SerializableFunction on_field = 2;
+    SerializableFunction as_field = 3;
+}
+
+message AggregationFunctionList {
+  repeated SerializableAggregationFunction functions = 1;
+}
+
+message SerializableEnumWrapper {
+    string value = 1;
+}
+
+message SerializableVariantDescriptor {
+  oneof value {
+    int32 int_value = 1;
+    uint32 uint_value = 2;
+    int64 long_value = 3;
+    uint64 ulong_value = 4;
+    bool bool_value = 5;
+    fixed32 char_value = 6;  // Represents a single byte (0-255). We need a fixed32 as protobuf does only support fixed32/fixed64.
+    float float_value = 7;
+    double double_value = 8;
+    string string_value = 9;
+    SerializableEnumWrapper enum_value = 10;
+    FunctionList function_list = 11;
+    AggregationFunctionList aggregation_function_list = 12;
+    WindowInfos window_infos = 13;
+  }
+}
