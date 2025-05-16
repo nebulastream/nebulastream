@@ -12,23 +12,11 @@
     limitations under the License.
 */
 
-#pragma once
-#include <string>
+#include <WindowTypes/Types/WindowType.hpp>
+
 namespace NES::Windowing
 {
-/**
- * Defines the measure of a window, common measures are time and count.
- */
-class WindowMeasure
-{
-    /**
-     * @brief Creates a string representation
-     * @return std::string
-     */
-    virtual std::string toString() const = 0;
 
-public:
-    virtual ~WindowMeasure() = default;
-};
+WindowType::WindowType() = default;
 
 }
