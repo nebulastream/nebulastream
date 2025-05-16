@@ -25,17 +25,9 @@ public:
     inline VariableSizedDataType() noexcept { }
 
     ~VariableSizedDataType() override = default;
-
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return true if equal types false if unequal
-     */
-    bool operator==(const DataType& other) const override;
-
-    std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;
-
-    std::string toString() override;
+    [[nodiscard]] bool operator==(const DataType& other) const override;
+    [[nodiscard]] std::shared_ptr<DataType> join(const DataType& otherDataType) const override;
+    [[nodiscard]] std::string toString() const override;
 };
 
 }
