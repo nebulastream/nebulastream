@@ -196,7 +196,7 @@ Sources::SourceDescriptor createSourceDescriptor(
         std::move(validSourceConfig));
 }
 
-void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config)
+static void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config)
 {
     auto sinkOperators = getOperatorByType<SinkLogicalOperator>(query);
     PRECONDITION(
@@ -228,11 +228,11 @@ std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& co
 
 
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
-    for (auto& [logicalSourceName, schemaFields] : config.logical)
+    for (const auto& [logicalSourceName, schemaFields] : config.logical)
     {
         auto schema = Schema();
         NES_INFO("Adding logical source: {}", logicalSourceName);
-        for (auto& [name, type] : schemaFields)
+        for (const auto& [name, type] : schemaFields)
         {
             schema = schema.addField(name, type);
         }
@@ -263,9 +263,9 @@ std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& co
 
     sourceInferencePhase.apply(queryplan);
     sourceLogicalExpansionPhase.apply(queryplan);
-    typeInferencePhase.apply(queryplan);
-    originIdInferencePhase.apply(queryplan);
-    typeInferencePhase.apply(queryplan);
+    NES::LegacyOptimizer::TypeInferencePhase::apply(queryplan);
+    NES::LegacyOptimizer::OriginIdInferencePhase::apply(queryplan);
+    NES::LegacyOptimizer::TypeInferencePhase::apply(queryplan);
 
     return std::make_unique<LogicalPlan>(queryplan);
 }
@@ -285,7 +285,7 @@ SchemaField::SchemaField(std::string name, const std::string& typeName) : Schema
 {
 }
 
-SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(type)
+SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(std::move(type)))
 {
 }
 

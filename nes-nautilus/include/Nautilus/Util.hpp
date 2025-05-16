@@ -81,7 +81,7 @@ VarVal createNautilusMaxValue(const PhysicalType& physicalType);
 template <typename T>
 static VarVal createNautilusConstValue(T value, const PhysicalType& physicalType)
 {
-    if (const auto basicType = dynamic_cast<const BasicPhysicalType*>(&physicalType))
+    if (const auto* const basicType = dynamic_cast<const BasicPhysicalType*>(&physicalType))
     {
         switch (basicType->nativeType)
         {

@@ -20,7 +20,7 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <SourceCatalogs/PhysicalSource.hpp>
+#include <SourceCatalogs/PhysicalSource.hpp> /// NOLINT
 #include <ErrorHandling.hpp>
 
 namespace NES::LegacyOptimizer
@@ -59,7 +59,7 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
                 auto children = parent.getChildren();
                 children.push_back(nextOp);
                 auto newParent = parent.withChildren(std::move(children));
-                auto replaceResult = replaceSubtree(queryPlan, parent, std::move(newParent));
+                auto replaceResult = replaceSubtree(queryPlan, parent, newParent);
                 INVARIANT(replaceResult.has_value(), "replaceOperator failed");
                 queryPlan = std::move(replaceResult.value());
             }

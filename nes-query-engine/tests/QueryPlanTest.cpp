@@ -163,7 +163,7 @@ struct EmittedTask
     std::condition_variable addCondition;
 
     template <typename... TArgs>
-    static std::unique_ptr<EmittedTask> setup(RangeOf<KeyT> auto stages, TArgs&&...);
+    static std::unique_ptr<EmittedTask> setup(const RangeOf<KeyT> auto& stages, TArgs&&...);
 
     ::testing::AssertionResult executeEmittedTask(Args&&);
 
@@ -252,7 +252,7 @@ using Terminations = EmittedTask<TerminatePipelineArgs, ExecutablePipelineStage*
 
 template <>
 template <typename... TArgs>
-std::unique_ptr<Terminations> Terminations::setup(RangeOf<ExecutablePipelineStage*> auto stages, TArgs&&... args)
+std::unique_ptr<Terminations> Terminations::setup(const RangeOf<ExecutablePipelineStage*> auto& stages, TArgs&&... args)
 {
     auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
     auto terminations = std::make_unique<Terminations>();
@@ -294,7 +294,7 @@ struct SetupPipelineArgs
 using Setups = EmittedTask<SetupPipelineArgs, ExecutablePipelineStage*>;
 template <>
 template <typename... TArgs>
-std::unique_ptr<Setups> Setups::setup(RangeOf<ExecutablePipelineStage*> auto stages, TArgs&&... args)
+std::unique_ptr<Setups> Setups::setup(const RangeOf<ExecutablePipelineStage*> auto& stages, TArgs&&... args)
 {
     auto setups = std::make_unique<Setups>();
     auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
@@ -338,7 +338,7 @@ using SourceStops = EmittedTask<SourceStopArgs, OriginId>;
 
 template <>
 template <typename... TArgs>
-std::unique_ptr<SourceStops> SourceStops::setup(RangeOf<OriginId> auto originIds, TArgs&&... args)
+std::unique_ptr<SourceStops> SourceStops::setup(const RangeOf<OriginId> auto& originIds, TArgs&&... args)
 {
     auto setups = std::make_unique<SourceStops>();
     auto& controller = std::get<0>(std::forward_as_tuple<TArgs>(args)...);

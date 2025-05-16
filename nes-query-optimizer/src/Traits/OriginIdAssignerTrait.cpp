@@ -12,26 +12,18 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <ostream>
+#include <typeinfo>
 #include <Traits/OriginIdAssignerTrait.hpp>
+#include <Traits/Trait.hpp>
+#include <SerializableTrait.pb.h>
 
 namespace NES
 {
 
 bool OriginIdAssignerTrait::operator==(const TraitConcept& other) const
 {
-    if (typeid(other) != typeid(*this))
-    {
-        return false;
-    }
-    return true;
-}
-
-std::ostream& operator<<(std::ostream& os, const OriginIdAssignerTrait&)
-{
-    os << "OriginIdAssignerTrait";
-    return os;
+    return typeid(other) == typeid(*this);
 }
 
 const std::type_info& OriginIdAssignerTrait::getType() const

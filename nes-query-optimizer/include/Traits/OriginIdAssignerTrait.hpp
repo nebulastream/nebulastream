@@ -15,8 +15,9 @@
 #pragma once
 
 #include <string>
-#include <vector>
+#include <typeinfo>
 #include <Traits/Trait.hpp>
+#include <SerializableTrait.pb.h>
 
 namespace NES
 {
@@ -25,7 +26,6 @@ namespace NES
 struct OriginIdAssignerTrait final : TraitConcept
 {
     bool operator==(const TraitConcept& other) const override;
-    friend std::ostream& operator<<(std::ostream& os, const TraitConcept& trait);
     [[nodiscard]] const std::type_info& getType() const override;
     [[nodiscard]] SerializableTrait serialize() const override;
 };

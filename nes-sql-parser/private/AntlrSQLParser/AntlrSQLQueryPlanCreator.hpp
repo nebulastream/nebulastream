@@ -19,6 +19,7 @@
 #include <AntlrSQLBaseListener.h>
 #include <AntlrSQLParser.h>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Parsers
 {

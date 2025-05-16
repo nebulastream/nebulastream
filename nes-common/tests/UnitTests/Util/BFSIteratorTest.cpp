@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <iterator>
+#include <utility>
 #include <vector>
 #include <Iterators/BFSIterator.hpp>
 #include <gtest/gtest.h>
@@ -27,9 +28,9 @@ public:
     explicit TestNode(uint64_t id) : id(id) { }
     explicit TestNode(uint64_t id, std::vector<TestNode> children) : id(id), children(std::move(children)) { }
 
-    uint64_t getId() const { return id; }
+    [[nodiscard]] uint64_t getId() const { return id; }
 
-    const std::vector<TestNode>& getChildren() const { return children; }
+    [[nodiscard]] const std::vector<TestNode>& getChildren() const { return children; }
 
     bool operator==(const TestNode& other) const { return id == other.id; }
 

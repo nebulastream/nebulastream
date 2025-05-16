@@ -37,7 +37,7 @@
 namespace NES::Sinks
 {
 
-CSVFormat::CSVFormat(const Schema& pSchema) : schema(pSchema)
+CSVFormat::CSVFormat(Schema pSchema) : schema(std::move(pSchema))
 {
     PRECONDITION(schema.getFieldCount() != 0, "Formatter expected a non-empty schema");
     const DefaultPhysicalTypeFactory factory;

@@ -12,17 +12,33 @@
     limitations under the License.
 */
 
+#include <atomic>
+#include <cstdint>
+#include <iterator>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/ExecutionMode.hpp>
+#include <fmt/base.h>
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
+#include <ErrorHandling.hpp>
+#include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
+#include <SinkPhysicalOperator.hpp>
+#include <SourcePhysicalOperator.hpp>
 
 namespace NES
 {
 
 namespace
 {
-std::string operatorChainToString(const PhysicalOperator& op, int indent = 0)
+std::string operatorChainToString(const PhysicalOperator& op, int indent)
 {
     std::string indentation(indent, ' ');
     std::string result = fmt::format("{}{}\n", indentation, op.toString());
@@ -48,7 +64,7 @@ std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
     fmt::format_to(
         std::back_inserter(buf), "{}  Operator chain:\n{}", indentStr, operatorChainToString(pipeline.getRootOperator(), indent + 4));
 
-    for (auto& succ : pipeline.getSuccessors())
+    for (const auto& succ : pipeline.getSuccessors())
     {
         fmt::format_to(std::back_inserter(buf), "{}  Successor Pipeline:\n", indentStr);
         fmt::format_to(std::back_inserter(buf), "{}", pipelineToString(*succ, indent + 4));
@@ -68,11 +84,11 @@ Pipeline::Pipeline(PhysicalOperator op) : rootOperator(std::move(op)), pipelineI
 {
 }
 
-Pipeline::Pipeline(SourcePhysicalOperator op) : rootOperator(std::move(op)), pipelineId(getNextPipelineId())
+Pipeline::Pipeline(const SourcePhysicalOperator& op) : rootOperator(op), pipelineId(getNextPipelineId())
 {
 }
 
-Pipeline::Pipeline(SinkPhysicalOperator op) : rootOperator(std::move(op)), pipelineId(getNextPipelineId())
+Pipeline::Pipeline(const SinkPhysicalOperator& op) : rootOperator(op), pipelineId(getNextPipelineId())
 {
 }
 
@@ -98,7 +114,7 @@ void Pipeline::prependOperator(PhysicalOperator newOp)
     setRootOperator(newOp);
 }
 
-PhysicalOperator appendOperatorHelper(PhysicalOperator op, const PhysicalOperator& newOp)
+static PhysicalOperator appendOperatorHelper(PhysicalOperator op, const PhysicalOperator& newOp)
 {
     if (not op.getChild())
     {
@@ -111,7 +127,7 @@ PhysicalOperator appendOperatorHelper(PhysicalOperator op, const PhysicalOperato
     return op;
 }
 
-void Pipeline::appendOperator(PhysicalOperator newOp)
+void Pipeline::appendOperator(const PhysicalOperator& newOp)
 {
     PRECONDITION(not(isSourcePipeline() or isSinkPipeline()), "Cannot add new operator to source or sink pipeline");
     setRootOperator(appendOperatorHelper(getRootOperator(), newOp));

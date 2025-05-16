@@ -48,7 +48,7 @@ public:
     /// @brief Constructor for MemoryLayout.
     /// @param bufferSize A memory layout is always created for a specific buffer size.
     /// @param schema A memory layout is always created for a specific schema.
-    MemoryLayout(uint64_t bufferSize, const Schema& schema);
+    MemoryLayout(uint64_t bufferSize, Schema schema);
     MemoryLayout(const MemoryLayout&) = default;
 
     virtual ~MemoryLayout() = default;

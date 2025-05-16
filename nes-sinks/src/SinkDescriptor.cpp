@@ -17,9 +17,12 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <Configurations/Descriptor.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <ErrorHandling.hpp>
+#include <ProtobufHelper.hpp> /// NOLINT
+#include <SerializableOperator.pb.h>
 #include <SinkValidationRegistry.hpp>
 
 namespace NES::Sinks
@@ -60,7 +63,7 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 SerializableSinkDescriptor SinkDescriptor::serialize() const
 {
     SerializableSinkDescriptor serializedSinkDescriptor;
-    SchemaSerializationUtil::serializeSchema(std::move(schema), serializedSinkDescriptor.mutable_sinkschema());
+    SchemaSerializationUtil::serializeSchema(schema, serializedSinkDescriptor.mutable_sinkschema());
     serializedSinkDescriptor.set_sinktype(sinkType);
     serializedSinkDescriptor.set_addtimestamp(addTimestamp);
     /// Iterate over SinkDescriptor config and serialize all key-value pairs.

@@ -17,6 +17,7 @@
 #include <memory>
 #include <set>
 #include <unordered_map>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
@@ -80,7 +81,10 @@ namespace NES::LegacyOptimizer
 class LogicalSourceExpansionRule
 {
 public:
-    explicit LogicalSourceExpansionRule(std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog) : sourceCatalog(sourceCatalog) { }
+    explicit LogicalSourceExpansionRule(std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog)
+        : sourceCatalog(std::move(std::move(sourceCatalog)))
+    {
+    }
 
     void apply(LogicalPlan& queryPlan) const;
 

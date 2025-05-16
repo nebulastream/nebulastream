@@ -17,10 +17,10 @@
 #include <ostream>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/NautilusBackend.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <PhysicalPlan.hpp>
+#include <Util/ExecutionMode.hpp>
+#include <Util/Logger/Formatter.hpp>
 #include <Pipeline.hpp>
+
 
 namespace NES
 {

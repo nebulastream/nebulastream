@@ -17,6 +17,9 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
+#include <type_traits>
+#include <typeinfo>
+#include <vector>
 #include <ErrorHandling.hpp>
 #include <SerializableTrait.pb.h>
 
@@ -60,7 +63,7 @@ struct Trait
     /// @tparam TraitType The type of the trait. Must satisfy IsTrait concept.
     /// @param op The trait to wrap.
     template <IsTrait TraitType>
-    Trait(const TraitType& op) : self(std::make_unique<Model<TraitType>>(op))
+    Trait(const TraitType& op) : self(std::make_unique<Model<TraitType>>(op)) /// NOLINT
     {
     }
 
@@ -85,7 +88,7 @@ struct Trait
     /// @return const T The trait.
     /// @throw InvalidDynamicCast If the trait is not of type T.
     template <typename T>
-    [[nodiscard]] const T get() const
+    [[nodiscard]] T get() const
     {
         if (auto p = dynamic_cast<const Model<T>*>(self.get()))
         {
