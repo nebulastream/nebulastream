@@ -73,3 +73,13 @@ jobs:
       base_dev_image_tag: ${{ needs.get-dev-images-for-base-branch.outputs.image-tag }}
       number_of_commits: ${{ github.event.pull_request.commits }}
     secrets: inherit
+
+  branch-release-image:
+    needs: [ get-dev-images ]
+    name: "Branch docker images"
+    secrets: inherit
+    uses: ./.github/workflows/create_release_image.yml
+    with:
+      ref: ${{ github.head_ref }}
+      dockerhub-tag: ${{ github.head_ref }}
+      dev_image_tag: ${{needs.get-dev-images.outputs.image-tag}}
