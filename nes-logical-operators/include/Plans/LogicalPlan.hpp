@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <iterator>
 #include <memory>
 #include <set>
 #include <unordered_set>
@@ -71,23 +72,15 @@ template <class T>
 [[nodiscard]] std::vector<T> getOperatorByType(const LogicalPlan& plan)
 {
     std::vector<T> operators;
-    std::set<OperatorId> visitedOpIds;
-    for (const auto& rootOperator : plan.rootOperators)
-    {
-        auto typedOps = BFSRange(rootOperator)
-            | std::views::filter(
-                            [&](const LogicalOperator& op)
-                            {
-                                if (visitedOpIds.contains(op.getId()))
-                                {
-                                    return false;
-                                }
-                                visitedOpIds.insert(op.getId());
-                                return op.tryGet<T>().has_value();
-                            })
-            | std::views::transform([](const LogicalOperator& op) { return op.get<T>(); });
-        std::ranges::copy(typedOps, std::back_inserter(operators));
-    }
+    std::ranges::for_each(
+        plan.rootOperators,
+        [&operators](const auto& rootOperator)
+        {
+            auto typedOps = BFSRange(rootOperator)
+                | std::views::filter([&](const LogicalOperator& op) { return op.tryGet<T>().has_value(); })
+                | std::views::transform([](const LogicalOperator& op) { return op.get<T>(); });
+            std::ranges::copy(typedOps, std::back_inserter(operators));
+        });
     return operators;
 }
 
@@ -95,24 +88,15 @@ template <typename... TraitTypes>
 [[nodiscard]] std::vector<LogicalOperator> getOperatorsByTraits(const LogicalPlan& plan)
 {
     std::vector<LogicalOperator> matchingOperators;
-    std::set<OperatorId> visitedOpIds;
+    std::ranges::for_each(
+        plan.rootOperators,
+        [&matchingOperators](const auto& rootOperator)
+        {
+            auto ops = BFSRange(rootOperator);
+            auto filtered = ops | std::views::filter([&](const LogicalOperator& op) { return hasTraits<TraitTypes...>(op.getTraitSet()); });
 
-    for (const auto& rootOperator : plan.rootOperators)
-    {
-        auto ops = BFSRange(rootOperator);
-
-        auto filtered = ops
-            | std::views::filter(
-                            [&](const LogicalOperator& op)
-                            {
-                                if (visitedOpIds.contains(op.getId()))
-                                    return false;
-                                visitedOpIds.insert(op.getId());
-                                return hasTraits<TraitTypes...>(op.getTraitSet());
-                            });
-
-        std::ranges::copy(filtered, std::back_inserter(matchingOperators));
-    }
+            std::ranges::copy(filtered, std::back_inserter(matchingOperators));
+        });
     return matchingOperators;
 }
 
