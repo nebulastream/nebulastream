@@ -13,7 +13,7 @@
 */
 
 
-#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <grpcpp/channel.h>
 #include <magic_enum/magic_enum.hpp>
@@ -24,12 +24,12 @@ GRPCClient::GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCS
 {
 }
 
-size_t GRPCClient::registerQuery(const NES::DecomposedQueryPlan& queryPlan) const
+size_t GRPCClient::registerQuery(const NES::LogicalPlan& queryPlan) const
 {
     grpc::ClientContext context;
     RegisterQueryReply reply;
     RegisterQueryRequest request;
-    NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(queryPlan, request.mutable_decomposedqueryplan());
+    request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(queryPlan));
     auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
     {
