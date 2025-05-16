@@ -61,7 +61,7 @@ std::ostream& FileSink::toString(std::ostream& str) const
     return str;
 }
 
-void FileSink::start(Runtime::Execution::PipelineExecutionContext&)
+void FileSink::start(PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up file sink: {}", *this);
     auto stream = outputFileStream.wlock();
@@ -98,7 +98,7 @@ void FileSink::start(Runtime::Execution::PipelineExecutionContext&)
         stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
 }
-void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext&)
+void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
     PRECONDITION(isOpen, "Sink was not opened");
@@ -113,7 +113,7 @@ void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Exe
         }
     }
 }
-void FileSink::stop(Runtime::Execution::PipelineExecutionContext&)
+void FileSink::stop(PipelineExecutionContext&)
 {
     NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
     auto stream = outputFileStream.wlock();
@@ -123,7 +123,7 @@ void FileSink::stop(Runtime::Execution::PipelineExecutionContext&)
 
 Configurations::DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
+    return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
 SinkValidationRegistryReturnType SinkValidationGeneratedRegistrar::RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)

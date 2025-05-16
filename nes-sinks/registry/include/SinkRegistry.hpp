@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
