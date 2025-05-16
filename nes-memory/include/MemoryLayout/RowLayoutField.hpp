@@ -36,25 +36,9 @@ template <class T, bool boundaryChecks = true>
 class RowLayoutField
 {
 public:
-    /**
-     *  Factory to create a RowLayoutField for a specific memory layout and a specific tuple buffer.
-     * @param fieldIndex
-     * @param layoutBuffer
-     * @tparam boundaryChecks if true will check if access is allowed
-     * @tparam T type of field
-     * @return field handler via a fieldIndex and a layoutBuffer
-     */
     static inline RowLayoutField<T, boundaryChecks>
     create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer);
 
-    /**
-    * Factory to create a RowLayoutField for a specific memory layout and a specific tuple buffer.
-    * @param fieldIndex the field which is accessed.
-    * @param layout the memory layout
-    * @tparam buffer the tuple buffer
-    * @tparam T type of field
-    * @return field handler
-    */
     static inline RowLayoutField<T, boundaryChecks>
     create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer);
 
@@ -66,13 +50,6 @@ public:
     inline T& operator[](size_t recordIndex);
 
 private:
-    /**
-     * @brief Constructor for RowLayoutField
-     * @param dynamicRowLayoutBuffer
-     * @param basePointer
-     * @param fieldIndex
-     * @param recordSize
-     */
     RowLayoutField(std::shared_ptr<RowLayout> layout, uint8_t* basePointer, uint64_t fieldIndex, uint64_t recordSize)
         : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), layout(std::move(layout)) { };
 
@@ -87,9 +64,9 @@ inline RowLayoutField<T, boundaryChecks>
 RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer)
 {
     INVARIANT(
-        boundaryChecks && fieldIndex < layout->getSchema()->getFieldCount(),
+        boundaryChecks && fieldIndex < layout->getSchema().getFieldCount(),
         "fieldIndex out of bounds! {} >= {}",
-        layout->getSchema()->getFieldCount(),
+        layout->getSchema().getFieldCount(),
         fieldIndex);
 
     /// via pointer arithmetic gets the starting field address
