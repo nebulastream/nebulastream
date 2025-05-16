@@ -80,10 +80,10 @@ bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier);
 
 /// Mock Implementation of the QueryEngineStatisticListener. This can be used to verify that certain
 /// statistic events have been emitted during test execution.
-class TestQueryStatisticListener : public NES::Runtime::QueryEngineStatisticListener
+class TestQueryStatisticListener : public NES::QueryEngineStatisticListener
 {
 public:
-    MOCK_METHOD(void, onEvent, (Runtime::Event), (override));
+    MOCK_METHOD(void, onEvent, (NES::Event), (override));
 };
 
 /// Mock implementation for the QueryStatusListener. This allows to verify query status events, e.g. `Running`, `Stopped`.
@@ -107,7 +107,7 @@ struct ExpectStats
 \
     void apply(Name v) \
     { \
-        EXPECT_CALL(*listener, onEvent(::testing::VariantWith<Runtime::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
+        EXPECT_CALL(*listener, onEvent(::testing::VariantWith<NES::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
     }
     STAT_TYPE(QueryStart);
     STAT_TYPE(QueryStop);
@@ -120,21 +120,21 @@ struct ExpectStats
 
     explicit ExpectStats(std::shared_ptr<TestQueryStatisticListener> listener) : listener(std::move(listener))
     {
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::QueryStop>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStop>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::PipelineStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::PipelineStop>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::PipelineStop>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExecutionStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExecutionComplete>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExpired>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskExpired>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
-        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_)))
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::TaskEmit>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
     }
 
@@ -150,46 +150,42 @@ struct ExpectStats
 class QueryStatusListener final : public AbstractQueryStatusListener
 {
 public:
-    MOCK_METHOD(
-        bool, logSourceTermination, (QueryId, OriginId, Runtime::QueryTerminationType, std::chrono::system_clock::time_point), (override));
+    MOCK_METHOD(bool, logSourceTermination, (QueryId, OriginId, QueryTerminationType, std::chrono::system_clock::time_point), (override));
     MOCK_METHOD(bool, logQueryFailure, (QueryId, Exception, std::chrono::system_clock::time_point), (override));
-    MOCK_METHOD(bool, logQueryStatusChange, (QueryId, Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point), (override));
+    MOCK_METHOD(bool, logQueryStatusChange, (QueryId, QueryStatus, std::chrono::system_clock::time_point), (override));
 };
 
 /// Mock implementation for internal interfaces of the QueryEngine. These are used when verifying the behavior of internal
 /// components for the QueryEngine like the RunningQueryPlan.
-struct TestWorkEmitter : Runtime::WorkEmitter
+struct TestWorkEmitter : WorkEmitter
 {
     MOCK_METHOD(
         bool,
         emitWork,
         (QueryId,
-         const std::shared_ptr<Runtime::RunningQueryPlanNode>&,
+         const std::shared_ptr<RunningQueryPlanNode>&,
          Memory::TupleBuffer,
-         Runtime::BaseTask::onComplete,
-         Runtime::BaseTask::onFailure,
-         Runtime::Execution::PipelineExecutionContext::ContinuationPolicy),
+         BaseTask::onComplete,
+         BaseTask::onFailure,
+         PipelineExecutionContext::ContinuationPolicy),
         (override));
     MOCK_METHOD(
         void,
         emitPipelineStart,
-        (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, Runtime::BaseTask::onComplete, Runtime::BaseTask::onFailure),
+        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, BaseTask::onComplete, BaseTask::onFailure),
         (override));
     MOCK_METHOD(
         void,
         emitPendingPipelineStop,
-        (QueryId, std::shared_ptr<Runtime::RunningQueryPlanNode>, Runtime::BaseTask::onComplete, Runtime::BaseTask::onFailure),
+        (QueryId, std::shared_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure),
         (override));
     MOCK_METHOD(
-        void,
-        emitPipelineStop,
-        (QueryId, std::unique_ptr<Runtime::RunningQueryPlanNode>, Runtime::BaseTask::onComplete, Runtime::BaseTask::onFailure),
-        (override));
+        void, emitPipelineStop, (QueryId, std::unique_ptr<RunningQueryPlanNode>, BaseTask::onComplete, BaseTask::onFailure), (override));
 };
-struct TestQueryLifetimeController : Runtime::QueryLifetimeController
+struct TestQueryLifetimeController : QueryLifetimeController
 {
-    MOCK_METHOD(void, initializeSourceFailure, (QueryId, OriginId, std::weak_ptr<Runtime::RunningSource>, Exception), (override));
-    MOCK_METHOD(void, initializeSourceStop, (QueryId, OriginId, std::weak_ptr<Runtime::RunningSource>), (override));
+    MOCK_METHOD(void, initializeSourceFailure, (QueryId, OriginId, std::weak_ptr<RunningSource>, Exception), (override));
+    MOCK_METHOD(void, initializeSourceStop, (QueryId, OriginId, std::weak_ptr<RunningSource>), (override));
 };
 
 template <template <typename> class FutType, typename T>
@@ -225,7 +221,7 @@ public:
     std::shared_future<void> stopFuture = stop.get_future().share();
 
     /// Back reference this is set during construction of a TestPipeline
-    Runtime::Execution::ExecutablePipelineStage* stage = nullptr;
+    ExecutablePipelineStage* stage = nullptr;
 
     [[nodiscard]] testing::AssertionResult waitForStart() const { return waitForFuture(startFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
     [[nodiscard]] testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_LONG_AWAIT_TIMEOUT); }
@@ -237,14 +233,14 @@ public:
     [[nodiscard]] testing::AssertionResult wasStopped() const { return waitForFuture(stopFuture, std::chrono::milliseconds(0)); }
 };
 
-struct TestPipeline final : Runtime::Execution::ExecutablePipelineStage
+struct TestPipeline final : ExecutablePipelineStage
 {
     explicit TestPipeline(std::shared_ptr<TestPipelineController> controller) : controller(std::move(controller))
     {
         this->controller->stage = this;
     }
     ~TestPipeline() override { controller->stage = nullptr; }
-    void start(Runtime::Execution::PipelineExecutionContext&) override
+    void start(PipelineExecutionContext&) override
     {
         std::this_thread::sleep_for(controller->startDuration.load());
         controller->start.set_value();
@@ -254,7 +250,7 @@ struct TestPipeline final : Runtime::Execution::ExecutablePipelineStage
         }
     }
 
-    void stop(Runtime::Execution::PipelineExecutionContext&) override
+    void stop(PipelineExecutionContext&) override
     {
         std::this_thread::sleep_for(controller->stopDuration.load());
         controller->stop.set_value();
@@ -264,14 +260,13 @@ struct TestPipeline final : Runtime::Execution::ExecutablePipelineStage
         }
     }
 
-    void
-    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override
+    void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override
     {
         if (controller->invocations.fetch_add(1) + 1 == controller->throwOnNthInvocation)
         {
             throw Exception("I should throw here.", 9999);
         }
-        pipelineExecutionContext.emitBuffer(inputTupleBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        pipelineExecutionContext.emitBuffer(inputTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 
     std::shared_ptr<TestPipelineController> controller;
@@ -311,16 +306,16 @@ private:
     friend class TestSink;
 };
 
-class TestSink final : public Runtime::Execution::ExecutablePipelineStage
+class TestSink final : public ExecutablePipelineStage
 {
 public:
-    void start(Runtime::Execution::PipelineExecutionContext&) override { controller->setup.set_value(); }
-    void execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&) override
+    void start(PipelineExecutionContext&) override { controller->setup.set_value(); }
+    void execute(const Memory::TupleBuffer& inputBuffer, PipelineExecutionContext&) override
     {
         controller->insertBuffer(copyBuffer(inputBuffer, *bufferProvider));
     }
 
-    void stop(Runtime::Execution::PipelineExecutionContext&) override { controller->shutdown.set_value(); }
+    void stop(PipelineExecutionContext&) override { controller->shutdown.set_value(); }
 
     TestSink(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, std::shared_ptr<TestSinkController> controller)
         : bufferProvider(std::move(bufferProvider)), controller(std::move(controller))
@@ -341,11 +336,11 @@ private:
     std::shared_ptr<TestSinkController> controller;
 };
 
-std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestSinkController>>
+std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
 createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider> bm);
 
-std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
-createPipeline(PipelineId id, const std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>& successors);
+std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
+createPipeline(PipelineId id, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);
 
 struct QueryPlanBuilder
 {
@@ -372,14 +367,14 @@ struct QueryPlanBuilder
 
     struct TestPlanCtrl
     {
-        std::unique_ptr<Runtime::ExecutableQueryPlan> query;
+        std::unique_ptr<ExecutableQueryPlan> query;
         std::unordered_map<identifier_t, OriginId> sourceIds;
         std::unordered_map<identifier_t, PipelineId> pipelineIds;
 
         std::unordered_map<identifier_t, std::shared_ptr<Sources::TestSourceControl>> sourceCtrls;
         std::unordered_map<identifier_t, std::shared_ptr<TestSinkController>> sinkCtrls;
         std::unordered_map<identifier_t, std::shared_ptr<TestPipelineController>> pipelineCtrls;
-        std::unordered_map<identifier_t, Runtime::Execution::ExecutablePipelineStage*> stages;
+        std::unordered_map<identifier_t, ExecutablePipelineStage*> stages;
     };
 
     TestPlanCtrl build(QueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&;
@@ -405,7 +400,7 @@ struct TestingHarness
     std::shared_ptr<TestQueryStatisticListener> statListener = std::make_shared<TestQueryStatisticListener>();
     ExpectStats stats{statListener};
     std::shared_ptr<QueryStatusListener> status = std::make_shared<QueryStatusListener>();
-    std::unique_ptr<Runtime::QueryEngine> qm;
+    std::unique_ptr<QueryEngine> qm;
     size_t numberOfThreads;
 
     QueryId::Underlying queryIdCounter = INITIAL<QueryId>.getRawValue();
@@ -413,7 +408,7 @@ struct TestingHarness
     QueryId::Underlying lastPipelineIdCounter = INITIAL<PipelineId>.getRawValue();
 
     QueryPlanBuilder::identifier_t lastIdentifier = 0;
-    std::unordered_map<QueryPlanBuilder::identifier_t, Runtime::Execution::ExecutablePipelineStage*> stages;
+    std::unordered_map<QueryPlanBuilder::identifier_t, ExecutablePipelineStage*> stages;
     std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<Sources::TestSourceControl>> sourceControls;
     std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<TestSinkController>> sinkControls;
     std::unordered_map<QueryPlanBuilder::identifier_t, std::shared_ptr<TestPipelineController>> pipelineControls;
@@ -437,31 +432,30 @@ struct TestingHarness
     ///   auto query = test.addNewQuery(std::move(builder));
     /// ```
     QueryPlanBuilder buildNewQuery() const;
-    std::unique_ptr<Runtime::ExecutableQueryPlan> addNewQuery(QueryPlanBuilder&& builder);
+    std::unique_ptr<ExecutableQueryPlan> addNewQuery(QueryPlanBuilder&& builder);
 
     /// List of status events to be emitted by a query with QueryId `id`
-    void expectQueryStatusEvents(QueryId id, std::initializer_list<Runtime::Execution::QueryStatus> states);
+    void expectQueryStatusEvents(QueryId id, std::initializer_list<QueryStatus> states);
 
     /// Expects a source for a given query to be terminated (gracefully or due to a failure)
-    void expectSourceTermination(QueryId id, QueryPlanBuilder::identifier_t source, Runtime::QueryTerminationType type);
+    void expectSourceTermination(QueryId id, QueryPlanBuilder::identifier_t source, QueryTerminationType type);
 
 
     /// Starts the query engine and initializes internal futures used to track query termination events.
     /// All expected query runtime events should be declared beforehand
     /// ```c++
-    ///  test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running});
+    ///  test.expectQueryStatusEvents(QueryId(1), {QueryStatus::Running});
     ///  test.start();
     /// ```
     void start();
 
     /// Inserts a new Query into the Query Engine. Requires `start` to be called beforehand.
-    void startQuery(std::unique_ptr<Runtime::ExecutableQueryPlan> query) const;
+    void startQuery(std::unique_ptr<ExecutableQueryPlan> query) const;
     /// Stops a Query. Requires `start` to be called beforehand.
     void stopQuery(QueryId id) const;
 
     /// Shuts the query engine down by calling its destructor
     void stop();
-
     testing::AssertionResult waitForQepTermination(QueryId id, std::chrono::milliseconds timeout) const;
     testing::AssertionResult waitForQepRunning(QueryId id, std::chrono::milliseconds timeout);
 };
