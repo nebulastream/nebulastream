@@ -21,22 +21,16 @@
 namespace NES
 {
 
-/**
- * @brief The physical type factory converts a nes data type into a physical representation.
- * This is implemented as an abstract factory, as in the future we could identify different data type mappings, depending on the underling hardware.
- */
+/// @brief The physical type factory converts a nes data type into a physical representation.
+/// This is implemented as an abstract factory, as in the future we could identify different data type mappings, depending on the underlying hardware.
 class PhysicalTypeFactory
 {
 public:
     PhysicalTypeFactory() = default;
     virtual ~PhysicalTypeFactory() = default;
 
-    /**
-     * @brief Translates a nes data type into a corresponding physical type.
-     * @param dataType
-     * @return std::shared_ptr<PhysicalType>
-     */
-    [[nodiscard]] virtual std::shared_ptr<PhysicalType> getPhysicalType(std::shared_ptr<DataType> dataType) const = 0;
+    /// @brief Translates a nes data type into a corresponding physical type.
+    [[nodiscard]] virtual std::unique_ptr<PhysicalType> getPhysicalType(std::shared_ptr<DataType> dataType) const = 0;
 };
 
 }
