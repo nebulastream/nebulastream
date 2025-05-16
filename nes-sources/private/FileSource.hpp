@@ -63,14 +63,14 @@ private:
 
 struct ConfigParametersCSV
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
+    static inline const NES::Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         "filePath",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
+        { return NES::Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
 
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH);
+    static inline std::unordered_map<std::string, NES::Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+        = NES::Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH);
 };
 
 }
