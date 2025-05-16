@@ -13,29 +13,10 @@
 */
 
 syntax = "proto3";
-import "google/protobuf/any.proto";
-import "SerializableFunction.proto";
+import "SerializableVariantDescriptor.proto";
 import "SerializableSchema.proto";
+import "SerializableTrait.proto";
 package NES;
-
-/**
-The serializable wrapper for the nes partition object
- */
-message NesPartition {
-  uint64 queryId = 1;
-  uint64 operatorId = 2;
-  uint64 partitionId = 3;
-  uint64 subpartitionId = 4;
-}
-
-/**
-The serializable wrapper for the node location object
- */
-message NodeLocation {
-  uint64 nodeId = 1;
-  string hostname = 2;
-  uint32 port = 3;
-}
 
 message ParserConfig {
   string type = 1;
@@ -43,250 +24,55 @@ message ParserConfig {
   string fieldDelimiter = 3;
 };
 
-message SerializableEnumWrapper {
-    string value = 1;
+message SerializableSinkDescriptor
+{
+  SerializableSchema sinkSchema = 1;
+  string sinkType = 2;
+  bool addTimestamp = 3;
+  map<string, SerializableVariantDescriptor> config = 4;
 }
 
-message SerializableVariantDescriptor {
+message SerializableSourceDescriptor
+{
+  SerializableSchema sourceSchema = 1;
+  string logicalSourceName = 2;
+  string sourceType = 3;
+  uint32 numberOfBuffersInSourceLocalBufferPool = 4;
+  ParserConfig parserConfig = 5;
+  map<string, SerializableVariantDescriptor> config = 6;
+}
+
+message SerializableSourceDescriptorLogicalOperator
+{
+  uint64 sourceOriginId = 1;
+  SerializableSourceDescriptor sourceDescriptor = 2;
+}
+
+message SerializableSinkLogicalOperator
+{
+  SerializableSinkDescriptor sinkDescriptor = 1;
+}
+
+message SerializableLogicalOperator {
+  string operator_type = 1;
+  SerializableTraitSet trait_set = 2;
+  SerializableSchema output_schema = 3;
+  repeated SerializableSchema input_schemas = 4;
+  message OriginList {
+    repeated uint64 origin_ids = 1;
+  }
+  repeated OriginList input_origin_lists = 5;
+  repeated uint64 output_origin_ids = 6;
+}
+
+message SerializableOperator
+{
+  uint64 operator_id = 1;
+  repeated int64 children_ids = 2;
+  map<string, SerializableVariantDescriptor> config = 3;
   oneof value {
-    int32 int_value = 1;
-    uint32 uint_value = 2;
-    bool bool_value = 3;
-    fixed32 char_value = 4;  // Represents a single byte (0-255). We need a fixed32 as protobuf does only support fixed32/fixed64.
-    float float_value = 5;
-    double double_value = 6;
-    string string_value = 7;
-    SerializableEnumWrapper enum_value = 8;
+    SerializableSourceDescriptorLogicalOperator source = 4;
+    SerializableSinkLogicalOperator sink = 5;
+    SerializableLogicalOperator operator = 6;
   }
-}
-
-/*
-The serializable wrapper definition for operator nodes
- */
-message SerializableOperator {
-
-  message SourceDescriptorLogicalOperator {
-
-    /* Source Descriptor Definition */
-    message SourceDescriptor {
-        SerializableSchema sourceSchema = 1;
-        string logicalSourceName = 2;
-        string sourceType = 3;
-        int32 numberOfBuffersInSourceLocalBufferPool = 4;
-        ParserConfig parserConfig = 5;
-        map<string, SerializableVariantDescriptor> config = 6;
-    }
-
-    uint64 sourceOriginId = 1;
-    SourceDescriptor sourceDescriptor = 2;
-  }
-
-  message SinkLogicalOperator {
-    message SerializableSinkDescriptor {
-        SerializableSchema sinkSchema = 1;
-        string sinkType = 2;
-        bool addTimestamp = 3;
-        map<string, SerializableVariantDescriptor> config = 4;
-    }
-
-    SerializableSinkDescriptor sinkDescriptor = 1;
-  }
-
-  /**
-    WatermarkAssignerDetail contains properties for the watermark assigner, such as watermark field and delay for
-    event time watermark
-   */
-  message WatermarkStrategyDetails {
-    message SerializableEventTimeWatermarkStrategyDescriptor {
-      SerializableFunction onField = 1;
-      uint64 multiplier = 2;
-    }
-
-    message SerializableIngestionTimeWatermarkStrategyDescriptor {
-    }
-    google.protobuf.Any strategy = 1;
-  }
-
-    /**
-      LimitDetails contains properties for the limit operator
-     */
-    message LimitDetails {
-        uint64 limit = 1;
-    }
-
-  /**
-   Map Details contains properties for the map operator, such as the field assignment function
-   */
-  message MapDetails {
-    SerializableFunction function = 1;
-  }
-
-  /**
-   CEPIteration Details contains properties for the CEPIteration operator, such as the field assignment minIteration and maxIteration
-   */
-  message CEPIterationDetails {
-    uint64 minIteration = 1;
-    uint64 maxIteration = 2;
-  }
-
-  /**
-  Projection Details contains properties for the projection operator, i.e., the output schema
-  */
-  message ProjectionDetails {
-    repeated SerializableFunction function = 1;
-
-  }
-  /**
-   Union Details contains properties for the union operator, which is empty currently.
-   */
-  message UnionDetails {}
-
-  /**
-   Broadcast details contains properties for the broadcast operator
-   */
-  message BroadcastDetails{}
-
-  /**
-   Selection Details contains properties for the selection operator, such as the selection predicate function
-   */
-  message SelectionDetails {
-    SerializableFunction predicate = 1;
-    float selectivity = 2;
-  }
-
-  /**
-  Rename details contain the new name of the source.
-   */
-  message RenameDetails {
-    string newSourceName = 1;
-  }
-
-  /**
- InferModelDetails contains the model file for the inference
- */
-  message InferModelDetails {
-    repeated SerializableFunction inputFields = 1;
-    repeated SerializableFunction outputFields = 2;
-    string mlFileName = 3;
-    bytes mlFileContent = 4;
-  }
-
-  /**
-    Properties of distribution characteristic
-  */
-  message DistributionCharacteristic {
-    enum Distribution{
-      // `Unset' indicates that the logical operator has just been deserialized from a client.
-      // The deserialization logic in the coordinator will change it to `Complete' to be inline with the creation
-      // logic in `Query::window' and `Query::windowByKey'.
-      // TODO This logic should be revisited when #2884 is fixed.
-      Unset = 0;
-      Complete = 1;
-      Slicing = 2;
-      Combining = 3;
-      Merging = 4;
-    }
-    Distribution distr = 1;
-  }
-
-  /**
-    Time Characteristic contains properties for the time characteristics
-  */
-  message TimeCharacteristic {
-    enum Type{
-      EventTime = 0;
-      IngestionTime = 1;
-    }
-    Type type = 1;
-    string field = 2;
-    uint64 multiplier = 3;
-  }
-
-  /**
-    Properties of a tumbling window
-  */
-  message TumblingWindow {
-    TimeCharacteristic timeCharacteristic = 1;
-    uint32 size = 2;
-  }
-
-  /**
-    Properties of a sliding window
-  */
-  message SlidingWindow {
-    TimeCharacteristic timeCharacteristic = 1;
-    uint32 size = 2;
-    uint32 slide = 3;
-  }
-
-  /**
-    Properties of a threshold window
-  */
-  message ThresholdWindow {
-    SerializableFunction predicate = 1;
-    uint32 minimumCount = 2;
-  }
-
-  /**
-    Window Details contains properties for the window operator
-  */
-  message WindowDetails {
-
-    message Aggregation {
-      enum Type{
-        SUM = 0;
-        MAX = 1;
-        MIN = 2;
-        COUNT = 3;
-        AVG = 4;
-        MEDIAN = 5;
-      }
-      Type type = 1;
-      SerializableFunction onField = 2;
-      SerializableFunction asField = 3;
-    }
-
-    google.protobuf.Any windowType = 1;
-    repeated Aggregation windowAggregations = 2;
-    DistributionCharacteristic distrChar = 3;
-    repeated SerializableFunction keys = 4;
-    uint64 originId = 5;
-    string windowStartFieldName = 6;
-    string windowEndFieldName = 7;
-  }
-
-  /**
-    Join Details contains properties for the join operator
-  */
-  message JoinDetails {
-
-    message JoinTypeCharacteristic {
-      enum JoinType{
-        INNER_JOIN = 0;
-        CARTESIAN_PRODUCT = 1;
-      }
-      JoinType jointype = 1;
-    }
-
-    google.protobuf.Any windowType = 1;
-    DistributionCharacteristic distrChar = 2;
-    SerializableFunction joinFunction = 3;
-    uint64 numberOfInputEdgesLeft = 4;
-    uint64 numberOfInputEdgesRight = 5;
-    JoinTypeCharacteristic jointype = 6;
-    string windowStartFieldName = 7;
-    string windowEndFieldName = 8;
-    uint64 origin = 9;
-  }
-
-  google.protobuf.Any details = 1;
-  repeated uint64 childrenIds = 2;
-  SerializableSchema inputSchema = 3;
-  SerializableSchema outputSchema = 4;
-  SerializableSchema leftInputSchema = 5;
-  SerializableSchema rightInputSchema = 6;
-  uint64 operatorId = 7;
-  repeated uint64 originIds = 8;
-  repeated uint64 leftOriginIds = 9;
-  repeated uint64 rightOriginIds = 10;
 }
