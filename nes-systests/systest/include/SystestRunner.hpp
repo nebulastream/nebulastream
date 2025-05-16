@@ -21,7 +21,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestParser.hpp>
@@ -34,7 +34,7 @@ struct RunningQuery;
 
 struct LoadedQueryPlan
 {
-    std::shared_ptr<DecomposedQueryPlan> queryPlan;
+    LogicalPlan queryPlan;
     std::string queryName;
     SystestParser::Schema sinkSchema;
     std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
