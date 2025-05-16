@@ -1,6 +1,6 @@
 # name: milestone/DEBS.test
 # description: Queries from our DEBS tutorial
-# groups: [milestone, benchmark, large]
+# groups: [milestone, benchmark, large, Aggregation]
 
 # Source definitions
 SourceCSV solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp TESTDATA/large/debs/SOLAR_PANELS_TOPIC.csv

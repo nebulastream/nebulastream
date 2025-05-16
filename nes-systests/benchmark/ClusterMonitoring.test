@@ -1,6 +1,6 @@
 # name: milestone/ClusterMonitoring.test
 # description: Queries from ClusterMonitoring
-# groups: [milestone, benchmark, large]
+# groups: [milestone, benchmark, large, Aggregation]
 
 # Source definitions
 ## We define two sources, as the lightsaber paper provides its own data file and the schema does not 100% match the original data under https://github.com/lsds/LightSaber/blob/master/resources/datasets/google-cluster-data/google-cluster-data.txt

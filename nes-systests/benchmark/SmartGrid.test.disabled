@@ -1,7 +1,7 @@
 # name: milestone/SmartGrid.test
 # description: Queries from the Paper: "LightSaber: Efficient Window Aggregation on Multi-core Processors (Theodorakis et al.)"
 # The paper uses the dataset from DEBS 2014 Grand Challenge https://debs.org/grand-challenges/2014/ but creates custom queries
-# groups: [milestone, benchmark, large]
+# groups: [milestone, benchmark, large, Aggregation]
 
 # This test is currently disabled, as we can not ensure deterministic results for the queries
 # The problem is that the queries perform a floating point average aggregation. Due to our out-of-order processing, the results may differ slightly.

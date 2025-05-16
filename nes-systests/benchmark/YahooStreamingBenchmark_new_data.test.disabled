@@ -1,6 +1,6 @@
 # name: milestone/YahooStreamingBenchmark.test
 # description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks)
-# groups: [milestone, benchmark, large]
+# groups: [milestone, benchmark, large, Aggregation]
 
 # Source definitions
 SourceCSV ysb1k VARSIZED user_id VARSIZED page_id VARSIZED campaign_id VARSIZED ad_id VARSIZED ad_type VARSIZED event_type UINT64 event_time VARSIZED ip_address TESTDATA/large/ysb/ysb_1k.csv

@@ -1,6 +1,6 @@
 # name: milestone/LinearRoadBenchmark.test
 # description: LinearRoadBenchmark from https://www.cs.brandeis.edu/~linearroad/linear-road.pdf
-# groups: [milestone, benchmark, large]
+# groups: [milestone, benchmark, large, Aggregation]
 
 # Source definitions
 SourceCSV lrb UINT64 creationTS INT16 vehicle FLOAT32 speed INT16 highway INT16 lane INT16 direction INT32 position TESTDATA/large/lrb/linear_road_benchmark.csv

@@ -1,12 +1,15 @@
 # name: milestone/Nexmark.test
 # description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
 # We have used https://github.com/risingwavelabs/nexmark-rs to generate the two source csv files
-# groups: [milestone, benchmark, large]
+# groups: [milestone, benchmark, large, Aggregation, Join]
 
 # Source definition. We have removed some columns that are not needed in our queries
 SourceCSV bid UINT64 timestamp INT32 auctionId INT32 bidder FLOAT64 price TESTDATA/large/nexmark/output_bid.csv
 SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/nexmark/output_auction.csv
 SourceCSV person UINT64 timestamp INT32 id VARSIZED name VARSIZED email_address VARSIZED credit_card VARSIZED city VARSIZED state VARSIZED extra TESTDATA/large/nexmark/output_person.csv
+MemoryCSV bid_memory UINT64 timestamp INT32 auctionId INT32 bidder FLOAT64 price TESTDATA/large/nexmark/output_bid.csv
+MemoryCSV auction_memory UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/nexmark/output_auction.csv
+MemoryCSV person_memory UINT64 timestamp INT32 id VARSIZED name VARSIZED email_address VARSIZED credit_card VARSIZED city VARSIZED state VARSIZED extra TESTDATA/large/nexmark/output_person.csv
 
 # Query 0
 # TODO: DID NOT DOUBLE CHECK THE CHECKSUM WITH APACHE FLINK. DO NOT MERGE INTO MAIN LIKE THIS
@@ -58,7 +61,7 @@ SELECT start, end, personId, name
     FROM (SELECT * FROM person)
 INNER JOIN
     (SELECT * FROM auction)
-ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO CHECKSUM;
+ON id = seller WINDOW TUMBLING (timestamp, size 10 sec) INTO CHECKSUM;
 ----
 0 0
 
