@@ -79,3 +79,13 @@ jobs:
     uses: ./.github/workflows/nix-build.yml
     with:
       head_sha: ${{ github.event.pull_request.head.sha }}
+
+  branch-release-image:
+    needs: [ get-dev-images ]
+    name: "Branch docker images"
+    secrets: inherit
+    uses: ./.github/workflows/create_release_image.yml
+    with:
+      ref: ${{ github.head_ref }}
+      dockerhub-tag: ${{ github.head_ref }}
+      dev_image_tag: ${{needs.get-dev-images.outputs.image-tag}}
