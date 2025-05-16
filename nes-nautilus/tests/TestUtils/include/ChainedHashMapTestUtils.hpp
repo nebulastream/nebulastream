@@ -63,7 +63,7 @@ class ChainedHashMapTestUtils : public TestUtils::NautilusTestUtils
 public:
     std::shared_ptr<Memory::BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
-    std::shared_ptr<Schema> inputSchema;
+    Schema inputSchema;
     std::vector<Interface::MemoryProvider::FieldOffsets> fieldKeys, fieldValues;
     std::vector<Record::RecordFieldIdentifier> projectionKeys, projectionValues;
     std::vector<Memory::TupleBuffer> inputBuffers;
@@ -77,19 +77,17 @@ public:
     };
 
     void setUpChainedHashMapTest(
-        const std::vector<BasicType>& keyTypes,
-        const std::vector<BasicType>& valueTypes,
-        Nautilus::Configurations::NautilusBackend backend);
+        const std::vector<BasicType>& keyTypes, const std::vector<BasicType>& valueTypes, Configurations::ExecutionMode backend);
 
     std::string compareExpectedWithActual(
         const Memory::TupleBuffer& inputBufferKeys,
         const Memory::TupleBuffer& bufferActual,
-        const std::map<TestUtils::RecordWithFields, Record>& exactMap);
+        const std::map<RecordWithFields, Record>& exactMap);
 
     std::string compareExpectedWithActual(
         const Memory::TupleBuffer& bufferActual,
         const Interface::MemoryProvider::TupleBufferMemoryProvider& memoryProviderInputBuffer,
-        const std::map<TestUtils::RecordWithFields, Record>& exactMap);
+        const std::map<RecordWithFields, Record>& exactMap);
 
     /// Compiles the query that writes the values for all keys in keyBufferRef to outputBufferForKeys.
     /// This enables us to perform a comparison in the c++ code by comparing every value in the record buffer with the exact value.
