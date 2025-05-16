@@ -9,18 +9,18 @@
 ## We aim for having at least two persons per folder to have a little bit of a redundancy.
 /docker/ @keyseven123 @ls-1801
 /grpc/ @ls-1801 @adrianmichalke
-/nes-client/ @alepping @adrianmichalke @ls-1801
 /nes-common/ @keyseven123 @adrianmichalke
 /nes-configurations/ @adrianmichalke @ls-1801
 /nes-data-types/ @alepping @adrianmichalke @ls-1801
 /nes-executable/ @alepping @keyseven123 @ls-1801
-/nes-execution/ @keyseven123 @adrianmichalke
-/nes-functions/ @alepping @adrianmichalke
+/nes-physical-operators/ @keyseven123 @adrianmichalke
 /nes-input-formatters/ @alepping @yschroeder97 @keyseven123
 /nes-memory/ @ls-1801 @alepping @Artraxon
 /nes-nautilus/ @alepping @keyseven123 @ls-1801
 /nes-nebuli/ @ls-1801 @Artraxon @alepping
-/nes-operators/ @adrianmichalke @alepping @keyseven123
+/nes-logical-operators/ @adrianmichalke @alepping @keyseven123
+/nes-query-compiler/ @alepping @keyseven123 @adrianmichalke
+/nes-query-optimizer/ @adrianmichalke @Artraxon
 /nes-plugins/ @alepping @yschroeder97
 /nes-query-engine/ @ls-1801 @keyseven123
 /nes-runtime/ @keyseven123 @ls-1801 @adrianmichalke
@@ -29,7 +29,6 @@
 /nes-sources/ @alepping @yschroeder97
 /nes-sql-parser/ @Artraxon @adrianmichalke @keyseven123
 /nes-systests/ @adrianmichalke @ls-1801
-/nes-window-types/ @alepping @adrianmichalke @keyseven123
 /scripts/ @keyseven123 @ls-1801
 /vcpkg/ @keyseven123 @ls-1801 @adrianmichalke
 
