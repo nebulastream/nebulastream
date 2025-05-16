@@ -85,18 +85,14 @@ TEST(BFSIteratorTest, IteratorEquality)
 
     auto expIt1 = expectedRange.begin();
     auto expIt2 = expectedRange.begin();
-    auto otherIt = otherRange.begin();
+    const auto otherIt = otherRange.begin();
 
     EXPECT_EQ(expIt1, expIt2);
     EXPECT_NE(expIt1, otherIt);
 
-    auto expIt1Next = expIt1;
-    auto expIt2Next = expIt2;
-    ++expIt1Next;
-    ++expIt2Next;
-
+    const auto expIt1Next = ++expIt1;
     EXPECT_NE(expIt1, expIt1Next);
-    EXPECT_EQ(expIt1Next, expIt2Next);
+    EXPECT_EQ(expIt1Next, ++expIt2);
 }
 
 }

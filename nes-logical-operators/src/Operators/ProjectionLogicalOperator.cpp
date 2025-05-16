@@ -137,11 +137,10 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema
     {
         auto func = function.withInferredDataType(firstSchema);
 
-        if (func.tryGet<FieldAccessLogicalFunction>())
+        if (auto fieldAccess = func.tryGet<FieldAccessLogicalFunction>())
         {
-            const auto& fieldAccess = func.get<FieldAccessLogicalFunction>();
-            copy.outputSchema.addField(fieldAccess.getFieldName(), fieldAccess.getDataType());
-            newFunctions.emplace_back(fieldAccess);
+            copy.outputSchema.addField(fieldAccess->getFieldName(), fieldAccess->getDataType());
+            newFunctions.emplace_back(*fieldAccess);
         }
         else if (func.tryGet<FieldAssignmentLogicalFunction>())
         {
