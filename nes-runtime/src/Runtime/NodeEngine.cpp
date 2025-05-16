@@ -31,14 +31,14 @@
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngine.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 class QueryTracker
 {
     struct Idle
     {
-        std::unique_ptr<Execution::CompiledQueryPlan> qep;
+        std::unique_ptr<CompiledQueryPlan> qep;
     };
     struct Executing
     {
@@ -47,7 +47,7 @@ class QueryTracker
     folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
 
 public:
-    QueryId registerQuery(std::unique_ptr<Execution::CompiledQueryPlan> qep)
+    QueryId registerQuery(std::unique_ptr<CompiledQueryPlan> qep)
     {
         NES_INFO("Register {}", qep->queryId);
         QueryId queryId = qep->queryId;
@@ -55,10 +55,10 @@ public:
         return queryId;
     }
 
-    std::unique_ptr<Execution::CompiledQueryPlan> moveToExecuting(QueryId qid)
+    std::unique_ptr<CompiledQueryPlan> moveToExecuting(QueryId qid)
     {
         auto rlocked = queries.rlock();
-        std::unique_ptr<Execution::CompiledQueryPlan> qep;
+        std::unique_ptr<CompiledQueryPlan> qep;
         if (auto it = rlocked->find(qid); it != rlocked->end())
         {
             it->second->transition(
@@ -88,10 +88,10 @@ NodeEngine::NodeEngine(
 {
 }
 
-QueryId NodeEngine::registerExecutableQueryPlan(std::unique_ptr<Execution::CompiledQueryPlan> queryExecutionPlan)
+QueryId NodeEngine::registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
-    auto queryId = queryTracker->registerQuery(std::move(queryExecutionPlan));
-    queryLog->logQueryStatusChange(queryId, Execution::QueryStatus::Registered, std::chrono::system_clock::now());
+    auto queryId = queryTracker->registerQuery(std::move(compiledQueryPlan));
+    queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
     return queryId;
 }
 

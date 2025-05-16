@@ -22,15 +22,13 @@
 #include <CompiledQueryPlan.hpp>
 #include <QueryEngine.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 /// Forward declaration of QueryEngineTest, which includes Task, which includes SinkMedium, which includes NodeEngine
 class QueryTracker;
-/**
- * @brief this class represents the interface and entrance point into the
- * query processing part of NES. It provides basic functionality
- * such as registering, unregistering, starting, and stopping.
- */
+/// @brief this class represents the interface and entrance point into the
+/// query processing part of NES. It provides basic functionality
+/// such as registering, unregistering, starting, and stopping.
 class NodeEngine
 {
     friend class NodeEngineBuilder;
@@ -48,7 +46,7 @@ public:
         std::unique_ptr<QueryEngine> queryEngine,
         int numberOfBuffersInSourceLocalBufferPool);
 
-    [[nodiscard]] QueryId registerExecutableQueryPlan(std::unique_ptr<Execution::CompiledQueryPlan> queryExecutionPlan);
+    [[nodiscard]] QueryId registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
     void unregisterQuery(QueryId queryId);
     void startQuery(QueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
