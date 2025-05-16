@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <SystestParser.hpp>
+#include <SystestState.hpp>
 
 namespace NES::Systest
 {
@@ -66,7 +67,6 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
            .csvFilePath = "xyz.txt"};
 
     bool queryCallbackCalled = false;
-    bool resultCallbackCalled = false;
     bool sltSourceCallbackCalled = false;
     bool csvSourceCallbackCalled = false;
 
@@ -76,14 +76,14 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&&) { csvSourceCallbackCalled = true; });
 
     ASSERT_TRUE(parser.loadFile(filename)) << "Failed to load file: " << filename;
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    SystestStarterGlobals systestStarterGlobals{};
+    EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
 
     /// Verify that all expected callbacks were called
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
-    ASSERT_TRUE(resultCallbackCalled) << "Result callback was never called";
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(csvSourceCallbackCalled) << "CSV source callback was never called";
+    ASSERT_TRUE(systestStarterGlobals.getQueryResultMap().size() != 3) << "Result callback was never called";
 }
 
 TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
@@ -146,10 +146,8 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
             "1,6,6000",   "1,7,7000",   "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
             "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}};
 
-    size_t queryCounter = 0;
     bool sltSourceCallbackCalled = false;
     bool queryCallbackCalled = false;
-    bool resultCallbackCalled = false;
 
     SystestParser parser{};
     parser.registerOnSLTSourceCallback(
@@ -162,18 +160,25 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](const std::string& query, size_t)
+        [&](const std::string& query, const size_t currentQueryNumberInTest)
         {
             queryCallbackCalled = true;
-            ASSERT_LT(queryCounter, expectedQueries.size());
-            ASSERT_EQ(query, expectedQueries[queryCounter]);
+            /// Query numbers start at QueryId::INITIAL, which is 1
+            ASSERT_LT(currentQueryNumberInTest, expectedQueries.size() + 1);
+            ASSERT_EQ(query, expectedQueries.at(currentQueryNumberInTest - 1));
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    SystestStarterGlobals systestStarterGlobals{};
+    EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
     ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
+    ASSERT_TRUE(systestStarterGlobals.getQueryResultMap().size() == expectedResults.size());
+    ASSERT_TRUE(
+        std::ranges::all_of(
+            expectedResults,
+            [&systestStarterGlobals](const auto& expectedResult)
+            { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
 }
 
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
@@ -246,7 +251,6 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     size_t queryCounter = 0;
     bool sltSourceCallbackCalled = false;
     bool queryCallbackCalled = false;
-    bool resultCallbackCalled = false;
 
     SystestParser parser{};
     parser.registerOnSLTSourceCallback(
@@ -259,18 +263,25 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](const std::string& query, size_t)
+        [&](const std::string& query, const size_t currentQueryNumberInTest)
         {
             queryCallbackCalled = true;
-            ASSERT_LT(queryCounter, expectedQueries.size());
-            ASSERT_EQ(query, expectedQueries[queryCounter]);
+            /// Query numbers start at QueryId::INITIAL, which is 1
+            ASSERT_LT(currentQueryNumberInTest, expectedQueries.size() + 1);
+            ASSERT_EQ(query, expectedQueries.at(currentQueryNumberInTest - 1));
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    SystestStarterGlobals systestStarterGlobals{};
+    EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(sltSourceCallbackCalled) << "SLT source callback was never called";
+    ASSERT_TRUE(systestStarterGlobals.getQueryResultMap().size() == expectedResults.size());
+    ASSERT_TRUE(
+        std::ranges::all_of(
+            expectedResults,
+            [&systestStarterGlobals](const auto& expectedResult)
+            { return std::ranges::contains(systestStarterGlobals.getQueryResultMap() | std::views::values, expectedResult); }));
 }
 
 TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
@@ -301,8 +312,8 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    SystestStarterGlobals systestStarterGlobals{};
+    EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(errorCallbackCalled);
 }

@@ -46,8 +46,8 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
             /// nop, ensure parsing of CSVSource token
         });
     ASSERT_TRUE(parser.loadFile(filename));
-    QueryResultMap queryResultMap{};
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(queryResultMap, {}, {}); }, ErrorCode::SLTUnexpectedToken)
+    SystestStarterGlobals systestStarterGlobals{};
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(systestStarterGlobals, {}); }, ErrorCode::SLTUnexpectedToken)
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
@@ -66,8 +66,8 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorCodeTest)
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    QueryResultMap queryResultMap{};
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(queryResultMap, {}, {}); }, ErrorCode::SLTUnexpectedToken)
+    SystestStarterGlobals systestStarterGlobals{};
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(systestStarterGlobals, {}); }, ErrorCode::SLTUnexpectedToken)
 }
 
 TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
@@ -85,8 +85,9 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidErrorMessageTest)
             /// nop, ensure parsing
         });
 
-    QueryResultMap queryResultMap{};
-    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(queryResultMap, {}, {}); }, ErrorCode::SLTUnexpectedToken)
+    SystestStarterGlobals systestStarterGlobals{};
+    ASSERT_TRUE(parser.loadFile(filename));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(systestStarterGlobals, {}); }, ErrorCode::SLTUnexpectedToken)
 }
 
 }

@@ -15,12 +15,11 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <filesystem>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <ErrorHandling.hpp>
@@ -110,7 +109,7 @@ public:
     void registerOnSinkCallBack(SinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
 
-    void parse(QueryResultMap& queryResultMap, const std::filesystem::path& workingDir, std::string_view fileName);
+    void parse(SystestStarterGlobals& systestStarterGlobals, std::string_view testFileName);
 
 private:
     /// Substitution rules ///
@@ -120,7 +119,7 @@ private:
     /// Parsing utils ///
     [[nodiscard]] static std::optional<TokenType> getTokenIfValid(std::string potentialToken);
     /// Parse the next token and return its type.
-    [[nodiscard]] std::optional<TokenType> nextToken();
+    [[nodiscard]] std::optional<TokenType> getNextToken();
     /// Got the next token. Returns false if reached end of file.
     [[nodiscard]] bool moveToNextToken();
     /// Look ahead at the next token without consuming it
