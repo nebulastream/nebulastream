@@ -24,8 +24,8 @@
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferRecycler.hpp>
 #include <Time/Timestamp.hpp>
-#include "BufferRecycler.hpp"
 
 namespace NES::Memory
 {
