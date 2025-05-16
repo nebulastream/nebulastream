@@ -15,10 +15,13 @@
 #include <memory>
 #include <Functions/FunctionProvider.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalEventTimeWatermarkAssigner.hpp>
 #include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <MapPhysicalOperator.hpp>
+#include <ErrorHandling.hpp>
+#include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 
 namespace NES
@@ -35,11 +38,11 @@ RewriteRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logic
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);
-    return {wrapper, {leafes}};
+    return {.root = wrapper, .leafs = {leafes}};
 }
 
 std::unique_ptr<AbstractRewriteRule>
-RewriteRuleGeneratedRegistrar::RegisterEventTimeWatermarkAssignerRewriteRule(RewriteRuleRegistryArguments argument)
+RewriteRuleGeneratedRegistrar::RegisterEventTimeWatermarkAssignerRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<NES::LowerToPhysicalEventTimeWatermarkAssigner>(argument.conf);
 }

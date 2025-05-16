@@ -21,6 +21,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
@@ -404,16 +405,16 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
 struct BufferMetaDataTest
 {
     SequenceData sequenceData;
-    Runtime::Timestamp timestamp;
+    Timestamp timestamp;
 };
 
 TEST_F(NonBlockingMonotonicSeqQueueTest, simpleInsertionsWithSingleChunks)
 {
     std::vector<BufferMetaDataTest> sequenceData = {
-        BufferMetaDataTest{.sequenceData = {SequenceNumber(1), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(31)},
-        BufferMetaDataTest{.sequenceData = {SequenceNumber(2), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(63)},
-        BufferMetaDataTest{.sequenceData = {SequenceNumber(3), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(80)},
-        BufferMetaDataTest{.sequenceData = {SequenceNumber(4), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(99)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(1), INITIAL_CHUNK_NUMBER, true}, .timestamp = Timestamp(31)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(2), INITIAL_CHUNK_NUMBER, true}, .timestamp = Timestamp(63)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(3), INITIAL_CHUNK_NUMBER, true}, .timestamp = Timestamp(80)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(4), INITIAL_CHUNK_NUMBER, true}, .timestamp = Timestamp(99)},
     };
 
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();

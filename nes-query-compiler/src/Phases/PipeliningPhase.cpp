@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <utility>
-#include <variant>
 #include <Identifiers/Identifiers.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Phases/PipeliningPhase.hpp>
-#include <Util/Common.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
@@ -40,7 +42,7 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 
 /// Helper function to add a default scan operator
 /// This is used only when the wrapped operator does not already provide a scan
-void addDefaultScan(std::shared_ptr<Pipeline> pipeline, const PhysicalOperatorWrapper& wrappedOp)
+void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
     constexpr uint64_t bufferSize = 100;
@@ -48,14 +50,14 @@ void addDefaultScan(std::shared_ptr<Pipeline> pipeline, const PhysicalOperatorWr
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), bufferSize);
-    const auto memoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(layout);
+    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     /// Prepend the default scan operator.
     pipeline->prependOperator(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
 }
 
 /// Helper function to add a default emit operator
 /// This is used only when the wrapped operator does not already provide an emit
-void addDefaultEmit(std::shared_ptr<Pipeline> pipeline, const PhysicalOperatorWrapper& wrappedOp)
+void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
     constexpr uint64_t bufferSize = 100;
@@ -63,9 +65,9 @@ void addDefaultEmit(std::shared_ptr<Pipeline> pipeline, const PhysicalOperatorWr
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), bufferSize);
-    const auto memoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(layout);
+    const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     /// Create an operator handler for the emit
-    OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
+    const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
     pipeline->getOperatorHandlers().emplace(operatorHandlerIndex, std::make_shared<EmitOperatorHandler>());
     pipeline->appendOperator(EmitPhysicalOperator(operatorHandlerIndex, memoryProvider));
 }
@@ -79,7 +81,7 @@ enum class PipelinePolicy : uint8_t
 void buildPipelineRecursively(
     const std::shared_ptr<PhysicalOperatorWrapper>& opWrapper,
     const std::shared_ptr<PhysicalOperatorWrapper>& prevOpWrapper,
-    std::shared_ptr<Pipeline> currentPipeline,
+    const std::shared_ptr<Pipeline>& currentPipeline,
     OperatorPipelineMap& pipelineMap,
     PipelinePolicy policy)
 {

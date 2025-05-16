@@ -14,8 +14,9 @@
 
 #pragma once
 
+#include <utility>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
-#include <Operators/MapLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 
 namespace NES
@@ -23,7 +24,8 @@ namespace NES
 
 struct LowerToPhysicalIngestionTimeWatermarkAssigner : AbstractRewriteRule
 {
-    LowerToPhysicalIngestionTimeWatermarkAssigner(const NES::Configurations::QueryOptimizerConfiguration& conf) : conf(conf) { }
+    explicit LowerToPhysicalIngestionTimeWatermarkAssigner(NES::Configurations::QueryOptimizerConfiguration conf)
+        : conf(std::move(conf)) { }
     RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:

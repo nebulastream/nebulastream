@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <ostream>
 #include <sstream>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Formatter.hpp>

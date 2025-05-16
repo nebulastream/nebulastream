@@ -142,7 +142,7 @@ ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, Memory
         storageSpace.size());
     auto* page = storageSpace[pageIndex].getBuffer();
     const auto entryOffsetInBuffer = numberOfTuples - (pageIndex * entriesPerPage);
-    auto* const newEntry = reinterpret_cast<ChainedHashMapEntry*>(page + entryOffsetInBuffer * entrySize);
+    auto* const newEntry = reinterpret_cast<ChainedHashMapEntry*>(page + (entryOffsetInBuffer * entrySize));
 
     /// 3. Inserting the new entry
     const auto entryPos = hash & mask;

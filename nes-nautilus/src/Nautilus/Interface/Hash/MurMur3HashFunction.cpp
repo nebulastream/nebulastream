@@ -13,6 +13,7 @@
 */
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <nautilus/function.hpp>

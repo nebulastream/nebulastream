@@ -13,6 +13,7 @@
 */
 #include <sstream>
 #include <utility>
+#include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 
@@ -43,7 +44,7 @@ const std::string& PhysicalSource::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescriptor(Schema schema)
+std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescriptor(const Schema& schema)
 {
     auto copyOfConfig = sourceDescriptor.config;
     return std::make_unique<Sources::SourceDescriptor>(

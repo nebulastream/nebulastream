@@ -19,8 +19,8 @@
 #include <InputFormatters/InputFormatter.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <SequenceShredder.hpp>
-
 
 namespace NES::InputFormatters
 {

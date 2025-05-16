@@ -28,10 +28,11 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/NautilusBackend.hpp>
+
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
+#include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -40,6 +41,7 @@
 #include <BaseUnitTest.hpp>
 #include <Engine.hpp>
 #include <NautilusTestUtils.hpp>
+#include <PagedVectorTestUtils.hpp>
 #include <options.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
@@ -47,8 +49,6 @@
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
-
-#include <PagedVectorTestUtils.hpp>
 
 namespace NES::Nautilus::Interface
 {

@@ -15,6 +15,7 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>

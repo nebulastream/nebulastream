@@ -26,6 +26,7 @@
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <SequenceShredder.hpp>
 
 namespace NES::InputFormatters

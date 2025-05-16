@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
 

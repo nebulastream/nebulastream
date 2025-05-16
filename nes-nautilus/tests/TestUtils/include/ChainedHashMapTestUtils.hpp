@@ -25,9 +25,9 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/NautilusBackend.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <nautilus/Engine.hpp>

@@ -18,8 +18,9 @@
 #include <tuple>
 #include <vector>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/NautilusBackend.hpp>
+
 #include <Runtime/BufferManager.hpp>
+#include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>

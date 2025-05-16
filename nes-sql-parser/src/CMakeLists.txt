@@ -14,5 +14,4 @@ add_source_files(nes-sql-parser
         AntlrSQLQueryPlanCreator.cpp
         AntlrSQLHelper.cpp
         AntlrSQLQueryParser.cpp
-        ParserUtil.cpp
 )

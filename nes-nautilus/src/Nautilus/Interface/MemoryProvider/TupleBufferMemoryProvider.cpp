@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include <API/Schema.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
@@ -63,11 +64,11 @@ const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, c
 VarVal TupleBufferMemoryProvider::loadValue(
     const PhysicalType& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
-    if (dynamic_cast<const BasicPhysicalType*>(&type))
+    if (dynamic_cast<const BasicPhysicalType*>(&type) != nullptr)
     {
         return VarVal::readVarValFromMemory(fieldReference, type);
     }
-    if (dynamic_cast<const VariableSizedDataPhysicalType*>(&type))
+    if (dynamic_cast<const VariableSizedDataPhysicalType*>(&type) != nullptr)
     {
         const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
         const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
@@ -84,7 +85,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
     VarVal value,
     const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
 {
-    if (dynamic_cast<const BasicPhysicalType*>(&type))
+    if (dynamic_cast<const BasicPhysicalType*>(&type) != nullptr)
     {
         /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
         /// We get the correct function to call via a unordered_map
@@ -96,7 +97,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
         throw UnsupportedOperation("Physical Type: {} is currently not supported", type.toString());
     }
 
-    if (dynamic_cast<const VariableSizedDataPhysicalType*>(&type))
+    if (dynamic_cast<const VariableSizedDataPhysicalType*>(&type) != nullptr)
     {
         const auto textValue = value.cast<VariableSizedData>();
         const auto childIndex = invoke(
@@ -121,10 +122,10 @@ std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(con
 {
     if (schema.getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto rowMemoryLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(std::move(schema), bufferSize);
+        auto rowMemoryLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
         return std::make_shared<RowTupleBufferMemoryProvider>(std::move(rowMemoryLayout));
     }
-    else if (schema.getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    if (schema.getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto columnMemoryLayout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(schema, bufferSize);
         return std::make_shared<ColumnTupleBufferMemoryProvider>(std::move(columnMemoryLayout));
