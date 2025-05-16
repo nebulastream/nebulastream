@@ -1,0 +1,29 @@
+# name: union/Union.test
+# description: Simple union tests
+# groups: [Union]
+
+Source stream UINT64 id UINT64 value UINT64 timestamp
+1,1,1000
+1,1,1001
+1,1,1002
+1,1,1003
+
+Source stream2 UINT64 id UINT64 value UINT64 timestamp
+2,2,2000
+2,2,2001
+2,2,2002
+2,2,2003
+
+SINK sink UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
+
+# Simple Union
+SELECT * FROM stream UNION SELECT * FROM stream2 INTO sink
+----
+1,1,1000
+1,1,1001
+1,1,1002
+1,1,1003
+2,2,2000
+2,2,2001
+2,2,2002
+2,2,2003
