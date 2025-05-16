@@ -17,11 +17,11 @@
 #include <thread>
 #include <utility>
 
+#include <DataServer/TCPDataServer.hpp>
 #include <ErrorHandling.hpp>
 #include <FileDataRegistry.hpp>
 #include <SystestAdaptor.hpp>
 #include <SystestState.hpp>
-#include <TCPDataServer.hpp>
 
 
 namespace

@@ -13,6 +13,7 @@
 add_subdirectory(Nodes)
 add_subdirectory(Sequencing)
 add_subdirectory(Util)
+add_subdirectory(DataServer)
 
 add_source_files(nes-common
         ErrorHandling.cpp)

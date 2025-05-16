@@ -20,7 +20,7 @@
 #include <InlineDataRegistry.hpp>
 #include <SystestAdaptor.hpp>
 #include <SystestState.hpp>
-#include <TCPDataServer.hpp>
+#include <DataServer/TCPDataServer.hpp>
 
 namespace NES
 {
