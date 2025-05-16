@@ -26,6 +26,11 @@ HashFunction::HashValue MurMur3HashFunction::init() const
     return SEED;
 }
 
+std::unique_ptr<HashFunction> MurMur3HashFunction::clone() const
+{
+    return std::make_unique<MurMur3HashFunction>(*this);
+}
+
 /// Hash Function that implements murmurhas3 by Robin-Hood-Hashing:
 /// https://github.com/martinus/robin-hood-hashing/blob/fb1483621fda28d4afb31c0097c1a4a457fdd35b/src/include/robin_hood.h#L748
 VarVal hashVarVal(const VarVal& input)
