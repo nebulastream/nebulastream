@@ -13,7 +13,7 @@
 */
 
 #include <cstdint>
-#include <string>
+#include <iterator>
 #include <vector>
 #include <Iterators/BFSIterator.hpp>
 #include <gtest/gtest.h>
@@ -24,7 +24,8 @@ namespace NES
 class TestNode
 {
 public:
-    explicit TestNode(uint64_t id, std::vector<TestNode> children = {}) : id(id), children(std::move(children)) { }
+    explicit TestNode(uint64_t id) : id(id) { }
+    explicit TestNode(uint64_t id, std::vector<TestNode> children) : id(id), children(std::move(children)) { }
 
     uint64_t getId() const { return id; }
 
@@ -90,7 +91,7 @@ TEST(BFSIteratorTest, IteratorEquality)
     EXPECT_EQ(expIt1, expIt2);
     EXPECT_NE(expIt1, otherIt);
 
-    const auto expIt1Next = ++expIt1;
+    const auto expIt1Next = std::next(expIt1);
     EXPECT_NE(expIt1, expIt1Next);
     EXPECT_EQ(expIt1Next, ++expIt2);
 }

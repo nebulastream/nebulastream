@@ -41,6 +41,8 @@ public:
     using difference_type = std::ptrdiff_t;
     using iterator_category = std::input_iterator_tag;
     using iterator_concept = std::input_iterator_tag;
+    using pointer = T*;
+    using reference = T&;
 
     BFSIterator& operator++()
     {
