@@ -10,10 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 add_plugin_as_library(RustFile Source nes-sources-registry rust_file_source_plugin_library RustFileSource.cpp)
-target_include_directories(tcp_source_plugin_library
-        PUBLIC include
-        PRIVATE .
-)
 add_plugin_as_library(RustFile SourceValidation nes-sources-registry rust_file_validation_plugin_library RustFileSource.cpp)
 target_include_directories(rust_file_validation_plugin_library
         PUBLIC include
@@ -21,6 +17,7 @@ target_include_directories(rust_file_validation_plugin_library
 )
 
 add_dependencies(rust_file_source_plugin_library rust_build)
+add_dependencies(rust_file_validation_plugin_library rust_build)
 target_link_libraries(rust_file_source_plugin_library PRIVATE rust-example)
 
 set(RUST_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rust-example")
@@ -28,16 +25,19 @@ set(RUST_BUILD_MODE "release")
 set(RUST_LIB_NAME "librust_example.a")
 set(RUST_LIB_PATH "${RUST_PROJECT_DIR}/target/${RUST_BUILD_MODE}/${RUST_LIB_NAME}")
 set(RUST_LIB_PATH_COMMON "${CMAKE_CURRENT_BINARY_DIR}/${RUST_LIB_NAME}")
+set(FFI_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/cxx.hpp")
+set(RUST_LIB_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/lib.rs.hpp")
+set(RUST_LIB_CPP "${CMAKE_CURRENT_SOURCE_DIR}/lib.rs.cpp")
 set(VCPKG_INCLUDE_DIR "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
 add_custom_command(
-        OUTPUT ${RUST_LIB_PATH_COMMON}
+        OUTPUT ${RUST_LIB_PATH_COMMON} ${FFI_HEADER} ${RUST_LIB_HEADER} ${RUST_LIB_CPP}
         # Build the rust code
         COMMAND ${CMAKE_COMMAND} -E env cargo build --${RUST_BUILD_MODE} --manifest-path ${RUST_PROJECT_DIR}/Cargo.toml
         # Copy the library, source- and header files to a common location
         COMMAND ${CMAKE_COMMAND} -E copy ${RUST_LIB_PATH} ${RUST_LIB_PATH_COMMON}
-        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust/cxx.h" "${CMAKE_CURRENT_SOURCE_DIR}/cxx.hpp"
-        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust-example/src/lib.rs.h" "${CMAKE_CURRENT_SOURCE_DIR}/lib.rs.hpp"
-        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust-example/src/lib.rs.cc" "${CMAKE_CURRENT_SOURCE_DIR}/lib.rs.cpp"
+        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust/cxx.h" ${FFI_HEADER}
+        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust-example/src/lib.rs.h" ${RUST_LIB_HEADER}
+        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust-example/src/lib.rs.cc" ${RUST_LIB_CPP}
 
         WORKING_DIRECTORY ${RUST_PROJECT_DIR}
         COMMENT "Building Rust project with Cargo"
@@ -45,7 +45,7 @@ add_custom_command(
 )
 
 add_custom_target(rust_build ALL
-        DEPENDS ${RUST_LIB_PATH_COMMON}
+        DEPENDS ${RUST_LIB_PATH_COMMON} ${FFI_HEADER} ${RUST_LIB_HEADER} ${RUST_LIB_CPP}
 )
 add_library(rust-example STATIC IMPORTED)
 set_target_properties(rust-example PROPERTIES
