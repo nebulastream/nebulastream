@@ -41,9 +41,9 @@ public:
     /// Especially a wrapper around a ChainedHashMapEntry.
     struct ChainedEntryRef
     {
-        void copyKeysToEntry(const Nautilus::Record& keys) const;
+        void copyKeysToEntry(const Record& keys) const;
         void copyKeysToEntry(const ChainedEntryRef& otherEntryRef) const;
-        void copyValuesToEntry(const Nautilus::Record& values) const;
+        void copyValuesToEntry(const Record& values) const;
         void copyValuesToEntry(const ChainedEntryRef& otherEntryRef) const;
         [[nodiscard]] VarVal getKey(const Record::RecordFieldIdentifier& fieldIdentifier) const;
         [[nodiscard]] Record getKey() const;
@@ -91,7 +91,7 @@ public:
 
     private:
         nautilus::val<HashMap*> hashMapRef;
-        ChainedHashMapRef::ChainedEntryRef currentEntry;
+        ChainedEntryRef currentEntry;
         nautilus::val<uint64_t> chainIndex;
         nautilus::val<uint64_t> tupleIndex;
         nautilus::val<uint64_t> numberOfChains;
@@ -108,7 +108,7 @@ public:
     ~ChainedHashMapRef() override = default;
 
     nautilus::val<AbstractHashMapEntry*> findOrCreateEntry(
-        const Nautilus::Record& recordKey,
+        const Record& recordKey,
         const HashFunction& hashFunction,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
         const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) override;
@@ -127,7 +127,7 @@ private:
     nautilus::val<ChainedHashMapEntry*>
     insert(const HashFunction::HashValue& hash, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider);
     [[nodiscard]] nautilus::val<bool> compareKeys(const ChainedEntryRef& entryRef, const Record& keys) const;
-    [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findKey(const Nautilus::Record& recordKey, const HashFunction::HashValue& hash) const;
+    [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findKey(const Record& recordKey, const HashFunction::HashValue& hash) const;
     [[nodiscard]] nautilus::val<ChainedHashMapEntry*> findEntry(const ChainedEntryRef& otherEntryRef) const;
 
     std::vector<MemoryProvider::FieldOffsets> fieldKeys;
