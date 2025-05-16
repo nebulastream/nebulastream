@@ -22,7 +22,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <ExecutablePipelineStage.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 
 struct ExecutablePipeline
