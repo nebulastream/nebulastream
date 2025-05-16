@@ -25,7 +25,7 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-RowLayout::RowLayout(const std::shared_ptr<Schema>& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+RowLayout::RowLayout(const Schema& schema, const uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
 {
     uint64_t offsetCounter = 0;
     for (const auto& fieldSize : physicalFieldSizes)
@@ -35,13 +35,9 @@ RowLayout::RowLayout(const std::shared_ptr<Schema>& schema, const uint64_t buffe
     }
 }
 
-RowLayout::RowLayout(const RowLayout& other) : MemoryLayout(other), fieldOffSets(other.fieldOffSets) /// NOLINT(*-copy-constructor-init)
+RowLayout::RowLayout(const RowLayout& other)
+    : MemoryLayout(other.bufferSize, other.schema), fieldOffSets(other.fieldOffSets) /// NOLINT(*-copy-constructor-init)
 {
-}
-
-std::shared_ptr<RowLayout> RowLayout::create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize)
-{
-    return std::make_shared<RowLayout>(schema, bufferSize);
 }
 
 uint64_t RowLayout::getFieldOffset(const uint64_t fieldIndex) const
@@ -75,8 +71,4 @@ uint64_t RowLayout::getFieldOffset(const uint64_t tupleIndex, const uint64_t fie
     return offSet;
 }
 
-std::shared_ptr<MemoryLayout> RowLayout::deepCopy() const
-{
-    return std::make_shared<RowLayout>(*this);
-}
 }

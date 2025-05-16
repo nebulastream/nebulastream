@@ -32,15 +32,12 @@ namespace NES::Memory::MemoryLayouts
  *
  * This may be beneficial for processing performance if all fields of the tuple are accessed.
  */
-class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLayout>
+class RowLayout : public MemoryLayout
 {
 public:
     /// @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
-    RowLayout(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
+    RowLayout(const Schema& schema, uint64_t bufferSize);
     RowLayout(const RowLayout&);
-
-    /// @brief Factory to create a RowLayout
-    static std::shared_ptr<RowLayout> create(const std::shared_ptr<Schema>& schema, uint64_t bufferSize);
 
     /// Gets the offset in bytes of all fields within a single tuple.
     /// For a single tuple with three int64 fields, the second field has a offset of 8 bytes.
@@ -51,8 +48,6 @@ public:
     /// \f$ offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex] \f$
     /// @throws CannotAccessBuffer if the tuple index or the field index is out of bounds.
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
-
-    std::shared_ptr<MemoryLayout> deepCopy() const override;
 
 private:
     std::vector<uint64_t> fieldOffSets;
