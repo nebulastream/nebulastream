@@ -1,5 +1,5 @@
 name: Create Container for Head_SHA
-description: |  
+description: |
   Builds images for nebuli, worker for the given head_sha (brach, tag, or commit sha)
   and publishes the images to nebulastream/nebuli and nebulastream/worker, tagged as specified via the parameter.
 on:
