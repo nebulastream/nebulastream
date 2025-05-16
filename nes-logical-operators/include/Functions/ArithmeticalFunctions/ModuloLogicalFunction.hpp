@@ -20,7 +20,7 @@ namespace NES
 class ModuloLogicalFunction final : public LogicalFunctionConcept
 {
 public:
-    static constexpr std::string_view NAME = "Modulo";
+    static constexpr std::string_view NAME = "Mod";
 
     ModuloLogicalFunction(LogicalFunction left, LogicalFunction right);
     ModuloLogicalFunction(const ModuloLogicalFunction& other);
