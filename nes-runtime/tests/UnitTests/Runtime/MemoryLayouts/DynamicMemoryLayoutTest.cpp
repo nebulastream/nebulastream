@@ -13,13 +13,19 @@
 */
 
 #include <memory>
+#include <utility>
 #include <API/Schema.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+
 namespace NES::Memory::MemoryLayouts
 {
 
@@ -27,8 +33,8 @@ class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, publi
 {
 public:
     std::shared_ptr<Memory::BufferManager> bufferManager;
-    std::shared_ptr<Schema> schema;
-    std::unique_ptr<TestTupleBuffer> testBuffer;
+    Schema schema;
+    std::shared_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
 
     static void SetUpTestCase()
@@ -41,25 +47,24 @@ public:
         Testing::BaseUnitTest::SetUp();
         bufferManager = Memory::BufferManager::create(4096, 10);
 
-        schema
-            = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);
+        schema = Schema().addField("t1", BasicType::UINT16).addField("t2", BasicType::BOOLEAN).addField("t3", BasicType::FLOAT64);
         if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
             std::shared_ptr<RowLayout> layout;
-            ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
+            ASSERT_NO_THROW(layout = std::make_shared<RowLayout>(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
-            testBuffer = std::make_unique<TestTupleBuffer>(layout, tupleBuffer);
+            testBuffer = std::make_unique<TestTupleBuffer>(std::move(layout), tupleBuffer);
         }
         else
         {
             std::shared_ptr<ColumnLayout> layout;
-            ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
+            ASSERT_NO_THROW(layout = std::make_shared<ColumnLayout>(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
-            testBuffer = std::make_unique<TestTupleBuffer>(layout, tupleBuffer);
+            testBuffer = std::make_shared<TestTupleBuffer>(std::move(layout), tupleBuffer);
         }
     }
 };
