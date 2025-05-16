@@ -52,7 +52,7 @@
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 
@@ -129,9 +129,9 @@ namespace detail
 using Queue = folly::MPMCQueue<Task>;
 }
 
-struct DefaultPEC final : Execution::PipelineExecutionContext
+struct DefaultPEC final : PipelineExecutionContext
 {
-    std::vector<std::shared_ptr<Execution::OperatorHandler>>* operatorHandlers = nullptr;
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     std::function<bool(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler;
     std::shared_ptr<Memory::AbstractBufferProvider> bm;
     size_t numberOfThreads;
@@ -154,12 +154,12 @@ struct DefaultPEC final : Execution::PipelineExecutionContext
     bool emitBuffer(const Memory::TupleBuffer& buffer, ContinuationPolicy policy) override { return handler(buffer, policy); }
     std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bm; }
     PipelineId getPipelineId() const override { return pipelineId; }
-    std::vector<std::shared_ptr<Execution::OperatorHandler>>& getOperatorHandlers() override
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
     {
-        PRECONDITION(operatorHandlers, "Operator Handlers were not set");
+        PRECONDITION(operatorHandlers, "OperatorHandlers were not set");
         return *operatorHandlers;
     }
-    void setOperatorHandlers(std::vector<std::shared_ptr<Execution::OperatorHandler>>& handlers) override
+    void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& handlers) override
     {
         operatorHandlers = std::addressof(handlers);
     }
@@ -233,7 +233,7 @@ public:
         Memory::TupleBuffer buffer,
         BaseTask::onComplete complete,
         BaseTask::onFailure failure,
-        const Execution::PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
+        const PipelineExecutionContext::ContinuationPolicy continuationPolicy) override
     {
         [[maybe_unused]] auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
         ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
@@ -255,12 +255,12 @@ public:
         /// WorkerThread
         switch (continuationPolicy)
         {
-            case Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
+            case PipelineExecutionContext::ContinuationPolicy::POSSIBLE:
                 addTaskOrDoItInPlace(std::move(task));
                 return true;
 
-            case Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT:
-            case Execution::PipelineExecutionContext::ContinuationPolicy::NEVER:
+            case PipelineExecutionContext::ContinuationPolicy::REPEAT:
+            case PipelineExecutionContext::ContinuationPolicy::NEVER:
                 if (not internalTaskQueue.tryWriteUntil(
                         std::chrono::high_resolution_clock::now() + std::chrono::seconds(1), std::move(task)))
                 {
@@ -453,7 +453,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 /// If the current WorkTask is a 'repeat' task, re-emit the same tuple buffer and the same pipeline as a WorkTask.
-                if (continuationPolicy == Execution::PipelineExecutionContext::ContinuationPolicy::REPEAT)
+                if (continuationPolicy == PipelineExecutionContext::ContinuationPolicy::REPEAT)
                 {
                     pool.statistic->onEvent(
                         TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
@@ -731,11 +731,10 @@ void QueryEngine::stop(QueryId queryId)
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
-void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> instantiatedQueryPlan)
+void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
 {
-    ENGINE_LOG_INFO("Starting Query: {}", fmt::streamed(*instantiatedQueryPlan));
     threadPool->admissionQueue.blockingWrite(
-        StartQueryTask{instantiatedQueryPlan->queryId, std::move(instantiatedQueryPlan), queryCatalog, {}, {}});
+        StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, {}, {}});
 }
 
 QueryEngine::~QueryEngine()
@@ -772,7 +771,7 @@ void QueryCatalog::start(
                         return Terminated{Terminated::Failed};
                     },
                     [](Starting&& starting) { return Running{std::move(starting.plan)}; });
-                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Running, timestamp);
+                listener->logQueryStatusChange(queryId, QueryStatus::Running, timestamp);
             }
         }
         void onFailure(Exception exception) override
@@ -833,7 +832,7 @@ void QueryCatalog::start(
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Stopped};
                     });
-                listener->logQueryStatusChange(queryId, Execution::QueryStatus::Stopped, timestamp);
+                listener->logQueryStatusChange(queryId, QueryStatus::Stopped, timestamp);
             }
         }
 
@@ -852,7 +851,7 @@ void QueryCatalog::start(
 
     if (state->transition([&](Reserved&&) { return Starting{std::move(runningQueryPlan)}; }))
     {
-        listener->logQueryStatusChange(queryId, Execution::QueryStatus::Started, startTimestamp);
+        listener->logQueryStatusChange(queryId, QueryStatus::Started, startTimestamp);
     }
     else
     {

@@ -22,7 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 using ChronoClock = std::chrono::system_clock;
 

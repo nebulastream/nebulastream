@@ -25,7 +25,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 /// Forward refs to not expose them via nes-query-engine
 struct RunningQueryPlanNode;
