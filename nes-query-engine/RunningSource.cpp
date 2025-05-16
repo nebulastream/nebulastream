@@ -28,7 +28,7 @@
 #include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 namespace
@@ -51,10 +51,10 @@ Sources::SourceReturnType::EmitFunction emitFunction(
                     {
                         /// The admission queue might be full, we have to reattempt
                         while (not emitter.emitWork(
-                            queryId, successor, data.buffer, {}, {}, Execution::PipelineExecutionContext::ContinuationPolicy::NEVER))
+                            queryId, successor, data.buffer, {}, {}, PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                         }
-                        ENGINE_LOG_DEBUG("Source Emitted Data to sucessor: {}-{}", queryId, successor->id);
+                        ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
                     }
                 },
                 [&](Sources::SourceReturnType::EoS)

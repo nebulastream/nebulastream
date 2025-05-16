@@ -31,7 +31,7 @@
 #include <Interfaces.hpp>
 #include <RunningSource.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 /// The Implementation of the RunningQueryPlan is based on the DesignDocument covering the redesign of the QueryEngine
@@ -113,7 +113,7 @@ struct RunningQueryPlanNode
         PipelineId pipelineId,
         WorkEmitter& emitter,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-        std::unique_ptr<Execution::ExecutablePipelineStage> stage,
+        std::unique_ptr<ExecutablePipelineStage> stage,
         std::function<void(Exception)> unregisterWithError,
         CallbackRef planRef,
         CallbackRef setupCallback);
@@ -123,7 +123,7 @@ struct RunningQueryPlanNode
     RunningQueryPlanNode(
         PipelineId id,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-        std::unique_ptr<Execution::ExecutablePipelineStage> stage,
+        std::unique_ptr<ExecutablePipelineStage> stage,
         std::function<void(Exception)> unregisterWithError,
         CallbackRef planRef)
         : id(id)
@@ -141,7 +141,7 @@ struct RunningQueryPlanNode
     std::atomic_bool requiresTermination = false;
     std::atomic<ssize_t> pendingTasks = 0;
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
-    std::unique_ptr<Execution::ExecutablePipelineStage> stage;
+    std::unique_ptr<ExecutablePipelineStage> stage;
 
     std::function<void(Exception)> unregisterWithError;
     CallbackRef planRef;

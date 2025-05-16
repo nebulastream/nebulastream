@@ -19,7 +19,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <PipelineExecutionContext.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES
 {
 
 /// The ExecutablePipelineStage is the interface that describes a processing step within a stream processing query.
