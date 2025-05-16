@@ -33,10 +33,10 @@
 
 namespace NES::Nautilus::Interface
 {
-class ChainedHashMapTest : public Testing::BaseUnitTest,
-                           public testing::WithParamInterface<
-                               std::tuple<int, std::vector<BasicType>, std::vector<BasicType>, Nautilus::Configurations::NautilusBackend>>,
-                           public TestUtils::ChainedHashMapTestUtils
+class ChainedHashMapTest
+    : public Testing::BaseUnitTest,
+      public testing::WithParamInterface<std::tuple<int, std::vector<BasicType>, std::vector<BasicType>, Configurations::ExecutionMode>>,
+      public TestUtils::ChainedHashMapTestUtils
 {
 public:
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_ITEMS = {.min = 100, .max = 10000};
@@ -150,7 +150,7 @@ INSTANTIATE_TEST_CASE_P(
               BasicType::UINT16,
               BasicType::UINT8,
               BasicType::FLOAT64}}),
-        ::testing::Values(Nautilus::Configurations::NautilusBackend::COMPILER, Nautilus::Configurations::NautilusBackend::INTERPRETER)),
+        ::testing::Values(Nautilus::Configurations::ExecutionMode::COMPILER, Nautilus::Configurations::ExecutionMode::INTERPRETER)),
     [](const testing::TestParamInfo<ChainedHashMapTest::ParamType>& info)
     {
         const auto iteration = std::get<0>(info.param);

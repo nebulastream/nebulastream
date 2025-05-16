@@ -65,7 +65,7 @@ struct RecordWithFields
 /// We use this information for being able to access a (pre-)compiled/traced function and not having to recompile it all the time
 struct NameAndNautilusBackend
 {
-    NameAndNautilusBackend(std::string_view functionName, const Configurations::NautilusBackend backend)
+    NameAndNautilusBackend(std::string_view functionName, const Configurations::ExecutionMode backend)
         : functionName(std::move(functionName)), backend(backend)
     {
     }
@@ -89,7 +89,7 @@ struct NameAndNautilusBackend
     }
 
     std::string functionName;
-    Configurations::NautilusBackend backend;
+    Configurations::ExecutionMode backend;
 };
 
 /// Struct that stores a min and max value.
@@ -140,22 +140,22 @@ public:
 
     /// Creates monotonic increasing values for each field. This means that each field in each tuple has a new and increased value
     std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(
-        const std::shared_ptr<Schema>& schema,
+        const Schema& schema,
         uint64_t numberOfTuples,
         Memory::BufferManager& bufferManager,
         uint64_t seed,
         uint64_t minSizeVarSizedData,
         uint64_t maxSizeVarSizedData);
     std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(
-        const std::shared_ptr<Schema>& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager, uint64_t minSizeVarSizedData);
-    std::vector<Memory::TupleBuffer> createMonotonicallyIncreasingValues(
-        const std::shared_ptr<Schema>& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager);
+        const Schema& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager, uint64_t minSizeVarSizedData);
+    std::vector<Memory::TupleBuffer>
+    createMonotonicallyIncreasingValues(const Schema& schema, uint64_t numberOfTuples, Memory::BufferManager& bufferManager);
 
     void compileFillBufferFunction(
         std::string_view functionName,
-        Configurations::NautilusBackend backend,
+        Configurations::ExecutionMode backend,
         nautilus::engine::Options& options,
-        const std::shared_ptr<Schema>& schema,
+        const Schema& schema,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProviderInputBuffer);
 
     /// Compares two records and if they are not equal returning a string. If the records are equal, return nullopt
