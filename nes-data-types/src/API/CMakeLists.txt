@@ -12,6 +12,7 @@
 
 add_source_files(nes-data-types
         AttributeField.cpp
+        TimeUnit.cpp
         Schema.cpp
 )
 

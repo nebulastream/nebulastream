@@ -12,14 +12,15 @@
     limitations under the License.
 */
 
+#include <atomic>
+#include <chrono>
 #include <memory>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
-#include <Runtime/NodeEngine.hpp>
+#include <optional>
+#include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryCompiler.hpp>
+#include <QueryOptimizer.hpp>
 #include <SingleNodeWorker.hpp>
 #include <StatisticPrinter.hpp>
 
@@ -31,12 +32,12 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : compiler(std::make_unique<QueryCompilation::QueryCompiler>(
-          configuration.workerConfiguration.queryCompiler, *QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , listener(std::make_shared<Runtime::PrintingStatisticListener>(
-          fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid())))
-    , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
+    : listener(std::make_shared<PrintingStatisticListener>(
+          fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", std::chrono::system_clock::now(), ::getpid())))
+    , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
+    , optimizer(std::make_unique<Optimizer::QueryOptimizer>(configuration.workerConfiguration.queryOptimizer))
+    , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
 {
 }
 
@@ -44,18 +45,16 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 
-QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan)
+QueryId SingleNodeWorker::registerQuery(LogicalPlan plan)
 {
     try
     {
-        auto logicalQueryPlan
-            = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
-
-        listener->onEvent(Runtime::SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
-
-        auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
-
-        return nodeEngine->registerExecutableQueryPlan(compiler->compileQuery(request));
+        plan.queryId = QueryId(queryIdCounter++);
+        auto queryPlan = optimizer->optimize(plan);
+        listener->onEvent(SubmitQuerySystemEvent{queryPlan.queryId, plan.originalSql});
+        auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
+        auto result = compiler->compileQuery(std::move(request));
+        return nodeEngine->registerCompiledQueryPlan(std::move(result));
     }
     catch (Exception& e)
     {
@@ -69,7 +68,7 @@ void SingleNodeWorker::startQuery(QueryId queryId)
     nodeEngine->startQuery(queryId);
 }
 
-void SingleNodeWorker::stopQuery(QueryId queryId, Runtime::QueryTerminationType type)
+void SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type)
 {
     nodeEngine->stopQuery(queryId, type);
 }
@@ -79,12 +78,12 @@ void SingleNodeWorker::unregisterQuery(QueryId queryId)
     nodeEngine->unregisterQuery(queryId);
 }
 
-std::optional<Runtime::QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
+std::optional<QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getQuerySummary(queryId);
 }
 
-std::optional<Runtime::QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
+std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getLogForQuery(queryId);
 }
