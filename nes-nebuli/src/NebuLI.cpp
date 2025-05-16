@@ -28,20 +28,18 @@
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <QueryValidation/SemanticQueryValidation.hpp>
+#include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+#include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/SourceInferencePhase.hpp>
+#include <LegacyOptimizer/TypeInferencePhase.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -163,7 +161,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
-    std::shared_ptr<Schema> schema,
+    Schema schema,
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
@@ -198,41 +196,45 @@ Sources::SourceDescriptor createSourceDescriptor(
         std::move(validSourceConfig));
 }
 
-void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
+void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig& config)
 {
+    auto sinkOperators = getOperatorByType<SinkLogicalOperator>(query);
     PRECONDITION(
-        query.getSinkOperators().size() == 1,
+        sinkOperators.size() == 1,
         "NebulaStream currently only supports a single sink per query, but the query contains: {}",
-        query.getSinkOperators().size());
+        sinkOperators.size());
     PRECONDITION(not config.sinks.empty(), "Expects at least one sink in the query config!");
-    if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
+    if (const auto sink = config.sinks.find(sinkOperators.at(0).sinkName); sink != config.sinks.end())
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
-        query.getSinkOperators().at(0)->sinkDescriptor
-            = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+        auto copy = sinkOperators.at(0);
+        copy.sinkDescriptor = std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+        auto replaceResult = replaceOperator(query, sinkOperators.at(0), copy);
+        INVARIANT(replaceResult.has_value(), "replaceOperator failed");
+        query = std::move(replaceResult.value());
     }
     else
     {
         throw UnknownSinkType(
             "Sinkname {} not specified in the configuration {}",
-            query.getSinkOperators().front()->sinkName,
+            sinkOperators.front().sinkName,
             fmt::join(std::views::keys(config.sinks), ","));
     }
 }
 
-std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
+std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
 
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
-    for (const auto& [logicalSourceName, schemaFields] : config.logical)
+    for (auto& [logicalSourceName, schemaFields] : config.logical)
     {
-        auto schema = Schema::create();
+        auto schema = Schema();
         NES_INFO("Adding logical source: {}", logicalSourceName);
-        for (const auto& [name, type] : schemaFields)
+        for (auto& [name, type] : schemaFields)
         {
-            schema = schema->addField(name, type);
+            schema = schema.addField(name, type);
         }
         sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }
@@ -250,30 +252,25 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
                 INITIAL<WorkerId>));
     }
 
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
-    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule(sourceCatalog);
-    auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
-    auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-    auto queryRewritePhase = Optimizer::QueryRewritePhase::create();
+    auto queryplan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
 
-    auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
+    const auto sourceLogicalExpansionPhase = LegacyOptimizer::LogicalSourceExpansionRule(sourceCatalog);
+    const auto originIdInferencePhase = LegacyOptimizer::OriginIdInferencePhase();
+    const auto sourceInferencePhase = LegacyOptimizer::SourceInferencePhase(sourceCatalog);
+    const auto typeInferencePhase = LegacyOptimizer::TypeInferencePhase();
 
-    validateAndSetSinkDescriptors(*query, config);
-    semanticQueryValidation->validate(query); /// performs the first type inference
+    validateAndSetSinkDescriptors(queryplan, config);
 
-    logicalSourceExpansionRule.apply(query);
-    Optimizer::TypeInferencePhase::performTypeInferenceQuery(query);
+    sourceInferencePhase.apply(queryplan);
+    sourceLogicalExpansionPhase.apply(queryplan);
+    typeInferencePhase.apply(queryplan);
+    originIdInferencePhase.apply(queryplan);
+    typeInferencePhase.apply(queryplan);
 
-    originIdInferencePhase->execute(query);
-    queryRewritePhase->execute(query);
-    Optimizer::TypeInferencePhase::performTypeInferenceQuery(query);
-
-    NES_INFO("QEP:\n {}", query->toString());
-    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
-    return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
+    return std::make_unique<LogicalPlan>(queryplan);
 }
 
-std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
+std::unique_ptr<LogicalPlan> loadFromYAMLFile(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -288,11 +285,11 @@ SchemaField::SchemaField(std::string name, const std::string& typeName) : Schema
 {
 }
 
-SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(std::move(type))
+SchemaField::SchemaField(std::string name, std::shared_ptr<NES::DataType> type) : name(std::move(name)), type(type)
 {
 }
 
-std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
+std::unique_ptr<LogicalPlan> loadFrom(std::istream& inputStream)
 {
     try
     {

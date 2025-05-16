@@ -13,15 +13,8 @@
 */
 
 #include <fstream>
-#include <initializer_list>
-#include <iostream>
-#include <ostream>
-#include <utility>
-#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/text_format.h>
@@ -41,12 +34,12 @@ public:
     explicit GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel)) { }
     std::unique_ptr<WorkerRPCService::Stub> stub;
 
-    size_t registerQuery(const NES::DecomposedQueryPlan& plan) const
+    size_t registerQuery(const NES::LogicalPlan& plan) const
     {
         grpc::ClientContext context;
         RegisterQueryReply reply;
         RegisterQueryRequest request;
-        NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(plan, request.mutable_decomposedqueryplan());
+        request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(plan));
         auto status = stub->RegisterQuery(&context, request, &reply);
         if (status.ok())
         {
@@ -215,21 +208,20 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        std::shared_ptr<NES::DecomposedQueryPlan> decomposedQueryPlan;
+        std::shared_ptr<NES::LogicalPlan> queryPlan;
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
         if (input == "-")
         {
-            decomposedQueryPlan = NES::CLI::loadFrom(std::cin);
+            queryPlan = NES::CLI::loadFrom(std::cin);
         }
         else
         {
-            decomposedQueryPlan = NES::CLI::loadFromYAMLFile(input);
+            queryPlan = NES::CLI::loadFromYAMLFile(input);
         }
 
         std::string output;
-        NES::SerializableDecomposedQueryPlan serialized;
-        NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(*decomposedQueryPlan, &serialized);
+        auto serialized = NES::QueryPlanSerializationUtil::serializeQueryPlan(*queryPlan);
         google::protobuf::TextFormat::PrintToString(serialized, &output);
         NES_INFO("GRPC QueryPlan: {}", output);
         if (program.is_subcommand_used("dump"))
@@ -267,7 +259,7 @@ int main(int argc, char** argv)
         {
             auto& registerArgs = program.at<ArgumentParser>("register");
             const GRPCClient client(grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
-            auto queryId = client.registerQuery(*decomposedQueryPlan);
+            auto queryId = client.registerQuery(*queryPlan);
             if (registerArgs.is_used("-x"))
             {
                 client.start(queryId);
