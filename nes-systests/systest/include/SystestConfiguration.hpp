@@ -26,34 +26,35 @@
 namespace NES::Configuration
 {
 
-class SystestConfiguration final : public Configurations::BaseConfiguration
+class SystestConfiguration final : public NES::Configurations::BaseConfiguration
 {
 public:
     SystestConfiguration() = default;
 
     /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `readConfiguration()`
-    Configurations::StringOption testsDiscoverDir
+    NES::Configurations::StringOption testsDiscoverDir
         = {"testsDiscoverDir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
-    Configurations::StringOption testDataDir
+    NES::Configurations::StringOption testDataDir
         = {"testDataDir", TEST_DATA_DIR, "Directory to lookup test data files in. Default: " TEST_DATA_DIR};
-    Configurations::StringOption directlySpecifiedTestFiles
+    NES::Configurations::StringOption directlySpecifiedTestFiles
         = {"directlySpecifiedTestFiles",
            "",
            "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
-    Configurations::SequenceOption<Configurations::UIntOption> testQueryNumbers
+    NES::Configurations::SequenceOption<NES::Configurations::UIntOption> testQueryNumbers
         = {"testQueryNumbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
-    Configurations::StringOption testFileExtension
+    NES::Configurations::StringOption testFileExtension
         = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
-    Configurations::StringOption workingDir
+    NES::Configurations::StringOption workingDir
         = {"workingDir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
-    Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
-    Configurations::UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
-    Configurations::BoolOption benchmark = {"Benchmark Queries", "false", "Records the execution time of each query"};
-    Configurations::SequenceOption<Configurations::StringOption> testGroups = {"testGroups", "test groups to run"};
-    Configurations::SequenceOption<Configurations::StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
-    Configurations::StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
-    Configurations::StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
-    Configurations::StringOption grpcAddressUri
+    NES::Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
+    NES::Configurations::UIntOption numberConcurrentQueries
+        = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
+    NES::Configurations::BoolOption benchmark = {"Benchmark Queries", "false", "Records the execution time of each query"};
+    NES::Configurations::SequenceOption<NES::Configurations::StringOption> testGroups = {"testGroups", "test groups to run"};
+    NES::Configurations::SequenceOption<NES::Configurations::StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
+    NES::Configurations::StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
+    NES::Configurations::StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
+    NES::Configurations::StringOption grpcAddressUri
         = {"grpc",
            "",
            R"(The address to try to bind to the server in URI form. If
