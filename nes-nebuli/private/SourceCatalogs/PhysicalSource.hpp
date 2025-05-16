@@ -28,7 +28,7 @@ public:
 
     const std::string& getLogicalSourceName() const;
 
-    std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(std::shared_ptr<Schema> schema);
+    std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(Schema schema);
 
     std::string toString();
 
