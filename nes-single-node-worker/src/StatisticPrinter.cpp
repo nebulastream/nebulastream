@@ -30,7 +30,7 @@
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 namespace
