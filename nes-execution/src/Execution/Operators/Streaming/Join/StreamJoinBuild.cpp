@@ -46,27 +46,21 @@ void updateSlicesProxy(
     PRECONDITION(memoryLayout != nullptr, "memory layout should not be null!");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+
+    /// For creating memory usage metrics
+    const auto now = std::chrono::high_resolution_clock::now();
+    std::cout << std::format(
+        "{},{},{}\n",
+        bufferProvider->getAvailableBuffers(),
+        bufferProvider->getNumOfUnpooledBuffers(),
+        static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count()));
+    /*if (const auto numPooledBuffers = bufferProvider->getNumOfPooledBuffers(); numPooledBuffers != 200000)
+    {
+        std::cout << std::format("NumPooledBuffers={}\n", numPooledBuffers);
+    }*/
+
     if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
     {
-        /*boost::asio::io_context ioContext;
-            boost::asio::co_spawn(
-                ioContext,
-                sliceStore->updateSlices(
-                    ioContext,
-                    bufferProvider,
-                    memoryLayout,
-                    joinBuildSide,
-                    SliceStoreMetaData(
-                        workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))),
-                boost::asio::detached);
-            ioContext.run();*/
-        /*sliceStore->updateSlices(
-            opHandler->getIoContext(),
-            bufferProvider,
-            memoryLayout,
-            joinBuildSide,
-            SliceStoreMetaData(
-                workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId)));*/
         opHandler->runSingleAwaitable(sliceStore->updateSlices(
             opHandler->getIoContext(),
             bufferProvider,
