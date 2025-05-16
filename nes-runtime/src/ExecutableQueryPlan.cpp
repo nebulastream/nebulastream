@@ -32,13 +32,13 @@
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
 
-namespace NES::Runtime
+namespace NES
 {
 
 std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiatedQueryPlan)
 {
-    std::function<void(const std::weak_ptr<Execution::ExecutablePipeline>&, size_t)> printNode
-        = [&os, &printNode](const std::weak_ptr<Execution::ExecutablePipeline>& weakPipeline, size_t indent)
+    std::function<void(const std::weak_ptr<ExecutablePipeline>&, size_t)> printNode
+        = [&os, &printNode](const std::weak_ptr<ExecutablePipeline>& weakPipeline, size_t indent)
     {
         auto pipeline = weakPipeline.lock();
         os << std::string(indent * 4, ' ') << *pipeline->stage << "(" << pipeline->id << ")" << '\n';
@@ -61,25 +61,25 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
 
 
 std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
-    Execution::CompiledQueryPlan& compiledQueryPlan,
+    CompiledQueryPlan& compiledQueryPlan,
     const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider,
     int numberOfBuffersInSourceLocalBufferPool)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
-    std::unordered_map<OriginId, std::vector<std::shared_ptr<Execution::ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
+    std::unordered_map<OriginId, std::vector<std::shared_ptr<ExecutablePipeline>>> instantiatedSinksWithSourcePredecessor;
     PipelineId::Underlying pipelineIdGenerator = compiledQueryPlan.pipelines.size() + PipelineId::INITIAL;
 
     for (auto& [descriptor, predecessors] : compiledQueryPlan.sinks)
     {
-        auto sink = Execution::ExecutablePipeline::create(PipelineId(pipelineIdGenerator++), Sinks::SinkProvider::lower(*descriptor), {});
+        auto sink = ExecutablePipeline::create(PipelineId(pipelineIdGenerator++), Sinks::SinkProvider::lower(*descriptor), {});
         compiledQueryPlan.pipelines.push_back(sink);
         for (const auto& predecessor : predecessors)
         {
             std::visit(
                 Overloaded{
                     [&](const OriginId& source) { instantiatedSinksWithSourcePredecessor[source].push_back(sink); },
-                    [&](const std::weak_ptr<Execution::ExecutablePipeline>& pipeline) { pipeline.lock()->successors.push_back(sink); },
+                    [&](const std::weak_ptr<ExecutablePipeline>& pipeline) { pipeline.lock()->successors.push_back(sink); },
                 },
                 predecessor);
         }
@@ -98,9 +98,7 @@ std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::instantiate(
 }
 
 ExecutableQueryPlan::ExecutableQueryPlan(
-    QueryId queryId,
-    std::vector<std::shared_ptr<Execution::ExecutablePipeline>> pipelines,
-    std::vector<SourceWithSuccessor> instantiatedSources)
+    QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources)
     : queryId(queryId), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
 {
 }
