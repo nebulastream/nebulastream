@@ -58,10 +58,9 @@ EXCEPTION(UnknownStatisticsType, 2115, "unknown statistics type")
 EXCEPTION(UnknownExpressionArgumentType, 2116, "unknown expression argument type")
 EXCEPTION(UnknownWatermarkStrategy, 2117, "unknown watermark strategy")
 EXCEPTION(UnknownInvocationType, 2118, "unknown invocation type")
-EXCEPTION(UnknownExecutablePipelineProviderType, 2119, "unknown executable pipeline provider type")
-EXCEPTION(UnknownCompilationBackendType, 2120, "unknown compilation backend type")
-EXCEPTION(UnsupportedOperation, 2121, "tried to execute an unsupported operation")
-EXCEPTION(UnknownParserType, 2122, "unknown parser type")
+EXCEPTION(UnknownCompilationBackendType, 2119, "unknown compilation backend type")
+EXCEPTION(UnsupportedOperation, 2120, "tried to execute an unsupported operation")
+EXCEPTION(UnknownParserType, 2121, "unknown parser type")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
