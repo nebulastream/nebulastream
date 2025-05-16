@@ -30,7 +30,7 @@ public:
     RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
 
-    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() override;
+    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayout() const override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,

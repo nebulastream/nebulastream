@@ -31,7 +31,7 @@ namespace NES::Nautilus::Interface::MemoryProvider
 ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr)
     : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))) { };
 
-std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> ColumnTupleBufferMemoryProvider::getMemoryLayout()
+std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> ColumnTupleBufferMemoryProvider::getMemoryLayout() const
 {
     return columnMemoryLayout;
 }
@@ -55,9 +55,9 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
     /// read all fields
     const auto bufferAddress = recordBuffer.getBuffer();
     Record record;
-    for (nautilus::static_val<uint64_t> i = 0; i < schema->getFieldCount(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < schema.getFieldCount(); ++i)
     {
-        const auto& fieldName = schema->getFieldByIndex(i)->getName();
+        const auto& fieldName = schema.getFieldByIndex(i).getName();
         if (!includesField(projections, fieldName))
         {
             continue;
@@ -77,10 +77,10 @@ void ColumnTupleBufferMemoryProvider::writeRecord(
 {
     const auto& schema = columnMemoryLayout->getSchema();
     const auto bufferAddress = recordBuffer.getBuffer();
-    for (nautilus::static_val<size_t> i = 0; i < schema->getFieldCount(); ++i)
+    for (nautilus::static_val<size_t> i = 0; i < schema.getFieldCount(); ++i)
     {
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        const auto value = rec.read(schema->getFieldByIndex(i)->getName());
+        const auto value = rec.read(schema.getFieldByIndex(i).getName());
         storeValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
     }
 }
