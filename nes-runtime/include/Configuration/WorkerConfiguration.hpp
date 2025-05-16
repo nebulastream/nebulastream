@@ -16,7 +16,9 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/BaseOption.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>

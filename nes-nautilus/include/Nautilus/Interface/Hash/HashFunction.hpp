@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <memory>
 #include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 

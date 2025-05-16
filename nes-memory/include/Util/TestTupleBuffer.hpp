@@ -233,7 +233,7 @@ public:
         NO_HEADER_END_IN_NEWLINE,
         NO_HEADER_END_WITHOUT_NEWLINE,
     };
-    explicit TestTupleBuffer(std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
+    explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, const Memory::TupleBuffer& buffer);
 
     static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, const Schema& schema);
 
@@ -295,8 +295,8 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
-    std::string toString(const Schema& schema) const;
-    std::string toString(const Schema& schema, PrintMode printMode) const;
+    [[nodiscard]] std::string toString(const Schema& schema) const;
+    [[nodiscard]] std::string toString(const Schema& schema, PrintMode printMode) const;
 
     /**
      * @brief Push a record to the underlying tuple buffer. Simply appends record to the end of the buffer.  
@@ -401,7 +401,7 @@ public:
 
     uint64_t countOccurrences(DynamicTuple& tuple) const;
 
-    const MemoryLayout& getMemoryLayout() const;
+    [[nodiscard]] const MemoryLayout& getMemoryLayout() const;
 
 private:
     /**

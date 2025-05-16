@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <random>
 #include <string>
@@ -26,7 +27,9 @@
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
+#include <fmt/format.h>
 #include <InputFormatterTestUtil.hpp>
+#include <TestTaskQueue.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES::InputFormatterTestUtil

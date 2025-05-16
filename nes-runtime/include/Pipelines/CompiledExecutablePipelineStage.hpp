@@ -15,8 +15,9 @@
 
 #include <iostream>
 #include <memory>
-#include <string>
+#include <unordered_map>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
@@ -36,12 +37,12 @@ public:
         std::shared_ptr<Pipeline> pipeline,
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
         nautilus::engine::Options options);
-    void start(PipelineExecutionContext& pipelineExecutionContext);
-    void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext);
-    void stop(PipelineExecutionContext& pipelineExecutionContext);
+    void start(PipelineExecutionContext& pipelineExecutionContext) override;
+    void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+    void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
 protected:
-    std::ostream& toString(std::ostream& os) const;
+    std::ostream& toString(std::ostream& os) const override;
 
 private:
     [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>

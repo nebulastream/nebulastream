@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -16,7 +16,11 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <memory>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/ExecutionMode.hpp>
+#include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
+
 
 namespace NES
 {
@@ -38,7 +42,7 @@ private:
     Roots sinks;
     Nautilus::Configurations::ExecutionMode executionMode;
 
-    /// Used internally to flip the plan from sink->source tp source->sink
+    /// Used internally to flip the plan fromstatic  sink->source tp source->sink
     Roots flip(Roots roots);
 };
 

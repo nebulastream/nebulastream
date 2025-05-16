@@ -17,7 +17,6 @@
 #include <functional>
 #include <memory>
 #include <numeric>
-#include <utility>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>

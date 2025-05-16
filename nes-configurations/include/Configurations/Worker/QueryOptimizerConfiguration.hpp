@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,7 +23,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
-#include <Nautilus/NautilusBackend.hpp>
+#include <Util/ExecutionMode.hpp>
 
 namespace NES::Configurations
 {

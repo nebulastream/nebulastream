@@ -22,6 +22,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES::Sources
 {
@@ -46,7 +47,7 @@ struct SourceDescriptor final : public NES::Configurations::Descriptor
         std::string sourceType,
         int numberOfBuffersInSourceLocalBufferPool,
         ParserConfig parserConfig,
-        Configurations::DescriptorConfig::Config&& config);
+        NES::Configurations::DescriptorConfig::Config&& config);
 
     ~SourceDescriptor() = default;
     const Schema schema;

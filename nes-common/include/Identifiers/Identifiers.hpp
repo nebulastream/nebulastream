@@ -16,7 +16,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <Identifiers/NESStrongType.hpp>
 
 namespace NES

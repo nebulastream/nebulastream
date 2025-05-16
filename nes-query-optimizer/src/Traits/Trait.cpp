@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -13,8 +13,8 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 
 #include <memory>
-#include <ostream>
 #include <Traits/Trait.hpp>
+#include <SerializableTrait.pb.h>
 
 namespace NES
 {

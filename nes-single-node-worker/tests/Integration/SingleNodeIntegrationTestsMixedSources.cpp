@@ -19,13 +19,15 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <Nautilus/NautilusBackend.hpp>
+
 #include <Runtime/BufferManager.hpp>
+#include <Util/ExecutionMode.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
+#include <SerializableQueryPlan.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 #include <boost/asio.hpp>

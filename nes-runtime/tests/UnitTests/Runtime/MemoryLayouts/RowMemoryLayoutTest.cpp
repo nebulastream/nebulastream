@@ -27,6 +27,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -190,10 +191,10 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
 
     auto testBuffer = std::make_shared<TestTupleBuffer>(rowLayout, tupleBuffer);
 
-    size_t NUM_TUPLES = tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes();
+    const size_t numTuples = tupleBuffer.getBufferSize() / schema.getSchemaSizeInBytes();
 
     std::vector<std::tuple<uint8_t, uint16_t, uint32_t>> allTuples;
-    for (size_t i = 0; i < NUM_TUPLES; ++i)
+    for (size_t i = 0; i < numTuples; ++i)
     {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
@@ -209,7 +210,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
     ASSERT_DEATH_DEBUG((RowLayoutField<uint32_t, true>::create(5, rowLayout, tupleBuffer)), "");
 
     size_t i = 0;
-    for (; i < NUM_TUPLES; ++i)
+    for (; i < numTuples; ++i)
     {
         ASSERT_EQ(std::get<0>(allTuples[i]), field0[i]);
         ASSERT_EQ(std::get<1>(allTuples[i]), field1[i]);

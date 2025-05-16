@@ -13,14 +13,17 @@
 */
 
 #include <memory>
-#include <Functions/FunctionProvider.hpp>
+#include <optional>
+#include <vector>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Operators/ProjectionLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalProjection.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 #include <RewriteRuleRegistry.hpp>
 #include <ScanPhysicalOperator.hpp>
 
@@ -41,7 +44,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
         scan, outputSchema, outputSchema, std::nullopt, std::nullopt, PhysicalOperatorWrapper::PipelineEndpoint::Scan);
 
     auto emitLayout = std::make_shared<Memory::MemoryLayouts::RowLayout>(outputSchema, bufferSize);
-    auto emitMemoryProvider = std::make_shared<RowTupleBufferMemoryProvider>(emitLayout);
+    auto emitMemoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(emitLayout);
     auto emit = EmitPhysicalOperator(handlerId, emitMemoryProvider);
     auto emitWrapper = std::make_shared<PhysicalOperatorWrapper>(
         emit,
@@ -50,14 +53,15 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
         handlerId,
         std::make_shared<EmitOperatorHandler>(),
         PhysicalOperatorWrapper::PipelineEndpoint::Emit,
-        std::vector<std::shared_ptr<PhysicalOperatorWrapper>>{scanWrapper});
+        std::vector{scanWrapper});
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
-    std::vector leafs(projectionLogicalOperator.getChildren().size(), scanWrapper);
+    const std::vector leafs(projectionLogicalOperator.getChildren().size(), scanWrapper);
     return {.root = emitWrapper, .leafs = {scanWrapper}};
 }
 
-std::unique_ptr<AbstractRewriteRule> RewriteRuleGeneratedRegistrar::RegisterProjectionRewriteRule(RewriteRuleRegistryArguments argument)
+std::unique_ptr<AbstractRewriteRule>
+RewriteRuleGeneratedRegistrar::RegisterProjectionRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalProjection>(argument.conf);
 }

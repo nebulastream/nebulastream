@@ -40,7 +40,7 @@ class ChunkCollectorTest : public ::testing::Test
 {
 };
 
-auto SeqWithWatermark(SequenceNumber seq, Runtime::Timestamp watermark)
+static auto SeqWithWatermark(SequenceNumber seq, Timestamp watermark)
 {
     return Optional(Pair(seq, watermark));
 }
@@ -49,27 +49,26 @@ TEST(ChunkCollectorTest, SingleInsert)
 {
     ChunkCollector sequence;
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, true}, Runtime::Timestamp(32)),
-        SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(32)));
+        sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, true}, Timestamp(32)),
+        SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(32)));
 }
 
 TEST(ChunkCollectorTest, MultipleChunks)
 {
     ChunkCollector sequence;
-    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Runtime::Timestamp(2)), std::nullopt);
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Timestamp(2)), std::nullopt);
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Runtime::Timestamp(12)),
-        SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(12)));
+        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(12)),
+        SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(12)));
 }
 
 TEST(ChunkCollectorTest, MultipleChunksOutOfOrder)
 {
     ChunkCollector sequence;
-    EXPECT_EQ(
-        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Runtime::Timestamp(42)), std::nullopt);
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(42)), std::nullopt);
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Runtime::Timestamp(2)),
-        SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(42)));
+        sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Timestamp(2)),
+        SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(42)));
 }
 
 TEST(CheckChunkCollector, MultipleTimesLastChunkSet)
@@ -77,26 +76,24 @@ TEST(CheckChunkCollector, MultipleTimesLastChunkSet)
     SKIP_IF_TSAN();
 
     ChunkCollector sequence;
-    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Runtime::Timestamp(2)), std::nullopt);
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Timestamp(2)), std::nullopt);
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Runtime::Timestamp(12)),
-        SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(12)));
-    EXPECT_DEATH_DEBUG(
-        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 2), true}, Runtime::Timestamp(12)), "");
+        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(12)),
+        SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(12)));
+    EXPECT_DEATH_DEBUG(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 2), true}, Timestamp(12)), "");
 }
 
 TEST(ChunkCollectorTest, DifferentSequenceNumbers)
 {
     ChunkCollector sequence;
-    EXPECT_EQ(
-        sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Runtime::Timestamp(32)), std::nullopt);
-    EXPECT_EQ(sequence.collect({SequenceNumber(101), INITIAL<ChunkNumber>, false}, Runtime::Timestamp(32)), std::nullopt);
+    EXPECT_EQ(sequence.collect({INITIAL<SequenceNumber>, ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(32)), std::nullopt);
+    EXPECT_EQ(sequence.collect({SequenceNumber(101), INITIAL<ChunkNumber>, false}, Timestamp(32)), std::nullopt);
     ASSERT_THAT(
-        sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Runtime::Timestamp(32)),
-        SeqWithWatermark(INITIAL<SequenceNumber>, Runtime::Timestamp(32)));
+        sequence.collect({INITIAL<SequenceNumber>, INITIAL<ChunkNumber>, false}, Timestamp(32)),
+        SeqWithWatermark(INITIAL<SequenceNumber>, Timestamp(32)));
     ASSERT_THAT(
-        sequence.collect({SequenceNumber(101), ChunkNumber(ChunkNumber::INITIAL + 1), true}, Runtime::Timestamp(32)),
-        SeqWithWatermark(SequenceNumber(101), Runtime::Timestamp(32)));
+        sequence.collect({SequenceNumber(101), ChunkNumber(ChunkNumber::INITIAL + 1), true}, Timestamp(32)),
+        SeqWithWatermark(SequenceNumber(101), Timestamp(32)));
 }
 
 class ConcurrentChunkCollectorTest
@@ -109,14 +106,14 @@ TEST_P(ConcurrentChunkCollectorTest, RandomInserts)
     auto [maxSequenceNumber, maxChunkNumber, numberOfThreads] = GetParam();
     std::random_device rd;
     std::uniform_int_distribution<ChunkNumber::Underlying> chunkNumbers(ChunkNumber::INITIAL + 1, maxChunkNumber + ChunkNumber::INITIAL);
-    std::uniform_int_distribution<Runtime::Timestamp::Underlying> watermarks(1, 10000000);
-    std::unordered_map<SequenceNumber::Underlying, Runtime::Timestamp::Underlying> maxWaterMark;
+    std::uniform_int_distribution<Timestamp::Underlying> watermarks(1, 10000000);
+    std::unordered_map<SequenceNumber::Underlying, Timestamp::Underlying> maxWaterMark;
 
     /// Prepare Inserts
-    std::vector<std::pair<SequenceData, Runtime::Timestamp::Underlying>> inserts;
+    std::vector<std::pair<SequenceData, Timestamp::Underlying>> inserts;
     for (size_t i = SequenceNumber::INITIAL; i < maxSequenceNumber + SequenceNumber::INITIAL; ++i)
     {
-        auto maxWatermarkForCurrentSequence = std::numeric_limits<Runtime::Timestamp::Underlying>::min();
+        auto maxWatermarkForCurrentSequence = std::numeric_limits<Timestamp::Underlying>::min();
         auto chunks = chunkNumbers(rd);
         auto watermark = watermarks(rd);
         for (size_t j = ChunkNumber::INITIAL; j < chunks; ++j)
@@ -130,7 +127,7 @@ TEST_P(ConcurrentChunkCollectorTest, RandomInserts)
 
     /// Add inserts so they can be evenly divided on all threads
     auto moreInserts = numberOfThreads - (inserts.size() % numberOfThreads);
-    auto maxWatermarkForLastSequence = std::numeric_limits<Runtime::Timestamp::Underlying>::min();
+    auto maxWatermarkForLastSequence = std::numeric_limits<Timestamp::Underlying>::min();
     for (size_t i = ChunkNumber::INITIAL; i < moreInserts + ChunkNumber::INITIAL; ++i)
     {
         auto watermark = watermarks(rd);
@@ -159,7 +156,7 @@ TEST_P(ConcurrentChunkCollectorTest, RandomInserts)
                 for (size_t j = 0; j < perThread; ++j)
                 {
                     auto [seq, watermark] = inserts[(perThread * i) + j];
-                    if (auto opt = uut.collect(seq, Runtime::Timestamp(watermark)))
+                    if (auto opt = uut.collect(seq, Timestamp(watermark)))
                     {
                         ++completed;
                         EXPECT_EQ(opt->first.getRawValue(), seq.sequenceNumber);

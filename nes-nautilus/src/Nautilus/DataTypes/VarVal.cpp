@@ -92,7 +92,7 @@ VarVal::operator bool() const
 
 VarVal VarVal::castToType(const PhysicalType& type) const
 {
-    if (auto basicType = dynamic_cast<const BasicPhysicalType*>(&type))
+    if (const auto* basicType = dynamic_cast<const BasicPhysicalType*>(&type))
     {
         switch (basicType->nativeType)
         {
@@ -122,7 +122,7 @@ VarVal VarVal::castToType(const PhysicalType& type) const
                 throw UnsupportedOperation("Physical Type: {} is currently not supported", basicType->toString());
         }
     }
-    if (dynamic_cast<const VariableSizedDataType*>(&type))
+    if (dynamic_cast<const VariableSizedDataType*>(&type) != nullptr)
     {
         return {cast<VariableSizedData>()};
     }
@@ -131,7 +131,7 @@ VarVal VarVal::castToType(const PhysicalType& type) const
 
 VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalType& type)
 {
-    if (const auto basicType = dynamic_cast<const BasicPhysicalType*>(&type))
+    if (const auto* const basicType = dynamic_cast<const BasicPhysicalType*>(&type))
     {
         switch (basicType->nativeType)
         {
