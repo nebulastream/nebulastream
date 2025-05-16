@@ -84,7 +84,7 @@ public:
 
     void emplace(SequenceData sequenceData, T newValue)
     {
-        if (auto opt = chunks.collect(sequenceData, Runtime::Timestamp(newValue)))
+        if (auto opt = chunks.collect(sequenceData, Timestamp(newValue)))
         {
             auto [sequenceNumber, value] = *opt;
             INVARIANT(
