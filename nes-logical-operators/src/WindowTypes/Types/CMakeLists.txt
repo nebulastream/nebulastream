@@ -10,9 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-window-types
-        ContentBasedWindowType.cpp
-        ThresholdWindow.cpp
+add_source_files(nes-logical-operators
         TimeBasedWindowType.cpp
         WindowType.cpp
         SlidingWindow.cpp
