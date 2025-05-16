@@ -26,17 +26,13 @@
 namespace NES::Nautilus
 {
 
-/**
- * @brief The RecordBuffer is a representation of a set of records that are stored together.
- * In the common case this maps to a TupleBuffer, which stores the individual records in either a row or a columnar layout.
- */
+/// @brief The RecordBuffer is a representation of a set of records that are stored together.
+/// In the common case this maps to a TupleBuffer, which stores the individual records in either a row or a columnar layout.
 class RecordBuffer
 {
 public:
-    /**
-     * @brief Creates a new record buffer with a reference to a tuple buffer
-     * @param tupleBufferRef
-     */
+    /// @brief Creates a new record buffer with a reference to a tuple buffer
+    /// @param tupleBufferRef
     explicit RecordBuffer(const nautilus::val<Memory::TupleBuffer*>& tupleBufferRef);
 
     void setNumRecords(const nautilus::val<uint64_t>& numRecordsValue);
@@ -65,12 +61,12 @@ public:
 
     ///  Get the watermark timestamp of the underlying tuple buffer. The watermark timestamp is a point in time that guarantees no records
     ///  with a lower timestamp will be received.
-    nautilus::val<Runtime::Timestamp> getWatermarkTs();
-    void setWatermarkTs(const nautilus::val<Runtime::Timestamp>& watermarkTs);
+    nautilus::val<Timestamp> getWatermarkTs();
+    void setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs);
 
     /// Get the creation timestamp of the underlying tuple buffer. The creation timestamp is the point in time when the tuple buffer was created.
-    nautilus::val<Runtime::Timestamp> getCreatingTs();
-    void setCreationTs(const nautilus::val<Runtime::Timestamp>& creationTs);
+    nautilus::val<Timestamp> getCreatingTs();
+    void setCreationTs(const nautilus::val<Timestamp>& creationTs);
 
     ~RecordBuffer() = default;
 
