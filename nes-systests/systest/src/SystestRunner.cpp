@@ -64,12 +64,8 @@ namespace NES::Systest
 {
 
 /// NOLINTBEGIN(readability-function-cognitive-complexity)
-std::vector<LoadedQueryPlan> loadFromSLTFile(
-    const std::filesystem::path& testFilePath,
-    const std::filesystem::path& workingDir,
-    std::string_view testFileName,
-    const std::filesystem::path& testDataDir,
-    QueryResultMap& queryResultMap)
+std::vector<LoadedQueryPlan>
+loadFromSLTFile(SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName)
 {
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
@@ -80,7 +76,8 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
          {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "S$Count"},
           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "S$Checksum"}}}};
 
-    parser.registerSubstitutionRule({.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
+    parser.registerSubstitutionRule(
+        {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = systestStarterGlobals.getTestDataDir(); }});
     if (!parser.loadFile(testFilePath))
     {
         throw TestException("Could not successfully load test file://{}", testFilePath.string());
@@ -130,7 +127,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                     return schema;
                 }()});
 
-            const auto sourceFile = SystestQuery::sourceFile(workingDir, testFileName, sourceIndex++);
+            const auto sourceFile = SystestQuery::sourceFile(systestStarterGlobals.getWorkingDir(), testFileName, ++sourceIndex);
             sourceNamesToFilepath[source.name] = sourceFile;
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
@@ -150,12 +147,12 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                 testFile.flush();
             }
 
-            NES_INFO("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
+            NES_DEBUG("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
         });
 
     /// We create a new query plan from our config when finding a query
     parser.registerOnQueryCallback(
-        [&](std::string&& query, const size_t currentQueryNumberInTest)
+        [&](std::string query, const size_t currentQueryNumberInTest)
         {
             /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
             /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
@@ -208,7 +205,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
 
             /// Adding the sink to the sink config, such that we can create a fully specified query plan
-            const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
+            const auto resultFile = SystestQuery::resultFile(systestStarterGlobals.getWorkingDir(), testFileName, currentQueryNumberInTest);
 
             if (sinkName == "CHECKSUM")
             {
@@ -244,7 +241,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
         });
     try
     {
-        parser.parse(queryResultMap, workingDir, testFileName);
+        parser.parse(systestStarterGlobals, testFileName);
     }
     catch (Exception& exception)
     {
@@ -261,7 +258,7 @@ std::vector<RunningQuery> runQueries(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     QuerySubmitter& submitter,
-    QueryResultMap& queryResultMap)
+    const QueryResultMap& queryResultMap)
 {
     std::vector<std::shared_ptr<RunningQuery>> terminatedQueries;
     std::vector<std::shared_ptr<RunningQuery>> runningQueries;
@@ -300,14 +297,15 @@ std::vector<RunningQuery> runQueries(
                 }
                 auto error = checkResult(**currentQuery, queryResultMap);
                 auto result = std::make_shared<RunningQuery>((*currentQuery)->query, (*currentQuery)->queryId);
-                printQueryResultToStdOut(*result, error.value_or(""), queryFinishedCounter++, queries.size(), "");
                 if (error.has_value())
                 {
+                    printQueryResultToStdOut(*result, error.value(), queryFinishedCounter++, queries.size(), "");
                     failedQueries.emplace_back(std::move(result));
                 }
                 else
                 {
                     result->passed = true;
+                    printQueryResultToStdOut(*result, "", queryFinishedCounter++, queries.size(), "");
                     terminatedQueries.emplace_back(std::move(result));
                 }
                 std::erase_if(runningQueries, [&](const auto& runningQuery) { return runningQuery->queryId == (*currentQuery)->queryId; });
@@ -335,7 +333,7 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
         }
         const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
         resultJson.push_back({
-            {"query name", queryRan.query.resultFile().stem()},
+            {"query name", queryRan.query.testName},
             {"time", executionTimeInSeconds},
             {"bytesPerSecond", static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds},
             {"tuplesPerSecond", static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds},
@@ -349,7 +347,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const std::vector<SystestQuery>& queries,
     const Configuration::SingleNodeWorkerConfiguration& configuration,
     nlohmann::json& resultJson,
-    QueryResultMap& queryResultMap)
+    const QueryResultMap& queryResultMap)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
@@ -408,8 +406,8 @@ void printQueryResultToStdOut(
     const size_t totalQueries,
     const std::string_view queryPerformanceMessage)
 {
-    const auto queryNameLength = runningQuery.query.name.size();
-    const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile + 1);
+    const auto queryNameLength = runningQuery.query.testName.size();
+    const auto queryNumberAsString = std::to_string(runningQuery.query.queryIdInFile);
     const auto queryNumberLength = queryNumberAsString.size();
     const auto queryCounterAsString = std::to_string(queryCounter + 1);
 
@@ -417,7 +415,7 @@ void printQueryResultToStdOut(
     /// And as this is only for test runs we use stdout here.
     std::cout << std::string(padSizeQueryCounter - queryCounterAsString.size(), ' ');
     std::cout << queryCounterAsString << "/" << totalQueries << " ";
-    std::cout << runningQuery.query.name << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
+    std::cout << runningQuery.query.testName << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
     std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
     if (runningQuery.passed)
     {
@@ -438,7 +436,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const Configuration::SingleNodeWorkerConfiguration& configuration,
-    NES::Systest::QueryResultMap& queryResultMap)
+    const NES::Systest::QueryResultMap& queryResultMap)
 {
     LocalWorkerQuerySubmitter submitter(configuration);
     return runQueries(queries, numConcurrentQueries, submitter, queryResultMap);
@@ -447,7 +445,7 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const std::string& serverURI,
-    NES::Systest::QueryResultMap& queryResultMap)
+    const NES::Systest::QueryResultMap& queryResultMap)
 {
     RemoteWorkerQuerySubmitter submitter(serverURI);
     return runQueries(queries, numConcurrentQueries, submitter, queryResultMap);

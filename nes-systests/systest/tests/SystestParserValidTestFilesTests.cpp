@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -23,6 +24,7 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <SystestParser.hpp>
+#include <SystestState.hpp>
 
 namespace NES::Systest
 {
@@ -75,8 +77,8 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource& source) { ASSERT_EQ(source, expectedCSVSource); });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    SystestStarterGlobals systestStarterGlobals{};
+    EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
 }
 
 TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
@@ -130,8 +132,8 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    SystestStarterGlobals systestStarterGlobals{};
+    EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
 }
 
 TEST_F(SystestParserValidTestFileTest, FilterTestFile)
@@ -233,8 +235,8 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    QueryResultMap queryResultMap{};
-    EXPECT_NO_THROW(parser.parse(queryResultMap, {}, {}));
+    SystestStarterGlobals systestStarterGlobals{};
+    EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
 }
 
 }

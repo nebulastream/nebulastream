@@ -15,12 +15,11 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 #include <filesystem>
 #include <functional>
-#include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <SystestState.hpp>
@@ -100,7 +99,7 @@ public:
     void registerOnSinkCallBack(SinkCallback callback);
 
 
-    void parse(QueryResultMap& queryResultMap, const std::filesystem::path& workingDir, std::string_view fileName);
+    void parse(SystestStarterGlobals& systestStarterGlobals, std::string_view testFileName);
 
 private:
     /// Substitution rules ///

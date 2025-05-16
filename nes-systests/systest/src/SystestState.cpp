@@ -51,59 +51,59 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
         return lowerStr;
     };
 
-    std::string desiredExtension = fileExtension.has_value() ? toLowerCopy(*fileExtension) : "";
+    const auto desiredExtension = fileExtension.has_value() ? toLowerCopy(*fileExtension) : "";
 
     for (const auto& entry : std::filesystem::recursive_directory_iterator(path, std::filesystem::directory_options::skip_permission_denied)
              | std::views::filter([](auto entry) { return entry.is_regular_file(); }))
     {
-        std::string entryExt = toLowerCopy(entry.path().extension().string());
-
+        const std::string entryExt = toLowerCopy(entry.path().extension().string());
         if (!fileExtension || entryExt == desiredExtension)
         {
-            TestFile testfile(entry.path());
-            testFiles.insert({entry.path().string(), testfile});
+            const TestFile testfile(entry.path());
+            testFiles.insert({testfile.file, testfile});
         }
     }
     return testFiles;
 }
 
-void loadQueriesFromTestFile(
-    TestFile& testfile, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir, QueryResultMap& queryResultMap)
+void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& systestStarterGlobals)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir, queryResultMap);
+    auto loadedPlans = loadFromSLTFile(systestStarterGlobals, testfile.file, testfile.name());
     std::unordered_set<uint64_t> foundQueries;
 
-    for (const auto& [decomposedPlan, queryDefinition, sinkSchema, queryIdInFile, sourceNamesToFilepath] : loadedPlans)
-    {
-        if (testfile.onlyEnableQueriesWithTestQueryNumber.contains(queryIdInFile))
+    std::ranges::for_each(
+        loadedPlans
+            | std::views::filter(
+                [&testfile](const auto& loadedQueryPlan)
+                {
+                    return testfile.onlyEnableQueriesWithTestQueryNumber.empty()
+                        or testfile.onlyEnableQueriesWithTestQueryNumber.contains(loadedQueryPlan.queryNumberInTest);
+                }),
+        [&systestStarterGlobals, &testfile, &foundQueries](const auto& filteredLoadedQueryPlan)
         {
-            foundQueries.insert(queryIdInFile + 1);
-            testfile.queries.emplace_back(
-                testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema, sourceNamesToFilepath);
-        }
-        else
-        {
-            testfile.queries.emplace_back(
+            foundQueries.insert(filteredLoadedQueryPlan.queryNumberInTest);
+            systestStarterGlobals.addQuery(
                 testfile.name(),
-                queryDefinition,
+                filteredLoadedQueryPlan.queryName,
                 testfile.file,
-                decomposedPlan,
-                queryIdInFile,
-                workingDir,
-                sinkSchema,
-                sourceNamesToFilepath);
-        }
-    }
+                filteredLoadedQueryPlan.queryPlan,
+                filteredLoadedQueryPlan.queryNumberInTest,
+                systestStarterGlobals.getWorkingDir(),
+                filteredLoadedQueryPlan.sinkSchema,
+                filteredLoadedQueryPlan.sourceNamesToFilepathAndCount);
+        });
 
-    /// After processing all queries, warn if any specified query number was not found
-    for (auto testNumber : testfile.onlyEnableQueriesWithTestQueryNumber)
-    {
-        if (not foundQueries.contains(testNumber))
+    /// Warn about queries specified via the command line that were not found in the test file
+    std::ranges::for_each(
+        testfile.onlyEnableQueriesWithTestQueryNumber
+            | std::views::filter([&foundQueries](auto testNumber) { return not foundQueries.contains(testNumber); }),
+        [&testfile](const auto badTestNumber)
         {
-            std::cerr << "Warning: Query number " << testNumber << " specified via command line argument but not found in file://"
-                      << testfile.file.string() << "\n";
-        }
-    }
+            std::cerr << fmt::format(
+                "Warning: Query number {} specified via command line argument but not found in file://{}",
+                badTestNumber,
+                testfile.file.string());
+        });
 }
 
 std::vector<TestGroup> readGroups(const TestFile& testfile)
@@ -141,17 +141,16 @@ TestFile::TestFile(const std::filesystem::path& file, std::unordered_set<uint64_
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) { };
 
-std::vector<SystestQuery> loadQueries(
-    TestFileMap& testmap, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir, QueryResultMap& queryResultMap)
+std::vector<SystestQuery> loadQueries(SystestStarterGlobals& systestStarterGlobals)
 {
     std::vector<SystestQuery> queries;
     uint64_t loadedFiles = 0;
-    for (auto& [testname, testfile] : testmap)
+    for (const auto& testfile : systestStarterGlobals.getTestFileMap() | std::views::values)
     {
         std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
         try
         {
-            loadQueriesFromTestFile(testfile, workingDir, testDataDir, queryResultMap);
+            loadQueriesFromTestFile(testfile, systestStarterGlobals);
             for (auto& query : testfile.queries)
             {
                 queries.emplace_back(std::move(query));
@@ -164,8 +163,8 @@ std::vector<SystestQuery> loadQueries(
             std::cerr << fmt::format("Loading test file://{} failed: {}\n", testfile.getLogFilePath(), exception.what());
         }
     }
-    std::cout << "Loaded test files: " << loadedFiles << "/" << testmap.size() << '\n' << std::flush;
-    if (loadedFiles != testmap.size())
+    std::cout << "Loaded test files: " << loadedFiles << "/" << systestStarterGlobals.getTestFileMap().size() << '\n' << std::flush;
+    if (loadedFiles != systestStarterGlobals.getTestFileMap().size())
     {
         std::cerr << "Could not load all test files. Terminating.\n" << std::flush;
         std::exit(1);
@@ -209,22 +208,16 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
 
         if (config.testQueryNumbers.empty()) /// case: load all tests
         {
-            TestFile testfile = TestFile(directlySpecifiedTestFiles);
-            return TestFileMap{{testfile.name(), testfile}};
+            const auto testfile = TestFile(directlySpecifiedTestFiles);
+            return TestFileMap{{testfile.file, testfile}};
         }
-        else
-        { /// case: load a concrete set of tests
-            auto scalarTestNumbers = config.testQueryNumbers.getValues();
-            std::unordered_set<uint64_t> testNumbers;
-            testNumbers.reserve(scalarTestNumbers.size());
-            for (const auto& scalarOption : scalarTestNumbers)
-            {
-                testNumbers.emplace(scalarOption.getValue());
-            }
+        /// case: load a concrete set of tests
+        auto scalarTestNumbers = config.testQueryNumbers.getValues();
+        const auto testNumbers = std::ranges::to<std::unordered_set<uint64_t>>(
+            scalarTestNumbers | std::views::transform([](const auto& option) { return option.getValue(); }));
 
-            TestFile testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
-            return TestFileMap{{testfile.name(), testfile}};
-        }
+        const auto testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
+        return TestFileMap{{testfile.file, testfile}};
     }
 
     auto testsDiscoverDir = config.testsDiscoverDir.getValue();

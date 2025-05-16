@@ -36,8 +36,58 @@
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
+namespace
+{
+
+/// Parses the stream into a schema. It expects a string in the format: FIELDNAME FIELDTYPE, FIELDNAME FIELDTYPE, ...
+NES::Systest::SystestSchema parseSchemaFields(const std::vector<std::string>& arguments)
+{
+    NES::Systest::SystestSchema schema;
+    if (arguments.size() % 2 != 0)
+    {
+        if (const auto& lastArg = arguments.back(); lastArg.ends_with(".csv"))
+        {
+            throw NES::SLTUnexpectedToken(
+                "Incomplete fieldtype/fieldname pair for arguments {}; {} potentially is a CSV file? Are you mixing semantics",
+                fmt::join(arguments, ","),
+                lastArg);
+        }
+        throw NES::SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
+    }
+
+    for (size_t i = 0; i < arguments.size(); i += 2)
+    {
+        NES::DataType dataType;
+        if (auto type = magic_enum::enum_cast<NES::DataType::Type>(arguments[i]); type.has_value())
+        {
+            dataType = NES::DataTypeProvider::provideDataType(type.value());
+        }
+        else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
+        {
+            dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED);
+        }
+        else
+        {
+            throw NES::SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
+        }
+        schema.emplace_back(dataType, arguments[i + 1]);
+    }
+
+    return schema;
+}
+
+
+bool emptyOrComment(const std::string& line)
+{
+    return line.empty() /// completely empty
+        || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
+        || line.starts_with('#'); /// slt comment
+}
+}
+
 namespace NES::Systest
 {
+
 static constexpr auto CSVSourceToken = "SourceCSV"s;
 static constexpr auto SLTSourceToken = "Source"s;
 static constexpr auto QueryToken = "SELECT"s;
@@ -50,51 +100,6 @@ static const std::array<std::pair<std::string_view, TokenType>, 5> stringToToken
         {QueryToken, TokenType::QUERY},
         {SinkToken, TokenType::SINK},
         {ResultDelimiter, TokenType::RESULT_DELIMITER}}};
-
-static bool emptyOrComment(const std::string& line)
-{
-    return line.empty() /// completely empty
-        || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
-        || line.starts_with('#'); /// slt comment
-}
-
-/// Parses the stream into a schema. It expects a string in the format: FIELDNAME FIELDTYPE, FIELDNAME FIELDTYPE, ...
-SystestSchema parseSchemaFields(const std::vector<std::string>& arguments)
-{
-    SystestSchema schema;
-    if (arguments.size() % 2 != 0)
-    {
-        if (const auto& lastArg = arguments.back(); lastArg.ends_with(".csv"))
-        {
-            throw SLTUnexpectedToken(
-                "Incomplete fieldtype/fieldname pair for arguments {}; {} potentially is a CSV file? Are you mixing semantics",
-                fmt::join(arguments, ","),
-                lastArg);
-        }
-        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
-    }
-
-    for (size_t i = 0; i < arguments.size(); i += 2)
-    {
-        DataType dataType;
-        if (auto type = magic_enum::enum_cast<DataType::Type>(arguments[i]); type.has_value())
-        {
-            dataType = DataTypeProvider::provideDataType(type.value());
-        }
-        else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
-        {
-            dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
-        }
-        else
-        {
-            throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
-        }
-        schema.emplace_back(dataType, arguments[i + 1]);
-    }
-
-    return schema;
-}
-
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -166,8 +171,7 @@ void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
 }
 
 /// Here we model the structure of the test file by what we `expect` to see.
-/// If we encounter something unexpected, we return false.
-void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem::path& workingDir, const std::string_view testFileName)
+void SystestParser::parse(SystestStarterGlobals& systestStarterGlobals, const std::string_view testFileName)
 {
     SystestQueryNumberAssigner queryNumberAssigner{};
     while (auto token = nextToken())
@@ -206,9 +210,7 @@ void SystestParser::parse(QueryResultMap& queryResultMap, const std::filesystem:
                 break;
             }
             case TokenType::RESULT_DELIMITER: {
-                /// place the results in the query result map using the unique 'result file path' as key
-                queryResultMap.emplace(
-                    SystestQuery::resultFile(workingDir, testFileName, queryNumberAssigner.getNextQueryResultNumber()), expectTuples());
+                systestStarterGlobals.addQueryResult(testFileName, queryNumberAssigner.getNextQueryResultNumber(), expectTuples());
                 break;
             }
             case TokenType::INVALID: {
