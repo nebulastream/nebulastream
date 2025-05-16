@@ -23,8 +23,6 @@
 #include <grpcpp/support/status.h>
 #include <gtest/gtest-assertion-result.h>
 #include <GrpcService.hpp>
-#include <SerializableDecomposedQueryPlan.pb.h>
-
 
 namespace NES::IntegrationTestUtil
 {
@@ -33,7 +31,7 @@ static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
 /// Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
 [[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId = 0,
     const std::string& timestampFieldname = "ts",
@@ -53,15 +51,15 @@ void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<Schema>& schema,
+    const Schema& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider);
 
 /// Loads the output @link Schema of the SinkOperator in the @link SerializableDecomposedQueryPlan. This requieres the plan to only
 /// have a single root operator, which is the SinkOperator
-std::shared_ptr<Schema> loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan);
+Schema loadSinkSchema(SerializableQueryPlan& queryPlan);
 
-QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPCServer& uut);
+QueryId registerQueryPlan(const SerializableQueryPlan& queryPlan, GRPCServer& uut);
 
 void startQuery(QueryId queryId, GRPCServer& uut);
 
@@ -78,9 +76,9 @@ QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut);
 void querySummaryFailure(QueryId queryId, GRPCServer& uut, grpc::StatusCode statusCode);
 
 /// Current status of the query.
-QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
+::QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
 
-std::vector<std::pair<Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut);
+std::vector<std::pair<QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut);
 
 /// Wating for the query to end, e.g. by finishing or failing. Returns assertion success if the query ended (also if it failed).
 testing::AssertionResult waitForQueryToEnd(QueryId queryId, GRPCServer& uut);
@@ -93,22 +91,21 @@ void removeFile(std::string_view filepath);
 
 /// Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
 bool loadFile(
-    SerializableDecomposedQueryPlan& queryPlan,
+    SerializableQueryPlan& queryPlan,
     std::string_view queryFileName,
     std::string_view dataFileName,
     std::string_view querySpecificDataFileName);
 
 /// Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
-bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName);
+bool loadFile(SerializableQueryPlan& queryPlan, const std::string_view queryFileName);
 
-void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName);
+void replaceInputFileInFileSources(SerializableQueryPlan& decomposedQueryPlan, std::string newInputFileName);
 
 /// Iterates over a decomposed query plan and replaces all CSV sink file paths to ensure expected behavior.
-void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& filePathNew);
+void replaceFileSinkPath(SerializableQueryPlan& decomposedQueryPlan, const std::string& filePathNew);
 
 /// @brief Iterates over a decomposed query plan and replaces all sockets with the a free port generated for the mocked tcp server.
-void replacePortInTCPSources(
-    SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber);
+void replacePortInTCPSources(SerializableQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber);
 
 std::string getUniqueTestIdentifier();
 

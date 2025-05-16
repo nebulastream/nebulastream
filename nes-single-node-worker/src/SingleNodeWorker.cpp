@@ -36,7 +36,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
           fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", std::chrono::system_clock::now(), ::getpid())))
     , nodeEngine(NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
-    , optimizer(std::make_unique<Optimizer::QueryOptimizer>(configuration.workerConfiguration.queryOptimizer))
+    , optimizer(std::make_unique<QueryOptimizer>(configuration.workerConfiguration.queryOptimizer))
     , compiler(std::make_unique<QueryCompilation::QueryCompiler>())
 {
 }
@@ -49,9 +49,9 @@ QueryId SingleNodeWorker::registerQuery(LogicalPlan plan)
 {
     try
     {
-        plan.queryId = QueryId(queryIdCounter++);
+        plan.setQueryId(QueryId(queryIdCounter++));
         auto queryPlan = optimizer->optimize(plan);
-        listener->onEvent(SubmitQuerySystemEvent{queryPlan.queryId, plan.originalSql});
+        listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         auto result = compiler->compileQuery(std::move(request));
         return nodeEngine->registerCompiledQueryPlan(std::move(result));

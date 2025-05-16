@@ -16,31 +16,28 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <QueryCompiler.hpp>
+#include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES
 {
-namespace Runtime
-{
 struct PrintingStatisticListener;
-}
 
-/**
- * @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
- * coordination. The SingleNodeWorker can register LogicalQueryPlans which are lowered into an executable format, by the
- * QueryCompiler. The user can manage the lifecycle of queries inside the NodeEngine using the SingleNodeWorkers interface.
- * The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
- */
+/// @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
+/// coordination. The SingleNodeWorker can register LogicalQueryPlans which are lowered into an executable format, by the
+/// QueryCompiler. The user can manage the lifecycle of queries inside the NodeEngine using the SingleNodeWorkers interface.
+/// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
-    std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
-    std::shared_ptr<Runtime::PrintingStatisticListener> listener;
-    std::shared_ptr<Runtime::NodeEngine> nodeEngine;
+    std::shared_ptr<PrintingStatisticListener> listener;
+    std::shared_ptr<NodeEngine> nodeEngine;
     size_t bufferSize;
+    std::unique_ptr<QueryOptimizer> optimizer;
+    std::unique_ptr<QueryCompilation::QueryCompiler> compiler;
 
 public:
     explicit SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration&);
@@ -53,38 +50,30 @@ public:
     SingleNodeWorker(SingleNodeWorker&& other) noexcept;
     SingleNodeWorker& operator=(SingleNodeWorker&& other) noexcept;
 
-    /**
-     * Registers a DecomposedQueryPlan which internally triggers the QueryCompiler and registers the executable query plan. Once
-     * returned the query can be started with the QueryId. The registered Query will be in the StoppedState
-     * @param plan Fully Specified LogicalQueryPlan.
-     * @return QueryId which identifies the registered Qconst uery
-     */
-    QueryId registerQuery(const std::shared_ptr<DecomposedQueryPlan>& plan);
+    /// Registers a DecomposedQueryPlan which internally triggers the QueryCompiler and registers the executable query plan. Once
+    /// returned the query can be started with the QueryId. The registered Query will be in the StoppedState
+    /// @param plan Fully Specified LogicalQueryPlan.
+    /// @return QueryId which identifies the registered Query
+    QueryId registerQuery(LogicalPlan plan);
 
-    /**
-     * Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
-     * of the query.
-     * @param queryId identifies the registered query
-     */
+    /// Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
+    /// of the query.
+    /// @param queryId identifies the registered query
     void startQuery(QueryId queryId);
 
-    /**
-     * Stops the Query and moves it into the StoppedState. The exact semantics and guarantees depend on the chosen
-     * QueryTerminationType
-     * @param queryId identifies the registered query
-     * @param terminationType dictates what happens with in in-flight data
-     */
-    void stopQuery(QueryId queryId, Runtime::QueryTerminationType terminationType);
+    /// Stops the Query and moves it into the StoppedState. The exact semantics and guarantees depend on the chosen
+    ///  QueryTerminationType
+    /// @param queryId identifies the registered query
+    /// @param terminationType dictates what happens with in in-flight data
+    void stopQuery(QueryId queryId, QueryTerminationType terminationType);
 
-    /**
-     * Unregisters a stopped Query.
-     * @param queryId identifies the registered stopped query
-     */
+    /// Unregisters a stopped Query.
+    /// @param queryId identifies the registered stopped query
     void unregisterQuery(QueryId queryId);
 
     /// Complete history of query status changes.
-    [[nodiscard]] std::optional<Runtime::QueryLog::Log> getQueryLog(QueryId queryId) const;
-    /// Summary sturcture for query.
-    [[nodiscard]] std::optional<Runtime::QuerySummary> getQuerySummary(QueryId queryId) const;
+    [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(QueryId queryId) const;
+    /// Summary structure for query.
+    [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId) const;
 };
 }
