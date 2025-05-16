@@ -28,9 +28,7 @@ namespace NES::Testing
 {
 using namespace ::testing;
 
-/**
- * @brief Integration tests for the SingleNodeWorker. Tests query status after registration, running, stopping and unregistration.
- */
+/// @brief Integration tests for the SingleNodeWorker. Tests query status after registration, running, stopping and unregistration.
 class SingleNodeIntegrationTest : public BaseIntegrationTest
 {
 public:
@@ -51,7 +49,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
     const std::string queryResultFile = fmt::format("{}.csv", resultFileName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
-    SerializableDecomposedQueryPlan queryPlan;
+    SerializableQueryPlan queryPlan;
     const auto querySpecificDataFileName = fmt::format("{}_{}", "TestQueryStatus", dataInputFile);
     if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, querySpecificDataFileName))
     {
@@ -62,7 +60,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
 
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryOptimizer.executionMode = Nautilus::Configurations::ExecutionMode::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -74,16 +72,16 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
     auto reply = IntegrationTestUtil::querySummary(queryId, uut);
-    EXPECT_EQ(reply.status(), QueryStatus::Stopped);
+    EXPECT_EQ(reply.status(), Stopped);
     EXPECT_EQ(reply.runs().size(), 1);
     EXPECT_FALSE(reply.runs().at(0).has_error());
 
     auto log = IntegrationTestUtil::queryLog(queryId, uut);
-    const std::vector<QueryStatus> expected = {Registered, Running, Stopped, Running, Stopped};
+    const std::vector<::QueryStatus> expected = {Registered, Running, Stopped, Running, Stopped};
 
     for (size_t i = 0; i < log.size(); ++i)
     {
-        EXPECT_EQ(log[i].first, static_cast<Runtime::Execution::QueryStatus>(expected[i]));
+        EXPECT_EQ(log[i].first, static_cast<QueryStatus>(expected[i]));
     }
 }
 
@@ -95,7 +93,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     const std::string queryResultFile = fmt::format("{}.csv", resultFileName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
-    SerializableDecomposedQueryPlan queryPlan;
+    SerializableQueryPlan queryPlan;
     const auto querySpecificDataFileName = fmt::format("{}_{}", "TestQueryStatusSimple", dataInputFile);
     if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, querySpecificDataFileName))
     {
@@ -105,7 +103,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = Nautilus::Configurations::NautilusBackend::INTERPRETER;
+    configuration.workerConfiguration.queryOptimizer.executionMode = Nautilus::Configurations::ExecutionMode::INTERPRETER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 

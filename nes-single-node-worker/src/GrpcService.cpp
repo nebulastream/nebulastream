@@ -15,8 +15,9 @@
 #include <exception>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/empty.pb.h>
@@ -47,10 +48,10 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
 
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
 {
-    auto fullySpecifiedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&request->decomposedqueryplan());
+    auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
     CPPTRACE_TRY
     {
-        auto queryId = delegate.registerQuery(fullySpecifiedQueryPlan);
+        auto queryId = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
         response->set_queryid(queryId.getRawValue());
         return grpc::Status::OK;
     }
@@ -103,7 +104,7 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
-    auto terminationType = static_cast<Runtime::QueryTerminationType>(request->terminationtype());
+    auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
     CPPTRACE_TRY
     {
         delegate.stopQuery(queryId, terminationType);
@@ -128,7 +129,7 @@ grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const
         auto summary = delegate.getQuerySummary(queryId);
         if (summary.has_value())
         {
-            reply->set_status(QueryStatus(summary->currentStatus));
+            reply->set_status(::QueryStatus(summary->currentStatus));
             for (const auto& [start, running, stop, error] : summary->runs)
             {
                 auto* const replyRun = reply->add_runs();
@@ -179,7 +180,7 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
             for (const auto& entry : *log)
             {
                 QueryLogEntry logEntry;
-                logEntry.set_status((QueryStatus)entry.state);
+                logEntry.set_status((::QueryStatus)entry.state);
                 logEntry.set_unixtimeinms(
                     std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
                 if (entry.exception.has_value())
