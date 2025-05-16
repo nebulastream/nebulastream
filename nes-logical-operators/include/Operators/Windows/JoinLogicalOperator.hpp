@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <Windowing/WindowMetaData.hpp>
 
 namespace NES
 {
@@ -46,6 +47,7 @@ public:
     [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
+    [[nodiscard]] const WindowMetaData& getWindowMetaData() const;
 
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
@@ -112,7 +114,7 @@ private:
     static constexpr std::string_view NAME = "Join";
     LogicalFunction joinFunction;
     std::shared_ptr<Windowing::WindowType> windowType;
-    std::string windowStartFieldName, windowEndFieldName;
+    WindowMetaData windowMetaData;
     JoinType joinType;
     OriginIdAssignerTrait originIdTrait;
 

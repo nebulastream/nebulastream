@@ -42,6 +42,7 @@ inline OperatorId getNextLogicalOperatorId()
 /// This concept defines the common interface that all logical operators must implement.
 /// Logical operators represent operations in the query plan and are used during query
 /// planning and optimization.
+/// TODO #875: Investigate C++20 Concepts to replace Operator/Function Inheritance
 struct LogicalOperatorConcept
 {
     virtual ~LogicalOperatorConcept() = default;

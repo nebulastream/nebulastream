@@ -59,11 +59,13 @@ std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity) const
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "Join({}-{}, windowType = {}, joinFunction = {})",
+            "Join({}-{}, windowType = {}, joinFunction = {}, windowStartField={}, windowEndField={})",
             id,
             outputOriginIds,
             getWindowType()->toString(),
-            getJoinFunction().explain(verbosity));
+            getJoinFunction().explain(verbosity),
+            windowMetaData.windowStartFieldName,
+            windowMetaData.windowEndFieldName);
     }
     return fmt::format("Join({})", getJoinFunction().explain(verbosity));
 }
@@ -82,10 +84,10 @@ LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     auto sourceNameRight = rightInputSchema.getQualifierNameForSystemGeneratedFields();
     auto newQualifierForSystemField = sourceNameLeft + sourceNameRight;
 
-    copy.windowStartFieldName = newQualifierForSystemField + "$start";
-    copy.windowEndFieldName = newQualifierForSystemField + "$end";
-    copy.outputSchema.addField(copy.windowStartFieldName, BasicType::UINT64);
-    copy.outputSchema.addField(copy.windowEndFieldName, BasicType::UINT64);
+    copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "$start";
+    copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "$end";
+    copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, BasicType::UINT64);
+    copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, BasicType::UINT64);
 
     for (auto field : leftInputSchema)
     {
@@ -172,12 +174,17 @@ std::shared_ptr<Windowing::WindowType> JoinLogicalOperator::getWindowType() cons
 
 std::string JoinLogicalOperator::getWindowStartFieldName() const
 {
-    return windowStartFieldName;
+    return windowMetaData.windowStartFieldName;
 }
 
 std::string JoinLogicalOperator::getWindowEndFieldName() const
 {
-    return windowEndFieldName;
+    return windowMetaData.windowEndFieldName;
+}
+
+const WindowMetaData& JoinLogicalOperator::getWindowMetaData() const
+{
+    return windowMetaData;
 }
 
 LogicalFunction JoinLogicalOperator::getJoinFunction() const
@@ -261,9 +268,9 @@ SerializableOperator JoinLogicalOperator::serialize() const
         = Configurations::descriptorConfigTypeToProto(Configurations::EnumWrapper(joinType));
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfo);
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME]
-        = Configurations::descriptorConfigTypeToProto(windowStartFieldName);
+        = Configurations::descriptorConfigTypeToProto(windowMetaData.windowStartFieldName);
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME]
-        = Configurations::descriptorConfigTypeToProto(windowEndFieldName);
+        = Configurations::descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;

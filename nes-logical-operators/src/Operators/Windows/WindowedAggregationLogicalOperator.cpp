@@ -142,10 +142,10 @@ LogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vect
         const auto& sourceName = firstSchema.getQualifierNameForSystemGeneratedFields();
         const auto& newQualifierForSystemField = sourceName;
 
-        copy.windowStartFieldName = newQualifierForSystemField + "$start";
-        copy.windowEndFieldName = newQualifierForSystemField + "$end";
-        copy.outputSchema.addField(copy.windowStartFieldName, BasicType::UINT64);
-        copy.outputSchema.addField(copy.windowEndFieldName, BasicType::UINT64);
+        copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "$start";
+        copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "$end";
+        copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, BasicType::UINT64);
+        copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, BasicType::UINT64);
     }
     else
     {
@@ -254,14 +254,19 @@ std::vector<FieldAccessLogicalFunction> WindowedAggregationLogicalOperator::getG
     return groupingKey;
 }
 
-[[nodiscard]] std::string WindowedAggregationLogicalOperator::getWindowStartFieldName() const
+std::string WindowedAggregationLogicalOperator::getWindowStartFieldName() const
 {
-    return windowStartFieldName;
+    return windowMetaData.windowStartFieldName;
 }
 
-[[nodiscard]] std::string WindowedAggregationLogicalOperator::getWindowEndFieldName() const
+std::string WindowedAggregationLogicalOperator::getWindowEndFieldName() const
 {
-    return windowEndFieldName;
+    return windowMetaData.windowEndFieldName;
+}
+
+const WindowMetaData& WindowedAggregationLogicalOperator::getWindowMetaData() const
+{
+    return windowMetaData;
 }
 
 SerializableOperator WindowedAggregationLogicalOperator::serialize() const
@@ -351,9 +356,9 @@ SerializableOperator WindowedAggregationLogicalOperator::serialize() const
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = Configurations::descriptorConfigTypeToProto(windowInfo);
 
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME]
-        = Configurations::descriptorConfigTypeToProto(windowStartFieldName);
+        = Configurations::descriptorConfigTypeToProto(windowMetaData.windowStartFieldName);
     (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME]
-        = Configurations::descriptorConfigTypeToProto(windowEndFieldName);
+        = Configurations::descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);
     return serializableOperator;
