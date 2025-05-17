@@ -13,10 +13,7 @@
 */
 #pragma once
 
-#include <memory>
-#include <string>
-#include <utility>
-#include <Functions/PhysicalFunction.hpp>
+#include <optional>
 #include <Nautilus/Interface/Record.hpp>
 #include <PhysicalOperator.hpp>
 

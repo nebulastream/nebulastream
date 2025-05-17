@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-#include <cstdint>
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Streaming/Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
+#include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 
 namespace NES
@@ -29,10 +28,10 @@ StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerIndex,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferMemoryProvider> memoryProvider)
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
     , joinBuildSide(joinBuildSide)
-    , memoryProvider(memoryProvider)
+    , memoryProvider(std::move(std::move(memoryProvider)))
 {
 }
 }

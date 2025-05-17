@@ -13,29 +13,38 @@
 */
 
 #include <memory>
-#include <queue>
+#include <ostream>
+#include <sstream>
+#include <string>
 #include <utility>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/ExecutionMode.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
-#include <SinkPhysicalOperator.hpp>
+#include <SourcePhysicalOperator.hpp>
 
 namespace NES
 {
 PhysicalPlan::PhysicalPlan(
-    QueryId id, std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators, Nautilus::Configurations::ExecutionMode executionMode, uint64_t operatorBufferSize)
+    QueryId id,
+    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators,
+    Nautilus::Configurations::ExecutionMode executionMode,
+    uint64_t operatorBufferSize)
     : queryId(id), rootOperators(std::move(rootOperators)), executionMode(executionMode), operatorBufferSize(operatorBufferSize)
 {
-    for (auto rootOperator : rootOperators)
+    for (const auto& rootOperator : this->rootOperators)
     {
-        PRECONDITION(rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(), "Expects SinkOperators as roots");
+        PRECONDITION(rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(), "Expects SourcePhysicalOperator as roots");
     }
 }
 
 std::string PhysicalPlan::toString() const
 {
     std::stringstream ss;
-    auto dumpHandler = QueryConsoleDumpHandler<PhysicalPlan, PhysicalOperatorWrapper>(ss);
+    auto dumpHandler = QueryConsoleDumpHandler<PhysicalPlan, PhysicalOperatorWrapper>(ss, true);
     for (const auto& rootOperator : rootOperators)
     {
         dumpHandler.dump(*rootOperator);

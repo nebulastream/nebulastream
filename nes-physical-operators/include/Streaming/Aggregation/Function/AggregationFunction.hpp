@@ -43,7 +43,7 @@ public:
     AggregationFunction(
         std::unique_ptr<PhysicalType> inputType,
         std::unique_ptr<PhysicalType> resultType,
-        Functions::PhysicalFunction inputFunction,
+        PhysicalFunction inputFunction,
         Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /// Adds the incoming record to the existing aggregation state
@@ -76,7 +76,7 @@ public:
 protected:
     const std::unique_ptr<PhysicalType> inputType;
     const std::unique_ptr<PhysicalType> resultType;
-    const Functions::PhysicalFunction inputFunction;
+    const PhysicalFunction inputFunction;
     const Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier;
 };
 

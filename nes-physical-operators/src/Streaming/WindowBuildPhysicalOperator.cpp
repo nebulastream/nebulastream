@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -24,6 +25,7 @@
 #include <Watermark/TimeFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
 #include <function.hpp>
 
 namespace NES

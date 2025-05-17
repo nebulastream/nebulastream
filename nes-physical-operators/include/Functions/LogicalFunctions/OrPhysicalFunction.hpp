@@ -14,13 +14,12 @@
 
 #pragma once
 
-#include <memory>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 class OrPhysicalFunction final : public PhysicalFunctionConcept
@@ -30,7 +29,7 @@ public:
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
-    const PhysicalFunction leftPhysicalFunction;
-    const PhysicalFunction rightPhysicalFunction;
+    PhysicalFunction leftPhysicalFunction;
+    PhysicalFunction rightPhysicalFunction;
 };
 }

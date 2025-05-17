@@ -20,7 +20,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 /// Performs leftPhysicalFunction * rightPhysicalFunction
@@ -31,8 +31,8 @@ public:
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
-    const PhysicalFunction leftPhysicalFunction;
-    const PhysicalFunction rightPhysicalFunction;
+    PhysicalFunction leftPhysicalFunction;
+    PhysicalFunction rightPhysicalFunction;
 };
 
 }

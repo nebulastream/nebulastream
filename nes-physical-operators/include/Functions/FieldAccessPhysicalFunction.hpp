@@ -18,7 +18,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 class FieldAccessPhysicalFunction : public PhysicalFunctionConcept

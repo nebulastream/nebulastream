@@ -14,11 +14,13 @@
 #pragma once
 
 #include <memory>
+#include <ostream>
+#include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/NautilusBackend.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Pipeline.hpp>
+#include <Util/ExecutionMode.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <vector>
 #include <Functions/ComparisonFunctions/LessEqualsPhysicalFunction.hpp>
@@ -24,7 +23,7 @@
 #include <PhysicalFunctionRegistry.hpp>
 
 
-namespace NES::Functions
+namespace NES
 {
 
 VarVal LessEqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -35,16 +34,16 @@ VarVal LessEqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena
 }
 
 LessEqualsPhysicalFunction::LessEqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
 {
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterLessEqualsPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterLessEqualsPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "LessEquals function must have exactly two sub-functions");
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "LessEquals function must have exactly two sub-functions");
     return LessEqualsPhysicalFunction(
-        PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
+        physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

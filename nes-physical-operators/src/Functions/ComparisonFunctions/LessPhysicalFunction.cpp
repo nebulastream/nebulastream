@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <vector>
 #include <Functions/ComparisonFunctions/LessPhysicalFunction.hpp>
@@ -24,7 +23,7 @@
 #include <PhysicalFunctionRegistry.hpp>
 
 
-namespace NES::Functions
+namespace NES
 {
 
 VarVal LessPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -35,15 +34,15 @@ VarVal LessPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
 }
 
 LessPhysicalFunction::LessPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
 {
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterLessPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterLessPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Less function must have exactly two sub-functions");
-    return LessPhysicalFunction(PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Less function must have exactly two sub-functions");
+    return LessPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <optional>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <PhysicalOperator.hpp>

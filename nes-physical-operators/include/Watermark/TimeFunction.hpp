@@ -13,10 +13,13 @@
 */
 #pragma once
 
+#include <memory>
 #include <API/TimeUnit.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 
 
@@ -39,21 +42,24 @@ public:
     virtual nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const = 0;
     virtual ~TimeFunction() = default;
 
-    virtual std::unique_ptr<TimeFunction> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<TimeFunction> clone() const = 0;
 };
 
 class EventTimeFunction final : public TimeFunction
 {
 public:
-    explicit EventTimeFunction(Functions::PhysicalFunction timestampFunction, Windowing::TimeUnit unit);
+    explicit EventTimeFunction(PhysicalFunction timestampFunction, const Windowing::TimeUnit& unit);
     void open(ExecutionContext& ctx, RecordBuffer& buffer) const override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const override;
 
-    std::unique_ptr<TimeFunction> clone() const override { return std::make_unique<EventTimeFunction>(timestampFunction, unit); }
+    [[nodiscard]] std::unique_ptr<TimeFunction> clone() const override
+    {
+        return std::make_unique<EventTimeFunction>(timestampFunction, unit);
+    }
 
 private:
     Windowing::TimeUnit unit;
-    Functions::PhysicalFunction timestampFunction;
+    PhysicalFunction timestampFunction;
 };
 
 class IngestionTimeFunction final : public TimeFunction
@@ -62,7 +68,7 @@ public:
     void open(ExecutionContext& ctx, RecordBuffer& buffer) const override;
     nautilus::val<Timestamp> getTs(ExecutionContext& ctx, Record& record) const override;
 
-    std::unique_ptr<TimeFunction> clone() const override { return std::make_unique<IngestionTimeFunction>(); }
+    [[nodiscard]] std::unique_ptr<TimeFunction> clone() const override { return std::make_unique<IngestionTimeFunction>(); }
 };
 
 }

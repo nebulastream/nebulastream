@@ -15,18 +15,19 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <optional>
-#include <sstream>
+#include <ostream>
 #include <string>
+#include <type_traits>
 #include <typeinfo>
 #include <vector>
+#include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <boost/core/demangle.hpp>
@@ -35,18 +36,13 @@
 namespace NES
 {
 using namespace Nautilus;
-using namespace Nautilus::Interface::MemoryProvider;
-
 struct ExecutionContext;
 
 /// Unique ID generation for physical operators.
-namespace
-{
 inline OperatorId getNextPhysicalOperatorId()
 {
     static std::atomic_uint64_t id = INITIAL_OPERATOR_ID.getRawValue();
     return OperatorId(id++);
-}
 }
 
 /// Concept defining the interface for all physical operators in the query plan.
@@ -108,7 +104,7 @@ struct PhysicalOperator
     /// @tparam T The type of the operator. Must satisfy IsPhysicalOperator concept.
     /// @param op The operator to wrap.
     template <IsPhysicalOperator T>
-    PhysicalOperator(const T& op) : self(std::make_shared<Model<T>>(op, op.id))
+    PhysicalOperator(const T& op) : self(std::make_shared<Model<T>>(op, op.id)) /// NOLINT
     {
     }
 
@@ -213,17 +209,29 @@ public:
     {
         Scan, /// pipeline scan
         Emit, /// pipeline emit
-        None /// neither of them, normal operator
+        None, /// neither of them, normal operator
     };
+
+    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema);
+
+    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema, PipelineEndpoint endpoint);
 
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
         Schema inputSchema,
         Schema outputSchema,
-        std::optional<OperatorHandlerId> handlerId = std::nullopt,
-        std::optional<std::shared_ptr<OperatorHandler>> handler = std::nullopt,
-        PipelineEndpoint endpoint = PipelineEndpoint::None,
-        std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children = {});
+        std::optional<OperatorHandlerId> handlerId,
+        std::optional<std::shared_ptr<OperatorHandler>> handler,
+        PipelineEndpoint endpoint);
+
+    PhysicalOperatorWrapper(
+        PhysicalOperator physicalOperator,
+        Schema inputSchema,
+        Schema outputSchema,
+        std::optional<OperatorHandlerId> handlerId,
+        std::optional<std::shared_ptr<OperatorHandler>> handler,
+        PipelineEndpoint endpoint,
+        std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children);
 
     /// for compatibility with free functions requiring getChildren()
     [[nodiscard]] std::vector<std::shared_ptr<PhysicalOperatorWrapper>> getChildren() const;
@@ -235,7 +243,7 @@ public:
     [[nodiscard]] const std::optional<Schema>& getInputSchema() const;
     [[nodiscard]] const std::optional<Schema>& getOutputSchema() const;
 
-    void addChild(std::shared_ptr<PhysicalOperatorWrapper> child);
+    void addChild(const std::shared_ptr<PhysicalOperatorWrapper>& child);
     void setChildren(const std::vector<std::shared_ptr<PhysicalOperatorWrapper>>& newChildren);
 
     [[nodiscard]] const std::optional<std::shared_ptr<OperatorHandler>>& getHandler() const;

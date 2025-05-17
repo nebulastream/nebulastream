@@ -16,7 +16,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -30,11 +29,8 @@ namespace NES
 {
 
 StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
-    const OperatorHandlerId operatorHandlerIndex,
-    Functions::PhysicalFunction joinFunction,
-    WindowMetaData windowMetaData,
-    JoinSchema joinSchema)
-    : WindowProbePhysicalOperator(operatorHandlerIndex, windowMetaData)
+    const OperatorHandlerId operatorHandlerIndex, PhysicalFunction joinFunction, WindowMetaData windowMetaData, JoinSchema joinSchema)
+    : WindowProbePhysicalOperator(operatorHandlerIndex, std::move(windowMetaData))
     , joinFunction(std::move(joinFunction))
     , joinSchema(std::move(joinSchema))
 {

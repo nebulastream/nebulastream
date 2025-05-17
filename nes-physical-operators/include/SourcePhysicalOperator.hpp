@@ -14,10 +14,8 @@
 #pragma once
 
 #include <memory>
-#include <string>
-#include <utility>
-#include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <optional>
+#include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -30,8 +28,8 @@ public:
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
-    std::shared_ptr<Sources::SourceDescriptor> getDescriptor() const;
-    OriginId getOriginId() const;
+    [[nodiscard]] std::shared_ptr<Sources::SourceDescriptor> getDescriptor() const;
+    [[nodiscard]] OriginId getOriginId() const;
 
     bool operator==(const SourcePhysicalOperator& other) const;
 

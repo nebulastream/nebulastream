@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <vector>
 #include <Functions/ComparisonFunctions/GreaterEqualsPhysicalFunction.hpp>
@@ -24,7 +23,7 @@
 #include <PhysicalFunctionRegistry.hpp>
 
 
-namespace NES::Functions
+namespace NES
 {
 
 VarVal GreaterEqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -35,17 +34,17 @@ VarVal GreaterEqualsPhysicalFunction::execute(const Record& record, ArenaRef& ar
 }
 
 GreaterEqualsPhysicalFunction::GreaterEqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
 {
 }
 
 PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterGreaterEqualsPhysicalFunction(
-    PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
-        PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two sub-functions");
+        physicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two sub-functions");
     return GreaterEqualsPhysicalFunction(
-        PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
+        physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

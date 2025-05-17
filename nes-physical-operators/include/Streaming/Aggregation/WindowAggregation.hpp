@@ -20,10 +20,10 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Windowing/WindowMetaData.hpp>
 
 namespace NES
 {
+using namespace Interface::MemoryProvider;
 
 /// Stores members that are needed for both phases of the aggregation, build and probe
 class WindowAggregation
@@ -36,7 +36,7 @@ public:
         std::vector<FieldOffsets> fieldValues,
         uint64_t entriesPerPage,
         uint64_t entrySize);
-    explicit WindowAggregation(const WindowAggregation& other);
+    WindowAggregation(const WindowAggregation& other);
     explicit WindowAggregation(const std::shared_ptr<WindowAggregation>& other);
 
 protected:

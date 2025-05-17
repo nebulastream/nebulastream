@@ -12,9 +12,21 @@
     limitations under the License.
 */
 
+#include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
 
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -93,9 +105,7 @@ void PhysicalOperatorConcept::terminateChild(ExecutionContext& executionCtx) con
 
 PhysicalOperator::PhysicalOperator() = default;
 
-PhysicalOperator::PhysicalOperator(const PhysicalOperator& other) : self(other.self)
-{
-}
+PhysicalOperator::PhysicalOperator(const PhysicalOperator& other) = default;
 
 PhysicalOperator::PhysicalOperator(PhysicalOperator&&) noexcept = default;
 
@@ -115,7 +125,7 @@ std::optional<PhysicalOperator> PhysicalOperator::getChild() const
 
 void PhysicalOperator::setChild(PhysicalOperator child)
 {
-    self->setChild(child);
+    self->setChild(std::move(child));
 }
 
 void PhysicalOperator::setup(ExecutionContext& executionCtx) const
@@ -153,6 +163,33 @@ std::string PhysicalOperator::toString() const
     return self->id;
 }
 
+PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema)
+    : physicalOperator(std::move(physicalOperator)), inputSchema(inputSchema), outputSchema(outputSchema), endpoint(PipelineEndpoint::None)
+{
+}
+
+PhysicalOperatorWrapper::PhysicalOperatorWrapper(
+    PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema, PipelineEndpoint endpoint)
+    : physicalOperator(std::move(physicalOperator)), inputSchema(inputSchema), outputSchema(outputSchema), endpoint(endpoint)
+{
+}
+
+PhysicalOperatorWrapper::PhysicalOperatorWrapper(
+    PhysicalOperator physicalOperator,
+    Schema inputSchema,
+    Schema outputSchema,
+    std::optional<OperatorHandlerId> handlerId,
+    std::optional<std::shared_ptr<OperatorHandler>> handler,
+    PipelineEndpoint endpoint)
+    : physicalOperator(std::move(std::move(physicalOperator)))
+    , inputSchema(inputSchema)
+    , outputSchema(outputSchema)
+    , handler(std::move(std::move(handler)))
+    , handlerId(handlerId)
+    , endpoint(endpoint)
+{
+}
+
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
     Schema inputSchema,
@@ -161,11 +198,11 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     std::optional<std::shared_ptr<OperatorHandler>> handler,
     PipelineEndpoint endpoint,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children)
-    : physicalOperator(physicalOperator)
+    : physicalOperator(std::move(std::move(physicalOperator)))
     , inputSchema(inputSchema)
     , outputSchema(outputSchema)
     , children(std::move(children))
-    , handler(handler)
+    , handler(std::move(std::move(handler)))
     , handlerId(handlerId)
     , endpoint(endpoint)
 {
@@ -205,7 +242,7 @@ const std::optional<Schema>& PhysicalOperatorWrapper::getOutputSchema() const
     return outputSchema;
 }
 
-void PhysicalOperatorWrapper::addChild(std::shared_ptr<PhysicalOperatorWrapper> child)
+void PhysicalOperatorWrapper::addChild(const std::shared_ptr<PhysicalOperatorWrapper>& child)
 {
     children.push_back(child);
 }
