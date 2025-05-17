@@ -22,7 +22,6 @@
 
 #include <memory>
 #include <string>
-#include <LogicalOperatorRegistry.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::LogicalOperatorGeneratedRegistrar

@@ -12,11 +12,20 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctions/LessEqualsLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
@@ -29,14 +38,16 @@ LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunc
 }
 
 LessEqualsLogicalFunction::LessEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(left), right(right), dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
+    : left(std::move(std::move(left)))
+    , right(std::move(std::move(right)))
+    , dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
 {
 }
 
 
 bool LessEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const LessEqualsLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const LessEqualsLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;

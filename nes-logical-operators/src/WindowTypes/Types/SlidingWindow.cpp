@@ -52,7 +52,7 @@ std::string SlidingWindow::toString() const
 
 bool SlidingWindow::operator==(const WindowType& otherWindowType) const
 {
-    if (auto otherSlidingWindow = dynamic_cast<const SlidingWindow*>(&otherWindowType))
+    if (const auto* otherSlidingWindow = dynamic_cast<const SlidingWindow*>(&otherWindowType))
     {
         return (this->size == otherSlidingWindow->size) && (this->slide == otherSlidingWindow->slide)
             && (this->timeCharacteristic == (otherSlidingWindow->timeCharacteristic));

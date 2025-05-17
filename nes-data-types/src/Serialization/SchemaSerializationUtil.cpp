@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <API/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>

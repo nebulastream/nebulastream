@@ -13,37 +13,37 @@
 */
 
 #include <memory>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MinAggregationLogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
 namespace NES
 {
-MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field)
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
 {
 }
-MinAggregationLogicalFunction::MinAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, asField)
+MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
+    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
 {
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction>
-MinAggregationLogicalFunction::create(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
+MinAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField)
 {
-    return std::make_shared<MinAggregationLogicalFunction>(std::move(onField), std::move(asField));
+    return std::make_shared<MinAggregationLogicalFunction>(onField, std::move(asField));
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> MinAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
 {
     return std::make_shared<MinAggregationLogicalFunction>(onField);
 }

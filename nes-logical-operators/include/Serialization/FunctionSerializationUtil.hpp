@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <SerializableVariantDescriptor.pb.h>

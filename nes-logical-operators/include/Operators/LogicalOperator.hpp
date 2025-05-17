@@ -15,8 +15,14 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <ostream>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -29,13 +35,10 @@
 namespace NES
 {
 
-namespace
-{
 inline OperatorId getNextLogicalOperatorId()
 {
     static std::atomic_uint64_t id = INITIAL_OPERATOR_ID.getRawValue();
     return OperatorId(id++);
-}
 }
 
 /// Concept defining the interface for all logical operators in the query plan.
@@ -113,7 +116,7 @@ struct LogicalOperator
     /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
     /// @param op The operator to wrap.
     template <IsLogicalOperator T>
-    LogicalOperator(const T& op) : self(std::make_unique<Model<T>>(op, op.id))
+    LogicalOperator(const T& op) : self(std::make_unique<Model<T>>(op, op.id)) /// NOLINT
     {
     }
 
@@ -138,7 +141,7 @@ struct LogicalOperator
     /// @return const T The operator.
     /// @throw InvalidDynamicCast If the operator is not of type T.
     template <typename T>
-    [[nodiscard]] const T get() const
+    [[nodiscard]] T get() const
     {
         if (auto model = dynamic_cast<const Model<T>*>(self.get()))
         {

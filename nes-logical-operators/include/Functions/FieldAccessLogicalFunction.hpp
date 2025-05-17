@@ -15,10 +15,16 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
@@ -32,7 +38,7 @@ class FieldAccessLogicalFunction : public LogicalFunctionConcept
 public:
     static constexpr std::string_view NAME = "FieldAccess";
 
-    FieldAccessLogicalFunction(std::string fieldName);
+    explicit FieldAccessLogicalFunction(std::string fieldName);
     FieldAccessLogicalFunction(std::shared_ptr<DataType> dataType, std::string fieldName);
 
     [[nodiscard]] std::string getFieldName() const;

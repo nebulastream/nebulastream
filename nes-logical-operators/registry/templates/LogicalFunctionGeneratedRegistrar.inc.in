@@ -22,7 +22,6 @@
 
 #include <memory>
 #include <string>
-#include <LogicalFunctionRegistry.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::LogicalFunctionGeneratedRegistrar

@@ -14,11 +14,19 @@
 
 #pragma once
 
-#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -27,7 +35,7 @@ namespace NES
 class MapLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    MapLogicalOperator(const FieldAssignmentLogicalFunction& mapFunction);
+    explicit MapLogicalOperator(FieldAssignmentLogicalFunction mapFunction);
 
     [[nodiscard]] const FieldAssignmentLogicalFunction& getMapFunction() const;
 

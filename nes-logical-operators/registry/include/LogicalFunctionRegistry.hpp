@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Registry.hpp>

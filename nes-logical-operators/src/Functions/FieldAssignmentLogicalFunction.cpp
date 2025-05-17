@@ -13,18 +13,21 @@
 */
 
 #include <memory>
-#include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 
@@ -33,8 +36,8 @@ namespace NES
 
 
 FieldAssignmentLogicalFunction::FieldAssignmentLogicalFunction(
-    const FieldAccessLogicalFunction& fieldAccess, LogicalFunction logicalFunction)
-    : dataType(logicalFunction.getDataType()), fieldAccess(fieldAccess), logicalFunction(logicalFunction)
+    FieldAccessLogicalFunction fieldAccess, const LogicalFunction& logicalFunction)
+    : dataType(logicalFunction.getDataType()), fieldAccess(std::move(fieldAccess)), logicalFunction(logicalFunction)
 {
 }
 

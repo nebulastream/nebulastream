@@ -15,7 +15,14 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -25,7 +32,7 @@ class SqrtLogicalFunction final : public LogicalFunctionConcept
 public:
     static constexpr std::string_view NAME = "Sqrt";
 
-    SqrtLogicalFunction(LogicalFunction child);
+    explicit SqrtLogicalFunction(const LogicalFunction& child);
     SqrtLogicalFunction(const SqrtLogicalFunction& other);
     ~SqrtLogicalFunction() noexcept override = default;
 

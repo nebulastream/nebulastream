@@ -13,13 +13,19 @@
 */
 
 #include <memory>
+#include <string>
+#include <string_view>
+#include <API/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MedianAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
+#include <utility>
 #include <AggregationLogicalFunctionRegistry.hpp>
 
 namespace NES
@@ -32,13 +38,14 @@ MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(const FieldAc
           field)
 {
 }
-MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
+MedianAggregationLogicalFunction::MedianAggregationLogicalFunction(
+    const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
     : WindowAggregationLogicalFunction(
           field.getDataType(),
           DataTypeProvider::provideDataType(partialAggregateStampType),
           DataTypeProvider::provideDataType(finalAggregateStampType),
           field,
-          asField)
+          std::move(asField))
 {
 }
 
@@ -48,7 +55,7 @@ MedianAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onFie
     return std::make_shared<MedianAggregationLogicalFunction>(onField, asField);
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> MedianAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
 {
     return std::make_shared<MedianAggregationLogicalFunction>(onField);
 }

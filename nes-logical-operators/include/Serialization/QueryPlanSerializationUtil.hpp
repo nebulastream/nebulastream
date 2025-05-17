@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <memory>
 #include <Plans/LogicalPlan.hpp>
 #include <SerializableQueryPlan.pb.h>
 

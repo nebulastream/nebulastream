@@ -14,10 +14,19 @@
 
 #pragma once
 
-#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -28,7 +37,7 @@ class ProjectionLogicalOperator : public LogicalOperatorConcept
 public:
     explicit ProjectionLogicalOperator(std::vector<LogicalFunction> functions);
 
-    const std::vector<LogicalFunction>& getFunctions() const;
+    [[nodiscard]] const std::vector<LogicalFunction>& getFunctions() const;
 
     [[nodiscard]] bool operator==(const LogicalOperatorConcept& rhs) const override;
     [[nodiscard]] SerializableOperator serialize() const override;

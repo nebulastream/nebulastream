@@ -11,15 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <format>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 #include <API/Schema.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
@@ -29,11 +35,11 @@ FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
     : fieldName(std::move(fieldName)), dataType(DataTypeProvider::provideDataType(LogicalType::UNDEFINED)) { };
 
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::shared_ptr<DataType> dataType, std::string fieldName)
-    : fieldName(std::move(fieldName)), dataType(dataType) { };
+    : fieldName(std::move(fieldName)), dataType(std::move(std::move(dataType))) { };
 
 bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const FieldAccessLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const FieldAccessLogicalFunction*>(&rhs))
     {
         return *this == *other;
     }
@@ -42,7 +48,7 @@ bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) c
 
 bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs)
 {
-    bool fieldNamesMatch = rhs.fieldName == lhs.fieldName;
+    const bool fieldNamesMatch = rhs.fieldName == lhs.fieldName;
     const bool dataTypesMatch = *rhs.dataType == *lhs.dataType;
     return fieldNamesMatch and dataTypesMatch;
 }
@@ -117,8 +123,8 @@ SerializableFunction FieldAccessLogicalFunction::serialize() const
     SerializableFunction serializedFunction;
     serializedFunction.set_function_type(NAME);
 
-    NES::Configurations::DescriptorConfig::ConfigType configVariant = getFieldName();
-    SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
+    const NES::Configurations::DescriptorConfig::ConfigType configVariant = getFieldName();
+    const SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
     (*serializedFunction.mutable_config())["FieldName"] = variantDescriptor;
 
     DataTypeSerializationUtil::serializeDataType(dataType, serializedFunction.mutable_data_type());

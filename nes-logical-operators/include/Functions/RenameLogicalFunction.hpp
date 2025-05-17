@@ -14,7 +14,20 @@
 
 #pragma once
 
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableVariantDescriptor.pb.h>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {

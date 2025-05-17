@@ -15,13 +15,17 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Traits/Trait.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
@@ -31,14 +35,14 @@ SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceNa
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema)
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, Schema schema)
     : logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
 
 bool SourceNameLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (auto* rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs))
+    if (const auto* rhsOperator = dynamic_cast<const SourceNameLogicalOperator*>(&rhs))
     {
         return this->getSchema() == rhsOperator->getSchema() && this->getName() == rhsOperator->getName()
             && getOutputSchema() == rhsOperator->getOutputSchema() && getInputSchemas() == rhsOperator->getInputSchemas()
@@ -146,7 +150,7 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
 SerializableOperator SourceNameLogicalOperator::serialize() const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
-    return SerializableOperator();
+    return {};
 }
 
 }

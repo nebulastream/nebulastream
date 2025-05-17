@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <Util/Registry.hpp>
 #include <Common/DataTypes/DataType.hpp>

@@ -12,18 +12,21 @@
     limitations under the License.
 */
 
-#include <memory>
+#include <algorithm>
+#include <string>
+#include <string_view>
+#include <vector>
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
-#include <SerializableSchema.pb.h>
 
 namespace NES
 {
@@ -37,7 +40,7 @@ std::string_view UnionLogicalOperator::getName() const noexcept
 
 bool UnionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (const auto rhsOperator = dynamic_cast<const UnionLogicalOperator*>(&rhs))
+    if (const auto* const rhsOperator = dynamic_cast<const UnionLogicalOperator*>(&rhs))
     {
         return leftInputSchema == rhsOperator->leftInputSchema && rightInputSchema == rhsOperator->rightInputSchema
             && getOutputSchema() == rhsOperator->getOutputSchema() && getInputOriginIds() == rhsOperator->getInputOriginIds()
@@ -68,9 +71,9 @@ LogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inp
     for (const auto& child : children)
     {
         auto childOutputSchema = child.getInputSchemas()[0];
-        auto found = std::find_if(
-            distinctSchemas.begin(),
-            distinctSchemas.end(),
+        auto found = std::ranges::find_if(
+            distinctSchemas,
+
             [&](const Schema& distinctSchema) { return (childOutputSchema == distinctSchema); });
         if (found == distinctSchemas.end())
         {

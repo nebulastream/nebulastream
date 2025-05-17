@@ -13,18 +13,24 @@
 */
 
 #include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/SqrtLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(LogicalFunction child) : dataType(child.getDataType()), child(child) { };
+SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
 SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : dataType(other.dataType), child(other.child)
 {
@@ -32,8 +38,8 @@ SqrtLogicalFunction::SqrtLogicalFunction(const SqrtLogicalFunction& other) : dat
 
 bool SqrtLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const SqrtLogicalFunction*>(&rhs);
-    if (other)
+    const auto* other = dynamic_cast<const SqrtLogicalFunction*>(&rhs);
+    if (other != nullptr)
     {
         return child == other->child;
     }

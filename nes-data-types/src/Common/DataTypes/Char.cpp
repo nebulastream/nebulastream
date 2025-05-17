@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <string>
 #include <Util/Common.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <DataTypeRegistry.hpp>
@@ -30,7 +31,7 @@ bool Char::operator==(const NES::DataType& other) const
 
 std::shared_ptr<DataType> Char::join(const DataType& otherDataType) const
 {
-    if (dynamic_cast<const Char*>(&otherDataType))
+    if (dynamic_cast<const Char*>(&otherDataType) != nullptr)
     {
         return DataTypeProvider::provideDataType(LogicalType::CHAR);
     }

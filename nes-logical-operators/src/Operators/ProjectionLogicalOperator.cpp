@@ -12,30 +12,36 @@
     limitations under the License.
 */
 
-#include <memory>
+#include <cstddef>
 #include <ranges>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Traits/Trait.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <LogicalFunctionRegistry.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
 
-ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<LogicalFunction> functions) : functions(functions)
+ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<LogicalFunction> functions) : functions(std::move(std::move(functions)))
 {
     const auto functionTypeNotSupported = [](const LogicalFunction& function) -> bool
     { return not(function.tryGet<FieldAccessLogicalFunction>() or function.tryGet<FieldAssignmentLogicalFunction>()); };
@@ -62,7 +68,7 @@ const std::vector<LogicalFunction>& ProjectionLogicalOperator::getFunctions() co
 
 bool ProjectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (const auto rhsOperator = dynamic_cast<const ProjectionLogicalOperator*>(&rhs))
+    if (const auto* const rhsOperator = dynamic_cast<const ProjectionLogicalOperator*>(&rhs))
     {
         if (functions.size() != rhsOperator->functions.size())
         {
@@ -83,7 +89,7 @@ bool ProjectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) co
     return false;
 };
 
-std::string getFieldName(const LogicalFunction& function)
+static std::string getFieldName(const LogicalFunction& function)
 {
     /// We assert that the projection operator only contains field access and assignment functions in the constructor.
     if (const auto& fieldAccessLogicalFunction = function.tryGet<FieldAccessLogicalFunction>())
@@ -133,7 +139,7 @@ LogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema
     copy.outputSchema.clear();
 
     std::vector<LogicalFunction> newFunctions;
-    for (auto& function : functions)
+    for (const auto& function : functions)
     {
         auto func = function.withInferredDataType(firstSchema);
 

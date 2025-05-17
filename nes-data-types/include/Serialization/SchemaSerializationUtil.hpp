@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <memory>
 #include <API/Schema.hpp>
 
 namespace NES

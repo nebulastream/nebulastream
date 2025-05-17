@@ -14,14 +14,26 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Traits/OriginIdAssignerTrait.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Windowing/WindowMetaData.hpp>
+#include <SerializableOperator.pb.h>
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -35,8 +47,8 @@ public:
         std::shared_ptr<Windowing::WindowType> windowType);
 
 
-    std::vector<std::string> getGroupByKeyNames() const;
-    bool isKeyed() const;
+    [[nodiscard]] std::vector<std::string> getGroupByKeyNames() const;
+    [[nodiscard]] bool isKeyed() const;
 
     [[nodiscard]] std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> getWindowAggregation() const;
     void setWindowAggregation(std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggregation);

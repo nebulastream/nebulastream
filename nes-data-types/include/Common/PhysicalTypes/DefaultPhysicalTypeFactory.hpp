@@ -38,10 +38,10 @@ public:
 
 private:
     /// @brief Translates an integer data type into a corresponding physical type.
-    static std::unique_ptr<PhysicalType> getPhysicalType(std::shared_ptr<Integer> integerType);
+    static std::unique_ptr<PhysicalType> getPhysicalType(const std::shared_ptr<Integer>& integerType);
 
     /// @brief Translates a float data type into a corresponding physical type.
-    static std::unique_ptr<PhysicalType> getPhysicalType(std::shared_ptr<Float> floatType);
+    static std::unique_ptr<PhysicalType> getPhysicalType(const std::shared_ptr<Float>& floatType);
 };
 
 }
