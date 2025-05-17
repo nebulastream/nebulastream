@@ -29,8 +29,6 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Locks.hpp>
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
@@ -272,7 +270,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
 }
 
 boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
-    boost::asio::io_context& ioContext,
+    boost::asio::io_context& ioCtx,
     Memory::AbstractBufferProvider* bufferProvider,
     const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
     const QueryCompilation::JoinBuildSideType joinBuildSide,
@@ -317,8 +315,9 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
                         (*slicesInMemoryLocked)[{slice->getSliceEnd(), joinBuildSide}] = false;
 
                         memoryController->setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
-                        const auto fileWriter = memoryController->getFileWriter(ioContext, sliceEnd, threadId, joinBuildSide);
+                        const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
                         co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, fileLayout);
+                        /// We need to flush now as we cannot do it from probe and we might not get this fileWriter in build again
                         co_await fileWriter->flush();
                         pagedVector->truncate(fileLayout);
                         fileWriter->deallocateBuffers();
@@ -434,12 +433,12 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         std::vector<char> data(dataSize);
         const auto start = std::chrono::high_resolution_clock::now();
 
-        boost::asio::io_context ioContext;
+        boost::asio::io_context ioCtx;
         const auto fileWriter = memoryController->getFileWriter(
-            ioContext, SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left);
-        boost::asio::co_spawn(ioContext, fileWriter->write(data.data(), dataSize), boost::asio::detached);
-        boost::asio::co_spawn(ioContext, fileWriter->flush(), boost::asio::detached);
-        ioContext.run();
+            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left, ioCtx);
+        boost::asio::co_spawn(ioCtx, fileWriter->write(data.data(), dataSize), boost::asio::detached);
+        boost::asio::co_spawn(ioCtx, fileWriter->flush(), boost::asio::detached);
+        ioCtx.run();
         const auto write = std::chrono::high_resolution_clock::now();
 
         const auto fileReader = memoryController->getFileReader(

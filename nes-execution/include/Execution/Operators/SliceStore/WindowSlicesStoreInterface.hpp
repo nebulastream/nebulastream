@@ -25,7 +25,6 @@
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
 
-
 namespace NES::Runtime::Execution
 {
 

@@ -24,13 +24,13 @@ boost::asio::io_context& getIoContext()
 }
 
 FileWriter::FileWriter(
-    boost::asio::io_context& ioContext,
+    boost::asio::io_context& ioCtx,
     const std::string& filePath,
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
-    : file(ioContext)
-    , keyFile(ioContext)
+    : file(ioCtx)
+    , keyFile(ioCtx)
     , writeBuffer(allocate())
     , writeKeyBuffer(nullptr)
     , writeBufferPos(0)
@@ -163,7 +163,6 @@ FileReader::FileReader(
     const size_t bufferSize)
     : file(filePath + ".dat", std::ios::in | std::ios::binary)
     , keyFile(filePath + "_key.dat", std::ios::in | std::ios::binary)
-    , filePath(filePath)
     , readBuffer(allocate())
     , readKeyBuffer(nullptr)
     , readBufferPos(0)
@@ -171,6 +170,7 @@ FileReader::FileReader(
     , readBufferEnd(0)
     , readKeyBufferEnd(0)
     , bufferSize(bufferSize)
+    , filePath(filePath)
     , allocate(allocate)
     , deallocate(deallocate)
 {

@@ -33,7 +33,7 @@ class FileWriter
 {
 public:
     FileWriter(
-        boost::asio::io_context& ioContext,
+        boost::asio::io_context& ioCtx,
         const std::string& filePath,
         const std::function<char*()>& allocate,
         const std::function<void(char*)>& deallocate,
@@ -81,7 +81,6 @@ private:
 
     std::ifstream file;
     std::ifstream keyFile;
-    std::string filePath;
 
     char* readBuffer;
     char* readKeyBuffer;
@@ -91,6 +90,7 @@ private:
     size_t readKeyBufferEnd;
     size_t bufferSize;
 
+    std::string filePath;
     std::function<char*()> allocate;
     std::function<void(char*)> deallocate;
 };

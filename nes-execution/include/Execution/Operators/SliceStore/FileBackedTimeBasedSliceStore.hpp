@@ -98,7 +98,7 @@ public:
 
     /// TODO
     boost::asio::awaitable<void> updateSlices(
-        boost::asio::io_context& ioContext,
+        boost::asio::io_context& ioCtx,
         Memory::AbstractBufferProvider* bufferProvider,
         const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
         QueryCompilation::JoinBuildSideType joinBuildSide,

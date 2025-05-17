@@ -63,10 +63,10 @@ MemoryController::~MemoryController()
 }
 
 std::shared_ptr<FileWriter> MemoryController::getFileWriter(
-    boost::asio::io_context& ioContext,
     const SliceEnd sliceEnd,
     const WorkerThreadId threadId,
-    const QueryCompilation::JoinBuildSideType joinBuildSide)
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    boost::asio::io_context& ioCtx)
 {
     /// Search for matching fileWriter to avoid attempting to open a file twice
     auto& writerMap = fileWriters[threadId.getRawValue()];
@@ -78,7 +78,7 @@ std::shared_ptr<FileWriter> MemoryController::getFileWriter(
 
     const auto& filePath = constructFilePath(sliceEnd, threadId, joinBuildSide);
     auto fileWriter = std::make_shared<FileWriter>(
-        ioContext, filePath, [this] { return allocateWriteBuffer(); }, [this](char* buf) { deallocateWriteBuffer(buf); }, bufferSize);
+        ioCtx, filePath, [this] { return allocateWriteBuffer(); }, [this](char* buf) { deallocateWriteBuffer(buf); }, bufferSize);
     writerMap[{sliceEnd, joinBuildSide}] = fileWriter;
     return fileWriter;
 }

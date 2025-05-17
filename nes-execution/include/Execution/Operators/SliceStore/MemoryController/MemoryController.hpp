@@ -36,7 +36,7 @@ public:
     ~MemoryController();
 
     std::shared_ptr<FileWriter> getFileWriter(
-        boost::asio::io_context& ioContext, SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
+        SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide, boost::asio::io_context& ioCtx);
     std::shared_ptr<FileReader>
     getFileReader(SliceEnd sliceEnd, WorkerThreadId threadId, QueryCompilation::JoinBuildSideType joinBuildSide);
 
