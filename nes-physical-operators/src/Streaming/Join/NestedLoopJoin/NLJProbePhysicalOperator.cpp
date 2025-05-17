@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <utility>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -30,6 +31,7 @@
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Windowing/WindowMetaData.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -63,7 +65,7 @@ Timestamp getNLJWindowEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTa
     return nljWindowTriggerTask->windowInfo.windowEnd;
 }
 
-SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask, const JoinBuildSideType joinBuildSide)
+static SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask, const JoinBuildSideType joinBuildSide)
 {
     PRECONDITION(nljWindowTriggerTask != nullptr, "nljWindowTriggerTask should not be null");
 
@@ -78,12 +80,12 @@ SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask
 
 NLJProbePhysicalOperator::NLJProbePhysicalOperator(
     OperatorHandlerId operatorHandlerIndex,
-    Functions::PhysicalFunction joinFunction,
+    PhysicalFunction joinFunction,
     WindowMetaData windowMetaData,
     const JoinSchema& joinSchema,
     std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider,
     std::shared_ptr<TupleBufferMemoryProvider> rightMemoryProvider)
-    : StreamJoinProbePhysicalOperator(operatorHandlerIndex, std::move(joinFunction), WindowMetaData(windowMetaData), joinSchema)
+    : StreamJoinProbePhysicalOperator(operatorHandlerIndex, std::move(joinFunction), WindowMetaData(std::move(windowMetaData)), joinSchema)
     , leftMemoryProvider(std::move(leftMemoryProvider))
     , rightMemoryProvider(std::move(rightMemoryProvider))
 {

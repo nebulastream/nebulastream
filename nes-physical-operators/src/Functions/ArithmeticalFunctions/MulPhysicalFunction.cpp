@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <utility>
 #include <vector>
 #include <Functions/ArithmeticalFunctions/MulPhysicalFunction.hpp>
@@ -22,7 +21,7 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 VarVal MulPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -33,14 +32,14 @@ VarVal MulPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 }
 
 MulPhysicalFunction::MulPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
 {
 }
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterMulPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterMulPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Mul function must have exactly two sub-functions");
-    return MulPhysicalFunction(PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Mul function must have exactly two sub-functions");
+    return MulPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

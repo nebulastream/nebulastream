@@ -14,11 +14,12 @@
 
 #pragma once
 
-#include <memory>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <ExecutionContext.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 /// Performs leftSubPhysicalFunction % rightSubPhysicalFunction

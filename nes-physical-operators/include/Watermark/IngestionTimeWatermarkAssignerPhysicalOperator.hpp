@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #pragma once
+#include <optional>
 #include <Watermark/TimeFunction.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -22,7 +23,7 @@ namespace NES
 class IngestionTimeWatermarkAssignerPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
-    IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction timeFunction);
+    explicit IngestionTimeWatermarkAssignerPhysicalOperator(IngestionTimeFunction timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;

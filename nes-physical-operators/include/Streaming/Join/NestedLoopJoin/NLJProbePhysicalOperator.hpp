@@ -17,10 +17,12 @@
 #include <cstdint>
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Streaming/Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
+#include <Windowing/WindowMetaData.hpp>
 
 namespace NES
 {
@@ -32,7 +34,7 @@ class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
 public:
     NLJProbePhysicalOperator(
         OperatorHandlerId operatorHandlerIndex,
-        Functions::PhysicalFunction joinFunction,
+        PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         const JoinSchema& joinSchema,
         std::shared_ptr<TupleBufferMemoryProvider> leftMemoryProvider,

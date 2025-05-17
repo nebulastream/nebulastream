@@ -14,7 +14,9 @@
 #pragma once
 
 #include <algorithm>
-#include <cinttypes>
+#include <cstdint>
+#include <SliceStore/Slice.hpp>
+#include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES

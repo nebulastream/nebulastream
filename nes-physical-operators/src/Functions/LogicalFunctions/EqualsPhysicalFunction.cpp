@@ -12,18 +12,16 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <Functions/LogicalFunctions/EqualsPhysicalFunction.hpp>
-#include <Util/Logger/LogLevel.hpp>
-#include <nautilus/val.hpp>
-#include <nautilus/val_enum.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-#include <function.hpp>
 
 
-namespace NES::Functions
+namespace NES
 {
 
 VarVal EqualsPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -40,10 +38,10 @@ EqualsPhysicalFunction::EqualsPhysicalFunction(PhysicalFunction leftPhysicalFunc
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterEqualsPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterEqualsPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
-    return EqualsPhysicalFunction(PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Equals function must have exactly two sub-functions");
+    return EqualsPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

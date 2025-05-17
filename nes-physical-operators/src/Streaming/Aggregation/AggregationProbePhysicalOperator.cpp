@@ -16,6 +16,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -153,14 +154,15 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
 }
 
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(
-    std::shared_ptr<WindowAggregation> windowAggregationOperator, OperatorHandlerId operatorHandlerIndex, WindowMetaData windowMetaData)
-    : WindowAggregation(windowAggregationOperator), WindowProbePhysicalOperator(operatorHandlerIndex, windowMetaData)
+    const std::shared_ptr<WindowAggregation>& windowAggregationOperator,
+    OperatorHandlerId operatorHandlerIndex,
+    WindowMetaData windowMetaData)
+    : WindowAggregation(windowAggregationOperator), WindowProbePhysicalOperator(operatorHandlerIndex, std::move(windowMetaData))
 {
 }
 
 AggregationProbePhysicalOperator::AggregationProbePhysicalOperator(const AggregationProbePhysicalOperator& other)
-    : WindowAggregation(other), WindowProbePhysicalOperator(other)
-{
-}
+
+    = default;
 
 }

@@ -14,23 +14,21 @@
 
 #pragma once
 
-#include <memory>
-#include <Abstract/LogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 
-namespace NES
-{
-namespace QueryCompilation
+namespace NES::QueryCompilation
 {
 class FunctionProvider
 {
 public:
-    static std::unique_ptr<Functions::PhysicalFunction> lowerFunction(const std::shared_ptr<LogicalFunction>& nodeFunction);
+    /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
+    /// NodeFunction a NodeFunctionConstantValue, FieldAccessLogicalFunction or FieldAssignment
+    static PhysicalFunction lowerFunction(LogicalFunction nodeFunction);
 
 private:
-    static std::unique_ptr<Functions::PhysicalFunction>
-    lowerConstantFunction(const std::shared_ptr<ConstantValueLogicalFunction>& nodeFunction);
+    static PhysicalFunction lowerConstantFunction(const ConstantValueLogicalFunction& nodeFunction);
 };
 
 }

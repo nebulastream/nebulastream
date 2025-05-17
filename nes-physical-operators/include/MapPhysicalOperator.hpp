@@ -14,8 +14,9 @@
 #pragma once
 
 #include <memory>
-#include <string>
+#include <optional>
 #include <Functions/PhysicalFunction.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -26,7 +27,7 @@ namespace NES
 class MapPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, Functions::PhysicalFunction mapFunction);
+    MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, PhysicalFunction mapFunction);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
@@ -34,7 +35,7 @@ public:
 
 private:
     Record::RecordFieldIdentifier fieldToWriteTo;
-    Functions::PhysicalFunction mapFunction;
+    PhysicalFunction mapFunction;
 
     std::optional<PhysicalOperator> child;
 };

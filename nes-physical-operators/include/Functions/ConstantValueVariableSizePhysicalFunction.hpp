@@ -17,12 +17,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 /// A function that represents a constant value of variable size, e.g., a string.

@@ -12,11 +12,15 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <optional>
+#include <type_traits>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 using namespace Nautilus;
 
@@ -48,7 +52,8 @@ struct PhysicalFunction
     /// @tparam FunctionType The type of the function. Must satisfy IsPhysicalFunction concept.
     /// @param fn The function to wrap.
     template <IsPhysicalFunction FunctionType>
-    PhysicalFunction(const FunctionType& fn) : self(std::make_shared<Model<FunctionType>>(fn))
+    PhysicalFunction(const FunctionType& fn)
+        : self(std::make_shared<Model<FunctionType>>(fn)) /// NOLINT(cppcoreguidelines-explicit-constructors
     {
     }
 
@@ -72,7 +77,7 @@ struct PhysicalFunction
     /// @return const FunctionType The function.
     /// @throw InvalidDynamicCast If the function is not of type FunctionType.
     template <typename FunctionType>
-    [[nodiscard]] const FunctionType get() const
+    [[nodiscard]] FunctionType get() const
     {
         if (auto p = dynamic_cast<const Model<FunctionType>*>(self.get()))
         {
@@ -83,7 +88,7 @@ struct PhysicalFunction
 
     PhysicalFunction(PhysicalFunction&&) noexcept = default;
 
-    PhysicalFunction(const PhysicalFunction& other) : self(other.self) { }
+    PhysicalFunction(const PhysicalFunction& other) = default;
 
     PhysicalFunction& operator=(const PhysicalFunction& other)
     {

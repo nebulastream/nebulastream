@@ -162,9 +162,9 @@ AggregationBuildPhysicalOperator::getStateCleanupFunction() const
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerIndex,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::vector<Functions::PhysicalFunction> keyFunctions,
-    std::shared_ptr<WindowAggregation> windowAggregationOperator)
-    : WindowAggregation(std::move(windowAggregationOperator))
+    std::vector<PhysicalFunction> keyFunctions,
+    const std::shared_ptr<WindowAggregation>& windowAggregationOperator)
+    : WindowAggregation(windowAggregationOperator)
     , WindowBuildPhysicalOperator(operatorHandlerIndex, std::move(timeFunction))
     , keyFunctions(std::move(keyFunctions))
 {
