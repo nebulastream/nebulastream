@@ -20,6 +20,8 @@
 #include <memory>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Streaming/Aggregation/WindowAggregation.hpp>
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -33,15 +35,15 @@ public:
     AggregationBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerIndex,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::vector<Functions::PhysicalFunction> keyFunctions,
-        std::shared_ptr<WindowAggregation> windowAggregationOperator);
+        std::vector<PhysicalFunction> keyFunctions,
+        const std::shared_ptr<WindowAggregation>& windowAggregationOperator);
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     /// Method that gets called, once an aggregation slice gets destroyed.
     [[nodiscard]] std::function<void(const std::vector<std::unique_ptr<Interface::HashMap>>&)> getStateCleanupFunction() const;
 
 private:
-    const std::vector<Functions::PhysicalFunction> keyFunctions;
+    const std::vector<PhysicalFunction> keyFunctions;
 };
 
 }

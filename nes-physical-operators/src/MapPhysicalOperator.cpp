@@ -13,13 +13,17 @@
 */
 
 #include <memory>
+#include <optional>
 #include <utility>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <ExecutionContext.hpp>
 #include <MapPhysicalOperator.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
-MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, Functions::PhysicalFunction mapFunction)
+MapPhysicalOperator::MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, PhysicalFunction mapFunction)
     : fieldToWriteTo(std::move(fieldToWriteTo)), mapFunction(std::move(mapFunction))
 {
 }

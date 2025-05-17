@@ -12,12 +12,19 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <optional>
+#include <utility>
+#include <Sinks/SinkDescriptor.hpp>
+#include <ErrorHandling.hpp>
+#include <PhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
 
 namespace NES
 {
 
-SinkPhysicalOperator::SinkPhysicalOperator(std::shared_ptr<Sinks::SinkDescriptor> descriptor) : descriptor(descriptor) { };
+SinkPhysicalOperator::SinkPhysicalOperator(std::shared_ptr<Sinks::SinkDescriptor> descriptor)
+    : descriptor(std::move(std::move(descriptor))) { };
 
 std::shared_ptr<Sinks::SinkDescriptor> SinkPhysicalOperator::getDescriptor() const
 {

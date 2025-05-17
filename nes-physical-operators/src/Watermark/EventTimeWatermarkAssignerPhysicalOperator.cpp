@@ -13,14 +13,16 @@
 */
 
 #include <memory>
+#include <optional>
 #include <utility>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
 #include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
@@ -31,11 +33,11 @@ namespace NES
 struct WatermarkState final : OperatorState
 {
     explicit WatermarkState() = default;
-    nautilus::val<Timestamp> currentWatermark = Timestamp(Timestamp::INITIAL_VALUE);
+    nautilus::val<Timestamp> currentWatermark{Timestamp(Timestamp::INITIAL_VALUE)};
 };
 
 EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction)
-    : timeFunction(timeFunction) { };
+    : timeFunction(std::move(std::move(timeFunction))) { };
 
 void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
@@ -46,7 +48,7 @@ void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executio
 
 void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    const auto state = static_cast<WatermarkState*>(ctx.getLocalState(id));
+    auto* const state = dynamic_cast<WatermarkState*>(ctx.getLocalState(id));
     const auto tsField = timeFunction.getTs(ctx, record);
     if (tsField > state->currentWatermark)
     {
@@ -61,7 +63,7 @@ void EventTimeWatermarkAssignerPhysicalOperator::close(ExecutionContext& executi
     PRECONDITION(
         NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(id)),
         "Expects the local state to be of type WatermarkState");
-    const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(id));
+    auto* const state = dynamic_cast<WatermarkState*>(executionCtx.getLocalState(id));
     executionCtx.watermarkTs = state->currentWatermark;
     PhysicalOperatorConcept::close(executionCtx, recordBuffer);
 }

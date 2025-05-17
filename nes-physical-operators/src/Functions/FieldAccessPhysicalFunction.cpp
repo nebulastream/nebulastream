@@ -12,14 +12,16 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
-FieldAccessPhysicalFunction::FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field) : field(field)
+FieldAccessPhysicalFunction::FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field) : field(std::move(std::move(field)))
 {
 }
 

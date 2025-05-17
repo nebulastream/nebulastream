@@ -12,16 +12,18 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <utility>
 #include <vector>
 #include <Functions/ComparisonFunctions/GreaterPhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
 
-namespace NES::Functions
+namespace NES
 {
 
 VarVal GreaterPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -32,15 +34,15 @@ VarVal GreaterPhysicalFunction::execute(const Record& record, ArenaRef& arena) c
 }
 
 GreaterPhysicalFunction::GreaterPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
 {
 }
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterGreaterPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterGreaterPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Greater function must have exactly two sub-functions");
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Greater function must have exactly two sub-functions");
     return GreaterPhysicalFunction(
-        PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
+        physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

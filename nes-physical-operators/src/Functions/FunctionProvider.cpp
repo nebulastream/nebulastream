@@ -12,19 +12,19 @@
     limitations under the License.
 */
 
-#include <Functions/FunctionProvider.hpp>
-
+#include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
+#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/ConstantValuePhysicalFunction.hpp>
 #include <Functions/ConstantValueVariableSizePhysicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <fmt/format.h>
+#include <Functions/PhysicalFunction.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -33,8 +33,6 @@
 
 namespace NES::QueryCompilation
 {
-using namespace Functions;
-
 PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
 {
     /// 1. Recursively lower the children of the function node.
@@ -60,7 +58,7 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     if (const auto function
         = PhysicalFunctionRegistry::instance().create(std::string(logicalFunction.getType()), std::move(executableFunctionArguments)))
     {
-        return std::move(function.value());
+        return function.value();
     }
     throw UnknownFunctionType("Can not lower function: {}", logicalFunction);
 }
@@ -69,7 +67,7 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
 {
     const auto stringValue = constantFunction.getConstantValue();
     const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction.getDataType());
-    if (const auto basicType = dynamic_cast<BasicPhysicalType*>(physicalType.get()))
+    if (auto* const basicType = dynamic_cast<BasicPhysicalType*>(physicalType.get()))
     {
         switch (basicType->nativeType)
         {
@@ -116,7 +114,7 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
             case BasicPhysicalType::NativeType::CHAR:
                 break;
             case BasicPhysicalType::NativeType::BOOLEAN: {
-                auto boolValue = static_cast<bool>(std::stoi(stringValue)) == 1;
+                auto boolValue = static_cast<int>(static_cast<bool>(std::stoi(stringValue))) == 1;
                 return ConstantBooleanValueFunction(boolValue);
             };
             default: {
@@ -124,7 +122,7 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
             }
         }
     }
-    else if (dynamic_cast<VariableSizedDataPhysicalType*>(physicalType.get()))
+    else if (dynamic_cast<VariableSizedDataPhysicalType*>(physicalType.get()) != nullptr)
     {
         return ConstantValueVariableSizePhysicalFunction(reinterpret_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
     }

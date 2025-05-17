@@ -16,9 +16,9 @@
 
 #include <cstdint>
 #include <memory>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Streaming/Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -36,9 +36,9 @@ public:
         OperatorHandlerId operatorHandlerIndex,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferMemoryProvider> memoryProvider);
+        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
 
-    NLJBuildPhysicalOperator(const NLJBuildPhysicalOperator& other) : StreamJoinBuildPhysicalOperator(other) { }
+    NLJBuildPhysicalOperator(const NLJBuildPhysicalOperator& other) = default;
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 };

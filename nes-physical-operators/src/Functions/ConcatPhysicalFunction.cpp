@@ -26,11 +26,11 @@
 #include <PhysicalFunctionRegistry.hpp>
 #include <val.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 ConcatPhysicalFunction::ConcatPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 
@@ -50,10 +50,10 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     return newVarSizeData;
 }
 
-PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(
-    NES::Functions::PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "And function must have exactly two sub-functions");
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Concat function must have exactly two sub-functions");
     return ConcatPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 }

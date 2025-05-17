@@ -15,10 +15,12 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 #include <API/Schema.hpp>
-#include <Identifiers/NESStrongTypeFormat.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp> /// NOLINT
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -75,8 +77,8 @@ struct BufferMetaData
 /// This stores the left, right and output schema for a binary join
 struct JoinSchema
 {
-    JoinSchema(const Schema& leftSchema, const Schema& rightSchema, const Schema& joinSchema)
-        : leftSchema(leftSchema), rightSchema(rightSchema), joinSchema(joinSchema)
+    JoinSchema(Schema leftSchema, Schema rightSchema, Schema joinSchema)
+        : leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)), joinSchema(std::move(joinSchema))
     {
     }
 

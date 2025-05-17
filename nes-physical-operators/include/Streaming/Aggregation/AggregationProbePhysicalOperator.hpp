@@ -16,10 +16,11 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Streaming/Aggregation/WindowAggregation.hpp>
 #include <Streaming/WindowProbePhysicalOperator.hpp>
+#include <Windowing/WindowMetaData.hpp>
 
 namespace NES
 {
@@ -28,7 +29,7 @@ class AggregationProbePhysicalOperator final : public WindowAggregation, public 
 {
 public:
     AggregationProbePhysicalOperator(
-        std::shared_ptr<WindowAggregation> windowAggregationOperator,
+        const std::shared_ptr<WindowAggregation>& windowAggregationOperator,
         OperatorHandlerId operatorHandlerIndex,
         WindowMetaData windowMetaData);
     AggregationProbePhysicalOperator(const AggregationProbePhysicalOperator& other);

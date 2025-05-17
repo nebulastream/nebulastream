@@ -19,13 +19,13 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Util/Registry.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
-using PhysicalFunctionRegistryReturnType = Functions::PhysicalFunction;
+using PhysicalFunctionRegistryReturnType = PhysicalFunction;
 struct PhysicalFunctionRegistryArguments
 {
-    std::vector<Functions::PhysicalFunction> childFunctions;
+    std::vector<PhysicalFunction> childFunctions;
 };
 
 class PhysicalFunctionRegistry

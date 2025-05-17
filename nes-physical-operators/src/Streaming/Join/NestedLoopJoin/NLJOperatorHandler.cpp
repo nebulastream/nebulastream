@@ -25,6 +25,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>

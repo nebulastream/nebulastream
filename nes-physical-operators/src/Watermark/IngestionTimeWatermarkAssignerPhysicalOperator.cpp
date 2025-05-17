@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
+#include <optional>
+#include <utility>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ExecutionContext.hpp>
-#include <OperatorState.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
