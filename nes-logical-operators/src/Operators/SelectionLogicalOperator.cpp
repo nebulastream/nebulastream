@@ -12,24 +12,32 @@
     limitations under the License.
 */
 
-#include <memory>
+#include <cstddef>
 #include <string>
+#include <string_view>
 #include <utility>
-#include <Functions/FieldAccessLogicalFunction.hpp>
+#include <variant>
+#include <vector>
+#include <Configurations/Descriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/Boolean.hpp>
 
 namespace NES
 {
 
-SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : predicate(predicate)
+SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : predicate(std::move(std::move(predicate)))
 {
 }
 
@@ -45,7 +53,7 @@ LogicalFunction SelectionLogicalOperator::getPredicate() const
 
 bool SelectionLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (const auto rhsOperator = dynamic_cast<const SelectionLogicalOperator*>(&rhs))
+    if (const auto* const rhsOperator = dynamic_cast<const SelectionLogicalOperator*>(&rhs))
     {
         return predicate == rhsOperator->predicate && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
@@ -78,7 +86,7 @@ LogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema>
     }
 
     copy.predicate = predicate.withInferredDataType(firstSchema);
-    if (*copy.predicate.getDataType().get() != Boolean())
+    if (*copy.predicate.getDataType() != Boolean())
     {
         throw CannotInferSchema("the selection expression is not a valid predicate");
     }

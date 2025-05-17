@@ -13,8 +13,9 @@
 */
 
 #include <algorithm>
-#include <memory>
+#include <cstddef>
 #include <optional>
+#include <ostream>
 #include <set>
 #include <sstream>
 #include <stack>
@@ -24,9 +25,8 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
 
@@ -85,7 +85,7 @@ LogicalPlan::LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOpera
 {
 }
 
-LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, LogicalOperator newRoot)
+LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot)
 {
     auto root = newRoot.withChildren(plan.rootOperators);
     return LogicalPlan(plan.getQueryId(), {std::move(root)});
@@ -103,9 +103,9 @@ bool replaceOperatorRecursion(LogicalOperator& current, const LogicalOperator& t
     }
     bool replaced = false;
     auto children = current.getChildren();
-    for (size_t i = 0; i < children.size(); ++i)
+    for (auto& i : children)
     {
-        if (replaceOperatorRecursion(children[i], target, replacement))
+        if (replaceOperatorRecursion(i, target, replacement))
         {
             replaced = true;
         }
@@ -118,7 +118,7 @@ bool replaceOperatorRecursion(LogicalOperator& current, const LogicalOperator& t
 }
 }
 
-std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, LogicalOperator target, LogicalOperator replacement)
+std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, const LogicalOperator& target, LogicalOperator replacement)
 {
     bool replaced = false;
     std::vector<LogicalOperator> newRoots;
@@ -145,7 +145,7 @@ std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, LogicalOpera
 
 namespace
 {
-bool replaceSubtreeRecursion(LogicalOperator& current, LogicalOperator target, LogicalOperator replacement)
+bool replaceSubtreeRecursion(LogicalOperator& current, const LogicalOperator& target, const LogicalOperator& replacement)
 {
     if (current.getId() == target.getId())
     {
@@ -169,7 +169,7 @@ bool replaceSubtreeRecursion(LogicalOperator& current, LogicalOperator target, L
 }
 }
 
-std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, LogicalOperator target, LogicalOperator replacement)
+std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, const LogicalOperator& target, const LogicalOperator& replacement)
 {
     bool replaced = false;
     std::vector<LogicalOperator> newRoots = plan.rootOperators;
@@ -328,8 +328,8 @@ bool LogicalPlan::operator==(const LogicalPlan& other) const
 
         std::vector lcSorted(lc.begin(), lc.end());
         std::vector rcSorted(rc.begin(), rc.end());
-        std::sort(lcSorted.begin(), lcSorted.end(), [](auto& a, auto& b) { return a.getId() < b.getId(); });
-        std::sort(rcSorted.begin(), rcSorted.end(), [](auto& a, auto& b) { return a.getId() < b.getId(); });
+        std::ranges::sort(lcSorted, [](auto& a, auto& b) { return a.getId() < b.getId(); });
+        std::ranges::sort(rcSorted, [](auto& a, auto& b) { return a.getId() < b.getId(); });
 
         for (std::size_t i = 0; i < lcSorted.size(); ++i)
         {

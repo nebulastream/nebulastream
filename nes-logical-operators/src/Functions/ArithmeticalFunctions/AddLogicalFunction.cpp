@@ -13,18 +13,24 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-AddLogicalFunction::AddLogicalFunction(LogicalFunction left, LogicalFunction right)
+AddLogicalFunction::AddLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType()->join(*right.getDataType())), left(left), right(right)
 {
 }
@@ -77,8 +83,8 @@ std::string_view AddLogicalFunction::getType() const
 
 bool AddLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    auto other = dynamic_cast<const AddLogicalFunction*>(&rhs);
-    if (other)
+    const auto* other = dynamic_cast<const AddLogicalFunction*>(&rhs);
+    if (other != nullptr)
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = right == other->right and right == other->left;

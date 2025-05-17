@@ -14,9 +14,12 @@
 
 #pragma once
 
+#include <memory>
+#include <string_view>
 #include <API/Schema.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
@@ -25,14 +28,15 @@ namespace NES
 class CountAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    static std::shared_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
-    static std::shared_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField);
+    static std::shared_ptr<WindowAggregationLogicalFunction>
+    create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
     CountAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
-    explicit CountAggregationLogicalFunction(FieldAccessLogicalFunction onField);
-    virtual ~CountAggregationLogicalFunction() = default;
+    explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    ~CountAggregationLogicalFunction() override = default;
 
     void inferStamp(const Schema& schema) override;
-    NES::SerializableAggregationFunction serialize() const override;
+    [[nodiscard]] NES::SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:

@@ -13,18 +13,24 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-AbsoluteLogicalFunction::AbsoluteLogicalFunction(LogicalFunction child) : dataType(child.getDataType()), child(child)
+AbsoluteLogicalFunction::AbsoluteLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child)
 {
 }
 
@@ -74,7 +80,7 @@ std::string_view AbsoluteLogicalFunction::getType() const
 
 bool AbsoluteLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs))
     {
         return child == other->child;
     }

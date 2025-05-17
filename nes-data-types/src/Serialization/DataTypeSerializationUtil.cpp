@@ -34,9 +34,9 @@ namespace NES
 {
 
 SerializableDataType*
-DataTypeSerializationUtil::serializeDataType(std::shared_ptr<DataType> dataType, SerializableDataType* serializedDataType)
+DataTypeSerializationUtil::serializeDataType(const std::shared_ptr<DataType>& dataType, SerializableDataType* serializedDataType)
 {
-    if (dynamic_cast<const Undefined*>(dataType.get()))
+    if (dynamic_cast<const Undefined*>(dataType.get()) != nullptr)
     {
         serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
     }
@@ -55,21 +55,21 @@ DataTypeSerializationUtil::serializeDataType(std::shared_ptr<DataType> dataType,
         serializedDataType->mutable_details()->PackFrom(serializableFloat);
         serializedDataType->set_type(SerializableDataType_Type_FLOAT);
     }
-    else if (dynamic_cast<const Boolean*>(dataType.get()))
+    else if (dynamic_cast<const Boolean*>(dataType.get()) != nullptr)
     {
         serializedDataType->set_type(SerializableDataType_Type_BOOLEAN);
     }
-    else if (dynamic_cast<const Char*>(dataType.get()))
+    else if (dynamic_cast<const Char*>(dataType.get()) != nullptr)
     {
         serializedDataType->set_type(SerializableDataType_Type_CHAR);
     }
-    else if (dynamic_cast<const VariableSizedDataType*>(dataType.get()))
+    else if (dynamic_cast<const VariableSizedDataType*>(dataType.get()) != nullptr)
     {
         serializedDataType->set_type(SerializableDataType_Type_VARIABLE_SIZED_DATA);
     }
     else
     {
-        throw CannotSerialize("serialization is not possible for " + dataType.get()->toString());
+        throw CannotSerialize("serialization is not possible for " + dataType->toString());
     }
     NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType.get()->toString(), serializedDataType->SerializeAsString());
     return serializedDataType;

@@ -12,12 +12,18 @@
     limitations under the License.
 */
 
+#include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
 
@@ -28,7 +34,7 @@ SinkLogicalOperator::SinkLogicalOperator(std::string sinkName) : sinkName(std::m
 
 bool SinkLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (auto rhsOperator = dynamic_cast<const SinkLogicalOperator*>(&rhs))
+    if (const auto* rhsOperator = dynamic_cast<const SinkLogicalOperator*>(&rhs))
     {
         const bool descriptorsEqual = (sinkDescriptor == nullptr && rhsOperator->sinkDescriptor == nullptr)
             || (sinkDescriptor != nullptr && rhsOperator->sinkDescriptor != nullptr && *sinkDescriptor == *rhsOperator->sinkDescriptor);
@@ -130,7 +136,7 @@ std::vector<LogicalOperator> SinkLogicalOperator::getChildren() const
 
 void SinkLogicalOperator::setOutputSchema(Schema schema)
 {
-    sinkDescriptor->schema = schema;
+    sinkDescriptor->schema = std::move(schema);
 }
 
 SerializableOperator SinkLogicalOperator::serialize() const

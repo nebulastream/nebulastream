@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <string>
 #include <Util/Common.hpp>
 #include <DataTypeRegistry.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>

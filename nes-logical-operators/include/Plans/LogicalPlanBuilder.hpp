@@ -14,11 +14,12 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -39,23 +40,23 @@ public:
     /// @param functions list of attributes
     /// @param queryPlan the queryPlan to add the projection node
     /// @return the updated queryPlan
-    static LogicalPlan addProjection(std::vector<LogicalFunction> functions, LogicalPlan queryPlan);
+    static LogicalPlan addProjection(std::vector<LogicalFunction> functions, const LogicalPlan& queryPlan);
 
     /// @brief: this call adds the selection operator to the queryPlan; the operator selects records according to the predicate.
     /// @param selectionFunction a function node containing the predicate
     /// @param LogicalPlan the queryPlan the selection node is added to
     /// @return the updated queryPlan
-    static LogicalPlan addSelection(LogicalFunction selectionFunction, LogicalPlan queryPlan);
+    static LogicalPlan addSelection(LogicalFunction selectionFunction, const LogicalPlan& queryPlan);
 
     /// @brief: Map records according to a map function.
     /// @param mapFunction as function node
     /// @param queryPlan the queryPlan the map is added to
     /// @return the updated LogicalPlan
-    static LogicalPlan addMap(LogicalFunction mapFunction, LogicalPlan queryPlan);
+    static LogicalPlan addMap(const LogicalFunction& mapFunction, const LogicalPlan& queryPlan);
 
     static LogicalPlan addWindowAggregation(
         LogicalPlan queryPlan,
-        std::shared_ptr<Windowing::WindowType> windowType,
+        const std::shared_ptr<Windowing::WindowType>& windowType,
         std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> windowAggs,
         std::vector<FieldAccessLogicalFunction> onKeys);
 
@@ -74,15 +75,15 @@ public:
     static LogicalPlan addJoin(
         LogicalPlan leftLogicalPlan,
         LogicalPlan rightLogicalPlan,
-        LogicalFunction joinFunction,
+        const LogicalFunction& joinFunction,
         std::shared_ptr<Windowing::WindowType> windowType,
         JoinLogicalOperator::JoinType joinType);
 
-    static LogicalPlan addSink(std::string sinkName, LogicalPlan queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
+    static LogicalPlan addSink(std::string sinkName, const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
-    static LogicalPlan checkAndAddWatermarkAssigner(LogicalPlan queryPlan, std::shared_ptr<Windowing::WindowType> windowType);
+    static LogicalPlan checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType);
 
 private:
     /// @brief: This method adds a binary operator to the query plan and updates the consumed sources
@@ -91,6 +92,6 @@ private:
     /// @param: rightLogicalPlan the right query plan of the binary operation
     /// @return the updated queryPlan
     static LogicalPlan
-    addBinaryOperatorAndUpdateSource(LogicalOperator operatorNode, LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan);
+    addBinaryOperatorAndUpdateSource(const LogicalOperator& operatorNode, LogicalPlan leftLogicalPlan, LogicalPlan rightLogicalPlan);
 };
 }

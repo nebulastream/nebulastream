@@ -15,7 +15,7 @@
 #include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -34,15 +34,15 @@ TimeCharacteristic::TimeCharacteristic(Type type, std::shared_ptr<AttributeField
     : field(std::move(field)), type(type), unit(std::move(unit))
 {
 }
-TimeCharacteristic TimeCharacteristic::createEventTime(FieldAccessLogicalFunction fieldAccess)
+TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalFunction& fieldAccess)
 {
-    return createEventTime(std::move(fieldAccess), TimeUnit(1));
+    return createEventTime(fieldAccess, TimeUnit(1));
 }
 
-TimeCharacteristic TimeCharacteristic::createEventTime(FieldAccessLogicalFunction fieldAccess, const TimeUnit& unit)
+TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalFunction& fieldAccess, const TimeUnit& unit)
 {
     auto keyField = std::make_shared<AttributeField>(fieldAccess.getFieldName(), fieldAccess.getDataType());
-    return TimeCharacteristic(Type::EventTime, keyField, unit);
+    return {Type::EventTime, keyField, unit};
 }
 
 TimeCharacteristic TimeCharacteristic::createIngestionTime()

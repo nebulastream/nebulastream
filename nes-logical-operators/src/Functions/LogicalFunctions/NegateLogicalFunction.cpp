@@ -12,13 +12,20 @@
     limitations under the License.
 */
 
-#include <sstream>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctions/NegateLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
@@ -27,7 +34,7 @@ namespace NES
 {
 
 NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
-    : dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)), child(child)
+    : dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)), child(std::move(std::move(child)))
 {
 }
 
@@ -37,7 +44,7 @@ NegateLogicalFunction::NegateLogicalFunction(const NegateLogicalFunction& other)
 
 bool NegateLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const NegateLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const NegateLogicalFunction*>(&rhs))
     {
         return this->child == other->getChildren()[0];
     }
@@ -52,10 +59,10 @@ std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
 LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     auto newChild = child.withInferredDataType(schema);
-    if (*newChild.getDataType().get() != Boolean())
+    if (*newChild.getDataType() != Boolean())
     {
         throw CannotInferSchema(
-            "Negate Function Node: the dataType of child must be boolean, but was: {}", child.getDataType().get()->toString());
+            "Negate Function Node: the dataType of child must be boolean, but was: {}", child.getDataType()->toString());
     }
     return withChildren({newChild});
 }

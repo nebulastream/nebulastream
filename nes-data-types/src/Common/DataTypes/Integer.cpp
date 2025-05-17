@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <DataTypeRegistry.hpp>

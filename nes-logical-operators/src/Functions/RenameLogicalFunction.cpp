@@ -12,17 +12,23 @@
     limitations under the License.
 */
 #include <memory>
-#include <span>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 #include <API/Schema.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/RenameLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -35,7 +41,7 @@ RenameLogicalFunction::RenameLogicalFunction(const RenameLogicalFunction& other)
 
 bool RenameLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const RenameLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const RenameLogicalFunction*>(&rhs))
     {
         return other->child.operator==(getOriginalField()) && this->newFieldName == other->getNewFieldName();
     }
@@ -130,8 +136,8 @@ SerializableFunction RenameLogicalFunction::serialize() const
     serializedFunction.set_function_type(NAME);
     serializedFunction.add_children()->CopyFrom(child.serialize());
 
-    NES::Configurations::DescriptorConfig::ConfigType configVariant = getNewFieldName();
-    SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
+    const NES::Configurations::DescriptorConfig::ConfigType configVariant = getNewFieldName();
+    const SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
     (*serializedFunction.mutable_config())["NewFieldName"] = variantDescriptor;
 
     DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());

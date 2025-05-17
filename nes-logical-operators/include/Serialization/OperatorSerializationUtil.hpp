@@ -15,12 +15,12 @@
 #pragma once
 
 #include <memory>
-#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <SerializableOperator.pb.h>
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -32,9 +32,9 @@ class OperatorSerializationUtil
 public:
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
-    static LogicalOperator deserializeOperator(SerializableOperator serializedOperator);
+    static LogicalOperator deserializeOperator(const SerializableOperator& serializedOperator);
     static std::unique_ptr<Sources::SourceDescriptor> deserializeSourceDescriptor(const SerializableSourceDescriptor& sourceDescriptor);
-    static std::unique_ptr<Sinks::SinkDescriptor> deserializeSinkDescriptor(const SerializableSinkDescriptor& SerializableSinkDescriptor);
+    static std::unique_ptr<Sinks::SinkDescriptor> deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor);
     static std::shared_ptr<WindowAggregationLogicalFunction>
     deserializeWindowAggregationFunction(const SerializableAggregationFunction& serializedFunction);
 };

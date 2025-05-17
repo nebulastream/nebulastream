@@ -14,7 +14,16 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableVariantDescriptor.pb.h>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -24,7 +33,7 @@ public:
     ~DivLogicalFunction() noexcept override = default;
     static constexpr std::string_view NAME = "Div";
 
-    DivLogicalFunction(LogicalFunction left, LogicalFunction right);
+    DivLogicalFunction(const LogicalFunction& left, LogicalFunction right);
     DivLogicalFunction(const DivLogicalFunction& other);
 
     [[nodiscard]] SerializableFunction serialize() const override;

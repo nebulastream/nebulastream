@@ -13,11 +13,18 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -28,14 +35,14 @@ ModuloLogicalFunction::ModuloLogicalFunction(const ModuloLogicalFunction& other)
 {
 }
 
-ModuloLogicalFunction::ModuloLogicalFunction(LogicalFunction left, LogicalFunction right)
+ModuloLogicalFunction::ModuloLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType()->join(*right.getDataType())), left(left), right(right)
 {
 }
 
 bool ModuloLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const ModuloLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const ModuloLogicalFunction*>(&rhs))
     {
         return left == other->left and right == other->right;
     }

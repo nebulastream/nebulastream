@@ -13,13 +13,19 @@
 */
 
 #include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctions/AndLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
@@ -32,7 +38,9 @@ AndLogicalFunction::AndLogicalFunction(const AndLogicalFunction& other) : dataTy
 }
 
 AndLogicalFunction::AndLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN)), left(left), right(right)
+    : dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
+    , left(std::move(std::move(left)))
+    , right(std::move(std::move(right)))
 {
 }
 
@@ -69,7 +77,7 @@ std::string_view AndLogicalFunction::getType() const
 
 bool AndLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const AndLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const AndLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;

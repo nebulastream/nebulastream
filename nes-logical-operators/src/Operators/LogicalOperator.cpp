@@ -12,14 +12,16 @@
     limitations under the License.
 */
 
-#include <algorithm>
 #include <memory>
 #include <string>
-#include <Configurations/Descriptor.hpp>
+#include <string_view>
+#include <utility>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <SerializableOperator.pb.h>
 
 namespace NES
@@ -63,7 +65,7 @@ std::vector<LogicalOperator> LogicalOperator::getChildren() const
 
 LogicalOperator LogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
-    return self->withChildren(children);
+    return self->withChildren(std::move(children));
 }
 
 OperatorId LogicalOperator::getId() const
@@ -113,12 +115,12 @@ std::vector<OriginId> LogicalOperator::getOutputOriginIds() const
 
 LogicalOperator LogicalOperator::withInputOriginIds(std::vector<std::vector<OriginId>> ids) const
 {
-    return self->withInputOriginIds(ids);
+    return self->withInputOriginIds(std::move(ids));
 }
 
 LogicalOperator LogicalOperator::withOutputOriginIds(std::vector<OriginId> ids) const
 {
-    return self->withOutputOriginIds(ids);
+    return self->withOutputOriginIds(std::move(ids));
 }
 
 LogicalOperator LogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const

@@ -14,8 +14,13 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <SerializableVariantDescriptor.pb.h>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -25,19 +30,19 @@ class WindowAggregationLogicalFunction
 public:
     virtual ~WindowAggregationLogicalFunction() = default;
 
-    std::shared_ptr<DataType> getInputStamp() const;
-    std::shared_ptr<DataType> getPartialAggregateStamp() const;
-    std::shared_ptr<DataType> getFinalAggregateStamp() const;
+    [[nodiscard]] std::shared_ptr<DataType> getInputStamp() const;
+    [[nodiscard]] std::shared_ptr<DataType> getPartialAggregateStamp() const;
+    [[nodiscard]] std::shared_ptr<DataType> getFinalAggregateStamp() const;
 
-    std::string toString() const;
-    bool operator==(std::shared_ptr<WindowAggregationLogicalFunction> otherWindowAggregationLogicalFunction) const;
+    [[nodiscard]] std::string toString() const;
+    bool operator==(const std::shared_ptr<WindowAggregationLogicalFunction>& otherWindowAggregationLogicalFunction) const;
 
     /// @brief Infers the dataType of the function given the current schema and the typeInferencePhaseContext.
     virtual void inferStamp(const Schema& schema) = 0;
 
-    virtual SerializableAggregationFunction serialize() const = 0;
+    [[nodiscard]] virtual SerializableAggregationFunction serialize() const = 0;
 
-    virtual std::string_view getName() const noexcept = 0;
+    [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
 
     std::shared_ptr<DataType> inputStamp, partialAggregateStamp, finalAggregateStamp;
     FieldAccessLogicalFunction onField, asField;
@@ -54,6 +59,6 @@ protected:
         std::shared_ptr<DataType> inputStamp,
         std::shared_ptr<DataType> partialAggregateStamp,
         std::shared_ptr<DataType> finalAggregateStamp,
-        FieldAccessLogicalFunction onField);
+        const FieldAccessLogicalFunction& onField);
 };
 }

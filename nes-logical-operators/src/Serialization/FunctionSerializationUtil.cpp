@@ -15,6 +15,7 @@
 #include <memory>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>

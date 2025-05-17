@@ -12,17 +12,25 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/FloorLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-FloorLogicalFunction::FloorLogicalFunction(LogicalFunction child) : dataType(child.getDataType()), child(child) { };
+FloorLogicalFunction::FloorLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
 FloorLogicalFunction::FloorLogicalFunction(const FloorLogicalFunction& other) : dataType(other.getDataType()), child(other.child)
 {
@@ -70,7 +78,7 @@ std::string_view FloorLogicalFunction::getType() const
 
 bool FloorLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const FloorLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const FloorLogicalFunction*>(&rhs))
     {
         return child == other->child;
     }

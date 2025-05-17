@@ -12,18 +12,27 @@
     limitations under the License.
 */
 
-#include <sstream>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-DivLogicalFunction::DivLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(left.getDataType()), left(left), right(right) { };
+DivLogicalFunction::DivLogicalFunction(const LogicalFunction& left, LogicalFunction right)
+    : dataType(left.getDataType()), left(left), right(std::move(std::move(right))) { };
 
 DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
 {
@@ -31,7 +40,7 @@ DivLogicalFunction::DivLogicalFunction(const DivLogicalFunction& other) : dataTy
 
 bool DivLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const DivLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const DivLogicalFunction*>(&rhs))
     {
         return left == other->left and right == other->right;
     }

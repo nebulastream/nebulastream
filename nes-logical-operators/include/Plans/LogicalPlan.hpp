@@ -14,15 +14,19 @@
 
 #pragma once
 
+#include <algorithm>
 #include <iterator>
-#include <memory>
-#include <set>
+#include <optional>
+#include <ostream>
+#include <ranges>
+#include <string>
 #include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
-#include <Operators/Sinks/SinkLogicalOperator.hpp>
-#include <Util/Common.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <Util/PlanRenderer.hpp>
 
 namespace NES
 {
@@ -60,13 +64,15 @@ private:
 [[nodiscard]] std::vector<LogicalOperator> getParents(const LogicalPlan& plan, const LogicalOperator& target);
 
 /// Replace `target` with `replacement`, keeping target's children
-[[nodiscard]] std::optional<LogicalPlan> replaceOperator(const LogicalPlan& plan, LogicalOperator target, LogicalOperator replacement);
+[[nodiscard]] std::optional<LogicalPlan>
+replaceOperator(const LogicalPlan& plan, const LogicalOperator& target, LogicalOperator replacement);
 
 /// Replace `target` with `replacement`, keeping the children that are already inside `replacement`
-[[nodiscard]] std::optional<LogicalPlan> replaceSubtree(const LogicalPlan& plan, LogicalOperator target, LogicalOperator replacement);
+[[nodiscard]] std::optional<LogicalPlan>
+replaceSubtree(const LogicalPlan& plan, const LogicalOperator& target, const LogicalOperator& replacement);
 
 /// Adds a new operator to the plan and promotes it as new root by reparenting existing root operators and replacing the current roots
-[[nodiscard]] LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, LogicalOperator newRoot);
+[[nodiscard]] LogicalPlan promoteOperatorToRoot(const LogicalPlan& plan, const LogicalOperator& newRoot);
 
 template <class T>
 [[nodiscard]] std::vector<T> getOperatorByType(const LogicalPlan& plan)

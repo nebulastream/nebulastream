@@ -14,9 +14,15 @@
 
 #pragma once
 
-#include <memory>
-#include <Configurations/Descriptor.hpp>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {

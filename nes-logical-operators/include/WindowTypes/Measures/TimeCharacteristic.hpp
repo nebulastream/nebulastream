@@ -14,10 +14,14 @@
 
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <ostream>
+#include <string>
 #include <API/AttributeField.hpp>
 #include <API/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
+#include <Util/Logger/Formatter.hpp>
 
 namespace NES::Windowing
 {
@@ -45,8 +49,8 @@ public:
     /// @param unit the time unit of the EventTime, defaults to milliseconds
     /// @param field the field from which we want to extract the time.
     /// @return std::shared_ptr<TimeCharacteristic>
-    static TimeCharacteristic createEventTime(FieldAccessLogicalFunction field, const TimeUnit& unit);
-    static TimeCharacteristic createEventTime(FieldAccessLogicalFunction field);
+    static TimeCharacteristic createEventTime(const FieldAccessLogicalFunction& field, const TimeUnit& unit);
+    static TimeCharacteristic createEventTime(const FieldAccessLogicalFunction& field);
 
     /// @return The TimeCharacteristic type.
     [[nodiscard]] Type getType() const;

@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
-#include <unordered_map>
+#include <vector>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Registry.hpp>
 
