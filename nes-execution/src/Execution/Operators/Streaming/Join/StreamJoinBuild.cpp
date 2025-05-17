@@ -47,6 +47,17 @@ void updateSlicesProxy(
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
 
+    if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
+    {
+        opHandler->runSingleAwaitable(sliceStore->updateSlices(
+            opHandler->getIoContext(),
+            bufferProvider,
+            memoryLayout,
+            joinBuildSide,
+            SliceStoreMetaData(
+                workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
+    }
+
     /// For creating memory usage metrics
     const auto now = std::chrono::high_resolution_clock::now();
     std::cout << std::format(
@@ -58,17 +69,6 @@ void updateSlicesProxy(
     {
         std::cout << std::format("NumPooledBuffers={}\n", numPooledBuffers);
     }*/
-
-    if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
-    {
-        opHandler->runSingleAwaitable(sliceStore->updateSlices(
-            opHandler->getIoContext(),
-            bufferProvider,
-            memoryLayout,
-            joinBuildSide,
-            SliceStoreMetaData(
-                workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
-    }
 }
 
 StreamJoinBuild::StreamJoinBuild(

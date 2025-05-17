@@ -58,6 +58,18 @@ NLJSlice* getNLJSliceRefFromEndProxy(
     const auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd, bufferProvider, memoryLayout, joinBuildSide);
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
 
+    /// For creating memory usage metrics
+    const auto now = std::chrono::high_resolution_clock::now();
+    std::cout << std::format(
+        "{},{},{}\n",
+        bufferProvider->getAvailableBuffers(),
+        bufferProvider->getNumOfUnpooledBuffers(),
+        static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count()));
+    /*if (const auto numPooledBuffers = bufferProvider->getNumOfPooledBuffers(); numPooledBuffers != 200000)
+    {
+        std::cout << std::format("NumPooledBuffers={}\n", numPooledBuffers);
+    }*/
+
     return dynamic_cast<NLJSlice*>(slice.value().get());
 }
 
