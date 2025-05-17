@@ -14,9 +14,12 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
-#include <unordered_map>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Registry.hpp>
 

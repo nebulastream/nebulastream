@@ -15,10 +15,12 @@
 #pragma once
 
 #include <memory>
+#include <string_view>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -28,14 +30,14 @@ class SumAggregationLogicalFunction : public WindowAggregationLogicalFunction
 public:
     SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
     explicit SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
-    virtual ~SumAggregationLogicalFunction() = default;
+    ~SumAggregationLogicalFunction() override = default;
 
-    static std::shared_ptr<WindowAggregationLogicalFunction> create(LogicalFunction onField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(const LogicalFunction& onField);
     static std::shared_ptr<WindowAggregationLogicalFunction>
     create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
 
     void inferStamp(const Schema& schema) override;
-    NES::SerializableAggregationFunction serialize() const override;
+    [[nodiscard]] NES::SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
 private:

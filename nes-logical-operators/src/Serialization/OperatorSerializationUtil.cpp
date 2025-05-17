@@ -12,12 +12,19 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
@@ -27,7 +34,7 @@ namespace NES
 {
 
 
-LogicalOperator OperatorSerializationUtil::deserializeOperator(SerializableOperator serializedOperator)
+LogicalOperator OperatorSerializationUtil::deserializeOperator(const SerializableOperator& serializedOperator)
 {
     if (serializedOperator.has_source())
     {
@@ -66,12 +73,12 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(SerializableOpera
         }
 
         auto registryArgument = NES::LogicalOperatorRegistryArguments{
-            OperatorId(serializedOperator.operator_id()),
-            {}, /// inputOriginIds - will be populated from operator_().input_origin_lists
-            {}, /// outputOriginIds - will be populated from operator_().output_origin_ids
-            {}, /// inputSchemas - will be populated from operator_().input_schema
-            Schema(), /// outputSchema - will be populated from operator_().output_schema
-            config};
+            .id = OperatorId(serializedOperator.operator_id()),
+            .inputOriginIds = {}, /// inputOriginIds - will be populated from operator_().input_origin_lists
+            .outputOriginIds = {}, /// outputOriginIds - will be populated from operator_().output_origin_ids
+            .inputSchemas = {}, /// inputSchemas - will be populated from operator_().input_schema
+            .outputSchema = Schema(), /// outputSchema - will be populated from operator_().output_schema
+            .config = config};
 
         for (const auto& originList : serializedOperator.operator_().input_origin_lists())
         {
@@ -128,10 +135,10 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceD
     deserializedParserConfig.fieldDelimiter = serializedParserConfig.fielddelimiter();
 
     /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
-    NES::Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
+    NES::Configurations::DescriptorConfig::Config sourceDescriptorConfig{};
     for (const auto& [key, value] : sourceDescriptor.config())
     {
-        SourceDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
+        sourceDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(value);
     }
 
     return std::make_unique<Sources::SourceDescriptor>(
@@ -140,20 +147,20 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableSourceD
         std::move(sourceType),
         numberOfBuffersInSourceLocalBufferPool,
         std::move(deserializedParserConfig),
-        std::move(SourceDescriptorConfig));
+        std::move(sourceDescriptorConfig));
 }
 
 std::unique_ptr<Sinks::SinkDescriptor>
-OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& SerializableSinkDescriptor)
+OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableSinkDescriptor& serializableSinkDescriptor)
 {
     /// Declaring variables outside of DescriptorSource for readability/debuggability.
-    auto schema = SchemaSerializationUtil::deserializeSchema(SerializableSinkDescriptor.sinkschema());
-    auto addTimestamp = SerializableSinkDescriptor.addtimestamp();
-    auto sinkType = SerializableSinkDescriptor.sinktype();
+    auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
+    auto addTimestamp = serializableSinkDescriptor.addtimestamp();
+    auto sinkType = serializableSinkDescriptor.sinktype();
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
     NES::Configurations::DescriptorConfig::Config sinkDescriptorConfig{};
-    for (const auto& [key, desciptor] : SerializableSinkDescriptor.config())
+    for (const auto& [key, desciptor] : serializableSinkDescriptor.config())
     {
         sinkDescriptorConfig[key] = Configurations::protoToDescriptorConfigType(desciptor);
     }

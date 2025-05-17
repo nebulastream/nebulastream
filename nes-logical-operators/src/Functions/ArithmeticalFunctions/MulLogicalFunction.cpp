@@ -13,17 +13,23 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/MulLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-MulLogicalFunction::MulLogicalFunction(LogicalFunction left, LogicalFunction right)
+MulLogicalFunction::MulLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType()->join(*right.getDataType())), left(left), right(right)
 {
 }
@@ -34,7 +40,7 @@ MulLogicalFunction::MulLogicalFunction(const MulLogicalFunction& other) : dataTy
 
 bool MulLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const MulLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const MulLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;

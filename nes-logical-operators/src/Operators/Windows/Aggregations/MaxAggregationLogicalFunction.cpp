@@ -13,6 +13,8 @@
 */
 
 #include <memory>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -32,12 +34,12 @@ MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLo
 {
 }
 
-MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, asField)
+MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
+    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, std::move(asField))
 {
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> MaxAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
 {
     return std::make_shared<MaxAggregationLogicalFunction>(onField);
 }

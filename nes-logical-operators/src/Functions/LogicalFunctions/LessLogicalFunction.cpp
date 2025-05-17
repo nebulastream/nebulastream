@@ -13,12 +13,19 @@
 */
 
 #include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctions/LessLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
@@ -30,13 +37,15 @@ LessLogicalFunction::LessLogicalFunction(const LessLogicalFunction& other) : lef
 }
 
 LessLogicalFunction::LessLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(left), right(right), dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
+    : left(std::move(std::move(left)))
+    , right(std::move(std::move(right)))
+    , dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
 {
 }
 
 bool LessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const LessLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const LessLogicalFunction*>(&rhs))
     {
         return this->left == other->left && this->right == other->right;
     }

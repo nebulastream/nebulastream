@@ -14,7 +14,16 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableVariantDescriptor.pb.h>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -23,7 +32,7 @@ class ExpLogicalFunction final : public LogicalFunctionConcept
 public:
     static constexpr std::string_view NAME = "Exp";
 
-    ExpLogicalFunction(LogicalFunction child);
+    explicit ExpLogicalFunction(const LogicalFunction& child);
     ExpLogicalFunction(const ExpLogicalFunction& other);
     ~ExpLogicalFunction() noexcept override = default;
 

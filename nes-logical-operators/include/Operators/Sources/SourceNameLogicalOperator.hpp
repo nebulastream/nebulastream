@@ -14,7 +14,15 @@
 
 #pragma once
 
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -27,9 +35,9 @@ class SourceNameLogicalOperator : public LogicalOperatorConcept
 {
 public:
     explicit SourceNameLogicalOperator(std::string logicalSourceName);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, const Schema& schema);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, Schema schema);
 
-    void inferInputOrigins();
+    static void inferInputOrigins();
 
     [[nodiscard]] std::string getLogicalSourceName() const;
 

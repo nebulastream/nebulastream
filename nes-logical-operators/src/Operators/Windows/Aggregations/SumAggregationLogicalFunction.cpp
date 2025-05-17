@@ -13,28 +13,27 @@
 */
 
 #include <memory>
-#include <utility>
+#include <string>
+#include <string_view>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/SumAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
 namespace NES
 {
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), std::move(field))
+    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
 {
 }
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(
     const FieldAccessLogicalFunction& field, const FieldAccessLogicalFunction& asField)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), std::move(field), std::move(asField))
+    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field, asField)
 {
 }
 
@@ -49,7 +48,7 @@ SumAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField,
     return std::make_shared<SumAggregationLogicalFunction>(onField, asField);
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::create(LogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> SumAggregationLogicalFunction::create(const LogicalFunction& onField)
 {
     return std::make_shared<SumAggregationLogicalFunction>(onField.get<FieldAccessLogicalFunction>());
 }

@@ -15,9 +15,13 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -68,7 +72,7 @@ struct LogicalFunction
     /// @tparam T The type of the function. Must satisfy IsLogicalFunction concept.
     /// @param op The function to wrap.
     template <IsLogicalFunction T>
-    LogicalFunction(const T& op) : self(std::make_unique<Model<T>>(op))
+    LogicalFunction(const T& op) : self(std::make_unique<Model<T>>(op)) /// NOLINT
     {
     }
 
@@ -96,7 +100,7 @@ struct LogicalFunction
     /// @return const T The function.
     /// @throw InvalidDynamicCast If the function is not of type T.
     template <typename T>
-    [[nodiscard]] const T get() const
+    [[nodiscard]] T get() const
     {
         if (auto model = dynamic_cast<const Model<T>*>(self.get()))
         {

@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Util/Common.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Integer.hpp>
@@ -33,7 +35,7 @@ bool TimeBasedWindowType::inferStamp(const Schema& schema)
         auto existingField = schema.getFieldByName(fieldName);
         if (existingField)
         {
-            if (!dynamic_cast<const Integer*>(existingField.value().getDataType().get()))
+            if (dynamic_cast<const Integer*>(existingField.value().getDataType().get()) == nullptr)
             {
                 throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field " + fieldName);
             }

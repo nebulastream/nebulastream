@@ -12,17 +12,25 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/ExpLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-ExpLogicalFunction::ExpLogicalFunction(LogicalFunction child) : dataType(child.getDataType()), child(child) { };
+ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
 ExpLogicalFunction::ExpLogicalFunction(const ExpLogicalFunction& other) : child(other.getChildren()[0])
 {
@@ -30,7 +38,7 @@ ExpLogicalFunction::ExpLogicalFunction(const ExpLogicalFunction& other) : child(
 
 bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const ExpLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const ExpLogicalFunction*>(&rhs))
     {
         return child == other->child;
     }

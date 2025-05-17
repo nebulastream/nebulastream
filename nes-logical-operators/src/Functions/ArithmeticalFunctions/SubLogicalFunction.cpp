@@ -13,18 +13,24 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-SubLogicalFunction::SubLogicalFunction(LogicalFunction left, LogicalFunction right)
+SubLogicalFunction::SubLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType()->join(*right.getDataType())), left(left), right(right) { };
 
 SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
@@ -33,7 +39,7 @@ SubLogicalFunction::SubLogicalFunction(const SubLogicalFunction& other) : dataTy
 
 bool SubLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const SubLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const SubLogicalFunction*>(&rhs))
     {
         return left == other->left and right == other->right;
     }

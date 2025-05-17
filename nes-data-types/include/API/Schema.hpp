@@ -37,7 +37,8 @@ public:
         COLUMNAR_LAYOUT = 1
     };
 
-    explicit Schema(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
+    explicit Schema() = default;
+    explicit Schema(MemoryLayoutType layoutType);
     Schema(const Schema& schema, MemoryLayoutType layoutType);
 
     /// @brief Schema qualifier separator
@@ -73,7 +74,7 @@ public:
     /// @brief Replaces a field, which is already part of the schema.
     /// @param name of the field we want to replace
     /// @param std::shared_ptr<DataType>
-    void replaceField(const std::string& name, std::shared_ptr<DataType> type);
+    void replaceField(const std::string& name, const std::shared_ptr<DataType>& type);
 
     /// @brief Returns the attribute field based on a qualified or unqualified field name.
     ///
@@ -84,13 +85,13 @@ public:
     //
     /// @param fieldName: Name of the attribute field that should be returned.
     /// @return std::optional<std::shared_ptr<AttributeField>> The attribute field if found, otherwise an empty optional.
-    std::optional<AttributeField> getFieldByName(const std::string& fieldName) const;
+    [[nodiscard]] std::optional<AttributeField> getFieldByName(const std::string& fieldName) const;
 
     /// @brief Finds a attribute field by index in the schema
     /// @param index
     /// @return AttributeField
     /// @throws FieldNotFound if the field does not exist
-    AttributeField getFieldByIndex(size_t index) const;
+    [[nodiscard]] AttributeField getFieldByIndex(size_t index) const;
 
     /// @brief Returns the number of fields in the schema.
     /// @return uint64_t
@@ -160,7 +161,7 @@ public:
 
 private:
     std::vector<AttributeField> fields;
-    MemoryLayoutType layoutType;
+    MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT;
 };
 
 }

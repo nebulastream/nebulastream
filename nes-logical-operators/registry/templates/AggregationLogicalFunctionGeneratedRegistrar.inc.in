@@ -22,7 +22,6 @@
 
 #include <memory>
 #include <string>
-#include <AggregationLogicalFunctionRegistry.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES::AggregationLogicalFunctionGeneratedRegistrar

@@ -15,9 +15,11 @@
 #pragma once
 
 #include <memory>
+#include <string_view>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
@@ -26,8 +28,8 @@ namespace NES
 class MedianAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    MedianAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
-    static std::shared_ptr<WindowAggregationLogicalFunction> create(FieldAccessLogicalFunction onField);
+    MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
+    static std::shared_ptr<WindowAggregationLogicalFunction> create(const FieldAccessLogicalFunction& onField);
     explicit MedianAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
 
     /// Creates a new MedianAggregationLogicalFunction
@@ -38,9 +40,9 @@ public:
 
     void inferStamp(const Schema& schema) override;
 
-    virtual ~MedianAggregationLogicalFunction() = default;
+    ~MedianAggregationLogicalFunction() override = default;
 
-    NES::SerializableAggregationFunction serialize() const override;
+    [[nodiscard]] NES::SerializableAggregationFunction serialize() const override;
     [[nodiscard]] std::string_view getName() const noexcept override;
 
 

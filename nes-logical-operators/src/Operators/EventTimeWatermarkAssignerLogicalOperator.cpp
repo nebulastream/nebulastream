@@ -13,27 +13,33 @@
 */
 
 #include <cstdint>
-#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <variant>
+#include <vector>
+#include <API/TimeUnit.hpp>
 #include <Configurations/Descriptor.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <LogicalFunctionRegistry.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
 
-EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, Windowing::TimeUnit unit)
+EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(
+    LogicalFunction onField, const Windowing::TimeUnit& unit)
     : onField(std::move(onField)), unit(unit)
 {
 }
@@ -65,7 +71,7 @@ std::string EventTimeWatermarkAssignerLogicalOperator::explain(ExplainVerbosity 
 
 bool EventTimeWatermarkAssignerLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (const auto rhsOperator = dynamic_cast<const EventTimeWatermarkAssignerLogicalOperator*>(&rhs))
+    if (const auto* const rhsOperator = dynamic_cast<const EventTimeWatermarkAssignerLogicalOperator*>(&rhs))
     {
         return onField == rhsOperator->onField && unit == rhsOperator->unit && getOutputSchema() == rhsOperator->getOutputSchema()
             && getInputSchemas() == rhsOperator->getInputSchemas() && getInputOriginIds() == rhsOperator->getInputOriginIds()
@@ -183,10 +189,10 @@ SerializableOperator EventTimeWatermarkAssignerLogicalOperator::serialize() cons
 
     FunctionList funcList;
     *funcList.add_functions() = onField.serialize();
-    Configurations::DescriptorConfig::ConfigType funcVariant = std::move(funcList);
+    const Configurations::DescriptorConfig::ConfigType funcVariant = std::move(funcList);
     (*serializableOperator.mutable_config())[ConfigParameters::FUNCTION] = descriptorConfigTypeToProto(funcVariant);
 
-    Configurations::DescriptorConfig::ConfigType timeVariant = unit.getMillisecondsConversionMultiplier();
+    const Configurations::DescriptorConfig::ConfigType timeVariant = unit.getMillisecondsConversionMultiplier();
     (*serializableOperator.mutable_config())[ConfigParameters::TIME_MS] = descriptorConfigTypeToProto(timeVariant);
 
     serializableOperator.mutable_operator_()->CopyFrom(proto);

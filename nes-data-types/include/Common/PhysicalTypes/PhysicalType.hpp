@@ -27,7 +27,7 @@ namespace NES
 class PhysicalType
 {
 public:
-    explicit PhysicalType(std::shared_ptr<DataType> type) noexcept : type(type) { }
+    explicit PhysicalType(std::shared_ptr<DataType> type) noexcept : type(std::move(std::move(type))) { }
 
     virtual ~PhysicalType() = default;
 
@@ -36,7 +36,7 @@ public:
 
     virtual std::string convertRawToString(const void* rawData) const noexcept = 0;
 
-    virtual std::unique_ptr<PhysicalType> clone() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<PhysicalType> clone() const = 0;
 
     /// Converts the binary representation of this value to a string without filling
     /// up the difference between the length of the string and the end of the schema definition

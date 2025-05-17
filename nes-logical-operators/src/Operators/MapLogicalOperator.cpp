@@ -12,27 +12,33 @@
     limitations under the License.
 */
 
-#include <algorithm>
-#include <memory>
+#include <cstddef>
 #include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
+#include <variant>
+#include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/MapLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Traits/Trait.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <LogicalFunctionRegistry.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
-#include <SerializableSchema.pb.h>
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
 
-MapLogicalOperator::MapLogicalOperator(const FieldAssignmentLogicalFunction& mapFunction) : mapFunction(mapFunction)
+MapLogicalOperator::MapLogicalOperator(FieldAssignmentLogicalFunction mapFunction) : mapFunction(std::move(mapFunction))
 {
 }
 
@@ -48,7 +54,7 @@ const FieldAssignmentLogicalFunction& MapLogicalOperator::getMapFunction() const
 
 bool MapLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const MapLogicalOperator*>(&rhs))
+    if (const auto* other = dynamic_cast<const MapLogicalOperator*>(&rhs))
     {
         return this->mapFunction == other->mapFunction && getOutputSchema() == other->getOutputSchema()
             && getInputSchemas() == other->getInputSchemas() && getInputOriginIds() == other->getInputOriginIds()

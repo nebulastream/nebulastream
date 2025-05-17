@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
@@ -36,9 +37,9 @@ public:
      * @param other data type
      * @return std::shared_ptr<DataType> joined data type
      */
-    std::shared_ptr<DataType> join(const DataType& otherDataType) const override;
+    [[nodiscard]] std::shared_ptr<DataType> join(const DataType& otherDataType) const override;
 
-    std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
 };
 
 }

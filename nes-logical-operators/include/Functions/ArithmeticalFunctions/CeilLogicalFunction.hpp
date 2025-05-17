@@ -14,7 +14,13 @@
 
 #pragma once
 #include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -24,7 +30,7 @@ class CeilLogicalFunction final : public LogicalFunctionConcept
 public:
     static constexpr std::string_view NAME = "Ceil";
 
-    CeilLogicalFunction(LogicalFunction child);
+    explicit CeilLogicalFunction(const LogicalFunction& child);
     CeilLogicalFunction(const CeilLogicalFunction& other);
     ~CeilLogicalFunction() noexcept override = default;
 

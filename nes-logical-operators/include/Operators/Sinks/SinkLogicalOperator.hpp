@@ -15,9 +15,19 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -27,7 +37,7 @@ struct SinkLogicalOperator final : LogicalOperatorConcept
     /// During deserialization, we don't need to know/use the name of the sink anymore.
     SinkLogicalOperator() = default;
     /// During query parsing, we require the name of the sink and need to assign it an id.
-    SinkLogicalOperator(std::string sinkName);
+    explicit SinkLogicalOperator(std::string sinkName);
 
     std::string sinkName;
     std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;

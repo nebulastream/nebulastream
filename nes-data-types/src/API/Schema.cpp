@@ -17,7 +17,9 @@
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -79,7 +81,7 @@ Schema& Schema::addField(const std::string& name, const BasicType& type)
 
 Schema& Schema::addField(const std::string& name, std::shared_ptr<DataType> type)
 {
-    return addField(AttributeField(name, type));
+    return addField(AttributeField(name, std::move(type)));
 }
 
 bool Schema::removeField(const AttributeField& field)
@@ -87,7 +89,7 @@ bool Schema::removeField(const AttributeField& field)
     return std::erase_if(fields, [&](const AttributeField& fieldInSchema) { return fieldInSchema.getName() == field.getName(); }) > 0;
 }
 
-void Schema::replaceField(const std::string& name, std::shared_ptr<DataType> type)
+void Schema::replaceField(const std::string& name, const std::shared_ptr<DataType>& type)
 {
     for (auto& field : fields)
     {
@@ -118,7 +120,7 @@ std::optional<AttributeField> Schema::getFieldByName(const std::string& fieldNam
     /// Iterates over all fields and checks if the field name matches the input field name without any qualifier.
     /// This means that if either the fieldName or the field name in the schema contains a qualifier, everything before the qualifier is ignored.
     std::vector<AttributeField> potentialMatches;
-    for (auto& field : fields)
+    for (const auto& field : fields)
     {
         /// Removing potential qualifiers from the field name and the input field name
         const auto fieldWithoutQualifier = field.getName().substr(field.getName().find(ATTRIBUTE_NAME_SEPARATOR) + 1);
