@@ -16,11 +16,11 @@
 
 #include <cstdint>
 #include <memory>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Streaming/WindowBuildPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
-#include <PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -33,16 +33,15 @@ public:
         OperatorHandlerId operatorHandlerIndex,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferMemoryProvider> memoryProvider);
+        std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
 
     StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other)
-        : WindowBuildPhysicalOperator(other), joinBuildSide(other.joinBuildSide), memoryProvider(other.memoryProvider)
-    {
-    }
+
+        = default;
 
 protected:
     const JoinBuildSideType joinBuildSide;
-    const std::shared_ptr<TupleBufferMemoryProvider> memoryProvider;
+    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 
 }

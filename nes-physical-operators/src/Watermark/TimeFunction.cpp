@@ -14,11 +14,16 @@
 
 #include <cstdint>
 #include <utility>
+#include <API/TimeUnit.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ExecutionContext.hpp>
+#include <val.hpp>
 
 namespace NES
 {
@@ -28,8 +33,8 @@ void EventTimeFunction::open(ExecutionContext&, RecordBuffer&) const
     /// nop
 }
 
-EventTimeFunction::EventTimeFunction(Functions::PhysicalFunction timestampFunction, Windowing::TimeUnit unit)
-    : unit(unit), timestampFunction(timestampFunction)
+EventTimeFunction::EventTimeFunction(PhysicalFunction timestampFunction, const Windowing::TimeUnit& unit)
+    : unit(unit), timestampFunction(std::move(std::move(timestampFunction)))
 {
 }
 

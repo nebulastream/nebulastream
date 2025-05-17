@@ -13,7 +13,8 @@
 */
 #pragma once
 
-#include <memory>
+#include <optional>
+#include <utility>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <PhysicalOperator.hpp>
@@ -25,14 +26,14 @@ namespace NES
 class SelectionPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit SelectionPhysicalOperator(Functions::PhysicalFunction function) : function(function) { };
+    explicit SelectionPhysicalOperator(PhysicalFunction function) : function(std::move(std::move(function))) { };
     void execute(ExecutionContext& ctx, Record& record) const override;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
 private:
-    const Functions::PhysicalFunction function;
+    const PhysicalFunction function;
     std::optional<PhysicalOperator> child;
 };
 }

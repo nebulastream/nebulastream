@@ -13,6 +13,7 @@
 */
 
 #include <cstdint>
+#include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -20,6 +21,7 @@
 #include <Streaming/WindowBasedOperatorHandler.hpp>
 #include <Streaming/WindowProbePhysicalOperator.hpp>
 #include <Time/Timestamp.hpp>
+#include <Windowing/WindowMetaData.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
@@ -64,7 +66,7 @@ void setupProxy(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* p
 
 
 WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId operatorHandlerIndex, WindowMetaData windowMetaData)
-    : operatorHandlerIndex(operatorHandlerIndex), windowMetaData(windowMetaData)
+    : operatorHandlerIndex(operatorHandlerIndex), windowMetaData(std::move(std::move(windowMetaData)))
 {
 }
 

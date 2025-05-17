@@ -11,13 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/AddPhysicalFunction.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
+#include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 VarVal AddPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -28,15 +30,15 @@ VarVal AddPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 }
 
 AddPhysicalFunction::AddPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
 {
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterAddPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterAddPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Add function must have exactly two sub-functions");
-    return AddPhysicalFunction(PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Add function must have exactly two sub-functions");
+    return AddPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

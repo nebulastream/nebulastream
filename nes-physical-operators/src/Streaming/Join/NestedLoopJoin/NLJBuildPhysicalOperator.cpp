@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -25,7 +26,7 @@
 #include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Streaming/Join/StreamJoinBuildPhysicalOperator.hpp>
-#include <Streaming/WindowBuildPhysicalOperator.hpp>
+#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <nautilus/val_enum.hpp>
@@ -51,8 +52,8 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     OperatorHandlerId operatorHandlerIndex,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferMemoryProvider> memoryProvider)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), memoryProvider)
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+    : StreamJoinBuildPhysicalOperator(operatorHandlerIndex, joinBuildSide, std::move(timeFunction), std::move(memoryProvider))
 {
 }
 

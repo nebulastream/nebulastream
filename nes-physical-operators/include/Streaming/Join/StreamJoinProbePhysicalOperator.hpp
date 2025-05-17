@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Streaming/Join/StreamJoinUtil.hpp>
@@ -34,10 +35,7 @@ class StreamJoinProbePhysicalOperator : public WindowProbePhysicalOperator
 {
 public:
     StreamJoinProbePhysicalOperator(
-        OperatorHandlerId operatorHandlerIndex,
-        Functions::PhysicalFunction joinFunction,
-        WindowMetaData windowMetaData,
-        JoinSchema joinSchema);
+        OperatorHandlerId operatorHandlerIndex, PhysicalFunction joinFunction, WindowMetaData windowMetaData, JoinSchema joinSchema);
 
 protected:
     /// Creates a joined record out of the left and right record, but it only uses the provided projection
@@ -56,7 +54,7 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
-    Functions::PhysicalFunction joinFunction;
+    PhysicalFunction joinFunction;
     JoinSchema joinSchema;
 };
 }

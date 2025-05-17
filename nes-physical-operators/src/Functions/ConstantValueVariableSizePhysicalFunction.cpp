@@ -22,7 +22,7 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
-namespace NES::Functions
+namespace NES
 {
 ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size)
     : data(size + sizeof(uint32_t))

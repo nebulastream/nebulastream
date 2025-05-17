@@ -19,7 +19,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 /// Negates the result of the childFunction
@@ -30,6 +30,6 @@ public:
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
-    const PhysicalFunction childFunction;
+    PhysicalFunction childFunction;
 };
 }

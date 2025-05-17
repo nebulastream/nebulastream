@@ -14,12 +14,9 @@
 #pragma once
 
 #include <memory>
-#include <string>
-#include <utility>
-#include <Functions/PhysicalFunction.hpp>
+#include <optional>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
@@ -28,10 +25,10 @@ class SinkPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     explicit SinkPhysicalOperator(std::shared_ptr<Sinks::SinkDescriptor> descriptor);
-    std::optional<PhysicalOperator> getChild() const override;
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator) override;
 
-    std::shared_ptr<Sinks::SinkDescriptor> getDescriptor() const;
+    [[nodiscard]] std::shared_ptr<Sinks::SinkDescriptor> getDescriptor() const;
 
     bool operator==(const SinkPhysicalOperator& other) const;
 

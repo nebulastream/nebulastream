@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
+#include <utility>
 #include <Functions/LogicalFunctions/NegatePhysicalFunction.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -20,7 +20,7 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 VarVal NegatePhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -29,15 +29,15 @@ VarVal NegatePhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     return !value;
 }
 
-NegatePhysicalFunction::NegatePhysicalFunction(PhysicalFunction childFunction) : childFunction(childFunction)
+NegatePhysicalFunction::NegatePhysicalFunction(PhysicalFunction childFunction) : childFunction(std::move(std::move(childFunction)))
 {
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterNegatePhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterNegatePhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one sub-function");
-    return NegatePhysicalFunction(PhysicalFunctionRegistryArguments.childFunctions[0]);
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one sub-function");
+    return NegatePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
 }
 
 }

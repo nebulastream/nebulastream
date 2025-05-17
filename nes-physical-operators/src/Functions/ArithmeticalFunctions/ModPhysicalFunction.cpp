@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
 #include <utility>
 #include <vector>
 #include <Functions/ArithmeticalFunctions/ModPhysicalFunction.hpp>
@@ -22,7 +21,7 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 
-namespace NES::Functions
+namespace NES
 {
 
 VarVal ModPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
@@ -33,15 +32,15 @@ VarVal ModPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 }
 
 ModPhysicalFunction::ModPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(leftPhysicalFunction), rightPhysicalFunction(rightPhysicalFunction)
+    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
 {
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterModPhysicalFunction(PhysicalFunctionRegistryArguments PhysicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterModPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(PhysicalFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
-    return ModPhysicalFunction(PhysicalFunctionRegistryArguments.childFunctions[0], PhysicalFunctionRegistryArguments.childFunctions[1]);
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two sub-functions");
+    return ModPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 
 }

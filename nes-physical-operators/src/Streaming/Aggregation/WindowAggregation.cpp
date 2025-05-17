@@ -12,7 +12,15 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <memory>
+#include <utility>
+#include <vector>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Streaming/Aggregation/WindowAggregation.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

@@ -15,8 +15,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -28,6 +31,7 @@
 #include <EmitPhysicalOperator.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
+#include <PhysicalOperator.hpp>
 #include <function.hpp>
 
 namespace NES
@@ -103,7 +107,7 @@ void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 
 void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    const auto emitState = static_cast<EmitState*>(ctx.getLocalState(id));
+    auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
     /// emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= getMaxRecordsPerBuffer())
     {
@@ -150,7 +154,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
 }
 
 EmitPhysicalOperator::EmitPhysicalOperator(
-    OperatorHandlerId operatorHandlerIndex, std::shared_ptr<TupleBufferMemoryProvider> memoryProvider)
+    OperatorHandlerId operatorHandlerIndex, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : memoryProvider(std::move(memoryProvider)), operatorHandlerIndex(operatorHandlerIndex)
 {
 }
