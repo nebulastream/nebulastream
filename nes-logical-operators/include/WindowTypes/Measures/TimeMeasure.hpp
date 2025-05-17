@@ -14,6 +14,7 @@
 
 #pragma once
 #include <cstdint>
+#include <string>
 namespace NES::Windowing
 {
 /// A time based window measure.
@@ -24,7 +25,7 @@ public:
 
     [[nodiscard]] uint64_t getTime() const;
 
-    std::string toString() const;
+    [[nodiscard]] std::string toString() const;
 
     bool operator<(const TimeMeasure& other) const;
     bool operator<=(const TimeMeasure& other) const;

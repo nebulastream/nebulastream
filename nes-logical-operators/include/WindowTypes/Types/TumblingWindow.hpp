@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <memory>
+#include <string>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -36,7 +36,7 @@ public:
     TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size);
     TimeMeasure getSize() override;
     TimeMeasure getSlide() override;
-    std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
     bool operator==(const WindowType& otherWindowType) const override;
 
 private:

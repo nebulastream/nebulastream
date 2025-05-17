@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
-#include <memory>
+#include <string>
 #include <utility>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <fmt/format.h>
@@ -45,7 +46,7 @@ std::string TumblingWindow::toString() const
 
 bool TumblingWindow::operator==(const WindowType& otherWindowType) const
 {
-    if (auto other = dynamic_cast<const TumblingWindow*>(&otherWindowType))
+    if (const auto* other = dynamic_cast<const TumblingWindow*>(&otherWindowType))
     {
         return (this->size == other->size) && (this->timeCharacteristic == (other->timeCharacteristic));
     }

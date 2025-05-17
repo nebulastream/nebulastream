@@ -13,18 +13,24 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-ConcatLogicalFunction::ConcatLogicalFunction(LogicalFunction left, LogicalFunction right)
+ConcatLogicalFunction::ConcatLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
     : dataType(left.getDataType()->join(*right.getDataType())), left(left), right(right)
 {
 }
@@ -36,7 +42,7 @@ ConcatLogicalFunction::ConcatLogicalFunction(const ConcatLogicalFunction& other)
 
 bool ConcatLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const ConcatLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const ConcatLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;
@@ -82,7 +88,7 @@ LogicalFunction ConcatLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
-    copy.dataType = children[0].getDataType()->join(*children[1].getDataType().get());
+    copy.dataType = children[0].getDataType()->join(*children[1].getDataType());
     return copy;
 };
 

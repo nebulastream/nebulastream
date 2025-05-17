@@ -13,17 +13,16 @@
 */
 
 #include <memory>
-#include <utility>
+#include <string>
+#include <string_view>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Numeric.hpp>
 
@@ -52,10 +51,10 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(
 std::shared_ptr<WindowAggregationLogicalFunction>
 AvgAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
-    return std::make_shared<AvgAggregationLogicalFunction>(std::move(onField), std::move(asField));
+    return std::make_shared<AvgAggregationLogicalFunction>(onField, asField);
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> AvgAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
 {
     return std::make_shared<AvgAggregationLogicalFunction>(onField);
 }

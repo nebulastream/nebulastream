@@ -13,19 +13,25 @@
 */
 
 #include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-PowLogicalFunction::PowLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(left.getDataType()->join(*right.getDataType().get())), left(left), right(right) { };
+PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
+    : dataType(left.getDataType()->join(*right.getDataType())), left(left), right(right) { };
 
 PowLogicalFunction::PowLogicalFunction(const PowLogicalFunction& other) : dataType(other.dataType), left(other.left), right(other.right)
 {
@@ -33,7 +39,7 @@ PowLogicalFunction::PowLogicalFunction(const PowLogicalFunction& other) : dataTy
 
 bool PowLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const PowLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const PowLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;

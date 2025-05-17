@@ -13,13 +13,20 @@
 */
 
 #include <memory>
-#include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
@@ -31,13 +38,15 @@ GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const GreaterEqualsLo
 }
 
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(left), right(right), dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
+    : left(std::move(std::move(left)))
+    , right(std::move(std::move(right)))
+    , dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
 {
 }
 
 bool GreaterEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const GreaterEqualsLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const GreaterEqualsLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;

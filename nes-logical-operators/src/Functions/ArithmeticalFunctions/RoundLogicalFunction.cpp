@@ -13,20 +13,24 @@
 */
 
 #include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/RoundLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 
 namespace NES
 {
 
-RoundLogicalFunction::RoundLogicalFunction(LogicalFunction child) : dataType(child.getDataType()), child(child) { };
+RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
 RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : dataType(other.dataType), child(other.child)
 {
@@ -34,7 +38,7 @@ RoundLogicalFunction::RoundLogicalFunction(const RoundLogicalFunction& other) : 
 
 bool RoundLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const RoundLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const RoundLogicalFunction*>(&rhs))
     {
         return child == other->getChildren()[0];
     }

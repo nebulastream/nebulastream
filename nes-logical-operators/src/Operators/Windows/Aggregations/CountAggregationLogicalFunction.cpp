@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <API/Schema.hpp>
@@ -20,16 +21,14 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
-#include <Util/Common.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 
 namespace NES
 {
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field)
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(inputAggregateStampType),
           DataTypeProvider::provideDataType(partialAggregateStampType),
@@ -42,18 +41,18 @@ CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogi
           DataTypeProvider::provideDataType(inputAggregateStampType),
           DataTypeProvider::provideDataType(partialAggregateStampType),
           DataTypeProvider::provideDataType(finalAggregateStampType),
-          field,
-          asField)
+          std::move(field),
+          std::move(asField))
 {
 }
 
 std::shared_ptr<WindowAggregationLogicalFunction>
-CountAggregationLogicalFunction::create(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField)
+CountAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField)
 {
     return std::make_shared<CountAggregationLogicalFunction>(onField, asField);
 }
 
-std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(FieldAccessLogicalFunction onField)
+std::shared_ptr<WindowAggregationLogicalFunction> CountAggregationLogicalFunction::create(const FieldAccessLogicalFunction& onField)
 {
     return std::make_shared<CountAggregationLogicalFunction>(onField);
 }

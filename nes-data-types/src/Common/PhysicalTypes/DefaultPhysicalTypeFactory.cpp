@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <memory>
-#include <utility>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -37,30 +36,30 @@ std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::s
     {
         return BasicPhysicalType::create(dataType, BasicPhysicalType::NativeType::BOOLEAN);
     }
-    else if (const auto integerPtr = std::dynamic_pointer_cast<Integer>(dataType))
+    if (const auto integerPtr = std::dynamic_pointer_cast<Integer>(dataType))
     {
         return getPhysicalType(DataType::as<Integer>(dataType));
     }
-    else if (const auto floatPtr = std::dynamic_pointer_cast<Float>(dataType))
+    if (const auto floatPtr = std::dynamic_pointer_cast<Float>(dataType))
     {
         return getPhysicalType(DataType::as<Float>(dataType));
     }
-    else if (const auto charPtr = std::dynamic_pointer_cast<Char>(dataType))
+    if (const auto charPtr = std::dynamic_pointer_cast<Char>(dataType))
     {
         return BasicPhysicalType::create(dataType, BasicPhysicalType::NativeType::CHAR);
     }
-    else if (const auto varSizedPtr = std::dynamic_pointer_cast<VariableSizedDataType>(dataType))
+    if (const auto varSizedPtr = std::dynamic_pointer_cast<VariableSizedDataType>(dataType))
     {
         return VariableSizedDataPhysicalType::create(dataType);
     }
     else
     {
-        throw UnknownPhysicalType("It was not possible to infer a physical type for: " + dataType.get()->toString());
+        throw UnknownPhysicalType("It was not possible to infer a physical type for: " + dataType->toString());
     }
 }
 
 
-std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::shared_ptr<Integer> integer)
+std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(const std::shared_ptr<Integer>& integer)
 {
     using enum NES::BasicPhysicalType::NativeType;
     if (!integer->getIsSigned())
@@ -111,7 +110,7 @@ std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::s
     }
 }
 
-std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(std::shared_ptr<Float> floatType)
+std::unique_ptr<PhysicalType> DefaultPhysicalTypeFactory::getPhysicalType(const std::shared_ptr<Float>& floatType)
 {
     if (floatType->getBits() <= 32)
     {

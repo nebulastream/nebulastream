@@ -14,10 +14,22 @@
 
 #pragma once
 
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+#include <API/Schema.hpp>
 #include <API/TimeUnit.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <SerializableOperator.pb.h>
+#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -25,7 +37,7 @@ namespace NES
 class EventTimeWatermarkAssignerLogicalOperator : public LogicalOperatorConcept
 {
 public:
-    EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, Windowing::TimeUnit unit);
+    EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
 
     LogicalFunction onField;
     Windowing::TimeUnit unit;

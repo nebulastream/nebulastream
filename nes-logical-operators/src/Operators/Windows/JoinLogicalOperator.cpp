@@ -13,28 +13,40 @@
 */
 
 #include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <variant>
+#include <vector>
 #include <API/Schema.hpp>
-#include <Functions/FieldAssignmentLogicalFunction.hpp>
+#include <Configurations/Descriptor.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
 
 JoinLogicalOperator::JoinLogicalOperator(LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType)
-    : joinFunction(joinFunction), windowType(std::move(windowType)), joinType(joinType)
+    : joinFunction(std::move(joinFunction)), windowType(std::move(windowType)), joinType(joinType)
 {
 }
 
@@ -45,7 +57,7 @@ std::string_view JoinLogicalOperator::getName() const noexcept
 
 bool JoinLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (const auto rhsOperator = dynamic_cast<const JoinLogicalOperator*>(&rhs))
+    if (const auto* const rhsOperator = dynamic_cast<const JoinLogicalOperator*>(&rhs))
     {
         return *getWindowType() == *rhsOperator->getWindowType() and getJoinFunction() == rhsOperator->getJoinFunction()
             and getOutputSchema() == rhsOperator->outputSchema and getRightSchema() == rhsOperator->getRightSchema()
@@ -90,11 +102,11 @@ LogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inpu
     copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, BasicType::UINT64);
     copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, BasicType::UINT64);
 
-    for (auto field : leftInputSchema)
+    for (const auto& field : leftInputSchema)
     {
         copy.outputSchema.addField(field.getName(), field.getDataType());
     }
-    for (auto field : rightInputSchema)
+    for (const auto& field : rightInputSchema)
     {
         copy.outputSchema.addField(field.getName(), field.getDataType());
     }
@@ -262,7 +274,7 @@ SerializableOperator JoinLogicalOperator::serialize() const
     FunctionList list;
     auto* serializedFunction = list.add_functions();
     serializedFunction->CopyFrom(getJoinFunction().serialize());
-    NES::Configurations::DescriptorConfig::ConfigType functionList = list;
+    const NES::Configurations::DescriptorConfig::ConfigType functionList = list;
 
     (*serializableOperator.mutable_config())[ConfigParameters::JOIN_FUNCTION] = Configurations::descriptorConfigTypeToProto(functionList);
     (*serializableOperator.mutable_config())[ConfigParameters::JOIN_TYPE]
@@ -303,7 +315,7 @@ LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(NES::LogicalOpera
         if (std::holds_alternative<WindowInfos>(windowInfoVariant))
         {
             auto windowInfoProto = std::get<WindowInfos>(windowInfoVariant);
-            auto timeCharProto = windowInfoProto.time_characteristic();
+            const auto& timeCharProto = windowInfoProto.time_characteristic();
             if (windowInfoProto.has_tumbling_window())
             {
                 auto timeChar = Windowing::TimeCharacteristic::createEventTime(

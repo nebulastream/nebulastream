@@ -12,17 +12,22 @@
     limitations under the License.
 */
 
-#include <sstream>
+#include <memory>
+#include <string>
+#include <string_view>
 #include <utility>
+#include <vector>
 #include <API/Schema.hpp>
-#include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <LogicalOperatorRegistry.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -44,7 +49,7 @@ LogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(std::vector<
 
 bool SourceDescriptorLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (const auto rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs))
+    if (const auto* const rhsOperator = dynamic_cast<const SourceDescriptorLogicalOperator*>(&rhs))
     {
         const bool descriptorsEqual = (sourceDescriptor == nullptr && rhsOperator->sourceDescriptor == nullptr)
             || (sourceDescriptor != nullptr && rhsOperator->sourceDescriptor != nullptr

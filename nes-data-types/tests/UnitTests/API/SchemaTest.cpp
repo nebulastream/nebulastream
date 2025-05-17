@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdlib>
 #include <memory>
 #include <random>
 #include <vector>
@@ -220,8 +221,8 @@ TEST_F(SchemaTest, replaceFieldTest)
 
             /// Replacing field
             auto newDataType = getRandomFields(1_u64)[0].getDataType();
-            auto clone = newDataType;
-            ASSERT_NO_THROW(testSchema.replaceField("field", std::move(newDataType)));
+            const auto& clone = newDataType;
+            ASSERT_NO_THROW(testSchema.replaceField("field", newDataType));
             ASSERT_EQ(*testSchema.getFieldByIndex(0).getDataType(), *clone);
         }
     }
@@ -250,7 +251,7 @@ TEST_F(SchemaTest, replaceFieldTest)
 
         /// Replacing multiple fields with new data types
         auto replacingFields = getRandomFields(NUM_FIELDS);
-        for (auto replaceField : replacingFields)
+        for (const auto& replaceField : replacingFields)
         {
             testSchema.replaceField(replaceField.getName(), replaceField.getDataType());
         }
@@ -364,7 +365,7 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
 TEST_F(SchemaTest, copyTest)
 {
     auto testSchema = Schema().addField("field1", BasicType::UINT8).addField("field2", BasicType::UINT16);
-    auto testSchemaCopy = testSchema;
+    const auto& testSchemaCopy = testSchema;
 
     ASSERT_EQ(testSchema.getSchemaSizeInBytes(), testSchemaCopy.getSchemaSizeInBytes());
     ASSERT_EQ(testSchema.getLayoutType(), testSchemaCopy.getLayoutType());

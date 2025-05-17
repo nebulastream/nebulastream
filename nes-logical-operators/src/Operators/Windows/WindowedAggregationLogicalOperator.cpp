@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
-#include <sstream>
+#include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -27,14 +31,18 @@
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Serialization/FunctionSerializationUtil.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Traits/Trait.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 #include <SerializableOperator.pb.h>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
@@ -72,7 +80,7 @@ std::string WindowedAggregationLogicalOperator::explain(ExplainVerbosity verbosi
 
 bool WindowedAggregationLogicalOperator::operator==(const LogicalOperatorConcept& rhs) const
 {
-    if (const auto rhsOperator = dynamic_cast<const WindowedAggregationLogicalOperator*>(&rhs))
+    if (const auto* const rhsOperator = dynamic_cast<const WindowedAggregationLogicalOperator*>(&rhs))
     {
         if (this->isKeyed() != rhsOperator->isKeyed())
         {
@@ -247,7 +255,7 @@ std::shared_ptr<Windowing::WindowType> WindowedAggregationLogicalOperator::getWi
 
 void WindowedAggregationLogicalOperator::setWindowType(std::shared_ptr<Windowing::WindowType> wt)
 {
-    windowType = wt;
+    windowType = std::move(wt);
 }
 
 std::vector<FieldAccessLogicalFunction> WindowedAggregationLogicalOperator::getGroupingKeys() const

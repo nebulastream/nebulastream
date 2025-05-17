@@ -12,17 +12,25 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <API/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/CeilLogicalFunction.hpp>
+#include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/Common.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
-CeilLogicalFunction::CeilLogicalFunction(LogicalFunction child) : dataType(child.getDataType()), child(child) { };
+CeilLogicalFunction::CeilLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
 CeilLogicalFunction::CeilLogicalFunction(const CeilLogicalFunction& other) : dataType(other.dataType), child(other.child)
 {
@@ -71,7 +79,7 @@ std::string_view CeilLogicalFunction::getType() const
 
 bool CeilLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const CeilLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const CeilLogicalFunction*>(&rhs))
     {
         return child == other->child;
     }

@@ -13,13 +13,18 @@
 */
 
 #include <memory>
-#include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 #include <API/Schema.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 #include <Common/DataTypes/DataType.hpp>
@@ -27,7 +32,7 @@
 namespace NES
 {
 ConstantValueLogicalFunction::ConstantValueLogicalFunction(std::shared_ptr<DataType> dataType, std::string value)
-    : constantValue(std::move(value)), dataType(dataType)
+    : constantValue(std::move(value)), dataType(std::move(std::move(dataType)))
 {
 }
 
@@ -65,7 +70,7 @@ std::string_view ConstantValueLogicalFunction::getType() const
 
 bool ConstantValueLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (auto other = dynamic_cast<const ConstantValueLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const ConstantValueLogicalFunction*>(&rhs))
     {
         return constantValue == other->constantValue;
     }
@@ -100,8 +105,8 @@ SerializableFunction ConstantValueLogicalFunction::serialize() const
 
     DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
 
-    NES::Configurations::DescriptorConfig::ConfigType configVariant = getConstantValue();
-    SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
+    const NES::Configurations::DescriptorConfig::ConfigType configVariant = getConstantValue();
+    const SerializableVariantDescriptor variantDescriptor = Configurations::descriptorConfigTypeToProto(configVariant);
     (*serializedFunction.mutable_config())["constantValueAsString"] = variantDescriptor;
 
     return serializedFunction;

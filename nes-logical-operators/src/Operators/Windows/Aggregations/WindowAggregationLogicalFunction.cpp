@@ -13,12 +13,12 @@
 */
 
 #include <memory>
-#include <sstream>
 #include <string>
+#include <utility>
 #include <Functions/FieldAccessLogicalFunction.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <fmt/format.h>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -27,12 +27,9 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     std::shared_ptr<DataType> inputStamp,
     std::shared_ptr<DataType> partialAggregateStamp,
     std::shared_ptr<DataType> finalAggregateStamp,
-    FieldAccessLogicalFunction onField)
-    : inputStamp(std::move(inputStamp))
-    , partialAggregateStamp(std::move(partialAggregateStamp))
-    , finalAggregateStamp(std::move(finalAggregateStamp))
-    , onField(onField)
-    , asField(onField)
+    const FieldAccessLogicalFunction& onField)
+    : WindowAggregationLogicalFunction(
+          std::move(inputStamp), std::move(partialAggregateStamp), std::move(finalAggregateStamp), onField, onField)
 {
 }
 
@@ -45,8 +42,8 @@ WindowAggregationLogicalFunction::WindowAggregationLogicalFunction(
     : inputStamp(std::move(inputStamp))
     , partialAggregateStamp(std::move(partialAggregateStamp))
     , finalAggregateStamp(std::move(finalAggregateStamp))
-    , onField(onField)
-    , asField(asField)
+    , onField(std::move(std::move(onField)))
+    , asField(std::move(std::move(asField)))
 {
 }
 
@@ -71,7 +68,7 @@ std::shared_ptr<DataType> WindowAggregationLogicalFunction::getFinalAggregateSta
 }
 
 bool WindowAggregationLogicalFunction::operator==(
-    std::shared_ptr<WindowAggregationLogicalFunction> otherWindowAggregationLogicalFunction) const
+    const std::shared_ptr<WindowAggregationLogicalFunction>& otherWindowAggregationLogicalFunction) const
 {
     return this->getName() == otherWindowAggregationLogicalFunction->getName()
         && this->onField == otherWindowAggregationLogicalFunction->onField

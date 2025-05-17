@@ -16,7 +16,6 @@
 #include <Util/Common.hpp>
 #include <DataTypeRegistry.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Undefined.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES
@@ -30,7 +29,7 @@ bool VariableSizedDataType::operator==(const NES::DataType& other) const
 /// A VariableSizedData type cannot be joined with a different type.
 std::shared_ptr<DataType> VariableSizedDataType::join(const DataType& otherDataType) const
 {
-    if (not dynamic_cast<const VariableSizedDataType*>(&otherDataType))
+    if (dynamic_cast<const VariableSizedDataType*>(&otherDataType) == nullptr)
     {
         throw DifferentFieldTypeExpected("Cannot join a VARSIZED datatype with a non-VARSIZED datatype.");
     }
