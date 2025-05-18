@@ -13,10 +13,7 @@
 add_source_files(nes-common
         Common.cpp
         DumpHelper.cpp
-        FileMutex.cpp
-        DumpHelper.cpp
         Strings.cpp
-        StacktraceLoader.cpp
         ThreadNaming.cpp
 )
 add_subdirectory(Logger)
