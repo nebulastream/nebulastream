@@ -92,7 +92,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
 
     /// single node worker config
     program.add_argument("--")
-        .help("arguments passed to the worker config, e.g., `-- --workerConfiguration.numberOfWorkerThreads=10`")
+        .help("arguments passed to the worker config, e.g., `-- --worker.queryEngine.numberOfWorkerThreads=10`")
         .default_value(std::vector<std::string>{})
         .remaining();
 
