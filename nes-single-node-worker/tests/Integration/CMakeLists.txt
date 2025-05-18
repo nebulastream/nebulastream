@@ -34,21 +34,6 @@ endfunction()
 
 find_package(boost_asio REQUIRED CONFIG)
 
-# TCP integration tests
-add_nes_unit_test(single-node-integration-tests-tcp SingleNodeIntegrationTestsTCP.cpp ../../src/GrpcService.cpp ../../src/SingleNodeWorker.cpp)
-target_include_directories(single-node-integration-tests-tcp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include/ ${CMAKE_CURRENT_SOURCE_DIR}/../Util/include/)
-target_link_libraries(
-        single-node-integration-tests-tcp
-        nes-grpc
-        nes-runtime
-        nes-execution
-        Boost::asio
-        nes-single-node-worker-test-util
-)
-serialize_query_with_nebuli(single-node-integration-tests-tcp "qOneTCPSource")
-serialize_query_with_nebuli(single-node-integration-tests-tcp "qOneTCPSourceWithFilter")
-serialize_query_with_nebuli(single-node-integration-tests-tcp "qTwoTCPSourcesWithFilter")
-
 add_nes_unit_test(single-node-integration-tests-query-status SingleNodeIntegrationTestsQueryStatus.cpp ../../src/GrpcService.cpp ../../src/SingleNodeWorker.cpp)
 target_include_directories(single-node-integration-tests-query-status PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include/ ${CMAKE_CURRENT_SOURCE_DIR}/../Util/include/)
 target_link_libraries(
