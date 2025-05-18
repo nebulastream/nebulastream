@@ -24,6 +24,15 @@
 
 namespace NES
 {
+/// Represents a query plan composed of interconnected pipelines.
+///
+/// This class serves as a container for a collection of @link Pipeline objects that
+/// together define the data flow and processing stages of a query. It holds metadata
+/// such as the query ID and execution mode. It provides functionalities to manage
+/// these pipelines, such as adding, removing, and retrieving them, particularly
+/// identifying source pipelines which act as entry points for data.
+/// This representation is used during the query compilation process (@link QueryCompiler) to transform
+/// a @link PhysicalPlan into @link CompiledQueryPlan.
 struct PipelinedQueryPlan final
 {
     explicit PipelinedQueryPlan(QueryId id, Nautilus::Configurations::ExecutionMode executionMode);

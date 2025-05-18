@@ -38,7 +38,7 @@ EXCEPTION(DifferentFieldTypeExpected, 2006, "different field type expected")
 EXCEPTION(CannotInferStamp, 2007, "cannot infer stamp")
 EXCEPTION(UnsupportedQuery, 2008, "specified query is (currently) not supported")
 
-/// 21XX Errors during query compilation
+/// 21XX Errors during query optimization & compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
 EXCEPTION(UnknownWindowType, 2101, "unknown window type")
 EXCEPTION(UnknownPhysicalType, 2102, "unknown physical type")
@@ -61,6 +61,7 @@ EXCEPTION(UnknownInvocationType, 2118, "unknown invocation type")
 EXCEPTION(UnknownCompilationBackendType, 2119, "unknown compilation backend type")
 EXCEPTION(UnsupportedOperation, 2120, "tried to execute an unsupported operation")
 EXCEPTION(UnknownParserType, 2121, "unknown parser type")
+EXCEPTION(UnknownOptimizerRule, 2122, "unknown optimizer rule")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")

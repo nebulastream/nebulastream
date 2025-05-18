@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -34,16 +35,19 @@ public:
     explicit PhysicalPlanBuilder(QueryId id);
     void addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> sink);
     void setExecutionMode(Nautilus::Configurations::ExecutionMode mode);
+    void setOperatorBufferSize(uint64_t bufferSize);
 
+    /// R-value as finalize should be called once at the end, with a move() to 'build' the plan.
     [[nodiscard]] PhysicalPlan finalize() &&;
 
 private:
     QueryId queryId;
     Roots sinks;
     Nautilus::Configurations::ExecutionMode executionMode;
+    uint64_t operatorBufferSize{};
 
-    /// Used internally to flip the plan fromstatic  sink->source tp source->sink
-    Roots flip(Roots roots);
+    /// Used internally to flip the plan from sink->source tstatic o source->sink
+    static Roots flip(const Roots& roots);
 };
 
 }

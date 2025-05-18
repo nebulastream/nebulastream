@@ -131,7 +131,7 @@ std::string DynamicTuple::toString(const Schema& schema) const
         const auto* const fieldEnding = (i < schema.getFieldCount() - 1) ? "|" : "";
         const auto dataType = schema.getFieldByIndex(i).getDataType();
         DynamicField currentField = this->operator[](i);
-        if (nullptr != dynamic_cast<const VariableSizedDataType*>(dataType.get()))
+        if (dynamic_cast<const VariableSizedDataType*>(dataType.get()) != nullptr)
         {
             const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
             const auto string = readVarSizedData(buffer, index);
