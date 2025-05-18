@@ -12,7 +12,6 @@
 
 add_subdirectory(Runtime)
 add_subdirectory(Pipelines)
-add_subdirectory(Util)
 add_subdirectory(Listeners)
 
 add_source_files(nes-runtime
