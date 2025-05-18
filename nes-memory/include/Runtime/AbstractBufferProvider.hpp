@@ -101,15 +101,4 @@ public:
       */
     virtual std::optional<std::shared_ptr<AbstractBufferProvider>> createFixedSizeBufferPool(size_t numberOfReservedBuffers) = 0;
 };
-
-/// free functions for buffer provider
-
-/**
- * @brief This function allocates a TupleBuffer of a desired size via a provider
- * @param provider the buffer allocator
- * @param size the desired size
- * @return a tuplebuffer of size size allocated via the given provider
- */
-TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size);
-
 }

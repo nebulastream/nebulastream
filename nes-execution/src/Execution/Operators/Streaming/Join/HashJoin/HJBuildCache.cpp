@@ -18,11 +18,11 @@
 #include <Execution/Operators/SliceCache/SliceCacheSecondChance.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJBuildCache.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <nautilus/val_enum.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/val_enum.hpp>
 #include <Engine.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -269,8 +269,7 @@ void HJBuildCache::execute(ExecutionContext& executionCtx, Record& record) const
     /// Inserting the tuple into the corresponding hash entry
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
     auto entryMemArea = entryRef.getValueMemArea();
-    const Nautilus::Interface::PagedVectorRef pagedVectorRef(
-        entryMemArea, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, memoryProvider);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

@@ -83,8 +83,7 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
 
 
     /// Write record to the pagedVector
-    const Interface::PagedVectorRef pagedVectorRef(
-        nljPagedVectorMemRef, memoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+    const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, memoryProvider);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

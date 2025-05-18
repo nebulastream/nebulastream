@@ -39,18 +39,12 @@ struct EmittedHJWindowTrigger
 class HJOperatorHandler final : public StreamJoinOperatorHandler
 {
 public:
-HJOperatorHandler(
-        const std::vector<OriginId>& inputOrigins,
-        OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& leftMemoryProvider,
-        const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
-        : StreamJoinOperatorHandler(
-              inputOrigins, std::move(outputOriginId), std::move(sliceAndWindowStore), leftMemoryProvider, rightMemoryProvider)
+    HJOperatorHandler(
+        const std::vector<OriginId>& inputOrigins, OriginId outputOriginId, std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+        : StreamJoinOperatorHandler(inputOrigins, std::move(outputOriginId), std::move(sliceAndWindowStore))
     {
     }
-    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction() const override;
+    [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
 
     using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;
     void setNautilusCleanupExec(std::shared_ptr<NautilusCleanupExec> nautilusCleanupExec, const QueryCompilation::JoinBuildSideType& buildSide);
