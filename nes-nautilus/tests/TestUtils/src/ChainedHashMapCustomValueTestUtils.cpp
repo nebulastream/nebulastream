@@ -69,7 +69,7 @@ nautilus::engine::
                 bufferManagerVal);
 
             const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
-            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer, bufferManagerVal);
+            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer);
             const RecordBuffer recordBufferValue(bufferValue);
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
@@ -103,7 +103,7 @@ nautilus::engine::
                 = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
             const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
-            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer, bufferManagerVal);
+            const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer);
             nautilus::val<uint64_t> recordBufferIndex = 0;
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
             {

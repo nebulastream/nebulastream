@@ -295,7 +295,8 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
                         }
                     }
                     INVARIANT(leftField.has_value() and rightField.has_value(), "Could not find left and right leaves");
-                    INVARIANT(leftFieldAccess.has_value() and rightFieldAccess.has_value(), "Could not find left and right leaves field access");
+                    INVARIANT(
+                        leftFieldAccess.has_value() and rightFieldAccess.has_value(), "Could not find left and right leaves field access");
 
                     /// We are now converting the fields to a physical data type and then joining them together
                     const auto joinedDataType = leftField.value()->getDataType()->join(rightField.value()->getDataType());
@@ -305,16 +306,10 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
                     rightFieldAccess.value()->updateFieldName(rightFieldNewName);
                     leftJoinNames.emplace_back(
                         PhysicalOperators::FieldNamesExtension{
-                            leftField.value()->getName(),
-                            leftFieldNewName,
-                            leftField.value()->getDataType(),
-                            joinedDataType});
+                            leftField.value()->getName(), leftFieldNewName, leftField.value()->getDataType(), joinedDataType});
                     rightJoinNames.emplace_back(
                         PhysicalOperators::FieldNamesExtension{
-                            rightField.value()->getName(),
-                            rightFieldNewName,
-                            rightField.value()->getDataType(),
-                            joinedDataType});
+                            rightField.value()->getName(), rightFieldNewName, rightField.value()->getDataType(), joinedDataType});
                 }
             });
 

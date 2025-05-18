@@ -113,10 +113,8 @@ void HJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) c
                         leftEntry, leftHashMapBasedOptions.fieldKeys, leftHashMapBasedOptions.fieldValues);
                     auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
                     auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
-                    Interface::PagedVectorRef leftPagedVector(
-                        leftPagedVectorMem, leftMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
-                    Interface::PagedVectorRef rightPagedVector(
-                        rightPagedVectorMem, rightMemoryProvider, executionCtx.pipelineMemoryProvider.bufferProvider);
+                    Interface::PagedVectorRef leftPagedVector(leftPagedVectorMem, leftMemoryProvider);
+                    Interface::PagedVectorRef rightPagedVector(rightPagedVectorMem, rightMemoryProvider);
                     const auto leftFields = leftMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
                     const auto rightFields = rightMemoryProvider->getMemoryLayout()->getSchema()->getFieldNames();
                     for (auto leftIt = leftPagedVector.begin(leftFields); leftIt != leftPagedVector.end(leftFields); ++leftIt)
