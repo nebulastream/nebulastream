@@ -23,6 +23,7 @@
 #include <string_view>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>

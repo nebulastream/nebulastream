@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -44,15 +45,20 @@ void PhysicalPlanBuilder::setExecutionMode(Nautilus::Configurations::ExecutionMo
     executionMode = mode;
 }
 
+void PhysicalPlanBuilder::setOperatorBufferSize(uint64_t bufferSize)
+{
+    operatorBufferSize = bufferSize;
+}
+
 PhysicalPlan PhysicalPlanBuilder::finalize() &&
 {
     auto sources = flip(sinks);
-    return {queryId, std::move(sources), executionMode};
+    return {queryId, std::move(sources), executionMode, operatorBufferSize};
 }
 
 using PhysicalOpPtr = std::shared_ptr<PhysicalOperatorWrapper>;
 
-PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(Roots rootOperators)
+PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
 {
     PRECONDITION(rootOperators.size() == 1, "For now we can only flip graphs with a single root");
 

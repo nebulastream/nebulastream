@@ -13,7 +13,6 @@
 */
 
 #include <algorithm>
-#include <exception>
 #include <memory>
 #include <ranges>
 #include <string>
@@ -42,10 +41,7 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const RewriteRu
         {
             return std::move(ruleOptional.value());
         }
-        /// We expect that in this last phase of query optimiation only logical operator with physical lowering rules
-        /// are part of the plan. If not the case, this indicates a bug in our query optimizer.
-        INVARIANT(false, "Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
-        std::terminate();
+        throw UnknownOptimizerRule("Rewrite rule for logical operator '{}' can't be resolved", logicalOperator.getName());
     }(logicalOperator, registryArgument);
     /// We apply the rule and receive a subgraph
     const auto [root, leafs] = rule->apply(logicalOperator);
@@ -101,7 +97,8 @@ PhysicalPlan apply(const LogicalPlan& queryPlan, const NES::Configurations::Quer
     INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");
     auto physicalPlanBuilder = PhysicalPlanBuilder(queryPlan.getQueryId());
     physicalPlanBuilder.addSinkRoot(newRootOperators[0]);
-    physicalPlanBuilder.setExecutionMode(conf.executionMode);
+    physicalPlanBuilder.setExecutionMode(conf.executionMode.getValue());
+    physicalPlanBuilder.setOperatorBufferSize(conf.operatorBufferSize.getValue());
     return std::move(physicalPlanBuilder).finalize();
 }
 }

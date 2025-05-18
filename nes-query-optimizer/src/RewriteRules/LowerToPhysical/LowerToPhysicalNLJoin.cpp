@@ -228,7 +228,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
     auto probeOperator
         = NLJProbePhysicalOperator(handlerId, joinFunction, join.getWindowMetaData(), joinSchema, leftMemoryProvider, rightMemoryProvider);
 
-    constexpr uint64_t numberOfOriginIds = 2;
+    const uint64_t numberOfOriginIds = logicalOperator.getInputOriginIds().size();
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType->getSize().getTime(), windowType->getSlide().getTime(), numberOfOriginIds);
     auto handler = std::make_shared<NLJOperatorHandler>(

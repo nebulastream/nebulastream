@@ -52,8 +52,8 @@ struct PhysicalFunction
     /// @tparam FunctionType The type of the function. Must satisfy IsPhysicalFunction concept.
     /// @param fn The function to wrap.
     template <IsPhysicalFunction FunctionType>
-    PhysicalFunction(const FunctionType& fn)
-        : self(std::make_shared<Model<FunctionType>>(fn)) /// NOLINT(cppcoreguidelines-explicit-constructors
+    PhysicalFunction(const FunctionType& fn) /// NOLINT
+        : self(std::make_shared<Model<FunctionType>>(fn))
     {
     }
 
