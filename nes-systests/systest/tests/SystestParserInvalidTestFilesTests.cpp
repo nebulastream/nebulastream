@@ -17,6 +17,7 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
+#include "SystestSources/SourceTypes.hpp"
 
 namespace NES::Systest
 {
@@ -38,10 +39,10 @@ TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
     const std::string filename = TEST_DATA_DIR "invalid.dummy";
 
     SystestParser parser{};
-    parser.registerOnCSVSourceCallback(
-        [&](SystestParser::CSVSource&&)
+    parser.registerOnAttachSourceCallback(
+        [&](SystestAttachSource&&)
         {
-            /// nop, ensure parsing of CSVSource token
+            // noop
         });
 
     ASSERT_TRUE(parser.loadFile(filename));

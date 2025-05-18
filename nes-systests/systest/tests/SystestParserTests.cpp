@@ -59,32 +59,31 @@ TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
 TEST_F(SystestParserTest, testCallbackSourceCSV)
 {
     SystestParser parser{};
-    const std::string sourceIn = "SourceCSV window UINT64 id UINT64 value UINT64 timestamp window.csv";
+    const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp\n"
+                                 "Attach File InlineData CONFIG/sources/file_inline_default.yaml window";
 
-    bool callbackCalled = false;
+    bool isSLTSourceCallbackCalled = false;
+    bool isAttachSourceCallbackCalled = false;
 
     const std::string str = sourceIn + "\n";
 
-    parser.registerOnQueryCallback([&](SystestParser::Query&&) { FAIL(); });
-    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&&) { FAIL(); });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback(
-        [&](SystestParser::CSVSource&& sourceOut)
+    parser.registerOnQueryCallback([](SystestParser::Query&&) { FAIL(); });
+    parser.registerOnResultTuplesCallback([](SystestParser::ResultTuples&&) { FAIL(); });
+    parser.registerOnSLTSourceCallback([&isSLTSourceCallbackCalled](SystestParser::SLTSource&&) { isSLTSourceCallbackCalled = true; });
+    parser.registerOnAttachSourceCallback(
+        [&isAttachSourceCallbackCalled](SystestAttachSource&& attachSource)
         {
-            ASSERT_EQ(sourceOut.name, "window");
-            ASSERT_EQ(*sourceOut.fields[0].type, *DataTypeProvider::provideDataType(LogicalType::UINT64));
-            ASSERT_EQ(sourceOut.fields[0].name, "id");
-            ASSERT_EQ(*sourceOut.fields[1].type, *DataTypeProvider::provideDataType(LogicalType::UINT64));
-            ASSERT_EQ(sourceOut.fields[1].name, "value");
-            ASSERT_EQ(*sourceOut.fields[2].type, *DataTypeProvider::provideDataType(LogicalType::UINT64));
-            ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
-            ASSERT_EQ(sourceOut.csvFilePath, "window.csv");
-            callbackCalled = true;
+            ASSERT_EQ(attachSource.configurationPath, "CONFIG/sources/file_inline_default.yaml");
+            ASSERT_EQ(attachSource.logicalSourceName, "window");
+            ASSERT_EQ(attachSource.sourceType, "File");
+            ASSERT_EQ(attachSource.testDataIngestionType, TestDataIngestionType::INLINE);
+            isAttachSourceCallbackCalled = true;
         });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
-    ASSERT_TRUE(callbackCalled);
+    ASSERT_TRUE(isSLTSourceCallbackCalled);
+    ASSERT_TRUE(isAttachSourceCallbackCalled);
 }
 
 TEST_F(SystestParserTest, testCallbackQuery)
@@ -114,7 +113,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
             resultCallbackCalled = true;
         });
     parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnAttachSourceCallback([&](SystestAttachSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
@@ -149,7 +148,7 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
             // ASSERT_EQ(sourceOut.tuples[1], tpl2);
             callbackCalled = true;
         });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnAttachSourceCallback([&](SystestAttachSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
@@ -172,7 +171,7 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
             /// nop
         });
     parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnAttachSourceCallback([&](SystestAttachSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
