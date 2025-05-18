@@ -393,33 +393,21 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     const StreamJoinConfigs streamJoinConfig(
         leftJoinFieldNames, rightJoinFieldNames, windowSize, windowSlide, timeStampFieldLeft, timeStampFieldRight, joinStrategy);
 
+    /// Creating the correct operator handler
     std::shared_ptr<StreamJoinOperatorHandler> joinOperatorHandler;
+    std::unique_ptr<Runtime::Execution::WindowSlicesStoreInterface> sliceAndWindowStore
+        = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
+            streamJoinConfig.windowSize, streamJoinConfig.windowSlide, joinOperator->getAllInputOriginIds().size());
     switch (joinStrategy)
     {
-        case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN:
-            joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
+        case Configurations::StreamJoinStrategy::NESTED_LOOP_JOIN: {
+            joinOperatorHandler = std::make_shared<NLJOperatorHandler>(
+                joinOperator->getAllInputOriginIds(), joinOperator->getOutputOriginIds()[0], std::move(sliceAndWindowStore));
             break;
+        }
         case Configurations::StreamJoinStrategy::HASH_JOIN: {
-            auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-                queryCompilerConfig.pageSize.getValue(), joinOperator->getLeftInputSchema());
-            leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
-            auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-                queryCompilerConfig.pageSize.getValue(), joinOperator->getRightInputSchema());
-            rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
-            NES_DEBUG(
-                "Created left and right memory provider for StreamJoin with page size {}--{}",
-                leftMemoryProvider->getMemoryLayout()->getBufferSize(),
-                rightMemoryProvider->getMemoryLayout()->getBufferSize());
-
-            std::unique_ptr<Runtime::Execution::WindowSlicesStoreInterface> sliceAndWindowStore
-                = std::make_unique<Runtime::Execution::DefaultTimeBasedSliceStore>(
-                    streamJoinConfig.windowSize, streamJoinConfig.windowSlide, joinOperator->getAllInputOriginIds().size());
             joinOperatorHandler = std::make_shared<HJOperatorHandler>(
-                joinOperator->getAllInputOriginIds(),
-                joinOperator->getOutputOriginIds()[0],
-                std::move(sliceAndWindowStore),
-                leftMemoryProvider,
-                rightMemoryProvider);
+                joinOperator->getAllInputOriginIds(), joinOperator->getOutputOriginIds()[0], std::move(sliceAndWindowStore));
             break;
         }
             std::unreachable();
@@ -470,33 +458,6 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const std::shared_ptr<Lo
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
     streamJoinOperators.operatorNode->replace(joinProbeOperator);
-}
-
-std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(
-    const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig) const
-{
-    using namespace Runtime::Execution;
-    const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
-
-    auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        queryCompilerConfig.pageSize.getValue(), joinOperator->getLeftInputSchema());
-    leftMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
-    auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        queryCompilerConfig.pageSize.getValue(), joinOperator->getRightInputSchema());
-    rightMemoryProvider->getMemoryLayout()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
-    NES_DEBUG(
-        "Created left and right memory provider for StreamJoin with page size {}--{}",
-        leftMemoryProvider->getMemoryLayout()->getBufferSize(),
-        rightMemoryProvider->getMemoryLayout()->getBufferSize());
-
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
-        streamJoinConfig.windowSize, streamJoinConfig.windowSlide, joinOperator->getAllInputOriginIds().size());
-    return std::make_shared<Operators::NLJOperatorHandler>(
-        joinOperator->getAllInputOriginIds(),
-        joinOperator->getOutputOriginIds()[0],
-        std::move(sliceAndWindowStore),
-        leftMemoryProvider,
-        rightMemoryProvider);
 }
 
 std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(

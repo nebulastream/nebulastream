@@ -133,10 +133,6 @@ protected:
         std::vector<std::shared_ptr<Operator>> children);
 
 private:
-    /// Lowers the stream nested loop join
-    std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>
-    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig) const;
-
     /// replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
     [[nodiscard]] std::shared_ptr<Node> replaceOperatorTimeBasedWindow(
         WindowOperatorProperties& windowOperatorProperties, const std::shared_ptr<LogicalOperator>& operatorNode);
