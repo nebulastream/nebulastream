@@ -17,7 +17,6 @@
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <Util/StacktraceLoader.hpp>
 
 /// In the following we define the NES_COMPILE_TIME_LOG_LEVEL macro.
 /// This macro indicates the log level, which was chosen at compilation time and enables the complete
