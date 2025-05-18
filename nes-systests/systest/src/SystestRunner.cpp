@@ -106,17 +106,20 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             static uint64_t sourceIndex = 0;
             attachSource.serverThreads = serverThreads;
 
-            const auto initialPhysicalSourceConfig = [](const std::string& path)
+            /// Load physical source from file and overwrite logical source name with value from attach source
+            const auto initialPhysicalSourceConfig = [](const std::string& path, const std::string& logicalSourceName)
             {
                 try
                 {
-                    return CLI::loadFromYAMLSource(path);
+                    auto loadedPhysicalSourceConfig = CLI::loadFromYAMLSource(path);
+                    loadedPhysicalSourceConfig.logical = logicalSourceName;
+                    return loadedPhysicalSourceConfig;
                 }
                 catch (const std::exception& e)
                 {
                     throw CannotLoadConfig("Failed to parse source: {}", e.what());
                 }
-            }(attachSource.configurationPath);
+            }(attachSource.configurationPath, attachSource.logicalSourceName);
 
             switch (attachSource.testDataIngestionType)
             {

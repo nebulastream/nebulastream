@@ -1,4 +1,4 @@
-logical: stream
+logical: PLACEHOLDER
 parserConfig:
   type: CSV
   fieldDelimiter: ','
