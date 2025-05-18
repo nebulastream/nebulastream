@@ -75,7 +75,7 @@ public:
     [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
     void setKeyFieldNames(const std::vector<std::string>& keyFields);
     bool operator==(const MemoryLayout& rhs) const = default;
-    bool operator!=(const MemoryLayout& rhs) const;
+    bool operator!=(const MemoryLayout& rhs) const = default;
 
 protected:
     uint64_t bufferSize;
