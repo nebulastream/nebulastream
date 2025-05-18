@@ -16,8 +16,14 @@
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <utility>
+#include <unistd.h>
+#include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
