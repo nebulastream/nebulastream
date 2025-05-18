@@ -30,7 +30,7 @@ namespace NES::Configurations
 
 static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
 static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
-static constexpr auto DEFAULT_BUFFER_SIZE = 1024;
+static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 1024;
 enum class StreamJoinStrategy : uint8_t
 {
     NESTED_LOOP_JOIN
@@ -71,10 +71,10 @@ public:
            std::to_string(DEFAULT_PAGED_VECTOR_SIZE),
            "Page size of any other paged data structure",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
-    NES::Configurations::UIntOption bufferSize
-        = {"bufferSize",
-           std::to_string(DEFAULT_BUFFER_SIZE),
-           "Buffer size e.g. during scan",
+    NES::Configurations::UIntOption operatorBufferSize
+        = {"operatorBufferSize",
+           std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
+           "Buffer size of a operator e.g. during scan",
            {std::make_shared<NES::Configurations::NumberValidation>()}};
     NES::Configurations::EnumOption<StreamJoinStrategy> joinStrategy
         = {"joinStrategy",

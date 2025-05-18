@@ -42,14 +42,13 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 
 /// Helper function to add a default scan operator
 /// This is used only when the wrapped operator does not already provide a scan
-void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp)
+void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
-    constexpr uint64_t bufferSize = 100;
     auto schema = wrappedOp.getInputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no input schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), bufferSize);
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), configuredBufferSize);
     const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     /// Prepend the default scan operator.
     pipeline->prependOperator(ScanPhysicalOperator(memoryProvider, schema->getFieldNames()));
@@ -57,14 +56,13 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
 
 /// Helper function to add a default emit operator
 /// This is used only when the wrapped operator does not already provide an emit
-void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp)
+void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
-    constexpr uint64_t bufferSize = 100;
     auto schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
-    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), bufferSize);
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema.value(), configuredBufferSize);
     const auto memoryProvider = std::make_shared<Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     /// Create an operator handler for the emit
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
@@ -83,7 +81,8 @@ void buildPipelineRecursively(
     const std::shared_ptr<PhysicalOperatorWrapper>& prevOpWrapper,
     const std::shared_ptr<Pipeline>& currentPipeline,
     OperatorPipelineMap& pipelineMap,
-    PipelinePolicy policy)
+    PipelinePolicy policy,
+    uint64_t configuredBufferSize)
 {
     /// Check if we've already seen this operator
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
@@ -98,7 +97,7 @@ void buildPipelineRecursively(
     {
         if (prevOpWrapper && prevOpWrapper->getEndpoint() != PhysicalOperatorWrapper::PipelineEndpoint::Emit)
         {
-            addDefaultEmit(currentPipeline, *prevOpWrapper);
+            addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
         auto newPipeline = std::make_shared<Pipeline>(opWrapper->getPhysicalOperator());
         if (opWrapper->getHandler() && opWrapper->getHandlerId())
@@ -110,7 +109,7 @@ void buildPipelineRecursively(
         auto newPipelinePtr = currentPipeline->getSuccessors().back();
         for (auto& child : opWrapper->getChildren())
         {
-            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue);
+            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
         }
         return;
     }
@@ -127,7 +126,7 @@ void buildPipelineRecursively(
         pipelineMap.emplace(opId, currentPipeline);
         for (auto& child : opWrapper->getChildren())
         {
-            buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew);
+            buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
         }
         return;
     }
@@ -138,7 +137,7 @@ void buildPipelineRecursively(
         /// Add emit first if there is one needed
         if (prevOpWrapper and prevOpWrapper->getEndpoint() != PhysicalOperatorWrapper::PipelineEndpoint::Emit)
         {
-            addDefaultEmit(currentPipeline, *prevOpWrapper);
+            addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
         auto newPipeline = std::make_shared<Pipeline>(*sink);
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
@@ -146,7 +145,7 @@ void buildPipelineRecursively(
         pipelineMap.emplace(opId, newPipelinePtr);
         for (auto& child : opWrapper->getChildren())
         {
-            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue);
+            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
         }
         return;
     }
@@ -156,16 +155,16 @@ void buildPipelineRecursively(
     {
         if (prevOpWrapper and prevOpWrapper->getEndpoint() != PhysicalOperatorWrapper::PipelineEndpoint::Emit)
         {
-            addDefaultEmit(currentPipeline, *opWrapper);
+            addDefaultEmit(currentPipeline, *opWrapper, configuredBufferSize);
         }
         auto newPipeline = std::make_shared<Pipeline>(opWrapper->getPhysicalOperator());
         currentPipeline->addSuccessor(newPipeline, currentPipeline);
         auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
-        addDefaultScan(newPipelinePtr, *opWrapper);
+        addDefaultScan(newPipelinePtr, *opWrapper, configuredBufferSize);
         for (auto& child : opWrapper->getChildren())
         {
-            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue);
+            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
         }
         return;
     }
@@ -178,13 +177,13 @@ void buildPipelineRecursively(
     }
     if (opWrapper->getChildren().empty())
     {
-        addDefaultEmit(currentPipeline, *opWrapper);
+        addDefaultEmit(currentPipeline, *opWrapper, configuredBufferSize);
     }
     else
     {
         for (auto& child : opWrapper->getChildren())
         {
-            buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::Continue);
+            buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
         }
     }
 }
@@ -193,6 +192,7 @@ void buildPipelineRecursively(
 
 std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
 {
+    const uint64_t configuredBufferSize = physicalPlan.getOperatorBufferSize();
     auto pipelinedPlan = std::make_shared<PipelinedQueryPlan>(physicalPlan.getQueryId(), physicalPlan.getExecutionMode());
 
     OperatorPipelineMap pipelineMap;
@@ -206,7 +206,7 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
 
         for (const auto& child : rootWrapper->getChildren())
         {
-            buildPipelineRecursively(child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew);
+            buildPipelineRecursively(child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
         }
     }
 

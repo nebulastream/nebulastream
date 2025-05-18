@@ -14,6 +14,7 @@
 
 #include <exception>
 #include <string>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -180,7 +181,7 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
             for (const auto& entry : *log)
             {
                 QueryLogEntry logEntry;
-                logEntry.set_status((::QueryStatus)entry.state);
+                logEntry.set_status(static_cast<::QueryStatus>(entry.state));
                 logEntry.set_unixtimeinms(
                     std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
                 if (entry.exception.has_value())

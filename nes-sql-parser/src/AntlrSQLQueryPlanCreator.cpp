@@ -845,7 +845,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 auto value = std::move(helper.constantBuilder.back());
                 helper.constantBuilder.pop_back();
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
-                parentHelper.functionBuilder.push_back(constFunctionItem);
+                parentHelper.functionBuilder.emplace_back(constFunctionItem);
                 break;
             }
             if (funcName == "CONCAT")

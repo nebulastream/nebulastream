@@ -127,9 +127,4 @@ void MemoryLayout::setKeyFieldNames(const std::vector<std::string>& keyFields)
         keyFieldNames.emplace_back(field);
     }
 }
-
-bool MemoryLayout::operator!=(const MemoryLayout& rhs) const
-{
-    return !(rhs == *this);
-}
 }

@@ -35,8 +35,17 @@ PipelineId getNextPipelineId();
 /// We make use of shared_ptr reference counting of Pipelines to track the lifetime const of query plans
 struct Pipeline
 {
+    /// These constructors are used during the @link PipeliningPhase to create initial pipeline segments
+    /// from root operators of a @link PhysicalPlan. The actual role of the pipeline (source, sink, or intermediate)
+    /// is determined by the dynamic type of the provided 'op'.
+
+    /// Constructs a pipeline with the given PhysicalOperator as its root.
     explicit Pipeline(PhysicalOperator op);
+
+    /// Constructs a pipeline explicitly rooted with a SourcePhysicalOperator.
     explicit Pipeline(const SourcePhysicalOperator& op);
+
+    /// Constructs a pipeline explicitly rooted with a SinkPhysicalOperator.
     explicit Pipeline(const SinkPhysicalOperator& op);
     Pipeline() = delete;
 
@@ -70,7 +79,7 @@ struct Pipeline
     void removeSuccessor(const Pipeline& pipeline);
 
 private:
-    Nautilus::Configurations::ExecutionMode executionMode = Nautilus::Configurations::ExecutionMode::INTERPRETER;
+    Nautilus::Configurations::ExecutionMode executionMode;
     PhysicalOperator rootOperator;
     const PipelineId pipelineId;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
