@@ -1,7 +1,7 @@
 logical: stream
 parserConfig:
   type: CSV
-  fieldDelimiter: '|'
+  fieldDelimiter: ','
 sourceConfig:
   type: File
   filePath: INLINE

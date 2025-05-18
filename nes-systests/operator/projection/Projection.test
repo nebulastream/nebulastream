@@ -4,21 +4,27 @@
 
 Source stream UINT64 id UINT64 value UINT64 timestamp
 
-# Attach TCP InlineData CONFIG/sources/tcp_inline_default.yaml stream
-# 1|1|1000
-# 2|1|1001
-# 3|1|1002
-# 4|2|2000
-
-Attach TCP FileData CONFIG/sources/tcp_file_theTestData.yaml stream
-
 Attach File InlineData CONFIG/sources/file_inline_default.yaml stream
-5|19|19000
-6|20|20000
-7|21|21000
-
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
+5,19,19000
+6,20,20000
+7,21,21000
 
 SINK sinkId UINT64 stream$id
+SINK sinkValue UINT64 stream$value
+SINK sinkTimestamp UINT64 stream$timestamp
+SINK sinkIdValue UINT64 stream$id UINT64 stream$value
+SINK sinkIdTimestamp UINT64 stream$id UINT64 stream$timestamp
+SINK sinkValueTimestamp UINT64 stream$value UINT64 stream$timestamp
+SINK sinkIdValueTimestamp UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
+SINK sinkIdTimestampValue UINT64 stream$id UINT64 stream$timestamp UINT64 stream$value
+SINK sinkValueIdTimestamp UINT64 stream$value UINT64 stream$id UINT64 stream$timestamp
+SINK sinkValueTimestampId UINT64 stream$value UINT64 stream$timestamp UINT64 stream$id
+SINK sinkTimestampIdValue UINT64 stream$timestamp UINT64 stream$id UINT64 stream$value
+SINK sinkTimestampValueId UINT64 stream$timestamp UINT64 stream$value UINT64 stream$id
 
 # 0: [id]
 SELECT id FROM stream INTO sinkId
@@ -30,3 +36,125 @@ SELECT id FROM stream INTO sinkId
 5
 6
 7
+
+
+# 1: [value]
+SELECT value FROM stream INTO sinkValue
+----
+1
+1
+1
+2
+19
+20
+21
+
+# 2: [timestamp]
+SELECT timestamp FROM stream INTO sinkTimestamp
+----
+1000
+1001
+1002
+2000
+19000
+20000
+21000
+
+# 3: [id, value]
+SELECT id, value FROM stream INTO sinkIdValue
+----
+1,1
+2,1
+3,1
+4,2
+5,19
+6,20
+7,21
+
+# 4: [id, timestamp]
+SELECT id, timestamp FROM stream INTO sinkIdTimestamp
+----
+1,1000
+2,1001
+3,1002
+4,2000
+5,19000
+6,20000
+7,21000
+
+# 5: [value, timestamp]
+SELECT value, timestamp FROM stream INTO sinkValueTimestamp
+----
+1,1000
+1,1001
+1,1002
+2,2000
+19,19000
+20,20000
+21,21000
+
+# 6: [id, value, timestamp]
+SELECT id, value, timestamp FROM stream INTO sinkIdValueTimestamp
+----
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
+5,19,19000
+6,20,20000
+7,21,21000
+
+# 7: [id, timestamp, value]
+SELECT id, timestamp, value FROM stream INTO sinkIdTimestampValue
+----
+1,1000,1
+2,1001,1
+3,1002,1
+4,2000,2
+5,19000,19
+6,20000,20
+7,21000,21
+
+# 8: [value, id, timestamp]
+SELECT value, id, timestamp FROM stream INTO sinkValueIdTimestamp
+----
+1,1,1000
+1,2,1001
+1,3,1002
+2,4,2000
+19,5,19000
+20,6,20000
+21,7,21000
+
+# 9: [value, timestamp, id]
+SELECT value, timestamp, id FROM stream INTO sinkValueTimestampId
+----
+1,1000,1
+1,1001,2
+1,1002,3
+2,2000,4
+19,19000,5
+20,20000,6
+21,21000,7
+
+# 10: [timestamp, id, value]
+SELECT timestamp, id, value FROM stream INTO sinkTimestampIdValue
+----
+1000,1,1
+1001,2,1
+1002,3,1
+2000,4,2
+19000,5,19
+20000,6,20
+21000,7,21
+
+# 11: [timestamp, value, id]
+SELECT timestamp, value, id FROM stream INTO sinkTimestampValueId
+----
+1000,1,1
+1001,1,2
+1002,1,3
+2000,2,4
+19000,19,5
+20000,20,6
+21000,21,7
