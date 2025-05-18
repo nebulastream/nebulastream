@@ -1,4 +1,4 @@
-logical: stream
+logical: double_stream
 parserConfig:
   type: CSV
   fieldDelimiter: ','

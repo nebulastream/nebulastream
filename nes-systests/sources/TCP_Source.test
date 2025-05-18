@@ -1,0 +1,56 @@
+# name: projection/Projection.test
+# description: Simple map tests with an add function
+# groups: [Projection]
+
+
+# Integration test migration:
+# 1. 32 tuples (1, 31) -> replaced with source with 4 tuples (no essential difference)
+# 2. 2x 32 tuples (1, 31) -> replaced two sources with 4 tuples (no essential difference)
+# 3. 200 tuples (1, 2, .., 199)
+# 4. 10k tuples
+# -> combine 3. and 4. into one test with some reading some 'small' data from a file
+
+# Source/Sink for single TCP stream
+Source stream UINT64 id UINT64 value UINT64 timestamp
+SINK tcp_sink UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
+
+# Source/Sink for double TCP stream
+Source double_stream UINT64 id UINT64 value UINT64 timestamp
+SINK tcp_sink_double UINT64 double_stream$id UINT64 double_stream$value UINT64 double_stream$timestamp
+
+Attach TCP InlineData CONFIG/sources/tcp_inline_default.yaml stream
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000
+
+Attach TCP InlineData CONFIG/sources/tcp_inline_double_stream.yaml double_stream
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000
+
+Attach TCP InlineData CONFIG/sources/tcp_inline_double_stream.yaml double_stream
+5,23,23000
+6,24,24000
+7,25,25000
+8,26,26000
+
+SELECT * FROM stream INTO tcp_sink
+----
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000
+
+
+SELECT * FROM double_stream INTO tcp_sink_double
+----
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000
+5,23,23000
+6,24,24000
+7,25,25000
+8,26,26000
