@@ -41,9 +41,7 @@ add_executable(systest src/SystestStarter.cpp)
 target_compile_definitions(systest PRIVATE
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
-        # Todo: change back to binary dir before submitting PR
-#        TEST_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../testdata"
-        TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata"
+        TEST_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../testdata"
         TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../configs"
 )
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)

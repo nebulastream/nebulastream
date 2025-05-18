@@ -1,7 +1,7 @@
 logical: PLACEHOLDER
 parserConfig:
   type: CSV
-  fieldDelimiter: '|'
+  fieldDelimiter: ','
 sourceConfig:
   type: File
-  filePath: "TESTDATA/tiny/four_tuples.csv"
+  filePath: "TESTDATA/small/200x8-rows-fields.csv"
