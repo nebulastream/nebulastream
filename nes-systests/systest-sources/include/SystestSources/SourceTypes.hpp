@@ -15,12 +15,13 @@
 #pragma once
 
 #include <cstdint>
-#include <optional>
+#include <filesystem>
 #include <memory>
-#include <vector>
-#include <thread>
+#include <optional>
 #include <string>
+#include <thread>
 #include <unordered_map>
+#include <vector>
 
 namespace NES
 {
@@ -47,6 +48,7 @@ struct SystestAttachSource
     std::string sourceType;
     TestDataIngestionType testDataIngestionType;
     std::optional<std::vector<std::string>> tuples;
+    std::optional<std::filesystem::path> fileDataPath;
     std::shared_ptr<std::vector<std::jthread>> serverThreads;
 
     bool operator==(const SystestAttachSource& other) const = default;

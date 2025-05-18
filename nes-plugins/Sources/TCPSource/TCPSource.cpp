@@ -340,13 +340,12 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData
 
 FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
-    if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
-        filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+    if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)
     {
         if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::PORT);
             port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
         {
-            auto mockTCPServer = std::make_unique<TCPDataServer>(replaceRootPath(filePath->second, systestAdaptorArguments.testDataDir));
+            auto mockTCPServer = std::make_unique<TCPDataServer>(replaceRootPath(attachSourceFilePath.value(), systestAdaptorArguments.testDataDir));
             port->second = std::to_string(mockTCPServer->getPort());
 
             if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::HOST);
@@ -364,6 +363,6 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
         }
         throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
     }
-    throw InvalidConfigParameter("A TCP source with FileData config must contain filePath parameter.");
+    throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
 }
 }

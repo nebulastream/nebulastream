@@ -391,66 +391,70 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
     return source;
 }
 
+/// Attach SOURCE_TYPE LOGICAL_SOURCE_NAME DATA_SOURCE_TYPE
+/// Attach SOURCE_TYPE SOURCE_CONFIG_PATH LOGICAL_SOURCE_NAME DATA_SOURCE_TYPE
 SystestAttachSource SystestParser::expectAttachSource()
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
     SystestAttachSource attachSource;
-    const auto& line = lines[currentLine];
-    std::istringstream stream(line);
+    const auto attachSourceTokens = Util::splitWithStringDelimiter<std::string_view>(lines[currentLine], " ");
+    INVARIANT(
+        attachSourceTokens.size() == 3 or attachSourceTokens.size() == 4,
+        "Expected 3 or tokens in attach source statement, but got {}",
+        attachSourceTokens.size());
+    INVARIANT(Util::toUpperCase(attachSourceTokens.front()) == "ATTACH", "Expected first token of attach source to be 'ATTACH'");
 
-    /// Read and discard the first word as it is always CSVSource
-    const auto discard = [](std::istringstream& stream, const std::string line)
+    /// Validated in a follow-up step
+    attachSource.sourceType = attachSourceTokens.at(1);
+
+    // Todo: make filesystem::path
+    attachSource.configurationPath = [](const std::vector<std::string_view>& tokens, SystestAttachSource& attachSource)
     {
-        if (std::string discardString; stream >> discardString)
+        if (tokens.size() == 3)
         {
-            INVARIANT(discardString == AttachSourceToken, "Expected first word to be `{}` for csv source statement", AttachSourceToken);
-            return discardString;
+            /// parse and return default path
+            // Todo: how to set the default path? <-- could use constexpr std::array pattern
+            // Todo: below approach would miss Data Source Type
+            const auto defaultFilePath = std::filesystem::path(TEST_CONFIGURATION_DIR) / "sources" / attachSource.sourceType / "default.yaml";
+            // const auto sourceFile = Query::sourceFile(workingDir, testFileName, sourceIndex++);
         }
-        throw SLTUnexpectedToken("failed to read the first word in: {}", line);
-    }(stream, line);
+        /// parse custom config path
+        return std::string(tokens.at(2).data());
+    }(attachSourceTokens, attachSource);
+    // attachSource.testDataIngestionType = [this](std::vector<std::string_view>& tokens, SystestAttachSource& attachSource)
+    // {
+    //     if (const auto testDataTypeString =
+    //             [](std::istringstream& stream)
+    //         {
+    //             std::string streamOutput;
+    //             stream >> streamOutput;
+    //             return Util::toLowerCase(streamOutput);
+    //         }(stream);
+    //         not(testDataTypeString.empty()))
+    //     {
+    //         if (testDataTypeString == Util::toLowerCase("InlineData"))
+    //         {
+    //             attachSource.tuples = {expectTuples(true)};
+    //             return TestDataIngestionType::INLINE;
+    //         }
+    //         if (testDataTypeString == Util::toLowerCase("FileData"))
+    //         {
+    //             attachSource.fileDataPath = {expectFilePath()};
+    //             return TestDataIngestionType::FILE;
+    //         }
+    //     }
+    //     throw SLTUnexpectedToken("failed to parse the test data type in: {}", stream.str());
+    // }(stream, attachSource);
 
-    attachSource.sourceType = [](std::istringstream& stream)
-    {
-        if (std::string testSourceTypeString; stream >> testSourceTypeString)
-        {
-            return testSourceTypeString;
-        }
-        throw SLTUnexpectedToken("failed to parse source configuration path in: {}", stream.str());
-    }(stream);
-
-    attachSource.testDataIngestionType = [this](std::istringstream& stream, SystestAttachSource& attachSource)
-    {
-        if (const auto testDataTypeString =
-                [](std::istringstream& stream)
-            {
-                std::string streamOutput;
-                stream >> streamOutput;
-                return Util::toLowerCase(streamOutput);
-            }(stream);
-            not(testDataTypeString.empty()))
-        {
-            if (testDataTypeString == Util::toLowerCase("InlineData"))
-            {
-                attachSource.tuples = {expectTuples(true)};
-                return TestDataIngestionType::INLINE;
-            }
-            if (testDataTypeString == Util::toLowerCase("FileData"))
-            {
-                return TestDataIngestionType::FILE;
-            }
-        }
-        throw SLTUnexpectedToken("failed to parse the test data type in: {}", stream.str());
-    }(stream, attachSource);
-
-    if (not(stream >> attachSource.configurationPath))
-    {
-        throw SLTUnexpectedToken("failed to configuration path in: {}", line);
-    }
-
-    if (not(stream >> attachSource.logicalSourceName))
-    {
-        throw SLTUnexpectedToken("failed to parse logical source name in: {}", line);
-    }
+    // if (not(stream >> attachSource.configurationPath))
+    // {
+    //     throw SLTUnexpectedToken("failed to configuration path in: {}", line);
+    // }
+    //
+    // if (not(stream >> attachSource.logicalSourceName))
+    // {
+    //     throw SLTUnexpectedToken("failed to parse logical source name in: {}", line);
+    // }
 
     return attachSource;
 }
@@ -491,6 +495,17 @@ SystestParser::CSVSource SystestParser::expectCSVSource() const
     return source;
 }
 
+std::filesystem::path SystestParser::expectFilePath()
+{
+    ++currentLine;
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
+    if (const auto parsedFilePath = std::filesystem::path(lines.at(currentLine));
+        std::filesystem::exists(parsedFilePath) and parsedFilePath.has_filename())
+    {
+        return parsedFilePath;
+    }
+    throw TestException("Attach source with FileData must be followed by valid file path, but got: {}", lines.at(currentLine));
+}
 SystestParser::ResultTuples SystestParser::expectTuples(const bool ignoreFirst)
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");

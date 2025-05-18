@@ -4,4 +4,4 @@ parserConfig:
   fieldDelimiter: ','
 sourceConfig:
   type: File
-  filePath: INLINE
+  filePath: PLACEHOLDER

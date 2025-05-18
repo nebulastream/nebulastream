@@ -130,6 +130,7 @@ private:
     [[nodiscard]] CSVSource expectCSVSource() const;
     [[nodiscard]] Sink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
+    [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] Query expectQuery();
 
     QueryCallback onQueryCallback;

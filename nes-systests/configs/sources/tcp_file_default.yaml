@@ -12,4 +12,4 @@ sourceConfig:
   socketBufferSize: 2
   flushIntervalMS: 100
   connectTimeoutSeconds: 60
-  filePath: "TESTDATA/small/200x8-rows-fields.csv"
+  filePath: PLACEHOLDER

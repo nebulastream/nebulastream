@@ -4,4 +4,4 @@ parserConfig:
   fieldDelimiter: ','
 sourceConfig:
   type: File
-  filePath: "TESTDATA/small/200x8-rows-fields.csv"
+  filePath: PLACEHOLDER
