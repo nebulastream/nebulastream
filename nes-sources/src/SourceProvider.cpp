@@ -26,11 +26,6 @@
 namespace NES::Sources
 {
 
-std::unique_ptr<SourceProvider> SourceProvider::create()
-{
-    return std::make_unique<SourceProvider>();
-}
-
 std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
     const SourceDescriptor& sourceDescriptor,
@@ -49,6 +44,11 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
             std::move(originId), std::move(bufferPool), numberOfBuffersInLocalPool, std::move(source.value()));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
+}
+
+bool SourceProvider::contains(const std::string& sourceType)
+{
+    return SourceRegistry::instance().contains(sourceType);
 }
 
 }
