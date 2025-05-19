@@ -544,8 +544,8 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
             sourcesToFilePaths[physicalSource.value()] = source.csvFilePath;
         });
 
-    parser.registerOnSLTSourceCallback(
-        [&](const SystestParser::SLTSource& source)
+    parser.registerOnSystestLogicalSourceCallback(
+        [&](const SystestParser::SystestLogicalSource& source)
         {
             const auto sourceFile = SystestQuery::sourceFile(systestStarterGlobals.getWorkingDir(), testFileName, ++sourceIndex);
             {

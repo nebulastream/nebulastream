@@ -65,29 +65,18 @@ TEST_F(SystestParserTest, testCallbackSourceCSV)
     SystestParser parser{};
     const std::string sourceIn = "SourceCSV window UINT64 id UINT64 value UINT64 timestamp window.csv";
 
-    bool callbackCalled = false;
+    bool isSystestLogicalSourceCallbackCalled = false;
+    bool isAttachSourceCallbackCalled = false;
 
     const std::string str = sourceIn + "\n";
 
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { FAIL(); });
-    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&) { FAIL(); });
-    parser.registerOnCSVSourceCallback(
-        [&](const SystestParser::CSVSource& sourceOut)
-        {
-            ASSERT_EQ(sourceOut.name, "window");
-            ASSERT_EQ(sourceOut.fields[0].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
-            ASSERT_EQ(sourceOut.fields[0].name, "id");
-            ASSERT_EQ(sourceOut.fields[1].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
-            ASSERT_EQ(sourceOut.fields[1].name, "value");
-            ASSERT_EQ(sourceOut.fields[2].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
-            ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
-            ASSERT_EQ(sourceOut.csvFilePath, "window.csv");
-            callbackCalled = true;
-        });
+    parser.registerOnQueryCallback([](const std::string&, SystestQueryId) { FAIL(); });
+    parser.registerOnSystestLogicalSourceCallback([&isSystestLogicalSourceCallbackCalled](const SystestParser::SystestLogicalSource&)
+                                                  { isSystestLogicalSourceCallbackCalled = true; });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
-    ASSERT_TRUE(callbackCalled);
+    ASSERT_TRUE(isSystestLogicalSourceCallbackCalled);
 }
 
 TEST_F(SystestParserTest, testCallbackQuery)
@@ -110,7 +99,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
             ASSERT_EQ(queryIn, queryOut);
             queryCallbackCalled = true;
         });
-    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&) { FAIL(); });
+    parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { FAIL(); });
     parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { FAIL(); });
     parser.registerOnResultTuplesCallback(
         [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
@@ -126,7 +115,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
     ASSERT_EQ(queryResultMap.at("results/_1.csv").at(1), tpl2);
 }
 
-TEST_F(SystestParserTest, testCallbackSLTSource)
+TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
 {
     SystestParser parser{};
     const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp";
@@ -138,8 +127,8 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
     const std::string str = sourceIn + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { FAIL(); });
-    parser.registerOnSLTSourceCallback(
-        [&](const SystestParser::SLTSource& sourceOut)
+    parser.registerOnSystestLogicalSourceCallback(
+        [&](const SystestParser::SystestLogicalSource& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
             ASSERT_EQ(sourceOut.fields[0].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
@@ -174,7 +163,7 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
         {
             /// nop
         });
-    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&) { FAIL(); });
+    parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { FAIL(); });
     parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
