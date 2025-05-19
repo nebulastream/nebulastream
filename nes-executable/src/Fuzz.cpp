@@ -18,7 +18,11 @@
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
+    /// if logging enabled, setup logging
+    if (NES_COMPILE_TIME_LOG_LEVEL > 1)
+    {
+        NES::Logger::setupLogging("client.log", NES::LogLevel::LOG_ERROR);
+    }
     try
     {
         std::string query(reinterpret_cast<const char*>(data), size);
