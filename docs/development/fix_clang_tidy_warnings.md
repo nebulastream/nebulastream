@@ -12,11 +12,12 @@ Before running clang-tidy, we must create a running container from the image.
 If possible, you should run the Docker container in rootless mode. 
 Otherwise, the clang-tidy check will change the ownership of the files to root, and you will have to change it back. 
 ```bash
-docker run --rm -it -v <path/to/nebulastream>:/tmp/nebulastream  nebulastream/nes-development
+docker run --rm -it -v <path/to/nebulastream>:/tmp/nebulastream nebulastream/nes-development
 ```
 
 Then, we can run the following command to fix the clang-tidy warnings inside the Docker container.
-Before running the command, please change the `<branch name>`, and `<no. threads>`.
+Before running the command, please change the `<no. threads>`.
+If you want run clang-tidy on the diff to another branch, please change `origin/main` to that branch.
 The below command assumes that NebulaStream is mounted under `/tmp/nebulastream` in the docker image.
 We exclude '*.inc' files, since '*.inc' files are dependent header files that other header files include and that therefore don't need to compile on their own.
 ```bash
@@ -25,7 +26,7 @@ export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-19 && \
     cd /tmp/nebulastream && \
     rm -rf build/ && mkdir build && \
     cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
-    git diff -U0 origin/<branch name> -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
+    git diff -U0 origin/main -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -fix -config-file .clang-tidy -use-color -j <no. threads>
 ```
 Since we generate some header files in the build process, clang-tidy might complain about missing header files.
 In this case, you have to build `NebulaStream` before running the clang-tidy check to create the missing header files.
@@ -36,7 +37,7 @@ export LLVM_SYMBOLIZER_PATH=llvm-symbolizer-19 && \
     rm -rf build/ && mkdir build && \
     cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && \
     cmake --build build -j -- -k 0 && \
-    git diff -U0 origin/<branch name> -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -fix -config-file .clang-tidy -j <no. threads>
+    git diff -U0 origin/main -- ':!*.inc' | clang-tidy-diff-19.py -clang-tidy-binary clang-tidy-19 -p1 -path build -fix -config-file .clang-tidy -use-color -j <no. threads>
 ```
 
 # Fixing clang-tidy warnings compared to a commit hash
