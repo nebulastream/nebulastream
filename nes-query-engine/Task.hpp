@@ -65,7 +65,7 @@ public:
     QueryId queryId = INVALID<QueryId>;
 
 private:
-#ifndef NDEBUG /// Only used in debug INVARIANT
+#ifndef NO_ASSERT /// Only used in debug INVARIANT
     mutable bool onCompletionCalled = false;
     mutable bool onErrorCalled = false;
 #endif
