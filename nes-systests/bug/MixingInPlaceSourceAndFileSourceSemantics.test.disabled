@@ -5,7 +5,7 @@
 # Todo 484 Validate that exception is thrown
 # The 'TESTDATA/200x8-rows-fields.csv' is wrong. However, our test parser does not catch this.
 # Instead the systest-utils runs indefinitely.
-Source fiveTuples UINT64 field_1 TESTDATA/200x8-rows-fields.csv
+Source fiveTuples UINT64 field_1 FILE
 1
 2
 3

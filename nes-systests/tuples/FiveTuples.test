@@ -2,7 +2,7 @@
 # description: Simple source/buffer tests
 # groups: [Tuples]
 
-Source fiveTuples UINT64 field_1
+Source fiveTuples UINT64 field_1 INLINE
 1
 2
 3

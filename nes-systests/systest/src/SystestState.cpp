@@ -18,6 +18,7 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <exception>
 #include <expected>
 #include <filesystem>
 #include <fstream>
@@ -43,7 +44,9 @@
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
+#include <SystestSources/SystestSourceYAMLBinder.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
@@ -52,6 +55,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
@@ -174,7 +178,7 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
 
 void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& systestStarterGlobals)
 {
-    auto loadedPlans = systestStarterGlobals.binder.loadFromSLTFile(systestStarterGlobals, testfile.file, testfile.name());
+    auto loadedPlans = SystestStarterGlobals::SystestBinder::loadFromSLTFile(systestStarterGlobals, testfile.file, testfile.name());
     std::unordered_set<SystestQueryId> foundQueries;
 
     std::ranges::for_each(
@@ -494,6 +498,8 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
         { systestStarterGlobals.addQueryResult(testFileName, correspondingQueryId, std::move(resultTuples)); });
     parser.registerSubstitutionRule(
         {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = systestStarterGlobals.getTestDataDir(); }});
+    parser.registerSubstitutionRule(
+        {.keyword = "CONFIG", .ruleFunction = [&](std::string& substitute) { substitute = systestStarterGlobals.getConfigDir(); }});
     if (!parser.loadFile(testFilePath))
     {
         throw TestException("Could not successfully load test file://{}", testFilePath.string());
@@ -514,79 +520,82 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
             }
         });
 
-
-    /// We add new found sources to our config
-    parser.registerOnCSVSourceCallback(
-        [&](const SystestParser::CSVSource& source)
+    parser.registerOnSystestAttachSourceCallback(
+        [&](SystestAttachSource attachSource)
         {
-            Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
-            for (const auto& [type, name] : source.fields)
-            {
-                schema.addField(name, type);
-            }
-            const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema);
-            if (not logicalSource.has_value())
-            {
-                throw SourceAlreadyExists("{}", source.name);
-            }
+            static uint64_t sourceIndex = 0;
+            systestStarterGlobals.setDataServerThreadsInAttachSource(attachSource);
 
-            auto sourceConfig = Sources::SourceValidationProvider::provide(
-                "File", std::unordered_map<std::string, std::string>{{"filePath", source.csvFilePath}});
-            const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
-
-            const auto physicalSource = sourceCatalog->addPhysicalSource(
-                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
-            if (not physicalSource.has_value())
+            /// Load physical source from file and overwrite logical source name with value from attach source
+            const auto initialPhysicalSourceConfig
+                = [](const std::string& logicalSourceName, const std::string& sourceConfigPath, const std::string& inputFormatterConfigPath)
             {
-                NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
-                throw UnknownSource("{}", source.name);
+                try
+                {
+                    auto loadedPhysicalSourceConfig = SystestSourceYAMLBinder::loadSystestPhysicalSourceFromYAML(
+                        logicalSourceName, sourceConfigPath, inputFormatterConfigPath);
+                    return loadedPhysicalSourceConfig;
+                }
+                catch (const std::exception& e)
+                {
+                    throw CannotLoadConfig("Failed to parse source: {}", e.what());
+                }
+            }(attachSource.logicalSourceName, attachSource.sourceConfigurationPath, attachSource.inputFormatterConfigurationPath);
+
+            const auto [logical, parserConfig, sourceConfig] = [&]()
+            {
+                switch (attachSource.testDataIngestionType)
+                {
+                    case TestDataIngestionType::INLINE: {
+                        if (attachSource.tuples.has_value())
+                        {
+                            const auto sourceFile
+                                = SystestQuery::sourceFile(systestStarterGlobals.getWorkingDir(), testFileName, sourceIndex++);
+                            return Sources::SourceDataProvider::provideInlineDataSource(
+                                initialPhysicalSourceConfig, attachSource, sourceFile);
+                        }
+                        throw CannotLoadConfig("An InlineData source must have tuples, but tuples was null.");
+                    }
+                    case TestDataIngestionType::FILE: {
+                        return Sources::SourceDataProvider::provideFileDataSource(
+                            initialPhysicalSourceConfig, attachSource, systestStarterGlobals.getTestDataDir());
+                    }
+                }
+                std::unreachable();
+            }();
+            if (const auto logicalSource = sourceCatalog->getLogicalSource(attachSource.logicalSourceName))
+            {
+                if (const auto sourceDescriptor = sourceCatalog->addPhysicalSource(
+                        logicalSource.value(),
+                        INITIAL<WorkerId>,
+                        attachSource.sourceType,
+                        -1,
+                        Sources::SourceValidationProvider::provide(attachSource.sourceType, sourceConfig),
+                        ParserConfig::create(parserConfig)))
+                {
+                    sourcesToFilePaths[sourceDescriptor.value()] = testFilePath;
+                    return;
+                }
+                throw UnknownSource(
+                    "Failed to attach physical source with type {} to logical source {}",
+                    attachSource.sourceType,
+                    attachSource.logicalSourceName);
             }
-            sourcesToFilePaths[physicalSource.value()] = source.csvFilePath;
+            throw UnknownSource("Failed to attach physical source to logical source: {}", attachSource.logicalSourceName);
         });
 
     parser.registerOnSystestLogicalSourceCallback(
         [&](const SystestParser::SystestLogicalSource& source)
         {
-            const auto sourceFile = SystestQuery::sourceFile(systestStarterGlobals.getWorkingDir(), testFileName, ++sourceIndex);
-            {
-                std::ofstream testFile(sourceFile);
-                if (!testFile.is_open())
-                {
-                    throw TestException("Could not open source file \"{}\"", sourceFile);
-                }
-
-                for (const auto& tuple : source.tuples)
-                {
-                    testFile << tuple << "\n";
-                }
-                testFile.flush();
-            }
-
             Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
             for (const auto& [type, name] : source.fields)
             {
                 schema.addField(name, type);
             }
-            const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema);
-            if (not logicalSource.has_value())
+            if (const auto logicalSource = sourceCatalog->addLogicalSource(source.name, schema); not logicalSource.has_value())
             {
                 throw SourceAlreadyExists("{}", source.name);
             }
-
-            auto sourceConfig = Sources::SourceValidationProvider::provide(
-                "File", std::unordered_map<std::string, std::string>{{"filePath", sourceFile}});
-            const auto parserConfig = ParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
-
-            const auto physicalSource = sourceCatalog->addPhysicalSource(
-                logicalSource.value(), INITIAL<WorkerId>, "File", -1, std::move(sourceConfig), parserConfig);
-            if (not physicalSource.has_value())
-            {
-                NES_ERROR("Concurrent deletion of just created logical source \"{}\" by another thread", source.name);
-                throw UnknownSource("{}", source.name);
-            }
-            sourcesToFilePaths[physicalSource.value()] = sourceFile;
-
-            NES_DEBUG("Written in file: {}. Number of Tuples: {}", sourceFile, source.tuples.size());
         });
 
     /// We create a new query plan from our config when finding a query

@@ -2,9 +2,10 @@
 # description: #503: Two sources do not work. Is this a special case that is different from 'TwoSources.test'?
 # groups: [Sources]
 
-Source noTuple UINT64 field_1
+Source noTuple UINT64 field_1 INLINE
 
-Source oneTuple UINT64 field_1 # Probably triggers a parser bug (parser still looks for tuples)
+# Probably triggers a parser bug (parser still looks for tuples)
+Source oneTuple UINT64 field_1 INLINE
 1
 
 SINK noTupleSink UINT64 noTuple$field_1

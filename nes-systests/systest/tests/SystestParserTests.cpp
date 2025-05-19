@@ -13,13 +13,16 @@
 */
 
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
@@ -60,10 +63,11 @@ TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
     EXPECT_NO_THROW(parser.parse());
 }
 
-TEST_F(SystestParserTest, testCallbackSourceCSV)
+TEST_F(SystestParserTest, testAttachSourceCallbackSource)
 {
     SystestParser parser{};
-    const std::string sourceIn = "SourceCSV window UINT64 id UINT64 value UINT64 timestamp window.csv";
+    const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp\n"
+                                 "Attach File CSV window INLINE";
 
     bool isSystestLogicalSourceCallbackCalled = false;
     bool isAttachSourceCallbackCalled = false;
@@ -73,6 +77,15 @@ TEST_F(SystestParserTest, testCallbackSourceCSV)
     parser.registerOnQueryCallback([](const std::string&, SystestQueryId) { FAIL(); });
     parser.registerOnSystestLogicalSourceCallback([&isSystestLogicalSourceCallbackCalled](const SystestParser::SystestLogicalSource&)
                                                   { isSystestLogicalSourceCallbackCalled = true; });
+    parser.registerOnSystestAttachSourceCallback(
+        [&isAttachSourceCallbackCalled](const SystestAttachSource& attachSource)
+        {
+            isAttachSourceCallbackCalled = true;
+            /// Not asserting on configurationPath, because we expand 'CONFIG' to the local path on the system executing the test
+            ASSERT_EQ(attachSource.logicalSourceName, "window");
+            ASSERT_EQ(attachSource.sourceType, "File");
+            ASSERT_EQ(attachSource.testDataIngestionType, TestDataIngestionType::INLINE);
+        });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
@@ -84,6 +97,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
     SystestParser parser{};
     QueryResultMap queryResultMap;
 
+    static constexpr std::string_view TestFileName = "testCallbackQuery";
     const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
     const std::string delimiter = "----";
     const std::string tpl1 = "1,1,1";
@@ -91,7 +105,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
 
     bool queryCallbackCalled = false;
 
-    const std::string str = queryIn + "\n" + delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
+    const std::string testFileString = fmt::format("{}\n{}\n{}\n{}\n", queryIn, delimiter, tpl1, tpl2);
 
     parser.registerOnQueryCallback(
         [&](const std::string& queryOut, SystestQueryId)
@@ -100,19 +114,19 @@ TEST_F(SystestParserTest, testCallbackQuery)
             queryCallbackCalled = true;
         });
     parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { FAIL(); });
+    parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { FAIL(); });
     parser.registerOnResultTuplesCallback(
         [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
-        { queryResultMap.emplace(SystestQuery::resultFile("", "", correspondingQueryId), std::move(resultTuples)); });
+        { queryResultMap.emplace(SystestQuery::resultFile("", TestFileName, correspondingQueryId), std::move(resultTuples)); });
 
-    ASSERT_TRUE(parser.loadString(str));
+    ASSERT_TRUE(parser.loadString(testFileString));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled);
     /// Check that the queryResult map contains the expected two results for the query defined above
-    ASSERT_TRUE(queryResultMap.contains("results/_1.csv"));
-    ASSERT_EQ(queryResultMap.at("results/_1.csv").size(), 2);
-    ASSERT_EQ(queryResultMap.at("results/_1.csv").at(0), tpl1);
-    ASSERT_EQ(queryResultMap.at("results/_1.csv").at(1), tpl2);
+    ASSERT_TRUE(queryResultMap.contains("results/testCallbackQuery_1.csv"));
+    ASSERT_EQ(queryResultMap.at("results/testCallbackQuery_1.csv").size(), 2);
+    ASSERT_EQ(queryResultMap.at("results/testCallbackQuery_1.csv").at(0), tpl1);
+    ASSERT_EQ(queryResultMap.at("results/testCallbackQuery_1.csv").at(1), tpl2);
 }
 
 TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
@@ -137,11 +151,9 @@ TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
             ASSERT_EQ(sourceOut.fields[1].name, "value");
             ASSERT_EQ(sourceOut.fields[2].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
             ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
-            ASSERT_EQ(sourceOut.tuples[0], tpl1);
-            ASSERT_EQ(sourceOut.tuples[1], tpl2);
             callbackCalled = true;
         });
-    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { FAIL(); });
+    parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
@@ -164,7 +176,7 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
             /// nop
         });
     parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { FAIL(); });
+    parser.registerOnSystestAttachSourceCallback([&](const SystestAttachSource&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     const SystestStarterGlobals systestStarterGlobals{};

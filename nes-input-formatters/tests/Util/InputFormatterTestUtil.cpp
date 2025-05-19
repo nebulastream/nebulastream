@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <InputFormatterTestUtil.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
@@ -48,7 +50,6 @@
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
 
 namespace NES::InputFormatterTestUtil

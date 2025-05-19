@@ -2,7 +2,7 @@
 # description: Simple function NotEqual tests
 # groups: [Function, FunctionNotEqual]
 
-Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
+Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64 INLINE
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,13,42.42
 
 SINK sink10Booleans BOOLEAN stream$bool1 BOOLEAN stream$bool2 BOOLEAN stream$bool3 BOOLEAN stream$bool4 BOOLEAN stream$bool5 BOOLEAN stream$bool6 BOOLEAN stream$bool7 BOOLEAN stream$bool8 BOOLEAN stream$bool9 BOOLEAN stream$bool10

@@ -1,4 +1,4 @@
-Source stream UINT64 id
+Source stream UINT64 id INLINE
 1
 
 SINK CORRECT_SINK UINT64 stream$id
