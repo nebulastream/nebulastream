@@ -110,7 +110,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && !github.event.act }}
         with:
-          name: junit-${{ matrix.cmake_args.name }}-${{ matrix.stdlib }}.xml
+          name: junit-${{ matrix.cmake_args.name }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
           path: /junit.xml
 
   # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
