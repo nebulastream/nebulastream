@@ -61,40 +61,40 @@ TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
     EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
 }
 
-TEST_F(SystestParserTest, testCallbackSourceCSV)
+TEST_F(SystestParserTest, testAttachSourceCallbackSource)
 {
     SystestParser parser{};
-    const std::string sourceIn = "SourceCSV window UINT64 id UINT64 value UINT64 timestamp window.csv";
+    const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp\n"
+                                 "Attach File CSV window INLINE";
 
-    bool callbackCalled = false;
+    bool isSLTSourceCallbackCalled = false;
+    bool isAttachSourceCallbackCalled = false;
 
     const std::string str = sourceIn + "\n";
 
-    parser.registerOnQueryCallback([&](const std::string&, size_t) { FAIL(); });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback(
-        [&](SystestParser::CSVSource&& sourceOut)
+    parser.registerOnQueryCallback([](const std::string&, size_t) { FAIL(); });
+    parser.registerOnSLTSourceCallback([&isSLTSourceCallbackCalled](SystestParser::SLTSource&&) { isSLTSourceCallbackCalled = true; });
+    parser.registerOnAttachSourceCallback(
+        [&isAttachSourceCallbackCalled](SystestAttachSource&& attachSource)
         {
-            ASSERT_EQ(sourceOut.name, "window");
-            ASSERT_EQ(sourceOut.fields[0].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
-            ASSERT_EQ(sourceOut.fields[0].name, "id");
-            ASSERT_EQ(sourceOut.fields[1].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
-            ASSERT_EQ(sourceOut.fields[1].name, "value");
-            ASSERT_EQ(sourceOut.fields[2].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
-            ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
-            ASSERT_EQ(sourceOut.csvFilePath, "window.csv");
-            callbackCalled = true;
+            isAttachSourceCallbackCalled = true;
+            /// Not asserting on configurationPath, because we expand 'CONFIG' to the local path on the system executing the test
+            ASSERT_EQ(attachSource.logicalSourceName, "window");
+            ASSERT_EQ(attachSource.sourceType, "File");
+            ASSERT_EQ(attachSource.testDataIngestionType, TestDataIngestionType::INLINE);
         });
 
     ASSERT_TRUE(parser.loadString(str));
     SystestStarterGlobals systestStarterGlobals{};
     EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
-    ASSERT_TRUE(callbackCalled);
+    ASSERT_TRUE(isSLTSourceCallbackCalled);
+    ASSERT_TRUE(isAttachSourceCallbackCalled);
 }
 
 TEST_F(SystestParserTest, testCallbackQuery)
 {
     SystestParser parser{};
+    static constexpr std::string_view testFileName = "testCallbackQuery";
     const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
     const std::string delimiter = "----";
     const std::string tpl1 = "1,1,1";
@@ -102,7 +102,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
 
     bool queryCallbackCalled = false;
 
-    const std::string str = queryIn + "\n" + delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
+    const std::string testFileString = fmt::format("{}\n{}\n{}\n{}\n", queryIn, delimiter, tpl1, tpl2);
 
     parser.registerOnQueryCallback(
         [&](const std::string& queryOut, size_t)
@@ -111,17 +111,17 @@ TEST_F(SystestParserTest, testCallbackQuery)
             queryCallbackCalled = true;
         });
     parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnAttachSourceCallback([&](SystestAttachSource&&) { FAIL(); });
 
-    ASSERT_TRUE(parser.loadString(str));
+    ASSERT_TRUE(parser.loadString(testFileString));
     SystestStarterGlobals systestStarterGlobals{};
-    EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
+    EXPECT_NO_THROW(parser.parse(systestStarterGlobals, testFileName));
     ASSERT_TRUE(queryCallbackCalled);
     /// Check that the queryResult map contains the expected two results for the query defined above
-    ASSERT_TRUE(systestStarterGlobals.getQueryResultMap().contains("results/_1.csv"));
-    ASSERT_EQ(systestStarterGlobals.getQueryResultMap().at("results/_1.csv").size(), 2);
-    ASSERT_EQ(systestStarterGlobals.getQueryResultMap().at("results/_1.csv").at(0), tpl1);
-    ASSERT_EQ(systestStarterGlobals.getQueryResultMap().at("results/_1.csv").at(1), tpl2);
+    ASSERT_TRUE(systestStarterGlobals.getQueryResultMap().contains("results/testCallbackQuery_1.csv"));
+    ASSERT_EQ(systestStarterGlobals.getQueryResultMap().at("results/testCallbackQuery_1.csv").size(), 2);
+    ASSERT_EQ(systestStarterGlobals.getQueryResultMap().at("results/testCallbackQuery_1.csv").at(0), tpl1);
+    ASSERT_EQ(systestStarterGlobals.getQueryResultMap().at("results/testCallbackQuery_1.csv").at(1), tpl2);
 }
 
 TEST_F(SystestParserTest, testCallbackSLTSource)
@@ -146,11 +146,9 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
             ASSERT_EQ(sourceOut.fields[1].name, "value");
             ASSERT_EQ(sourceOut.fields[2].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
             ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
-            ASSERT_EQ(sourceOut.tuples[0], tpl1);
-            ASSERT_EQ(sourceOut.tuples[1], tpl2);
             callbackCalled = true;
         });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnAttachSourceCallback([&](SystestAttachSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     SystestStarterGlobals systestStarterGlobals{};
@@ -169,7 +167,7 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
 
     parser.registerOnQueryCallback([&](const std::string&, size_t) { FAIL(); });
     parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
+    parser.registerOnAttachSourceCallback([&](SystestAttachSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     SystestStarterGlobals systestStarterGlobals{};

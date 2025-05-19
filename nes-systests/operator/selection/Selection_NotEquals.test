@@ -3,6 +3,8 @@
 # groups: [Selection]
 
 Source stream UINT64 id UINT64 value UINT64 timestamp
+
+Attach File CSV stream INLINE
 1,1,1000
 12,1,1001
 4,1,1002
@@ -34,6 +36,8 @@ Source stream UINT64 id UINT64 value UINT64 timestamp
 
 
 Source streamWithText UINT64 id UINT64 value VARSIZED text1 VARSIZED text2
+
+Attach File CSV streamWithText INLINE
 1,1,test1,test1
 12,1,test1,test2
 4,1,test2,test2

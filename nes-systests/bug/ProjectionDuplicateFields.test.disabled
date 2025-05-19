@@ -6,6 +6,7 @@
 # TODO #529
 
 Source window UINT64 id UINT64 value UINT64 timestamp
+Attach File CSV window INLINE
 1,1,1000
 2,1,1001
 3,1,1002

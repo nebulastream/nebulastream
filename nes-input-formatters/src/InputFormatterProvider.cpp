@@ -35,4 +35,8 @@ provideInputFormatter(const std::string& parserType, const Schema& schema, std::
     }
     throw UnknownParserType("unknown type of parser: {}", parserType);
 }
+bool contains(const std::string& sourceType)
+{
+    return InputFormatterRegistry::instance().contains(sourceType);
+}
 }

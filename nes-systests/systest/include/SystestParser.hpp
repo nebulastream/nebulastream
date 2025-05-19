@@ -20,8 +20,10 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
-#include <DataTypes/DataType.hpp>
+
+#include <SystestSources/SourceTypes.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -32,8 +34,8 @@ using namespace std::literals;
 enum class TokenType : uint8_t
 {
     INVALID,
-    CSV_SOURCE,
     SLT_SOURCE,
+    ATTACH_SOURCE,
     SINK,
     QUERY,
     RESULT_DELIMITER,
@@ -61,19 +63,10 @@ public:
     [[nodiscard]] bool loadString(const std::string& str);
 
     /// Type definitions ///
-    struct CSVSource
-    {
-        std::string name;
-        SystestSchema fields;
-        std::string csvFilePath;
-        bool operator==(const CSVSource& other) const = default;
-    };
-
     struct SLTSource
     {
         std::string name;
         SystestSchema fields;
-        std::vector<std::string> tuples;
         bool operator==(const SLTSource& other) const = default;
     };
 
@@ -89,17 +82,18 @@ public:
     using QueryCallback = std::function<void(std::string, size_t)>;
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
-    using CSVSourceCallback = std::function<void(CSVSource&&)>;
+    using AttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
     using SinkCallback = std::function<void(Sink&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
-    void registerOnCSVSourceCallback(CSVSourceCallback callback);
+    void registerOnAttachSourceCallback(AttachSourceCallback callback);
     void registerOnSinkCallBack(SinkCallback callback);
 
 
     void parse(SystestStarterGlobals& systestStarterGlobals, std::string_view testFileName);
+    void parseResultLines();
 
 private:
     /// Substitution rules ///
@@ -114,18 +108,20 @@ private:
     [[nodiscard]] bool moveToNextToken();
 
     [[nodiscard]] SLTSource expectSLTSource();
-    [[nodiscard]] CSVSource expectCSVSource() const;
+    [[nodiscard]] SystestAttachSource expectAttachSource();
     [[nodiscard]] Sink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
+    [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
 
     QueryCallback onQueryCallback;
     SLTSourceCallback onSLTSourceCallback;
-    CSVSourceCallback onCSVSourceCallback;
+    AttachSourceCallback onAttachSourceCallback;
     SinkCallback onSinkCallback;
 
     bool firstToken = true;
     size_t currentLine = 0;
     std::vector<std::string> lines;
+    std::unordered_set<std::string> seenLogicalSourceNames;
 };
 }

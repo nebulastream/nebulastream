@@ -3,8 +3,10 @@
 # groups: [Sources]
 
 Source noTuple UINT64 field_1
+Attach File CSV noTuple INLINE
 
 Source oneTuple UINT64 field_1 # Probably triggers a parser bug (parser still looks for tuples)
+Attach File CSV oneTuple INLINE
 1
 
 SINK noTupleSink UINT64 noTuple$field_1

@@ -436,7 +436,7 @@ SystestMainResult executeSystests(Configuration::SystestConfiguration config)
         std::filesystem::create_directory(config.workingDir.getValue());
 
         Systest::SystestStarterGlobals systestStarterGlobals{
-            config.workingDir.getValue(), config.testDataDir.getValue(), Systest::loadTestFileMap(config)};
+            config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue(), Systest::loadTestFileMap(config)};
         auto queries = loadQueries(systestStarterGlobals);
         if (queries.empty())
         {

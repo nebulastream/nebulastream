@@ -4,6 +4,7 @@
 
 # Both queries below should pass, but the first fails.
 Source fiveTuples UINT64 field_1
+Attach File CSV fiveTuples INLINE
 1
 2
 3
@@ -11,6 +12,7 @@ Source fiveTuples UINT64 field_1
 5
 
 Source sixTuples UINT64 field_1
+Attach File CSV sixTuples INLINE
 1
 2
 3

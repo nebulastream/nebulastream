@@ -20,7 +20,10 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
+#include <SystestSources/SourceTypes.hpp>
+#include <SystestSources/SourceTypes.hpp>
 
 namespace NES
 {
@@ -53,22 +56,18 @@ struct LogicalSource
     std::vector<SchemaField> schema;
 };
 
-struct PhysicalSource
-{
-    std::string logical;
-    std::unordered_map<std::string, std::string> parserConfig;
-    std::unordered_map<std::string, std::string> sourceConfig;
-};
-
 struct QueryConfig
 {
     std::string query;
     std::unordered_map<std::string, Sink> sinks;
     std::vector<LogicalSource> logical;
-    std::vector<PhysicalSource> physical;
+    std::vector<SystestPhysicalSource> physical;
 };
 
 std::unique_ptr<LogicalPlan> loadFromYAMLFile(const std::filesystem::path& file);
+SystestPhysicalSource loadFromYAMLSource(const std::filesystem::path& file);
+SystestPhysicalSource loadSystestPhysicalSourceFromYAML(
+    std::string logicalSourceName, const std::filesystem::path& sourceFilePath, const std::filesystem::path& inputFormatterFilePath);
 std::unique_ptr<LogicalPlan> loadFrom(std::istream& inputStream);
 std::unique_ptr<LogicalPlan> createFullySpecifiedQueryPlan(const QueryConfig& config);
 }

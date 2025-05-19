@@ -3,6 +3,7 @@
 # groups: [Sources]
 
 Source noTuple UINT64 field_1
+Attach File CSV noTuple INLINE
 
 SINK SINK UINT64 noTuple$field_1
 

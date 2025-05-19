@@ -7,7 +7,9 @@
 # The problem is that the queries perform a floating point average aggregation. Due to our out-of-order processing, the results may differ slightly.
 
 # Source definitions
-SourceCSV smartGrid UINT64 creationTS FLOAT32 value FLOAT32 property INT16 plugId INT16 householdId INT16 houseId TESTDATA/smartgrid/smartgrid-data_974K.csv
+Source smartGrid UINT64 creationTS FLOAT32 value FLOAT32 property INT16 plugId INT16 householdId INT16 houseId
+Attach File CSV smartGrid FILE
+TESTDATA/smartgrid/smartgrid-data.csv
 
 
 # Query 1

@@ -35,6 +35,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -43,7 +44,7 @@
 
 namespace NES::Systest
 {
-class SystestParser;
+
 using TestName = std::string;
 using TestGroup = std::string;
 
@@ -262,18 +263,25 @@ using TestFileMap = std::unordered_map<std::filesystem::path, TestFile>;
 using QueryResultMap = std::unordered_map<std::filesystem::path, std::vector<std::string>>;
 
 /// Groups (global) variables used throughout the main function call of SystestStarter
-/// Only selected classes may modify its internals
+/// Only selected classes/structs may modify its internals:
+class SystestParser;
+struct LoadedQueryPlan;
 class SystestStarterGlobals
 {
 public:
     SystestStarterGlobals() = default;
-    explicit SystestStarterGlobals(std::filesystem::path workingDir, std::filesystem::path testDataDir, TestFileMap testFileMap)
-        : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), testFileMap(std::move(testFileMap))
+    explicit SystestStarterGlobals(
+        std::filesystem::path workingDir, std::filesystem::path testDataDir, std::filesystem::path configDir, TestFileMap testFileMap)
+        : workingDir(std::move(workingDir))
+        , testDataDir(std::move(testDataDir))
+        , configDir(std::move(configDir))
+        , testFileMap(std::move(testFileMap))
     {
     }
 
     [[nodiscard]] std::filesystem::path getWorkingDir() const { return workingDir; }
     [[nodiscard]] std::filesystem::path getTestDataDir() const { return testDataDir; }
+    [[nodiscard]] std::filesystem::path getConfigDir() const { return configDir; }
     [[nodiscard]] const TestFileMap& getTestFileMap() const { return testFileMap; }
     [[nodiscard]] const QueryResultMap& getQueryResultMap() const { return queryResultMap; }
 
@@ -283,6 +291,10 @@ protected:
     {
         queryResultMap.emplace(SystestQuery::resultFile(workingDir, testFileName, queryResultNumber), std::move(resultLines));
     }
+
+    friend std::vector<LoadedQueryPlan>
+    loadFromSLTFile(SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName);
+    void setDataServerThreadsInAttachSource(SystestAttachSource& attachSource) const { attachSource.serverThreads = dataServerThreads; }
 
     friend void loadQueriesFromTestFile(const TestFile& testfile, SystestStarterGlobals& systestStarterGlobals);
     void addQuery(
@@ -314,8 +326,10 @@ protected:
 private:
     std::filesystem::path workingDir;
     std::filesystem::path testDataDir;
+    std::filesystem::path configDir;
     TestFileMap testFileMap;
     QueryResultMap queryResultMap;
+    std::shared_ptr<std::vector<std::jthread>> dataServerThreads;
 };
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 

@@ -18,6 +18,7 @@
 #include <array>
 #include <cstddef>
 #include <cstring>
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -27,8 +28,13 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
+#include <InputFormatters/InputFormatterProvider.hpp>
+#include <Sources/SourceProvider.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
+#include <Sources/SourceProvider.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
@@ -83,20 +89,111 @@ bool emptyOrComment(const std::string& line)
         || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
         || line.starts_with('#'); /// slt comment
 }
+
+std::optional<std::filesystem::path> validateYamlConfigPath(const std::string_view filePath)
+{
+    const std::filesystem::path path(filePath);
+    if (not std::filesystem::exists(path) or not std::filesystem::is_regular_file(path) or not path.has_extension())
+    {
+        return std::nullopt;
+    }
+
+    const std::string ext = NES::Util::toLowerCase(path.extension().string());
+    return (ext == ".yaml" or ext == ".yml") ? std::optional{path} : std::nullopt;
+}
+
+NES::SystestAttachSource validateAttachSource(const std::unordered_set<std::string>& seenLogicalSourceNames, const std::string& line)
+{
+    (void)seenLogicalSourceNames; /// allows release mode to build (fails because of 'unused-parameter' otherwise)
+    const auto attachSourceTokens = NES::Util::splitWithStringDelimiter<std::string>(line, " ");
+    /// Attach SourceType (SourceConfig) IFormatter (IFormatterConfig) LogicalSourceName DataIngestionType
+    constexpr size_t minNumberOfTokensInAttachSource = 5;
+    constexpr size_t maxNumberOfTokensInAttachSource = 7;
+
+    /// Preliminary checks
+    INVARIANT(
+        attachSourceTokens.size() >= minNumberOfTokensInAttachSource and attachSourceTokens.size() <= maxNumberOfTokensInAttachSource,
+        "Expected between {} and {} tokens for attach source, but found {} tokens in \"{}\"",
+        minNumberOfTokensInAttachSource,
+        maxNumberOfTokensInAttachSource,
+        attachSourceTokens.size(),
+        fmt::join(attachSourceTokens, ", "));
+    INVARIANT(NES::Util::toUpperCase(attachSourceTokens.front()) == "ATTACH", "Expected first token of attach source to be 'ATTACH'");
+
+    /// Validate and parse tokens
+    size_t nextTokenIdx = 1;
+    NES::SystestAttachSource attachSource{};
+    INVARIANT(
+        NES::Sources::SourceProvider::contains(attachSourceTokens.at(nextTokenIdx)),
+        "Expected second token of attach source to be valid source type, but was: {}",
+        attachSourceTokens.at(1));
+    attachSource.sourceType = std::string(attachSourceTokens.at(nextTokenIdx++));
+
+    attachSource.sourceConfigurationPath
+        = [](const std::vector<std::string>& attachSourceTokens, const std::string_view sourceType, size_t& nextTokenIdx)
+        {
+            if (const auto sourceConfigPath = validateYamlConfigPath(attachSourceTokens.at(nextTokenIdx)))
+            {
+                ++nextTokenIdx;
+                return sourceConfigPath.value();
+            }
+            /// Set default source config path
+            return std::filesystem::path(TEST_CONFIGURATION_DIR) / fmt::format("sources/{}_default.yaml", NES::Util::toLowerCase(sourceType));
+        }(attachSourceTokens, attachSource.sourceType, nextTokenIdx);
+
+    INVARIANT(
+        NES::InputFormatters::InputFormatterProvider::contains(attachSourceTokens.at(nextTokenIdx)),
+        "Expected token after source config to be a valid input formatter, but was: {}",
+        attachSourceTokens.at(nextTokenIdx));
+    attachSource.inputFormatterType = attachSourceTokens.at(nextTokenIdx++);
+
+    attachSource.inputFormatterConfigurationPath
+        = [](const std::vector<std::string>& attachSourceTokens, const std::string_view inputFormatterType, size_t& nextTokenIdx)
+        {
+            if (const auto inputFormatterConfigPath = validateYamlConfigPath(attachSourceTokens.at(nextTokenIdx)))
+            {
+                ++nextTokenIdx;
+                return inputFormatterConfigPath.value();
+            }
+            /// Set default source config path
+            return std::filesystem::path(TEST_CONFIGURATION_DIR)
+                / fmt::format("inputFormatters/{}_default.yaml", NES::Util::toLowerCase(inputFormatterType));
+        }(attachSourceTokens, attachSource.inputFormatterType, nextTokenIdx);
+
+    INVARIANT(
+        seenLogicalSourceNames.contains(attachSourceTokens.at(nextTokenIdx)),
+        "Expected second to last token of attach source to be an existing logical source name, but was: {}",
+        attachSourceTokens.at(nextTokenIdx));
+    attachSource.logicalSourceName = attachSourceTokens.at(nextTokenIdx++);
+
+    INVARIANT(
+        magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(attachSourceTokens.at(nextTokenIdx))),
+        "Last keyword of attach source must be a valid TestDataIngestionType, but was: {}",
+        attachSourceTokens.at(nextTokenIdx));
+    attachSource.testDataIngestionType
+        = magic_enum::enum_cast<NES::TestDataIngestionType>(NES::Util::toUpperCase(attachSourceTokens.at(nextTokenIdx++))).value();
+
+    INVARIANT(
+        nextTokenIdx == attachSourceTokens.size(),
+        "Number of parsed tokens {} does not match number of input tokens {}",
+        nextTokenIdx,
+        attachSourceTokens.size());
+    return attachSource;
+}
 }
 
 namespace NES::Systest
 {
 
-static constexpr auto CSVSourceToken = "SourceCSV"s;
 static constexpr auto SLTSourceToken = "Source"s;
+static constexpr auto AttachSourceToken = "Attach"s;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 
-static const std::array<std::pair<std::string_view, TokenType>, 5> stringToToken
-    = {{{CSVSourceToken, TokenType::CSV_SOURCE},
-        {SLTSourceToken, TokenType::SLT_SOURCE},
+static constexpr std::array<std::pair<std::string_view, TokenType>, 6> stringToToken
+    = {{{SLTSourceToken, TokenType::SLT_SOURCE},
+        {AttachSourceToken, TokenType::ATTACH_SOURCE},
         {QueryToken, TokenType::QUERY},
         {SinkToken, TokenType::SINK},
         {ResultDelimiter, TokenType::RESULT_DELIMITER}}};
@@ -159,18 +256,16 @@ void SystestParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
 {
     this->onSLTSourceCallback = std::move(callback);
 }
+void SystestParser::registerOnAttachSourceCallback(AttachSourceCallback callback)
+{
+    this->onAttachSourceCallback = std::move(callback);
+}
 
 void SystestParser::registerOnSinkCallBack(SinkCallback callback)
 {
     this->onSinkCallback = std::move(callback);
 }
 
-void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
-{
-    this->onCSVSourceCallback = std::move(callback);
-}
-
-/// Here we model the structure of the test file by what we `expect` to see.
 void SystestParser::parse(SystestStarterGlobals& systestStarterGlobals, const std::string_view testFileName)
 {
     SystestQueryNumberAssigner queryNumberAssigner{};
@@ -178,11 +273,10 @@ void SystestParser::parse(SystestStarterGlobals& systestStarterGlobals, const st
     {
         switch (token.value())
         {
-            case TokenType::CSV_SOURCE: {
-                auto source = expectCSVSource();
-                if (onCSVSourceCallback)
+            case TokenType::ATTACH_SOURCE: {
+                if (onAttachSourceCallback)
                 {
-                    onCSVSourceCallback(std::move(source));
+                    onAttachSourceCallback(expectAttachSource());
                 }
                 break;
             }
@@ -361,49 +455,41 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
 
     /// After the source definition line we expect schema fields
     source.fields = parseSchemaFields(arguments);
-
-    /// After the source definition line, we expect the tuples
-    source.tuples = expectTuples(true);
+    seenLogicalSourceNames.emplace(source.name);
 
     return source;
 }
 
-
-SystestParser::CSVSource SystestParser::expectCSVSource() const
+/// Attach SOURCE_TYPE LOGICAL_SOURCE_NAME DATA_SOURCE_TYPE
+/// Attach SOURCE_TYPE SOURCE_CONFIG_PATH LOGICAL_SOURCE_NAME DATA_SOURCE_TYPE
+SystestAttachSource SystestParser::expectAttachSource()
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
-    CSVSource source;
-    const auto& line = lines[currentLine];
-    std::istringstream stream(line);
 
-    /// Read and discard the first word as it is always CSVSource
-    std::string discard;
-    if (!(stream >> discard))
+    switch (auto attachSource = validateAttachSource(seenLogicalSourceNames, lines[currentLine]); attachSource.testDataIngestionType)
     {
-        throw SLTUnexpectedToken("failed to read the first word in: " + line);
+        case TestDataIngestionType::INLINE: {
+            attachSource.tuples = {expectTuples(true)};
+            return attachSource;
+        }
+        case TestDataIngestionType::FILE: {
+            attachSource.fileDataPath = {expectFilePath()};
+            return attachSource;
+        }
     }
-    INVARIANT(discard == CSVSourceToken, "Expected first word to be `{}` for csv source statement", CSVSourceToken);
-
-    /// Read the source name and check if successful
-    if (!(stream >> source.name))
-    {
-        throw SLTUnexpectedToken("failed to read source name in: " + line);
-    }
-
-    std::vector<std::string> arguments;
-    std::string argument;
-    while (stream >> argument)
-    {
-        arguments.push_back(argument);
-    }
-
-    source.csvFilePath = arguments.back();
-    arguments.pop_back();
-
-    source.fields = parseSchemaFields(arguments);
-    return source;
 }
 
+std::filesystem::path SystestParser::expectFilePath()
+{
+    ++currentLine;
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
+    if (const auto parsedFilePath = std::filesystem::path(lines.at(currentLine));
+        std::filesystem::exists(parsedFilePath) and parsedFilePath.has_filename())
+    {
+        return parsedFilePath;
+    }
+    throw TestException("Attach source with FileData must be followed by valid file path, but got: {}", lines.at(currentLine));
+}
 SystestParser::ResultTuples SystestParser::expectTuples(const bool ignoreFirst)
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");

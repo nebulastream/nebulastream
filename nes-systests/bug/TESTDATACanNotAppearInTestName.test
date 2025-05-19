@@ -6,6 +6,7 @@
 # This test works if it does not contain 'TESTDATA' in its file name.
 # This might be true for other keywords too. 'Source' seems to be fine though.
 Source fiveTuples UINT64 field_1
+Attach File CSV fiveTuples INLINE
 1
 2
 3

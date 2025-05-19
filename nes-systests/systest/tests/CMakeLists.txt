@@ -18,6 +18,6 @@ add_nes_test_systest(slt-parser-test
 add_nes_test_systest(slt-e2e-test
         "SystestE2ETests.cpp")
 
-target_compile_definitions(slt-parser-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/" TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/" PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}")
+target_compile_definitions(slt-parser-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/" TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/" PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}" TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/configs")
 
-target_compile_definitions(slt-e2e-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/" TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/" PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}")
+target_compile_definitions(slt-e2e-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/" TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/" PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}" TEST_CONFIGURATION_DIR="${CMAKE_CURRENT_SOURCE_DIR}/configs")

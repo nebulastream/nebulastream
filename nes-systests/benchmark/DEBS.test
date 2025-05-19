@@ -3,8 +3,13 @@
 # groups: [milestone, benchmark, large]
 
 # Source definitions
-SourceCSV solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp TESTDATA/large/debs/SOLAR_PANELS_TOPIC_1G.csv
-SourceCSV consumers INT32 consumerId INT32 sectorId FLOAT64 consumedPower VARSIZED consumerType UINT64 timestamp TESTDATA/large/debs/CONSUMERS_TOPIC_1G.csv
+Source solarPanels INT32 producerId INT32 groupId FLOAT64 producedPower UINT64 timestamp
+Attach File CSV solarPanels FILE
+TESTDATA/large/debs/SOLAR_PANELS_TOPIC.csv
+
+Source consumers INT32 consumerId INT32 sectorId FLOAT64 consumedPower VARSIZED consumerType UINT64 timestamp
+Attach File CSV consumers FILE
+TESTDATA/large/debs/CONSUMERS_TOPIC.csv
 
 
 # Query 0a - Simple Source Sink with consumers stream

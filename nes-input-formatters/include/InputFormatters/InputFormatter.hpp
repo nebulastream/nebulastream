@@ -20,6 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES::InputFormatters
 {

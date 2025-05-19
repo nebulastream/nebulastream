@@ -1,0 +1,27 @@
+# name: projection/Projection.test
+# description: Simple map tests with an add function
+# groups: [Projection]
+
+Source stream UINT64 id UINT64 value UINT64 timestamp
+SINK file_sink UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
+
+Attach File stream FILE
+TESTDATA/small/stream8.csv
+
+Attach File CONFIG/sources/file_inline_pipe_delimiter.yaml stream INLINE
+1|6|67
+1|7|78
+1|8|89
+1|9|100
+
+SELECT * FROM stream INTO file_sink
+----
+1,1,12
+1,2,23
+1,3,34
+1,4,45
+1,5,56
+1,6,67
+1,7,78
+1,8,89
+1,9,100

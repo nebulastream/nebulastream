@@ -28,9 +28,14 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <ErrorHandling.hpp>
+#include <FileDataRegistry.hpp>
+#include <FileSource.hpp>
+#include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+
 
 namespace NES::Sources
 {
@@ -82,5 +87,48 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegi
 {
     return std::make_unique<FileSource>(sourceRegistryArguments.sourceDescriptor);
 }
+
+InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterFileInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+{
+    if (systestAdaptorArguments.attachSource.tuples)
+    {
+        if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
+            filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            filePath->second = systestAdaptorArguments.testFilePath;
+            if (std::ofstream testFile(systestAdaptorArguments.testFilePath); testFile.is_open())
+            {
+                /// Write inline tuples to test file.
+                for (const auto& tuple : systestAdaptorArguments.attachSource.tuples.value())
+                {
+                    testFile << tuple << "\n";
+                }
+                testFile.flush();
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw TestException("Could not open source file \"{}\"", systestAdaptorArguments.testFilePath);
+        }
+        throw InvalidConfigParameter("A FileSource config must contain filePath parameter");
+    }
+    throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
+}
+
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterFileFileData(FileDataRegistryArguments systestAdaptorArguments)
+{
+    /// Check that the test data dir is defined and that the 'filePath' parameter is set
+    /// Replace the 'TESTDATA' placeholder in the filepath
+    if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)
+    {
+        if (const auto filePath = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(std::string(SYSTEST_FILE_PATH_PARAMETER));
+            filePath != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            filePath->second = attachSourceFilePath.value();
+            return systestAdaptorArguments.physicalSourceConfig;
+        }
+        throw InvalidConfigParameter("A FileSource config must contain filePath parameter.");
+    }
+    throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
+}
+
 
 }

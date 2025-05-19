@@ -3,6 +3,7 @@
 # groups: [Tuples]
 
 Source fiveTuples UINT64 field_1
+Attach File CSV fiveTuples INLINE
 1
 2
 3

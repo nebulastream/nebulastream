@@ -3,6 +3,7 @@
 # groups: [Tuples]
 
 Source oneTuple UINT64 field_1
+Attach File CSV oneTuple INLINE
 1
 
 SINK sinkOneTuple UINT64 oneTuple$field_1

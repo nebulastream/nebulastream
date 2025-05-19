@@ -45,16 +45,16 @@ public:
 
 TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 {
-    const auto* const filename = TEST_DATA_DIR "valid.dummy";
+    const std::string filename = std::string(TEST_DATA_DIR) + "valid.dummy";
 
-    const auto* const expectQuery1 = R"(Query::from("e123").filter(Attribute("i") >= 10).SINK;)";
-    const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
+    const std::string expectQuery1 = R"(Query::from("e123").filter(Attribute("i") >= 10).SINK;)";
+    const std::string expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
-    SystestParser::SLTSource expectedSLTSource
-        = {.name = "e123",
-           .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT32), .name = "id"}},
-           .tuples = {"1", "1", "1", "1"}};
-    SystestParser::CSVSource expectedCSVSource
+    bool hasFirstSourceBeenParsed = false;
+    bool hasSecondSourceBeenParsed = false;
+    SystestParser::SLTSource firstExpectedSLTSource
+        = {.name = "e123", .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT32), .name = "id"}}};
+    SystestParser::SLTSource secondExpectedSLTSource
         = {.name = "e124",
            .fields
            = {{.type = DataTypeProvider::provideDataType(DataType::Type::INT8), .name = "i"},
@@ -68,17 +68,36 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
               {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "i"},
               {.type = DataTypeProvider::provideDataType(DataType::Type::FLOAT64), .name = "i"},
               {.type = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), .name = "i"},
-              {.type = DataTypeProvider::provideDataType(DataType::Type::CHAR), .name = "i"}},
-           .csvFilePath = "xyz.txt"};
+              {.type = DataTypeProvider::provideDataType(DataType::Type::CHAR), .name = "i"}}};
 
     SystestParser parser{};
-    parser.registerOnQueryCallback([&](const std::string& query, size_t) { ASSERT_TRUE(query == expectQuery1 || query == expectQuery2); });
-    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource& source) { ASSERT_EQ(source, expectedSLTSource); });
-    parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource& source) { ASSERT_EQ(source, expectedCSVSource); });
+    parser.registerOnQueryCallback([&expectQuery1, &expectQuery2](const std::string& query, size_t)
+                                   { ASSERT_TRUE(query == expectQuery1 || query == expectQuery2); });
+    parser.registerOnAttachSourceCallback([](const SystestAttachSource&&) { /* noop */ });
+    parser.registerOnSLTSourceCallback(
+        [&hasFirstSourceBeenParsed, &hasSecondSourceBeenParsed, &firstExpectedSLTSource, &secondExpectedSLTSource](
+            const SystestParser::SLTSource& source)
+        {
+            if (source.name == firstExpectedSLTSource.name)
+            {
+                hasFirstSourceBeenParsed = true;
+                ASSERT_EQ(source, firstExpectedSLTSource);
+                return;
+            }
+            if (source.name == secondExpectedSLTSource.name)
+            {
+                hasSecondSourceBeenParsed = true;
+                ASSERT_EQ(source, secondExpectedSLTSource);
+                return;
+            }
+            FAIL();
+        });
 
     ASSERT_TRUE(parser.loadFile(filename));
     SystestStarterGlobals systestStarterGlobals{};
     EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
+    ASSERT_TRUE(hasFirstSourceBeenParsed);
+    ASSERT_TRUE(hasSecondSourceBeenParsed);
 }
 
 TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
@@ -86,15 +105,16 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
     const auto* const filename = TEST_DATA_DIR "comments.dummy";
 
     SystestParser::SLTSource expectedSLTSource;
+    SystestAttachSource expectedAttachSource{};
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
         = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
            {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"},
            {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "timestamp"}};
-    expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
-                                "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
-                                "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
-                                "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"};
+    expectedAttachSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
+                                   "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
+                                   "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
+                                   "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"};
 
     /// Expected queries and results
     const auto* const expectedQuery1 = R"(Query::from("window")
@@ -121,8 +141,11 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         {
             ASSERT_EQ(source.name, expectedSLTSource.name);
             ASSERT_EQ(source.fields, expectedSLTSource.fields);
-            ASSERT_EQ(source.tuples, expectedSLTSource.tuples);
         });
+
+    parser.registerOnAttachSourceCallback(
+        [&](SystestAttachSource&& attachSource)
+        { ASSERT_TRUE(attachSource.tuples and attachSource.tuples.value() == expectedAttachSource.tuples.value()); });
 
     parser.registerOnQueryCallback(
         [&](const std::string& query, size_t)
@@ -141,15 +164,16 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
     const auto* const filename = TEST_DATA_DIR "filter.dummy";
 
     SystestParser::SLTSource expectedSLTSource;
+    SystestAttachSource expectedAttachSource{};
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
         = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
            {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "value"},
            {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "timestamp"}};
-    expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
-                                "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
-                                "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
-                                "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"};
+    expectedAttachSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
+                                   "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
+                                   "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
+                                   "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"};
 
     std::vector<std::string> expectedQueries = {
         R"(Query::from("window")
@@ -224,8 +248,11 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
         {
             ASSERT_EQ(source.name, expectedSLTSource.name);
             ASSERT_EQ(source.fields, expectedSLTSource.fields);
-            ASSERT_EQ(source.tuples, expectedSLTSource.tuples);
         });
+
+    parser.registerOnAttachSourceCallback(
+        [&](SystestAttachSource&& attachSource)
+        { ASSERT_TRUE(attachSource.tuples and attachSource.tuples.value() == expectedAttachSource.tuples.value()); });
 
     parser.registerOnQueryCallback(
         [&](const std::string& query, size_t)

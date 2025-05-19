@@ -5,6 +5,7 @@
 # NOTE: assumes that raw tuple buffers are of page size (4096 bytes)
 
 Source multiBuffer UINT64 field_1 UINT64 field_2 UINT64 field_3 UINT64 field_4 UINT64 field_5 UINT64 field_6 UINT64 field_7 UINT64 field_8
+Attach File CSV multiBuffer INLINE
 1,1,1,1,1,1,1,1
 1,1,1,1,1,1,1,1
 1,1,1,1,1,1,1,1
