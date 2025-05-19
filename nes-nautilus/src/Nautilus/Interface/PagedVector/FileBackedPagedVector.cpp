@@ -62,10 +62,11 @@ boost::asio::awaitable<void> FileBackedPagedVector::writeToFile(
         /// Write all tuples consecutivley to file
         case Runtime::Execution::NO_SEPARATION_KEEP_KEYS:
         case Runtime::Execution::NO_SEPARATION: {
-            for (const auto& page : pages)
+            for (const auto& [_, page] : pages)
             {
-                co_await fileWriter->write(page.getBuffer(), page.getNumberOfTuples() * memoryLayout->getTupleSize());
-                numTuplesOnDisk += page.getNumberOfTuples();
+                const auto numTuplesOnPage = page.getNumberOfTuples();
+                co_await fileWriter->write(page.getBuffer(), numTuplesOnPage * memoryLayout->getTupleSize());
+                numTuplesOnDisk += numTuplesOnPage;
             }
             break;
         }
@@ -111,7 +112,7 @@ void FileBackedPagedVector::readFromFile(
             // TODO just append new page disregarding the number of tuples on the last page?
             const auto tupleSize = memoryLayout->getTupleSize();
             appendPageIfFull(bufferProvider, memoryLayout);
-            auto lastPage = pages.back();
+            auto lastPage = pages.back().buffer;
             auto* lastPagePtr = lastPage.getBuffer() + lastPage.getNumberOfTuples() * tupleSize;
             auto tuplesToRead = memoryLayout->getCapacity() - lastPage.getNumberOfTuples();
 
@@ -120,7 +121,7 @@ void FileBackedPagedVector::readFromFile(
                 const auto tuplesRead = bytesRead / tupleSize;
                 lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + tuplesRead);
                 appendPageIfFull(bufferProvider, memoryLayout);
-                lastPage = pages.back();
+                lastPage = pages.back().buffer;
                 lastPagePtr = lastPage.getBuffer();
                 tuplesToRead = memoryLayout->getCapacity();
                 numTuplesOnDisk -= tuplesRead;
@@ -215,11 +216,11 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparat
         co_await fileWriter->writeKey(keyPage.getBuffer(), keyPage.getNumberOfTuples() * keyFieldsOnlyMemoryLayout->getTupleSize());
     }
 
-    for (const auto& page : pages)
+    for (const auto& [_, page] : pages)
     {
-        numTuplesOnDisk += page.getNumberOfTuples();
         const auto* pagePtr = page.getBuffer();
-        for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
+        const auto numTuplesOnPage = page.getNumberOfTuples();
+        for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
         {
             for (const auto& [fieldType, fieldSize] : groupedFieldTypeSizes)
             {
@@ -234,6 +235,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadAndKeysToSeparat
                 pagePtr += fieldSize;
             }
         }
+        numTuplesOnDisk += numTuplesOnPage;
     }
     co_return;
 }
@@ -248,11 +250,11 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
         = Memory::MemoryLayouts::MemoryLayout::createMemoryLayout(keyFieldsOnlySchema, memoryLayout->getBufferSize());
     const auto groupedFieldTypeSizes = memoryLayout->getGroupedFieldTypeSizes();
 
-    for (const auto& page : pages)
+    for (const auto& [_, page] : pages)
     {
-        numTuplesOnDisk += page.getNumberOfTuples();
         const auto* pagePtr = page.getBuffer();
-        for (auto tupleIdx = 0UL; tupleIdx < page.getNumberOfTuples(); ++tupleIdx)
+        const auto numTuplesOnPage = page.getNumberOfTuples();
+        for (auto tupleIdx = 0UL; tupleIdx < numTuplesOnPage; ++tupleIdx)
         {
             // TODO appendPageIfFull only when page is full not for each tuple
             appendKeyPageIfFull(bufferProvider, keyFieldsOnlyMemoryLayout.get());
@@ -275,6 +277,7 @@ boost::asio::awaitable<void> FileBackedPagedVector::writePayloadOnlyToFile(
             }
             lastKeyPage.setNumberOfTuples(numTuplesLastKeyPage + 1);
         }
+        numTuplesOnDisk += numTuplesOnPage;
     }
     co_return;
 }
@@ -294,7 +297,7 @@ void FileBackedPagedVector::readSeparatelyFromFiles(
     {
         // TODO appendPageIfFull only when page is full not for each tuple
         appendPageIfFull(bufferProvider, memoryLayout);
-        auto& lastPage = pages.back();
+        auto& lastPage = pages.back().buffer;
         const auto numTuplesLastPage = lastPage.getNumberOfTuples();
         auto* lastPagePtr = lastPage.getBuffer() + numTuplesLastPage * memoryLayout->getTupleSize();
 
