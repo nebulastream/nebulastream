@@ -1,0 +1,21 @@
+# name: projection/Projection.test
+# description: Simple map tests with an add function
+# groups: [Projection]
+
+Source multiBuffer UINT64 field_1 UINT64 field_2 UINT64 field_3 UINT64 field_4 UINT64 field_5 UINT64 field_6 UINT64 field_7 UINT64 field_8
+Attach TCP multiBuffer INLINE
+1,10,100,1000,10000,100000,1000000,10000000
+2,20,200,2000,20000,200000,2000000,20000000
+
+
+SINK sinkMultiBuffer UINT64 multiBuffer$field_1 UINT64 multiBuffer$field_2 UINT64 multiBuffer$field_3 UINT64 multiBuffer$field_4 UINT64 multiBuffer$field_5 UINT64 multiBuffer$field_6 UINT64 multiBuffer$field_7 UINT64 multiBuffer$field_8
+
+SELECT * FROM multiBuffer INTO sinkMultiBuffer
+----
+1 10 100 1000 10000 100000 1000000 10000000
+2 20 200 2000 20000 200000 2000000 20000000
+
+SELECT * FROM multiBuffer INTO sinkMultiBuffer
+----
+1 10 100 1000 10000 100000 1000000 10000000
+2 20 200 2000 20000 200000 2000000 20000000

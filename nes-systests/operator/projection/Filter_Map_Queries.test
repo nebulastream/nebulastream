@@ -3,7 +3,6 @@
 # groups: [Filter, Map]
 
 Source stream INT64 id INT64 value UINT64 timestamp
-
 Attach File CSV stream INLINE
 1,1,1000
 2,1,1001

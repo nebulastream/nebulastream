@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <TCPSource.hpp>
+#include "TCPSource.hpp"
 
 #include <cerrno> /// For socket error
 #include <chrono>
@@ -27,20 +27,25 @@
 #include <vector>
 #include <sys/select.h>
 
-#include <cstdio>
 #include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h> /// For read
 #include <Configurations/Descriptor.hpp>
+#include <DataServer/TCPDataServer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <asm-generic/socket.h>
 #include <bits/types/struct_timeval.h>
 #include <sys/socket.h> /// For socket functions
+#include <sys/types.h>
 #include <ErrorHandling.hpp>
+#include <FileDataRegistry.hpp>
+#include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
+
 
 namespace NES::Sources
 {
@@ -56,9 +61,6 @@ TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
     , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
     , connectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCP::CONNECT_TIMEOUT))
 {
-    /// init physical types
-    const std::vector<std::string> schemaKeys;
-    NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
 }
 
 std::ostream& TCPSource::toString(std::ostream& str) const
@@ -261,7 +263,7 @@ bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numRec
 
 NES::Configurations::DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return NES::Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), name());
+    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), name());
 }
 
 void TCPSource::close()
@@ -285,4 +287,58 @@ SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegis
     return std::make_unique<TCPSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
+InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+{
+    if (systestAdaptorArguments.attachSource.tuples)
+    {
+        if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::PORT);
+            port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.attachSource.tuples.value()));
+            port->second = std::to_string(mockTCPServer->getPort());
+
+            if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::HOST);
+                host != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+            {
+                host->second = "localhost";
+                auto serverThread
+                    = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
+
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw InvalidConfigParameter("A TCP source config must contain a 'host' parameter");
+        }
+        throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
+    }
+    throw TestException("An INLINE SystestAttachSource must not have a 'tuples' vector that is null.");
+}
+
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
+{
+    if (const auto attachSourceFilePath = systestAdaptorArguments.attachSource.fileDataPath)
+    {
+        if (const auto port = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::PORT);
+            port != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+        {
+            auto mockTCPServer = std::make_unique<TCPDataServer>(attachSourceFilePath.value());
+            port->second = std::to_string(mockTCPServer->getPort());
+
+            if (const auto host = systestAdaptorArguments.physicalSourceConfig.sourceConfig.find(ConfigParametersTCP::HOST);
+                host != systestAdaptorArguments.physicalSourceConfig.sourceConfig.end())
+            {
+                host->second = "localhost";
+                auto serverThread
+                    = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
+                systestAdaptorArguments.attachSource.serverThreads->push_back(std::move(serverThread));
+
+                systestAdaptorArguments.physicalSourceConfig.sourceConfig.erase(std::string(SYSTEST_FILE_PATH_PARAMETER));
+                return systestAdaptorArguments.physicalSourceConfig;
+            }
+            throw InvalidConfigParameter("A TCP source config must contain a 'host' parameter");
+        }
+        throw InvalidConfigParameter("A TCP source config must contain a 'port' parameter");
+    }
+    throw InvalidConfigParameter("An attach source of type FileData must contain a filePath configuration.");
+}
 }

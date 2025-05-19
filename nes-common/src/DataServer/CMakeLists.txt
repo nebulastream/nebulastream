@@ -10,9 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Sequencing)
-add_subdirectory(Util)
-add_subdirectory(DataServer)
-
 add_source_files(nes-common
-        ErrorHandling.cpp)
+        TCPDataServer.cpp
+)

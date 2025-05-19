@@ -1,0 +1,30 @@
+# name: projection/Projection.test
+# description: Simple map tests with an add function
+# groups: [Projection]
+
+Source stream UINT64 id UINT64 value UINT64 timestamp
+Attach TCP stream INLINE
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000
+
+Attach File stream INLINE
+5,23,23000
+6,24,24000
+7,25,25000
+8,26,26000
+
+SINK mixed_sink UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
+
+
+SELECT * FROM stream INTO mixed_sink
+----
+1,19,19000
+2,20,20000
+3,21,21000
+4,22,22000
+5,23,23000
+6,24,24000
+7,25,25000
+8,26,26000

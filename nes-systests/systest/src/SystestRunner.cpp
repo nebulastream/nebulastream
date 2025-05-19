@@ -51,7 +51,9 @@
 #include <Sources/SourceDataProvider.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <Sources/SourceDataProvider.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <QuerySubmitter.hpp>
