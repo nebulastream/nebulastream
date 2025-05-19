@@ -88,16 +88,16 @@ bool emptyOrComment(const std::string& line)
 namespace NES::Systest
 {
 
-static constexpr auto CSVSourceToken = "SourceCSV"s;
-static constexpr auto SLTSourceToken = "Source"s;
+static constexpr auto SystestLogicalSourceToken = "Source"s;
+static constexpr auto CSVSourceToken = "Attach"s;
 static constexpr auto QueryToken = "SELECT"s;
 static constexpr auto SinkToken = "SINK"s;
 static constexpr auto ResultDelimiter = "----"s;
 static constexpr auto ErrorToken = "ERROR"s;
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
-    {{CSVSourceToken, TokenType::CSV_SOURCE},
-     {SLTSourceToken, TokenType::SLT_SOURCE},
+    {{SystestLogicalSourceToken, TokenType::SLT_SOURCE},
+     {CSVSourceToken, TokenType::CSV_SOURCE},
      {QueryToken, TokenType::QUERY},
      {SinkToken, TokenType::SINK},
      {ResultDelimiter, TokenType::RESULT_DELIMITER},
@@ -162,9 +162,9 @@ void SystestParser::registerOnResultTuplesCallback(ResultTuplesCallback callback
     this->onResultTuplesCallback = std::move(callback);
 }
 
-void SystestParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
+void SystestParser::registerOnSystestLogicalSourceCallback(SystestLogicalSourceCallback callback)
 {
-    this->onSLTSourceCallback = std::move(callback);
+    this->onSystestLogicalSourceCallback = std::move(callback);
 }
 
 void SystestParser::registerOnSystestSinkCallback(SystestSinkCallback callback)
@@ -199,10 +199,10 @@ void SystestParser::parse()
                 break;
             }
             case TokenType::SLT_SOURCE: {
-                auto source = expectSLTSource();
-                if (onSLTSourceCallback)
+                auto source = expectSystestLogicalSource();
+                if (onSystestLogicalSourceCallback)
                 {
-                    onSLTSourceCallback(source);
+                    onSystestLogicalSourceCallback(source);
                 }
                 break;
             }
@@ -364,7 +364,9 @@ SystestParser::SystestSink SystestParser::expectSink() const
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
     INVARIANT(
-        Util::toLowerCase(discard) == Util::toLowerCase(SinkToken), "Expected first word to be `{}` for sink statement", SLTSourceToken);
+        Util::toLowerCase(discard) == Util::toLowerCase(SinkToken),
+        "Expected first word to be `{}` for sink statement",
+        SystestLogicalSourceToken);
 
     /// Read the source name and check if successful
     if (!(lineAsStream >> sink.name))
@@ -385,11 +387,11 @@ SystestParser::SystestSink SystestParser::expectSink() const
     return sink;
 }
 
-SystestParser::SLTSource SystestParser::expectSLTSource()
+SystestParser::SystestLogicalSource SystestParser::expectSystestLogicalSource()
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
 
-    SLTSource source;
+    SystestLogicalSource source;
     auto& line = lines[currentLine];
     std::istringstream stream(line);
 
@@ -399,10 +401,7 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
     {
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
-    INVARIANT(
-        Util::toLowerCase(discard) == Util::toLowerCase(SLTSourceToken),
-        "Expected first word to be `{}` for source statement",
-        SLTSourceToken);
+    INVARIANT(discard == SystestLogicalSourceToken, "Expected first word to be `{}` for source statement", SystestLogicalSourceToken);
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))

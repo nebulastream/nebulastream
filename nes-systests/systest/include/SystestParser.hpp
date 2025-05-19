@@ -71,12 +71,12 @@ public:
         bool operator==(const CSVSource& other) const = default;
     };
 
-    struct SLTSource
+    struct SystestLogicalSource
     {
         std::string name;
         SystestSchema fields;
         std::vector<std::string> tuples;
-        bool operator==(const SLTSource& other) const = default;
+        bool operator==(const SystestLogicalSource& other) const = default;
     };
 
     struct SystestSink
@@ -95,15 +95,15 @@ public:
 
     using QueryCallback = std::function<void(std::string, SystestQueryId)>;
     using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
-    using SLTSourceCallback = std::function<void(const SLTSource&)>;
-    using CSVSourceCallback = std::function<void(const CSVSource&)>;
+    using SystestLogicalSourceCallback = std::function<void(const SystestLogicalSource&)>;
+    using CSVSourceCallback = std::function<void(CSVSource&&)>;
     using SystestSinkCallback = std::function<void(SystestSink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
-    void registerOnSLTSourceCallback(SLTSourceCallback callback);
+    void registerOnSystestLogicalSourceCallback(SystestLogicalSourceCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
     void registerOnSystestSinkCallback(SystestSinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
@@ -124,7 +124,7 @@ private:
     /// Look ahead at the next token without consuming it
     [[nodiscard]] std::optional<TokenType> peekToken() const;
 
-    [[nodiscard]] SLTSource expectSLTSource();
+    [[nodiscard]] SystestLogicalSource expectSystestLogicalSource();
     [[nodiscard]] CSVSource expectCSVSource() const;
     [[nodiscard]] SystestSink expectSink() const;
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
@@ -133,7 +133,7 @@ private:
 
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
-    SLTSourceCallback onSLTSourceCallback;
+    SystestLogicalSourceCallback onSystestLogicalSourceCallback;
     CSVSourceCallback onCSVSourceCallback;
     SystestSinkCallback onSystestSinkCallback;
     ErrorExpectationCallback onErrorExpectationCallback;

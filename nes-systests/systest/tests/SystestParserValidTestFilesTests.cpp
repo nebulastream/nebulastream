@@ -49,7 +49,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     const auto* const filename = SYSTEST_DATA_DIR "valid.dummy";
 
     const std::vector<std::string> expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
-    const SystestParser::SLTSource expectedSLTSource
+    const SystestParser::SystestLogicalSource expectedSLTSource
         = {.name = "e123",
            .fields = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT32), .name = "id"}},
            .tuples = {"1", "1", "1", "1"}};
@@ -77,7 +77,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     SystestParser parser{};
     QueryResultMap queryResultMap;
     parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { queryCallbackCalled = true; });
-    parser.registerOnSLTSourceCallback([&](const SystestParser::SLTSource&) { sltSourceCallbackCalled = true; });
+    parser.registerOnSystestLogicalSourceCallback([&](const SystestParser::SystestLogicalSource&) { sltSourceCallbackCalled = true; });
     parser.registerOnCSVSourceCallback([&](const SystestParser::CSVSource&) { csvSourceCallbackCalled = true; });
     parser.registerOnResultTuplesCallback(
         [&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
@@ -97,7 +97,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 {
     const auto* const filename = SYSTEST_DATA_DIR "comments.dummy";
 
-    SystestParser::SLTSource expectedSLTSource;
+    SystestParser::SystestLogicalSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
         = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
@@ -158,8 +158,8 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 
     SystestParser parser{};
     QueryResultMap queryResultMap;
-    parser.registerOnSLTSourceCallback(
-        [&](const SystestParser::SLTSource& source)
+    parser.registerOnSystestLogicalSourceCallback(
+        [&](const SystestParser::SystestLogicalSource& source)
         {
             sltSourceCallbackCalled = true;
             ASSERT_EQ(source.name, expectedSLTSource.name);
@@ -195,7 +195,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 {
     const auto* const filename = SYSTEST_DATA_DIR "filter.dummy";
 
-    SystestParser::SLTSource expectedSLTSource;
+    SystestParser::SystestLogicalSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields
         = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64), .name = "id"},
@@ -263,8 +263,8 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 
     SystestParser parser{};
     QueryResultMap queryResultMap;
-    parser.registerOnSLTSourceCallback(
-        [&](const SystestParser::SLTSource& source)
+    parser.registerOnSystestLogicalSourceCallback(
+        [&](const SystestParser::SystestLogicalSource& source)
         {
             sltSourceCallbackCalled = true;
             ASSERT_EQ(source.name, expectedSLTSource.name);
