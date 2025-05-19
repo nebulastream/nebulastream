@@ -67,13 +67,14 @@ TEST_F(SystestParserTest, testAttachSourceCallbackSource)
     const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp\n"
                                  "Attach File CSV window INLINE";
 
-    bool isSLTSourceCallbackCalled = false;
+    bool isSystestLogicalSourceCallbackCalled = false;
     bool isAttachSourceCallbackCalled = false;
 
     const std::string str = sourceIn + "\n";
 
     parser.registerOnQueryCallback([](const std::string&, size_t) { FAIL(); });
-    parser.registerOnSLTSourceCallback([&isSLTSourceCallbackCalled](SystestParser::SLTSource&&) { isSLTSourceCallbackCalled = true; });
+    parser.registerOnSystestLogicalSourceCallback([&isSystestLogicalSourceCallbackCalled](SystestParser::SystestLogicalSource&&)
+                                                  { isSystestLogicalSourceCallbackCalled = true; });
     parser.registerOnAttachSourceCallback(
         [&isAttachSourceCallbackCalled](SystestAttachSource&& attachSource)
         {
@@ -87,7 +88,7 @@ TEST_F(SystestParserTest, testAttachSourceCallbackSource)
     ASSERT_TRUE(parser.loadString(str));
     SystestStarterGlobals systestStarterGlobals{};
     EXPECT_NO_THROW(parser.parse(systestStarterGlobals, {}));
-    ASSERT_TRUE(isSLTSourceCallbackCalled);
+    ASSERT_TRUE(isSystestLogicalSourceCallbackCalled);
     ASSERT_TRUE(isAttachSourceCallbackCalled);
 }
 
@@ -110,7 +111,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
             ASSERT_EQ(queryIn, queryOut);
             queryCallbackCalled = true;
         });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
+    parser.registerOnSystestLogicalSourceCallback([&](SystestParser::SystestLogicalSource&&) { FAIL(); });
     parser.registerOnAttachSourceCallback([&](SystestAttachSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(testFileString));
@@ -124,7 +125,7 @@ TEST_F(SystestParserTest, testCallbackQuery)
     ASSERT_EQ(systestStarterGlobals.getQueryResultMap().at("results/testCallbackQuery_1.csv").at(1), tpl2);
 }
 
-TEST_F(SystestParserTest, testCallbackSLTSource)
+TEST_F(SystestParserTest, testCallbackSystestLogicalSource)
 {
     SystestParser parser{};
     const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp";
@@ -136,8 +137,8 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
     const std::string str = sourceIn + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
     parser.registerOnQueryCallback([&](const std::string&, size_t) { FAIL(); });
-    parser.registerOnSLTSourceCallback(
-        [&](SystestParser::SLTSource&& sourceOut)
+    parser.registerOnSystestLogicalSourceCallback(
+        [&](SystestParser::SystestLogicalSource&& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
             ASSERT_EQ(sourceOut.fields[0].type, DataTypeProvider::provideDataType(DataType::Type::UINT64));
@@ -166,7 +167,7 @@ TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
     const std::string str = delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
     parser.registerOnQueryCallback([&](const std::string&, size_t) { FAIL(); });
-    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
+    parser.registerOnSystestLogicalSourceCallback([&](SystestParser::SystestLogicalSource&&) { FAIL(); });
     parser.registerOnAttachSourceCallback([&](SystestAttachSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));

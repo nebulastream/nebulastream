@@ -63,11 +63,11 @@ public:
     [[nodiscard]] bool loadString(const std::string& str);
 
     /// Type definitions ///
-    struct SLTSource
+    struct SystestLogicalSource
     {
         std::string name;
         SystestSchema fields;
-        bool operator==(const SLTSource& other) const = default;
+        bool operator==(const SystestLogicalSource& other) const = default;
     };
 
     struct SystestSink
@@ -81,13 +81,13 @@ public:
 
     using QueryCallback = std::function<void(std::string, size_t)>;
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
-    using SLTSourceCallback = std::function<void(SLTSource&&)>;
+    using SystestLogicalSourceCallback = std::function<void(SystestLogicalSource&&)>;
     using AttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
     using SystestSinkCallback = std::function<void(SystestSink&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
-    void registerOnSLTSourceCallback(SLTSourceCallback callback);
+    void registerOnSystestLogicalSourceCallback(SystestLogicalSourceCallback callback);
     void registerOnAttachSourceCallback(AttachSourceCallback callback);
     void registerOnSystestSystestSinkCallback(SystestSinkCallback callback);
 
@@ -107,7 +107,7 @@ private:
     /// Got the next token. Returns false if reached end of file.
     [[nodiscard]] bool moveToNextToken();
 
-    [[nodiscard]] SLTSource expectSLTSource();
+    [[nodiscard]] SystestLogicalSource expectSystestLogicalSource();
     [[nodiscard]] SystestAttachSource expectAttachSource();
     [[nodiscard]] SystestSink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
@@ -115,7 +115,7 @@ private:
     [[nodiscard]] std::string expectQuery();
 
     QueryCallback onQueryCallback;
-    SLTSourceCallback onSLTSourceCallback;
+    SystestLogicalSourceCallback onSystestLogicalSourceCallback;
     AttachSourceCallback onAttachSourceCallback;
     SystestSinkCallback onSystestSinkCallback;
 
