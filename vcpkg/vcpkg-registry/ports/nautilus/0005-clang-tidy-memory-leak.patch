@@ -1,0 +1,27 @@
+Subject: [PATCH] Clang-tidy patch
+---
+Index: nautilus/include/nautilus/Engine.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+--- a/nautilus/include/nautilus/Engine.hpp	(revision 364c89c184430e1ccd0d9422fc73b1cc54c33ca8)
++++ b/nautilus/include/nautilus/Engine.hpp	(date 1747658882896)
+@@ -30,7 +30,7 @@
+ std::function<void()> createFunctionWrapper(std::index_sequence<Indices...>,
+                                             std::function<R(FunctionArguments...)> func) {
+ 	[[maybe_unused]] std::size_t args = sizeof...(FunctionArguments);
+-	auto traceFunc = [=]() {
++	return [=]() {
+ 		if constexpr (std::is_void_v<R>) {
+ 			func(details::createTraceableArgument<FunctionArguments, Indices>()...);
+ 			tracing::traceReturnOperation(Type::v, tracing::TypedValueRef());
+@@ -40,7 +40,6 @@
+ 			tracing::traceReturnOperation(type, returnValue.state);
+ 		}
+ 	};
+-	return traceFunc;
+ }
+ 
+ template <typename R, typename... FunctionArguments>

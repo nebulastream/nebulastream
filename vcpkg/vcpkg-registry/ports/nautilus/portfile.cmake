@@ -8,6 +8,7 @@ vcpkg_from_github(
 		0002_llvm_v20.patch
 		0003-disable-ubsan-function-call-check.patch
 		0004-disable-mlir-multithreading.patch
+		0005-clang-tidy-memory-leak.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
