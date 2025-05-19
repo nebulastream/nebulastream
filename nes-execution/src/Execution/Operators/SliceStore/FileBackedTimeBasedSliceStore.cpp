@@ -187,55 +187,75 @@ std::optional<std::shared_ptr<Slice>> FileBackedTimeBasedSliceStore::getSliceByS
 
 void FileBackedTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
-    auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
-    if (not lockedSlicesAndWindows)
+    std::vector<std::shared_ptr<Slice>> slicesToDelete;
     {
-        /// We could not acquire the lock, so we opt for not performing the garbage collection this time.
-        return;
+        NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
+
+        {
+            /// Solely acquiring a lock for the windows
+            if (const auto windowsWriteLocked = windows.tryWLock())
+            {
+                /// 1. We iterate over all windows and erase them if they can be deleted
+                /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.
+                for (auto windowsLockedIt = windowsWriteLocked->cbegin(); windowsLockedIt != windowsWriteLocked->cend();)
+                {
+                    const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
+                    if (windowInfo.windowEnd < newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
+                    {
+                        windowsLockedIt = windowsWriteLocked->erase(windowsLockedIt);
+                    }
+                    else if (windowInfo.windowEnd > newGlobalWaterMark)
+                    {
+                        /// As the windows are sorted (due to std::map), we can break here as we will not find any windows with a smaller window end
+                        break;
+                    }
+                    else
+                    {
+                        ++windowsLockedIt;
+                    }
+                }
+            }
+        }
+
+        {
+            /// Solely acquiring a lock for the slices
+            if (const auto slicesWriteLocked = slices.tryWLock())
+            {
+                /// 2. We gather all slices if they are not used in any window that has not been triggered/can not be deleted yet
+                for (auto slicesLockedIt = slicesWriteLocked->begin(); slicesLockedIt != slicesWriteLocked->end();)
+                {
+                    const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
+                    if (sliceEnd + sliceAssigner.getWindowSize() < newGlobalWaterMark)
+                    {
+                        NES_TRACE("Deleting slice with sliceEnd {} as it is not used anymore", sliceEnd);
+                        /// As we are first copying the shared_ptr the destructor of Slice will not be called.
+                        /// This allows us to solely collect what slices to delete during holding the lock, while the time-consuming destructor is called without holding any locks
+                        slicesToDelete.emplace_back(slicePtr);
+                        slicesLockedIt = slicesWriteLocked->erase(slicesLockedIt);
+                    }
+                    else
+                    {
+                        /// As the slices are sorted (due to std::map), we can break here as we will not find any slices with a smaller slice end
+                        break;
+                    }
+                }
+            }
+        }
     }
-    auto& [slicesWriteLocked, windowsWriteLocked] = *lockedSlicesAndWindows;
 
-    NES_TRACE("Performing garbage collection for new global watermark {}", newGlobalWaterMark);
-
-    /// 1. We iterate over all windows and erase them if they can be deleted
-    /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.
-    for (auto windowsLockedIt = windowsWriteLocked->cbegin(); windowsLockedIt != windowsWriteLocked->cend();)
     {
-        const auto& [windowInfo, windowSlicesAndState] = *windowsLockedIt;
-        if (windowInfo.windowEnd < newGlobalWaterMark and windowSlicesAndState.windowState == WindowInfoState::EMITTED_TO_PROBE)
+        const auto slicesInMemoryLocked = slicesInMemory.wlock();
+        for (const auto& slice : slicesToDelete)
         {
-            windowsLockedIt = windowsWriteLocked->erase(windowsLockedIt);
-        }
-        else if (windowInfo.windowEnd > newGlobalWaterMark)
-        {
-            /// As the windows are sorted (due to std::map), we can break here as we will not find any windows with a smaller window end
-            break;
-        }
-        else
-        {
-            ++windowsLockedIt;
-        }
-    }
-
-    /// 2. We gather all slices if they are not used in any window that has not been triggered/can not be deleted yet
-    const auto slicesInMemoryLocked = slicesInMemory.wlock();
-    for (auto slicesLockedIt = slicesWriteLocked->begin(); slicesLockedIt != slicesWriteLocked->end();)
-    {
-        const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
-        if (sliceEnd + sliceAssigner.getWindowSize() < newGlobalWaterMark)
-        {
-            NES_TRACE("Deleting slice with sliceEnd {} as it is not used anymore", sliceEnd);
+            const auto sliceEnd = slice->getSliceEnd();
             memoryController->deleteSliceFiles(sliceEnd);
             slicesInMemoryLocked->erase({sliceEnd, QueryCompilation::JoinBuildSideType::Left});
             slicesInMemoryLocked->erase({sliceEnd, QueryCompilation::JoinBuildSideType::Right});
-            slicesLockedIt = slicesWriteLocked->erase(slicesLockedIt);
-        }
-        else
-        {
-            /// As the slices are sorted (due to std::map), we can break here as we will not find any slices with a smaller slice end
-            break;
         }
     }
+
+    /// Now we can remove/call destructor on every slice without still holding the lock
+    slicesToDelete.clear();
 }
 
 void FileBackedTimeBasedSliceStore::deleteState()
