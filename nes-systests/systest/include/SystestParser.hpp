@@ -79,11 +79,11 @@ public:
         bool operator==(const SLTSource& other) const = default;
     };
 
-    struct Sink
+    struct SystestSink
     {
         std::string name;
         SystestSchema fields;
-        bool operator==(const Sink& other) const = default;
+        bool operator==(const SystestSink& other) const = default;
     };
 
     struct ErrorExpectation
@@ -97,7 +97,7 @@ public:
     using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
     using SLTSourceCallback = std::function<void(const SLTSource&)>;
     using CSVSourceCallback = std::function<void(const CSVSource&)>;
-    using SinkCallback = std::function<void(Sink&&)>;
+    using SystestSinkCallback = std::function<void(SystestSink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&)>;
 
     /// Register callbacks to be called when the respective section is parsed
@@ -105,7 +105,7 @@ public:
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
-    void registerOnSinkCallBack(SinkCallback callback);
+    void registerOnSystestSinkCallback(SystestSinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
 
     void parse();
@@ -126,7 +126,7 @@ private:
 
     [[nodiscard]] SLTSource expectSLTSource();
     [[nodiscard]] CSVSource expectCSVSource() const;
-    [[nodiscard]] Sink expectSink() const;
+    [[nodiscard]] SystestSink expectSink() const;
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] ErrorExpectation expectError() const;
@@ -135,7 +135,7 @@ private:
     ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
     CSVSourceCallback onCSVSourceCallback;
-    SinkCallback onSinkCallback;
+    SystestSinkCallback onSystestSinkCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
 
     bool firstToken = true;

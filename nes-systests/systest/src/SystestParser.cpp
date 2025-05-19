@@ -34,7 +34,6 @@
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestParser.hpp>
 #include <SystestState.hpp>
 
 namespace
@@ -168,9 +167,9 @@ void SystestParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
     this->onSLTSourceCallback = std::move(callback);
 }
 
-void SystestParser::registerOnSinkCallBack(SinkCallback callback)
+void SystestParser::registerOnSystestSinkCallback(SystestSinkCallback callback)
 {
-    this->onSinkCallback = std::move(callback);
+    this->onSystestSinkCallback = std::move(callback);
 }
 
 void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
@@ -209,9 +208,9 @@ void SystestParser::parse()
             }
             case TokenType::SINK: {
                 auto sink = expectSink();
-                if (onSinkCallback)
+                if (onSystestSinkCallback)
                 {
-                    onSinkCallback(std::move(sink));
+                    onSystestSinkCallback(std::move(sink));
                 }
                 break;
             }
@@ -350,11 +349,11 @@ std::optional<TokenType> SystestParser::peekToken() const
     return getTokenIfValid(potentialToken);
 }
 
-SystestParser::Sink SystestParser::expectSink() const
+SystestParser::SystestSink SystestParser::expectSink() const
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
 
-    Sink sink;
+    SystestSink sink;
     const auto& line = lines[currentLine];
     std::istringstream lineAsStream(line);
 
