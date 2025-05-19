@@ -6,16 +6,67 @@ to conbench
 import json
 import subprocess
 import time
+from datetime import datetime, timezone
 import os
 import logging
+import uuid
 from typing import List, Any
 
 log = logging.getLogger(__name__)
 
-from benchadapt import BenchmarkResult
+from benchadapt import BenchmarkResult, _machine_info
 from benchadapt.adapters import BenchmarkAdapter
+from benchclients import ConbenchClient
 
 import argparse
+
+class FlamegraphUploader():
+    client = ConbenchClient()
+
+    @staticmethod
+    def getFlamegraphFiles():
+        resultDir = "./"
+        svg_files = [os.path.join(resultDir, filename) for filename in os.listdir(resultDir)
+                     if filename.endswith(".svg")
+        ]
+        return svg_files
+
+
+
+    @staticmethod
+    def upload():
+        run_id = uuid.uuid4().hex
+        machine_info = _machine_info.machine_info()
+        github = _machine_info.gh_commit_info_from_env()
+        svg_files = FlamegraphUploader.getFlamegraphFiles()
+
+        for svg_file in svg_files:
+            # SVG file name is the name of the benchmark
+            name, _ = os.path.splitext(os.path.basename(svg_file))
+            upload_dict = {
+                "run_id": run_id,
+                "machine_info": machine_info,
+                "github": github,
+                "name": name,
+                "run_reason": os.getenv("CONBENCH_RUN_REASON"),
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            resp = FlamegraphUploader.client.post("/flamegraphs/", upload_dict)
+            # Absolutely hacky way to upload a files using conbench internals
+            # _make_request() uses pythons Session.make_request use we can use the files={}
+            # to upload files. Additionally, auth cookie has already been set by the client on login
+            with open(svg_file, "rb") as f:
+                files = {"file": (svg_file, f)}
+
+                resp_file = FlamegraphUploader.client._make_request(
+                    "POST",
+                    FlamegraphUploader.client._abs_url_from_path(f"/flamegraphs/{resp["id"]}"),
+                    files=files,
+                    expected_status_code=200
+                )
+
+
+
 
 class SystestAdapter(BenchmarkAdapter):
     """
@@ -113,7 +164,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--systest", action="store_true", help="upload systest results")
     parser.add_argument("--compile-time", action="store_true", help="Benchmark Nebulastream compile time and upload results")
-
+    parser.add_argument("--flamegraphs", action="store_true", help="Upload profiling Flamegraph results")
     args = parser.parse_args()
 
     if args.systest:
@@ -130,5 +181,7 @@ if __name__ == "__main__":
         )
         compile_time_adapter.run()
         compile_time_adapter.post_results()
+    elif args.flamegraphs:
+        FlamegraphUploader.upload()
     else:
         log.fatal("No operation specified!")
