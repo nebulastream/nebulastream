@@ -500,8 +500,8 @@ std::vector<LoadedQueryPlan> SystestStarterGlobals::SystestBinder::loadFromSLTFi
     }
 
     /// We create a map from sink names to their schema
-    parser.registerOnSinkCallBack(
-        [&](const SystestParser::Sink& sinkParsed)
+    parser.registerOnSystestSinkCallback(
+        [&](const SystestParser::SystestSink& sinkParsed)
         {
             auto [sinkPair, success] = sinkNamesToSchema.emplace(sinkParsed.name, Schema{Schema::MemoryLayoutType::ROW_LAYOUT});
             if (not success)
