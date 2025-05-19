@@ -199,7 +199,7 @@ void MemoryController::deallocateReadBuffer(char* buffer)
         return;
     }
 
-    const std::lock_guard lock(readMemoryPoolMutex);
+    const std::scoped_lock lock(readMemoryPoolMutex);
     freeReadBuffers.push_back(buffer);
     readMemoryPoolCondition.notify_one();
 }
@@ -227,7 +227,7 @@ void MemoryController::deallocateWriteBuffer(char* buffer)
         return;
     }
 
-    const std::lock_guard lock(writeMemoryPoolMutex);
+    const std::scoped_lock lock(writeMemoryPoolMutex);
     freeWriteBuffers.push_back(buffer);
     writeMemoryPoolCondition.notify_one();
 }

@@ -25,6 +25,7 @@
 #include <Execution/Operators/SliceStore/WatermarkPredictor/RLSBasedWatermarkPredictor.hpp>
 #include <Execution/Operators/SliceStore/WatermarkPredictor/RegressionBasedWatermarkPredictor.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Execution/Operators/Streaming/WindowBasedOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
@@ -261,7 +262,7 @@ void FileBackedTimeBasedSliceStore::setWorkerThreads(const uint64_t numberOfWork
     memoryController = std::make_shared<MemoryController>(
         USE_BUFFER_SIZE,
         numberOfWorkerThreads,
-        USE_NUM_WRITE_BUFFERS,
+        numberOfWorkerThreads,
         numberOfWorkerThreads,
         memoryControllerInfo.workingDir,
         memoryControllerInfo.queryId,
@@ -300,28 +301,29 @@ boost::asio::awaitable<void> FileBackedTimeBasedSliceStore::updateSlices(
             {
                 case READ: {
                     // TODO investigate why numTuples and numPages can be zero
-                    if (const auto numTuplesOnDisk = pagedVector->getNumberOfTuplesOnDisk(); numTuplesOnDisk > 0)
+                    if (pagedVector->getNumberOfTuplesOnDisk() > 0)
                     {
                         auto fileReader = memoryController->getFileReader(sliceEnd, threadId, joinBuildSide);
                         pagedVector->readFromFile(bufferProvider, memoryLayout, *fileReader, fileLayout);
                         memoryController->deleteFileLayout(sliceEnd, WorkerThreadId(threadId), joinBuildSide);
                     }
+                    // TODO handle wrong predictions
                     break;
                 }
                 case WRITE: {
-                    if (const auto numPagesInMemory = pagedVector->getNumberOfPages(); numPagesInMemory > 0)
+                    if (pagedVector->getNumberOfPages() > 0)
                     {
                         const auto slicesInMemoryLocked = slicesInMemory.wlock();
                         (*slicesInMemoryLocked)[{slice->getSliceEnd(), joinBuildSide}] = false;
 
-                        memoryController->setFileLayout(sliceEnd, threadId, joinBuildSide, USE_FILE_LAYOUT);
                         const auto fileWriter = memoryController->getFileWriter(sliceEnd, threadId, joinBuildSide, ioCtx);
                         co_await pagedVector->writeToFile(bufferProvider, memoryLayout, fileWriter, fileLayout);
-                        /// We need to flush now as we cannot do it from probe and we might not get this fileWriter in build again
+                        /// We need to flush and deallocate buffers now as we cannot do it from probe and we might not get this fileWriter in build again
                         co_await fileWriter->flush();
-                        pagedVector->truncate(fileLayout);
                         fileWriter->deallocateBuffers();
+                        pagedVector->truncate(fileLayout);
                     }
+                    // TODO handle wrong predictions
                     break;
                 }
             }
@@ -426,6 +428,8 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         throw std::invalid_argument("At least two points are required to initialize the model.");
     }
 
+    boost::asio::io_context ioCtx;
+    auto guard = boost::asio::make_work_guard(ioCtx);
     double sumXWrite = 0, sumYWrite = 0, sumXYWrite = 0, sumX2Write = 0;
     double sumXRead = 0, sumYRead = 0, sumXYRead = 0, sumX2Read = 0;
     for (const auto dataSize : dataSizes)
@@ -433,18 +437,26 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         std::vector<char> data(dataSize);
         const auto start = std::chrono::high_resolution_clock::now();
 
-        boost::asio::io_context ioCtx;
-        const auto fileWriter = memoryController->getFileWriter(
-            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left, ioCtx);
-        boost::asio::co_spawn(ioCtx, fileWriter->write(data.data(), dataSize), boost::asio::detached);
-        boost::asio::co_spawn(ioCtx, fileWriter->flush(), boost::asio::detached);
-        ioCtx.run();
+        {
+            /// FileWriter should be destroyed when calling getFileReader
+            const auto fileWriter = memoryController->getFileWriter(
+                SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left, ioCtx);
+            Operators::runSingleAwaitable(ioCtx, fileWriter->write(data.data(), dataSize));
+            Operators::runSingleAwaitable(ioCtx, fileWriter->flush());
+        }
         const auto write = std::chrono::high_resolution_clock::now();
 
-        const auto fileReader = memoryController->getFileReader(
-            SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left);
-        fileReader->read(data.data(), dataSize);
+        const auto sizeRead
+            = memoryController
+                  ->getFileReader(
+                      SliceEnd(SliceEnd::INVALID_VALUE), WorkerThreadId(numberOfWorkerThreads), QueryCompilation::JoinBuildSideType::Left)
+                  ->read(data.data(), dataSize);
         const auto read = std::chrono::high_resolution_clock::now();
+
+        if (sizeRead != dataSize)
+        {
+            throw std::runtime_error("Data does not match");
+        }
 
         const auto startTicks
             = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(start.time_since_epoch()).count());
@@ -464,6 +476,7 @@ void FileBackedTimeBasedSliceStore::measureReadAndWriteExecTimes(const std::arra
         sumXYRead += dataSize * readExecTimes;
         sumX2Read += dataSize * dataSize;
     }
+    guard.reset();
 
     const auto writeSlope = (numElements * sumXYWrite - sumXWrite * sumYWrite) / (numElements * sumX2Write - sumXWrite * sumXWrite);
     const auto writeIntercept = (sumYWrite - writeSlope * sumXWrite) / numElements;

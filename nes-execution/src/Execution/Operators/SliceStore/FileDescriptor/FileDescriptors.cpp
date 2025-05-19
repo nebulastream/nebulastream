@@ -17,19 +17,14 @@
 namespace NES::Runtime::Execution
 {
 
-boost::asio::io_context& getIoContext()
-{
-    static boost::asio::io_context ioContext;
-    return ioContext;
-}
-
 FileWriter::FileWriter(
     boost::asio::io_context& ioCtx,
     const std::string& filePath,
     const std::function<char*()>& allocate,
     const std::function<void(char*)>& deallocate,
     const size_t bufferSize)
-    : file(ioCtx)
+    : ioCtx(ioCtx)
+    , file(ioCtx)
     , keyFile(ioCtx)
     , writeBuffer(allocate())
     , writeKeyBuffer(nullptr)
@@ -53,7 +48,6 @@ FileWriter::FileWriter(
 FileWriter::~FileWriter()
 {
     /// Buffer needs to be flushed manually before calling the destructor
-    // TODO add synchronous flush
     deallocateBuffers();
     file.close();
     keyFile.close();
@@ -135,6 +129,48 @@ boost::asio::awaitable<void> FileWriter::flush()
         co_await flushBuffer(keyFile, writeKeyBuffer, writeKeyBufferPos);
     }
     co_return;
+}
+
+void FileWriter::flushAndDeallocateBuffers()
+{
+    std::promise<void> promise;
+    const std::future<void> future = promise.get_future();
+
+    // TODO schedule the awaitable flush to run on the same io context
+    boost::asio::post(
+        ioCtx,
+        [this, &promise]
+        {
+            try
+            {
+                boost::asio::co_spawn(
+                    ioCtx,
+                    flush(),
+                    [&promise](const std::exception_ptr& e)
+                    {
+                        if (e)
+                        {
+                            promise.set_exception(e);
+                        }
+                        else
+                        {
+                            promise.set_value();
+                        }
+                    });
+            }
+            catch ([[maybe_unused]] const std::exception& e)
+            {
+                promise.set_exception(std::current_exception());
+            }
+        });
+
+    /// Use non-blocking calls to wait for the flush operation to complete
+    while (future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready)
+    {
+        ioCtx.poll();
+    }
+
+    deallocateBuffers();
 }
 
 void FileWriter::deallocateBuffers()

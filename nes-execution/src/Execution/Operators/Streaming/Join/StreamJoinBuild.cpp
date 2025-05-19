@@ -49,13 +49,15 @@ void updateSlicesProxy(
 
     if (const auto sliceStore = dynamic_cast<FileBackedTimeBasedSliceStore*>(&opHandler->getSliceAndWindowStore()))
     {
-        opHandler->runSingleAwaitable(sliceStore->updateSlices(
+        runSingleAwaitable(
             opHandler->getIoContext(),
-            bufferProvider,
-            memoryLayout,
-            joinBuildSide,
-            SliceStoreMetaData(
-                workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
+            sliceStore->updateSlices(
+                opHandler->getIoContext(),
+                bufferProvider,
+                memoryLayout,
+                joinBuildSide,
+                SliceStoreMetaData(
+                    workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
     }
 
     /// For creating memory usage metrics

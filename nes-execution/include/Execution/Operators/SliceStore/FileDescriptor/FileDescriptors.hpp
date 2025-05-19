@@ -44,10 +44,13 @@ public:
     boost::asio::awaitable<void> writeKey(const void* data, size_t size);
 
     boost::asio::awaitable<void> flush();
+    void flushAndDeallocateBuffers();
     void deallocateBuffers();
 
 private:
     static boost::asio::awaitable<void> flushBuffer(boost::asio::posix::stream_descriptor& stream, const char* buffer, size_t& size);
+
+    boost::asio::io_context& ioCtx;
 
     boost::asio::posix::stream_descriptor file;
     boost::asio::posix::stream_descriptor keyFile;
