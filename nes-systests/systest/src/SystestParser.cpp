@@ -261,9 +261,9 @@ void SystestParser::registerOnAttachSourceCallback(AttachSourceCallback callback
     this->onAttachSourceCallback = std::move(callback);
 }
 
-void SystestParser::registerOnSinkCallBack(SinkCallback callback)
+void SystestParser::registerOnSystestSystestSinkCallback(SystestSinkCallback callback)
 {
-    this->onSinkCallback = std::move(callback);
+    this->onSystestSinkCallback = std::move(callback);
 }
 
 void SystestParser::parse(SystestStarterGlobals& systestStarterGlobals, const std::string_view testFileName)
@@ -290,9 +290,9 @@ void SystestParser::parse(SystestStarterGlobals& systestStarterGlobals, const st
             }
             case TokenType::SINK: {
                 auto sink = expectSink();
-                if (onSinkCallback)
+                if (onSystestSinkCallback)
                 {
-                    onSinkCallback(std::move(sink));
+                    onSystestSinkCallback(std::move(sink));
                 }
                 break;
             }
@@ -389,11 +389,11 @@ std::optional<TokenType> SystestParser::nextToken()
     return getTokenIfValid(potentialToken);
 }
 
-SystestParser::Sink SystestParser::expectSink() const
+SystestParser::SystestSink SystestParser::expectSink() const
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
 
-    Sink sink;
+    SystestSink sink;
     const auto& line = lines[currentLine];
     std::istringstream lineAsStream(line);
 

@@ -90,8 +90,8 @@ loadFromSLTFile(SystestStarterGlobals& systestStarterGlobals, const std::filesys
     }
 
     /// We create a map from sink names to their schema
-    parser.registerOnSinkCallBack([&](SystestParser::Sink&& sinkParsed)
-                                  { sinkNamesToSchema.insert_or_assign(sinkParsed.name, sinkParsed.fields); });
+    parser.registerOnSystestSystestSinkCallback([&](SystestParser::SystestSink&& sinkParsed)
+                                                { sinkNamesToSchema.insert_or_assign(sinkParsed.name, sinkParsed.fields); });
 
     /// We add new found sources to our config
     parser.registerOnSLTSourceCallback(

@@ -70,11 +70,11 @@ public:
         bool operator==(const SLTSource& other) const = default;
     };
 
-    struct Sink
+    struct SystestSink
     {
         std::string name;
         SystestSchema fields;
-        bool operator==(const Sink& other) const = default;
+        bool operator==(const SystestSink& other) const = default;
     };
 
     using ResultTuples = std::vector<std::string>;
@@ -83,13 +83,13 @@ public:
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using AttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
-    using SinkCallback = std::function<void(Sink&&)>;
+    using SystestSinkCallback = std::function<void(SystestSink&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
     void registerOnAttachSourceCallback(AttachSourceCallback callback);
-    void registerOnSinkCallBack(SinkCallback callback);
+    void registerOnSystestSystestSinkCallback(SystestSinkCallback callback);
 
 
     void parse(SystestStarterGlobals& systestStarterGlobals, std::string_view testFileName);
@@ -109,7 +109,7 @@ private:
 
     [[nodiscard]] SLTSource expectSLTSource();
     [[nodiscard]] SystestAttachSource expectAttachSource();
-    [[nodiscard]] Sink expectSink() const;
+    [[nodiscard]] SystestSink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
     [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
@@ -117,7 +117,7 @@ private:
     QueryCallback onQueryCallback;
     SLTSourceCallback onSLTSourceCallback;
     AttachSourceCallback onAttachSourceCallback;
-    SinkCallback onSinkCallback;
+    SystestSinkCallback onSystestSinkCallback;
 
     bool firstToken = true;
     size_t currentLine = 0;
