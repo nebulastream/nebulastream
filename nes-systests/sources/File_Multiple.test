@@ -1,0 +1,30 @@
+# name: sources/FileSource.test
+# description: Simple map tests with an add function
+# groups: [Sources]
+
+# Description:
+# Combine two files sources with different input formatter configurations
+
+Source combinedSource UINT64 id UINT64 value UINT64 timestamp
+Attach File CSV combinedSource FILE
+TESTDATA/small/stream8.csv
+
+Attach File CSV CONFIG/inputFormatters/csv_pipe_delimiter.yaml combinedSource INLINE
+1|6|67
+1|7|78
+1|8|89
+1|9|100
+
+SINK unifiedStreamSink UINT64 combinedSource$id UINT64 combinedSource$value UINT64 combinedSource$timestamp
+
+SELECT * FROM combinedSource INTO unifiedStreamSink
+----
+1,1,12
+1,2,23
+1,3,34
+1,4,45
+1,5,56
+1,6,67
+1,7,78
+1,8,89
+1,9,100

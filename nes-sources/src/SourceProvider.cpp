@@ -15,6 +15,7 @@
 #include <Sources/SourceProvider.hpp>
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>

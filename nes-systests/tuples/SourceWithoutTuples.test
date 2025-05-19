@@ -2,7 +2,7 @@
 # description: Simple source/buffer tests
 # groups: [Sources]
 
-Source noTuple UINT64 field_1
+Source noTuple UINT64 field_1 INLINE
 
 SINK SINK UINT64 noTuple$field_1
 

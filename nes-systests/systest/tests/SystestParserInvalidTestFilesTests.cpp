@@ -14,7 +14,7 @@
 
 #include <string>
 
-#include <Util/Logger/LogLevel.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
@@ -39,12 +39,13 @@ public:
 };
 TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     const std::string filename = SYSTEST_DATA_DIR "invalid.dummy";
     SystestParser parser{};
-    parser.registerOnCSVSourceCallback(
-        [&](const SystestParser::CSVSource&)
+    parser.registerOnSystestAttachSourceCallback(
+        [&](const SystestAttachSource&)
         {
-            /// nop, ensure parsing of CSVSource token
+            /// noop
         });
     ASSERT_TRUE(parser.loadFile(filename));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)

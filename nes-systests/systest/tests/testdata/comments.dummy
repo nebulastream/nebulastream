@@ -1,7 +1,7 @@
 # name: comments.dymmy
 # description: Test file used in SystestParserValidTestFileTest
 
-Source window UINT64 id UINT64 value UINT64 timestamp
+Source window UINT64 id UINT64 value UINT64 timestamp INLINE
 1,1,1000
 12,1,1001
 4,1,1002

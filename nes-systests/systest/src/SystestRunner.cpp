@@ -36,6 +36,14 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <fmt/base.h>
+#include <fmt/color.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
+#include <fmt/std.h>
+#include <folly/MPMCQueue.h>
+#include <nlohmann/json.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -52,15 +60,6 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
-#include <fmt/base.h>
-#include <fmt/color.h>
-#include <fmt/format.h>
-#include <fmt/ostream.h>
-#include <fmt/ranges.h>
-#include <fmt/std.h>
-#include <folly/MPMCQueue.h>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <QuerySubmitter.hpp>
@@ -70,6 +69,7 @@
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
+
 
 namespace NES::Systest
 {
