@@ -746,7 +746,10 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     }
 
     /// we assume that the left query plan is the first element in the queryPlans vector and the right query plan is the second element
-    INVARIANT(helper.queryPlans.size() == 2, "Join relation requires exactly two subqueries, but got {}", helper.queryPlans.size());
+    if (helper.queryPlans.size() != 2)
+    {
+        throw ParserInvalidState("Join relation requires exactly two subqueries, but got {}", helper.queryPlans.size());
+    }
     const auto leftQueryPlan = helper.queryPlans[0];
     const auto rightQueryPlan = helper.queryPlans[1];
     helper.queryPlans.clear();
