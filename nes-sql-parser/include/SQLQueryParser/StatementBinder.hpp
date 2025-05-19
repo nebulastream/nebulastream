@@ -35,22 +35,22 @@ namespace NES::Binder
 /// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
 struct CreateLogicalSourceStatement
 {
-    std::expected<LogicalSource, Exception> created;
+    LogicalSource created;
 };
 
 struct CreatePhysicalSourceStatement
 {
-    std::expected<Sources::SourceDescriptor, Exception> created;
+    Sources::SourceDescriptor created;
 };
 
 struct DropLogicalSourceStatement
 {
-    std::expected<LogicalSource, Exception> dropped;
+    LogicalSource dropped;
 };
 
 struct DropPhysicalSourceStatement
 {
-    std::expected<Sources::SourceDescriptor, Exception> dropped;
+    Sources::SourceDescriptor dropped;
 };
 
 struct DropQueryStatement
@@ -67,18 +67,20 @@ using Statement = std::variant<
     DropQueryStatement,
     std::shared_ptr<QueryPlan>>;
 
+using BindingResult = std::expected<Statement, Exception>;
+
 
 class StatementBinder
 {
     std::shared_ptr<Catalogs::Source::SourceCatalog> sourceCatalog;
     std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)> queryBinder;
-    Statement bind(AntlrSQLParser::StatementContext* statementAST);
+    BindingResult bind(AntlrSQLParser::StatementContext* statementAST);
 
 public:
     explicit StatementBinder(
         const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog,
         const std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept;
 
-    Statement parseAndBind(std::string_view statementString);
+    BindingResult parseAndBind(std::string_view statementString);
 };
 }
