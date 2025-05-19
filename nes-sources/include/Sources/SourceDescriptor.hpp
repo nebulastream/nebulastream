@@ -14,10 +14,10 @@
 
 #pragma once
 
+#include <optional>
 #include <ostream>
 #include <string>
 #include <API/Schema.hpp>
-#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,6 +30,7 @@ struct ParserConfig
     std::string parserType;
     std::string tupleDelimiter;
     std::string fieldDelimiter;
+    std::string nullRepresentation;
 };
 
 struct SourceDescriptor : public Configurations::Descriptor
@@ -63,10 +64,7 @@ struct SourceDescriptor : public Configurations::Descriptor
 
 /// Specializing the fmt ostream_formatter to accept SourceDescriptor objects.
 /// Allows to call fmt::format("SourceDescriptor: {}", SourceDescriptorObject); and therefore also works with our logging.
-namespace fmt
-{
 template <>
-struct formatter<NES::Sources::SourceDescriptor> : ostream_formatter
+struct fmt::formatter<NES::Sources::SourceDescriptor> : ostream_formatter
 {
 };
-}

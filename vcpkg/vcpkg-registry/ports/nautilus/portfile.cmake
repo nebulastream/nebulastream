@@ -5,9 +5,11 @@ vcpkg_from_github(
         SHA512 e152ecd75fc881bf12622fd443890d7a33c86ce1f31ce3b59ecce5878ac03bb75210048af53dbf714095332c9d6acd86434ea1ef7e59a20c2fd97fd5e8023b08
 		PATCHES
 		0001_fixes_clang_tidy.patch
-		0002_llvm_v20.patch
-		0003-disable-ubsan-function-call-check.patch
-		0004-disable-mlir-multithreading.patch
+		0002_cache_mangled_names.patch
+		0003_increase_tracing_performance.patch
+		0004_llvm_v20.patch
+		0005_disable_ubsan_function_call_check.patch
+		0006_disable_mlir_multithreading.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
@@ -22,6 +24,7 @@ vcpkg_cmake_configure(
 		OPTIONS
 		-DENABLE_TESTS=OFF
 		-DENABLE_MLIR_BACKEND=ON
+		-DENABLE_LOGGING=OFF
 		-DENABLE_BC_BACKEND=OFF
 		-DENABLE_C_BACKEND=OFF
 		-DENABLE_STACKTRACE=OFF

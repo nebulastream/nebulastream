@@ -16,6 +16,10 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
+
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
@@ -23,9 +27,6 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <val_concepts.hpp>
-#include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
@@ -45,12 +46,19 @@ void MinAggregationFunction::lift(
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
 {
+    /// Reading the value from the record
+    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    if (inputType->type->nullable && value.isNull())
+    {
+        /// If the value is null, we do not update the min.
+        return;
+    }
+
     /// Reading the old min value from the aggregation state.
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, inputType);
+    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, *inputType);
 
     /// Updating the min value with the new value, if the new value is smaller
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
     if (value < min)
     {
         value.writeToMemory(memAreaMin);
@@ -64,11 +72,11 @@ void MinAggregationFunction::combine(
 {
     /// Reading the min value from the first aggregation state
     const auto memAreaMin1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto min1 = Nautilus::VarVal::readVarValFromMemory(memAreaMin1, inputType);
+    const auto min1 = Nautilus::VarVal::readVarValFromMemory(memAreaMin1, *inputType);
 
     /// Reading the min value from the second aggregation state
     const auto memAreaMin2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto min2 = Nautilus::VarVal::readVarValFromMemory(memAreaMin2, inputType);
+    const auto min2 = Nautilus::VarVal::readVarValFromMemory(memAreaMin2, *inputType);
 
     /// Updating the min value with the new min value, if the new min value is smaller
     if (min2 < min1)
@@ -81,7 +89,7 @@ Nautilus::Record MinAggregationFunction::lower(const nautilus::val<AggregationSt
 {
     /// Reading the min value from the aggregation state
     const auto memAreaMin = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, inputType);
+    const auto min = Nautilus::VarVal::readVarValFromMemory(memAreaMin, *inputType);
 
     /// Creating a record with the min value
     Nautilus::Record record;
@@ -104,7 +112,7 @@ void MinAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t MinAggregationFunction::getSizeOfStateInBytes() const
 {
-    return inputType->size();
+    return inputType->getSizeInBytes();
 }
 
 }

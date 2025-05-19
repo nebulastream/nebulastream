@@ -29,7 +29,8 @@
 namespace NES
 {
 NodeFunctionLogicalBinary::NodeFunctionLogicalBinary(std::string name)
-    : NodeFunctionBinary(DataTypeProvider::provideDataType(LogicalType::BOOLEAN), std::move(name)), LogicalNodeFunction()
+    : NodeFunctionBinary(DataTypeProvider::provideDataType(LogicalType::BOOLEAN, DataTypeProvider::isNullable(name)), std::move(name))
+    , LogicalNodeFunction()
 {
 }
 

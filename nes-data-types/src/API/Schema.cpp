@@ -68,7 +68,7 @@ uint64_t Schema::getSchemaSizeInBytes() const
     for (const auto& field : fields)
     {
         const auto type = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        size += type->size();
+        size += type->getSizeInBytes();
     }
     return size;
 }
@@ -94,7 +94,8 @@ std::shared_ptr<Schema> Schema::addField(const std::shared_ptr<AttributeField>& 
 ///TODO #473: investigate if we can remove this method
 std::shared_ptr<Schema> Schema::addField(const std::string& name, const BasicType& type)
 {
-    return addField(name, DataTypeProvider::provideBasicType(type));
+    const auto nullable = DataTypeProvider::isNullable(name);
+    return addField(name, DataTypeProvider::provideBasicType(type, nullable));
 }
 
 std::shared_ptr<Schema> Schema::addField(const std::string& name, const std::shared_ptr<DataType>& data)
@@ -104,7 +105,14 @@ std::shared_ptr<Schema> Schema::addField(const std::string& name, const std::sha
 
 void Schema::removeField(const std::shared_ptr<AttributeField>& field)
 {
-    std::erase_if(fields, [&](const std::shared_ptr<AttributeField>& otherField) { return otherField->getName() == field->getName(); });
+    for (auto fieldIt = fields.begin(); fieldIt != fields.end(); ++fieldIt)
+    {
+        if ((*fieldIt)->getName() == field->getName())
+        {
+            fields.erase(fieldIt);
+            return;
+        }
+    }
 }
 
 void Schema::replaceField(const std::string& name, const std::shared_ptr<DataType>& type)

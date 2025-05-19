@@ -39,10 +39,10 @@ std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> ColumnTupleBufferMemoryProv
 nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(
     const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, const uint64_t fieldIndex) const
 {
-    auto fieldSize = columnMemoryLayout->getFieldSize(fieldIndex);
-    auto columnOffset = columnMemoryLayout->getColumnOffset(fieldIndex);
+    const nautilus::static_val<uint64_t> fieldSize = columnMemoryLayout->getFieldSize(fieldIndex);
+    const nautilus::static_val<uint64_t> columnOffset = columnMemoryLayout->getColumnOffset(fieldIndex);
     const auto fieldOffset = recordIndex * fieldSize + columnOffset;
-    auto fieldAddress = bufferAddress + fieldOffset;
+    const auto fieldAddress = bufferAddress + fieldOffset;
     return fieldAddress;
 }
 
@@ -58,13 +58,12 @@ Record ColumnTupleBufferMemoryProvider::readRecord(
     for (nautilus::static_val<uint64_t> i = 0; i < schema->getFieldCount(); ++i)
     {
         const auto& fieldName = schema->getFieldByIndex(i)->getName();
-        if (!includesField(projections, fieldName))
+        if (includesField(projections, fieldName))
         {
-            continue;
+            const auto& fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
+            const auto& value = loadValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
+            record.write(fieldName, value);
         }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        auto value = loadValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
-        record.write(fieldName, value);
     }
     return record;
 }

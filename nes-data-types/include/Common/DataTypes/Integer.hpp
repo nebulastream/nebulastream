@@ -32,11 +32,11 @@ class Integer final : public Numeric
 public:
     /**
      * @brief Constructs a new Integer type.
+     * @param nullable whether the integer type is nullable.
      * @param bits the number of bits in which this type is represented.
-     * @param lowerBound the lower bound, which is contained in that integer.
-     * @param upperBound the upper bound, which is contained in that integer.
+     * @param isSigned whether the integer type is signed/unsigned.
      */
-    Integer(int8_t bits, bool isSigned) noexcept : Numeric(bits), isSigned(isSigned) { }
+    Integer(const bool nullable, const int8_t bits, const bool isSigned) noexcept : Numeric(nullable, bits), isSigned(isSigned) { }
 
     ~Integer() override = default;
 
@@ -46,7 +46,7 @@ public:
     * @brief Calculates the joined data type between this data type and the other.
     * If they have no possible joined data type, the coined type is Undefined.
     * For integers, we can join with all numeric data types.
-    * @param other data type
+    * @param otherDataType data type
     * @return std::shared_ptr<DataType> joined data type
     */
     std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;

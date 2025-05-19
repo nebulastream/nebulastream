@@ -287,4 +287,31 @@ void removeDoubleSpaces(std::string& input)
     input.erase(newEnd, input.end());
 }
 
+void replaceEmptyStringWithNullTag(std::string& input)
+{
+    std::stringstream stream(input);
+    std::string field;
+    std::string result;
+    bool first = true;
+
+    while (std::getline(stream, field, ','))
+    {
+        if (!first)
+        {
+            result += ",";
+        }
+        first = false;
+
+        if (field.empty())
+        {
+            result += "[null]";
+        }
+        else
+        {
+            result += field;
+        }
+    }
+    input = result;
+}
+
 }

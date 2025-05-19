@@ -125,7 +125,8 @@ FunctionItem Attribute(std::string fieldName)
 
 FunctionItem Attribute(std::string fieldName, BasicType type)
 {
-    return {NodeFunctionFieldAccess::create(DataTypeProvider::provideBasicType(type), std::move(fieldName))};
+    return {NodeFunctionFieldAccess::create(
+        DataTypeProvider::provideBasicType(type, DataTypeProvider::isNullable(fieldName)), std::move(fieldName))};
 }
 
 std::shared_ptr<NodeFunction> WHEN(const std::shared_ptr<NodeFunction>& conditionExp, const std::shared_ptr<NodeFunction>& valueExp)

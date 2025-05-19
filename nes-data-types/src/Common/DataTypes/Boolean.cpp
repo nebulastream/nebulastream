@@ -13,9 +13,12 @@
 */
 
 #include <memory>
-#include <Util/Common.hpp>
+
 #include <magic_enum/magic_enum.hpp>
+
+#include <Util/Common.hpp>
 #include <DataTypeRegistry.hpp>
+#include "Common/DataTypes/DataType.hpp"
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
@@ -23,19 +26,24 @@
 namespace NES
 {
 
-bool Boolean::operator==(const NES::DataType& other) const
+Boolean::Boolean(const bool nullable) : DataType(nullable)
 {
-    return dynamic_cast<const Boolean*>(&other) != nullptr;
+}
+
+bool Boolean::operator==(const DataType& other) const
+{
+    return dynamic_cast<const Boolean*>(&other) != nullptr && nullable == other.nullable;
 }
 
 
 std::shared_ptr<DataType> Boolean::join(const std::shared_ptr<DataType> otherDataType)
 {
+    const auto resultIsNullable = nullable || otherDataType->nullable;
     if (NES::Util::instanceOf<Boolean>(otherDataType))
     {
-        return DataTypeProvider::provideDataType(LogicalType::BOOLEAN);
+        return DataTypeProvider::provideDataType(LogicalType::BOOLEAN, resultIsNullable);
     }
-    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
+    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED, resultIsNullable);
 }
 
 std::string Boolean::toString()
@@ -43,10 +51,9 @@ std::string Boolean::toString()
     return std::string(magic_enum::enum_name(BasicType::BOOLEAN));
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterBOOLEANDataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Boolean>();
+    return std::make_shared<Boolean>(args.nullable);
 }
-
 
 }

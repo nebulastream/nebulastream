@@ -15,30 +15,20 @@
 #pragma once
 
 #include <memory>
+
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
-/**
- * @brief The char type represents a single character.
- */
 class Char final : public DataType
 {
 public:
+    explicit Char(bool nullable);
     ~Char() override = default;
-
-
     bool operator==(const DataType& other) const override;
 
-    /**
-     * @brief Calculates the joined data type between this data type and the other.
-     * If they have no possible joined data type, the coined type is Undefined.
-     * @param other data type
-     * @return std::shared_ptr<DataType> joined data type
-     */
     std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;
-
-
     std::string toString() override;
 };
 

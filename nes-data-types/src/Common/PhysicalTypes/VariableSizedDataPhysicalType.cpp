@@ -20,7 +20,7 @@
 namespace NES
 {
 
-uint64_t VariableSizedDataPhysicalType::size() const
+uint64_t VariableSizedDataPhysicalType::getRawSizeInBytes() const noexcept
 {
     /// returning the size of the index to the child buffer that contains the VariableSizedData data
     return sizeVal;

@@ -1,0 +1,19 @@
+Subject: [PATCH] Improve tracing performance
+---
+Index: nautilus/include/nautilus/val.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/val.hpp b/nautilus/include/nautilus/val.hpp
+--- a/nautilus/include/nautilus/val.hpp	(revision 59db490fcbadf0f537c1da9b314e0b26120003eb)
++++ b/nautilus/include/nautilus/val.hpp	(revision 438a188d6dd0a9d545e535c3d9778cb236d1c625)
+@@ -258,7 +258,7 @@
+ 		auto&& lValue = cast_value<LHS, commonType>(std::forward<LHS>(left));                                          \
+ 		auto&& rValue = cast_value<RHS, commonType>(std::forward<RHS>(right));                                         \
+ 		if SHOULD_TRACE () {                                                                                           \
+-			auto tc = tracing::traceBinaryOp(tracing::OP_TRACE, tracing::TypeResolver<RES_TYPE>::to_type(),                          \
++			auto&& tc = tracing::traceBinaryOp(tracing::OP_TRACE, tracing::TypeResolver<RES_TYPE>::to_type(),                          \
+ 			                                 details::StateResolver<decltype(lValue)>::getState(lValue), details::StateResolver<decltype(rValue)>::getState(rValue));                    \
+ 			return val<RES_TYPE>(tc);                                                                                  \
+ 		}                                                                                                              \

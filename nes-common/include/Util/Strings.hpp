@@ -39,6 +39,9 @@ namespace NES::Util
 /// Removes all double spaces from the input string.
 void removeDoubleSpaces(std::string& input);
 
+/// Replaces empty strings before, after or between comma-separated values with a special [null] tag.
+void replaceEmptyStringWithNullTag(std::string& input);
+
 
 /// From chars attempts to extract a T from string_view after removing surrounding whitespaces.
 /// Note: Implementation of T = string or string_view will return the string without performing any trimming.

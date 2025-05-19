@@ -20,35 +20,29 @@
 namespace NES
 {
 
-
-/**
- * @brief Base data type, which is the parent class for all other data types.
- */
+/// @brief Base data type, which is the parent class for all other data types.
 class DataType
 {
 public:
+    explicit DataType(const bool nullable) : nullable(nullable) { }
     virtual ~DataType() = default;
 
-
     template <class NewDataType>
-    static std::shared_ptr<NewDataType> as(const std::shared_ptr<DataType> ptr)
+    static std::shared_ptr<NewDataType> as(const std::shared_ptr<DataType> type)
     {
-        return std::dynamic_pointer_cast<NewDataType>(ptr);
+        return std::dynamic_pointer_cast<NewDataType>(type);
     }
 
     virtual bool operator==(const DataType& other) const = 0;
 
     bool operator!=(const DataType& other) const { return !(*this == other); }
 
-    /**
-     * @brief Calculates the joined data type between this data type and the other.
-     * If they have no possible joined data type, the coined type is Undefined.
-     * @param other data type
-     * @return std::shared_ptr<DataType> joined data type
-     */
+    /// Calculates the joined data type between this data type and the other. If they have no possible joined data type, the coined type is Undefined.
     virtual std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) = 0;
 
     virtual std::string toString() = 0;
+
+    bool nullable;
 };
 
 }

@@ -82,7 +82,8 @@ Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos, const std:
     /// As we can not return two values via one invoke, we have to perform two invokes
     /// This is still less than iterating over the pages in the PagedVector here and calling getNumberOfTuples on each page.
     /// As calling getNumberOfTuples on each page would require one invoke per page.
-    const auto recordBuffer = RecordBuffer(invoke(getTupleBufferForEntryProxy, pagedVectorRef, pos));
+    const auto bufferRef = invoke(getTupleBufferForEntryProxy, pagedVectorRef, pos);
+    const RecordBuffer recordBuffer(bufferRef);
     auto recordEntry = invoke(getBufferPosForEntryProxy, pagedVectorRef, pos);
     const auto record = memoryProvider->readRecord(projections, recordBuffer, recordEntry);
     return record;

@@ -59,10 +59,7 @@ std::shared_ptr<DataType> MinAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> MinAggregationDescriptor::getPartialAggregateStamp()
-{
-    return onField->getStamp();
-}
+
 std::shared_ptr<DataType> MinAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();

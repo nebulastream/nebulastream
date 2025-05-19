@@ -45,7 +45,8 @@ void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const Var
     /// We can not use the insert_or_assign method, as we otherwise run into a nautilus tracing exception.
     if (const auto [hashMapIterator, inserted] = recordFields.insert({recordFieldIdentifier, dataType}); not inserted)
     {
-        hashMapIterator->second = dataType;
+        recordFields.erase(recordFieldIdentifier);
+        recordFields.insert_or_assign(recordFieldIdentifier, dataType);
     }
 }
 

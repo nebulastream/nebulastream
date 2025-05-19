@@ -14,7 +14,6 @@
 
 #include <NebuLI.hpp>
 
-#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <istream>
@@ -25,6 +24,10 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+
+#include <fmt/ranges.h>
+#include <yaml-cpp/yaml.h>
+
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -55,13 +58,13 @@ namespace YAML
 {
 using namespace NES::CLI;
 
-std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType)
+std::shared_ptr<NES::DataType> stringToFieldType(const std::string& fieldNodeType, bool nullable)
 {
     try
     {
-        return NES::DataTypeProvider::provideDataType(fieldNodeType);
+        return NES::DataTypeProvider::provideDataType(fieldNodeType, nullable);
     }
-    catch (std::runtime_error& e)
+    catch (std::runtime_error&)
     {
         throw NES::SLTWrongSchema("Found Invalid Logical Source Configuration. {} is not a proper Schema Field Type.", fieldNodeType);
     }
@@ -73,7 +76,7 @@ struct convert<SchemaField>
     static bool decode(const Node& node, SchemaField& rhs)
     {
         rhs.name = node["name"].as<std::string>();
-        rhs.type = stringToFieldType(node["type"].as<std::string>());
+        rhs.type = stringToFieldType(node["type"].as<std::string>(), NES::DataTypeProvider::isNullable(rhs.name));
         return true;
     }
 };
@@ -138,6 +141,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
     {
         throw InvalidConfigParameter("Parser configuration must contain: type");
     }
+
     if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
@@ -149,6 +153,7 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
         NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
         validParserConfig.tupleDelimiter = '\n';
     }
+
     if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
     {
         validParserConfig.fieldDelimiter = fieldDelimiter->second;
@@ -157,6 +162,16 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
     {
         NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
         validParserConfig.fieldDelimiter = ",";
+    }
+
+    if (const auto nullRepresentation = parserConfig.find("nullRepresentation"); nullRepresentation != parserConfig.end())
+    {
+        validParserConfig.nullRepresentation = nullRepresentation->second;
+    }
+    else
+    {
+        NES_DEBUG("InputFormatter configuration did not contain: nullRepresentation, using default empty string");
+        validParserConfig.nullRepresentation = "";
     }
     return validParserConfig;
 }
@@ -214,7 +229,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     else
     {
         throw UnknownSinkType(
-            "Sinkname {} not specified in the configuration {}",
+            "Sink name {} not specified in the configuration {}",
             query.getSinkOperators().front()->sinkName,
             fmt::join(std::views::keys(config.sinks), ","));
     }
@@ -284,7 +299,8 @@ std::shared_ptr<DecomposedQueryPlan> loadFromYAMLFile(const std::filesystem::pat
     return loadFrom(file);
 }
 
-SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), YAML::stringToFieldType(typeName))
+SchemaField::SchemaField(std::string name, const std::string& typeName)
+    : SchemaField(std::move(name), YAML::stringToFieldType(typeName, DataTypeProvider::isNullable(name)))
 {
 }
 
@@ -296,7 +312,7 @@ std::shared_ptr<DecomposedQueryPlan> loadFrom(std::istream& inputStream)
 {
     try
     {
-        auto config = YAML::Load(inputStream).as<QueryConfig>();
+        const auto config = YAML::Load(inputStream).as<QueryConfig>();
         return createFullySpecifiedQueryPlan(config);
     }
     catch (const YAML::ParserException& pex)

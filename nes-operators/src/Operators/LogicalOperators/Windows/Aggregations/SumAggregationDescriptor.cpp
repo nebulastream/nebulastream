@@ -90,10 +90,7 @@ std::shared_ptr<DataType> SumAggregationDescriptor::getInputStamp()
 {
     return onField->getStamp();
 }
-std::shared_ptr<DataType> SumAggregationDescriptor::getPartialAggregateStamp()
-{
-    return onField->getStamp();
-}
+
 std::shared_ptr<DataType> SumAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();

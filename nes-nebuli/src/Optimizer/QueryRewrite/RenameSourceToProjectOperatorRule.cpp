@@ -49,9 +49,9 @@ std::shared_ptr<QueryPlan> RenameSourceToProjectOperatorRule::apply(std::shared_
 std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::shared_ptr<Operator>& operatorNode)
 {
     /// Fetch the new source name and input schema for the as operator
-    auto renameSourceOperator = NES::Util::as<RenameSourceOperator>(operatorNode);
-    auto newSourceName = renameSourceOperator->getNewSourceName();
-    auto inputSchema = renameSourceOperator->getInputSchema();
+    const auto renameSourceOperator = NES::Util::as<RenameSourceOperator>(operatorNode);
+    const auto newSourceName = renameSourceOperator->getNewSourceName();
+    const auto inputSchema = renameSourceOperator->getInputSchema();
 
     std::vector<std::shared_ptr<NodeFunction>> projectionAttributes;
     /// Iterate over the input schema and add a new field rename function
@@ -60,7 +60,7 @@ std::shared_ptr<Operator> RenameSourceToProjectOperatorRule::convert(const std::
         /// compute the new name for the field by added new source name as field qualifier
         std::string fieldName = field->getName();
         /// Compute new name without field qualifier
-        std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
+        const std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
         /// Compute field access and field rename function
         auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), fieldName);
         auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);

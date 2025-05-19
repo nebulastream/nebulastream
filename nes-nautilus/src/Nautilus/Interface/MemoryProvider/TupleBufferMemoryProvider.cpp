@@ -16,8 +16,12 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <nautilus/function.hpp>
+#include <nautilus/val_ptr.hpp>
+#include <val.hpp>
+
 #include <API/Schema.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
@@ -30,9 +34,6 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <nautilus/function.hpp>
-#include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -40,8 +41,43 @@
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
-namespace
+
+const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
 {
+    auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
+    return childBuffer.getBuffer<uint8_t>();
+}
+
+VarVal TupleBufferMemoryProvider::loadValue(
+    const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
+{
+    if (NES::Util::instanceOf<BasicPhysicalType>(type))
+    {
+        return VarVal::readVarValFromMemory(fieldReference, *type);
+    }
+    if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
+    {
+        if (type->type->nullable)
+        {
+            const auto memRefNull = fieldReference + nautilus::val<uint64_t>(sizeof(uint32_t));
+            if (const auto null = Nautilus::Util::readValueFromMemRef<bool>(memRefNull))
+            {
+                /// Field is nullable and null flag is true
+                return {VariableSizedData(fieldReference), true};
+            }
+            /// Field is nullable, but null flag is set to false
+            /// Retrieve child index from field ref, load the child buffer and return the text value
+            const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
+            const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
+            return {VariableSizedData(textPtr), false};
+        }
+        const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
+        const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
+        return {VariableSizedData(textPtr)};
+    }
+    throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
+}
+
 uint32_t storeAssociatedTextValueProxy(
     const Memory::TupleBuffer* tupleBuffer,
     Memory::AbstractBufferProvider* bufferProvider,
@@ -54,30 +90,6 @@ uint32_t storeAssociatedTextValueProxy(
     return tupleBuffer->storeChildBuffer(buffer.value());
 }
 
-const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
-{
-    auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
-    return childBuffer.getBuffer<uint8_t>();
-}
-}
-
-VarVal TupleBufferMemoryProvider::loadValue(
-    const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
-{
-    if (NES::Util::instanceOf<BasicPhysicalType>(type))
-    {
-        return VarVal::readVarValFromMemory(fieldReference, type);
-    }
-    if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
-    {
-        const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
-        const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-        return VariableSizedData(textPtr);
-    }
-    throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
-}
-
-
 VarVal TupleBufferMemoryProvider::storeValue(
     const std::shared_ptr<PhysicalType>& type,
     const RecordBuffer& recordBuffer,
@@ -87,7 +99,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
-        /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
+        /// We have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
         /// We get the correct function to call via a unordered_map
         if (const auto storeFunction = Nautilus::Util::storeValueFunctionMap.find(NES::Util::as<BasicPhysicalType>(type)->nativeType);
             storeFunction != Nautilus::Util::storeValueFunctionMap.end())
@@ -99,7 +111,20 @@ VarVal TupleBufferMemoryProvider::storeValue(
 
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
-        const auto textValue = value.cast<VariableSizedData>();
+        /// If the field is nullable, check if it actually null
+        /// If it is, there is no associated text value in a child buffer
+        /// In this case, we do not want to
+        if (type->type->nullable)
+        {
+            const auto memRefNull = fieldReference + nautilus::val<uint64_t>(sizeof(uint32_t));
+            *static_cast<nautilus::val<bool*>>(memRefNull) = value.isNull();
+            if (value.isNull())
+            {
+                return value;
+            }
+        }
+
+        const auto textValue = value.getRawValueAs<VariableSizedData>();
         const auto childIndex = invoke(
             storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
@@ -113,7 +138,7 @@ VarVal TupleBufferMemoryProvider::storeValue(
 bool TupleBufferMemoryProvider::includesField(
     const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex)
 {
-    return std::ranges::find(projections, fieldIndex) != projections.end();
+    return projections.empty() or std::ranges::find(projections, fieldIndex) != projections.end();
 }
 
 TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
@@ -121,16 +146,19 @@ TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 std::shared_ptr<TupleBufferMemoryProvider>
 TupleBufferMemoryProvider::create(const uint64_t bufferSize, const std::shared_ptr<Schema>& schema)
 {
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    switch (schema->getLayoutType())
     {
-        auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(std::move(schema), bufferSize);
-        return std::make_unique<RowTupleBufferMemoryProvider>(rowMemoryLayout);
+        case Schema::MemoryLayoutType::ROW_LAYOUT: {
+            auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferSize);
+            return std::make_shared<RowTupleBufferMemoryProvider>(rowMemoryLayout);
+        }
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
+            auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+            return std::make_unique<ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
+        }
+        default: {
+            throw NotImplemented("Currently only row and column layout are supported");
+        }
     }
-    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
-        return std::make_unique<ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
-    }
-    throw NotImplemented("Currently only row and column layout are supported");
 }
 }

@@ -19,29 +19,15 @@
 namespace NES
 {
 
-/**
- * @brief The Undefined type represents a type for without any meaning.
- */
+/// @brief The Undefined type represents a type for without any meaning.
 class Undefined final : public DataType
 {
 public:
+    explicit Undefined(bool nullable);
     ~Undefined() override = default;
-
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return true if equal types false if unequal
-     */
     bool operator==(const DataType& other) const override;
 
-    /**
-     * @brief Calculates the joined data type between this data type and the other.
-     * If they have no possible joined data type, the coined type is Undefined.
-     * @param other data type
-     * @return std::shared_ptr<DataType> joined data type
-     */
     std::shared_ptr<DataType> join(std::shared_ptr<DataType> otherDataType) override;
-
     std::string toString() override;
 };
 

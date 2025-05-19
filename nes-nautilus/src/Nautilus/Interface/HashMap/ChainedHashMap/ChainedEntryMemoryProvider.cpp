@@ -50,7 +50,7 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto& fieldValue = field.value();
         const auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue->getDataType());
         fieldsKey.emplace_back(MemoryProvider::FieldOffsets{fieldValue->getName(), physicalType, offset});
-        offset += physicalType->size();
+        offset += physicalType->getSizeInBytes();
     }
 
     for (const auto& fieldName : fieldNameValues)
@@ -60,7 +60,7 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         const auto& fieldValue = field.value();
         const auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue->getDataType());
         fieldsValue.emplace_back(MemoryProvider::FieldOffsets{fieldValue->getName(), physicalType, offset});
-        offset += physicalType->size();
+        offset += physicalType->getSizeInBytes();
     }
     return {fieldsKey, fieldsValue};
 }
@@ -75,7 +75,7 @@ VarVal ChainedEntryMemoryProvider::readVarVal(
             const auto& entryRefCopy = entryRef;
             auto castedEntryAddress = static_cast<nautilus::val<int8_t*>>(entryRefCopy);
             const auto memoryAddress = castedEntryAddress + fieldOffset;
-            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, type);
+            const auto varVal = VarVal::readVarValFromMemory(memoryAddress, *type);
             return varVal;
         }
     }

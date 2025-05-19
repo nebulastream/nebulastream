@@ -13,8 +13,10 @@
 */
 
 #include <memory>
-#include <Util/Common.hpp>
+
 #include <magic_enum/magic_enum.hpp>
+
+#include <Util/Common.hpp>
 #include <DataTypeRegistry.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Char.hpp>
@@ -23,18 +25,23 @@
 namespace NES
 {
 
-bool Char::operator==(const NES::DataType& other) const
+Char::Char(const bool nullable) : DataType(nullable)
 {
-    return dynamic_cast<const Char*>(&other) != nullptr;
+}
+
+bool Char::operator==(const DataType& other) const
+{
+    return dynamic_cast<const Char*>(&other) != nullptr && nullable == other.nullable;
 }
 
 std::shared_ptr<DataType> Char::join(const std::shared_ptr<DataType> otherDataType)
 {
+    const auto resultIsNullable = nullable || otherDataType->nullable;
     if (NES::Util::instanceOf<Char>(otherDataType))
     {
-        return DataTypeProvider::provideDataType(LogicalType::CHAR);
+        return DataTypeProvider::provideDataType(LogicalType::CHAR, resultIsNullable);
     }
-    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
+    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED, resultIsNullable);
 }
 
 std::string Char::toString()
@@ -42,9 +49,9 @@ std::string Char::toString()
     return std::string(magic_enum::enum_name(BasicType::CHAR));
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterCHARDataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Char>();
+    return std::make_shared<Char>(args.nullable);
 }
 
 }

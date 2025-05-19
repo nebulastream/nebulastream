@@ -13,32 +13,38 @@
 */
 
 #include <memory>
-#include <Util/Common.hpp>
+#include <string>
+
 #include <DataTypeRegistry.hpp>
+#include "Common/DataTypes/DataType.hpp"
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
 {
 
-bool Undefined::operator==(const DataType& other) const
+Undefined::Undefined(const bool nullable) : DataType(nullable)
 {
-    return dynamic_cast<const Undefined*>(&other) != nullptr;
 }
 
-std::shared_ptr<DataType> Undefined::join(std::shared_ptr<DataType>)
+bool Undefined::operator==(const DataType& other) const
 {
-    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED);
+    return dynamic_cast<const Undefined*>(&other) != nullptr && nullable == other.nullable;
 }
+
+std::shared_ptr<DataType> Undefined::join(const std::shared_ptr<DataType> otherDataType)
+{
+    return DataTypeProvider::provideDataType(LogicalType::UNDEFINED, nullable || otherDataType->nullable);
+}
+
 std::string Undefined::toString()
 {
     return "Undefined";
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments)
+DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterUNDEFINEDDataType(DataTypeRegistryArguments args)
 {
-    return std::make_unique<Undefined>();
+    return std::make_shared<Undefined>(args.nullable);
 }
-
 
 }

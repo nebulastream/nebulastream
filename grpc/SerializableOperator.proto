@@ -41,6 +41,7 @@ message ParserConfig {
   string type = 1;
   string tupleDelimiter = 2;
   string fieldDelimiter = 3;
+  string nullRepresentation = 4;
 };
 
 message SerializableEnumWrapper {

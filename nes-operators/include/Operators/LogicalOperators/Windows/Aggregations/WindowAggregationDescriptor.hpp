@@ -66,7 +66,6 @@ public:
 
     /**
      * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
      * @param schema
      */
     virtual void inferStamp(const Schema& schema) = 0;
@@ -80,11 +79,6 @@ public:
      * @return the input type
      */
     virtual std::shared_ptr<DataType> getInputStamp() = 0;
-
-    /**
-     * @return the partial aggregation type
-     */
-    virtual std::shared_ptr<DataType> getPartialAggregateStamp() = 0;
 
     /**
      * @return the final aggregation type

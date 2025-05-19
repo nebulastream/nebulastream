@@ -15,22 +15,23 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <string>
-#include <utility>
-#include <API/AttributeField.hpp>
+#include <string_view>
+#include <vector>
+
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
 
-std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t childBufferIdx)
+std::string readVarSizedData(const TupleBuffer& buffer, const uint64_t childBufferIdx)
 {
     auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
     const auto stringSize = *childBuffer.getBuffer<uint32_t>();
@@ -40,11 +41,10 @@ std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t c
 }
 
 std::optional<uint32_t>
-writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view value, Memory::AbstractBufferProvider& bufferProvider)
+writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferProvider)
 {
     const auto valueLength = value.length();
-    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
-    if (childBuffer.has_value())
+    if (auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t)); childBuffer.has_value())
     {
         auto& childBufferVal = childBuffer.value();
         *childBufferVal.getBuffer<uint32_t>() = valueLength;
@@ -61,6 +61,7 @@ uint64_t MemoryLayout::getTupleSize() const
 
 uint64_t MemoryLayout::getFieldSize(const uint64_t fieldIndex) const
 {
+    PRECONDITION(fieldIndex < physicalFieldSizes.size(), "Field index out of bounds");
     return physicalFieldSizes[fieldIndex];
 }
 
@@ -72,9 +73,9 @@ MemoryLayout::MemoryLayout(const uint64_t bufferSize, const std::shared_ptr<Sche
         const DefaultPhysicalTypeFactory physicalDataTypeFactory;
         const auto field = this->schema->getFieldByIndex(fieldIndex);
         auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        physicalFieldSizes.emplace_back(physicalFieldSize->size());
+        physicalFieldSizes.emplace_back(physicalFieldSize->getSizeInBytes());
         physicalTypes.emplace_back(physicalFieldSize);
-        recordSize += physicalFieldSize->size();
+        recordSize += physicalFieldSize->getSizeInBytes();
         nameFieldIndexMap[field->getName()] = fieldIndex;
     }
     /// calculate the buffer capacity only if the record size is larger then zero

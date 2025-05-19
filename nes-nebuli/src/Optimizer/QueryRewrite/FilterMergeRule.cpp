@@ -60,7 +60,7 @@ std::shared_ptr<QueryPlan> FilterMergeRule::apply(std::shared_ptr<QueryPlan> que
                 auto filterChainChildren = consecutiveFilters.back()->getChildren();
                 NES_DEBUG("FilterMergeRule: Start re-writing the new query plan");
                 NES_DEBUG("FilterMergeRule: Remove parent/children references for the consecutive filters");
-                for (auto& filterToRemove : consecutiveFilters)
+                for (const auto& filterToRemove : consecutiveFilters)
                 {
                     filterToRemove->removeAllParent();
                     filterToRemove->removeChildren();
@@ -71,13 +71,13 @@ std::shared_ptr<QueryPlan> FilterMergeRule::apply(std::shared_ptr<QueryPlan> que
                     combinedFilter->addParent(filterChainParent);
                 }
                 NES_DEBUG("FilterMergeRule: Fix references, the chain children have only one parent, which is the new combined filter");
-                for (auto& filterChainChild : filterChainChildren)
+                for (const auto& filterChainChild : filterChainChildren)
                 {
                     filterChainChild->removeAllParent();
                     filterChainChild->addParent(combinedFilter);
                 }
                 NES_DEBUG("FilterMergeRule: Mark the involved nodes as visited");
-                for (auto& orderedFilter : consecutiveFilters)
+                for (const auto& orderedFilter : consecutiveFilters)
                 {
                     visitedOperators.insert(orderedFilter->getId());
                 }
@@ -100,7 +100,7 @@ std::vector<std::shared_ptr<LogicalSelectionOperator>>
 FilterMergeRule::getConsecutiveFilters(const std::shared_ptr<NES::LogicalSelectionOperator>& filter)
 {
     std::vector<std::shared_ptr<LogicalSelectionOperator>> consecutiveFilters = {};
-    DepthFirstNodeIterator queryPlanNodeIterator(filter);
+    const DepthFirstNodeIterator queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);
     while (NES::Util::instanceOf<LogicalSelectionOperator>(node))

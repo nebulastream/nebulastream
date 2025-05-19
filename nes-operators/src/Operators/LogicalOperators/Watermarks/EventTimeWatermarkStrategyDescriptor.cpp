@@ -16,7 +16,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <API/AttributeField.hpp>
+
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -25,7 +25,6 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Windowing
@@ -34,6 +33,10 @@ namespace NES::Windowing
 EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(std::shared_ptr<NodeFunction> onField, TimeUnit unit)
     : onField(std::move(onField)), unit(std::move(unit))
 {
+    if (this->onField->getStamp()->nullable)
+    {
+        throw DisallowedNullField("The timestamp field used for watermarking can not be null.\n");
+    }
 }
 
 std::shared_ptr<WatermarkStrategyDescriptor>

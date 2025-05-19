@@ -1,0 +1,47 @@
+Subject: [PATCH] Added hash map that stores/caches already mangled name for each function pointer.
+---
+Index: nautilus/src/nautilus/tracing/TraceContext.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.hpp b/nautilus/src/nautilus/tracing/TraceContext.hpp
+--- a/nautilus/src/nautilus/tracing/TraceContext.hpp	(revision ad6c049aefe3da91e4aae047fc83dbdc144cbb2c)
++++ b/nautilus/src/nautilus/tracing/TraceContext.hpp	(revision 59db490fcbadf0f537c1da9b314e0b26120003eb)
+@@ -91,6 +91,8 @@
+ 	void allocateValRef(ValueRef ref);
+ 	void freeValRef(ValueRef ref);
+
++	std::unordered_map<void*, std::string> fnPtrToMangledName;
++
+ private:
+ 	explicit TraceContext(TagRecorder& tagRecorder);
+
+Index: nautilus/src/nautilus/tracing/TracingUtil.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+--- a/nautilus/src/nautilus/tracing/TracingUtil.cpp	(revision ad6c049aefe3da91e4aae047fc83dbdc144cbb2c)
++++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp	(revision 59db490fcbadf0f537c1da9b314e0b26120003eb)
+@@ -9,6 +9,11 @@
+ namespace nautilus::tracing {
+
+ std::string getMangledName(void* fnptr) {
++	const auto traceContext = TraceContext::get();
++	if (traceContext->fnPtrToMangledName.contains(fnptr)) {
++		return traceContext->fnPtrToMangledName.at(fnptr);
++	}
++
+ 	Dl_info info;
+ 	dladdr(reinterpret_cast<void*>(fnptr), &info);
+ 	if (info.dli_sname != nullptr) {
+@@ -16,6 +21,7 @@
+ 	}
+ 	std::stringstream ss;
+ 	ss << fnptr;
++	traceContext->fnPtrToMangledName[fnptr] = ss.str();
+ 	return ss.str();
+ }
+

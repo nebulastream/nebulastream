@@ -76,20 +76,21 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
 
     for (size_t i = 0; i < arguments.size(); i += 2)
     {
+        const auto fieldName = arguments[i + 1];
         std::shared_ptr<DataType> dataType;
         if (auto type = magic_enum::enum_cast<BasicType>(arguments[i]); type.has_value())
         {
-            dataType = DataTypeProvider::provideBasicType(type.value());
+            dataType = DataTypeProvider::provideBasicType(type.value(), DataTypeProvider::isNullable(fieldName));
         }
         else if (NES::Util::toLowerCase(arguments[i]) == "varsized")
         {
-            dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED);
+            dataType = DataTypeProvider::provideDataType(LogicalType::VARSIZED, DataTypeProvider::isNullable(fieldName));
         }
         else
         {
             throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
         }
-        schema.emplace_back(dataType, arguments[i + 1]);
+        schema.emplace_back(dataType, fieldName);
     }
 
     return schema;
@@ -98,8 +99,7 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
-    auto found = std::find_if(
-        substitutionRules.begin(), substitutionRules.end(), [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
+    auto found = std::ranges::find_if(substitutionRules, [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
     PRECONDITION(
         found == substitutionRules.end(),
         "substitution rule keywords must be unique. Tried to register for the second time: {}",

@@ -54,18 +54,18 @@ std::shared_ptr<QueryPlan> BinaryOperatorSortRule::apply(std::shared_ptr<QueryPl
 void BinaryOperatorSortRule::sortChildren(const std::shared_ptr<BinaryOperator>& binaryOperator)
 {
     /// Extract the children operators
-    auto children = binaryOperator->getChildren();
+    const auto children = binaryOperator->getChildren();
     INVARIANT(children.size() == 2, "Binary operator should have only 2 children, but had: {}", children.size());
 
     /// Extract left and right children
-    auto leftChild = children[0];
+    const auto leftChild = children[0];
     auto rightChild = children[1];
 
     /// Extract schema and qualifier name for left and right children
-    auto leftInputSchema = binaryOperator->getLeftInputSchema();
-    auto leftQualifierName = leftInputSchema->getQualifierNameForSystemGeneratedFields();
-    auto rightInputSchema = binaryOperator->getRightInputSchema();
-    auto rightQualifierName = rightInputSchema->getQualifierNameForSystemGeneratedFields();
+    const auto leftInputSchema = binaryOperator->getLeftInputSchema();
+    const auto leftQualifierName = leftInputSchema->getQualifierNameForSystemGeneratedFields();
+    const auto rightInputSchema = binaryOperator->getRightInputSchema();
+    const auto rightQualifierName = rightInputSchema->getQualifierNameForSystemGeneratedFields();
 
     /// Compare left and right children qualifier name
     if (leftQualifierName.compare(rightQualifierName) > 0)

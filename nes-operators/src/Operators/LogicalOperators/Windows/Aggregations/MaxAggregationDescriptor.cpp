@@ -93,11 +93,6 @@ std::shared_ptr<DataType> MaxAggregationDescriptor::getInputStamp()
     return onField->getStamp();
 }
 
-std::shared_ptr<DataType> MaxAggregationDescriptor::getPartialAggregateStamp()
-{
-    return onField->getStamp();
-}
-
 std::shared_ptr<DataType> MaxAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();

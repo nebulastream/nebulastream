@@ -74,12 +74,12 @@ void FilterSplitUpRule::splitUpFilters(const std::shared_ptr<LogicalSelectionOpe
     if (Util::instanceOf<NodeFunctionAnd>(filterOperator->getPredicate()))
     {
         /// create filter that contains function1 of the andFunction
-        auto child1 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
+        const auto child1 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
         child1->setId(getNextOperatorId());
         child1->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[0]));
 
         /// create filter that contains function2 of the andFunction
-        auto child2 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
+        const auto child2 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
         child2->setId(getNextOperatorId());
         child2->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[1]));
 
@@ -113,11 +113,11 @@ void FilterSplitUpRule::splitUpFilters(const std::shared_ptr<LogicalSelectionOpe
         /// The reformulated predicate can be used to apply the split up filter rule again.
         if (Util::instanceOf<NodeFunctionOr>(filterOperator->getPredicate()->getChildren()[0]))
         {
-            auto orFunction = filterOperator->getPredicate()->getChildren()[0];
-            auto negatedChild1 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[0]));
-            auto negatedChild2 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[1]));
+            const auto orFunction = filterOperator->getPredicate()->getChildren()[0];
+            const auto negatedChild1 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[0]));
+            const auto negatedChild2 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[1]));
 
-            auto equivalentAndFunction = NodeFunctionAnd::create(negatedChild1, negatedChild2);
+            const auto equivalentAndFunction = NodeFunctionAnd::create(negatedChild1, negatedChild2);
             filterOperator->setPredicate(equivalentAndFunction); /// changing predicate to equivalent AndFunction
             splitUpFilters(filterOperator); /// splitting up the filter
         }

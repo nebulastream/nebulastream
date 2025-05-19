@@ -16,16 +16,17 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+
+#include <nautilus/std/cstring.h>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
+
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/SumAggregationFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <nautilus/std/cstring.h>
-#include <val_concepts.hpp>
-#include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
@@ -45,12 +46,19 @@ void SumAggregationFunction::lift(
     PipelineMemoryProvider& pipelineMemoryProvider,
     const Nautilus::Record& record)
 {
+    /// Reading the value from the record
+    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
+    if (inputType->type->nullable && value.isNull())
+    {
+        /// If the value is null, we do not update the sum.
+        return;
+    }
+
     /// Reading the old sum from the aggregation state.
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType);
+    const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, *inputType);
 
     /// Updating the sum and count with the new value
-    const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena);
     const auto newSum = sum + value;
 
     /// Writing the new sum and count back to the aggregation state
@@ -64,11 +72,11 @@ void SumAggregationFunction::combine(
 {
     /// Reading the sum from the first aggregation state
     const auto memAreaSum1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto sum1 = Nautilus::VarVal::readVarValFromMemory(memAreaSum1, inputType);
+    const auto sum1 = Nautilus::VarVal::readVarValFromMemory(memAreaSum1, *inputType);
 
     /// Reading the sum from the second aggregation state
     const auto memAreaSum2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto sum2 = Nautilus::VarVal::readVarValFromMemory(memAreaSum2, inputType);
+    const auto sum2 = Nautilus::VarVal::readVarValFromMemory(memAreaSum2, *inputType);
 
     /// Adding the sums together
     const auto newSum = sum1 + sum2;
@@ -81,7 +89,7 @@ Nautilus::Record SumAggregationFunction::lower(const nautilus::val<AggregationSt
 {
     /// Reading the sum from the aggregation state
     const auto memAreaSum = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, inputType);
+    const auto sum = Nautilus::VarVal::readVarValFromMemory(memAreaSum, *inputType);
 
     /// Creating a record with the sum
     Nautilus::Record record;
@@ -103,7 +111,7 @@ void SumAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t SumAggregationFunction::getSizeOfStateInBytes() const
 {
-    return inputType->size();
+    return inputType->getSizeInBytes();
 }
 
 }

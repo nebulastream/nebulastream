@@ -14,11 +14,13 @@
 
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
-#include <utility>
+#include <string_view>
+
 #include <magic_enum/magic_enum.hpp>
+
 #include <DataTypeRegistry.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
@@ -26,37 +28,38 @@
 namespace NES::DataTypeProvider
 {
 
-std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type)
+bool isNullable(const std::string_view fieldName)
 {
-    auto args = DataTypeRegistryArguments{};
+    return fieldName.ends_with(NULLABLE_POSTFIX);
+}
+
+std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type, const bool nullable)
+{
+    auto args = DataTypeRegistryArguments{.nullable = nullable};
     if (auto dataType = DataTypeRegistry::instance().create(type, args))
     {
-        std::shared_ptr<DataType> sharedType = std::move(dataType.value());
-        return {sharedType};
+        return dataType;
     }
     return std::nullopt;
 }
 
-std::shared_ptr<DataType> provideDataType(const std::string& type)
+std::shared_ptr<DataType> provideDataType(const std::string& type, const bool nullable)
 {
-    /// Empty argument struct, since we do not have data types that take arguments at the moment.
-    /// However, we provide the empty struct to be consistent with the design of our registries.
-    auto args = DataTypeRegistryArguments{};
+    const auto args = DataTypeRegistryArguments{.nullable = nullable};
     if (auto dataType = DataTypeRegistry::instance().create(type, args))
     {
-        std::shared_ptr<DataType> sharedType = std::move(dataType.value());
-        return sharedType;
+        return dataType.value();
     }
-    throw std::runtime_error("Failed to create data type of type: " + type);
+    throw UnknownDataType("Unknown data type {}", type);
 }
 
-std::shared_ptr<DataType> provideDataType(LogicalType type)
+std::shared_ptr<DataType> provideDataType(const LogicalType type, const bool nullable)
 {
-    return provideDataType(std::string(magic_enum::enum_name(type)));
+    return provideDataType(std::string(magic_enum::enum_name(type)), nullable);
 }
 
-std::shared_ptr<DataType> provideBasicType(const BasicType type)
+std::shared_ptr<DataType> provideBasicType(const BasicType type, const bool nullable)
 {
-    return provideDataType(std::string(magic_enum::enum_name(type)));
+    return provideDataType(std::string(magic_enum::enum_name(type)), nullable);
 }
 }

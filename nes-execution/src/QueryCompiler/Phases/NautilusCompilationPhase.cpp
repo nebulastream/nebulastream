@@ -78,7 +78,7 @@ nautilus::engine::Options setNautilusOptions(const Configurations::QueryCompiler
             INVARIANT(false, "Invalid backend");
         }
     }
-
+    options.setOption("dump.all", true);
     return options;
 }
 

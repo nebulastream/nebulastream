@@ -16,17 +16,18 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+
+#include <nautilus/std/cstring.h>
+#include <val.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
+
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregation/Function/CountAggregationFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <nautilus/std/cstring.h>
-#include <val.hpp>
-#include <val_concepts.hpp>
-#include <val_ptr.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
@@ -42,11 +43,21 @@ CountAggregationFunction::CountAggregationFunction(
 }
 
 void CountAggregationFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider&, const Nautilus::Record&)
-{
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    const Nautilus::Record&  record) {
+
+    /// Reading the value from the record
+    /// TODO(yschroeder97): update this after fix of COUNT(*) is fixed in #699 such that null values are taken into account
+    if (const auto value = inputFunction->execute(record, pipelineMemoryProvider.arena); inputType->type->nullable && value.isNull())
+    {
+        /// If the input type is nullable and the field null, do not update the count
+        return;
+
+    }
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, inputType);
+    const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, *resultType);
 
     /// Updating the count with the new value
     const auto newCount = count + nautilus::val<uint64_t>(1);
@@ -62,11 +73,11 @@ void CountAggregationFunction::combine(
 {
     /// Reading the count from the first aggregation state
     const auto memAreaCount1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto count1 = Nautilus::VarVal::readVarValFromMemory(memAreaCount1, inputType);
+    const auto count1 = Nautilus::VarVal::readVarValFromMemory(memAreaCount1, *resultType);
 
     /// Reading the count from the second aggregation state
     const auto memAreaCount2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto count2 = Nautilus::VarVal::readVarValFromMemory(memAreaCount2, inputType);
+    const auto count2 = Nautilus::VarVal::readVarValFromMemory(memAreaCount2, *resultType);
 
     /// Adding the counts together
     const auto newCount = count1 + count2;
@@ -79,7 +90,7 @@ Nautilus::Record CountAggregationFunction::lower(const nautilus::val<Aggregation
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, inputType);
+    const auto count = Nautilus::VarVal::readVarValFromMemory(memAreaCount, *resultType);
 
     /// Creating a record with the count
     Nautilus::Record record;
@@ -101,7 +112,7 @@ void CountAggregationFunction::cleanup(nautilus::val<AggregationState*>)
 
 size_t CountAggregationFunction::getSizeOfStateInBytes() const
 {
-    return inputType->size();
+    return resultType->getSizeInBytes();
 }
 
 }

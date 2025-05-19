@@ -14,9 +14,12 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
+
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -36,13 +39,13 @@ public:
         return std::make_shared<VariableSizedDataPhysicalType>(type);
     }
 
-    [[nodiscard]] uint64_t size() const override;
-
     std::string convertRawToString(const void* rawData) const noexcept override;
 
     std::string convertRawToStringWithoutFill(const void* rawData) const noexcept override;
 
     [[nodiscard]] std::string toString() const noexcept override;
+protected:
+    [[nodiscard]] uint64_t getRawSizeInBytes() const noexcept override;
 
 private:
     static constexpr size_t sizeVal = sizeof(uint32_t);
