@@ -79,7 +79,7 @@ private:
 #include <ExceptionDefinitions.inc>
 #undef EXCEPTION
 
-#ifdef NDEBUG
+#ifdef NO_ASSERT
     #define USED_IN_DEBUG [[maybe_unused]]
     #define PRECONDITION(condition, formatString, ...) ((void)0)
     #define INVARIANT(condition, formatString, ...) ((void)0)

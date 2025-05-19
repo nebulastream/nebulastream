@@ -28,8 +28,33 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING "Enables the inlining for the MLIR backend." OFF)
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
 option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
+option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
 
-set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
+
+if (CMAKE_BUILD_TYPE STREQUAL "Benchmark")
+    add_compile_definitions(NO_ASSERT)
+    set(NES_BUILD_NATIVE ON)
+    set(NES_LOG_LEVEL "LEVEL_NONE" CACHE STRING "LogLevel")
+    message(STATUS "Building without any asserts, invariants or preconditions enabled!")
+    message(STATUS "NES_BUILD_NATIVE enabling by default in Benchmark!")
+    message(STATUS "Setting NES_LOG_LEVEL to LEVEL_NONE in Benchmark!")
+elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_compile_definitions(NO_ASSERT)
+    if (NOT DEFINED NES_LOG_LEVEL)
+        set(NES_LOG_LEVEL "ERROR" CACHE STRING "LogLevel")
+        message(STATUS "NES_LOG_LEVEL was not set, therefore setting NES_LOG_LEVEL to ERROR in Release!")
+    endif ()
+elseif (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    if (NOT DEFINED NES_LOG_LEVEL)
+        set(NES_LOG_LEVEL "WARN" CACHE STRING "LogLevel")
+        message(STATUS "NES_LOG_LEVEL was not set, therefore setting NES_LOG_LEVEL to WARN in Release!")
+    endif ()
+else ()
+    # Default is to compile all log levels
+    set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
+endif ()
+
+
 if (NES_LOG_WITH_STACKTRACE)
     add_compile_definitions(NES_LOG_WITH_STACKTRACE)
 endif ()
@@ -62,8 +87,6 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 # Set NES Flags
 set(NES_SPECIFIC_FLAGS)
-
-option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
 endif ()
@@ -146,6 +169,7 @@ endif ()
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
+message(STATUS "CMAKE_CXX_FLAGS_BENCHMARK: ${CMAKE_CXX_FLAGS_BENCHMARK}")
 
 
 # Find Protobuf installation
