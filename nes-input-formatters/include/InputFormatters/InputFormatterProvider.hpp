@@ -23,4 +23,6 @@ namespace NES::InputFormatters::InputFormatterProvider
 {
 std::unique_ptr<InputFormatter>
 provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
+
+bool contains(const std::string& parserType);
 }

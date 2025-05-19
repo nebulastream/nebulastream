@@ -19,8 +19,12 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <unordered_set>
+#include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestState.hpp>
 
@@ -32,8 +36,8 @@ using namespace std::literals;
 enum class TokenType : uint8_t
 {
     INVALID,
-    CSV_SOURCE,
-    SLT_SOURCE,
+    LOGICAL_SOURCE,
+    ATTACH_SOURCE,
     SINK,
     QUERY,
     RESULT_DELIMITER,
@@ -63,19 +67,10 @@ public:
 
     using SystestSchema = std::vector<SystestField>;
     /// Type definitions ///
-    struct CSVSource
-    {
-        std::string name;
-        SystestSchema fields;
-        std::string csvFilePath;
-        bool operator==(const CSVSource& other) const = default;
-    };
-
     struct SystestLogicalSource
     {
         std::string name;
         SystestSchema fields;
-        std::vector<std::string> tuples;
         bool operator==(const SystestLogicalSource& other) const = default;
     };
 
@@ -96,7 +91,7 @@ public:
     using QueryCallback = std::function<void(std::string, SystestQueryId)>;
     using ResultTuplesCallback = std::function<void(std::vector<std::string>&&, SystestQueryId correspondingQueryId)>;
     using SystestLogicalSourceCallback = std::function<void(const SystestLogicalSource&)>;
-    using CSVSourceCallback = std::function<void(CSVSource&&)>;
+    using SystestAttachSourceCallback = std::function<void(SystestAttachSource attachSource)>;
     using SystestSinkCallback = std::function<void(SystestSink&&)>;
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&)>;
 
@@ -104,11 +99,12 @@ public:
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSystestLogicalSourceCallback(SystestLogicalSourceCallback callback);
-    void registerOnCSVSourceCallback(CSVSourceCallback callback);
+    void registerOnSystestAttachSourceCallback(SystestAttachSourceCallback callback);
     void registerOnSystestSinkCallback(SystestSinkCallback callback);
     void registerOnErrorExpectationCallback(ErrorExpectationCallback callback);
 
     void parse();
+    void parseResultLines();
 
 private:
     /// Substitution rules ///
@@ -124,22 +120,24 @@ private:
     /// Look ahead at the next token without consuming it
     [[nodiscard]] std::optional<TokenType> peekToken() const;
 
-    [[nodiscard]] SystestLogicalSource expectSystestLogicalSource();
-    [[nodiscard]] CSVSource expectCSVSource() const;
+    [[nodiscard]] std::pair<SystestLogicalSource, std::optional<SystestAttachSource>> expectSystestLogicalSource();
+    [[nodiscard]] SystestAttachSource expectAttachSource();
     [[nodiscard]] SystestSink expectSink() const;
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
+    [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
     [[nodiscard]] ErrorExpectation expectError() const;
 
     QueryCallback onQueryCallback;
     ResultTuplesCallback onResultTuplesCallback;
     SystestLogicalSourceCallback onSystestLogicalSourceCallback;
-    CSVSourceCallback onCSVSourceCallback;
+    SystestAttachSourceCallback onAttachSourceCallback;
     SystestSinkCallback onSystestSinkCallback;
     ErrorExpectationCallback onErrorExpectationCallback;
 
     bool firstToken = true;
     size_t currentLine = 0;
     std::vector<std::string> lines;
+    std::unordered_set<std::string> seenLogicalSourceNames;
 };
 }

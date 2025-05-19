@@ -2,7 +2,7 @@
 # description: Simple tests that contain map and filter
 # groups: [Filter, Map]
 
-Source stream INT64 id INT64 value UINT64 timestamp
+Source stream INT64 id INT64 value UINT64 timestamp INLINE
 1,1,1000
 2,1,1001
 3,11,1002

@@ -1,2 +1,2 @@
-# INVALID: field name for CHAR missing
-SourceCSV e124 INT8 i UINT8 i INT16 i UINT16 i INT32 i UINT32 i INT64 i FLOAT32 i UINT64 i FLOAT64 i BOOLEAN i CHAR xyz.txt
+# INVALID: name of logical source missing
+Attach File InlineData CONFIG/sources/tcp_inline_default.yaml

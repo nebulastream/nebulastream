@@ -5,7 +5,7 @@
 # All of the tests are failing, as our query parser does not work if we duplicate the fields in the SELECT clause.
 # TODO #529
 
-Source window UINT64 id UINT64 value UINT64 timestamp
+Source window UINT64 id UINT64 value UINT64 timestamp INLINE
 1,1,1000
 2,1,1001
 3,1,1002

@@ -2,7 +2,7 @@
 # description: Simple map tests with a mul function
 # groups: [Map]
 
-Source stream INT64 id INT64 value INT64 timestamp
+Source stream INT64 id INT64 value INT64 timestamp INLINE
 1,1,1000
 2,1,1001
 3,1,1002

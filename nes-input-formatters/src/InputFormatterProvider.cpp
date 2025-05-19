@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
+#include <InputFormatters/InputFormatterProvider.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>
+
 #include <DataTypes/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
 
@@ -34,5 +36,9 @@ provideInputFormatter(const std::string& parserType, const Schema& schema, std::
         return std::move(inputFormatter.value());
     }
     throw UnknownParserType("unknown type of parser: {}", parserType);
+}
+bool contains(const std::string& parserType)
+{
+    return InputFormatterRegistry::instance().contains(parserType);
 }
 }

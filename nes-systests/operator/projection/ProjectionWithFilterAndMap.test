@@ -2,7 +2,7 @@
 # description: Simple map tests with an add function
 # groups: [Projection, Filter, Map]
 
-Source stream UINT64 id UINT64 value UINT64 timestamp
+Source stream UINT64 id UINT64 value UINT64 timestamp INLINE
 1,1,1000
 2,1,1001
 3,1,1002

@@ -2,7 +2,7 @@
 # description: Simple tuple/buffer tests
 # groups: [Tuples]
 
-Source oneTuple UINT64 field_1
+Source oneTuple UINT64 field_1 INLINE
 1
 
 SINK sinkOneTuple UINT64 oneTuple$field_1

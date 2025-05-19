@@ -2,7 +2,7 @@
 # description: Simple map tests with a div function
 # groups: [Map]
 
-Source stream INT64 id INT64 value INT64 timestamp
+Source stream INT64 id INT64 value INT64 timestamp INLINE
 5,1,1000
 10,1,1001
 15,1,1002

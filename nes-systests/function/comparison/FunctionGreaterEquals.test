@@ -2,7 +2,7 @@
 # description: Simple function less equals tests
 # groups: [Function,FunctionGreaterEquals]
 
-Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
+Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64 INLINE
 -42,-129,-32769,-2147413649,41,156,65536,4294967296,13.3,42.42
 
 SINK sinkConstant BOOLEAN stream$i8 BOOLEAN stream$i16 BOOLEAN stream$i32 BOOLEAN stream$i64 BOOLEAN stream$u8 BOOLEAN stream$u16 BOOLEAN stream$u32 BOOLEAN stream$u64 BOOLEAN stream$f32 BOOLEAN stream$f64

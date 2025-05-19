@@ -2,7 +2,7 @@
 # description: Simple function Div tests
 # groups: [Function, FunctionDiv]
 
-Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
+Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64 INLINE
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23.0,23.0
 
 SINK sinkConstant INT32 stream$i8 INT32 stream$i16 INT32 stream$i32 INT64 stream$i64 INT32 stream$u8 INT32 stream$u16 UINT32 stream$u32 UINT64 stream$u64 FLOAT32 stream$f32 FLOAT64 stream$f64

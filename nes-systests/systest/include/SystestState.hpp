@@ -26,6 +26,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -38,6 +39,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <SystestSources/SourceTypes.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -188,7 +190,9 @@ using TestFileMap = std::unordered_map<std::filesystem::path, TestFile>;
 using QueryResultMap = std::unordered_map<std::filesystem::path, std::vector<std::string>>;
 
 /// Groups (global) variables used throughout the main function call of SystestStarter
-/// Only selected classes may modify its internals
+/// Only selected classes/structs may modify its internals:
+class SystestParser;
+struct LoadedQueryPlan;
 class SystestStarterGlobals
 {
     class SystestBinder
@@ -196,7 +200,7 @@ class SystestStarterGlobals
     public:
         SystestBinder() = default; /// Load query plan objects by parsing an SLT file for queries and lowering it
         /// Returns a triplet of the lowered query plan, the query name and the schema of the sink
-        [[nodiscard]] std::vector<LoadedQueryPlan> loadFromSLTFile(
+        static std::vector<LoadedQueryPlan> loadFromSLTFile(
             SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName);
 
     private:
@@ -207,13 +211,18 @@ class SystestStarterGlobals
 
 public:
     SystestStarterGlobals() = default;
-    explicit SystestStarterGlobals(std::filesystem::path workingDir, std::filesystem::path testDataDir, TestFileMap testFileMap)
-        : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), testFileMap(std::move(testFileMap))
+    explicit SystestStarterGlobals(
+        std::filesystem::path workingDir, std::filesystem::path testDataDir, std::filesystem::path configDir, TestFileMap testFileMap)
+        : workingDir(std::move(workingDir))
+        , testDataDir(std::move(testDataDir))
+        , configDir(std::move(configDir))
+        , testFileMap(std::move(testFileMap))
     {
     }
 
     [[nodiscard]] const std::filesystem::path& getWorkingDir() const { return workingDir; }
     [[nodiscard]] const std::filesystem::path& getTestDataDir() const { return testDataDir; }
+    [[nodiscard]] std::filesystem::path getConfigDir() const { return configDir; }
     [[nodiscard]] const TestFileMap& getTestFileMap() const { return testFileMap; }
     [[nodiscard]] const QueryResultMap& getQueryResultMap() const { return queryResultMap; }
 
@@ -222,10 +231,14 @@ private:
     friend std::vector<LoadedQueryPlan>
     loadFromSLTFile(SystestStarterGlobals& systestStarterGlobals, const std::filesystem::path& testFilePath, std::string_view testFileName);
 
+
     void addQueryResult(const std::string_view testFileName, const SystestQueryId queryResultNumber, std::vector<std::string> resultLines)
     {
         queryResultMap.emplace(SystestQuery::resultFile(workingDir, testFileName, queryResultNumber), std::move(resultLines));
     }
+
+    void setDataServerThreadsInAttachSource(SystestAttachSource& attachSource) const { attachSource.serverThreads = dataServerThreads; }
+
     void addQuery(
         TestName testName,
         std::string queryDefinition,
@@ -256,9 +269,11 @@ private:
 
     std::filesystem::path workingDir;
     std::filesystem::path testDataDir;
+    std::filesystem::path configDir;
     TestFileMap testFileMap;
     QueryResultMap queryResultMap;
     SystestBinder binder;
+    std::shared_ptr<std::vector<std::jthread>> dataServerThreads;
 };
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
