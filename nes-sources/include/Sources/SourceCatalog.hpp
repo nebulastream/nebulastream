@@ -72,6 +72,7 @@ public:
 
     [[nodiscard]] bool containsLogicalSource(const LogicalSource& logicalSource) const;
     [[nodiscard]] bool containsLogicalSource(const std::string& logicalSourceName) const;
+    [[nodiscard]] bool containsPhysicalSource(uint64_t physicalSourceId) const;
 
     [[nodiscard]] std::optional<Sources::SourceDescriptor> getPhysicalSource(uint64_t physicalSourceID) const;
 

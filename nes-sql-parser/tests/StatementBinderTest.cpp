@@ -12,6 +12,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
+#include "Common/DataTypes/DataType.hpp"
+#include "Common/DataTypes/BasicTypes.hpp"
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include "API/Schema.hpp"
 #include "Identifiers/Identifiers.hpp"
@@ -77,17 +79,17 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const auto& actualSource = actualSourceExp.value();
     Schema expectedSchema{};
     auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
-    expectedSchema.addField("attribute1", DataTypeProvider::provideBasicType(BasicType::UINT32));
-    expectedSchema.addField("attribute2", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
+    expectedSchema.addField("ATTRIBUTE1", DataTypeProvider::provideBasicType(BasicType::UINT32));
+    expectedSchema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
     ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 
     const std::string createPhysicalSourceStatement
-        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE file SET ('LOCAL' as `SOURCE`.LOCATION, -1 as `SOURCE`.POOL_BUFFERS, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
+        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET ('LOCAL' as `SOURCE`.LOCATION, -1 as `SOURCE`.BUFFERS_IN_LOCAL_POOL, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBind(createPhysicalSourceStatement);
-    const Sources::ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\\n", .fieldDelimiter = ","};
-    std::unordered_map<std::string, std::string> unvalidatedConfig{{"type", "file"}, {"filePath", "/dev/null"}};
-    const Configurations::DescriptorConfig::Config descriptorConfig = Sources::SourceValidationProvider::provide("file", std::move(unvalidatedConfig));
+    const Sources::ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+    std::unordered_map<std::string, std::string> unvalidatedConfig{{"type", "File"}, {"filePath", "/dev/null"}};
+    const Configurations::DescriptorConfig::Config descriptorConfig = Sources::SourceValidationProvider::provide("File", std::move(unvalidatedConfig));
 
     ASSERT_TRUE(std::holds_alternative<Binder::CreatePhysicalSourceStatement>(statement2));
     const auto [created] = std::get<Binder::CreatePhysicalSourceStatement>(statement2);
@@ -96,7 +98,38 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     ASSERT_EQ(physicalSource.getWorkerId(), INITIAL<WorkerId>);
     ASSERT_EQ(physicalSource.getParserConfig(), expectedParserConfig);
     ASSERT_EQ(physicalSource.getBuffersInLocalPool(), -1);
-    ASSERT_EQ(physicalSource.getSourceType(), "file");
+    ASSERT_EQ(physicalSource.getSourceType(), "File");
     ASSERT_EQ(physicalSource.getConfig(), descriptorConfig);
-    ASSERT_EQ(physicalSource.getPhysicalSourceId(), 1);
+    ASSERT_EQ(physicalSource.getPhysicalSourceId(), 0);
+
+    const std::string dropPhysicalSourceStatement = "DROP PHYSICAL SOURCE 0";
+    const auto statement3 = binder->parseAndBind(dropPhysicalSourceStatement);
+    ASSERT_TRUE(std::holds_alternative<Binder::DropPhysicalSourceStatement>(statement3));
+    const auto [dropped] = std::get<Binder::DropPhysicalSourceStatement>(statement3);
+    ASSERT_EQ(dropped.value().getPhysicalSourceId(), 0);
+
+    const std::string dropLogicalSourceStatement = "DROP LOGICAL SOURCE testSource";
+    const auto statement4 = binder->parseAndBind(dropLogicalSourceStatement);
+    ASSERT_TRUE(std::holds_alternative<Binder::DropLogicalSourceStatement>(statement4));
+    const auto [dropped2] = std::get<Binder::DropLogicalSourceStatement>(statement4);
+    ASSERT_EQ(dropped2.value().getLogicalSourceName(), "testSource");
+}
+
+
+TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfig)
+{
+
+    Schema schema{};
+    auto expectedColumns = std::vector<std::pair<std::string, std::shared_ptr<DataType>>>{};
+    schema.addField("ATTRIBUTE1", DataTypeProvider::provideBasicType(BasicType::UINT32));
+    schema.addField("ATTRIBUTE2", DataTypeProvider::provideDataType(LogicalType::VARSIZED));
+    const auto logicalSourceOpt = sourceCatalog->addLogicalSource("testSource", schema);
+    ASSERT_TRUE(logicalSourceOpt.has_value());
+
+    const std::string createPhysicalSourceStatement
+        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET ('LOCAL' as `SOURCE`.LOCATION, -1 as `SOURCE`.BUFFERS_IN_LOCAL_POOL, '/dev/null' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER))";
+    const auto statement2 = binder->parseAndBind(createPhysicalSourceStatement);
+    const Sources::ParserConfig expectedParserConfig{.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","};
+    std::unordered_map<std::string, std::string> unvalidatedConfig{{"type", "File"}, {"filePath", "/dev/null"}, {"invalid", "config"}};
+    const Configurations::DescriptorConfig::Config descriptorConfig = Sources::SourceValidationProvider::provide("File", std::move(unvalidatedConfig));
 }

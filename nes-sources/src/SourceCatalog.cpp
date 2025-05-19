@@ -138,6 +138,11 @@ std::optional<Sources::SourceDescriptor> SourceCatalog::getPhysicalSource(const 
     }
     return std::nullopt;
 }
+bool SourceCatalog::containsPhysicalSource(const uint64_t physicalSourceId) const
+{
+    const std::unique_lock lock{catalogMutex};
+    return idsToPhysicalSources.contains(physicalSourceId);
+}
 std::optional<std::unordered_set<Sources::SourceDescriptor>> SourceCatalog::getPhysicalSources(const LogicalSource& logicalSource) const
 {
     const std::unique_lock lock(catalogMutex);

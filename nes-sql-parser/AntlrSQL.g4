@@ -56,7 +56,7 @@ createSinkDefinition: SINK sinkName=identifier schemaDefinition;
 
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
-columnDefinition: IDENTIFIER typeDefinition;
+columnDefinition: identifier typeDefinition;
 
 typeDefinition: DATA_TYPE;
 
@@ -64,10 +64,10 @@ fromQuery: AS query;
 
 dropStatement: DROP dropSubject;
 dropSubject: dropQuery | dropSource;
-dropQuery: QUERY id=INTEGER_VALUE;
+dropQuery: QUERY id=unsignedIntegerLiteral;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
-dropLogicalSourceSubject: LOGICAL SOURCE name=IDENTIFIER;
-dropPhysicalSourceSubject: PHYSICAL SOURCE id=INTEGER_VALUE;
+dropLogicalSourceSubject: LOGICAL SOURCE name=identifier;
+dropPhysicalSourceSubject: PHYSICAL SOURCE id=unsignedIntegerLiteral;
 
 showStatement: SHOW dbObjectType (FORMAT format=('TEXT' | 'JSON'))?;
 
@@ -344,12 +344,16 @@ number
     | MINUS? FLOAT_LITERAL              #floatLiteral
     ;
 
+unsignedIntegerLiteral: INTEGER_VALUE;
+
+signedIntegerLiteral: MINUS INTEGER_VALUE;
+
 constant
     : NULLTOKEN                                                                                #nullLiteral
     | identifier STRING                                                                        #typeConstructor
     | number                                                                                   #numericLiteral
     | booleanValue                                                                             #booleanLiteral
-    | STRING+                                                                                  #stringLiteral
+    | STRING                                                                                  #stringLiteral
     ;
 
 booleanValue

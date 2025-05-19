@@ -65,6 +65,8 @@ EXCEPTION(UnknownParserType, 2122, "unknown parser type")
 EXCEPTION(UnregisteredSource, 2123, "unregistered source")
 EXCEPTION(SourceAlreadyExists, 2124, "source already exists")
 EXCEPTION(UnknownDataType, 2125, "unknown data type")
+EXCEPTION(InvalidIdentifier, 2125, "invalid identifier")
+EXCEPTION(InvalidLiteral, 2126, "invalid literal")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")

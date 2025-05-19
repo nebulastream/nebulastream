@@ -43,9 +43,14 @@ struct CreatePhysicalSourceStatement
     std::expected<Sources::SourceDescriptor, Exception> created;
 };
 
-struct DropSourceStatement
+struct DropLogicalSourceStatement
 {
-    std::expected<std::variant<LogicalSource, Sources::SourceDescriptor>, Exception> dropped;
+    std::expected<LogicalSource, Exception> dropped;
+};
+
+struct DropPhysicalSourceStatement
+{
+    std::expected<Sources::SourceDescriptor, Exception> dropped;
 };
 
 struct DropQueryStatement
@@ -57,7 +62,8 @@ struct DropQueryStatement
 using Statement = std::variant<
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
-    DropSourceStatement,
+    DropLogicalSourceStatement,
+    DropPhysicalSourceStatement,
     DropQueryStatement,
     std::shared_ptr<QueryPlan>>;
 
