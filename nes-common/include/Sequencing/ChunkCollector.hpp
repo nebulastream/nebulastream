@@ -53,7 +53,7 @@ private:
     class Chunk
     {
         std::atomic<ChunkNumber::Underlying> counter;
-#ifndef NDEBUG
+#ifndef NO_ASSERT
         std::atomic<bool> seenLastChunk = false;
 #endif
         std::atomic<T> value = {InitialValue};

@@ -35,3 +35,27 @@ NebulaStream targets C++23 using all features implemented in both `libc++` 18 an
 `Clang` 18.
 Follow the [development guide](docs/technical/development.md) to learn how to set up the development environment.
 To see our code of conduct, please refer to [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md).
+
+## Build Types
+This project supports multiple build types to cater to different stages of development and deployment. Below are the details of each build type:
+
+### Debug
+- **Default Logging Level**: All logging messages are compiled.
+- **Assert Checks**: Enabled.
+- **Use Case**: Ideal for development, providing comprehensive logging and assert checks to help identify and fix issues.
+
+### RelWithDebInfo (Release with Debug Information)
+- **Default Logging Level**: Warning.
+- **Assert Checks**: Enabled.
+- **Use Case**: Balances performance and debugging, including warning-level logging and assert checks for useful debugging information without full logging overhead.
+
+### Release
+- **Default Logging Level**: Error.
+- **Assert Checks**: Enabled.
+- **Use Case**: Optimized for performance, with logging set to error level and assert checks disabled, ensuring only critical issues are logged.
+
+### Benchmark
+- **Logging Level**: None.
+- **Assert Checks**: Disabled.
+- **Use Case**: Designed for maximum performance, omitting all logging and assert checks, including null pointer checks. Suitable for thoroughly tested environments where performance is critical.
+- Use this with care, as this is not regularly tested, i.e., Release terminates deterministically if a bug occurs (failed invariant/precondition), whereas Benchmark will be in an undefined state.

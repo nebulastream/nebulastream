@@ -14,7 +14,7 @@ on:
 
 jobs:
   build-and-test-linux:
-    name: "Run large scale tests on ${{matrix.arch}} with ${{matrix.stdlib}}"
+    name: "Run large scale tests on ${{matrix.arch}} with ${{matrix.stdlib}} in ${{ matrix.build_type }}"
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
@@ -33,12 +33,13 @@ jobs:
         arch: [ x64 ]
         stdlib: [ 'libcxx' ]
         sanitizer: [ 'none' ]
+        build_type: [ 'RelWithDebInfo', 'Release' ]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
       - name: Configure NebulaStream
-        run: cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
+        run: cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DENABLE_LARGE_TESTS=ON -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
         run: cmake --build build -j
       - name: Run Large System Level Tests
@@ -47,5 +48,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && !github.event.act }}
         with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-large.xml
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}-large.xml
           path: /junit.xml

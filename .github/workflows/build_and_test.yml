@@ -90,7 +90,9 @@ jobs:
       matrix:
         arch: [ x64, arm64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
-        build_type: [ 'Debug', 'RelWithDebInfo' ]
+        # To reduce the load on our CI, we do not run all our tests with Benchmark.
+        # The difference between Benchmark and Release is anyway that we disable any asserts (invariants or preconditions)
+        build_type: [ 'Debug', 'RelWithDebInfo', 'Release']
         sanitizer: [ 'address', 'undefined', 'thread', 'none' ]
         exclude:
           # Due to limited capacity, we disable sanitizer and libstdc++ tests on arm machines
@@ -161,7 +163,7 @@ jobs:
         # We only want to run the tests with libcxx, as the log level tests are not standard library dependent, and we want to reduce the number of jobs
         arch: [ x64 ]
         stdlib: [ 'libcxx' ]
-        build_type: [ 'Debug', 'RelWithDebInfo' ]
+        build_type: [ 'Debug', 'RelWithDebInfo', 'Release', 'Benchmark' ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -200,6 +202,7 @@ jobs:
       matrix:
         arch: [ x64, arm64 ]
         stdlib: [ 'libcxx' ]
+        build_type: [ 'Debug', 'Benchmark' ]
     steps:
       - uses: actions/checkout@v4
         with:
