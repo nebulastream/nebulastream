@@ -40,11 +40,26 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     , numberOfWorkerThreads(0)
     , outputOriginId(outputOriginId)
 {
+    /*for (auto i = 0UL; i < std::thread::hardware_concurrency(); ++i)
+    {
+        ioThreads.emplace_back([this]() { ioContext.run(); });
+    }*/
+    //ioThread = std::thread([this]() { ioContext.run(); });
+    //ioContext.run();
 }
 
 WindowBasedOperatorHandler::~WindowBasedOperatorHandler()
 {
     workGuard.reset();
+    /*ioContext.stop();
+    for (auto& thread : ioThreads)
+    {
+        thread.join();
+    }*/
+    /*if (ioThread.joinable())
+    {
+        ioThread.join();
+    }*/
 }
 
 void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
