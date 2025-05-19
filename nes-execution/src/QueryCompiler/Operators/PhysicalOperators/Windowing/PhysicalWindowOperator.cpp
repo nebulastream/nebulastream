@@ -125,10 +125,10 @@ PhysicalWindowOperator::getKeyAndValueFields() const
     return {fieldKeyNames, fieldValueNames};
 }
 
-std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
+std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
 PhysicalWindowOperator::getAggregationFunctions(const Configurations::QueryCompilerConfiguration& options) const
 {
-    std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
+    std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
     const auto aggregationDescriptors = getWindowDefinition()->getWindowAggregation();
     for (const auto& descriptor : aggregationDescriptors)
     {

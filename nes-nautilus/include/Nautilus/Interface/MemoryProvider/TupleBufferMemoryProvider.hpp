@@ -56,7 +56,6 @@ public:
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
-    /// @param context: ExecutionContext to be used for the write operation
     virtual void writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,

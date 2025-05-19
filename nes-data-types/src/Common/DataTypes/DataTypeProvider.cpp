@@ -20,10 +20,10 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <DataTypeRegistry.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES::DataTypeProvider
 {
@@ -31,6 +31,16 @@ namespace NES::DataTypeProvider
 bool isNullable(const std::string_view fieldName)
 {
     return fieldName.ends_with(NULLABLE_POSTFIX);
+}
+
+std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type, const bool nullable)
+{
+    auto args = DataTypeRegistryArguments{.nullable = nullable};
+    if (auto dataType = DataTypeRegistry::instance().create(type, args))
+    {
+        return dataType;
+    }
+    return std::nullopt;
 }
 
 std::shared_ptr<DataType> provideDataType(const std::string& type, const bool nullable)

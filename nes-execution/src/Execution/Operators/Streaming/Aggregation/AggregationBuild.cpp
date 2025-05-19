@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <vector>
 

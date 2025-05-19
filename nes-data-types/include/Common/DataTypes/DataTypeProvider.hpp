@@ -51,10 +51,10 @@ constexpr static std::string NULLABLE_POSTFIX = "_NULLABLE";
 
 /// Checks if the field corresponding to the given name is nullable.
 /// For now, we assume that a field is nullable if the name ends with NULLABLE.
-bool isNullable(const std::string_view fieldName);
+bool isNullable(std::string_view fieldName);
 
 
-std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type);
+std::optional<std::shared_ptr<DataType>> tryProvideDataType(const std::string& type, bool nullable = false);
 
 /// @return a shared pointer to a logical data type
 /// @param type name of the logical data type

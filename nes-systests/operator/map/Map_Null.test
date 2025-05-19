@@ -14,7 +14,7 @@ Source stream UINT64 id INT32 value1_NULLABLE INT32 value2_NULLABLE
 SINK sink UINT64 stream$id INT32 stream$result
 
 # Adds a constant to a field
-SELECT id, value1_NULLABLE + 1 AS result FROM stream INTO sink
+SELECT id, value1_NULLABLE + INT32(1) AS result FROM stream INTO sink
 ----
 0,1
 1,2

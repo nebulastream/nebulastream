@@ -51,6 +51,8 @@ public:
 
     Nautilus::Record lower(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
 
+    void cleanup(nautilus::val<AggregationState*> aggregationState) override;
+
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
 
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;

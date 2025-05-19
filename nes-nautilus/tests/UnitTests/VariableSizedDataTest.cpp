@@ -63,7 +63,7 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized)};
-        EXPECT_EQ(varSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_EQ(varSizedData.getRawValueAs<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
             std::memcmp(
                 varSizedData.getRawValueAs<VariableSizedData>().getContent().value,
@@ -79,7 +79,7 @@ TEST_F(VariableSizedDataTest, SimpleConstruction)
         auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
-        EXPECT_EQ(varSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_EQ(varSizedData.getRawValueAs<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
             std::memcmp(
                 varSizedData.getRawValueAs<VariableSizedData>().getContent().value,
@@ -99,7 +99,7 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
 
     /// Test, if we can copy the variable sized data object by copy operator=
     const VarVal copiedVarSizedData = varSizedData;
-    EXPECT_EQ(copiedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+    EXPECT_EQ(copiedVarSizedData.getRawValueAs<VariableSizedData>().getContentSize(), sizeInBytes);
     EXPECT_TRUE(
         std::memcmp(
             copiedVarSizedData.getRawValueAs<VariableSizedData>().getContent().value,
@@ -109,7 +109,7 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
 
     /// Test, if we can copy the variable sized data object by copy constructor
     const VarVal copiedVarSizedData2(varSizedData);
-    EXPECT_EQ(copiedVarSizedData2.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+    EXPECT_EQ(copiedVarSizedData2.getRawValueAs<VariableSizedData>().getContentSize(), sizeInBytes);
     EXPECT_TRUE(
         std::memcmp(
             copiedVarSizedData2.getRawValueAs<VariableSizedData>().getContent().value,
@@ -129,7 +129,7 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
 
         /// Test, if we can move the variable sized data object by move operator=
         const VarVal movedVarSizedData = std::move(varSizedData);
-        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
             std::memcmp(
                 movedVarSizedData.getRawValueAs<VariableSizedData>().getContent().value,
@@ -147,7 +147,7 @@ TEST_F(VariableSizedDataTest, MoveConstruction)
 
         /// Test, if we can move the variable sized data object by move constructor
         const VarVal movedVarSizedData(std::move(varSizedData));
-        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
             std::memcmp(
                 movedVarSizedData.getRawValueAs<VariableSizedData>().getContent().value,
@@ -168,7 +168,7 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
 
         /// Test, if we can move the variable sized data object by move operator=
         const VarVal movedVarSizedData = std::move(varSizedData);
-        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
             std::memcmp(
                 movedVarSizedData.getRawValueAs<VariableSizedData>().getContent().value,
@@ -186,7 +186,7 @@ TEST_F(VariableSizedDataTest, AssignmentConstruction)
 
         /// Test, if we can move the variable sized data object by move constructor
         const VarVal movedVarSizedData(std::move(varSizedData));
-        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
+        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getContentSize(), sizeInBytes);
         EXPECT_TRUE(
             std::memcmp(
                 movedVarSizedData.getRawValueAs<VariableSizedData>().getContent().value,

@@ -55,6 +55,8 @@ public:
 
     void reset(nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider) override;
 
+    void cleanup(nautilus::val<AggregationState*> aggregationState) override;
+
     [[nodiscard]] size_t getSizeOfStateInBytes() const override;
 private:
     std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memProviderPagedVector;
