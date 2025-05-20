@@ -5,12 +5,8 @@ worker:
   queryCompiler:
     nautilusBackend: COMPILER
     pageSize: 10240
-    sliceStoreType: TBA
-    sliceCacheType: TBA
-    numberOfEntriesSliceCache: TBA
-    lockSliceCache: TBA
 
   queryEngine:
     numberOfWorkerThreads: 1
     taskQueueSize: 1000
-    statisticsDir: TBA
+#    statisticsDir: TBA

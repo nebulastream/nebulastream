@@ -27,8 +27,8 @@
 class ClientHandler
 {
 public:
-    ClientHandler(const int clientSocket, const sockaddr_in address, const int countLimit, const int timeStep)
-        : clientSocket(clientSocket), address(address), countLimit(countLimit), timeStep(timeStep)
+    ClientHandler(const int clientSocket, const sockaddr_in address, const int countLimit, const int timeStep, const int ingestionRate)
+        : clientSocket(clientSocket), address(address), countLimit(countLimit), timeStep(timeStep), ingestionRate(ingestionRate)
     {
     }
 
@@ -43,8 +43,12 @@ public:
 
             std::uniform_int_distribution valueDistrib(0, 10000);
 
+            auto lastSec = std::chrono::high_resolution_clock::now();
             while (running && (countLimit == 0 || counter < countLimit))
             {
+                const auto now = std::chrono::high_resolution_clock::now();
+                //if (now.time_since_epoch())
+
                 value = valueDistrib(gen);
 
                 std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(payload) + ","
@@ -87,6 +91,7 @@ private:
     sockaddr_in address;
     uint64_t countLimit;
     int timeStep;
+    int ingestionRate;
     uint64_t counter = 0;
     int value = 0;
     int payload = 0;
@@ -97,8 +102,8 @@ private:
 class CounterServer
 {
 public:
-    CounterServer(const std::string& host, const int port, const uint64_t countLimit, const int timeStep)
-        : host(host), port(port), countLimit(countLimit), timeStep(timeStep)
+    CounterServer(const std::string& host, const int port, const uint64_t countLimit, const int timeStep, const int ingestionRate)
+        : host(host), port(port), countLimit(countLimit), timeStep(timeStep), ingestionRate(ingestionRate)
     {
     }
 
@@ -133,7 +138,7 @@ public:
                 sockaddr_in clientAddress;
                 socklen_t clientLen = sizeof(clientAddress);
                 const int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
-                ClientHandler client(clientSocket, clientAddress, countLimit, timeStep);
+                ClientHandler client(clientSocket, clientAddress, countLimit, timeStep, ingestionRate);
                 std::thread clientThread(&ClientHandler::handle, &client);
                 clientThread.detach();
                 clients.push_back(std::move(client));
@@ -185,6 +190,7 @@ private:
     int port = 5020;
     uint64_t countLimit = 0;
     int timeStep = 1;
+    int ingestionRate = 0;
     int serverSocket;
     sockaddr_in serverAddress;
     std::vector<ClientHandler> clients;
@@ -197,6 +203,7 @@ int main(const int argc, char* argv[])
     int port = 5020;
     uint64_t countLimit = 0;
     int timeStep = 1;
+    int ingestionRate = 0;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -216,11 +223,15 @@ int main(const int argc, char* argv[])
         {
             timeStep = std::stoi(argv[++i]);
         }
+        else if (std::strcmp(argv[i], "-i") == 0 || std::strcmp(argv[i], "--ingestion-rate") == 0)
+        {
+            ingestionRate = std::stoi(argv[++i]);
+        }
     }
 
     try
     {
-        CounterServer server(host, port, countLimit, timeStep);
+        CounterServer server(host, port, countLimit, timeStep, ingestionRate);
         server.start();
     }
     catch (const std::exception& e)

@@ -24,23 +24,18 @@ import PostProcessing
 import pathlib
 import copy
 
-
 # Configuration for compilation
-BUILD_DIR = "build_dir"
-SOURCE_DIR = "/home/nils/remote_server/nebulastream-public"
-LOG_LEVEL = "LEVEL_NONE"  # "-DNES_LOG_LEVEL=LEVEL_NONE/DEBUG",
-CMAKE_BUILD_TYPE = "Release"  # Release or Debug
-USE_LIBCXX_IF_AVAILABLE = "False"  # False for using libstdcxx, true for libcxx
-CMAKE_TOOLCHAIN_FILE = "/home/nils/remote_server/vcpkg/scripts/buildsystems/vcpkg.cmake"
+BUILD_DIR = "cmake-build-relnologging"
+SOURCE_DIR = "/home/nikla/Documents/Nebulastream/nebulastream-2"
 NEBULI_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-nebuli/nes-nebuli")
 SINGLE_NODE_PATH = os.path.join(SOURCE_DIR, BUILD_DIR, "nes-single-node-worker/nes-single-node-worker")
-TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "window_management/tcpserver")
+TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
 WAIT_BEFORE_SIGKILL = 5
 MEASURE_INTERVAL = 5
 WAIT_BETWEEN_COMMANDS = 2
-NUMBER_OF_TUPLES_GENERATE_PER_SOURCE = 1 * 1000 * 1000 * 1000 # 0 means the source will run indefinitely
+NUMBER_OF_TUPLES_GENERATE_PER_SOURCE = 1 * 1000 * 1000 * 1000  # 0 means the source will run indefinitely
 
 # Compilation for misc.
 COMBINED_CSV_FILE_WORKER_STATISTICS = "combined_worker_statistics.csv"
@@ -60,30 +55,9 @@ CONFIG_FILES = {
 }
 
 
-# Helper functions
-def clear_build_dir():
-    if os.path.exists(BUILD_DIR):
-        shutil.rmtree(BUILD_DIR)
-    os.mkdir(BUILD_DIR)
-
-
-def compile_project():
-    cmd_cmake = ["cmake",
-                 f"-DCMAKE_BUILD_TYPE={CMAKE_BUILD_TYPE}",
-                 f"-DNES_LOG_LEVEL={LOG_LEVEL}",
-                 f"-DCMAKE_TOOLCHAIN_FILE={CMAKE_TOOLCHAIN_FILE}",
-                 f"-DUSE_LIBCXX_IF_AVAILABLE:BOOL={USE_LIBCXX_IF_AVAILABLE}",
-                 f"-S {SOURCE_DIR}",
-                 f"-B {BUILD_DIR}",
-                 "-G Ninja"]
-    cmd_build = f"cmake --build {BUILD_DIR} -j -- -k 0".split(" ")
-    subprocess.run(cmd_cmake, check=True)
-    subprocess.run(cmd_build, check=True)
-
-
 def create_output_folder():
     timestamp = int(time.time())
-    folder_name = f"WindowManagementBM_{timestamp}"
+    folder_name = f"SpillingBenchmarks_{timestamp}"
     os.mkdir(folder_name)
     print(f"Created folder {folder_name}...")
     return folder_name
@@ -101,27 +75,19 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
         "numberOfBuffersInGlobalBufferManager"] = current_benchmark_config.buffers_in_global_buffer_manager
     worker_config_yaml["worker"]["numberOfBuffersPerWorker"] = current_benchmark_config.buffers_per_worker
     worker_config_yaml["worker"]["bufferSizeInBytes"] = current_benchmark_config.buffer_size_in_bytes
-    worker_config_yaml["worker"]["numberOfBuffersPerWorker"] = current_benchmark_config.buffers_per_worker
 
     # Query Compiler Configuration
     worker_config_yaml["worker"]["queryCompiler"]["nautilusBackend"] = current_benchmark_config.nautilus_backend
-    worker_config_yaml["worker"]["queryCompiler"]["sliceStoreType"] = current_benchmark_config.slice_store_type
-    worker_config_yaml["worker"]["queryCompiler"]["sliceCacheType"] = current_benchmark_config.slice_cache_type
-    worker_config_yaml["worker"]["queryCompiler"]["numberOfEntriesSliceCache"] = current_benchmark_config.numberOfEntriesSliceCache
-    worker_config_yaml["worker"]["queryCompiler"]["lockSliceCache"] = current_benchmark_config.lock_slice_cache
-    worker_config_yaml["worker"]["queryCompiler"]["pipelinesTxtFilePath"] = os.path.abspath(os.path.join(output_folder, PIPELINE_TXT))
-    worker_config_yaml["worker"]["queryCompiler"]["cacheHitsAndMissesFilePath"] = os.path.abspath(os.path.join(output_folder, CACHE_HITS_MISSES_TXT))
-    worker_config_yaml["worker"]["queryCompiler"]["degreeOfDisorder"] = current_benchmark_config.degree_of_disorder
-    worker_config_yaml["worker"]["queryCompiler"]["shuffleStrategy"] = current_benchmark_config.shuffle_strategy
-    worker_config_yaml["worker"]["queryCompiler"]["minDelay"] = current_benchmark_config.min_delay
-    worker_config_yaml["worker"]["queryCompiler"]["maxDelay"] = current_benchmark_config.max_delay
-
+    worker_config_yaml["worker"]["queryCompiler"]["pipelinesTxtFilePath"] = os.path.abspath(
+        os.path.join(output_folder, PIPELINE_TXT))
+    worker_config_yaml["worker"]["queryCompiler"]["cacheHitsAndMissesFilePath"] = os.path.abspath(
+        os.path.join(output_folder, CACHE_HITS_MISSES_TXT))
 
     # Query Engine Configuration
     worker_config_yaml["worker"]["queryEngine"][
         "numberOfWorkerThreads"] = current_benchmark_config.number_of_worker_threads
     worker_config_yaml["worker"]["queryEngine"]["taskQueueSize"] = current_benchmark_config.task_queue_size
-    worker_config_yaml["worker"]["queryEngine"]["statisticsDir"] = os.path.abspath(output_folder)
+    # TODO worker_config_yaml["worker"]["queryEngine"]["statisticsDir"] = os.path.abspath(output_folder)
 
     # Dumping the updated worker config yaml to the dest path
     with open(dest_path_worker, 'w') as output_file:
@@ -133,7 +99,8 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
     query_config_yaml["query"] = current_benchmark_config.query
 
     # Duplicating the physical sources until we have the same number of physical sources as configured in the benchmark config
-    assert len(tcp_server_ports) % len(query_config_yaml["physical"]) == 0, "The number of physical sources must be a multiple of the number of TCP server ports."
+    assert len(tcp_server_ports) % len(query_config_yaml[
+                                           "physical"]) == 0, "The number of physical sources must be a multiple of the number of TCP server ports."
 
     # Iterating over the physical sources and writing as many in a separate list as we have configured in the benchmark config
     new_physical_sources = []
@@ -152,12 +119,10 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
     with open(dest_path_query, 'w') as output_file:
         yaml.dump(query_config_yaml, output_file)
 
-
     # Write the current benchmark config to the output folder in a way that it can be easily read
     # We use a dictionary representation of the configuration
     with open(os.path.join(output_folder, BENCHMARK_CONFIG_FILE), 'w') as output_file:
         yaml.dump(current_benchmark_config.to_dict(), output_file)
-
 
 
 def start_tcp_servers(starting_ports, current_benchmark_config):
@@ -167,25 +132,26 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
     for port in starting_ports:
         for i in range(benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
-                cmd = f"{TCP_SERVER} -p {port} -n {NUMBER_OF_TUPLES_GENERATE_PER_SOURCE} -t {current_benchmark_config.timestamp_increment}"
+                cmd = f"{TCP_SERVER} -p {port} -n {NUMBER_OF_TUPLES_GENERATE_PER_SOURCE} -t {current_benchmark_config.timestamp_increment} - i {current_benchmark_config.ingestion_rate}"
                 # print(f"Trying to start tcp server with {cmd}")
                 process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
-                time.sleep(WAIT_BETWEEN_COMMANDS) # Allow server to start
+                time.sleep(WAIT_BETWEEN_COMMANDS)  # Allow server to start
                 if process.poll() is not None and process.poll() != 0:
                     # print(f"Failed to start tcp server with PID: {process.pid} and port: {port}")
-                    port = str(int(port) + random.randint(1,10))
+                    port = str(int(port) + random.randint(1, 10))
                     terminate_process_if_exists(process)
                     time.sleep(1)
                 else:
                     # print(f"Started tcp server with PID: {process.pid} and port: {port}")
                     processes.append(process)
                     ports.append(port)
-                    port = str(int(port) + 1) # Increment the port for the next server
+                    port = str(int(port) + 1)  # Increment the port for the next server
                     break
             else:
                 raise Exception(f"Failed to start the TCP server after {max_retries} attempts.")
 
-    print(f"Started all TCP servers with the following <port, pid>: {list(zip(ports, [proc.pid for proc in processes]))}")
+    print(
+        f"Started all TCP servers with the following <port, pid>: {list(zip(ports, [proc.pid for proc in processes]))}")
     return [processes, ports]
 
 
@@ -288,14 +254,7 @@ def run_benchmark(current_benchmark_config):
         return output_folder
 
 
-
-
-
 if __name__ == "__main__":
-    # Removing the build folder and compiling the project
-    # clear_build_dir()
-    compile_project()
-
     # Running all benchmarks
     output_folders = []
     ALL_BENCHMARK_CONFIGS = BenchmarkConfig.create_all_benchmark_configs()
@@ -324,19 +283,22 @@ if __name__ == "__main__":
         finish_time = datetime.datetime.now() + eta
 
         # Print ETA and finish time in cyan
-        print(f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
-
+        print(
+            f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
 
     # Calling the postprocessing main
-    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE, COMBINED_CSV_FILE_WORKER_STATISTICS, WORKER_STATISTICS_CSV_PATH, CACHE_STATISTICS_CSV_PATH, CACHE_HITS_MISSES_TXT, PIPELINE_TXT)
+    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE,
+                                                    COMBINED_CSV_FILE_WORKER_STATISTICS, WORKER_STATISTICS_CSV_PATH,
+                                                    CACHE_STATISTICS_CSV_PATH, CACHE_HITS_MISSES_TXT, PIPELINE_TXT)
     post_processing.main()
 
-    #all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
-    #copy_command = f"rsync -avz --progress tower-en717:/home/nils/remote_server/nebulastream-public/{all_paths} /home/nils/Downloads/"
-    #print(f"Copy command: \n\"{copy_command}\"")
+    # all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
+    # copy_command = f"rsync -avz --progress tower-en717:/home/nils/remote_server/nebulastream-public/{all_paths} /home/nils/Downloads/"
+    # print(f"Copy command: \n\"{copy_command}\"")
 
-    #output_folders_str = "\",\n\"/home/nils/Downloads/".join(output_folders)
-    #print(f"\nFinished running all benchmarks. Output folders: \n\"/home/nils/Downloads/{output_folders_str}\"")
-    print(f"Created worker statistics CSV file at {WORKER_STATISTICS_CSV_PATH} and cache statistics CSV file at {CACHE_STATISTICS_CSV_PATH}")
-    copy_command = f"rsync -avz --progress tower-en717:{WORKER_STATISTICS_CSV_PATH} tower-en717:{CACHE_STATISTICS_CSV_PATH} /home/nils/Downloads/"
-    print(f"Copy command: \n\"{copy_command}\"")
+    # output_folders_str = "\",\n\"/home/nils/Downloads/".join(output_folders)
+    # print(f"\nFinished running all benchmarks. Output folders: \n\"/home/nils/Downloads/{output_folders_str}\"")
+    # print(
+    #     f"Created worker statistics CSV file at {WORKER_STATISTICS_CSV_PATH} and cache statistics CSV file at {CACHE_STATISTICS_CSV_PATH}")
+    # copy_command = f"rsync -avz --progress tower-en717:{WORKER_STATISTICS_CSV_PATH} tower-en717:{CACHE_STATISTICS_CSV_PATH} /home/nils/Downloads/"
+    # print(f"Copy command: \n\"{copy_command}\"")

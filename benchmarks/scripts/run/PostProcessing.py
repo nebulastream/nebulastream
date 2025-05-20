@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-from concurrent.futures import ThreadPoolExecutor
-
-from numpy.lib.format import BUFFER_SIZE
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +11,9 @@ from numpy.lib.format import BUFFER_SIZE
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+#from concurrent.futures import ThreadPoolExecutor
+#from numpy.lib.format import BUFFER_SIZE
 
 import os
 import re
@@ -63,6 +63,7 @@ def parse_lines_to_dataframe(file):
 
     return hits_data, misses_data
 
+
 def find_pipeline_number(log_text):
     lines = log_text.split('\n')
     for i, line in enumerate(lines):
@@ -75,6 +76,7 @@ def find_pipeline_number(log_text):
                 elif "Build" in lines[j]:
                     return [pipeline_number]
     return None
+
 
 # This class stores some methods that we need to call after all benchmarks have been run
 class PostProcessing:
