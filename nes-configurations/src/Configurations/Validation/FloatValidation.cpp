@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <regex>
-#include <string>
 #include <Configurations/Validation/FloatValidation.hpp>
+
+#include <regex>
 
 namespace NES::Configurations
 {

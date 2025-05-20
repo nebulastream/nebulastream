@@ -14,7 +14,6 @@
 
 #include <SystestRunner.hpp>
 
-#include <algorithm>
 #include <atomic>
 #include <cerrno>
 #include <chrono>

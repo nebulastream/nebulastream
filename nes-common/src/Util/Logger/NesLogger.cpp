@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Util/Logger/impl/NesLogger.hpp>
 
 #include <chrono>
 #include <memory>
@@ -18,7 +19,6 @@
 #include <utility>
 #include <vector>
 #include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
 #include <spdlog/async.h>
 #include <spdlog/async_logger.h>
 #include <spdlog/common.h>

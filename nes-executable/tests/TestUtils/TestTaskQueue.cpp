@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <TestTaskQueue.hpp>
+
 #include <cstddef>
 #include <memory>
 #include <ostream>
@@ -25,7 +27,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <TestTaskQueue.hpp>
 
 namespace NES
 {

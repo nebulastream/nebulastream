@@ -28,14 +28,14 @@ public:
     NodeEngineBuilder() = delete;
 
     explicit NodeEngineBuilder(
-        const Configurations::WorkerConfiguration& workerConfiguration,
+        const NES::Configurations::WorkerConfiguration& workerConfiguration,
         std::shared_ptr<SystemEventListener> systemEventListener,
         std::shared_ptr<QueryEngineStatisticListener> statisticListener);
 
     std::unique_ptr<NodeEngine> build();
 
 private:
-    const Configurations::WorkerConfiguration& workerConfiguration;
+    NES::Configurations::WorkerConfiguration workerConfiguration;
     std::shared_ptr<SystemEventListener> systemEventListener;
     std::shared_ptr<QueryEngineStatisticListener> statisticEventListener;
 };

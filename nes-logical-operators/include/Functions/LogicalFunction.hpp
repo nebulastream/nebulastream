@@ -23,7 +23,6 @@
 #include <string_view>
 #include <type_traits>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>

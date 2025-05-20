@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <QueryEngine.hpp>
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -45,7 +47,6 @@
 #include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <QueryEngine.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>

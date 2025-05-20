@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Configurations/BaseConfiguration.hpp>
+
 #include <algorithm>
 #include <cctype>
 #include <cstddef>

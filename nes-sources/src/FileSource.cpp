@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <FileSource.hpp>
+
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -27,7 +29,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
-#include <FileSource.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 

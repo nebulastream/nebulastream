@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
+#include <CompiledQueryPlan.hpp>
+
 #include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <CompiledQueryPlan.hpp>
+#include <Util/Ranges.hpp>
 #include <ExecutablePipelineStage.hpp>
 
 namespace NES

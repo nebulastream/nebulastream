@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <SystestState.hpp>
+
 #include <algorithm>
 #include <cctype>
 #include <cstdint>
@@ -34,7 +36,6 @@
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestRunner.hpp>
-#include <SystestState.hpp>
 
 namespace NES::Systest
 {

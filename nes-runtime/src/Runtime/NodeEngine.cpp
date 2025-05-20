@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Runtime/NodeEngine.hpp>
+
 #include <chrono>
 #include <memory>
 #include <unordered_map>
@@ -21,7 +23,6 @@
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/AtomicState.hpp>
 #include <Util/Logger/Logger.hpp>

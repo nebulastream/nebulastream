@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <DataTypes/DataTypeProvider.hpp>
+
 #include <optional>
 #include <string>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <DataTypeRegistry.hpp>
 #include <ErrorHandling.hpp>

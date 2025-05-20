@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <ExecutableQueryPlan.hpp>
+
 #include <algorithm>
 #include <cstddef>
 #include <functional>
@@ -30,7 +32,6 @@
 #include <Util/Overloaded.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ExecutablePipelineStage.hpp>
-#include <ExecutableQueryPlan.hpp>
 
 namespace NES
 {

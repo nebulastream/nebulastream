@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <SystestGrpc.hpp>
 
 #include <cstddef>
 #include <Listeners/QueryLog.hpp>
@@ -21,8 +22,6 @@
 #include <grpcpp/channel.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <SingleNodeWorkerRPCService.pb.h>
-#include <SystestGrpc.hpp>
 
 GRPCClient::GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel))
 {

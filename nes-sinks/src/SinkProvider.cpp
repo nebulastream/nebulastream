@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <Sinks/SinkProvider.hpp>
+
 #include <memory>
 #include <utility>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sinks/SinkProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SinkRegistry.hpp>

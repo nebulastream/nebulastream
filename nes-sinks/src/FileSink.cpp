@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Sinks/FileSink.hpp>
+
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -24,7 +26,6 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/FileSink.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>

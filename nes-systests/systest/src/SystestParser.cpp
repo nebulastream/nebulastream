@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <SystestParser.hpp>
+
 #include <algorithm>
 #include <array>
 #include <cstddef>
