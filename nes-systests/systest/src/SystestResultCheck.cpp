@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <SystestResultCheck.hpp>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -24,7 +26,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,7 +34,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
-#include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest

@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <regex>
-#include <string>
 #include <Configurations/Validation/NonZeroValidation.hpp>
 
+#include <regex>
+#include <string>
 namespace NES::Configurations
 {
 

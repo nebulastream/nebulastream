@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Sequencing/SequenceData.hpp>
 
 #include <ostream>
 #include <Identifiers/Identifiers.hpp>
-#include <Sequencing/SequenceData.hpp>
+
 
 namespace NES
 {

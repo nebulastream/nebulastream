@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
+#include <Sources/SourceProvider.hpp>
+
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Sources/SourceProvider.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 

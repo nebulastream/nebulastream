@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Sources/SourceValidationProvider.hpp>
+
 #include <optional>
 #include <string>
 #include <unordered_map>

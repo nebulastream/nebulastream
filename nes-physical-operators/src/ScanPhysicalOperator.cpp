@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+
+#include <ScanPhysicalOperator.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -23,8 +26,6 @@
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
-#include <ScanPhysicalOperator.hpp>
-#include <val.hpp>
 
 namespace NES
 {

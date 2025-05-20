@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Sequencing/ChunkCollector.hpp>
 
 #include <algorithm>
 #include <atomic>
@@ -26,7 +27,6 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Sequencing/ChunkCollector.hpp>
 #include <Time/Timestamp.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>

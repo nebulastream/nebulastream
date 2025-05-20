@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <EmitPhysicalOperator.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -27,8 +29,6 @@
 #include <Util/StdInt.hpp>
 #include <nautilus/val.hpp>
 #include <EmitOperatorHandler.hpp>
-#include <EmitPhysicalOperator.hpp>
-#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>

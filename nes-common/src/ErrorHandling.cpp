@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <ErrorHandling.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -23,7 +24,6 @@
 #include <cpptrace/basic.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
-#include <ErrorHandling.hpp>
 #include <from_current.hpp>
 
 /// formater for cpptrace::nullable

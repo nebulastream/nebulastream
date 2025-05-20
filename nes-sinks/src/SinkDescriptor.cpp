@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <Sinks/SinkDescriptor.hpp>
+
+#include <memory>
 #include <ostream>
 #include <string>
 #include <unordered_map>

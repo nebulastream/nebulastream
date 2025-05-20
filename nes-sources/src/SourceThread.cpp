@@ -11,6 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <SourceThread.hpp>
+
 #include <chrono>
 #include <cstddef>
 #include <exception>
@@ -33,7 +36,6 @@
 #include <Util/ThreadNaming.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <SourceThread.hpp>
 
 namespace NES::Sources
 {

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <RunningQueryPlan.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <functional>
@@ -35,7 +37,6 @@
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
-#include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
 
 namespace NES

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Join/NestedLoopJoin/NLJSlice.hpp>
+
 #include <cstdint>
 #include <memory>
 #include <mutex>

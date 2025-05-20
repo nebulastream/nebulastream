@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <RunningSource.hpp>
+
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -26,7 +28,6 @@
 #include <Interfaces.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <RunningQueryPlan.hpp>
-#include <RunningSource.hpp>
 
 namespace NES
 {

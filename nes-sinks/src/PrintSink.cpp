@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <Sinks/PrintSink.hpp>
+
+#include <cstdint>
 #include <iostream>
 #include <memory>
 #include <ostream>

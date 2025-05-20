@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
+#include <Join/StreamJoinProbePhysicalOperator.hpp>
+
+#include <cstdint>
+#include <memory>
 #include <utility>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
-#include <Join/StreamJoinProbePhysicalOperator.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>

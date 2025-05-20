@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <QueryEngineConfiguration.hpp>
+
+#include <charconv>
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -19,7 +22,6 @@
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
-#include <QueryEngineConfiguration.hpp>
 
 namespace NES
 {

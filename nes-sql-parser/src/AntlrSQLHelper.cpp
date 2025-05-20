@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <string>
+#include <AntlrSQLParser/AntlrSQLHelper.hpp>
+
 #include <utility>
 #include <vector>
-#include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAssignmentLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -30,7 +29,7 @@ const std::string AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
-std::vector<NES::LogicalFunction>& AntlrSQLHelper::getWhereClauses()
+std::vector<LogicalFunction>& AntlrSQLHelper::getWhereClauses()
 {
     return whereClauses;
 }

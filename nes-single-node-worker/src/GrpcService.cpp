@@ -12,7 +12,8 @@
     limitations under the License.
 */
 
-#include <chrono>
+#include <GrpcService.hpp>
+
 #include <exception>
 #include <string>
 #include <utility>
@@ -26,7 +27,6 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
 #include <ErrorHandling.hpp>
-#include <GrpcService.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 namespace NES
