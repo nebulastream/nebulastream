@@ -38,7 +38,7 @@ RewriteRuleResultSubgraph LowerToPhysicalMap::apply(LogicalOperator logicalOpera
         physicalOperator,
         logicalOperator.getInputSchemas()[0],
         logicalOperator.getOutputSchema(),
-        PhysicalOperatorWrapper::PipelineEndpoint::None);
+        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), wrapper);

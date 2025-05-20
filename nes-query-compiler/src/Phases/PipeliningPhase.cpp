@@ -97,9 +97,9 @@ void buildPipelineRecursively(
     }
 
     /// Case 1: Custom Scan
-    if (opWrapper->getEndpoint() == PhysicalOperatorWrapper::PipelineEndpoint::Scan)
+    if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::SCAN)
     {
-        if (prevOpWrapper && prevOpWrapper->getEndpoint() != PhysicalOperatorWrapper::PipelineEndpoint::Emit)
+        if (prevOpWrapper && prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
@@ -120,7 +120,7 @@ void buildPipelineRecursively(
 
     /// Case 2: Custom Emit – if the operator is explicitly an emit,
     /// it should close the pipeline without adding a default emit
-    if (opWrapper->getEndpoint() == PhysicalOperatorWrapper::PipelineEndpoint::Emit)
+    if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
     {
         currentPipeline->appendOperator(opWrapper->getPhysicalOperator());
         if (opWrapper->getHandler() && opWrapper->getHandlerId())
@@ -139,7 +139,7 @@ void buildPipelineRecursively(
     if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
     {
         /// Add emit first if there is one needed
-        if (prevOpWrapper and prevOpWrapper->getEndpoint() != PhysicalOperatorWrapper::PipelineEndpoint::Emit)
+        if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
@@ -157,7 +157,7 @@ void buildPipelineRecursively(
     /// Case 4: Forced new pipeline (pipeline breaker) for fusible operators
     if (policy == PipelinePolicy::ForceNew)
     {
-        if (prevOpWrapper and prevOpWrapper->getEndpoint() != PhysicalOperatorWrapper::PipelineEndpoint::Emit)
+        if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *opWrapper, configuredBufferSize);
         }

@@ -40,7 +40,7 @@ namespace NES::Memory::MemoryLayouts
 {
 
 DynamicField::DynamicField(const uint8_t* address, std::shared_ptr<PhysicalType> physicalType)
-    : address(address), physicalType(std::move(std::move(physicalType)))
+    : address(address), physicalType(std::move(physicalType))
 {
 }
 
