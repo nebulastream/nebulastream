@@ -219,21 +219,21 @@ std::vector<LogicalOperator> getParents(const LogicalPlan& plan, const LogicalOp
 
 std::string explain(const LogicalPlan& plan, ExplainVerbosity verbosity)
 {
-    std::stringstream ss;
+    std::stringstream stringstream;
     if (verbosity == ExplainVerbosity::Short)
     {
-        auto dumpHandler = PlanRenderer<LogicalPlan, LogicalOperator>(ss, ExplainVerbosity::Short);
+        auto dumpHandler = PlanRenderer<LogicalPlan, LogicalOperator>(stringstream, ExplainVerbosity::Short);
         dumpHandler.dump(plan);
     }
     else
     {
-        auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(ss, false);
+        auto dumpHandler = QueryConsoleDumpHandler<LogicalPlan, LogicalOperator>(stringstream, false);
         for (const auto& rootOperator : plan.rootOperators)
         {
             dumpHandler.dump({rootOperator});
         }
     }
-    return ss.str();
+    return stringstream.str();
 }
 
 std::vector<LogicalOperator> getLeafOperators(const LogicalPlan& plan)

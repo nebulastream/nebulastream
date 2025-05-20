@@ -42,6 +42,8 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 
 /// Helper function to add a default scan operator
 /// This is used only when the wrapped operator does not already provide a scan
+/// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
+/// Do not add further parameters here that should be part of the QueryOptimizerConfiguration.
 void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
@@ -56,6 +58,8 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
 
 /// Helper function to add a default emit operator
 /// This is used only when the wrapped operator does not already provide an emit
+/// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
+/// Do not add further parameters here that should be part of the QueryOptimizerConfiguration.
 void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
@@ -93,9 +97,9 @@ void buildPipelineRecursively(
     }
 
     /// Case 1: Custom Scan
-    if (opWrapper->getEndpoint() == PhysicalOperatorWrapper::PipelineEndpoint::Scan)
+    if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::SCAN)
     {
-        if (prevOpWrapper && prevOpWrapper->getEndpoint() != PhysicalOperatorWrapper::PipelineEndpoint::Emit)
+        if (prevOpWrapper && prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
@@ -116,7 +120,7 @@ void buildPipelineRecursively(
 
     /// Case 2: Custom Emit – if the operator is explicitly an emit,
     /// it should close the pipeline without adding a default emit
-    if (opWrapper->getEndpoint() == PhysicalOperatorWrapper::PipelineEndpoint::Emit)
+    if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
     {
         currentPipeline->appendOperator(opWrapper->getPhysicalOperator());
         if (opWrapper->getHandler() && opWrapper->getHandlerId())
@@ -135,7 +139,7 @@ void buildPipelineRecursively(
     if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
     {
         /// Add emit first if there is one needed
-        if (prevOpWrapper and prevOpWrapper->getEndpoint() != PhysicalOperatorWrapper::PipelineEndpoint::Emit)
+        if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
@@ -153,7 +157,7 @@ void buildPipelineRecursively(
     /// Case 4: Forced new pipeline (pipeline breaker) for fusible operators
     if (policy == PipelinePolicy::ForceNew)
     {
-        if (prevOpWrapper and prevOpWrapper->getEndpoint() != PhysicalOperatorWrapper::PipelineEndpoint::Emit)
+        if (prevOpWrapper and prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *opWrapper, configuredBufferSize);
         }

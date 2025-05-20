@@ -23,6 +23,10 @@ namespace NES
 /// Forward declaration of PipelineExecutionContext, which directly includes OperatorHandler
 class PipelineExecutionContext;
 
+using OperatorHandlerId = NESStrongType<uint64_t, struct OperatorHandlerId_, 0, 1>;
+static constexpr OperatorHandlerId INVALID_OPERATOR_HANDLER_ID = INVALID<OperatorHandlerId>;
+static constexpr OperatorHandlerId INITIAL_OPERATOR_HANDLER_ID = INITIAL<OperatorHandlerId>;
+
 inline OperatorHandlerId getNextOperatorHandlerId()
 {
     static std::atomic_uint64_t id = INITIAL_OPERATOR_HANDLER_ID.getRawValue();
