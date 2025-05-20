@@ -21,8 +21,8 @@
 #include <optional>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Join/StreamJoinUtil.hpp>
 #include <SliceStore/Slice.hpp>
-#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Time/Timestamp.hpp>
 
 namespace NES

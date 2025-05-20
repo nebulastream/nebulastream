@@ -22,7 +22,7 @@
 namespace NES
 {
 
-/// @brief Selection operator that evaluates an boolean function on each record.
+/// @brief Selection operator that evaluates a boolean function on each record.
 class SelectionPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:

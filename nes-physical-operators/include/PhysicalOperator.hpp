@@ -201,36 +201,34 @@ inline std::ostream& operator<<(std::ostream& os, const PhysicalOperator& op)
     return os << op.toString();
 }
 
-/// Wrapper for the physical operator to store input and output schema after query optimization.
+/// The wrapper provides all information of a physical operator needed for correct pipeline construction during query compilation.
+/// The wrapper is removed after pipeline creation. Thus, our physical operators only contain information needed for the actual execution.
 class PhysicalOperatorWrapper
 {
 public:
-    enum class PipelineEndpoint : uint8_t
+    enum class PipelineLocation : uint8_t
     {
-        Scan, /// pipeline scan
-        Emit, /// pipeline emit
-        None, /// neither of them, normal operator
+        SCAN, /// pipeline scan
+        EMIT, /// pipeline emit
+        INTERMEDIATE, /// neither of them, intermediate operator
     };
 
     PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema);
-
-    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema, PipelineEndpoint endpoint);
-
+    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema, PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
         Schema inputSchema,
         Schema outputSchema,
         std::optional<OperatorHandlerId> handlerId,
         std::optional<std::shared_ptr<OperatorHandler>> handler,
-        PipelineEndpoint endpoint);
-
+        PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
         Schema inputSchema,
         Schema outputSchema,
         std::optional<OperatorHandlerId> handlerId,
         std::optional<std::shared_ptr<OperatorHandler>> handler,
-        PipelineEndpoint endpoint,
+        PipelineLocation pipelineLocation,
         std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children);
 
     /// for compatibility with free functions requiring getChildren()
@@ -248,7 +246,7 @@ public:
 
     [[nodiscard]] const std::optional<std::shared_ptr<OperatorHandler>>& getHandler() const;
     [[nodiscard]] const std::optional<OperatorHandlerId>& getHandlerId() const;
-    [[nodiscard]] PipelineEndpoint getEndpoint() const;
+    [[nodiscard]] PipelineLocation getPipelineLocation() const;
 
 private:
     PhysicalOperator physicalOperator;
@@ -258,7 +256,7 @@ private:
 
     std::optional<std::shared_ptr<OperatorHandler>> handler;
     std::optional<OperatorHandlerId> handlerId;
-    PipelineEndpoint endpoint;
+    PipelineLocation pipelineLocation;
 };
 }
 FMT_OSTREAM(NES::PhysicalOperator);

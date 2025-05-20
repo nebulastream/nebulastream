@@ -10,14 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Function)
+
+
 add_source_files(nes-physical-operators
-        FunctionProvider.cpp
-        FieldAccessPhysicalFunction.cpp
-        ConstantValueVariableSizePhysicalFunction.cpp
-        )
-
-add_plugin(Concat PhysicalFunction nes-physical-operators ConcatPhysicalFunction.cpp)
-
-add_subdirectory(ArithmeticalFunctions)
-add_subdirectory(ComparisonFunctions)
-add_subdirectory(BooleanFunctions)
+        AggregationBuildPhysicalOperator.cpp
+        AggregationOperatorHandler.cpp
+        AggregationProbePhysicalOperator.cpp
+        AggregationSlice.cpp
+        WindowAggregation.cpp
+)
