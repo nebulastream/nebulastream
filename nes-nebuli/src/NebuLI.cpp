@@ -49,9 +49,9 @@
 #include <fmt/ranges.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
-#include "ModelCatalog.hpp"
 
 namespace YAML
 {
@@ -135,7 +135,10 @@ struct convert<NES::CLI::QueryConfig>
         rhs.sinks.emplace(sink.name, sink);
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
-        rhs.models = node["models"].as<std::vector<NES::CLI::Model>>();
+        if (node["models"].IsDefined())
+        {
+            rhs.models = node["models"].as<std::vector<NES::CLI::Model>>();
+        }
         rhs.query = node["query"].as<std::string>();
         return true;
     }

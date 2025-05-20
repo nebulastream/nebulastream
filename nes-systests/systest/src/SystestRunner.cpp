@@ -75,6 +75,18 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
     parser.registerOnSinkCallBack([&](SystestParser::Sink&& sinkParsed)
                                   { sinkNamesToSchema.insert_or_assign(sinkParsed.name, sinkParsed.fields); });
 
+    parser.registerOnModelCallback(
+        [&config](SystestParser::Model&& model)
+        {
+            std::vector<CLI::SchemaField> schema;
+            for (const auto& [type, name] : model.outputs)
+            {
+                schema.emplace_back(name, type);
+            }
+
+            config.models.emplace_back(model.name, std::filesystem::absolute(model.path), model.inputs, schema);
+        });
+
     /// We add new found sources to our config
     parser.registerOnCSVSourceCallback(
         [&](SystestParser::CSVSource&& source)
@@ -95,6 +107,27 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                 .logical = source.name,
                 .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
                 .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
+        });
+
+    parser.registerOnRawSourceCallback(
+        [&](SystestParser::RawSource&& source)
+        {
+            config.logical.emplace_back(CLI::LogicalSource{
+                .name = source.name,
+                .schema = [&source]()
+                {
+                    std::vector<CLI::SchemaField> schema;
+                    for (const auto& [type, name] : source.fields)
+                    {
+                        schema.emplace_back(name, type);
+                    }
+                    return schema;
+                }()});
+
+            config.physical.emplace_back(CLI::PhysicalSource{
+                .logical = source.name,
+                .parserConfig = {{"type", "Raw"}},
+                .sourceConfig = {{"type", "File"}, {"filePath", source.rawFilePath}, {"numberOfBuffersInSourceLocalBufferPool", "-1"}}});
         });
 
     parser.registerOnSLTSourceCallback(

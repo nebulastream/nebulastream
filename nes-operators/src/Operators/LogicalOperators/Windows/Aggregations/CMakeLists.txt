@@ -16,6 +16,7 @@ add_source_files(nes-operators
         MinAggregationDescriptor.cpp
         CountAggregationDescriptor.cpp
         AvgAggregationDescriptor.cpp
+        MergeAggregationDescriptor.cpp
         MedianAggregationDescriptor.cpp
         WindowAggregationDescriptor.cpp
 )

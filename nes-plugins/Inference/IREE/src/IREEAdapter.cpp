@@ -16,7 +16,6 @@
 #include <fstream>
 #include <Util/Logger/Logger.hpp>
 #include <iree/runtime/api.h>
-#include "IREECompilerWrapper.hpp"
 #include "IREERuntimeWrapper.hpp"
 
 #include <Model.hpp>
@@ -44,21 +43,18 @@ void IREEAdapter::initializeModel(Nebuli::Inference::Model& model)
 
     runtimeWrapper.setInputShape(model.getInputShape());
     runtimeWrapper.setNDim(model.getNDim());
-    this->inputSize = model.inputSize();
     this->functionName = model.getFunctionName();
-    this->inputData = malloc(inputSize);
-    this->outputData = reinterpret_cast<float*>(malloc(inputSize));
+
+    this->inputData = std::make_unique<std::byte[]>(model.inputSize());
+    this->inputSize = model.inputSize();
+
+    this->outputData = std::make_unique<std::byte[]>(model.outputSize());
+    this->outputSize = model.outputSize();
 }
 
 void IREEAdapter::infer()
 {
-    this->outputData = runtimeWrapper.execute(functionName, inputData, inputSize, outputData);
-}
-
-IREEAdapter::~IREEAdapter()
-{
-    free(inputData);
-    free(outputData);
+    runtimeWrapper.execute(functionName, inputData.get(), inputSize, reinterpret_cast<float*>(outputData.get()));
 }
 
 }

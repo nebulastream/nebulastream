@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>

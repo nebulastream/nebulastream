@@ -75,7 +75,7 @@ public:
 
 protected:
     [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
-    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override { return os << "InferModel"; }
 
 private:
     /**

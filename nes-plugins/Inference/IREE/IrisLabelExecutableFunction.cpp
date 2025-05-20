@@ -14,9 +14,9 @@
 
 #include <memory>
 
+#include <Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <ExecutableFunctionRegistry.hpp>
-#include "Execution/Functions/ExecutableFunctionConstantValueVariableSize.hpp"
 
 namespace NES::Runtime::Execution::Functions
 {

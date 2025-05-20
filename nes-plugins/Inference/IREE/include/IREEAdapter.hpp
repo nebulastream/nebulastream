@@ -14,11 +14,10 @@
 
 #pragma once
 
-#include "IREECompilerWrapper.hpp"
-#include "IREERuntimeWrapper.hpp"
-
 #include <ostream>
+#include <ErrorHandling.hpp>
 #include <Model.hpp>
+#include "IREERuntimeWrapper.hpp"
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -29,28 +28,40 @@ public:
     static std::shared_ptr<IREEAdapter> create();
 
     IREEAdapter() = default;
-    ~IREEAdapter();
 
     void initializeModel(Nebuli::Inference::Model& model);
 
-    template<class T>
-    void addModelInput(int index, T value)
+    template <class T>
+    void addModelInput(size_t index, T value)
     {
-        ((T*) inputData)[index] = value;
-    };
+        PRECONDITION(index < inputSize / sizeof(T), "Index is too large");
+        std::bit_cast<T*>(inputData.get())[index] = value;
+    }
 
-    void addModelInput(int8_t* content, uint32_t size)
+    float getResultAt(size_t idx)
     {
-        memcpy(static_cast<float*>(inputData), content, size);
+        PRECONDITION(idx < outputSize / 4, "Index is too large");
+        return std::bit_cast<float*>(outputData.get())[idx];
+    }
+
+    void copyResultTo(std::span<std::byte> content)
+    {
+        PRECONDITION(outputSize == content.size(), "Output size does not match");
+        std::ranges::copy_n(outputData.get(), std::min(content.size(), outputSize), content.data());
+    }
+
+    void addModelInput(std::span<std::byte> content)
+    {
+        std::ranges::copy_n(content.data(), std::min(content.size(), inputSize), inputData.get());
     }
 
     void infer();
-    float getResultAt(int idx) { return outputData[idx]; }
 
 private:
-    void* inputData{};
+    std::unique_ptr<std::byte[]> inputData{};
     size_t inputSize;
-    float* outputData{};
+    std::unique_ptr<std::byte[]> outputData{};
+    size_t outputSize;
     std::string functionName;
     IREERuntimeWrapper runtimeWrapper;
 };

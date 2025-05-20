@@ -29,8 +29,13 @@ PhysicalInferModelOperator::PhysicalInferModelOperator(
     std::shared_ptr<Schema> outputSchema,
     Nebuli::Inference::Model model,
     std::vector<std::shared_ptr<NodeFunction>> inputFields)
-    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)),
-    model(std::move(model)), inputFields(std::move(inputFields))
+    : Operator(id)
+    , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
+    , model(std::move(model))
+    , inputFields(std::move(inputFields))
+    , outputFields(
+          this->model.getOutputs() | std::views::transform([](const auto& output) { return output.first; })
+          | std::ranges::to<std::vector>())
 {
 }
 
@@ -50,13 +55,17 @@ std::shared_ptr<PhysicalOperator> PhysicalInferModelOperator::create(
     Nebuli::Inference::Model model,
     std::vector<std::shared_ptr<NodeFunction>> inputFields)
 {
-    return create(
-        getNextOperatorId(), std::move(inputSchema), std::move(outputSchema),
-        std::move(model), std::move(inputFields));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(model), std::move(inputFields));
 }
 
-std::string PhysicalInferModelOperator::toString() const {
-    return "IREE";
+std::ostream& PhysicalInferModelOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "IREE";
+}
+
+std::ostream& PhysicalInferModelOperator::toDebugString(std::ostream& os) const
+{
+    return os << "IREE";
 }
 
 std::shared_ptr<Operator> PhysicalInferModelOperator::copy()
@@ -66,7 +75,17 @@ std::shared_ptr<Operator> PhysicalInferModelOperator::copy()
     return result;
 }
 
-const Nebuli::Inference::Model& PhysicalInferModelOperator::getModel() const { return model; }
-const std::vector<std::shared_ptr<NodeFunction>>& PhysicalInferModelOperator::getInputFields() const { return inputFields; }
+const Nebuli::Inference::Model& PhysicalInferModelOperator::getModel() const
+{
+    return model;
+}
+const std::vector<std::shared_ptr<NodeFunction>>& PhysicalInferModelOperator::getInputFields() const
+{
+    return inputFields;
+}
+const std::vector<std::string>& PhysicalInferModelOperator::getOutputFields() const
+{
+    return outputFields;
+}
 
 }

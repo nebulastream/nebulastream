@@ -14,21 +14,26 @@
 
 #include "IREEInferenceOperatorHandler.hpp"
 #include <Util/Logger/Logger.hpp>
+#include <PipelineExecutionContext.hpp>
 #include "IREEAdapter.hpp"
 
 namespace NES::Runtime::Execution::Operators
 {
 
-IREEInferenceOperatorHandler::IREEInferenceOperatorHandler(Nebuli::Inference::Model model)
-    : model(std::move(model)), ireeAdapter(IREEAdapter::create())
+IREEInferenceOperatorHandler::IREEInferenceOperatorHandler(Nebuli::Inference::Model model) : model(std::move(model))
 {
 }
 
-void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId)
+void IREEInferenceOperatorHandler::start(PipelineExecutionContext& pec, uint32_t)
 {
-    ireeAdapter->initializeModel(model);
+    threadLocalAdapters.reserve(pec.getNumberOfWorkerThreads());
+    for (size_t threadId = 0; threadId < pec.getNumberOfWorkerThreads(); ++threadId)
+    {
+        threadLocalAdapters.emplace_back(IREEAdapter::create());
+        threadLocalAdapters.back()->initializeModel(model);
+    }
 }
-void IREEInferenceOperatorHandler::stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext)
+void IREEInferenceOperatorHandler::stop(Runtime::QueryTerminationType, PipelineExecutionContext&)
 {
 }
 
@@ -37,9 +42,9 @@ const Nebuli::Inference::Model& IREEInferenceOperatorHandler::getModel() const
     return model;
 }
 
-const std::shared_ptr<IREEAdapter>& IREEInferenceOperatorHandler::getIREEAdapter() const
+const std::shared_ptr<IREEAdapter>& IREEInferenceOperatorHandler::getIREEAdapter(WorkerThreadId threadId) const
 {
-    return ireeAdapter;
+    return threadLocalAdapters[threadId % threadLocalAdapters.size()];
 }
 
 }

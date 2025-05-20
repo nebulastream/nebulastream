@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <API/Functions/Functions.hpp>
@@ -24,6 +25,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/MergeAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
@@ -69,6 +71,11 @@ std::shared_ptr<API::WindowAggregation> Count(const FunctionItem& onField)
 std::shared_ptr<API::WindowAggregation> Median(const FunctionItem& onField)
 {
     return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getNodeFunction()));
+}
+
+std::shared_ptr<API::WindowAggregation> Merge(const FunctionItem& onField)
+{
+    return std::make_shared<API::WindowAggregation>(Windowing::MergeAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
 Windowing::TimeMeasure Milliseconds(const uint64_t milliseconds)

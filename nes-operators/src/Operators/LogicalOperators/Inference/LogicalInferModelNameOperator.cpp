@@ -34,33 +34,6 @@
 
 namespace NES::InferModel
 {
-namespace
-{
-std::string getFieldName(const NodeFunction& function)
-{
-    if (const auto* nodeFunctionFieldAccess = dynamic_cast<const NodeFunctionFieldAccess*>(&function))
-    {
-        return nodeFunctionFieldAccess->getFieldName();
-    }
-    return dynamic_cast<const NodeFunctionFieldAssignment*>(&function)->getField()->getFieldName();
-}
-}
-
-std::string LogicalInferModelNameOperator::toString() const
-{
-    PRECONDITION(not modelName.empty(), "Inference operator must contain a path to the model.");
-    PRECONDITION(not inputFields.empty(), "Inference operator must contain at least 1 input field.");
-
-    if (not outputSchema->getFieldNames().empty())
-    {
-        return fmt::format("INFER_MODEL(opId: {}, schema={})", id, outputSchema->toString());
-    }
-    return fmt::format(
-        "INFER_MODEL_NAME(opId: {}, model: \"{}\", inputFields: [{}])",
-        id,
-        modelName,
-        fmt::join(std::views::transform(inputFields, [](const auto& field) { return getFieldName(*field); }), ", "));
-}
 
 std::shared_ptr<Operator> LogicalInferModelNameOperator::copy()
 {

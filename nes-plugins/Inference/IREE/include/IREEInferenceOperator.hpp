@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -22,17 +23,21 @@ namespace NES::Runtime::Execution::Operators
 class IREEInferenceOperator : public ExecutableOperator
 {
 public:
-    IREEInferenceOperator(const uint32_t inferModelHandlerIndex,
-                          const std::vector<std::string>& inputFieldNames,
-                          const std::vector<std::string>& outputFieldNames)
-    : inferModelHandlerIndex(inferModelHandlerIndex), inputFieldNames(inputFieldNames), outputFieldNames(outputFieldNames){};
+    IREEInferenceOperator(
+        const uint32_t inferModelHandlerIndex,
+        const std::vector<std::string>& inputFieldNames,
+        const std::vector<std::string>& outputFieldNames)
+        : inferModelHandlerIndex(inferModelHandlerIndex), inputFieldNames(inputFieldNames), outputFieldNames(outputFieldNames) { };
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void setup(ExecutionContext& executionCtx) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
 
     bool isVarSizedInput = false;
+    bool isVarSizedOutput = false;
+    size_t outputSize = 0;
+    size_t inputSize = 0;
 
 private:
     const uint32_t inferModelHandlerIndex;
@@ -41,4 +46,3 @@ private:
 };
 
 }
-

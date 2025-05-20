@@ -15,7 +15,8 @@
 #pragma once
 #include <expected>
 #include <filesystem>
-#include <vector>
+#include <optional>
+#include <string>
 #include <Model.hpp>
 
 namespace NES::Nebuli::Inference

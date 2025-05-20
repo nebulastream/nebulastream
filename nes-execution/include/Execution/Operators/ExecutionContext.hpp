@@ -123,6 +123,13 @@ struct ArenaRef
         return result;
     }
 
+    VariableSizedData allocateVariableSizedData(const nautilus::val<size_t>& sizeInBytes)
+    {
+        auto basePtr = allocateMemory(sizeInBytes + 4);
+        *(static_cast<nautilus::val<int32_t*>>(basePtr)) = sizeInBytes;
+        return VariableSizedData(basePtr, false);
+    }
+
 private:
     nautilus::val<Arena*> arenaRef;
     nautilus::val<size_t> availableSpaceForPointer;

@@ -35,6 +35,7 @@ int main(const int argc, const char* argv[])
         NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
 
         grpc::ServerBuilder builder;
+        builder.SetMaxMessageSize(-1);
         builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
         builder.RegisterService(&workerService);
 

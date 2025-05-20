@@ -52,6 +52,7 @@ public:
     std::shared_ptr<Operator> copy() override;
     const Nebuli::Inference::Model& getModel() const;
     const std::vector<std::shared_ptr<NodeFunction>>& getInputFields() const;
+    const std::vector<std::string>& getOutputFields() const;
 
     std::optional<std::reference_wrapper<const std::string>> registryType() const override
     {
@@ -60,10 +61,11 @@ public:
     }
 
 protected:
-    std::string toString() const override;
-
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
     Nebuli::Inference::Model model;
     const std::vector<std::shared_ptr<NodeFunction>> inputFields;
+    const std::vector<std::string> outputFields;
 };
 
 }

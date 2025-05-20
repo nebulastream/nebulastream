@@ -14,7 +14,6 @@ add_plugin_as_library(IREE ExecutableOperator nes-execution-registry iree_infere
         IREEInferenceOperator.cpp
         IREEInferenceOperatorHandler.cpp
         IREEAdapter.cpp
-        IREECompilerWrapper.cpp
         IREERuntimeWrapper.cpp
 )
 
