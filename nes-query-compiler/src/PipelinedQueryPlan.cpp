@@ -91,6 +91,7 @@ const std::vector<std::shared_ptr<Pipeline>>& PipelinedQueryPlan::getPipelines()
 
 void PipelinedQueryPlan::addPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
+    pipeline->setExecutionMode(executionMode);
     pipelines.push_back(pipeline);
 }
 

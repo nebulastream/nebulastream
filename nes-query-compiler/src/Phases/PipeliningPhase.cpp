@@ -42,6 +42,8 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 
 /// Helper function to add a default scan operator
 /// This is used only when the wrapped operator does not already provide a scan
+/// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
+/// Do not add further parameters here that should be part of the QueryOptimizerConfiguration.
 void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
@@ -56,6 +58,8 @@ void addDefaultScan(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
 
 /// Helper function to add a default emit operator
 /// This is used only when the wrapped operator does not already provide an emit
+/// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
+/// Do not add further parameters here that should be part of the QueryOptimizerConfiguration.
 void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
