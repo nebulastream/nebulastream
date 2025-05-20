@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Functions/LogicalFunctions/OrLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
