@@ -1,12 +1,22 @@
-[![NES Nightly](https://github.com/nebulastream/nebulastream-public/actions/workflows/nightly.yml/badge.svg)](https://github.com/nebulastream/nebulastream-public/actions/workflows/nightly.yml) [![Conbench](https://img.shields.io/badge/Benchmark-Conbench-blue?labelColor=3D444C)](https://bench.nebula.stream/c-benchmarks/)
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="docs/resources/NebulaBanner.png">
     <source media="(prefers-color-scheme: dark)" srcset="docs/resources/NebulaBannerDarkMode.png">
     <img alt="NebulaStream logo" src="docs/resources/NebulaBanner.png" height="100">
   </picture>
+  <br />
+  <!-- Badges -->
+  <a href="https://github.com/nebulastream/nebulastream-public/actions/workflows/nightly.yml">
+    <img src="https://github.com/nebulastream/nebulastream-public/actions/workflows/nightly.yml/badge.svg"
+         alt="NES Nightly" />
+  </a>
+  <a href="https://bench.nebula.stream/c-benchmarks/">
+    <img src="https://img.shields.io/badge/Benchmark-Conbench-blue?labelColor=3D444C"
+         alt="Conbench" />
+  </a>
 </div>
-<br>
+
+----
 
 NebulaStream is our attempt to develop a general-purpose, end-to-end data management system for the IoT.
 It provides an out-of-the-box experience with rich data processing functionalities and a high ease-of-use.
