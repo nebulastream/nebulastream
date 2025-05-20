@@ -20,9 +20,9 @@ add_dependencies(rust_file_source_plugin_library rust_build)
 add_dependencies(rust_file_validation_plugin_library rust_build)
 target_link_libraries(rust_file_source_plugin_library PRIVATE rust-example)
 
-set(RUST_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rust-example")
+set(RUST_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rust-example-cxx")
 set(RUST_BUILD_MODE "release")
-set(RUST_LIB_NAME "librust_example.a")
+set(RUST_LIB_NAME "librust_example_cxx.a")
 set(RUST_LIB_PATH "${RUST_PROJECT_DIR}/target/${RUST_BUILD_MODE}/${RUST_LIB_NAME}")
 set(RUST_LIB_PATH_COMMON "${CMAKE_CURRENT_BINARY_DIR}/${RUST_LIB_NAME}")
 set(FFI_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/cxx.hpp")
@@ -36,8 +36,8 @@ add_custom_command(
         # Copy the library, source- and header files to a common location
         COMMAND ${CMAKE_COMMAND} -E copy ${RUST_LIB_PATH} ${RUST_LIB_PATH_COMMON}
         COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust/cxx.h" ${FFI_HEADER}
-        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust-example/src/lib.rs.h" ${RUST_LIB_HEADER}
-        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust-example/src/lib.rs.cc" ${RUST_LIB_CPP}
+        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust-example-cxx/src/lib.rs.h" ${RUST_LIB_HEADER}
+        COMMAND ${CMAKE_COMMAND} -E copy "${RUST_PROJECT_DIR}/target/cxxbridge/rust-example-cxx/src/lib.rs.cc" ${RUST_LIB_CPP}
 
         WORKING_DIRECTORY ${RUST_PROJECT_DIR}
         COMMENT "Building Rust project with Cargo"

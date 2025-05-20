@@ -27,7 +27,7 @@ pub struct RustFileSourceImpl {
     num_bytes_read: usize
 }
 
-impl<'a> RustFileSourceImpl {
+impl RustFileSourceImpl {
     pub fn open(&mut self) -> anyhow::Result<()> {
         if self.file.is_some() {
             return Err(anyhow!("RustFileSourceImpl already open."));
