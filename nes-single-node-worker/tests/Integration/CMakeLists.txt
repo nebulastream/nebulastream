@@ -58,3 +58,8 @@ serialize_query_with_nebuli(single-node-integration-tests-generator "qOneCSVSour
 serialize_query_with_nebuli(single-node-integration-tests-generator "qOneGeneratorSource")
 serialize_query_with_nebuli(single-node-integration-tests-generator "qOneGeneratorSourceStopAll")
 serialize_query_with_nebuli(single-node-integration-tests-generator "qOneGeneratorSourceStopOne")
+
+add_executable(snw-proto-fuzz ProtoFuzz.cpp)
+target_link_libraries(snw-proto-fuzz PUBLIC nes-common nes-runtime nes-execution nes-operators nes-single-node-worker-lib)
+target_compile_options(snw-proto-fuzz PRIVATE -fsanitize=fuzzer)
+target_link_options(snw-proto-fuzz PRIVATE -fsanitize=fuzzer)
