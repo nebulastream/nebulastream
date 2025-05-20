@@ -31,7 +31,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Expected.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <sys/types.h>
 
@@ -48,49 +50,47 @@ struct ConfigParametersTCP
     static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> PORT{
         "socketPort",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<std::string, std::string>& config) -> Expected<uint32_t>
         {
-            /// Mandatory (no default value)
-            const auto portNumber = Configurations::DescriptorConfig::tryGet(PORT, config);
-            if (portNumber.has_value())
-            {
-                constexpr uint32_t PORT_NUMBER_MAX = 65535;
-                if (portNumber.value() <= PORT_NUMBER_MAX)
-                {
-                    return portNumber;
-                }
-                NES_ERROR("TCPSource specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
-            }
-            return portNumber;
+            return Configurations::DescriptorConfig::tryGet(PORT, config)
+                .and_then(
+                    [](const auto& portNumber) -> Expected<uint32_t>
+                    {
+                        constexpr uint32_t PORT_NUMBER_MAX = 65535;
+                        if (portNumber <= PORT_NUMBER_MAX)
+                        {
+                            return portNumber;
+                        }
+                        return unexpected(
+                            "TCPSource specified port is: {}, but ports must be between 0 and {}", portNumber, PORT_NUMBER_MAX);
+                    });
         }};
+
     static inline const Configurations::DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
         "socketDomain",
         AF_INET,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
+        [](const std::unordered_map<std::string, std::string>& config) -> Expected<int32_t>
         {
-            /// User specified value, set if input is valid, throw if not.
-            const auto& socketDomainString = config.at(DOMAIN);
-            if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
+            auto domainValue = config.at(DOMAIN);
+            auto domainTypeString = Util::toUpperCase(domainValue);
+            if (domainTypeString == "AF_INET")
             {
-                return (AF_INET);
+                return AF_INET;
             }
-            if (strcasecmp(socketDomainString.c_str(), "AF_INET6") == 0)
+            if (domainTypeString == "AF_INET6")
             {
                 return AF_INET6;
             }
-            NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
-            return std::nullopt;
+            return unexpected("TCPSource: Domain Type '{}' is invalid. Expected either AF_INET or AF_INET6.", domainValue);
         }};
+
     static inline const Configurations::DescriptorConfig::ConfigParameter<int32_t> TYPE{
         "socketType",
         SOCK_STREAM,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
+        [](const std::unordered_map<std::string, std::string>& config) -> Expected<int32_t>
         {
-            auto socketTypeString = config.at(TYPE);
-            for (auto& character : socketTypeString)
-            {
-                character = toupper(character);
-            }
+            const auto socketType = config.at(TYPE);
+            auto socketTypeString = Util::toUpperCase(socketType);
             if (socketTypeString == "SOCK_STREAM")
             {
                 return SOCK_STREAM;
@@ -111,11 +111,10 @@ struct ConfigParametersTCP
             {
                 return SOCK_RDM;
             }
-            NES_ERROR(
-                "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
-                "SOCK_RDM",
-                socketTypeString)
-            return std::nullopt;
+            return unexpected(
+                "TCPSource: Socket type '{}' is invalid. Expected either 'SOCK_STREAM', 'SOCK_DGRAM', 'SOCK_SEQPACKET', "
+                "'SOCK_RAW', or 'SOCK_RDM'",
+                socketTypeString);
         }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<char> SEPARATOR{
         "tupleDelimiter",

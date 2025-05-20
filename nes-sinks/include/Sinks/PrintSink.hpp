@@ -67,8 +67,9 @@ struct ConfigParametersPrint
         INPUT_FORMAT{
             "inputFormat",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+            std::function(
+                [](const std::unordered_map<std::string, std::string>& config) -> Expected<Configurations::EnumWrapper>
+                { return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config); })};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT);

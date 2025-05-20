@@ -29,6 +29,7 @@ class EnumWrapper
 {
 public:
     template <typename EnumType>
+    requires std::is_enum_v<EnumType>
     explicit EnumWrapper(EnumType enumValue) : value(std::string(magic_enum::enum_name<EnumType>(enumValue)))
     {
     }
@@ -36,6 +37,7 @@ public:
     explicit EnumWrapper(std::string enumValueAsString) : value(std::move(enumValueAsString)) { }
 
     template <typename EnumType>
+    requires std::is_enum_v<EnumType>
     std::optional<EnumType> asEnum() const
     {
         return magic_enum::enum_cast<EnumType>(value);
