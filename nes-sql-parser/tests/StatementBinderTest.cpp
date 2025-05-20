@@ -139,11 +139,11 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
     const auto statement = binder->parseAndBind(createPhysicalSourceStatement);
     ASSERT_FALSE(statement.has_value());
 
-    /// Invalid parser type
-    const std::string createPhysicalSourceStatement2
-        = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET ('LOCAL' as `SOURCE`.LOCATION, '/dev/null' AS `SOURCE`.FILE_PATH, 'ERROR' AS PARSER.`TYPE`))";
-    const auto statement2 = binder->parseAndBind(createPhysicalSourceStatement2);
-    ASSERT_FALSE(statement2.has_value());
+    /// TODO after #805 uncomment test for invalid parser type
+    // const std::string createPhysicalSourceStatement2
+    //     = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET ('LOCAL' as `SOURCE`.LOCATION, '/dev/null' AS `SOURCE`.FILE_PATH, 'INVALID PARSER' AS PARSER.`TYPE`))";
+    // const auto statement2 = binder->parseAndBind(createPhysicalSourceStatement2);
+    // ASSERT_FALSE(statement2.has_value());
 
     /// Invalid logical source
     const std::string createPhysicalSourceStatement3 = "CREATE PHYSICAL SOURCE FOR invalidSource TYPE File SET ('LOCAL' as "

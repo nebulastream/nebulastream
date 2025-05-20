@@ -53,8 +53,10 @@ struct ParserConfig
     std::string fieldDelimiter;
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs);
     friend bool operator!=(const ParserConfig& lhs, const ParserConfig& rhs);
+    friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
 };
+
 static_assert(std::is_copy_assignable_v<ParserConfig>);
 
 class SourceDescriptor : public Configurations::Descriptor

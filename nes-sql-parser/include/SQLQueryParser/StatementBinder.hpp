@@ -17,6 +17,7 @@
 #include <expected>
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -35,28 +36,33 @@ namespace NES::Binder
 /// Should we require this in the future, we can change these structs to some intermediate representation with which the frontends have to go to the source catalog with.
 struct CreateLogicalSourceStatement
 {
-    LogicalSource created;
+    std::string name;
+    Schema schema;
 };
 
 struct CreatePhysicalSourceStatement
 {
-    Sources::SourceDescriptor created;
+    LogicalSource attachedTo;
+    std::string sourceType;
+    WorkerId workerId;
+    std::unordered_map<std::string, std::string> sourceConfig;
+    Sources::ParserConfig parserConfig;
+    friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
 struct DropLogicalSourceStatement
 {
-    LogicalSource dropped;
+    LogicalSource source;
 };
 
 struct DropPhysicalSourceStatement
 {
-    Sources::SourceDescriptor dropped;
+    Sources::SourceDescriptor descriptor;
 };
 
 struct DropQueryStatement
 {
     QueryId id;
-    explicit DropQueryStatement(const QueryId id) : id(id) { }
 };
 
 using Statement = std::variant<

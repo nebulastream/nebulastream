@@ -121,6 +121,10 @@ bool operator!=(const ParserConfig& lhs, const ParserConfig& rhs)
 {
     return !(lhs == rhs);
 }
+std::ostream& operator<<(std::ostream& os, const ParserConfig& obj)
+{
+    return os << "parserType: " << obj.parserType << " tupleDelimiter: " << obj.tupleDelimiter << " fieldDelimiter: " << obj.fieldDelimiter;
+}
 
 std::weak_ordering operator<=>(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {

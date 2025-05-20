@@ -26,12 +26,12 @@
 #include <unordered_map>
 #include <variant>
 
+#include <InputFormatters/InputFormatterProvider.hpp>
 #include <sys/stat.h>
 #include <Common/DataTypes/DataTypeProvider.hpp>
 #include "Functions/NodeFunction.hpp"
 #include "Functions/NodeFunctionConstantValue.hpp"
 #include "Sources/SourceDescriptor.hpp"
-#include <InputFormatters/InputFormatterProvider.hpp>
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
@@ -44,6 +44,7 @@
 
 namespace NES::Binder
 {
+
 StatementBinder::StatementBinder(
     const std::shared_ptr<Catalogs::Source::SourceCatalog>& sourceCatalog,
     const std::function<std::shared_ptr<QueryPlan>(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept
@@ -207,14 +208,7 @@ BindingResult StatementBinder::bind(AntlrSQLParser::StatementContext* statementA
                         throw UnknownDataType(column->typeDefinition()->getText());
                     }
                 }
-                const auto addedSourceOpt = sourceCatalog->addLogicalSource(sourceName, schema);
-
-                if (not addedSourceOpt.has_value())
-                {
-                    return std::unexpected(SourceAlreadyExists(sourceName));
-                }
-
-                return CreateLogicalSourceStatement{addedSourceOpt.value()};
+                return CreateLogicalSourceStatement{sourceName, schema};
             }
             if (auto* const physicalSourceDefAST = createAST->createDefinition()->createPhysicalSourceDefinition();
                 physicalSourceDefAST != nullptr)
@@ -309,18 +303,13 @@ BindingResult StatementBinder::bind(AntlrSQLParser::StatementContext* statementA
 
                 auto parserConfig = Sources::ParserConfig::create(parserOptions);
                 //Validate input formatter config and type. We don't attach it directly to the SourceDescriptor to avoid the dependencies
-                InputFormatters::InputFormatterProvider::provideInputFormatter(parserConfig.parserType, *logicalSourceOpt->getSchema(), parserConfig.tupleDelimiter, parserConfig.fieldDelimiter);
+                InputFormatters::InputFormatterProvider::provideInputFormatter(
+                    parserConfig.parserType, *logicalSourceOpt->getSchema(), parserConfig.tupleDelimiter, parserConfig.fieldDelimiter);
                 if (not sourceOptions.try_emplace("type", type).second)
                 {
                     throw InvalidConfigParameter("Type option for source cannot be specified via SET");
                 }
-                auto source = sourceCatalog->addPhysicalSource(logicalSourceOpt.value(), type, workerId, sourceOptions, parserConfig);
-                if (not source.has_value())
-                {
-                    throw InvalidConfigParameter("Invalid source configuration: {}", statementAST->getText());
-                }
-
-                return CreatePhysicalSourceStatement{source.value()};
+                return CreatePhysicalSourceStatement{logicalSourceOpt.value(), type, workerId, sourceOptions, parserConfig};
             }
         }
         if (auto* dropAst = statementAST->dropStatement(); dropAst != nullptr)
@@ -333,11 +322,7 @@ BindingResult StatementBinder::bind(AntlrSQLParser::StatementContext* statementA
                     if (const auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceSubject->name->getText());
                         logicalSource.has_value())
                     {
-                        if (const auto success = sourceCatalog->removeLogicalSource(logicalSource.value()))
-                        {
-                            return DropLogicalSourceStatement{*logicalSource};
-                        }
-                        throw UnregisteredSource(logicalSourceSubject->name->getText());
+                        return DropLogicalSourceStatement{*logicalSource};
                     }
                     throw UnregisteredSource(logicalSourceSubject->name->getText());
                 }
@@ -346,11 +331,7 @@ BindingResult StatementBinder::bind(AntlrSQLParser::StatementContext* statementA
                     if (const auto physicalSource = sourceCatalog->getPhysicalSource(bindUnsignedIntegerLiteral(physicalSourceSubject->id));
                         physicalSource.has_value())
                     {
-                        if (sourceCatalog->removePhysicalSource(physicalSource.value()))
-                        {
-                            return DropPhysicalSourceStatement{*physicalSource};
-                        }
-                        throw UnregisteredSource("Physical source {} couldn't be unregistered", *physicalSource);
+                        return DropPhysicalSourceStatement{*physicalSource};
                     }
                     throw UnregisteredSource("There is no physical source with id {}", physicalSourceSubject->id->getText());
                 }
@@ -367,7 +348,8 @@ BindingResult StatementBinder::bind(AntlrSQLParser::StatementContext* statementA
         }
 
         throw InvalidStatement(statementAST->toString());
-    } catch (Exception& e)
+    }
+    catch (Exception& e)
     {
         return std::unexpected{e};
     }
@@ -382,5 +364,15 @@ BindingResult StatementBinder::parseAndBind(const std::string_view statementStri
     parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
     AntlrSQLParser::StatementContext* tree = parser.statement();
     return bind(tree);
+}
+std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj)
+{
+    return os << fmt::format(
+               "CreatePhysicalSourceStatement: attachedTo: {} sourceType: {} workerId: {} sourceConfig: {} parserConfig: {}",
+               obj.attachedTo,
+               obj.sourceType,
+               obj.workerId,
+               obj.sourceConfig,
+               obj.parserConfig);
 }
 }
