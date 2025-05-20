@@ -94,15 +94,25 @@ std::optional<size_t> PagedVector::findIdx(const uint64_t entryPos) const
         pages.begin(),
         pages.end(),
         entryPos,
-        [](const TupleBufferWithCumulativeSum& bufferWithSum, const size_t value)
+        [&](const TupleBufferWithCumulativeSum& bufferWithSum, const size_t value)
         {
             /// The -1 is important as we need to subtract one due to starting the entryPos at 0.
             /// Otherwise, {4, 12, 14} and entryPos 12 would return the iterator to 12 and not to 14
+            /// Also, as the cumulative sum on the last page might not have been updated since the
+            /// last write operation, we need to use the number of tuples in the buffer instead
+            if (&bufferWithSum == &pages.back())
+            {
+                const auto penultimateCumulativeSum = (pages.size() > 1) ? pages.rbegin()[1].cumulativeSum : 0;
+                return penultimateCumulativeSum + bufferWithSum.buffer.getNumberOfTuples() - 1 < value;
+            }
             return bufferWithSum.cumulativeSum - 1 < value;
         });
 
-    const auto index = std::distance(pages.begin(), it);
-    return index;
+    if (it != pages.end())
+    {
+        return std::distance(pages.begin(), it);
+    }
+    return {};
 }
 
 const Memory::TupleBuffer* PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
