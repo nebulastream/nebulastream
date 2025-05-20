@@ -10,8 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(LogicalFunctions)
+add_subdirectory(BooleanFunctions)
 add_subdirectory(ArithmeticalFunctions)
+add_subdirectory(ComparisonFunctions)
 
 add_source_files(nes-logical-operators
         LogicalFunction.cpp

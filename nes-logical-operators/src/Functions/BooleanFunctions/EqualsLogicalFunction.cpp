@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Functions/LogicalFunctions/LessEqualsLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
@@ -32,22 +32,21 @@
 namespace NES
 {
 
-LessEqualsLogicalFunction::LessEqualsLogicalFunction(const LessEqualsLogicalFunction& other)
-    : left(other.left), right(other.right), dataType(other.dataType)
-{
-}
-
-LessEqualsLogicalFunction::LessEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
+EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
     : left(std::move(std::move(left)))
     , right(std::move(std::move(right)))
     , dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
 {
 }
 
-
-bool LessEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+EqualsLogicalFunction::EqualsLogicalFunction(const EqualsLogicalFunction& other)
+    : left(other.left), right(other.right), dataType(other.dataType)
 {
-    if (const auto* other = dynamic_cast<const LessEqualsLogicalFunction*>(&rhs))
+}
+
+bool EqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+{
+    if (const auto* other = dynamic_cast<const EqualsLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;
@@ -56,69 +55,70 @@ bool LessEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) co
     return false;
 }
 
-std::string LessEqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
-{
-    return fmt::format("{} <= {}", left.explain(verbosity), right.explain(verbosity));
-}
-
-std::shared_ptr<DataType> LessEqualsLogicalFunction::getDataType() const
+std::shared_ptr<DataType> EqualsLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction LessEqualsLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction EqualsLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
     return copy;
 };
 
-LogicalFunction LessEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction EqualsLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
     {
         newChildren.push_back(child.withInferredDataType(schema));
     }
-    return this->withChildren(newChildren);
+    return withChildren(newChildren);
 };
 
-std::vector<LogicalFunction> LessEqualsLogicalFunction::getChildren() const
+std::vector<LogicalFunction> EqualsLogicalFunction::getChildren() const
 {
     return {left, right};
 };
 
-LogicalFunction LessEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+LogicalFunction EqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
-    PRECONDITION(children.size() == 2, "LessEqualsLogicalFunction requires exactly two children, but got {}", children.size());
+    PRECONDITION(children.size() == 2, "EqualsLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
     return copy;
 };
 
-std::string_view LessEqualsLogicalFunction::getType() const
+std::string_view EqualsLogicalFunction::getType() const
 {
     return NAME;
 }
 
+std::string EqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
+{
+    return fmt::format("{} = {}", left.explain(verbosity), right.explain(verbosity));
+}
 
-SerializableFunction LessEqualsLogicalFunction::serialize() const
+SerializableFunction EqualsLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_function_type(NAME);
     serializedFunction.add_children()->CopyFrom(left.serialize());
     serializedFunction.add_children()->CopyFrom(right.serialize());
+
     DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
+
     return serializedFunction;
 }
 
 LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterLessEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     PRECONDITION(
-        arguments.children.size() == 2, "LessEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
-    return LessEqualsLogicalFunction(arguments.children[0], arguments.children[1]);
+        arguments.children.size() == 2, "EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    return EqualsLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
 }

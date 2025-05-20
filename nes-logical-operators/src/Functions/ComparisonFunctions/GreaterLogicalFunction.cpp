@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Functions/LogicalFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
@@ -32,21 +32,21 @@
 namespace NES
 {
 
-GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(const GreaterEqualsLogicalFunction& other)
-    : left(other.left), right(other.right), dataType(other.dataType)
+GreaterLogicalFunction::GreaterLogicalFunction(const GreaterLogicalFunction& other)
+    : dataType(other.dataType), left(other.left), right(other.right)
 {
 }
 
-GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(std::move(left)))
+GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunction right)
+    : dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
+    , left(std::move(std::move(left)))
     , right(std::move(std::move(right)))
-    , dataType(DataTypeProvider::provideDataType(LogicalType::BOOLEAN))
 {
 }
 
-bool GreaterEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool GreaterLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
 {
-    if (const auto* other = dynamic_cast<const GreaterEqualsLogicalFunction*>(&rhs))
+    if (const auto* other = dynamic_cast<const GreaterLogicalFunction*>(&rhs))
     {
         const bool simpleMatch = left == other->left and right == other->right;
         const bool commutativeMatch = left == other->right and right == other->left;
@@ -55,24 +55,24 @@ bool GreaterEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs)
     return false;
 }
 
-std::string GreaterEqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
+std::string GreaterLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    return fmt::format("{} >= {}", left.explain(verbosity), right.explain(verbosity));
+    return fmt::format("{} > {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-std::shared_ptr<DataType> GreaterEqualsLogicalFunction::getDataType() const
+std::shared_ptr<DataType> GreaterLogicalFunction::getDataType() const
 {
     return dataType;
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
+LogicalFunction GreaterLogicalFunction::withDataType(std::shared_ptr<DataType> dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
     return copy;
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction GreaterLogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
     for (auto& child : getChildren())
@@ -80,45 +80,43 @@ LogicalFunction GreaterEqualsLogicalFunction::withInferredDataType(const Schema&
         newChildren.push_back(child.withInferredDataType(schema));
     }
     return this->withChildren(newChildren);
-};
+}
 
-std::vector<LogicalFunction> GreaterEqualsLogicalFunction::getChildren() const
+std::vector<LogicalFunction> GreaterLogicalFunction::getChildren() const
 {
     return {left, right};
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+LogicalFunction GreaterLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
-    PRECONDITION(children.size() == 2, "GreaterEqualsLogicalFunction requires exactly two children, but got {}", children.size());
+    PRECONDITION(children.size() == 2, "GreaterLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
     return copy;
 };
 
-std::string_view GreaterEqualsLogicalFunction::getType() const
+std::string_view GreaterLogicalFunction::getType() const
 {
     return NAME;
 }
 
-SerializableFunction GreaterEqualsLogicalFunction::serialize() const
+SerializableFunction GreaterLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(right.serialize());
     serializedFunction.add_children()->CopyFrom(left.serialize());
+    serializedFunction.add_children()->CopyFrom(right.serialize());
     DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
     return serializedFunction;
 }
 
 LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterGreaterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     PRECONDITION(
-        arguments.children.size() == 2,
-        "GreaterEqualsLogicalFunction requires exactly two children, but got {}",
-        arguments.children.size());
-    return GreaterEqualsLogicalFunction(arguments.children[0], arguments.children[1]);
+        arguments.children.size() == 2, "GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());
+    return GreaterLogicalFunction(arguments.children[0], arguments.children[1]);
 }
 
 }
