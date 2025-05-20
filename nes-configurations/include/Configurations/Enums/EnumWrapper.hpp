@@ -14,12 +14,17 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
-#include <fmt/std.h>
+#include <utility>
+#include <fmt/std.h> ///NOLINT(misc-include-cleaner)
 #include <magic_enum/magic_enum.hpp>
 
 namespace NES::Configurations
 {
+
+template <typename T>
+concept Enum = std::is_enum_v<T>;
 
 /// The EnumWrapper allows to represent an arbitrary Enum as a string, which is beneficial for variants. When defining a variant, all possible
 /// types for the variant must be specified. In the case of Enums, this would be every possible Enum. By representing the Enum as a string,
@@ -28,14 +33,11 @@ namespace NES::Configurations
 class EnumWrapper
 {
 public:
-    template <typename EnumType>
-    explicit EnumWrapper(EnumType enumValue) : value(std::string(magic_enum::enum_name<EnumType>(enumValue)))
-    {
-    }
+    explicit EnumWrapper(Enum auto enumValue) : value(std::string(magic_enum::enum_name(enumValue))) { }
 
     explicit EnumWrapper(std::string enumValueAsString) : value(std::move(enumValueAsString)) { }
 
-    template <typename EnumType>
+    template <Enum EnumType>
     std::optional<EnumType> asEnum() const
     {
         return magic_enum::enum_cast<EnumType>(value);

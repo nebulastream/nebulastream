@@ -14,8 +14,9 @@
 
 #pragma once
 
-#include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -27,6 +28,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <Util/Expected.hpp>
 #include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
@@ -66,8 +68,9 @@ struct ConfigParametersPrint
         INPUT_FORMAT{
             "inputFormat",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
-            { return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+            std::function(
+                [](const std::unordered_map<std::string, std::string>& config) -> Expected<Configurations::EnumWrapper>
+                { return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config); })};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT);
