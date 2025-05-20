@@ -226,6 +226,9 @@ foreach (NES_DIR ${NES_DIRECTORIES})
     add_subdirectory(${NES_DIR})
 endforeach ()
 
+# Add all targets in benchmarks
+add_subdirectory(benchmarks)
+
 # Other configurations
 project_enable_format()
 
