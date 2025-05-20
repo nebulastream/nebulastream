@@ -134,9 +134,21 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     NES_INFO("Lower node:{} to NautilusOperator.", *operatorNode);
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
     {
-        auto scan = lowerScan(operatorNode->getOutputSchema(), bufferSize);
-        pipeline.setRootOperator(scan);
-        return scan;
+        auto child = operatorNode->getChildren()[0];
+        /// alter the projections of the parent operator (scan for now, because own pipeline), to only store the fields, the filter predicate actually uses
+        /// inputSchemaof filter has all fields for addScan phase, but then gets altered based on the new scan projections/filter outputschema
+        if (NES::Util::instanceOf<PhysicalOperators::PhysicalSelectionOperator>(child)){
+            auto filter = NES::Util::as<PhysicalOperators::PhysicalSelectionOperator>(child);
+            auto scan = lowerScan(operatorNode->getOutputSchema(), bufferSize, filter->getOutputSchema()->getFieldNames());
+            filter->setInputSchema(filter->getOutputSchema());
+            pipeline.setRootOperator(scan);
+            return scan;
+        }else {
+            auto scan = lowerScan(operatorNode->getOutputSchema(), bufferSize, operatorNode->getOutputSchema()->getFieldNames());/// TODO: use inputSchema
+            pipeline.setRootOperator(scan);
+            return scan;
+        }
+
     }
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalEmitOperator>(operatorNode))
     {
@@ -280,7 +292,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalMemoryLayoutSwapOperator>(operatorNode))
     {
         const auto swapOperator = NES::Util::as<PhysicalOperators::PhysicalMemoryLayoutSwapOperator>(operatorNode);
-        auto scan = lowerScan(swapOperator->getInputSchema(), bufferSize);
+        auto scan = lowerScan(swapOperator->getInputSchema(), bufferSize, swapOperator->getInputSchema()->getFieldNames());
         auto emit = lowerEmit(swapOperator->getOutputSchema(), bufferSize, operatorHandlers);
         scan->setChild(emit);
         pipeline.setRootOperator(scan);
@@ -346,7 +358,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
-LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<Schema>& schema, size_t bufferSize)
+LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<Schema>& schema, size_t bufferSize, std::vector<std::string> fieldNames)
 {
     switch (schema->getLayoutType())
     {
@@ -354,13 +366,13 @@ LowerPhysicalToNautilusOperators::lowerScan(const std::shared_ptr<Schema>& schem
             auto layout = std::make_shared<Memory::MemoryLayouts::ColumnLayout>(schema, bufferSize);
             std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                 = std::make_unique<Nautilus::Interface::MemoryProvider::ColumnTupleBufferMemoryProvider>(layout);
-            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
+            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), fieldNames);
         }
         case Schema::MemoryLayoutType::ROW_LAYOUT: {
             auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
             std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
                 = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
+            return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), fieldNames);
         }
     }
 }
