@@ -61,17 +61,8 @@ void PipelinedQueryPlan::removePipeline(Pipeline& pipeline)
 
 std::vector<std::shared_ptr<Pipeline>> PipelinedQueryPlan::getSourcePipelines() const
 {
-    std::vector<std::shared_ptr<Pipeline>> sourcePipelines;
-    auto it = pipelines.begin();
-    while (it != pipelines.end())
-    {
-        if (it->get()->isSourcePipeline())
-        {
-            sourcePipelines.push_back(*it);
-        }
-        ++it;
-    }
-    return sourcePipelines;
+    return std::views::filter(pipelines, [](const auto& pipelinePtr) { return pipelinePtr->isSourcePipeline(); })
+        | std::ranges::to<std::vector>();
 }
 
 QueryId PipelinedQueryPlan::getQueryId() const
@@ -91,6 +82,7 @@ const std::vector<std::shared_ptr<Pipeline>>& PipelinedQueryPlan::getPipelines()
 
 void PipelinedQueryPlan::addPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
+    pipeline->setExecutionMode(executionMode);
     pipelines.push_back(pipeline);
 }
 

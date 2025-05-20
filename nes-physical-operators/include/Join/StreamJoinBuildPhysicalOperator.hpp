@@ -35,9 +35,7 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
 
-    StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other)
-
-        = default;
+    StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other) = default;
 
 protected:
     const JoinBuildSideType joinBuildSide;
