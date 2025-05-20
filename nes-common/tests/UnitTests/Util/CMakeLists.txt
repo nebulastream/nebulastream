@@ -17,6 +17,7 @@ add_nes_common_test(nes-common-tests
         "StringUtilTest.cpp"
         "RangesTest.cpp"
         "LogLevelTest.cpp"
+        "ExpectedTest.cpp"
 )
 
 add_nes_test(chunk-collector-test
