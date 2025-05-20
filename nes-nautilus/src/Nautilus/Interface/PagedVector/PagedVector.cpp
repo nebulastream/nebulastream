@@ -136,19 +136,26 @@ std::optional<size_t> PagedVector::PagesWrapper::findIdx(const uint64_t entryPos
     }
 
     /// Use std::lower_bound to find the first cumulative sum greater than entryPos
-    auto it = std::lower_bound(
-        pages.begin(),
-        pages.end(),
-        entryPos,
-        [](const TupleBufferWithCumulativeSum& bufferWithSum, const size_t value)
+    auto projection = [&](const TupleBufferWithCumulativeSum& bufferWithSum) -> size_t
+    {
+        /// The -1 is important as we need to subtract one due to starting the entryPos at 0.
+        /// Otherwise, {4, 12, 14} and entryPos 12 would return the iterator to 12 and not to 14
+        /// Also, as the cumulative sum on the last page might not have been updated since the
+        /// last write operation, we need to use the number of tuples in the buffer instead
+        if (&bufferWithSum == &pages.back())
         {
-            /// The -1 is important as we need to subtract one due to starting the entryPos at 0.
-            /// Otherwise, {4, 12, 14} and entryPos 12 would return the iterator to 12 and not to 14
-            return bufferWithSum.cumulativeSum - 1 < value;
-        });
+            const auto penultimateCumulativeSum = (pages.size() > 1) ? std::prev(pages.end(), 2)->cumulativeSum : 0;
+            return penultimateCumulativeSum + bufferWithSum.buffer.getNumberOfTuples() - 1;
+        }
+        return bufferWithSum.cumulativeSum - 1;
+    };
+    const auto it = std::ranges::lower_bound(pages, entryPos, std::less<>{}, projection);
 
-    const auto index = std::distance(pages.begin(), it);
-    return index;
+    if (it != pages.end())
+    {
+        return std::distance(pages.begin(), it);
+    }
+    return {};
 }
 
 uint64_t PagedVector::PagesWrapper::getTotalNumberOfEntries() const
