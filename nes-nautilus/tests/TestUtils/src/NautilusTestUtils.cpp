@@ -115,7 +115,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
     const auto createShuffledVector = [seed](const uint64_t n)
     {
         std::vector<uint64_t> vec(n);
-        std::iota(vec.begin(), vec.end(), 0);
+        std::iota(vec.begin(), vec.end(), 0); /// NOLINT(modernize-use-ranges) as libcxx does not have ranges::iota
         std::ranges::shuffle(vec, std::default_random_engine(seed));
         return vec;
     };
@@ -133,7 +133,7 @@ std::vector<Memory::TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasin
         const auto tuplesToFill = std::min(capacity, numberOfTuples - i);
         auto buffer = bufferManager.getBufferBlocking();
         auto outputBufferIndex = createShuffledVector(tuplesToFill);
-        const auto sizeVarSizedData = rand() % (maxSizeVarSizedData + 1 - minSizeVarSizedData) + minSizeVarSizedData;
+        const auto sizeVarSizedData = (rand() % (maxSizeVarSizedData + 1 - minSizeVarSizedData)) + minSizeVarSizedData;
         callCompiledFunction<void, Memory::TupleBuffer*, Memory::AbstractBufferProvider*, uint64_t, uint64_t, uint64_t, uint64_t*>(
             {FUNCTION_CREATE_MONOTONIC_VALUES_FOR_BUFFER, backend},
             std::addressof(buffer),

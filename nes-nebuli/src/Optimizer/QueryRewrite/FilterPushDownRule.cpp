@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <memory>
 #include <queue>
 #include <set>
@@ -64,9 +65,8 @@ std::shared_ptr<QueryPlan> FilterPushDownRule::apply(std::shared_ptr<QueryPlan> 
     }
     std::vector<std::shared_ptr<LogicalSelectionOperator>> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
     NES_DEBUG("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
-    std::sort(
-        filterOperators.begin(),
-        filterOperators.end(),
+    std::ranges::sort(
+        filterOperators,
         [](const std::shared_ptr<LogicalSelectionOperator>& lhs, const std::shared_ptr<LogicalSelectionOperator>& rhs)
         { return lhs->getId() < rhs->getId(); });
     auto originalQueryPlan = queryPlan->copy();
@@ -272,7 +272,7 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(
     bool areAllFilterAttributesInGroupByKeys = true;
     for (const auto& filterAttribute : fieldNamesUsedByFilter)
     {
-        if (std::find(groupByKeyNames.begin(), groupByKeyNames.end(), filterAttribute) == groupByKeyNames.end())
+        if (std::ranges::find(groupByKeyNames, filterAttribute) == groupByKeyNames.end())
         {
             areAllFilterAttributesInGroupByKeys = false;
         }

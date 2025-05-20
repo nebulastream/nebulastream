@@ -28,6 +28,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Listeners/QueryLog.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <fmt/base.h>
@@ -78,6 +79,7 @@ struct Query
         std::shared_ptr<DecomposedQueryPlan> queryPlan,
         const uint64_t queryIdInFile,
         std::filesystem::path workingDir,
+        std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount,
         SystestParser::Schema sinkSchema)
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
@@ -85,6 +87,7 @@ struct Query
         , queryPlan(std::move(queryPlan))
         , queryIdInFile(queryIdInFile)
         , workingDir(std::move(workingDir))
+        , sourceNamesToFilepathAndCount(std::move(sourceNamesToFilepathAndCount))
         , expectedSinkSchema(std::move(sinkSchema))
     {
     }
@@ -97,25 +100,62 @@ struct Query
     std::shared_ptr<DecomposedQueryPlan> queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path workingDir;
+    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
     SystestParser::Schema expectedSinkSchema;
 };
 
-struct QueryExecutionInfo
-{
-    explicit QueryExecutionInfo(std::chrono::time_point<std::chrono::high_resolution_clock> startTime)
-        : passed(false), startTime(std::move(startTime))
-    {
-    }
-    bool passed;
-    std::chrono::time_point<std::chrono::high_resolution_clock> startTime;
-    std::chrono::time_point<std::chrono::high_resolution_clock> endTime;
-};
 
 struct RunningQuery
 {
     Query query;
     QueryId queryId = INVALID_QUERY_ID;
-    QueryExecutionInfo queryExecutionInfo;
+    Runtime::QuerySummary querySummary;
+    std::optional<uint64_t> bytesProcessed{0};
+    std::optional<uint64_t> tuplesProcessed{0};
+    bool passed = false;
+
+    std::chrono::duration<double> getElapsedTime() const
+    {
+        INVARIANT(not querySummary.runs.empty(), "Query summaries should not be empty!");
+        INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+
+        const auto lastRun = querySummary.runs.back();
+        INVARIANT(lastRun.stop.has_value() && lastRun.running.has_value(), "Query {} has no querySummary timestamps!", queryId);
+        return std::chrono::duration_cast<std::chrono::duration<double>>(lastRun.stop.value() - lastRun.running.value());
+    }
+
+    [[nodiscard]] std::string getThroughput() const
+    {
+        INVARIANT(not querySummary.runs.empty(), "Query summaries should not be empty!");
+        INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+
+        const auto lastRun = querySummary.runs.back();
+        INVARIANT(lastRun.stop.has_value() && lastRun.running.has_value(), "Query {} has no querySummary timestamps!", queryId);
+        if (not bytesProcessed.has_value() or not tuplesProcessed.has_value())
+        {
+            return "";
+        }
+
+        /// Calculating the throughput in bytes per second and tuples per second
+        const std::chrono::duration<double> duration = lastRun.stop.value() - lastRun.running.value();
+        const auto bytesPerSecond = static_cast<double>(bytesProcessed.value()) / duration.count();
+        const auto tuplesPerSecond = static_cast<double>(tuplesProcessed.value()) / duration.count();
+
+        auto formatUnits = [](double throughput)
+        {
+            /// Format throughput in SI units, e.g. 1.234 MB/s instead of 1234000 B/s
+            const std::array<std::string, 5> units = {"", "k", "M", "G", "T"};
+            uint64_t unitIndex = 0;
+            constexpr auto nextUnit = 1000;
+            while (throughput >= nextUnit && unitIndex < units.size() - 1)
+            {
+                throughput /= nextUnit;
+                unitIndex++;
+            }
+            return fmt::format("{:.3f} {}", throughput, units[unitIndex]);
+        };
+        return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
+    }
 };
 
 struct TestFile

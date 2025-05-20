@@ -529,6 +529,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
     TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources);
     auto builder = test.buildNewQuery();
     std::vector<QueryPlanBuilder::identifier_t> sources;
+    sources.reserve(numberOfSources);
     for (size_t i = 0; i < numberOfSources; i++)
     {
         sources.push_back(builder.addSource());
@@ -538,9 +539,8 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
     auto query = test.addNewQuery(std::move(builder));
 
     std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
-    std::transform(
-        sources.begin(),
-        sources.end(),
+    std::ranges::transform(
+        sources,
         std::back_inserter(sourcesCtrls),
         [&](auto identifier)
         {
@@ -576,6 +576,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
     TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources);
     auto builder = test.buildNewQuery();
     std::vector<QueryPlanBuilder::identifier_t> sources;
+    sources.reserve(numberOfSources);
     for (size_t i = 0; i < numberOfSources; i++)
     {
         sources.push_back(builder.addSource());
@@ -585,8 +586,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
     auto query = test.addNewQuery(std::move(builder));
 
     std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
-    std::transform(
-        sources.begin(), sources.end(), std::back_inserter(sourcesCtrls), [&](auto identifier) { return test.sourceControls[identifier]; });
+    std::ranges::transform(sources, std::back_inserter(sourcesCtrls), [&](auto identifier) { return test.sourceControls[identifier]; });
 
     test.expectQueryStatusEvents(
         QueryId(1),
@@ -641,10 +641,10 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
     for (const auto& [index, _] : queryPlans | views::enumerate)
     {
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
-        sourcesCtrls.push_back(test.sourceControls[sources[index * 2 + 1]]);
+        sourcesCtrls.push_back(test.sourceControls[sources[(index * 2) + 1]]);
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectSourceTermination(QueryId(1 + index), sources[index * 2], Runtime::QueryTerminationType::Graceful);
-        test.expectSourceTermination(QueryId(1 + index), sources[index * 2 + 1], Runtime::QueryTerminationType::Graceful);
+        test.expectSourceTermination(QueryId(1 + index), sources[(index * 2) + 1], Runtime::QueryTerminationType::Graceful);
         test.expectQueryStatusEvents(
             QueryId(1 + index),
             {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
@@ -736,10 +736,10 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
     for (size_t index = 2; const auto& query : queryPlans | std::ranges::views::drop(2))
     {
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
-        sourcesCtrls.push_back(test.sourceControls[sources[index * 2 + 1]]);
+        sourcesCtrls.push_back(test.sourceControls[sources[(index * 2) + 1]]);
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectSourceTermination(QueryId(1 + index), sources[index * 2], Runtime::QueryTerminationType::Graceful);
-        test.expectSourceTermination(QueryId(1 + index), sources[index * 2 + 1], Runtime::QueryTerminationType::Graceful);
+        test.expectSourceTermination(QueryId(1 + index), sources[(index * 2) + 1], Runtime::QueryTerminationType::Graceful);
         test.expectQueryStatusEvents(
             QueryId(1 + index),
             {Runtime::Execution::QueryStatus::Started, Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
@@ -1091,7 +1091,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
     {
         test.pipelineControls[pipelines[index]]->throwOnNthInvocation = failAfterNInvocations;
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
-        sourcesCtrls.push_back(test.sourceControls[sources[index * 2 + 1]]);
+        sourcesCtrls.push_back(test.sourceControls[sources[(index * 2) + 1]]);
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectQueryStatusEvents(
             QueryId(1 + index),

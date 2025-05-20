@@ -53,6 +53,7 @@
 #include <Util/Common.hpp>
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -261,6 +262,18 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     auto helper = helpers.top();
     std::shared_ptr<NodeFunction> function;
 
+    if (helper.functionBuilder.size() < 2)
+    {
+        if (helper.functionBuilder.size() + helper.constantBuilder.size() == 2)
+        {
+            throw InvalidQuerySyntax(
+                "Attempted to use a raw constant in a binary expression. {} in `{}`.",
+                fmt::join(helper.constantBuilder, ", "),
+                context->getText());
+        }
+        throw InvalidQuerySyntax(
+            "There were less than 2 functions in the functionBuilder in exitArithmeticBinary. `{}`.", context->getText());
+    }
     const auto rightFunction = helper.functionBuilder.back();
     helper.functionBuilder.pop_back();
     const auto leftFunction = helper.functionBuilder.back();

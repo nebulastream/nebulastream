@@ -292,11 +292,11 @@ std::shared_ptr<DecomposedQueryPlan> createFullySpecifiedQueryPlan(const QueryCo
     semanticQueryValidation->validate(query); /// performs the first type inference
 
     logicalSourceExpansionRule.apply(query);
-    typeInference->performTypeInferenceQuery(query);
+    Optimizer::TypeInferencePhase::performTypeInferenceQuery(query);
 
     originIdInferencePhase->execute(query);
     queryRewritePhase->execute(query);
-    typeInference->performTypeInferenceQuery(query);
+    Optimizer::TypeInferencePhase::performTypeInferenceQuery(query);
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());

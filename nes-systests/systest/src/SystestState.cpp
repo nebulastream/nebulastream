@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -20,6 +21,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
 #include <SystestRunner.hpp>
@@ -35,7 +37,7 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     auto toLowerCopy = [](const std::string& str)
     {
         std::string lowerStr = str;
-        std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::tolower);
+        std::ranges::transform(lowerStr, lowerStr.begin(), ::tolower);
         return lowerStr;
     };
 
@@ -61,7 +63,7 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
     uint64_t queryIdInFile = 0;
     std::unordered_set<uint64_t> foundQueries;
 
-    for (const auto& [decomposedPlan, queryDefinition, sinkSchema] : loadedPlans)
+    for (const auto& [decomposedPlan, queryDefinition, sinkSchema, sourceNamesToFilepath] : loadedPlans)
     {
         if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
         {
@@ -70,13 +72,27 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& wo
             {
                 foundQueries.insert(queryIdInFile + 1);
                 testfile.queries.emplace_back(
-                    testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
+                    testfile.name(),
+                    queryDefinition,
+                    testfile.file,
+                    decomposedPlan,
+                    queryIdInFile,
+                    workingDir,
+                    sourceNamesToFilepath,
+                    sinkSchema);
             }
         }
         else
         {
             testfile.queries.emplace_back(
-                testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, workingDir, sinkSchema);
+                testfile.name(),
+                queryDefinition,
+                testfile.file,
+                decomposedPlan,
+                queryIdInFile,
+                workingDir,
+                sourceNamesToFilepath,
+                sinkSchema);
         }
         ++queryIdInFile;
     }
@@ -180,7 +196,7 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
     testGroups.reserve(groupFilesMap.size());
     for (const auto& [groupName, files] : groupFilesMap)
     {
-        testGroups.push_back(TestGroupFiles{groupName, files});
+        testGroups.push_back(TestGroupFiles{.name = groupName, .files = files});
     }
     return testGroups;
 }
@@ -216,10 +232,15 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
     auto testFileExtension = config.testFileExtension.getValue();
     auto testMap = discoverTestsRecursively(testsDiscoverDir, testFileExtension);
 
+    auto toLowerSet = [](const auto& vec)
+    {
+        return vec | std::views::transform([](const auto& scalarOption) { return scalarOption.getValue(); })
+            | std::views::transform(Util::toLowerCase) | std::ranges::to<std::unordered_set<std::string>>();
+    };
     auto includedGroupsVector = config.testGroups.getValues();
     auto excludedGroupsVector = config.excludeGroups.getValues();
-    std::unordered_set<std::string> includedGroups(includedGroupsVector.begin(), includedGroupsVector.end());
-    std::unordered_set<std::string> excludedGroups(excludedGroupsVector.begin(), excludedGroupsVector.end());
+    const auto includedGroups = toLowerSet(config.testGroups.getValues());
+    const auto excludedGroups = toLowerSet(config.excludeGroups.getValues());
 
     std::erase_if(
         testMap,
@@ -228,14 +249,15 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
             const auto& [name, testFile] = nameAndFile;
             if (!includedGroups.empty())
             {
-                if (std::ranges::none_of(testFile.groups, [&](const auto& group) { return includedGroups.contains(group); }))
+                if (std::ranges::none_of(
+                        testFile.groups, [&](const auto& group) { return includedGroups.contains(Util::toLowerCase(group)); }))
                 {
                     std::cout << fmt::format(
                         "Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), includedGroups);
                     return true;
                 }
             }
-            if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(group); }))
+            if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(Util::toLowerCase(group)); }))
             {
                 std::cout << fmt::format(
                     "Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);

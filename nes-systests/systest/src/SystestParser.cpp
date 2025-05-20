@@ -104,8 +104,7 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
-    auto found = std::find_if(
-        substitutionRules.begin(), substitutionRules.end(), [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
+    auto found = std::ranges::find_if(substitutionRules, [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
     PRECONDITION(
         found == substitutionRules.end(),
         "substitution rule keywords must be unique. Tried to register for the second time: {}",
@@ -288,13 +287,12 @@ void SystestParser::applySubstitutionRules(std::string& line)
 std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialToken)
 {
     /// Query is a special case as it's identifying token is not space seperated
-    if (potentialToken.compare(0, QueryToken.size(), QueryToken) == 0)
+    if (potentialToken.starts_with(QueryToken))
     {
         return TokenType::QUERY;
     }
     /// Lookup in map
-    const auto* it = std::find_if(
-        stringToToken.begin(), stringToToken.end(), [&potentialToken](const auto& pair) { return pair.first == potentialToken; });
+    const auto* it = std::ranges::find_if(stringToToken, [&potentialToken](const auto& pair) { return pair.first == potentialToken; });
     if (it != stringToToken.end())
     {
         return it->second;

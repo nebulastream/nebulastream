@@ -37,7 +37,6 @@ protected:
     std::shared_ptr<LowerPhysicalToNautilusOperators> lowerPhysicalToNautilusOperatorsPhase;
     std::shared_ptr<NautilusCompilationPhase> compileNautilusPlanPhase;
     std::shared_ptr<PipeliningPhase> pipeliningPhase;
-    std::shared_ptr<AddScanAndEmitPhase> addScanAndEmitPhase;
 };
 
 }

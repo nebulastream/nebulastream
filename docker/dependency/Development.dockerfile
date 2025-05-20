@@ -10,10 +10,8 @@ RUN apt-get update -y && apt-get install -y \
         lldb-${LLVM_TOOLCHAIN_VERSION} \
         gdb \
         jq \
-        python3 \
         python3-venv \
-        python3-bs4 \
-        linux-tools-generic
+        python3-bs4
 
 ENV PIPX_HOME=/opt/pipx \
     PIPX_BIN_DIR=/usr/local/bin \

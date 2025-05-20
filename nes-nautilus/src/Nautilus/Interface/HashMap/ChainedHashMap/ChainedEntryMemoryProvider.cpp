@@ -49,7 +49,8 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         const auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue->getDataType());
-        fieldsKey.emplace_back(MemoryProvider::FieldOffsets{fieldValue->getName(), physicalType, offset});
+        fieldsKey.emplace_back(
+            MemoryProvider::FieldOffsets{.fieldIdentifier = fieldValue->getName(), .type = physicalType, .fieldOffset = offset});
         offset += physicalType->size();
     }
 
@@ -59,7 +60,8 @@ ChainedEntryMemoryProvider::createFieldOffsets(
         INVARIANT(field.has_value(), "Field {} not found in schema", fieldName);
         const auto& fieldValue = field.value();
         const auto physicalType = physicalDataTypeFactory.getPhysicalType(fieldValue->getDataType());
-        fieldsValue.emplace_back(MemoryProvider::FieldOffsets{fieldValue->getName(), physicalType, offset});
+        fieldsValue.emplace_back(
+            MemoryProvider::FieldOffsets{.fieldIdentifier = fieldValue->getName(), .type = physicalType, .fieldOffset = offset});
         offset += physicalType->size();
     }
     return {fieldsKey, fieldsValue};

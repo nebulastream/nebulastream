@@ -77,8 +77,8 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
 
     ASSERT_EQ(testBuffer->getCapacity(), tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     ASSERT_EQ(testBuffer->getNumberOfTuples(), 0U);
-    ASSERT_EQ(rowLayout->getFieldOffset(1, 2), schema->getSchemaSizeInBytes() * 1 + (1 + 2));
-    ASSERT_EQ(rowLayout->getFieldOffset(4, 0), schema->getSchemaSizeInBytes() * 4 + 0);
+    ASSERT_EQ(rowLayout->getFieldOffset(1, 2), (schema->getSchemaSizeInBytes() * 1) + (1 + 2));
+    ASSERT_EQ(rowLayout->getFieldOffset(4, 0), (schema->getSchemaSizeInBytes() * 4) + 0);
 }
 
 /**

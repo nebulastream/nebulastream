@@ -37,6 +37,7 @@ struct LoadedQueryPlan
     std::shared_ptr<DecomposedQueryPlan> queryPlan;
     std::string queryName;
     SystestParser::Schema sinkSchema;
+    std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCount;
 };
 
 /// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
@@ -75,6 +76,11 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, uint64_t numConcurre
 /// function/arithmetical/FunctionMul:5..................................Failed
 /// SELECT * FROM s....
 /// Expected ............ | Actual 1, 2,3
-void printQueryResultToStdOut(const RunningQuery& runningQuery, const std::string& errorMessage, size_t queryCounter, size_t totalQueries);
+void printQueryResultToStdOut(
+    const RunningQuery& runningQuery,
+    const std::string& errorMessage,
+    size_t queryCounter,
+    size_t totalQueries,
+    const std::string_view queryPerformanceMessage);
 
 }

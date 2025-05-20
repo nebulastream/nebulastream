@@ -19,16 +19,17 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Util/TestUtil.hpp>
 #include <TestTaskQueue.hpp>
 #include "Util/Logger/Logger.hpp"
 #include "Util/TestTupleBuffer.hpp"
@@ -185,6 +186,95 @@ struct TestHandle
     }
 };
 
+inline bool
+checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
+{
+    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
+    if (leftBuffer.getNumberOfTuples() != rightBuffer.getNumberOfTuples())
+    {
+        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        return false;
+    }
+
+    std::set<uint64_t> sameTupleIndices;
+    for (auto idxBuffer1 = 0UL; idxBuffer1 < leftBuffer.getNumberOfTuples(); ++idxBuffer1)
+    {
+        bool idxFoundInBuffer2 = false;
+        for (auto idxBuffer2 = 0UL; idxBuffer2 < rightBuffer.getNumberOfTuples(); ++idxBuffer2)
+        {
+            if (sameTupleIndices.contains(idxBuffer2))
+            {
+                continue;
+            }
+
+            const auto* const startPosBuffer1 = leftBuffer.getBuffer() + (schemaSizeInByte * idxBuffer1);
+            const auto* const startPosBuffer2 = rightBuffer.getBuffer() + (schemaSizeInByte * idxBuffer2);
+            if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0)
+            {
+                sameTupleIndices.insert(idxBuffer2);
+                idxFoundInBuffer2 = true;
+                break;
+            }
+        }
+
+        if (!idxFoundInBuffer2)
+        {
+            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}", idxBuffer1);
+            return false;
+        }
+    }
+
+    return (sameTupleIndices.size() == leftBuffer.getNumberOfTuples());
+}
+
+inline Memory::TupleBuffer copyStringDataToTupleBuffer(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer)
+{
+    PRECONDITION(
+        tupleBuffer.getBufferSize() >= rawData.size(),
+        "{} < {}, size of TupleBuffer is not sufficient to contain string",
+        tupleBuffer.getBufferSize(),
+        rawData.size());
+    std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
+    tupleBuffer.setNumberOfTuples(rawData.size());
+    return tupleBuffer;
+}
+
+/// Takes a schema, a buffer manager and tuples.
+/// Creates a TestTupleBuffer with row layout using the schema and the buffer manager.
+/// Unfolds the tuples into the TestTupleBuffer.
+/// Example usage (assumes a bufferManager (shared_ptr to BufferManager object) is available):
+///     using TestTuple = std::tuple<int, bool>;
+///     SchemaPtr schema = Schema::create()->addField("INT", BasicType::INT32)->addField("BOOL", BasicType::BOOLEAN);
+///     auto testTupleBuffer = TestUtil::createTupleBufferFromTuples(schema, *bufferManager,
+///         TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
+template <typename TupleSchema, bool ContainsVarSized = false, bool PrintDebug = false>
+Memory::TupleBuffer createTupleBufferFromTuples(
+    const std::shared_ptr<Schema>& schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
+{
+    PRECONDITION(schema != nullptr, "Cannot create a test tuple buffer from a schema that is null");
+    PRECONDITION(bufferManager.getAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
+    auto rowLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager.getBufferSize());
+    auto testTupleBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, bufferManager.getBufferBlocking());
+
+    for (const auto& testTuple : tuples)
+    {
+        if constexpr (ContainsVarSized)
+        {
+            testTupleBuffer->pushRecordToBuffer(testTuple, &bufferManager);
+        }
+        else
+        {
+            testTupleBuffer->pushRecordToBuffer(testTuple);
+        }
+    }
+
+    if constexpr (PrintDebug)
+    {
+        NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema));
+    }
+    return testTupleBuffer->getBuffer();
+}
+
 /// Gets the actual result buffers and the expected result buffers from the test handle and compares them.
 /// Logs both the actual and the expected buffers if 'PrintDebug' is set to true.
 template <typename TupleSchemaTemplate, bool PrintDebug>
@@ -219,7 +309,7 @@ bool validateResult(const TestHandle<TupleSchemaTemplate>& testHandle)
                     expectedTestBuffer.toString(
                         testHandle.schema, Memory::MemoryLayouts::TestTupleBuffer::PrintMode::NO_HEADER_END_IN_NEWLINE));
             }
-            isValid &= TestUtil::checkIfBuffersAreEqual(
+            isValid &= checkIfBuffersAreEqual(
                 actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema->getSchemaSizeInBytes());
             ++bufferIndex;
         }
@@ -237,7 +327,7 @@ std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestHa
         /// expectedBuffersVector: vector<TupleSchemaTemplate>
         for (const auto& expectedBuffersVector : workerThreadResultVector.expectedResultsForThread)
         {
-            expectedTupleBuffers.at(0).emplace_back(TestUtil::createTupleBufferFromTuples<TupleSchemaTemplate, false, PrintDebug>(
+            expectedTupleBuffers.at(0).emplace_back(createTupleBufferFromTuples<TupleSchemaTemplate, false, PrintDebug>(
                 testHandle.schema, *testHandle.testBufferManager, expectedBuffersVector));
         }
     }
@@ -290,7 +380,7 @@ std::vector<TaskPackage> createTestTupleBuffers(const TestHandle<TupleSchemaTemp
         auto tupleBuffer = testHandle.testBufferManager->getBufferNoBlocking();
         INVARIANT(tupleBuffer, "Couldn't get buffer from bufferManager. Configure test to use more buffers.");
         rawTupleBuffers.emplace_back(TaskPackage{
-            rawInputBuffer.sequenceNumber, TestUtil::copyStringDataToTupleBuffer(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
+            rawInputBuffer.sequenceNumber, copyStringDataToTupleBuffer(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
     }
     return rawTupleBuffers;
 }

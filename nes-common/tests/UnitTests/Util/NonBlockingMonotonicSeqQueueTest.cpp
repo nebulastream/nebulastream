@@ -136,7 +136,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadReversSequentialUpdaterTest
             std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), INITIAL<ChunkNumber>, true}, /*ts*/ i));
     }
     /// reverse updates
-    std::reverse(watermarkBarriers.begin(), watermarkBarriers.end());
+    std::ranges::reverse(watermarkBarriers);
 
     for (auto i = 0_u64; i < updates - 1; i++)
     {
@@ -288,7 +288,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadedUpdatesWithChunkNumberInR
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i <= noSeqNumbers; i++)
     {
-        auto noChunks = 1 + rand() % maxChunksPerSeqNumber;
+        auto noChunks = 1 + (rand() % maxChunksPerSeqNumber);
         for (auto chunk = ChunkNumber::INITIAL; chunk < ChunkNumber::INITIAL + noChunks; ++chunk)
         {
             watermarkBarriers.emplace_back(
@@ -334,7 +334,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
     /// preallocate watermarks for each transaction
     for (auto i = SequenceNumber::INITIAL; i < noSeqNumbers + SequenceNumber::INITIAL; i++)
     {
-        auto noChunks = 1 + rand() % maxChunksPerSeqNumber;
+        auto noChunks = 1 + (rand() % maxChunksPerSeqNumber);
         for (auto chunk = ChunkNumber::INITIAL; chunk < noChunks + ChunkNumber::INITIAL; ++chunk)
         {
             watermarkBarriers.emplace_back(
@@ -353,7 +353,7 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
     {
         const auto copyGlobalUpdateCounter = globalUpdateCounter.load();
         const auto missingUpdates = watermarkBarriers.size() - globalUpdateCounter;
-        const auto updatesThisRound = std::min(missingUpdates, 1 + rand() % averageUpdatesPerRound);
+        const auto updatesThisRound = std::min(missingUpdates, 1 + (rand() % averageUpdatesPerRound));
         const auto maxUpdatePos = copyGlobalUpdateCounter + updatesThisRound;
 
         std::vector<std::thread> threads;
@@ -410,10 +410,10 @@ struct BufferMetaDataTest
 TEST_F(NonBlockingMonotonicSeqQueueTest, simpleInsertionsWithSingleChunks)
 {
     std::vector<BufferMetaDataTest> sequenceData = {
-        BufferMetaDataTest{{SequenceNumber(1), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(31)},
-        BufferMetaDataTest{{SequenceNumber(2), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(63)},
-        BufferMetaDataTest{{SequenceNumber(3), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(80)},
-        BufferMetaDataTest{{SequenceNumber(4), INITIAL_CHUNK_NUMBER, true}, Runtime::Timestamp(99)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(1), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(31)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(2), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(63)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(3), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(80)},
+        BufferMetaDataTest{.sequenceData = {SequenceNumber(4), INITIAL_CHUNK_NUMBER, true}, .timestamp = Runtime::Timestamp(99)},
     };
 
     auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();

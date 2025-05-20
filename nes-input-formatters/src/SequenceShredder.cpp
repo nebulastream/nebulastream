@@ -33,6 +33,8 @@
 
 namespace NES::InputFormatters
 {
+/// Enable for detailed bitmap prints
+constexpr bool VERBOSE_DEBUG_BITMAP_PRINTING = false;
 
 SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiter) : SequenceShredder(sizeOfTupleDelimiter, INITIAL_NUM_BITMAPS)
 {
@@ -226,7 +228,8 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
                 bitmapSnapshot.tupleDelimiterBitmapSnapshot,
                 bitmapSnapshot.seenAndUsedBitmapSnapshot);
 
-            spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
+            spanningTuple = SpanningTuple{
+                .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
             break;
         }
         case WrappingMode::CHECK_WRAPPING_TO_LOWER: {
@@ -244,11 +247,13 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             {
                 const auto [spanningTupleStart, isStartValid]
                     = tryToFindLowerWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
             }
             else
             {
-                spanningTuple = SpanningTuple{INVALID_SEQUENCE_NUMBER, spanningTupleEnd, false, isEndValid};
+                spanningTuple = SpanningTuple{
+                    .spanStart = INVALID_SEQUENCE_NUMBER, .spanEnd = spanningTupleEnd, .isStartValid = false, .isEndValid = isEndValid};
             }
             break;
         }
@@ -267,27 +272,31 @@ SequenceShredder::processSequenceNumber(StagedBuffer stagedBufferOfSequenceNumbe
             {
                 const auto [spanningTupleEnd, isEndValid]
                     = tryToFindHigherWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
             }
             else
             {
-                spanningTuple = SpanningTuple{spanningTupleStart, INVALID_SEQUENCE_NUMBER, isStartValid, false};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = INVALID_SEQUENCE_NUMBER, .isStartValid = isStartValid, .isEndValid = false};
             }
             break;
         }
         case WrappingMode::CHECK_WRAPPING_TO_LOWER_AND_HIGHER: {
-            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(std::move(snapshot));
+            const auto bitmapSnapshot = *std::get<std::unique_ptr<BitmapVectorSnapshot>>(snapshot);
             const auto [spanningTupleStart, isStartValid]
                 = tryToFindLowerWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
             if (spanningTupleStart or HasTupleDelimiter)
             {
                 const auto [spanningTupleEnd, isEndValid]
                     = tryToFindHigherWrappingSpanningTuple(sequenceNumberBitmapOffset, sequenceNumberBitmapIndex, bitmapSnapshot);
-                spanningTuple = SpanningTuple{spanningTupleStart, spanningTupleEnd, isStartValid, isEndValid};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = spanningTupleEnd, .isStartValid = isStartValid, .isEndValid = isEndValid};
             }
             else
             {
-                spanningTuple = SpanningTuple{spanningTupleStart, INVALID_SEQUENCE_NUMBER, isStartValid, false};
+                spanningTuple = SpanningTuple{
+                    .spanStart = spanningTupleStart, .spanEnd = INVALID_SEQUENCE_NUMBER, .isStartValid = isStartValid, .isEndValid = false};
             }
             break;
         }
@@ -627,30 +636,49 @@ void bitmapToString(const SequenceShredder::SequenceNumberType bitmap, std::ostr
     }
 }
 
+namespace
+{
+std::string bitmapsToString(const std::vector<SequenceShredder::SequenceNumberType>& bitmaps)
+{
+    if (bitmaps.empty())
+    {
+        return "";
+    }
+
+    std::stringstream ss;
+    bitmapToString(bitmaps.front(), ss);
+    for (const auto& bitmap : bitmaps | std::views::drop(1))
+    {
+        ss << "-";
+        bitmapToString(bitmap, ss);
+    }
+    return ss.str();
+}
+}
+
 std::ostream& operator<<(std::ostream& os, SequenceShredder& sequenceShredder)
 {
     const std::scoped_lock lock(sequenceShredder.readWriteMutex);
-    std::stringstream tupleDelimiterBitmapsString;
-    std::stringstream seenAndUsedBitmapsString;
-    bitmapToString(sequenceShredder.tupleDelimiterBitmaps.front(), tupleDelimiterBitmapsString);
-    for (const auto& tupleDelimiterBitmap : sequenceShredder.tupleDelimiterBitmaps | std::views::drop(1))
+
+    if (VERBOSE_DEBUG_BITMAP_PRINTING)
     {
-        tupleDelimiterBitmapsString << "-";
-        bitmapToString(tupleDelimiterBitmap, tupleDelimiterBitmapsString);
+        os << fmt::format(
+            "SequenceShredder(number of bitmaps: {}, resize request count: {}, tail: {}, tupleDelimiterBitmaps: {}, seenAndUsedBitmaps: "
+            "{})",
+            sequenceShredder.numberOfBitmaps,
+            sequenceShredder.resizeRequestCount,
+            sequenceShredder.tail,
+            bitmapsToString(sequenceShredder.tupleDelimiterBitmaps),
+            bitmapsToString(sequenceShredder.seenAndUsedBitmaps));
     }
-    bitmapToString(sequenceShredder.seenAndUsedBitmaps.front(), seenAndUsedBitmapsString);
-    for (const auto& seenAndUsedBitmap : sequenceShredder.seenAndUsedBitmaps | std::views::drop(1))
+    else
     {
-        seenAndUsedBitmapsString << "-";
-        bitmapToString(seenAndUsedBitmap, seenAndUsedBitmapsString);
+        os << fmt::format(
+            "SequenceShredder(number of bitmaps: {}, resize request count: {}, tail: {})",
+            sequenceShredder.numberOfBitmaps,
+            sequenceShredder.resizeRequestCount,
+            sequenceShredder.tail);
     }
-    os << fmt::format(
-        "SequenceShredder(number of bitmaps: {}, resize request count: {}, tail: {}, tupleDelimiterBitmaps: {}, seenAndUsedBitmaps: {}",
-        sequenceShredder.numberOfBitmaps,
-        sequenceShredder.resizeRequestCount,
-        sequenceShredder.tail,
-        tupleDelimiterBitmapsString.str(),
-        seenAndUsedBitmapsString.str());
 
     return os;
 }

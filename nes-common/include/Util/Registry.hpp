@@ -109,11 +109,14 @@ class Registrar
 template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename Arguments, bool LowerCaseKey = true>
 class BaseRegistry : public Registry<Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments>, LowerCaseKey>
 {
+    BaseRegistry() = default;
+
 public:
     static ConcreteRegistry& instance()
     {
         static ConcreteRegistry instance;
         return instance;
     }
+    friend ConcreteRegistry;
 };
 }
