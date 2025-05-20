@@ -12,22 +12,27 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
-#include <Functions/FieldAccessPhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Aggregation/Function/AggregationFunction.hpp>
+#include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <ExecutionContext.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
 
-FieldAccessPhysicalFunction::FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field) : field(std::move(field))
+AggregationFunction::AggregationFunction(
+    std::unique_ptr<PhysicalType> inputType,
+    std::unique_ptr<PhysicalType> resultType,
+    PhysicalFunction inputFunction,
+    Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier)
+    : inputType(std::move(inputType))
+    , resultType(std::move(resultType))
+    , inputFunction(std::move(inputFunction))
+    , resultFieldIdentifier(std::move(resultFieldIdentifier))
 {
 }
 
-VarVal FieldAccessPhysicalFunction::execute(const Record& record, ArenaRef&) const
-{
-    return record.read(field);
-}
-
+AggregationFunction::~AggregationFunction() = default;
 }

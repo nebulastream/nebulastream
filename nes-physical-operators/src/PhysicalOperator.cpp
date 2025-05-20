@@ -12,10 +12,6 @@
     limitations under the License.
 */
 
-#include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
-
-
 #include <memory>
 #include <optional>
 #include <string>
@@ -27,6 +23,8 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -164,13 +162,19 @@ std::string PhysicalOperator::toString() const
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema)
-    : physicalOperator(std::move(physicalOperator)), inputSchema(inputSchema), outputSchema(outputSchema), endpoint(PipelineEndpoint::None)
+    : physicalOperator(std::move(physicalOperator))
+    , inputSchema(inputSchema)
+    , outputSchema(outputSchema)
+    , pipelineLocation(PipelineLocation::INTERMEDIATE)
 {
 }
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
-    PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema, PipelineEndpoint endpoint)
-    : physicalOperator(std::move(physicalOperator)), inputSchema(inputSchema), outputSchema(outputSchema), endpoint(endpoint)
+    PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema, PipelineLocation pipelineLocation)
+    : physicalOperator(std::move(physicalOperator))
+    , inputSchema(inputSchema)
+    , outputSchema(outputSchema)
+    , pipelineLocation(pipelineLocation)
 {
 }
 
@@ -180,13 +184,13 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     Schema outputSchema,
     std::optional<OperatorHandlerId> handlerId,
     std::optional<std::shared_ptr<OperatorHandler>> handler,
-    PipelineEndpoint endpoint)
+    PipelineLocation pipelineLocation)
     : physicalOperator(std::move(std::move(physicalOperator)))
     , inputSchema(inputSchema)
     , outputSchema(outputSchema)
     , handler(std::move(std::move(handler)))
     , handlerId(handlerId)
-    , endpoint(endpoint)
+    , pipelineLocation(pipelineLocation)
 {
 }
 
@@ -196,7 +200,7 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     Schema outputSchema,
     std::optional<OperatorHandlerId> handlerId,
     std::optional<std::shared_ptr<OperatorHandler>> handler,
-    PipelineEndpoint endpoint,
+    PipelineLocation pipelineLocation,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children)
     : physicalOperator(std::move(std::move(physicalOperator)))
     , inputSchema(inputSchema)
@@ -204,7 +208,7 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     , children(std::move(children))
     , handler(std::move(std::move(handler)))
     , handlerId(handlerId)
-    , endpoint(endpoint)
+    , pipelineLocation(pipelineLocation)
 {
 }
 
@@ -219,12 +223,12 @@ std::string PhysicalOperatorWrapper::explain(ExplainVerbosity) const
         "PhysicalOperatorWrapper("
         "Operator: {}, id: {}, "
         "InputSchema: {}, OutputSchema: {}, "
-        "endpoint: {} )",
+        "pipelineLocation: {} )",
         physicalOperator.toString(),
         physicalOperator.getId(),
         inputSchema ? inputSchema->toString() : "none",
         outputSchema ? outputSchema->toString() : "none",
-        magic_enum::enum_name(endpoint));
+        magic_enum::enum_name(pipelineLocation));
 }
 
 const PhysicalOperator& PhysicalOperatorWrapper::getPhysicalOperator() const
@@ -262,9 +266,9 @@ const std::optional<OperatorHandlerId>& PhysicalOperatorWrapper::getHandlerId() 
     return handlerId;
 }
 
-PhysicalOperatorWrapper::PipelineEndpoint PhysicalOperatorWrapper::getEndpoint() const
+PhysicalOperatorWrapper::PipelineLocation PhysicalOperatorWrapper::getPipelineLocation() const
 {
-    return endpoint;
+    return pipelineLocation;
 }
 
 }
