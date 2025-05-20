@@ -46,7 +46,7 @@ if (NOT ${USING_LIBCXX})
     set(CMAKE_REQUIRED_FLAGS "-std=c++23")
     check_cxx_source_compiles("
     #include <cstddef>
-    #if defined(__GLIBCXX__) && __GLIBCXX__ >= 20240101
+    #if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 14
         int main() { return 0; }
     #else
         #error \"libstdc++ version is not above 14\"
