@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
+#include <Join/StreamJoinOperatorHandler.hpp>
+
 #include <map>
 #include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>

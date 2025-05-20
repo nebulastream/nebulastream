@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Listeners/QueryLog.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
@@ -21,7 +23,6 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <magic_enum/magic_enum.hpp>

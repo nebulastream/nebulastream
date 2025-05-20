@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <SingleNodeWorker.hpp>
+
 #include <atomic>
 #include <chrono>
 #include <memory>

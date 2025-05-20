@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
+#include <Configurations/Validation/NumberValidation.hpp>
+
 #include <regex>
 #include <string>
-#include <Configurations/Validation/NumberValidation.hpp>
 
 namespace NES::Configurations
 {

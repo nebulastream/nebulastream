@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Util/DumpHelper.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -19,7 +20,6 @@
 #include <fstream>
 #include <string_view>
 #include <utility>
-#include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 

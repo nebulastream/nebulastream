@@ -12,10 +12,11 @@
     limitations under the License.
 */
 
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
+
 #include <utility>
 #include <DataTypes/Schema.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
-#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Windowing

@@ -11,9 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Util/Logger/LogLevel.hpp>
 
 #include <string_view>
-#include <Util/Logger/LogLevel.hpp>
 #include <magic_enum/magic_enum.hpp>
 
 namespace NES

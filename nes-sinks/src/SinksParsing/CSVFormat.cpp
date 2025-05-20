@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <SinksParsing/CSVFormat.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <ostream>

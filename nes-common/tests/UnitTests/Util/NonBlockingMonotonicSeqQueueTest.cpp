@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+
 #include <algorithm>
 #include <atomic>
 #include <cstdint>

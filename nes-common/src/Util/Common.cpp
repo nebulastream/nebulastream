@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Util/Common.hpp>
 
 #include <algorithm>
 #include <cctype>
@@ -24,7 +25,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum/magic_enum.hpp>
 

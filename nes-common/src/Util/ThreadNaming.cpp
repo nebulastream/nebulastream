@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Util/ThreadNaming.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <string_view>
 #include <pthread.h>
-#include <Util/ThreadNaming.hpp>
 #include <ErrorHandling.hpp>
 
 

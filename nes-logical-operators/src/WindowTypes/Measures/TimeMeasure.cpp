@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
+#include <WindowTypes/Measures/TimeMeasure.hpp>
+
 #include <cstdint>
 #include <string>
-#include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing

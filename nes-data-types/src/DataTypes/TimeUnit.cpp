@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <DataTypes/TimeUnit.hpp>
+
 #include <cstdint>
 #include <ostream>
 #include <string>

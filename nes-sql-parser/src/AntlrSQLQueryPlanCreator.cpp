@@ -11,7 +11,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <algorithm>
+
+#include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -24,7 +26,6 @@
 #include <AntlrSQLParser.h>
 #include <ParserRuleContext.h>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
-#include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>

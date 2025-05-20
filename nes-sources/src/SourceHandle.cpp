@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Sources/SourceHandle.hpp>
+
 #include <chrono>
 #include <cstddef>
 #include <memory>
@@ -20,7 +22,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <SourceThread.hpp>
 

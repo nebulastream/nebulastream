@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <Task.hpp>
+
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <RunningQueryPlan.hpp>
-#include <Task.hpp>
 
 namespace NES
 {

@@ -12,17 +12,14 @@
     limitations under the License.
 */
 
-#include <compare>
-#include <cstdint>
-#include <ostream>
+#include <Sources/SourceDescriptor.hpp>
+
 #include <sstream>
 #include <string>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/SchemaSerializationUtil.hpp>
-#include <Sources/LogicalSource.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>

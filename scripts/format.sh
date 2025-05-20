@@ -92,6 +92,46 @@ then
     FAIL=1
 fi
 
+# Check if the first include in a .cpp file is the corresponding .hpp file
+changed_files=$(git diff --name-only $(git merge-base HEAD origin/main 2>/dev/null) | grep -E '\.cpp$' | while read -r file; do [ -f "$file" ] && echo "$file"; done)
+if [ -z "$changed_files" ]; then
+    echo "No changed .cpp files found compared to origin/main."
+else
+    # Check if the first include in each changed .cpp file is the corresponding .hpp file
+    echo "$changed_files" | while read -r file; do    awk -v file="$file" '
+      FNR == 1 {
+          firstInclude = 0
+          headerFile = ""
+      }
+      /^[ \t]*#include/ {
+          if (firstInclude == 0) {
+              firstInclude = FNR
+              # Extract the header file name from the include directive
+              if ($2 ~ /^".*"$/) {
+                  headerFile = substr($2, 2, length($2) - 2)
+              } else if ($2 ~ /^<.*>$/) {
+                  headerFile = substr($2, 2, length($2) - 2)
+              }
+
+              # Remove path information if present
+              sub(/.*\//, "", headerFile)
+
+              # Remove path information from the .cpp file name
+              cppFile = file
+              sub(/\.cpp$/, "", cppFile)
+              sub(/.*\//, "", cppFile)  # Remove path information
+
+              # Check if the header file corresponds to the .cpp file with .hpp extension
+              if (headerFile != cppFile ".hpp") {
+                  printf "Warning: %s:%d: First include is not the corresponding .hpp file:\n", file, FNR
+                  printf "  Found:    %s\n", $0
+              }
+          }
+      }
+      ' "$file"
+    done
+fi
+
 # warning: no includes with double quotes
 #
 # CLion uses double quotes when adding includes (automatically).

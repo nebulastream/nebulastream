@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
+#include <WindowTypes/Types/SlidingWindow.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
-#include <WindowTypes/Types/SlidingWindow.hpp>
-#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <fmt/format.h>
 

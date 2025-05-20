@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+
 #include <algorithm>
 #include <cstdint>
 #include <functional>
@@ -22,7 +24,6 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
