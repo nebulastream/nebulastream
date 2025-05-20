@@ -63,7 +63,7 @@ jobs:
           name: clang-tidy-result
           path: clang-tidy-result
       - name: Run clang-tidy-pr-comments action
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         # requires python3-venv
         uses: platisd/clang-tidy-pr-comments@v1
         with:
