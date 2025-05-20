@@ -102,10 +102,16 @@ jobs:
       - name: Configure NebulaStream
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.cmake_args.arg }}
       - name: Build NebulaStream
-        run: cmake --build build -j -- -k 0
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          cmake --build build -j -- -k 0
       - name: Run Tests
         # timeout of 600 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
-        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600
+        shell: bash
+        run: |
+          source .github/.env/test-${{matrix.sanitizer}}.env
+          ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && !github.event.act }}
