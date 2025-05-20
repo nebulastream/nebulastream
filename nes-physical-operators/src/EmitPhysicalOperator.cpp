@@ -63,27 +63,27 @@ void removeSequenceStateProxy(void* operatorHandlerPtr, OriginId originId, Seque
 
 namespace
 {
-nautilus::val<bool> isLastChunk(ExecutionContext& context, OperatorHandlerId operatorHandlerIndex)
+nautilus::val<bool> isLastChunk(ExecutionContext& context, OperatorHandlerId operatorHandlerId)
 {
     return nautilus::invoke(
         isLastChunkProxy,
-        context.getGlobalOperatorHandler(operatorHandlerIndex),
+        context.getGlobalOperatorHandler(operatorHandlerId),
         context.originId,
         context.sequenceNumber,
         context.chunkNumber,
         context.lastChunk);
 }
 
-nautilus::val<ChunkNumber> getNextChunkNr(ExecutionContext& context, OperatorHandlerId operatorHandlerIndex)
+nautilus::val<ChunkNumber> getNextChunkNr(ExecutionContext& context, OperatorHandlerId operatorHandlerId)
 {
     return nautilus::invoke(
-        getNextChunkNumberProxy, context.getGlobalOperatorHandler(operatorHandlerIndex), context.originId, context.sequenceNumber);
+        getNextChunkNumberProxy, context.getGlobalOperatorHandler(operatorHandlerId), context.originId, context.sequenceNumber);
 }
 
-void removeSequenceState(ExecutionContext& context, OperatorHandlerId operatorHandlerIndex)
+void removeSequenceState(ExecutionContext& context, OperatorHandlerId operatorHandlerId)
 {
     nautilus::invoke(
-        removeSequenceStateProxy, context.getGlobalOperatorHandler(operatorHandlerIndex), context.originId, context.sequenceNumber);
+        removeSequenceStateProxy, context.getGlobalOperatorHandler(operatorHandlerId), context.originId, context.sequenceNumber);
 }
 }
 
@@ -129,7 +129,7 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
-    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerIndex));
+    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerId));
 }
 
 void EmitPhysicalOperator::emitRecordBuffer(
@@ -142,20 +142,20 @@ void EmitPhysicalOperator::emitRecordBuffer(
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
-    recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerIndex));
+    recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerId));
     recordBuffer.setLastChunk(isLastChunk);
     recordBuffer.setCreationTs(ctx.currentTs);
     ctx.emitBuffer(recordBuffer);
 
     if (isLastChunk == true)
     {
-        removeSequenceState(ctx, operatorHandlerIndex);
+        removeSequenceState(ctx, operatorHandlerId);
     }
 }
 
 EmitPhysicalOperator::EmitPhysicalOperator(
-    OperatorHandlerId operatorHandlerIndex, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
-    : memoryProvider(std::move(memoryProvider)), operatorHandlerIndex(operatorHandlerIndex)
+    OperatorHandlerId operatorHandlerId, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+    : memoryProvider(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
 {
 }
 

@@ -33,7 +33,7 @@ class EmitPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
     explicit EmitPhysicalOperator(
-        OperatorHandlerId operatorHandlerIndex, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
+        OperatorHandlerId operatorHandlerId, std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
@@ -51,7 +51,7 @@ private:
 
     std::optional<PhysicalOperator> child;
     std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
-    OperatorHandlerId operatorHandlerIndex;
+    OperatorHandlerId operatorHandlerId;
 };
 
 }

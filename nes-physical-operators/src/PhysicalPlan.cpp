@@ -43,13 +43,13 @@ PhysicalPlan::PhysicalPlan(
 
 std::string PhysicalPlan::toString() const
 {
-    std::stringstream ss;
-    auto dumpHandler = QueryConsoleDumpHandler<PhysicalPlan, PhysicalOperatorWrapper>(ss, true);
+    std::stringstream stringstream;
+    auto dumpHandler = QueryConsoleDumpHandler<PhysicalPlan, PhysicalOperatorWrapper>(stringstream, true);
     for (const auto& rootOperator : rootOperators)
     {
         dumpHandler.dump(*rootOperator);
     }
-    return ss.str();
+    return stringstream.str();
 }
 
 QueryId PhysicalPlan::getQueryId() const

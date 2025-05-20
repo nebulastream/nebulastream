@@ -19,7 +19,7 @@
 namespace NES
 {
 /// @brief Watermark assignment operator.
-/// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
+/// Determines the watermark ts according to a WatermarkStrategyDescriptor and places it in the current buffer.
 class IngestionTimeWatermarkAssignerPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
