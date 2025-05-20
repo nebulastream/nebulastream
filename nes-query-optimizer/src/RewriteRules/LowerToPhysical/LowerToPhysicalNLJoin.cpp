@@ -28,6 +28,10 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
+#include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
@@ -35,10 +39,6 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
-#include <Streaming/Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
-#include <Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Streaming/Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
-#include <Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -235,10 +235,10 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), leftMemoryProvider, rightMemoryProvider);
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(leftBuildOperator), leftInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineEndpoint::Emit);
+        std::move(leftBuildOperator), leftInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto rightBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(rightBuildOperator), rightInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineEndpoint::Emit);
+        std::move(rightBuildOperator), rightInputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),
@@ -246,7 +246,7 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         outputSchema,
         handlerId,
         handler,
-        PhysicalOperatorWrapper::PipelineEndpoint::Scan,
+        PhysicalOperatorWrapper::PipelineLocation::SCAN,
         std::vector{leftBuildWrapper, rightBuildWrapper});
 
     return {.root = {probeWrapper}, .leafs = {rightBuildWrapper, leftBuildWrapper}};

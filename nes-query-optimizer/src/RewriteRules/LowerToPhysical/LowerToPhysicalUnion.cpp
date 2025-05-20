@@ -35,7 +35,7 @@ RewriteRuleResultSubgraph LowerToPhysicalUnion::apply(LogicalOperator logicalOpe
     auto physicalOperator = UnionPhysicalOperator();
 
     auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineEndpoint::None);
+        physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leafs = {wrapper, wrapper}};
 }
 

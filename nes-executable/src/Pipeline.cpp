@@ -16,8 +16,10 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -54,12 +56,12 @@ std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
     fmt::memory_buffer buf;
     auto indentStr = std::string(indent, ' ');
 
+    constexpr std::string_view kNoMode = "None";
+
+    const std::string_view modeName = pipeline.getExecutionMode() ? magic_enum::enum_name(*pipeline.getExecutionMode()) : kNoMode;
+
     fmt::format_to(
-        std::back_inserter(buf),
-        "{}Pipeline(ID({}), Provider({}))\n",
-        indentStr,
-        pipeline.getPipelineId().getRawValue(),
-        magic_enum::enum_name(pipeline.getExecutionMode()));
+        std::back_inserter(buf), "{}Pipeline(ID({}), Provider({}))\n", indentStr, pipeline.getPipelineId().getRawValue(), modeName);
 
     fmt::format_to(
         std::back_inserter(buf), "{}  Operator chain:\n{}", indentStr, operatorChainToString(pipeline.getRootOperator(), indent + 4));
@@ -198,7 +200,7 @@ std::ostream& operator<<(std::ostream& os, const Pipeline& p)
     return os;
 }
 
-Nautilus::Configurations::ExecutionMode Pipeline::getExecutionMode() const
+std::optional<Nautilus::Configurations::ExecutionMode> Pipeline::getExecutionMode() const
 {
     return executionMode;
 }

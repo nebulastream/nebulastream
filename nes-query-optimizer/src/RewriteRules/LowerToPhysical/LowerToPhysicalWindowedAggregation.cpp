@@ -17,6 +17,17 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+#include <Aggregation/AggregationBuildPhysicalOperator.hpp>
+#include <Aggregation/AggregationOperatorHandler.hpp>
+#include <Aggregation/AggregationProbePhysicalOperator.hpp>
+#include <Aggregation/Function/AggregationFunction.hpp>
+#include <Aggregation/Function/AvgAggregationFunction.hpp>
+#include <Aggregation/Function/CountAggregationFunction.hpp>
+#include <Aggregation/Function/MaxAggregationFunction.hpp>
+#include <Aggregation/Function/MedianAggregationFunction.hpp>
+#include <Aggregation/Function/MinAggregationFunction.hpp>
+#include <Aggregation/Function/SumAggregationFunction.hpp>
+#include <Aggregation/WindowAggregation.hpp>
 #include <Configurations/Worker/QueryOptimizerConfiguration.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
@@ -33,17 +44,6 @@
 #include <RewriteRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
-#include <Streaming/Aggregation/AggregationBuildPhysicalOperator.hpp>
-#include <Streaming/Aggregation/AggregationOperatorHandler.hpp>
-#include <Streaming/Aggregation/AggregationProbePhysicalOperator.hpp>
-#include <Streaming/Aggregation/Function/AggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/AvgAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/CountAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/MaxAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/MedianAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/MinAggregationFunction.hpp>
-#include <Streaming/Aggregation/Function/SumAggregationFunction.hpp>
-#include <Streaming/Aggregation/WindowAggregation.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -240,10 +240,10 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
     auto probe = AggregationProbePhysicalOperator(windowAggregation, handlerId, windowMetaData);
 
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        build, inputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineEndpoint::Emit);
+        build, inputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        probe, inputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineEndpoint::Scan, std::vector{buildWrapper});
+        probe, inputSchema, outputSchema, handlerId, handler, PhysicalOperatorWrapper::PipelineLocation::SCAN, std::vector{buildWrapper});
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     std::vector leafes(logicalOperator.getChildren().size(), buildWrapper);

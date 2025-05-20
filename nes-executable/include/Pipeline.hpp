@@ -14,6 +14,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <unordered_map>
 #include <vector>
@@ -58,7 +59,7 @@ struct Pipeline
 
     friend std::ostream& operator<<(std::ostream& os, const Pipeline& p);
 
-    [[nodiscard]] Nautilus::Configurations::ExecutionMode getExecutionMode() const;
+    [[nodiscard]] std::optional<Nautilus::Configurations::ExecutionMode> getExecutionMode() const;
     void setExecutionMode(Nautilus::Configurations::ExecutionMode mode);
 
     [[nodiscard]] const PhysicalOperator& getRootOperator() const;
@@ -79,7 +80,7 @@ struct Pipeline
     void removeSuccessor(const Pipeline& pipeline);
 
 private:
-    Nautilus::Configurations::ExecutionMode executionMode;
+    std::optional<Nautilus::Configurations::ExecutionMode> executionMode;
     PhysicalOperator rootOperator;
     const PipelineId pipelineId;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
