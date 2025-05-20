@@ -115,24 +115,6 @@ Lastly, you need to create a new CMake profile which uses the newly created dock
 
 ![CLion-CMake-Settings](../resources/SetupDockerCmakeClion.png)
 
-### Run with profiler (perf)
-
-Profiling NebulaStream in docker is possible but entails couple steps.
-
-1. You first need to set the access level to full access for performance counters on your host system:
-
-    ```shell
-    sudo sh -c 'echo -1 > /proc/sys/kernel/perf_event_paranoid'
-    ```
-
-2. You then need to add the following run options to your docker toolchain in order to add the needed capabilities:
-
-    ![CLion-Toolchain-Settings-Perf](../resources/EditDockerRunOptionsForPerf.png)
-
-3. Finally, you can profile any run configuration via
-
-   ![CLion-Profile-Run-Configuration](../resources/ClionProfileRunConfiguration.png)
-
 ## Non-Container Development Environment
 
 The relevant CI Jobs will be executed in the development container. This means in order to reproduce CI results, it is
