@@ -1,0 +1,24 @@
+# name: join/selfJoin.test.disabled
+# description: Tests a self join, i.e., a join of two equivalent schemas, it fails also with different logical streams for instance solarPanel and windTurbine
+# groups: [Join]
+# TODO #892 - Enable these tests
+
+SourceCSV solarPanel INT32 solarPanel_Id INT32 solarPanel_groupId FLOAT64 solarPanel_power UINT64 TS TESTDATA/small/solarPanel.csv
+SourceCSV windTurbine INT32 windTurbine_Id INT32 windTurbine_groupId FLOAT64 windTurbine_power UINT64 TS TESTDATA/small/windTurbine.csv
+
+# TODO: Join Operator expects two different schemas (schemas are assigned to left and right by join key, problems with source expansion)
+# Fails: query is invalid; cannot infer schema; Found 1 distinct schemas but expected 2 distinct schemas
+# Q1 self-join with tumbling window
+SELECT *
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM solarPanel) ON solarPanel_groupId = solarPanel_groupId
+WINDOW TUMBLING (TS, SIZE 10 MINUTE)
+INTO CHECKSUM;
+----
+
+
+# Q1 self-join with tumbling window
+SELECT *
+FROM (SELECT * FROM solarPanel) INNER JOIN (SELECT * FROM windTurbine) ON solarPanel_groupId = windTurbine_groupId
+WINDOW TUMBLING (TS, SIZE 10 MINUTE)
+INTO CHECKSUM;
+----
