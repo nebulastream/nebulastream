@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <map>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <filesystem>
 #include <Execution/Operators/SliceStore/FileDescriptor/FileDescriptors.hpp>
 
 namespace NES::Runtime::Execution

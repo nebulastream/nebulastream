@@ -48,6 +48,7 @@ public:
             {
                 const auto now = std::chrono::high_resolution_clock::now();
                 //if (now.time_since_epoch())
+                (void)ingestionRate;
 
                 value = valueDistrib(gen);
 
