@@ -166,7 +166,6 @@ struct ExecutionContext final
     OperatorState* getLocalState(OperatorId operatorId);
 
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(OperatorHandlerId handlerIndex) const;
-    [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
     /// Use allocateBuffer if you want to allocate space that lives for multiple pipeline invocations, i.e., query lifetime.
     /// You must take care of the memory management yourself, i.e., when/how should the tuple buffer be returned to the buffer provider.
     [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
@@ -181,6 +180,7 @@ struct ExecutionContext final
 
     std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
+    nautilus::val<WorkerThreadId> workerThreadId;
     PipelineMemoryProvider pipelineMemoryProvider;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.

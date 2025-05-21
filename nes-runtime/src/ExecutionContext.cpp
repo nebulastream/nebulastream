@@ -35,14 +35,22 @@
 
 namespace NES
 {
-
+namespace
+{
 Memory::AbstractBufferProvider* getBufferProviderProxy(const PipelineExecutionContext* pipelineCtx)
 {
     return pipelineCtx->getBufferManager().get();
 }
 
+WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
+{
+    return pec->getId();
+}
+}
+
 ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
     : pipelineContext(pipelineContext)
+    , workerThreadId(nautilus::invoke(getWorkerThreadIdProxy, pipelineContext))
     , pipelineMemoryProvider(arena, invoke(getBufferProviderProxy, pipelineContext))
     , originId(INVALID<OriginId>)
     , watermarkTs(0_u64)
@@ -93,16 +101,6 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer*
 void ExecutionContext::emitBuffer(const Nautilus::RecordBuffer& buffer) const
 {
     nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
-}
-
-WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
-{
-    return pec->getId();
-}
-
-nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId() const
-{
-    return nautilus::invoke(getWorkerThreadIdProxy, pipelineContext);
 }
 
 OperatorState* ExecutionContext::getLocalState(OperatorId operatorId)
