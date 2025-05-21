@@ -43,3 +43,4 @@ nes-asp/data/*.csv
 *.undo
 
 scripts/__pycache__
+cov-*/
