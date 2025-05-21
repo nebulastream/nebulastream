@@ -148,8 +148,8 @@ std::unique_ptr<Sources::SourceHandle> createFileSource(
         numberOfLocalBuffersInSource,
         Sources::ParserConfig{},
         std::move(validatedSourceConfiguration));
-
-    return Sources::SourceProvider::lower(NES::OriginId(1), sourceDescriptor, std::move(sourceBufferPool), -1);
+    auto [_, ingestion] = Backpressure();
+    return Sources::SourceProvider::lower(NES::OriginId(1), ingestion, sourceDescriptor, std::move(sourceBufferPool), -1);
 }
 std::shared_ptr<InputFormatters::InputFormatterTask> createInputFormatterTask(const Schema& schema)
 {

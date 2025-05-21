@@ -44,15 +44,15 @@ public:
     template <typename LogicalSourceType>
     std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators() const
     {
-        NES_DEBUG("Get all source operators by traversing all the root nodes.");
+        NES_TRACE("Get all source operators by traversing all the root nodes.");
         std::unordered_set<std::shared_ptr<LogicalSourceType>> sourceOperatorsSet;
         for (const auto& rootOperator : rootOperators)
         {
             auto sourceOperators = rootOperator->getNodesByType<LogicalSourceType>();
-            NES_DEBUG("insert all source operators to the collection");
+            NES_TRACE("insert all source operators to the collection");
             sourceOperatorsSet.insert(sourceOperators.begin(), sourceOperators.end());
         }
-        NES_DEBUG("Found {} source operators.", sourceOperatorsSet.size());
+        NES_TRACE("Found {} source operators.", sourceOperatorsSet.size());
         std::vector<std::shared_ptr<LogicalSourceType>> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
         return sourceOperators;
     }

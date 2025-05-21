@@ -48,8 +48,7 @@ QueryId SingleNodeWorker::registerQuery(const std::shared_ptr<DecomposedQueryPla
 {
     try
     {
-        auto logicalQueryPlan
-            = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
+        auto logicalQueryPlan = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), "", plan->getRootOperators());
 
         listener->onEvent(Runtime::SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
 
@@ -82,6 +81,37 @@ void SingleNodeWorker::unregisterQuery(QueryId queryId)
 std::optional<Runtime::QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
 {
     return nodeEngine->getQueryLog()->getQuerySummary(queryId);
+}
+WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
+{
+    auto summaries = nodeEngine->getQueryLog()->getSummary();
+    WorkerStatus status;
+    for (auto& summary : summaries)
+    {
+        INVARIANT(!summary.runs.empty(), "Query should at least contain a single run");
+        if (summary.currentStatus == Runtime::Execution::QueryStatus::Running)
+        {
+            INVARIANT(summary.runs.back().running.has_value(), "If query is running it should have a running timestamp");
+            if (summary.runs.back().running.value() >= after)
+            {
+                status.activeQueries.emplace_back(summary.queryId, summary.runs.back().running.value());
+            }
+        }
+        else if (summary.currentStatus == Runtime::Execution::QueryStatus::Stopped)
+        {
+            INVARIANT(summary.runs.back().running.has_value(), "If query is stopped it should have a running timestamp");
+            INVARIANT(summary.runs.back().stop.has_value(), "If query is stopped it should have a stopped timestamp");
+            if (summary.runs.back().stop.value() >= after)
+            {
+                status.terminatedQueries.emplace_back(
+                    summary.queryId,
+                    summary.runs.back().running.value(),
+                    summary.runs.back().stop.value(),
+                    std::move(summary.runs.back().error));
+            }
+        }
+    }
+    return status;
 }
 
 std::optional<Runtime::QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const

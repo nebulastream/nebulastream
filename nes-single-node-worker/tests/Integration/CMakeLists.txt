@@ -20,16 +20,17 @@ function(serialize_query_with_nebuli TARGET QUERY_NAME)
     set(SERIALIZED_QUERIES_DIR "${CMAKE_BINARY_DIR}/${INTEGRATION_TEST_DATA_PATH}/queries")
     file(MAKE_DIRECTORY ${SERIALIZED_QUERIES_DIR})
 
-    # Add dependency to ensure that the nebuli binary is built before the target that uses it
-    add_dependencies(${TARGET} nes-nebuli)
-
     # Run nebuli on the specified yaml query (QUERY_NAME) and output the serialized protobuf version in the build directory
-    add_custom_command(
-            TARGET ${TARGET} PRE_BUILD
-            COMMAND "${NEBULI_BINARY}" dump -i "${YAML_QUERIES_DIR}/${QUERY_NAME}.yaml" -o "${SERIALIZED_QUERIES_DIR}/${QUERY_NAME}.bin"
+    add_custom_target(
+            GENERATE_${QUERY_NAME}
+            COMMAND "${NEBULI_BINARY}" dump -s ${QUERY_NAME} -i "${YAML_QUERIES_DIR}/${QUERY_NAME}.yaml" -o "${SERIALIZED_QUERIES_DIR}/"
+            BYPRODUCTS "${SERIALIZED_QUERIES_DIR}/${QUERY_NAME}.bin"
+            DEPENDS nes-nebuli
             COMMENT "Running nes-nebuli: ${INPUT_PATH} -> ${OUTPUT_PATH}"
+            SOURCES "${YAML_QUERIES_DIR}/${QUERY_NAME}.yaml"
             VERBATIM
     )
+    add_dependencies(${TARGET} GENERATE_${QUERY_NAME})
 endfunction()
 
 find_package(boost_asio REQUIRED CONFIG)

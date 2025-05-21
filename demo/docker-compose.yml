@@ -1,0 +1,50 @@
+services:
+  root:
+    healthcheck:
+      test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
+    command: [ "--bind=0.0.0.0:9090", "--connection=root:9090" ]
+    # Either build locally or use prebuilt docker image
+    image: nebulastream/worker:distributed
+    build:
+      context: ..
+      dockerfile: docker/single-node-worker/SingleNodeWorker.dockerfile
+      args:
+        - TAG=ls-distributed-poc
+
+  source-1:
+    healthcheck:
+      test: [ "CMD-SHELL", "/bin/grpc_health_probe", '-addr', 'localhost:8080' ]
+    command: [ "--bind=0.0.0.0:9090", "--connection=root:9090" ]
+    volumes:
+      - ./sources:/sources
+    # Either build locally or use prebuilt docker image
+    image: nebulastream/worker:distributed
+    build:
+      context: ..
+      dockerfile: docker/single-node-worker/SingleNodeWorker.dockerfile
+      args:
+        - TAG=ls-distributed-poc
+
+  nebuli:
+    depends_on:
+      - root
+      - source-1
+    image: nebulastream/nebuli:distributed
+    volumes:
+      - ./topology:/topology
+      - ./query-coordinator.sh:/usr/bin/query-coordinator.sh
+    entrypoint: [ '/usr/bin/query-coordinator.sh', '/topology/test.yml', 'SELECT * FROM stream2 INTO sink;' ]
+    build:
+      context: ..
+      dockerfile: docker/single-node-worker/SingleNodeWorker.dockerfile
+      args:
+        - TAG=ls-distributed-poc
+
+  data-generator:
+    ports:
+      - "9999:9999"
+    build:
+      context: data-generator
+      dockerfile: Python.dockerfile
+      args:
+        - SCRIPT_FILE=tcpserver.py

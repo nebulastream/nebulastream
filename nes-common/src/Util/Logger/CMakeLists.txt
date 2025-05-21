@@ -13,5 +13,17 @@
 add_source_files(nes-common
         NesLogger.cpp
         LogLevel.cpp
+        spdlog/bridge.cpp
 )
+
+corrosion_add_cxxbridge(
+        rustlogger_cxx_bridge
+        CRATE bridge_of_bridges
+        FILES ../spdlog/lib.rs
+)
+target_include_directories(rustlogger_cxx_bridge PUBLIC spdlog/include)
+target_link_libraries(rustlogger_cxx_bridge PUBLIC spdlog::spdlog magic_enum::magic_enum)
+
+find_package(magic_enum CONFIG REQUIRED)
+find_package(spdlog     CONFIG REQUIRED)
 

@@ -1,0 +1,49 @@
+logical:
+  - name: stream2
+    schema:
+      - type: UINT64
+        name: timestamp
+      - type: FLOAT64
+        name: value
+      - type: UINT64
+        name: id
+  - name: stream
+    schema:
+      - type: UINT64
+        name: id
+      - type: UINT64
+        name: value
+      - type: UINT64
+        name: timestamp
+nodes:
+  - connection: source-1:9090
+    grpc: source-1:8080
+    capacity: 10
+    physical:
+      - logical: stream2
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          socketDomain: AF_INET
+          socketType: SOCK_STREAM
+          flushIntervalMS: 100
+          socketHost: data-generator
+          socketPort: 9999
+          type: TCP
+      - logical: stream
+        parserConfig:
+          type: CSV
+        sourceConfig:
+          filePath: '/sources/Map_Add_stream.csv'
+          type: File
+  - connection: root:9090
+    grpc: root:8080
+    capacity: 10
+    links:
+      upstreams: [ source-1:9090 ]
+    sinks:
+      - name: sink
+        type: Print
+        config:
+          ingestion: 100
+          inputFormat: CSV

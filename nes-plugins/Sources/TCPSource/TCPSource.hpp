@@ -116,26 +116,11 @@ struct ConfigParametersTCP
                 "'SOCK_RAW', or 'SOCK_RDM'",
                 socketTypeString);
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<char> SEPARATOR{
-        "tupleDelimiter",
-        '\n',
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(SEPARATOR, config); }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
         "flushIntervalMS",
         0,
         [](const std::unordered_map<std::string, std::string>& config)
         { return Configurations::DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
-        "socketBufferSize",
-        1024,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
-        "bytesUsedForSocketBufferSizeTransfer",
-        0,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config); }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
         "connectTimeoutSeconds",
         10,
@@ -143,8 +128,7 @@ struct ConfigParametersTCP
         { return Configurations::DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(
-            HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE, CONNECT_TIMEOUT);
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(HOST, PORT, DOMAIN, TYPE, FLUSH_INTERVAL_MS, CONNECT_TIMEOUT);
 };
 
 class TCPSource : public Source
@@ -175,7 +159,7 @@ public:
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open TCP connection.
-    void open() override;
+    void open(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider) override;
     /// Close TCP connection.
     void close() override;
 
@@ -197,9 +181,6 @@ private:
     std::string socketPort;
     int socketType;
     int socketDomain;
-    char tupleDelimiter;
-    size_t socketBufferSize;
-    size_t bytesUsedForSocketBufferSizeTransfer;
     float flushIntervalInMs;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};

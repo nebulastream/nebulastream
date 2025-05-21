@@ -32,12 +32,12 @@
 namespace NES
 {
 
-DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId) : queryId(queryId), workerId(workerId)
+DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, std::string grpc) : queryId(queryId), grpc(std::move(grpc))
 {
 }
 
-DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<std::shared_ptr<Operator>> rootOperators)
-    : queryId(queryId), workerId(workerId), rootOperators(std::move(rootOperators))
+DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, std::string grpc, std::vector<std::shared_ptr<Operator>> rootOperators)
+    : queryId(queryId), grpc(std::move(grpc)), rootOperators(std::move(rootOperators))
 {
 }
 
@@ -69,11 +69,11 @@ std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getRootOperators() c
 std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getLeafOperators() const
 {
     /// Find all the leaf nodes in the query plan
-    NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
+    NES_TRACE("QueryPlan: Get all leaf nodes in the query plan.");
     std::vector<std::shared_ptr<Operator>> leafOperators;
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::set<OperatorId> visitedOpIds;
-    NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
+    NES_TRACE("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
     {
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
@@ -85,11 +85,11 @@ std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getLeafOperators() c
                 /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
-            NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
+            NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
             visitedOpIds.insert(visitingOp->getId());
             if (visitingOp->getChildren().empty())
             {
-                NES_DEBUG("QueryPlan: Found leaf node. Adding to the collection of leaf nodes.");
+                NES_TRACE("QueryPlan: Found leaf node. Adding to the collection of leaf nodes.");
                 leafOperators.push_back(visitingOp);
             }
         }
@@ -100,6 +100,16 @@ std::vector<std::shared_ptr<Operator>> DecomposedQueryPlan::getLeafOperators() c
 QueryId DecomposedQueryPlan::getQueryId() const
 {
     return queryId;
+}
+
+const std::string& DecomposedQueryPlan::getGRPC() const
+{
+    return grpc;
+}
+
+void DecomposedQueryPlan::setGRPC(std::string grpc)
+{
+    this->grpc = std::move(grpc);
 }
 
 void DecomposedQueryPlan::setQueryId(QueryId queryId)
@@ -279,7 +289,7 @@ std::shared_ptr<DecomposedQueryPlan> DecomposedQueryPlan::copy() const
     operatorIdToOperatorMap.clear();
 
     /// Create the duplicated decomposed query plan
-    auto copiedDecomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, workerId, duplicateRootOperators);
+    auto copiedDecomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, grpc, duplicateRootOperators);
     return copiedDecomposedQueryPlan;
 }
 
@@ -287,16 +297,8 @@ std::string DecomposedQueryPlan::toString() const
 {
     std::stringstream ss;
     auto dumpHandler = LogicalQueryDumpHelper(ss);
-    for (const auto& rootOperator : rootOperators)
-    {
-        dumpHandler.dump({rootOperator});
-    }
+    dumpHandler.dump({rootOperators});
     return ss.str();
-}
-
-WorkerId DecomposedQueryPlan::getWorkerId() const
-{
-    return workerId;
 }
 
 }

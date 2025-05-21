@@ -72,6 +72,10 @@ EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was n
 EXCEPTION(OperatorNotFound, 2205, "operator not found")
 EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
 
+/// 23XX NebuLI Distributed
+EXCEPTION(NoPath, 2300, "could not find path between source and sink")
+EXCEPTION(PlacementFailed, 2301, "could not place all operators")
+
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
 EXCEPTION(CannotStartNodeEngine, 3001, "cannot start node engine")

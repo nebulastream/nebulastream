@@ -35,8 +35,8 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
 {
     std::set<OperatorId> visitedOperators;
     auto filterOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
-    NES_DEBUG("PredicateReorderingRule: Identified {} filter nodes in the query plan", filterOperators.size());
-    NES_DEBUG("Query before applying the rule: {}", queryPlan->toString());
+    NES_TRACE("PredicateReorderingRule: Identified {} filter nodes in the query plan", filterOperators.size());
+    NES_TRACE("Query before applying the rule: {}", queryPlan->toString());
     for (auto& filter : filterOperators)
     {
         if (visitedOperators.find(filter->getId()) == visitedOperators.end())
@@ -101,7 +101,7 @@ std::shared_ptr<QueryPlan> PredicateReorderingRule::apply(std::shared_ptr<QueryP
             NES_TRACE("PredicateReorderingRule: Filter node already visited");
         }
     }
-    NES_DEBUG("Query after applying the rule: {}", queryPlan->toString());
+    NES_TRACE("Query after applying the rule: {}", queryPlan->toString());
     return queryPlan;
 }
 
