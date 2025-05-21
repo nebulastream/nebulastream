@@ -120,13 +120,13 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(const std::shared_ptr<Schema>& schema) const
+std::string DynamicTuple::toString(const Schema& schema) const
 {
     std::stringstream ss;
-    for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
+    for (uint32_t i = 0; i < schema.getFieldCount(); ++i)
     {
-        const auto fieldEnding = (i < schema->getFieldCount() - 1) ? "|" : "";
-        const auto dataType = schema->getFieldByIndex(i)->getDataType();
+        const auto fieldEnding = (i < schema.getFieldCount() - 1) ? "|" : "";
+        const auto dataType = schema.getFieldByIndex(i)->getDataType();
         DynamicField currentField = this->operator[](i);
         if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
         {
@@ -315,13 +315,13 @@ std::string TestTupleBuffer::toString(const std::shared_ptr<Schema>& schema, con
     }
 
     auto tupleIterator = this->begin();
-    str << (*tupleIterator).toString(schema);
+    str << (*tupleIterator).toString(*schema);
     ++tupleIterator;
     while (tupleIterator != this->end())
     {
         str << std::endl;
         auto dynamicTuple = *tupleIterator;
-        str << dynamicTuple.toString(schema);
+        str << dynamicTuple.toString(*schema);
         ++tupleIterator;
     }
     if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::NO_HEADER_END_IN_NEWLINE)
