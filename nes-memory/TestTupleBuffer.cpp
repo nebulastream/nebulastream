@@ -291,13 +291,17 @@ std::string TestTupleBuffer::toString(const Schema& schema, PrintMode printMode)
     std::vector<uint32_t> physicalSizes;
     std::vector<std::shared_ptr<PhysicalType>> types;
     const auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (const auto& field : schema)
+    if constexpr (NES_COMPILE_TIME_LOG_LEVEL == 7) /// TRACE
     {
-        auto physicalType = physicalDataTypeFactory.getPhysicalType(field.getDataType());
-        auto size = physicalType->size();
-        physicalSizes.push_back(size);
-        types.push_back(std::move(physicalType));
-        NES_TRACE("TestTupleBuffer: {} {} {} {}", std::string("Field Size "), field.toString(), std::string(": "), std::to_string(size));
+        for (const auto& field : schema)
+        {
+            auto physicalType = physicalDataTypeFactory.getPhysicalType(field.getDataType());
+            auto size = physicalType->size();
+            physicalSizes.push_back(size);
+            types.push_back(std::move(physicalType));
+            NES_TRACE(
+                "TestTupleBuffer: {} {} {} {}", std::string("Field Size "), field.toString(), std::string(": "), std::to_string(size));
+        }
     }
 
     if (printMode == PrintMode::SHOW_HEADER_END_IN_NEWLINE or printMode == PrintMode::SHOW_HEADER_END_WITHOUT_NEWLINE)

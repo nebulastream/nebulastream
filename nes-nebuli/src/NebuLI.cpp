@@ -208,7 +208,7 @@ static void validateAndSetSinkDescriptors(LogicalPlan& query, const QueryConfig&
     {
         auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
         auto copy = sinkOperators.at(0);
-        copy.sinkDescriptor = std::make_unique<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+        copy.sinkDescriptor = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
         auto replaceResult = replaceOperator(query, sinkOperators.at(0), copy);
         INVARIANT(replaceResult.has_value(), "replaceOperator failed");
         query = std::move(replaceResult.value());
