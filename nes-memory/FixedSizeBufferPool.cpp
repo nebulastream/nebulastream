@@ -19,6 +19,7 @@
 #include <deque>
 #include <memory>
 #include <optional>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -151,8 +152,8 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
     throw UnknownOperation("This function is not supported here");
 }
-std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(const size_t bufferSize)
+std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(const size_t bufferSize, const WorkerThreadId workerThreadId)
 {
-    return bufferManager->getUnpooledBuffer(bufferSize);
+    return bufferManager->getUnpooledBuffer(bufferSize, workerThreadId);
 }
 }

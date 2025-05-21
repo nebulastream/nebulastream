@@ -53,12 +53,12 @@ struct Arena
     /// 1. The required size is larger than the buffer provider's buffer size. In this case, we allocate an unpooled buffer.
     /// 2. The required size is larger than the last buffer size. In this case, we allocate a new buffer of fixed size.
     /// 3. The required size is smaller than the last buffer size. In this case, we return the pointer to the address in the last buffer.
-    int8_t* allocateMemory(const size_t sizeInBytes)
+    int8_t* allocateMemory(const size_t sizeInBytes, const WorkerThreadId workerThreadId)
     {
         /// Case 1
         if (bufferProvider->getBufferSize() < sizeInBytes)
         {
-            const auto unpooledBufferOpt = bufferProvider->getUnpooledBuffer(sizeInBytes);
+            const auto unpooledBufferOpt = bufferProvider->getUnpooledBuffer(sizeInBytes, workerThreadId);
             if (not unpooledBufferOpt.has_value())
             {
                 throw CannotAllocateBuffer("Cannot allocate unpooled buffer of size " + std::to_string(sizeInBytes));
@@ -100,7 +100,7 @@ struct Arena
 /// Nautilus Wrapper for the Arena
 struct ArenaRef
 {
-    explicit ArenaRef(const nautilus::val<Arena*>& arenaRef) : arenaRef(arenaRef), availableSpaceForPointer(0), spacePointer(nullptr) { }
+    explicit ArenaRef(const nautilus::val<Arena*>& arenaRef, const nautilus::val<WorkerThreadId>& workerThreadId) : arenaRef(arenaRef), availableSpaceForPointer(0), spacePointer(nullptr), workerThreadId(workerThreadId) { }
 
     /// Allocates memory from the arena. If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
     nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes)
@@ -111,9 +111,10 @@ struct ArenaRef
         if (availableSpaceForPointer < sizeInBytes)
         {
             spacePointer = nautilus::invoke(
-                +[](Arena* arena, const size_t sizeInBytesVal) -> int8_t* { return arena->allocateMemory(sizeInBytesVal); },
+                +[](Arena* arena, const size_t sizeInBytesVal, const WorkerThreadId workerThreadIdVal) -> int8_t* { return arena->allocateMemory(sizeInBytesVal, workerThreadIdVal); },
                 arenaRef,
-                sizeInBytes);
+                sizeInBytes,
+                workerThreadId);
             availableSpaceForPointer
                 = Nautilus::Util::readValueFromMemRef<size_t>(Nautilus::Util::getMemberRef(arenaRef, &Arena::lastAllocationSize));
         }
@@ -127,6 +128,7 @@ private:
     nautilus::val<Arena*> arenaRef;
     nautilus::val<size_t> availableSpaceForPointer;
     nautilus::val<int8_t*> spacePointer;
+    nautilus::val<WorkerThreadId> workerThreadId;
 };
 
 /// Struct that combines the arena and the buffer provider. This struct combines the functionality of the arena and the buffer provider,
@@ -136,17 +138,18 @@ private:
 struct PipelineMemoryProvider
 {
     explicit PipelineMemoryProvider(
-        const nautilus::val<Arena*>& arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
-        : arena(arena), bufferProvider(bufferProvider)
+        const nautilus::val<Arena*>& arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider, const nautilus::val<WorkerThreadId>& workerThreadId)
+        : arena(arena, workerThreadId), bufferProvider(bufferProvider), workerThreadId(workerThreadId)
     {
     }
-    explicit PipelineMemoryProvider(ArenaRef arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
-        : arena(std::move(arena)), bufferProvider(bufferProvider)
+    explicit PipelineMemoryProvider(ArenaRef arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider, const nautilus::val<WorkerThreadId>& workerThreadId)
+        : arena(std::move(arena)), bufferProvider(bufferProvider), workerThreadId(workerThreadId)
     {
     }
 
     ArenaRef arena;
     nautilus::val<Memory::AbstractBufferProvider*> bufferProvider;
+    nautilus::val<WorkerThreadId> workerThreadId;
 };
 
 

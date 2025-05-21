@@ -40,7 +40,8 @@ public:
         const Nautilus::Record& recordKey,
         const HashFunction& hashFunction,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<WorkerThreadId>& workerThreadId)
         = 0;
 
     /// This function inserts an already existing entry from another hash map to this hash map.
@@ -50,7 +51,8 @@ public:
         const nautilus::val<AbstractHashMapEntry*>& otherEntry,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onUpdate,
         const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<WorkerThreadId>& workerThreadId)
         = 0;
 
 protected:

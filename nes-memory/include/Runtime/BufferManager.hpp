@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <memory>
@@ -24,10 +25,14 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Util/RollingAverage.hpp>
 #include <folly/MPMCQueue.h>
+#include <folly/Synchronized.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Memory
 {
@@ -75,18 +80,20 @@ public:
         Private,
         uint32_t bufferSize,
         uint32_t numOfBuffers,
+        uint64_t numberOfWorkerThreads,
         std::shared_ptr<std::pmr::memory_resource> memoryResource,
         uint32_t withAlignment);
 
-    /**
-     * @brief Creates a new global buffer manager
-     * @param bufferSize the size of each buffer in bytes
-     * @param numOfBuffers the total number of buffers in the pool
-     * @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
-     */
+    /// Creates a new global buffer manager
+    /// @param bufferSize the size of each buffer in bytes
+    /// @param numOfBuffers the total number of buffers in the pool
+    /// @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
+    /// @param numberOfWorkerThreads Number of worker thread this buffer manager hands out buffers to
+    /// @param memoryResource resource for allocating and deallocating memory
     static std::shared_ptr<BufferManager> create(
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
+        uint64_t numberOfWorkerThreads = 1,
         std::shared_ptr<std::pmr::memory_resource> memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
         uint32_t withAlignment = DEFAULT_ALIGNMENT);
 
@@ -102,7 +109,7 @@ private:
      * This is a one shot call. A second invocation of this call will fail
      * @param withAlignment
      */
-    void initialize(uint32_t withAlignment);
+    void initialize(uint32_t withAlignment, uint64_t numberOfWorkerThreads);
 
 public:
     /// This blocks until a buffer is available.
@@ -119,13 +126,7 @@ public:
      */
     std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeoutMs) override;
 
-    /**
-     * @brief Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
-     * occurs.
-     * @param bufferSize
-     * @return a new buffer
-     */
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize, WorkerThreadId workerThreadId) override;
 
 
     size_t getBufferSize() const override;
@@ -163,12 +164,53 @@ private:
 
     folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
     std::atomic<size_t> numOfAvailableBuffers;
-    std::unordered_map<uint8_t*, std::unique_ptr<detail::MemorySegment>> unpooledBuffers;
+
+    struct UnpooledChunk
+    {
+        size_t totalSize = 0;
+        size_t usedSize = 0;
+        uint8_t* startOfChunk = nullptr;
+        std::vector<std::unique_ptr<detail::MemorySegment>> unpooledMemorySegments;
+        uint64_t activeMemorySegments = 0;
+    };
+    template <typename T>
+    class ThreadLocalVector
+    {
+        std::vector<T> vec;
+
+    public:
+        /// This should be the only way on modifying the size of the underlying vector
+        explicit ThreadLocalVector(size_t capacity) { vec.reserve(capacity); }
+        T& operator[](WorkerThreadId workerThreadId)
+        {
+            PRECONDITION(vec.capacity() > 0, "ThreadLocalVector is empty. Have you reserved space for all threads?");
+            return vec[workerThreadId % vec.capacity()];
+        }
+
+        template <typename... Args>
+        void emplace_back(Args&&... args)
+        {
+            INVARIANT(vec.capacity() > 0, "ThreadLocalVector is empty.");
+            INVARIANT(vec.size() + 1 <= vec.capacity(), "ThreadLocalVector does not support resizing.");
+            vec.emplace_back(std::forward<Args>(args)...);
+        }
+
+        /// Methods for getting iterators of the underlying vector
+        auto begin() { return vec.begin(); }
+        auto end() { return vec.begin(); }
+        [[nodiscard]] auto begin() const { return vec.begin(); }
+        [[nodiscard]] auto end() const { return vec.begin(); }
+    };
+
+    /// During initialize, we create one unpooled chunk with the buffer size
+    ThreadLocalVector<folly::Synchronized<std::unordered_map<uint8_t*, UnpooledChunk>>> unpooledBufferChunkStorage;
+    static constexpr auto NUM_PRE_ALLOCATED_CHUNKS = 10;
+    static constexpr auto ROLLING_AVERAGE_UNPOOLED_BUFFER_SIZE = 100;
+    ThreadLocalVector<uint8_t*> lastAllocateChunkKey;
+    ThreadLocalVector<folly::Synchronized<RollingAverage<size_t>>> rollingAverage;
 
     mutable std::recursive_mutex availableBuffersMutex;
     std::condition_variable_any availableBuffersCvar;
-
-    mutable std::recursive_mutex unpooledBuffersMutex;
 
     size_t bufferSize;
     size_t numOfBuffers;

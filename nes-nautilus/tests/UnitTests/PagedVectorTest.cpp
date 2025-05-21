@@ -47,6 +47,7 @@ class PagedVectorTest : public Testing::BaseUnitTest,
 {
 public:
     static constexpr uint64_t PAGE_SIZE = 4096;
+    static constexpr uint64_t NUM_BUFFERS = 100 * 1000;
     std::shared_ptr<Memory::BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     Nautilus::Configurations::ExecutionMode backend = Configurations::ExecutionMode::INTERPRETER;
@@ -84,7 +85,7 @@ public:
 
 TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = Memory::BufferManager::create(PAGE_SIZE, NUM_BUFFERS);
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataType::Type::UINT64)
@@ -101,7 +102,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 
 TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = Memory::BufferManager::create(PAGE_SIZE, NUM_BUFFERS);
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
@@ -118,7 +119,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
 
 TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = Memory::BufferManager::create(PAGE_SIZE, NUM_BUFFERS);
     const auto testSchema
         = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}.addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     /// smallest possible pageSize ensures that the text is split over multiple pages
@@ -136,7 +137,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
 
 TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = Memory::BufferManager::create(PAGE_SIZE, NUM_BUFFERS);
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
@@ -153,7 +154,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 
 TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = Memory::BufferManager::create(PAGE_SIZE, NUM_BUFFERS);
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataType::Type::UINT64);
@@ -169,7 +170,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 
 TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = Memory::BufferManager::create(PAGE_SIZE, NUM_BUFFERS);
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
@@ -198,7 +199,7 @@ TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
 
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = Memory::BufferManager::create(PAGE_SIZE, NUM_BUFFERS);
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
@@ -228,7 +229,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
 
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = Memory::BufferManager::create(PAGE_SIZE, NUM_BUFFERS);
     const auto testSchema = Schema{Schema::MemoryLayoutType::COLUMNAR_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
@@ -258,7 +259,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
 {
-    bufferManager = Memory::BufferManager::create();
+    bufferManager = Memory::BufferManager::create(PAGE_SIZE, NUM_BUFFERS);
     const auto testSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))

@@ -17,12 +17,15 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <val.hpp>
+#include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
 namespace NES::Nautilus::Interface
@@ -44,7 +47,10 @@ public:
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
     /// @param bufferProvider: Buffer provider used for acquiring memory for the write operation, if needed
-    void writeRecord(const Record& record, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const;
+    void writeRecord(
+        const Record& record,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<WorkerThreadId>& workerThreadId) const;
 
     /// @brief Reads the specified fields of a record from the pagedVectorRef
     /// @param pos record position in pagedVector
@@ -55,7 +61,7 @@ public:
     [[nodiscard]] PagedVectorRefIter begin(const std::vector<Record::RecordFieldIdentifier>& projections) const;
     [[nodiscard]] PagedVectorRefIter end(const std::vector<Record::RecordFieldIdentifier>& projections) const;
     nautilus::val<bool> operator==(const PagedVectorRef& other) const;
-    nautilus::val<uint64_t> getNumberOfTuples() const;
+    [[nodiscard]] nautilus::val<uint64_t> getNumberOfTuples() const;
 
 private:
     nautilus::val<PagedVector*> pagedVectorRef;

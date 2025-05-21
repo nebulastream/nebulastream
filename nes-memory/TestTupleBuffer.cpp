@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <include/Util/TestTupleBuffer.hpp>
 
 #include <algorithm>
 #include <cstdint>
@@ -23,17 +24,16 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <include/Runtime/TupleBuffer.hpp>
-#include <include/Util/TestTupleBuffer.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
@@ -70,8 +70,9 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayo
 void DynamicTuple::writeVarSized(
     std::variant<const uint64_t, const std::string> field, std::string value, Memory::AbstractBufferProvider& bufferProvider)
 {
+    constexpr WorkerThreadId workerThreadId(INITIAL<WorkerThreadId>);
     const auto valueLength = value.length();
-    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
+    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t), workerThreadId);
     if (childBuffer.has_value())
     {
         auto& childBufferVal = childBuffer.value();

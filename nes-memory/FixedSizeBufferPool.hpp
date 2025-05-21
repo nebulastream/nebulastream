@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferRecycler.hpp>
@@ -71,7 +72,7 @@ public:
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
     std::optional<TupleBuffer> getBufferNoBlocking() override;
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize, WorkerThreadId workerThreadId) override;
     /**
      * @brief provide number of available exclusive buffers
      * @return number of available exclusive buffers

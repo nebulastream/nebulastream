@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <optional>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 /// This enum reflects the different types of buffer managers in the system
@@ -56,7 +57,8 @@ public:
 
     virtual std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) = 0;
 
-    virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
+    /// Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
+    virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize, WorkerThreadId workerThreadId) = 0;
 };
 
 class AbstractPoolProvider

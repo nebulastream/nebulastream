@@ -194,9 +194,10 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
             const RecordBuffer recordBufferKey(keyBufferRef);
             for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
             {
+                const nautilus::val<WorkerThreadId> workerThreadIdVal(INITIAL<WorkerThreadId>);
                 auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, i);
                 auto foundEntry = hashMapRef.findOrCreateEntry(
-                    recordKey, *NautilusTestUtils::getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
+                    recordKey, *NautilusTestUtils::getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal, workerThreadIdVal);
 
                 const auto castedEntry = static_cast<nautilus::val<Interface::ChainedHashMapEntry*>>(foundEntry);
                 const Interface::ChainedHashMapRef::ChainedEntryRef entry(castedEntry, fieldKeys, fieldValues);
@@ -209,7 +210,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
                 outputRecord.reassignFields(valueRecord);
 
                 RecordBuffer recordBufferOutput(outputBufferForValues);
-                memoryProviderInputBuffer->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
+                memoryProviderInputBuffer->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal, workerThreadIdVal);
                 recordBufferOutput.setNumRecords(i + 1);
             }
         }));
@@ -234,13 +235,14 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
             for (auto entry : hashMapRef)
             {
                 /// Writing the read value from the chained hash map into the buffer.
+                const nautilus::val<WorkerThreadId> workerThreadId(INITIAL<WorkerThreadId>);
                 Record outputRecord;
                 const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(entry, fieldKeys, fieldValues);
                 const auto keyRecord = entryRef.getKey();
                 const auto valueRecord = entryRef.getValue();
                 outputRecord.reassignFields(keyRecord);
                 outputRecord.reassignFields(valueRecord);
-                memoryProviderInputBuffer->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
+                memoryProviderInputBuffer->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider, workerThreadId);
                 outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
                 recordBufferOutput.setNumRecords(outputBufferIndex);
             }
@@ -264,6 +266,7 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
             const RecordBuffer recordBuffer(inputBufferRef);
             for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
             {
+                const nautilus::val<WorkerThreadId> workerThreadIdVal(INITIAL<WorkerThreadId>);
                 auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBuffer, i);
                 auto recordValue = memoryProviderInputBuffer->readRecord(projectionValues, recordBuffer, i);
                 auto foundEntry = hashMapRef.findOrCreateEntry(
@@ -275,7 +278,8 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
                         const Interface::ChainedHashMapRef::ChainedEntryRef ref(castedEntry, fieldKeys, fieldValues);
                         ref.copyValuesToEntry(recordValue);
                     },
-                    bufferManagerVal);
+                    bufferManagerVal,
+                    workerThreadIdVal);
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)
@@ -301,6 +305,7 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
 
             for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
             {
+                const nautilus::val<WorkerThreadId> workerThreadIdVal(INITIAL<WorkerThreadId>);
                 auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, i);
                 auto recordValue = memoryProviderInputBuffer->readRecord(projectionValues, recordBufferValue, i);
                 auto foundEntry = hashMapRef.findOrCreateEntry(
@@ -311,7 +316,8 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
                         const Interface::ChainedHashMapRef::ChainedEntryRef ref(entry, fieldKeys, fieldValues);
                         ref.copyValuesToEntry(recordValue);
                     },
-                    bufferManagerVal);
+                    bufferManagerVal,
+                    workerThreadIdVal);
                 hashMapRef.insertOrUpdateEntry(
                     foundEntry,
                     [&](const nautilus::val<Interface::AbstractHashMapEntry*>& entry)
@@ -320,7 +326,8 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
                         ref.copyValuesToEntry(recordValue);
                     },
                     ASSERT_VIOLATION_FOR_ON_INSERT,
-                    bufferManagerVal);
+                    bufferManagerVal,
+                    workerThreadIdVal);
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)
@@ -362,7 +369,7 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     /// Calling now the compiled function to write all values of the map to the output buffer.
     const auto numberOfInputTuples = std::accumulate(
         inputBuffers.begin(), inputBuffers.end(), 0, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema.getSizeOfSchemaInBytes());
+    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema.getSizeOfSchemaInBytes(), workerThreadId);
     if (not bufferOutputOpt)
     {
         NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema.getSizeOfSchemaInBytes());
@@ -394,7 +401,7 @@ void ChainedHashMapTestUtils::checkEntryIterator(
     {
         /// We assume that the valueBuffer has the corresponding values for the keyBuffer.
         /// Under this assumption, we know that the outputBufferForKeys MUST have the same size as the valueBuffer
-        auto bufferOutputOpt = bufferManager->getUnpooledBuffer(inputBuffer.getBufferSize());
+        auto bufferOutputOpt = bufferManager->getUnpooledBuffer(inputBuffer.getBufferSize(), workerThreadId);
         if (not bufferOutputOpt)
         {
             NES_ERROR("Could not allocate buffer for size {}", inputBuffer.getBufferSize());

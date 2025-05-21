@@ -160,7 +160,8 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     const Nautilus::Record& recordKey,
     const HashFunction& hashFunction,
     const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId)
 {
     /// Calculating the hash value of the keys and finding the entry.
     /// We can use here a std::vector to store the read VarValues of the keyFunction, as the number of keys does not change between
@@ -181,7 +182,7 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     }
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
-    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider), fieldKeys, fieldValues};
+    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider, workerThreadId), fieldKeys, fieldValues};
     newEntryRef.copyKeysToEntry(recordKey);
 
 
@@ -199,7 +200,8 @@ void ChainedHashMapRef::insertOrUpdateEntry(
     const nautilus::val<AbstractHashMapEntry*>& otherEntry,
     const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onUpdate,
     const std::function<void(nautilus::val<AbstractHashMapEntry*>&)>& onInsert,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId)
 {
     /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
@@ -215,7 +217,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
     }
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
-    const auto newEntry = insert(otherEntryRef.getHash(), bufferProvider);
+    const auto newEntry = insert(otherEntryRef.getHash(), bufferProvider, workerThreadId);
     const ChainedEntryRef newEntryRef(newEntry, fieldKeys, fieldValues);
     newEntryRef.copyKeysToEntry(otherEntryRef);
     if (onInsert)
@@ -250,15 +252,21 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
         hash);
 }
 
-nautilus::val<ChainedHashMapEntry*>
-ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::insert(
+    const HashFunction::HashValue& hash,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId)
 {
     const auto newEntry = invoke(
-        +[](HashMap* hashMap, const HashFunction::HashValue::raw_type hashValue, Memory::AbstractBufferProvider* bufferProviderVal)
-        { return dynamic_cast<ChainedHashMap*>(hashMap)->insertEntry(hashValue, bufferProviderVal); },
+        +[](HashMap* hashMap,
+            const HashFunction::HashValue::raw_type hashValue,
+            Memory::AbstractBufferProvider* bufferProviderVal,
+            const WorkerThreadId workerThreadIdVal)
+        { return dynamic_cast<ChainedHashMap*>(hashMap)->insertEntry(hashValue, bufferProviderVal, workerThreadIdVal); },
         hashMapRef,
         hash,
-        bufferProvider);
+        bufferProvider,
+        workerThreadId);
     return static_cast<nautilus::val<ChainedHashMapEntry*>>(newEntry);
 }
 

@@ -117,7 +117,8 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                         entryRefStatePtr = entryRefStatePtr + aggFunction->getSizeOfStateInBytes();
                     }
                 },
-                executionCtx.pipelineMemoryProvider.bufferProvider);
+                executionCtx.pipelineMemoryProvider.bufferProvider,
+                executionCtx.workerThreadId);
         }
     }
 

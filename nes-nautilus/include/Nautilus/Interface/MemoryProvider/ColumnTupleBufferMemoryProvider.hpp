@@ -15,9 +15,12 @@
 #pragma once
 
 #include <memory>
+#include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <val_concepts.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
 {
@@ -41,7 +44,8 @@ public:
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const override;
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<WorkerThreadId>& workerThreadId) const override;
 
 private:
     nautilus::val<int8_t*>

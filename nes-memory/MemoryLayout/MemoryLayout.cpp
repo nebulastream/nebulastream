@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <MemoryLayout/MemoryLayout.hpp>
 
 #include <cstdint>
 #include <cstring>
@@ -18,11 +19,9 @@
 #include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -38,11 +37,14 @@ std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t c
     return varSizedData;
 }
 
-std::optional<uint32_t>
-writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view value, Memory::AbstractBufferProvider& bufferProvider)
+std::optional<uint32_t> writeVarSizedData(
+    const Memory::TupleBuffer& buffer,
+    const std::string_view value,
+    Memory::AbstractBufferProvider& bufferProvider,
+    const WorkerThreadId workerThreadId)
 {
     const auto valueLength = value.length();
-    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
+    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t), workerThreadId);
     if (childBuffer.has_value())
     {
         auto& childBufferVal = childBuffer.value();
@@ -106,6 +108,8 @@ uint64_t MemoryLayout::getBufferSize() const
 void MemoryLayout::setBufferSize(const uint64_t bufferSize)
 {
     MemoryLayout::bufferSize = bufferSize;
+    /// As we have changed the bufferSize, we need to re-calculate the capacity
+    capacity = recordSize > 0 ? bufferSize / recordSize : 0;
 }
 
 DataType MemoryLayout::getPhysicalType(const uint64_t fieldIndex) const

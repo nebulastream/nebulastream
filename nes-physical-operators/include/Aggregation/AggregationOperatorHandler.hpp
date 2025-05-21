@@ -24,6 +24,7 @@
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <WindowBasedOperatorHandler.hpp>
+#include <nautilus/Engine.hpp>
 
 namespace NES
 {
@@ -54,6 +55,11 @@ public:
     void setHashMapParams(uint64_t keySize, uint64_t valueSize, uint64_t pageSize, uint64_t numberOfBuckets);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
+
+
+    /// shared_ptr as multiple slices need access to it
+    using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;
+    std::shared_ptr<NautilusCleanupExec> cleanupStateNautilusFunction;
 
 protected:
     void triggerSlices(

@@ -35,9 +35,12 @@ uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
 }
 
 const Memory::TupleBuffer* createNewEntryProxy(
-    PagedVector* pagedVector, Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
+    PagedVector* pagedVector,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const WorkerThreadId workerThreadId)
 {
-    pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
+    pagedVector->appendPageIfFull(bufferProvider, memoryLayout, workerThreadId);
     return std::addressof(pagedVector->getLastPage());
 }
 
@@ -62,19 +65,19 @@ nautilus::val<uint64_t> PagedVectorRef::getNumberOfTuples() const
 }
 
 PagedVectorRef::PagedVectorRef(
-    const nautilus::val<PagedVector*>& pagedVectorRef,
-    const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
-    : pagedVectorRef(pagedVectorRef)
-    , memoryProvider(memoryProvider)
-    , memoryLayout(memoryProvider->getMemoryLayout().get())
+    const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider>& memoryProvider)
+    : pagedVectorRef(pagedVectorRef), memoryProvider(memoryProvider), memoryLayout(memoryProvider->getMemoryLayout().get())
 {
 }
 
-void PagedVectorRef::writeRecord(const Record& record, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+void PagedVectorRef::writeRecord(
+    const Record& record,
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId) const
 {
-    auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout));
+    auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout, workerThreadId));
     auto numTuplesOnPage = recordBuffer.getNumRecords();
-    memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record, bufferProvider);
+    memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record, bufferProvider, workerThreadId);
     recordBuffer.setNumRecords(numTuplesOnPage + 1);
 }
 

@@ -18,10 +18,13 @@
 #include <memory>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
 namespace NES::Nautilus::Interface::MemoryProvider
@@ -58,7 +61,8 @@ public:
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider) const
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<WorkerThreadId>& workerThreadId) const
         = 0;
 
 protected:
@@ -75,7 +79,8 @@ protected:
         const RecordBuffer& recordBuffer,
         const nautilus::val<int8_t*>& fieldReference,
         VarVal value,
-        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider);
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<WorkerThreadId>& workerThreadId);
 
     [[nodiscard]] static bool
     includesField(const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex);

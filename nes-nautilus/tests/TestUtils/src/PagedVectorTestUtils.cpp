@@ -24,6 +24,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
@@ -64,11 +65,11 @@ void runStoreTest(
             {
                 const RecordBuffer recordBuffer(inputBufferRef);
                 const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider);
-
+                const nautilus::val<WorkerThreadId> workerThreadId(INITIAL<WorkerThreadId>);
                 for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
                 {
                     const auto record = memoryProviderInputBuffer->readRecord(projections, recordBuffer, i);
-                    pagedVectorRef.writeRecord(record, bufferProviderVal);
+                    pagedVectorRef.writeRecord(record, bufferProviderVal, workerThreadId);
                 }
             }));
     /// NOLINTEND(performance-unnecessary-value-param)
@@ -107,7 +108,8 @@ void runRetrieveTest(
     const uint64_t numberOfExpectedTuples = std::accumulate(
         allRecords.begin(), allRecords.end(), 0UL, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
     ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), numberOfExpectedTuples);
-    auto outputBufferVal = bufferManager.getUnpooledBuffer(numberOfExpectedTuples * testSchema.getSizeOfSchemaInBytes());
+    constexpr WorkerThreadId workerThreadId(INITIAL<WorkerThreadId>);
+    auto outputBufferVal = bufferManager.getUnpooledBuffer(numberOfExpectedTuples * testSchema.getSizeOfSchemaInBytes(), workerThreadId);
     ASSERT_TRUE(outputBufferVal.has_value());
     auto outputBuffer = outputBufferVal.value();
 
@@ -128,12 +130,12 @@ void runRetrieveTest(
             {
                 RecordBuffer recordBuffer(outputBufferRef);
                 const Interface::PagedVectorRef pagedVectorRef(pagedVectorVal, memoryProvider);
-
+                const nautilus::val<WorkerThreadId> workerThreadIdVal(INITIAL<WorkerThreadId>);
                 nautilus::val<uint64_t> numberOfTuples = 0;
                 for (auto it = pagedVectorRef.begin(projections); it != pagedVectorRef.end(projections); ++it)
                 {
                     auto record = *it;
-                    memoryProviderActualBuffer->writeRecord(numberOfTuples, recordBuffer, record, bufferProviderVal);
+                    memoryProviderActualBuffer->writeRecord(numberOfTuples, recordBuffer, record, bufferProviderVal, workerThreadIdVal);
                     numberOfTuples = numberOfTuples + 1;
                     recordBuffer.setNumRecords(numberOfTuples);
                 }

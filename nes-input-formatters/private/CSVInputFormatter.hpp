@@ -51,6 +51,7 @@ public:
         std::string inputString,
         int8_t* fieldPointer,
         Memory::AbstractBufferProvider& bufferProvider,
+        const WorkerThreadId workerThreadId,
         Memory::TupleBuffer& tupleBufferFormatted)>;
 
     CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);

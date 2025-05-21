@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
@@ -27,7 +29,6 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -44,9 +45,10 @@ uint32_t storeAssociatedTextValueProxy(
     const Memory::TupleBuffer* tupleBuffer,
     Memory::AbstractBufferProvider* bufferProvider,
     const int8_t* textValue,
-    const uint32_t totalVariableSize)
+    const uint32_t totalVariableSize,
+    const WorkerThreadId workerThreadId)
 {
-    auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize);
+    auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize, workerThreadId);
     INVARIANT(buffer.has_value(), "Cannot allocate unpooled buffer of size {}", totalVariableSize);
     std::memcpy(buffer.value().getBuffer<int8_t>(), textValue, totalVariableSize);
     return tupleBuffer->storeChildBuffer(buffer.value());
@@ -77,7 +79,8 @@ VarVal TupleBufferMemoryProvider::storeValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId)
 {
     if (physicalType.type != DataType::Type::VARSIZED)
     {
@@ -95,7 +98,12 @@ VarVal TupleBufferMemoryProvider::storeValue(
     {
         const auto textValue = value.cast<VariableSizedData>();
         const auto childIndex = invoke(
-            storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize());
+            storeAssociatedTextValueProxy,
+            recordBuffer.getReference(),
+            bufferProvider,
+            textValue.getReference(),
+            textValue.getTotalSize(),
+            workerThreadId);
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;

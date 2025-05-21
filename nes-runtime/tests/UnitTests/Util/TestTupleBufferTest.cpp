@@ -58,7 +58,7 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         const auto memoryLayout = GetParam();
-        bufferManager = Memory::BufferManager::create(4096, 10);
+        bufferManager = Memory::BufferManager::create(4096, 1000);
         schema = Schema{memoryLayout}
                      .addField("test$t1", DataType::Type::UINT16)
                      .addField("test$t2", DataType::Type::BOOLEAN)

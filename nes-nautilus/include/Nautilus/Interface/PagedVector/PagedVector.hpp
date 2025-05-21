@@ -14,12 +14,17 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -33,15 +38,18 @@ class PagedVector
 public:
     struct TupleBufferWithCumulativeSum
     {
-        explicit TupleBufferWithCumulativeSum(const Memory::TupleBuffer& buffer) : cumulativeSum(0), buffer(buffer) { }
-        size_t cumulativeSum;
+        explicit TupleBufferWithCumulativeSum(Memory::TupleBuffer buffer) : buffer(std::move(buffer)) { }
+        size_t cumulativeSum{0};
         Memory::TupleBuffer buffer;
     };
 
     PagedVector() = default;
 
     /// Appends a new page to the pages vector if the last page is full.
-    void appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
+    void appendPageIfFull(
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        WorkerThreadId workerThreadId);
 
     /// Appends the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);
@@ -63,7 +71,7 @@ public:
 private:
     void updateCumulativeSumLastItem();
     void updateCumulativeSumAllPages();
-    std::optional<size_t> findIdx(const uint64_t entryPos) const;
+    [[nodiscard]] std::optional<size_t> findIdx(uint64_t entryPos) const;
 
     std::vector<TupleBufferWithCumulativeSum> pages;
 };

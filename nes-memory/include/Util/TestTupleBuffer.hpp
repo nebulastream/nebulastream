@@ -303,7 +303,7 @@ public:
     requires(!ContainsString<Types> && ...)
     void pushRecordToBuffer(std::tuple<Types...> record)
     {
-        pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples());
+        pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples(), nullptr);
     }
 
     /**
@@ -333,8 +333,7 @@ public:
      * @return true if the record was pushed successfully, false otherwise.
      */
     template <typename... Types>
-    void
-    pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, Memory::AbstractBufferProvider* bufferProvider = nullptr)
+    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, Memory::AbstractBufferProvider* bufferProvider)
     {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;

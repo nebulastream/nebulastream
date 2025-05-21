@@ -84,7 +84,8 @@ void AggregationOperatorHandler::triggerSlices(
             const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
             for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
             {
-                if (auto* hashmap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx)); hashmap->getNumberOfTuples() > 0)
+                if (auto* hashmap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
+                    hashmap->getNumberOfTuples() > 0)
                 {
                     allHashMaps.emplace_back(hashmap);
                     totalNumberOfTuples += hashmap->getNumberOfTuples();
@@ -105,7 +106,7 @@ void AggregationOperatorHandler::triggerSlices(
         }
         else
         {
-            const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
+            const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize, pipelineCtx->getId());
             if (not tupleBufferVal.has_value())
             {
                 throw CannotAllocateBuffer("Could not get a buffer of size {} for the aggregation window trigger", neededBufferSize);

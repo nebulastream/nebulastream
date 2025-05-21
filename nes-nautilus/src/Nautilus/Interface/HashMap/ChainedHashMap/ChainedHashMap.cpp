@@ -99,8 +99,8 @@ uint64_t ChainedHashMap::getNumberOfTuples() const
     return numberOfTuples;
 }
 
-AbstractHashMapEntry*
-ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider)
+AbstractHashMapEntry* ChainedHashMap::insertEntry(
+    const HashFunction::HashValue::raw_type hash, Memory::AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
 {
     /// 0. Checking, if we have to set fill the entry space. This should be only done once, i.e., when the entries are still null
     if (entries == nullptr)
@@ -108,7 +108,7 @@ ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, Memory
         /// We add one more entry to the capacity, as we need to have a valid entry for the last entry in the entries array
         /// We will be using this entry for checking, if we are at the end of our hash map in our EntryIterator
         const auto totalSpace = (numberOfChains + 1) * sizeof(ChainedHashMapEntry*);
-        const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace);
+        const auto entryBuffer = bufferProvider->getUnpooledBuffer(totalSpace, workerThreadId);
         if (not entryBuffer)
         {
             throw CannotAllocateBuffer("Could not allocate memory for ChainedHashMap of size {}", std::to_string(totalSpace));
@@ -124,11 +124,13 @@ ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, Memory
     /// 1. Check if we need to allocate a new page
     if (numberOfTuples % entriesPerPage == 0)
     {
-        auto newPage = bufferProvider->getUnpooledBuffer(pageSize);
+        auto newPage = bufferProvider->getUnpooledBuffer(pageSize, workerThreadId);
         if (not newPage)
         {
             throw CannotAllocateBuffer("Could not allocate memory for new page in ChainedHashMap of size {}", std::to_string(pageSize));
         }
+
+        /// We need to memset zero-out the new page, as we expect NULL to be present
         std::memset(newPage.value().getBuffer(), 0, pageSize);
         storageSpace.emplace_back(newPage.value());
     }
