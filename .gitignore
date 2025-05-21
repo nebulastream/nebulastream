@@ -40,3 +40,4 @@ nes-asp/data/*.csv
 *.log
 
 scripts/__pycache__
+cov-*/
