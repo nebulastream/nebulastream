@@ -11,7 +11,7 @@ import subprocess
 import sys
 import urllib.request
 from collections import defaultdict
-from typing import Tuple
+from typing import Tuple, List
 
 def run_cmd(cmd: list) -> str:
     """runs cmd, returns stdout or crashes"""
@@ -26,7 +26,7 @@ def run_cmd(cmd: list) -> str:
     return p.stdout
 
 
-def get_added_lines_from_diff(diff: str) -> Tuple[str, int, str]:
+def get_added_lines_from_diff(diff: str) -> List[Tuple[str, int, str]]:
     """returns all added lines from diff as (file_no, line_no, line)"""
     file_header = re.compile("diff --git a/.* b/(.*)")
     line_context = re.compile(r"@@ -\d+,\d+ \+(\d+),\d+ @@")
@@ -35,11 +35,17 @@ def get_added_lines_from_diff(diff: str) -> Tuple[str, int, str]:
     diff_file = ""
     added_lines = []
 
+    skip_until_line_ctx = False
+
     for line in diff.split("\n"):
         if m := file_header.match(line):
             diff_file = m[1]
+            skip_until_line_ctx = True
         if m := line_context.match(line):
             line_no = int(m[1]) - 1
+            skip_until_line_ctx = False
+        if skip_until_line_ctx:
+            continue
 
         if line.startswith("+"):
             added_lines.append((diff_file, line_no, line[1:]))
