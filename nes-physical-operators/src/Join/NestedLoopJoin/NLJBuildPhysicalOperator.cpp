@@ -70,7 +70,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
         operatorHandlerRef,
         timestamp);
     const auto nljPagedVectorMemRef
-        = invoke(getNLJPagedVectorProxy, sliceReference, executionCtx.getWorkerThreadId(), nautilus::val<JoinBuildSideType>(joinBuildSide));
+        = invoke(getNLJPagedVectorProxy, sliceReference, executionCtx.workerThreadId, nautilus::val<JoinBuildSideType>(joinBuildSide));
 
 
     /// Write record to the pagedVector

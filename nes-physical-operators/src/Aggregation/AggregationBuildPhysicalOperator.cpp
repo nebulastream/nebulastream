@@ -87,7 +87,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         getHashMapProxy,
         ctx.getGlobalOperatorHandler(operatorHandlerId),
         timestamp,
-        ctx.getWorkerThreadId(),
+        ctx.workerThreadId,
         nautilus::val<const AggregationBuildPhysicalOperator*>(this));
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
