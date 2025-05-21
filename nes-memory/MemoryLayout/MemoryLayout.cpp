@@ -124,6 +124,8 @@ uint64_t MemoryLayout::getBufferSize() const
 void MemoryLayout::setBufferSize(const uint64_t bufferSize)
 {
     MemoryLayout::bufferSize = bufferSize;
+    /// As we have changed the bufferSize, we need to re-calculate the capacity
+    capacity = recordSize > 0 ? bufferSize / recordSize : 0;
 }
 
 std::shared_ptr<PhysicalType> MemoryLayout::getPhysicalType(const uint64_t fieldIndex) const
