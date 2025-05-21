@@ -51,6 +51,7 @@ nautilus::engine::
             Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             const RecordBuffer recordBufferKey(bufferKey);
             auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
+            const nautilus::val<WorkerThreadId> workerThreadId(INITIAL<WorkerThreadId>);
             auto foundEntry = hashMapRef.findOrCreateEntry(
                 recordKey,
                 *getMurMurHashFunction(),
@@ -66,7 +67,7 @@ nautilus::engine::
                         },
                         ref.getValueMemArea());
                 },
-                bufferManagerVal);
+                bufferManagerVal, workerThreadId);
 
             const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
             const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer);
@@ -74,7 +75,7 @@ nautilus::engine::
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
                 auto recordValue = memoryProviderInputBuffer->readRecord(projectionAllFields, recordBufferValue, idxValues);
-                pagedVectorRef.writeRecord(recordValue, bufferManagerVal);
+                pagedVectorRef.writeRecord(recordValue, bufferManagerVal, workerThreadId);
             }
         }));
 }
@@ -98,9 +99,10 @@ nautilus::engine::
             Interface::ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);
             const RecordBuffer recordBufferKey(keyBufferRef);
             RecordBuffer recordBufferOutput(outputBufferRef);
+            const nautilus::val<WorkerThreadId> workerThreadId(INITIAL<WorkerThreadId>);
             const auto recordKey = memoryProviderInputBuffer->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
             const auto foundEntry
-                = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
+                = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal, workerThreadId);
 
             const Interface::ChainedHashMapRef::ChainedEntryRef ref(foundEntry, fieldKeys, fieldValues);
             const Interface::PagedVectorRef pagedVectorRef(ref.getValueMemArea(), memoryProviderInputBuffer);
@@ -108,7 +110,7 @@ nautilus::engine::
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
             {
                 const auto record = *it;
-                memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
+                memoryProviderInputBuffer->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal, workerThreadId);
                 recordBufferIndex = recordBufferIndex + 1;
                 recordBufferOutput.setNumRecords(recordBufferIndex);
             }

@@ -76,10 +76,13 @@ void HJBuildCache::setup(ExecutionContext& executionCtx) const
     nautilus::invoke(
         +[](HJOperatorHandler* opHandler,
             Memory::AbstractBufferProvider* bufferProvider,
+            const WorkerThreadId workerThreadId,
             const uint64_t sizeOfEntry,
-            const uint64_t numberOfEntries) { opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider); },
+            const uint64_t numberOfEntries)
+        { opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider, workerThreadId); },
         globalOperatorHandler,
         executionCtx.pipelineMemoryProvider.bufferProvider,
+        executionCtx.workerThreadId,
         sizeOfEntry,
         numberOfEntries);
 
@@ -266,12 +269,13 @@ void HJBuildCache::execute(ExecutionContext& executionCtx, Record& record) const
                 },
                 state);
         },
-        executionCtx.pipelineMemoryProvider.bufferProvider);
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        executionCtx.workerThreadId);
 
     /// Inserting the tuple into the corresponding hash entry
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
     auto entryMemArea = entryRef.getValueMemArea();
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, memoryProvider);
-    pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+    pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider, executionCtx.workerThreadId);
 }
 }

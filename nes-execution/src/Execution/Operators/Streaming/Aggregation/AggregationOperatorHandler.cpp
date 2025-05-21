@@ -57,7 +57,10 @@ const int8_t* AggregationOperatorHandler::getStartOfSliceCacheEntries(const Work
 }
 
 void AggregationOperatorHandler::allocateSliceCacheEntries(
-    const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
+    const uint64_t sizeOfEntry,
+    const uint64_t numberOfEntries,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const WorkerThreadId workerThreadId)
 {
     /// If the slice cache has already been created, we simply return
     if (wasSliceCacheCreated.exchange(true))
@@ -74,7 +77,7 @@ void AggregationOperatorHandler::allocateSliceCacheEntries(
         const auto neededSize = numberOfEntries * sizeOfEntry + sizeof(HitsAndMisses);
         INVARIANT(neededSize > 0, "Size of entry should be larger than 0");
 
-        auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);
+        auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize, workerThreadId);
         INVARIANT(bufferOpt.has_value(), "Buffer provider should return a buffer");
         std::memset(bufferOpt.value().getBuffer(), 0, bufferOpt.value().getBufferSize());
         sliceCacheEntriesBufferForWorkerThreads.emplace_back(bufferOpt.value());
@@ -109,7 +112,8 @@ void AggregationOperatorHandler::triggerSlices(
             const auto aggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(slice);
             for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->getNumberOfHashMaps(); ++hashMapIdx)
             {
-                if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx)); hashMap and hashMap->getNumberOfTuples() > 0)
+                if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
+                    hashMap and hashMap->getNumberOfTuples() > 0)
                 {
                     allHashMaps.emplace_back(hashMap);
                     totalNumberOfTuples += hashMap->getNumberOfTuples();
@@ -128,7 +132,7 @@ void AggregationOperatorHandler::triggerSlices(
         /// - a new hashmap for the probe operator, so that we are not overwriting the thread local hashmaps
         /// - size of EmittedAggregationWindow
         const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(Interface::HashMap*));
-        const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
+        const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize, pipelineCtx->getId());
         if (not tupleBufferVal.has_value())
         {
             throw CannotAllocateBuffer("Could not get a buffer of size {} for the aggregation window trigger", neededBufferSize);

@@ -90,7 +90,7 @@ void HJOperatorHandler::emitSliceIdsToProbe(
     /// - size of EmittedHJWindowTrigger
     const auto neededBufferSize
         = sizeof(EmittedHJWindowTrigger) + ((leftHashMaps.size() + rightHashMaps.size()) * sizeof(Interface::HashMap*));
-    const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
+    const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize, pipelineCtx->getId());
     if (not tupleBufferVal.has_value())
     {
         throw CannotAllocateBuffer("Could not get a buffer of size {} for the aggregation window trigger", neededBufferSize);

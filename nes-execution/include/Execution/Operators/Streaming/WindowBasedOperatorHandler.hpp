@@ -84,12 +84,14 @@ public:
 
     /// Gives the specific operator handler the chance to provide a function that creates new slices
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
-    [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction() const = 0;
+    [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const = 0;
 
 
-    virtual void
-    allocateSliceCacheEntries(const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
+    virtual void allocateSliceCacheEntries(
+        const uint64_t sizeOfEntry,
+        const uint64_t numberOfEntries,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const WorkerThreadId workerThreadId)
         = 0;
 
 

@@ -68,11 +68,13 @@ void NLJBuildCache::setup(ExecutionContext& executionCtx) const
     nautilus::invoke(
         +[](NLJOperatorHandler* opHandler,
             Memory::AbstractBufferProvider* bufferProvider,
+            const WorkerThreadId workerThreadId,
             const uint64_t sizeOfEntryVal,
             const uint64_t numberOfEntriesVal)
-        { opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider); },
+        { opHandler->allocateSliceCacheEntries(sizeOfEntryVal, numberOfEntriesVal, bufferProvider, workerThreadId); },
         globalOperatorHandler,
         executionCtx.pipelineMemoryProvider.bufferProvider,
+        executionCtx.workerThreadId,
         sizeOfEntry,
         numberOfEntries);
 }
@@ -187,6 +189,6 @@ void NLJBuildCache::execute(ExecutionContext& executionCtx, Record& record) cons
 
     /// Write record to the pagedVector
     const Interface::PagedVectorRef pagedVectorRef(nljPagedVectorRef, memoryProvider);
-    pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+    pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider, executionCtx.workerThreadId);
 }
 }

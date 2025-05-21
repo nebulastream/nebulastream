@@ -61,6 +61,7 @@ struct TestParams
 class ChainedHashMapTestUtils : public TestUtils::NautilusTestUtils
 {
 public:
+    WorkerThreadId workerThreadId = INITIAL<WorkerThreadId>;
     std::shared_ptr<Memory::BufferManager> bufferManager;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     std::shared_ptr<Schema> inputSchema;

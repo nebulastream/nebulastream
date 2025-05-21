@@ -51,18 +51,21 @@ public:
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> getCreateNewSlicesFunction() const override;
     void allocateSliceCacheEntries(
-        const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider) override;
+        const uint64_t sizeOfEntry,
+        const uint64_t numberOfEntries,
+        Memory::AbstractBufferProvider* bufferProvider,
+        const WorkerThreadId workerThreadId) override;
     const int8_t* getStartOfSliceCacheEntries(const WorkerThreadId& workerThreadId) const;
 
 
     /// shared_ptr as multiple slices need access to it
     using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;
     std::shared_ptr<NautilusCleanupExec> cleanupStateNautilusFunction;
+
 protected:
     void triggerSlices(
         const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
         PipelineExecutionContext* pipelineCtx) override;
-
 };
 
 }

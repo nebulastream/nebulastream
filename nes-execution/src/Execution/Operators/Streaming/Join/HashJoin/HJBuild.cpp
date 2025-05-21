@@ -142,13 +142,14 @@ void HJBuild::execute(ExecutionContext& ctx, Record& record) const
                 },
                 state);
         },
-        ctx.pipelineMemoryProvider.bufferProvider);
+        ctx.pipelineMemoryProvider.bufferProvider,
+        ctx.workerThreadId);
 
     /// Inserting the tuple into the corresponding hash entry
     const Interface::ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, fieldKeys, fieldValues);
     auto entryMemArea = entryRef.getValueMemArea();
     const Nautilus::Interface::PagedVectorRef pagedVectorRef(entryMemArea, memoryProvider);
-    pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+    pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider, ctx.workerThreadId);
 }
 
 HJBuild::HJBuild(

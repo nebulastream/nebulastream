@@ -46,9 +46,10 @@ uint32_t storeAssociatedTextValueProxy(
     const Memory::TupleBuffer* tupleBuffer,
     Memory::AbstractBufferProvider* bufferProvider,
     const int8_t* textValue,
-    const uint32_t totalVariableSize)
+    const uint32_t totalVariableSize,
+    const WorkerThreadId workerThreadId)
 {
-    auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize);
+    auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize, workerThreadId);
     INVARIANT(buffer.has_value(), "Cannot allocate unpooled buffer of size {}", totalVariableSize);
     std::memcpy(buffer.value().getBuffer<int8_t>(), textValue, totalVariableSize);
     return tupleBuffer->storeChildBuffer(buffer.value());
@@ -83,7 +84,8 @@ VarVal TupleBufferMemoryProvider::storeValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<int8_t*>& fieldReference,
     VarVal value,
-    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider)
+    const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<WorkerThreadId>& workerThreadId)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -101,7 +103,12 @@ VarVal TupleBufferMemoryProvider::storeValue(
     {
         const auto textValue = value.cast<VariableSizedData>();
         const auto childIndex = invoke(
-            storeAssociatedTextValueProxy, recordBuffer.getReference(), bufferProvider, textValue.getReference(), textValue.getTotalSize());
+            storeAssociatedTextValueProxy,
+            recordBuffer.getReference(),
+            bufferProvider,
+            textValue.getReference(),
+            textValue.getTotalSize(),
+            workerThreadId);
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;

@@ -66,10 +66,13 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayo
 }
 
 void DynamicTuple::writeVarSized(
-    std::variant<const uint64_t, const std::string> field, std::string value, Memory::AbstractBufferProvider& bufferProvider)
+    std::variant<const uint64_t, const std::string> field,
+    std::string value,
+    Memory::AbstractBufferProvider& bufferProvider)
 {
+    constexpr WorkerThreadId workerThreadId(INITIAL<WorkerThreadId>);
     const auto valueLength = value.length();
-    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
+    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t), workerThreadId);
     if (childBuffer.has_value())
     {
         auto& childBufferVal = childBuffer.value();

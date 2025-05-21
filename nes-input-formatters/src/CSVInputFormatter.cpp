@@ -119,7 +119,8 @@ public:
         const std::string& fieldDelimiter,
         const std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions,
         const std::vector<size_t>& fieldSizes,
-        Memory::AbstractBufferProvider& bufferProvider)
+        Memory::AbstractBufferProvider& bufferProvider,
+        const WorkerThreadId workerThreadId)
     {
         const boost::char_separator sep{fieldDelimiter.c_str()};
         const boost::tokenizer tupleTokenizer{currentTuple.begin(), currentTuple.end(), sep};
@@ -127,7 +128,7 @@ public:
         for (auto [token, parseFunction, fieldSize] : std::views::zip(tupleTokenizer, fieldParseFunctions, fieldSizes))
         {
             const auto fieldPointer = this->tupleBufferFormatted.getBuffer() + currentFieldOffsetTBFormatted;
-            parseFunction(token, fieldPointer, bufferProvider, getTupleBufferFormatted());
+            parseFunction(token, fieldPointer, bufferProvider, workerThreadId, getTupleBufferFormatted());
             currentFieldOffsetTBFormatted += fieldSize;
         }
     }
@@ -172,7 +173,8 @@ public:
             /// Get next tuple
             const auto currentTuple = getNextTuple();
             /// Parse fields of tuple
-            processCurrentTuple(currentTuple, fieldDelimiter, fieldParseFunctions, fieldSizes, bufferProvider);
+            processCurrentTuple(
+                currentTuple, fieldDelimiter, fieldParseFunctions, fieldSizes, bufferProvider, pipelineExecutionContext.getId());
             /// Progress one tuple
             progressOneTuple();
         }
@@ -271,7 +273,11 @@ private:
 template <typename T>
 auto parseIntegerString()
 {
-    return [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
+    return [](const std::string& fieldValueString,
+              int8_t* fieldPointer,
+              NES::Memory::AbstractBufferProvider&,
+              const WorkerThreadId,
+              Memory::TupleBuffer&)
     {
         const auto sizeOfString = fieldValueString.size();
         T* value = reinterpret_cast<T*>(fieldPointer);
@@ -330,8 +336,11 @@ void addBasicTypeParseFunction(
             break;
         }
         case NES::BasicPhysicalType::NativeType::FLOAT: {
-            const auto validateAndParseFloat
-                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
+            const auto validateAndParseFloat = [](const std::string& fieldValueString,
+                                                  int8_t* fieldPointer,
+                                                  NES::Memory::AbstractBufferProvider&,
+                                                  const WorkerThreadId,
+                                                  Memory::TupleBuffer&)
             {
                 if (fieldValueString.find(',') != std::string_view::npos)
                 {
@@ -344,8 +353,11 @@ void addBasicTypeParseFunction(
             break;
         }
         case NES::BasicPhysicalType::NativeType::DOUBLE: {
-            const auto validateAndParseDouble
-                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
+            const auto validateAndParseDouble = [](const std::string& fieldValueString,
+                                                   int8_t* fieldPointer,
+                                                   NES::Memory::AbstractBufferProvider&,
+                                                   const WorkerThreadId,
+                                                   Memory::TupleBuffer&)
             {
                 if (fieldValueString.find(',') != std::string_view::npos)
                 {
@@ -360,7 +372,11 @@ void addBasicTypeParseFunction(
         case NES::BasicPhysicalType::NativeType::CHAR: {
             ///verify that only a single char was transmitted
             fieldParseFunctions.emplace_back(
-                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
+                [](const std::string& inputString,
+                   int8_t* fieldPointer,
+                   Memory::AbstractBufferProvider&,
+                   const WorkerThreadId,
+                   Memory::TupleBuffer&)
                 {
                     PRECONDITION(inputString.size() == 1, "A char must not have a size bigger than 1.");
                     const auto value = inputString.front();
@@ -372,7 +388,11 @@ void addBasicTypeParseFunction(
         case NES::BasicPhysicalType::NativeType::BOOLEAN: {
             ///verify that a valid bool was transmitted (valid{true,false,0,1})
             fieldParseFunctions.emplace_back(
-                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&, Memory::TupleBuffer&)
+                [](const std::string& inputString,
+                   int8_t* fieldPointer,
+                   Memory::AbstractBufferProvider&,
+                   const WorkerThreadId,
+                   Memory::TupleBuffer&)
                 {
                     const bool value = (strcasecmp(inputString.c_str(), "true") == 0) || (strcasecmp(inputString.c_str(), "1") == 0);
                     if (!value)
@@ -427,6 +447,7 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
                 [](const std::string& inputString,
                    int8_t* fieldPointer,
                    Memory::AbstractBufferProvider& bufferProvider,
+                   const WorkerThreadId workerThreadId,
                    const NES::Memory::TupleBuffer& tupleBufferFormatted)
                 {
                     NES_TRACE(
@@ -434,7 +455,7 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
                         "to tuple buffer",
                         inputString);
                     const auto valueLength = inputString.length();
-                    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
+                    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t), workerThreadId);
                     INVARIANT(childBuffer.has_value(), "Could not store string, because we cannot allocate a child buffer.");
 
                     auto& childBufferVal = childBuffer.value();
@@ -600,7 +621,7 @@ CSVInputFormatter::FormattedTupleIs CSVInputFormatter::processPartialTuple(
     partialTuple.append(lastPartialTuple);
     const auto stateOfPartialTuple = static_cast<FormattedTupleIs>(not(partialTuple.empty()));
     progressTracker.processCurrentTuple(
-        std::move(partialTuple), fieldDelimiter, fieldParseFunctions, fieldSizes, *pipelineExecutionContext.getBufferManager());
+        std::move(partialTuple), fieldDelimiter, fieldParseFunctions, fieldSizes, *pipelineExecutionContext.getBufferManager(), pipelineExecutionContext.getId());
     progressTracker.progressOneTuple();
     return stateOfPartialTuple;
 }

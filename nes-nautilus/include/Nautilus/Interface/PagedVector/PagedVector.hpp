@@ -41,7 +41,10 @@ public:
     PagedVector() = default;
 
     /// Appends a new page to the pages vector if the last page is full.
-    void appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout);
+    void appendPageIfFull(
+        Memory::AbstractBufferProvider* bufferProvider,
+        const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+        const WorkerThreadId workerThreadId);
 
     /// Appends the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);

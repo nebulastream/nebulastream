@@ -115,7 +115,8 @@ void AggregationProbe::open(ExecutionContext& executionCtx, RecordBuffer& record
                         entryRefStatePtr = entryRefStatePtr + aggFunction->getSizeOfStateInBytes();
                     }
                 },
-                executionCtx.pipelineMemoryProvider.bufferProvider);
+                executionCtx.pipelineMemoryProvider.bufferProvider,
+                executionCtx.workerThreadId);
         }
     }
 

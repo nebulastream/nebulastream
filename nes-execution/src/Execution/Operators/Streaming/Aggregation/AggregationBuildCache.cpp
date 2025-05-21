@@ -83,10 +83,12 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
     nautilus::invoke(
         +[](AggregationOperatorHandler* opHandler,
             Memory::AbstractBufferProvider* bufferProvider,
+            const WorkerThreadId workerThreadId,
             const uint64_t sizeOfEntry,
-            const uint64_t numberOfEntries) { opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider); },
+            const uint64_t numberOfEntries) { opHandler->allocateSliceCacheEntries(sizeOfEntry, numberOfEntries, bufferProvider, workerThreadId); },
         globalOperatorHandler,
         executionCtx.pipelineMemoryProvider.bufferProvider,
+        executionCtx.workerThreadId,
         sizeOfEntry,
         numberOfEntries);
 
@@ -137,7 +139,7 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
         +[](AggregationOperatorHandler* opHandler, const WorkerThreadId workerThreadId)
         { return opHandler->getStartOfSliceCacheEntries(workerThreadId); },
         globalOperatorHandler,
-        executionCtx.getWorkerThreadId());
+        executionCtx.workerThreadId);
     const auto hitsRef = startOfSliceEntries;
     const auto missesRef = hitsRef + nautilus::val<uint64_t>(sizeof(uint64_t));
     const auto sliceCacheEntries = startOfSliceEntries + nautilus::val<uint64_t>(sizeof(HitsAndMisses));
@@ -253,7 +255,7 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
                 sliceCacheEntryToReplace,
                 sliceCache->getOperatorHandler(),
                 timestamp,
-                executionCtx.getWorkerThreadId(),
+                executionCtx.workerThreadId,
                 nautilus::val<const AggregationBuildCache*>(this));
         });
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
@@ -283,7 +285,8 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
                 state = state + aggFunction->getSizeOfStateInBytes();
             }
         },
-        executionCtx.pipelineMemoryProvider.bufferProvider);
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        executionCtx.workerThreadId);
 
 
     /// Updating the aggregation states

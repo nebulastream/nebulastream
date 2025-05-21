@@ -218,8 +218,10 @@ void NautilusTestUtils::compileFillBufferFunction(
                             std::generate_n(randomString.begin(), size, randchar);
 
                             /// Adding the random string to the buffer and returning the pointer to the data
+                            constexpr WorkerThreadId workerThreadId(INITIAL<WorkerThreadId>);
                             const auto varSizedPosition
-                                = Memory::MemoryLayouts::writeVarSizedData(*inputBuffer, randomString, *bufferProviderVal).value();
+                                = Memory::MemoryLayouts::writeVarSizedData(*inputBuffer, randomString, *bufferProviderVal, workerThreadId)
+                                      .value();
                             const auto varSizedDataBuffer = inputBuffer->loadChildBuffer(varSizedPosition);
                             return varSizedDataBuffer.getBuffer();
                         },
@@ -235,7 +237,8 @@ void NautilusTestUtils::compileFillBufferFunction(
                 }
             }
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
-            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record, bufferProvider);
+            const nautilus::val<WorkerThreadId> workerThreadId(INITIAL<WorkerThreadId>);
+            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record, bufferProvider, workerThreadId);
             recordBuffer.setNumRecords(i + 1);
         }
     };

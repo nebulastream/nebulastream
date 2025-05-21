@@ -26,7 +26,10 @@
 namespace NES::Nautilus::Interface
 {
 
-void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvider, const Memory::MemoryLayouts::MemoryLayout* memoryLayout)
+void PagedVector::appendPageIfFull(
+    Memory::AbstractBufferProvider* bufferProvider,
+    const Memory::MemoryLayouts::MemoryLayout* memoryLayout,
+    const WorkerThreadId workerThreadId)
 {
     PRECONDITION(bufferProvider != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
     PRECONDITION(memoryLayout != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
@@ -35,10 +38,9 @@ void PagedVector::appendPageIfFull(Memory::AbstractBufferProvider* bufferProvide
 
     if (pages.empty() || pages.back().buffer.getNumberOfTuples() >= memoryLayout->getCapacity())
     {
-        if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
+        if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize(), workerThreadId); page.has_value())
         {
             updateCumulativeSumLastItem();
-            // std::memset(page.value().getBuffer(), 0, page.value().getBufferSize());
             pages.emplace_back(page.value());
         }
         else

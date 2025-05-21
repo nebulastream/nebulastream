@@ -39,11 +39,14 @@ std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t c
     return varSizedData;
 }
 
-std::optional<uint32_t>
-writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view value, Memory::AbstractBufferProvider& bufferProvider)
+std::optional<uint32_t> writeVarSizedData(
+    const Memory::TupleBuffer& buffer,
+    const std::string_view value,
+    Memory::AbstractBufferProvider& bufferProvider,
+    const WorkerThreadId workerThreadId)
 {
     const auto valueLength = value.length();
-    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
+    auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t), workerThreadId);
     if (childBuffer.has_value())
     {
         auto& childBufferVal = childBuffer.value();
@@ -109,6 +112,8 @@ uint64_t MemoryLayout::getBufferSize() const
 void MemoryLayout::setBufferSize(const uint64_t bufferSize)
 {
     MemoryLayout::bufferSize = bufferSize;
+    /// As we have changed the bufferSize, we need to re-calculate the capacity
+    capacity = recordSize > 0 ? bufferSize / recordSize : 0;
 }
 
 std::shared_ptr<PhysicalType> MemoryLayout::getPhysicalType(const uint64_t fieldIndex) const

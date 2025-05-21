@@ -129,7 +129,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
         getAggHashMapProxy,
         operatorHandler,
         timestamp,
-        ctx.getWorkerThreadId(),
+        ctx.workerThreadId,
         nautilus::val<const AggregationBuild*>(this));
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);
 
@@ -157,7 +157,7 @@ void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
                 state = state + aggFunction->getSizeOfStateInBytes();
             }
         },
-        ctx.pipelineMemoryProvider.bufferProvider);
+        ctx.pipelineMemoryProvider.bufferProvider, ctx.workerThreadId);
 
 
     /// Updating the aggregation states

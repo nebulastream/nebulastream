@@ -31,7 +31,7 @@ namespace NES::QueryCompilation::Configurations
 {
 static constexpr auto DEFAULT_NUMBER_OF_PARTITIONS_DATASTRUCTURES = 100;
 static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
-static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
+static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 8196;
 
 class QueryCompilerConfiguration final : public NES::Configurations::BaseConfiguration
 {

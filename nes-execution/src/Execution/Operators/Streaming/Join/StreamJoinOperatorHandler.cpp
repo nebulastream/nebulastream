@@ -53,7 +53,10 @@ const int8_t* StreamJoinOperatorHandler::getStartOfSliceCacheEntries(
 }
 
 void StreamJoinOperatorHandler::allocateSliceCacheEntries(
-    const uint64_t sizeOfEntry, const uint64_t numberOfEntries, Memory::AbstractBufferProvider* bufferProvider)
+    const uint64_t sizeOfEntry,
+    const uint64_t numberOfEntries,
+    Memory::AbstractBufferProvider* bufferProvider,
+    const WorkerThreadId workerThreadId)
 {
     /// If the slice cache has already been created, we simply return
     if (wasSliceCacheCreated.exchange(true))
@@ -68,7 +71,7 @@ void StreamJoinOperatorHandler::allocateSliceCacheEntries(
         const auto neededSize = numberOfEntries * sizeOfEntry + sizeof(HitsAndMisses);
         INVARIANT(neededSize > 0, "Size of entry should be larger than 0");
 
-        auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize);
+        auto bufferOpt = bufferProvider->getUnpooledBuffer(neededSize, workerThreadId);
         INVARIANT(bufferOpt.has_value(), "Buffer provider should return a buffer");
         std::memset(bufferOpt.value().getBuffer(), 0, bufferOpt.value().getBufferSize());
         sliceCacheEntriesBufferForWorkerThreads.emplace_back(bufferOpt.value());
