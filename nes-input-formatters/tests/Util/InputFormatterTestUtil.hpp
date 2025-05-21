@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <numeric>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -190,6 +191,95 @@ struct TestHandle
         schema = Schema{};
     }
 };
+
+inline void sortTupleBuffers(std::vector<Memory::TupleBuffer>& buffers)
+{
+    std::ranges::sort(
+        buffers.begin(),
+        buffers.end(),
+        [](const Memory::TupleBuffer& left, const Memory::TupleBuffer& right)
+        {
+            if (left.getSequenceNumber() == right.getSequenceNumber())
+            {
+                return left.getChunkNumber() < right.getChunkNumber();
+            }
+            return left.getSequenceNumber() < right.getSequenceNumber();
+        });
+}
+
+/// Takes a vector of tuple buffers and allows to iterate over all tuples in the buffers in order
+class TupleIterator
+{
+public:
+    TupleIterator(std::vector<Memory::TupleBuffer> buffers, Schema schema)
+        : schema(std::move(schema))
+        , buffers(std::move(buffers))
+        , currentBuffer(Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(this->buffers.front(), this->schema))
+    {
+    }
+
+    std::optional<Memory::MemoryLayouts::DynamicTuple> getNextTuple()
+    {
+        if (currentTupleIdx >= currentBuffer.getNumberOfTuples())
+        {
+            ++currentBufferIdx;
+            if (currentBufferIdx >= buffers.size())
+            {
+                /// all buffers exhausted
+                return std::nullopt;
+            }
+            currentBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffers.at(currentBufferIdx), schema);
+            currentTupleIdx = 0;
+        }
+        return currentBuffer[currentTupleIdx++];
+    }
+
+private:
+    size_t currentBufferIdx = 0;
+    size_t currentTupleIdx = 0;
+    Schema schema;
+    std::vector<Memory::TupleBuffer> buffers;
+    Memory::MemoryLayouts::TestTupleBuffer currentBuffer;
+};
+
+/// Expects tuple buffers with matching sequence numbers contain the same tuples in the same order
+inline bool compareTestTupleBuffersOrderSensitive(
+    std::vector<Memory::TupleBuffer>& actualResult, std::vector<Memory::TupleBuffer>& expectedResult, Schema schema)
+{
+    sortTupleBuffers(actualResult);
+    sortTupleBuffers(expectedResult);
+
+    bool allTuplesMatch = true;
+    TupleIterator expectedResultTupleIt(std::move(expectedResult), schema);
+    for (const auto& actualResultTupleBuffer : actualResult)
+    {
+        for (auto actualResultTestTupleBuffer
+             = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(actualResultTupleBuffer, schema);
+             const auto& actualResultTuple : actualResultTestTupleBuffer)
+        {
+            if (const auto expectedResultTuple = expectedResultTupleIt.getNextTuple())
+            {
+                if (actualResultTuple != expectedResultTuple)
+                {
+                    NES_ERROR(
+                        "Tuples don't match: {} != {}", actualResultTuple.toString(schema), expectedResultTuple.value().toString(schema));
+                    allTuplesMatch = false;
+                }
+            }
+            else
+            {
+                NES_ERROR("Found actual result tuple: {}, but exhausted expected", actualResultTuple.toString(schema));
+                allTuplesMatch = false;
+            }
+        }
+    }
+    while (const auto additionalRhsTuple = expectedResultTupleIt.getNextTuple())
+    {
+        NES_ERROR("Found expected result tuple: {}, but exhausted actual result tuples", additionalRhsTuple.value().toString(schema));
+        allTuplesMatch = false;
+    }
+    return allTuplesMatch;
+}
 
 inline bool
 checkIfBuffersAreEqual(const Memory::TupleBuffer& leftBuffer, const Memory::TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
