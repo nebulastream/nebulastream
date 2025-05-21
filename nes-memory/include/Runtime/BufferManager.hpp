@@ -135,6 +135,7 @@ public:
     size_t getNumOfUnpooledBuffers() const override;
     size_t getAvailableBuffers() const override;
     size_t getAvailableBuffersInFixedSizePools() const;
+    size_t getSizeOfUnpooledBufferChunks() const;
 
     /**
       * @brief Create a local buffer manager that is assigned to one pipeline or thread
@@ -183,6 +184,7 @@ private:
     uint8_t* lastAllocateChunkPtr;
     folly::Synchronized<RollingAverage<size_t>> rollingAverage;
     mutable std::recursive_mutex unpooledBuffersMutex;
+    std::atomic<size_t> unpooledBufferChunksSize;
 
     mutable std::recursive_mutex availableBuffersMutex;
     std::condition_variable_any availableBuffersCvar;

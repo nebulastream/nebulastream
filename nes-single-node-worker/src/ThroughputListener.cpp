@@ -35,10 +35,12 @@ Timestamp convertToTimeStamp(const ChronoClock::time_point timePoint)
 }
 
 void threadRoutine(
+    std::ofstream& file,
     const std::stop_token& token,
     const Timestamp::Underlying timeIntervalInMilliSeconds,
     folly::MPMCQueue<Event>& events,
-    const std::function<void(const ThroughputListener::CallBackParams&)>& callBack)
+    const std::shared_ptr<Memory::BufferManager>& bufferManager,
+    const std::function<void(std::ofstream&, const ThroughputListener::CallBackParams&)>& callBack)
 {
     PRECONDITION(callBack != nullptr, "Call Back is null");
 
@@ -113,8 +115,9 @@ void threadRoutine(
                        .windowStart = windowStart,
                        .windowEnd = windowEnd,
                        .throughputInBytesPerSec = 0,
-                       .throughputInTuplesPerSec = 0};
-                callBack(callbackParams);
+                       .throughputInTuplesPerSec = 0,
+                       .memoryConsumption = 0};
+                callBack(file, callbackParams);
                 startTimeNoEventsTriggered = curTimePoint;
             }
             continue;
@@ -174,13 +177,18 @@ void threadRoutine(
                             const auto durationInMilliseconds = (endTime - startTime).getRawValue();
                             const auto throughputInBytesPerSec = bytesProcessed / (durationInMilliseconds / 1000.0);
                             const auto throughputInTuplesPerSec = tuplesProcessed / (durationInMilliseconds / 1000.0);
+                            const auto totalSizeOfUsedBuffers
+                                = (bufferManager->getNumOfPooledBuffers() - bufferManager->getAvailableBuffers())
+                                    * bufferManager->getBufferSize()
+                                + bufferManager->getSizeOfUnpooledBufferChunks();
                             const ThroughputListener::CallBackParams callbackParams
                                 = {.queryId = queryId,
                                    .windowStart = startTime,
                                    .windowEnd = endTime,
                                    .throughputInBytesPerSec = throughputInBytesPerSec,
-                                   .throughputInTuplesPerSec = throughputInTuplesPerSec};
-                            callBack(callbackParams);
+                                   .throughputInTuplesPerSec = throughputInTuplesPerSec,
+                                   .memoryConsumption = totalSizeOfUsedBuffers};
+                            callBack(file, callbackParams);
 
                             /// Removing the window, as we do not need it anymore
                             it = endTimeAndThroughputWindow.erase(it);
@@ -202,12 +210,20 @@ void ThroughputListener::onEvent(Event event)
 }
 
 ThroughputListener::ThroughputListener(
-    const Timestamp::Underlying timeIntervalInMilliSeconds, const std::function<void(const CallBackParams&)>& callBack)
-    : timeIntervalInMilliSeconds(timeIntervalInMilliSeconds)
+    const std::filesystem::path& path,
+    const Timestamp::Underlying timeIntervalInMilliSeconds,
+    const std::function<void(std::ofstream&, const CallBackParams&)>& callBack)
+    : file(path, std::ios::out | std::ios::app)
+    , timeIntervalInMilliSeconds(timeIntervalInMilliSeconds)
     , callBack(callBack)
     , calculateThread([this](const std::stop_token& stopToken)
-                      { threadRoutine(stopToken, this->timeIntervalInMilliSeconds, events, this->callBack); })
-
+                      { threadRoutine(file, stopToken, this->timeIntervalInMilliSeconds, events, bufferManager, this->callBack); })
 {
 }
+
+void ThroughputListener::setBufferManager(std::shared_ptr<Memory::BufferManager> bufferManager)
+{
+    this->bufferManager = std::move(bufferManager);
+}
+
 }

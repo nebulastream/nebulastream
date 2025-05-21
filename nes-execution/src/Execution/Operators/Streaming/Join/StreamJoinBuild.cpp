@@ -59,18 +59,6 @@ void updateSlicesProxy(
                 SliceStoreMetaData(
                     workerThreadId, BufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId))));
     }
-
-    /// For creating memory usage metrics
-    const auto now = std::chrono::high_resolution_clock::now();
-    std::cout << std::format(
-        "{},{},{}\n",
-        bufferProvider->getAvailableBuffers(),
-        bufferProvider->getNumOfUnpooledBuffers(),
-        static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count()));
-    /*if (const auto numPooledBuffers = bufferProvider->getNumOfPooledBuffers(); numPooledBuffers != 200000)
-    {
-        std::cout << std::format("NumPooledBuffers={}\n", numPooledBuffers);
-    }*/
 }
 
 StreamJoinBuild::StreamJoinBuild(

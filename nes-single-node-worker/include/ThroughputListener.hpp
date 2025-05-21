@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <fstream>
 #include <thread>
+#include <Runtime/BufferManager.hpp>
 #include <folly/MPMCQueue.h>
 #include <QueryEngineStatisticListener.hpp>
 
@@ -33,19 +34,27 @@ public:
         const Timestamp windowEnd;
         const double throughputInBytesPerSec;
         const double throughputInTuplesPerSec;
+        const size_t memoryConsumption;
     };
 
     void onEvent(Event event) override;
     explicit ThroughputListener(
-        const Timestamp::Underlying timeIntervalInMilliSeconds, const std::function<void(const CallBackParams&)>& callBack);
+        const std::filesystem::path& path,
+        Timestamp::Underlying timeIntervalInMilliSeconds,
+        const std::function<void(std::ofstream&, const CallBackParams&)>& callBack);
+
+    void setBufferManager(std::shared_ptr<Memory::BufferManager> bufferManager);
 
 private:
     std::ofstream file;
     folly::MPMCQueue<Event> events{100};
     const Timestamp::Underlying timeIntervalInMilliSeconds;
 
+    /// BufferManager is needed to record memory consumption
+    std::shared_ptr<Memory::BufferManager> bufferManager;
+
     /// We need to store the callback, as it might go out of scope
-    std::function<void(const CallBackParams&)> callBack;
+    std::function<void(std::ofstream&, const CallBackParams&)> callBack;
     std::jthread calculateThread;
 };
 

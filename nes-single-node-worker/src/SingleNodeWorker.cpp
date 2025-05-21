@@ -36,41 +36,47 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
     /// Writing the current throughput to the log
-    auto callback = [](const Runtime::ThroughputListener::CallBackParams& callBackParams)
+    auto callback = [](std::ofstream& file, const Runtime::ThroughputListener::CallBackParams& callBackParams)
     {
-        /// Helper function to format throughput in SI units
-        auto formatThroughput = [](double throughput, const std::string_view suffix)
+        /// Helper function to format the given value in SI units
+        auto formatValue = [](double value, const std::string_view suffix)
         {
             constexpr std::array<const char*, 5> units = {"", "k", "M", "G", "T"};
             int unitIndex = 0;
 
-            while (throughput >= 1000 && unitIndex < 4)
+            while (value >= 1000 && unitIndex < 4)
             {
-                throughput /= 1000;
+                value /= 1000;
                 unitIndex++;
             }
 
-            return fmt::format("{:.3f} {}{}/s", throughput, units[unitIndex], suffix);
+            return fmt::format("{:.3f} {}{}", value, units[unitIndex], suffix);
         };
 
-        const auto bytesPerSecondMessage = formatThroughput(callBackParams.throughputInBytesPerSec, "B");
-        const auto tuplesPerSecondMessage = formatThroughput(callBackParams.throughputInTuplesPerSec, "Tup");
-        NES_INFO(
-            "Throughput for queryId {} in window {}-{} is {} / {}",
+        const auto bytesPerSecondMessage = formatValue(callBackParams.throughputInBytesPerSec, "B/s");
+        const auto tuplesPerSecondMessage = formatValue(callBackParams.throughputInTuplesPerSec, "Tup/s");
+        const auto memoryConsumptionMessage = formatValue(callBackParams.memoryConsumption, "B");
+        file << fmt::format(
+            "Throughput for queryId {} in window {}-{} is {} / {} and memory consumption is {}\n",
             callBackParams.queryId,
             callBackParams.windowStart,
             callBackParams.windowEnd,
             bytesPerSecondMessage,
-            tuplesPerSecondMessage);
+            tuplesPerSecondMessage,
+            memoryConsumptionMessage);
     };
-    constexpr auto timeIntervalInMilliSeconds = 1000;
-    const auto throughputListener = std::make_shared<Runtime::ThroughputListener>(timeIntervalInMilliSeconds, callback);
+    constexpr auto timeIntervalInMilliSeconds = 100; // TODO(nikla44): doesn't print for time intervals that are larger
+    auto throughputListener = std::make_shared<Runtime::ThroughputListener>(
+        fmt::format("BenchmarkStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()),
+        timeIntervalInMilliSeconds,
+        callback);
 
     const auto printStatisticListener = std::make_shared<Runtime::PrintingStatisticListener>(
         fmt::format("EngineStats_{:%Y-%m-%d_%H-%M-%S}_{:d}.stats", std::chrono::system_clock::now(), ::getpid()));
     queryEngineStatisticsListener = {printStatisticListener, throughputListener};
     systemEventListener = printStatisticListener;
     nodeEngine = Runtime::NodeEngineBuilder(configuration.workerConfiguration, systemEventListener, queryEngineStatisticsListener).build();
+    throughputListener->setBufferManager(nodeEngine->getBufferManager());
 }
 
 /// TODO #305: This is a hotfix to get again unique queryId after our initial worker refactoring.

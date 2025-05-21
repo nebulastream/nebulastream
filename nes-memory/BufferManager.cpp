@@ -186,6 +186,7 @@ void BufferManager::initialize(uint32_t withAlignment)
         auto& currentAllocatedChunk = unpooledBufferChunkStorage[lastAllocateChunkPtr];
         currentAllocatedChunk.totalSize = newAllocationSize;
         currentAllocatedChunk.startOfChunk = ptr;
+        unpooledBufferChunksSize = newAllocationSize;
     }
 }
 
@@ -295,6 +296,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
                     lastAllocateChunkPtr = newlyAllocatedMemory;
                     unpooledBufferChunkStorage[lastAllocateChunkPtr].startOfChunk = newlyAllocatedMemory;
                     unpooledBufferChunkStorage[lastAllocateChunkPtr].totalSize = newAllocationSize;
+                    unpooledBufferChunksSize += newAllocationSize;
                 }
                 else
                 {
@@ -313,6 +315,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
                 unpooledBufferChunkStorage[lastAllocateChunkPtr].totalSize = newAllocationSize;
                 unpooledBufferChunkStorage[lastAllocateChunkPtr].usedSize += alignedBufferSizePlusControlBlock;
                 unpooledBufferChunkStorage[lastAllocateChunkPtr].activeMemorySegments += 1;
+                unpooledBufferChunksSize += newAllocationSize;
             }
         }
     }();
@@ -339,6 +342,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
                 auto extractedChunk = unpooledBufferChunkStorage.extract(copyOLastChunkPtr);
                 unpooledBufferChunkStorage.erase(copyOLastChunkPtr);
                 lock.unlock();
+                unpooledBufferChunksSize -= curUnpooledChunk.totalSize;
                 memoryResource->deallocate(curUnpooledChunk.startOfChunk, curUnpooledChunk.totalSize, DEFAULT_ALIGNMENT);
             }
         });
@@ -401,6 +405,11 @@ size_t BufferManager::getAvailableBuffersInFixedSizePools() const
     const std::unique_lock lock(localBufferPoolsMutex);
     const auto numberOfAvailableBuffers = std::ranges::count_if(localBufferPools, [](auto& weak) { return !weak.expired(); });
     return numberOfAvailableBuffers;
+}
+
+size_t BufferManager::getSizeOfUnpooledBufferChunks() const
+{
+    return unpooledBufferChunksSize;
 }
 
 BufferManagerType BufferManager::getBufferManagerType() const
