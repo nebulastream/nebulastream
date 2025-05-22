@@ -163,6 +163,12 @@ void processSpanningTuple(
     }
 }
 
+enum class QuotationType : uint8_t
+{
+    NONE,
+    DOUBLE_QUOTE
+};
+
 /// InputFormatterTasks concurrently take (potentially) raw input buffers and format all full tuples in these raw input buffers that the
 /// individual InputFormatterTasks see during execution.
 /// The only point of synchronization is a call to the SequenceShredder data structure, which determines which buffers the InputFormatterTask
@@ -180,6 +186,7 @@ public:
         const OriginId originId,
         std::unique_ptr<InputFormatter<FieldAccessFunctionType, FormatterType::UsesNativeFormat>> inputFormatter,
         const Schema& schema,
+        const QuotationType quotationType,
         const std::optional<std::string>& optionalTupleDelimiter)
         : originId(originId), inputFormatter(std::move(inputFormatter))
     {
@@ -214,7 +221,17 @@ public:
             }
             else
             {
-                this->parseFunctions.emplace_back(RawInputDataParser::getBasicStringParseFunction());
+                switch (quotationType)
+                {
+                    case QuotationType::NONE: {
+                        this->parseFunctions.emplace_back(RawInputDataParser::getBasicStringParseFunction());
+                        break;
+                    }
+                    case QuotationType::DOUBLE_QUOTE: {
+                        this->parseFunctions.emplace_back(RawInputDataParser::getQuotedStringParseFunction());
+                        break;
+                    }
+                }
             }
             this->tupleMetaData.fieldSizesInBytes.emplace_back(physicalType->size());
             this->tupleMetaData.fieldOffsetsInBytes.emplace_back() = priorFieldOffset + physicalType->size();

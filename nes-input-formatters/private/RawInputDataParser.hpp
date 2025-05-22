@@ -53,6 +53,7 @@ auto parseFieldString()
 
 /// Takes a vector containing parse function for fields. Adds a parse function that parses strings to the vector.
 ParseFunctionSignature getBasicStringParseFunction();
+ParseFunctionSignature getQuotedStringParseFunction();
 
 /// Takes a vector containing parse function for fields. Adds a parse function that parses a basic NebulaStream type to the vector.
 ParseFunctionSignature getBasicTypeParseFunction(const BasicPhysicalType& basicPhysicalType);

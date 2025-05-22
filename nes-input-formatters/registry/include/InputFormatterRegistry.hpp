@@ -47,11 +47,11 @@ struct InputFormatterRegistryArguments
     /// @tparam: FieldAccessType: function used to index fields when parsing/processing the data of the (raw) input buffer
     /// @tparam: HasSpanningTuple: hardcode to 'true' if format cannot guarantee buffers with tuples that never span across buffers
     template <typename FormatterType, typename FieldAccessType, bool HasSpanningTuple>
-    InputFormatterRegistryReturnType
-    createInputFormatterTaskPipeline(std::unique_ptr<FormatterType> inputFormatter, const std::optional<std::string>& tupleDelimiter)
+    InputFormatterRegistryReturnType createInputFormatterTaskPipeline(
+        std::unique_ptr<FormatterType> inputFormatter, const QuotationType quotationType, const std::optional<std::string>& tupleDelimiter)
     {
         auto inputFormatterTask = InputFormatterTask<FormatterType, FieldAccessType, HasSpanningTuple>(
-            originId, std::move(inputFormatter), schema, tupleDelimiter);
+            originId, std::move(inputFormatter), schema, quotationType, tupleDelimiter);
         return std::make_unique<InputFormatterTaskPipeline>(std::move(inputFormatterTask));
     }
 

@@ -24,6 +24,36 @@
 namespace NES::InputFormatters::RawInputDataParser
 {
 
+ParseFunctionSignature getQuotedStringParseFunction()
+{
+    return [](const std::string_view inputString,
+              const size_t writeOffsetInBytes,
+              Memory::AbstractBufferProvider& bufferProvider,
+              Memory::TupleBuffer& tupleBufferFormatted)
+    {
+        INVARIANT(inputString.length() >= 2, "Input string must be at least 2 characters long.");
+        const auto inputStringWithoutQuotes = inputString.substr(1, inputString.length() - 2);
+        const auto valueLength = inputStringWithoutQuotes.length();
+        auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
+        if (not childBuffer.has_value())
+        {
+            throw CannotAllocateBuffer("Could not store string, because we cannot allocate a child buffer.");
+        }
+
+        auto& childBufferVal = childBuffer.value();
+        *childBufferVal.getBuffer<uint32_t>() = valueLength;
+        std::memcpy(
+            childBufferVal.getBuffer<char>() + sizeof(uint32_t), ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            inputStringWithoutQuotes.data(),
+            valueLength);
+        const auto indexToChildBuffer = tupleBufferFormatted.storeChildBuffer(childBufferVal);
+        auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>( ///NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            tupleBufferFormatted.getBuffer() + writeOffsetInBytes); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        *childBufferIndexPointer = indexToChildBuffer;
+    };
+}
+
+
 ParseFunctionSignature getBasicStringParseFunction()
 {
     return [](const std::string_view inputString,

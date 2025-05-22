@@ -45,11 +45,11 @@ InputFormatterRegistryReturnType InputFormatterGeneratedRegistrar::RegisterNativ
     {
         auto inputFormatter = std::make_unique<NativeInputFormatter<true>>();
         return arguments.createInputFormatterTaskPipeline<NativeInputFormatter<true>, NativeFormatFieldAccess<true>, true>(
-            std::move(inputFormatter), std::nullopt);
+            std::move(inputFormatter), QuotationType::NONE, std::nullopt);
     }
     auto inputFormatter = std::make_unique<NativeInputFormatter<false>>();
     return arguments.createInputFormatterTaskPipeline<NativeInputFormatter<false>, NativeFormatFieldAccess<false>, false>(
-        std::move(inputFormatter), std::nullopt);
+        std::move(inputFormatter), QuotationType::NONE, std::nullopt);
 }
 
 }
