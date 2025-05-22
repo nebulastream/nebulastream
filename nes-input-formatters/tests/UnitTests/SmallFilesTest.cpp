@@ -142,7 +142,7 @@ public:
     };
 
     size_t getNumberOfExpectedBuffers(
-        const TestConfig& testConfig, const std::filesystem::path& testFilePath, const size_t sizeOfSchemaInBytes) const
+        const TestConfig& testConfig, const std::filesystem::path& testFilePath, USED_IN_DEBUG const size_t sizeOfSchemaInBytes) const
     {
         const auto sizeOfFormattedBuffers = WorkerConfiguration().bufferSizeInBytes.getValue();
         PRECONDITION(
@@ -291,6 +291,50 @@ public:
         }
     }
 };
+
+TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumns",
+        .formatterType = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096});
+}
+
+TEST_F(SmallFilesTest, testBimboDataJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "Bimbo",
+        .formatterType = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096});
+}
+
+TEST_F(SmallFilesTest, testFoodDataJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "Food",
+        .formatterType = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096});
+}
+
+TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "Spacecraft_Telemetry",
+        .formatterType = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096});
+}
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
