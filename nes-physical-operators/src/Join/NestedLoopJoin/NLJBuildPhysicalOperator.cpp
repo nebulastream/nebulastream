@@ -56,9 +56,12 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
 
 void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
+    /// Getting the operator handler from the local state
+    const auto localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
+    auto operatorHandler = localState->getOperatorHandler();
+
     /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     const auto sliceReference = invoke(
         +[](OperatorHandler* ptrOpHandler, const Timestamp timestamp)
         {
@@ -67,7 +70,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
             const auto createFunction = opHandler->getCreateNewSlicesFunction();
             return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
         },
-        operatorHandlerRef,
+        operatorHandler,
         timestamp);
     const auto nljPagedVectorMemRef = invoke(
         +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)

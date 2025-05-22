@@ -100,7 +100,10 @@ struct Arena
 /// Nautilus Wrapper for the Arena
 struct ArenaRef
 {
-    explicit ArenaRef(const nautilus::val<Arena*>& arenaRef, const nautilus::val<WorkerThreadId>& workerThreadId) : arenaRef(arenaRef), availableSpaceForPointer(0), spacePointer(nullptr), workerThreadId(workerThreadId) { }
+    explicit ArenaRef(const nautilus::val<Arena*>& arenaRef, const nautilus::val<WorkerThreadId>& workerThreadId)
+        : arenaRef(arenaRef), availableSpaceForPointer(0), spacePointer(nullptr), workerThreadId(workerThreadId)
+    {
+    }
 
     /// Allocates memory from the arena. If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
     nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes)
@@ -111,7 +114,8 @@ struct ArenaRef
         if (availableSpaceForPointer < sizeInBytes)
         {
             spacePointer = nautilus::invoke(
-                +[](Arena* arena, const size_t sizeInBytesVal, const WorkerThreadId workerThreadIdVal) -> int8_t* { return arena->allocateMemory(sizeInBytesVal, workerThreadIdVal); },
+                +[](Arena* arena, const size_t sizeInBytesVal, const WorkerThreadId workerThreadIdVal) -> int8_t*
+                { return arena->allocateMemory(sizeInBytesVal, workerThreadIdVal); },
                 arenaRef,
                 sizeInBytes,
                 workerThreadId);
@@ -138,11 +142,16 @@ private:
 struct PipelineMemoryProvider
 {
     explicit PipelineMemoryProvider(
-        const nautilus::val<Arena*>& arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider, const nautilus::val<WorkerThreadId>& workerThreadId)
+        const nautilus::val<Arena*>& arena,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<WorkerThreadId>& workerThreadId)
         : arena(arena, workerThreadId), bufferProvider(bufferProvider), workerThreadId(workerThreadId)
     {
     }
-    explicit PipelineMemoryProvider(ArenaRef arena, const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider, const nautilus::val<WorkerThreadId>& workerThreadId)
+    explicit PipelineMemoryProvider(
+        ArenaRef arena,
+        const nautilus::val<Memory::AbstractBufferProvider*>& bufferProvider,
+        const nautilus::val<WorkerThreadId>& workerThreadId)
         : arena(std::move(arena)), bufferProvider(bufferProvider), workerThreadId(workerThreadId)
     {
     }
@@ -181,7 +190,6 @@ struct ExecutionContext final
     /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
 
-    std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<WorkerThreadId> workerThreadId;
     PipelineMemoryProvider pipelineMemoryProvider;
@@ -191,6 +199,9 @@ struct ExecutionContext final
     nautilus::val<SequenceNumber> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<ChunkNumber> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
     nautilus::val<bool> lastChunk;
+
+private:
+    std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
 };
 
 }
