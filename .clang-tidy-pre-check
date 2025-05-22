@@ -1,5 +1,6 @@
 Checks: [
-  -clang-diagnostic-*
+  -*,
+  readability-duplicate-include
 ]
 
 WarningsAsErrors: '
