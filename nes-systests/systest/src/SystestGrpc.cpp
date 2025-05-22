@@ -14,6 +14,7 @@
 
 
 #include <cstddef>
+#include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -69,7 +70,7 @@ void GRPCClient::start(size_t queryId) const
     }
 }
 
-NES::Runtime::QuerySummary GRPCClient::status(size_t queryId) const
+NES::QuerySummary GRPCClient::status(size_t queryId) const
 {
     grpc::ClientContext context;
     QuerySummaryRequest request;
@@ -90,7 +91,7 @@ NES::Runtime::QuerySummary GRPCClient::status(size_t queryId) const
     }
 
     /// Convert the gRPC object to a C++ one
-    std::vector<NES::Runtime::QueryRunSummary> runs;
+    std::vector<NES::QueryRunSummary> runs;
     for (auto run : response.runs())
     {
         const std::chrono::system_clock::time_point startTimePoint(std::chrono::milliseconds(run.startunixtimeinms()));
@@ -110,8 +111,8 @@ NES::Runtime::QuerySummary GRPCClient::status(size_t queryId) const
         }
     }
     /// First, we need to cast the gRPC enum value to an int and then to the C++ enum
-    const auto queryStatus(static_cast<NES::Runtime::Execution::QueryStatus>(static_cast<uint8_t>(response.status())));
-    NES::Runtime::QuerySummary querySummary = {.queryId = NES::QueryId(response.queryid()), .currentStatus = queryStatus, .runs = runs};
+    const auto queryStatus(static_cast<NES::QueryStatus>(static_cast<uint8_t>(response.status())));
+    NES::QuerySummary querySummary = {.queryId = NES::QueryId(response.queryid()), .currentStatus = queryStatus, .runs = runs};
     return querySummary;
 }
 

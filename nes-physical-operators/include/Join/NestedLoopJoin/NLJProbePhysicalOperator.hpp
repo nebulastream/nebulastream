@@ -17,11 +17,11 @@
 #include <cstdint>
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
 
 namespace NES

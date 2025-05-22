@@ -18,10 +18,10 @@
 #include <memory>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <WindowProbePhysicalOperator.hpp>

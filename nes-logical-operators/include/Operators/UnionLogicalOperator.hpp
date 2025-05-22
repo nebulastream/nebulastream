@@ -53,6 +53,10 @@ public:
 
     [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override;
 
+    /// Set the schemas directly without inference used for operator registration
+    [[nodiscard]] LogicalOperator setInputSchemas(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] LogicalOperator setOutputSchema(const Schema& outputSchema) const;
+
 private:
     static constexpr std::string_view NAME = "Union";
 
