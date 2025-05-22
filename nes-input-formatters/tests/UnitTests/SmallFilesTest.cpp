@@ -44,7 +44,7 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatterTestUtil.hpp>
 #include <TestTaskQueue.hpp>
-#include "Configuration/WorkerConfiguration.hpp"
+#include <Configuration/WorkerConfiguration.hpp>
 
 namespace
 {
@@ -74,35 +74,15 @@ class SmallFilesTest : public Testing::BaseUnitTest
 
     using enum InputFormatterTestUtil::TestDataTypes;
     std::unordered_map<std::string, TestFile> testFileMap{
-        {"TwoIntegerColumns",
-         TestFile{.fileName = std::filesystem::path("TwoIntegerColumns_20_Lines.csv"), .schemaFieldTypes = {INT32, INT32}}},
-        {"Bimbo_1_1000", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
+        {"TwoIntegerColumns", TestFile{.fileName = "TwoIntegerColumns", .schemaFieldTypes = {INT32, INT32}}},
+        {"Bimbo", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
          TestFile{
-             .fileName = std::filesystem::path("Bimbo_1_1000_Lines.csv"),
+             .fileName = "Bimbo",
              .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
-        {"Food_1", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
-         TestFile{
-             .fileName = std::filesystem::path("Food_1_1000_Lines.csv"),
-             .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
+        {"Food", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Food/
+         TestFile{.fileName = "Food", .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
         {"Spacecraft_Telemetry", /// generated
-         TestFile{
-             .fileName = std::filesystem::path("Spacecraft_Telemetry_1000_Lines.csv"),
-             .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}},
-        {"TwoIntegerColumns_binary",
-         TestFile{.fileName = std::filesystem::path("TwoIntegerColumns_20_Lines_binary.bin"), .schemaFieldTypes = {INT32, INT32}}},
-        {"Bimbo_1_1000_binary",
-         TestFile{
-             .fileName = std::filesystem::path("Bimbo_1_1000_Lines_binary.bin"),
-             .schemaFieldTypes = {INT16, INT16, INT32, INT16, FLOAT64, INT32, INT16, INT32, INT16, INT16, FLOAT64, INT16}}},
-        {"Food_1_binary",
-         TestFile{
-             .fileName = std::filesystem::path("Food_1_1000_Lines_binary.bin"),
-             .schemaFieldTypes = {INT16, INT32, VARSIZED, VARSIZED, INT16, FLOAT64}}},
-        {"Spacecraft_Telemetry_binary", /// generated
-         TestFile{
-             .fileName = std::filesystem::path("Spacecraft_Telemetry_1000_Lines_binary.bin"),
-             .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
-    SourceCatalog sourceCatalog;
+         TestFile{.fileName = "Spacecraft_Telemetry", .schemaFieldTypes = {INT32, UINT32, BOOLEAN, CHAR, VARSIZED, FLOAT32, FLOAT64}}}};
 
 public:
     static void SetUpTestCase()
@@ -362,7 +342,7 @@ TEST_F(SmallFilesTest, testBimboData)
 {
     runTest(
         TestConfig{
-            .testFileName = "Bimbo_1_1000",
+            .testFileName = "Bimbo",
             .formatterType = "CSV",
             .hasSpanningTuples = true,
             .numberOfIterations = 10,
@@ -374,7 +354,7 @@ TEST_F(SmallFilesTest, testFoodData)
 {
     runTest(
         TestConfig{
-            .testFileName = "Food_1",
+            .testFileName = "Food",
             .formatterType = "CSV",
             .hasSpanningTuples = true,
             .numberOfIterations = 1,
@@ -399,7 +379,7 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsNoSpanningBinary)
 {
     runTest(
         TestConfig{
-            .testFileName = "TwoIntegerColumns_binary",
+            .testFileName = "TwoIntegerColumns",
             .formatterType = "Native",
             .hasSpanningTuples = false,
             /// Only one iteration possible, because the InputFormatterTask replaces the number of bytes with the number of tuples in a
@@ -408,6 +388,5 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsNoSpanningBinary)
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 4096});
 }
-
 }
 /// NOLINTEND(readability-magic-numbers)
