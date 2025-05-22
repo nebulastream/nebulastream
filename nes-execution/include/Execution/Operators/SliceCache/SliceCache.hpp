@@ -14,7 +14,7 @@
 
 #pragma once
 #include <functional>
-#include <Execution/Operators/OperatorState.hpp>
+#include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val.hpp>
@@ -42,10 +42,11 @@ struct HitsAndMisses
     uint64_t misses;
 };
 
-class SliceCache : public Operators::OperatorState
+class SliceCache : public Operators::WindowOperatorBuildLocalState
 {
 public:
     explicit SliceCache(
+        const nautilus::val<OperatorHandler*>& operatorHandler,
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,

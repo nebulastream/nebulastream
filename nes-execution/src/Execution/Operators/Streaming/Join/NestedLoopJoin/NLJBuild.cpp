@@ -62,9 +62,12 @@ NLJBuild::NLJBuild(
 
 void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
 {
+    /// Getting the operator handler from the local state
+    auto localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(this));
+    auto operatorHandler = localState->getOperatorHandler();
+
     /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto operatorHandlerRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto sliceReference = invoke(
         +[](OperatorHandler* ptrOpHandler, const Timestamp timestamp)
         {
@@ -73,12 +76,12 @@ void NLJBuild::execute(ExecutionContext& executionCtx, Record& record) const
             const auto createFunction = opHandler->getCreateNewSlicesFunction();
             return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, createFunction)[0].get());
         },
-        operatorHandlerRef,
+        operatorHandler,
         timestamp);
     const auto nljPagedVectorMemRef = invoke(
         getNLJPagedVectorProxy,
         sliceReference,
-        executionCtx.getWorkerThreadId(),
+        executionCtx.workerThreadId,
         nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
 
 

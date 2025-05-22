@@ -26,6 +26,7 @@ class SliceCacheFIFO : public SliceCache
 {
 public:
     SliceCacheFIFO(
+        const nautilus::val<OperatorHandler*>& operatorHandler,
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,

@@ -100,14 +100,17 @@ void HJBuild::setup(ExecutionContext& executionCtx) const
 
 void HJBuild::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Getting the operator handler from the local state
+    auto localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(this));
+    auto operatorHandler = localState->getOperatorHandler();
+
     /// Get the current slice / hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto operatorHandlerRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto hashMapPtr = invoke(
         getHashJoinHashMapProxy,
-        ctx.getGlobalOperatorHandler(operatorHandlerIndex),
+        operatorHandler,
         timestamp,
-        ctx.getWorkerThreadId(),
+        ctx.workerThreadId,
         nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide),
         nautilus::val<const HJBuild*>(this));
     Interface::ChainedHashMapRef hashMap(hashMapPtr, fieldKeys, fieldValues, entriesPerPage, entrySize);

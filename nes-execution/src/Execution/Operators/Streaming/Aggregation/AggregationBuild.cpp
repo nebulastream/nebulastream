@@ -119,11 +119,15 @@ void AggregationBuild::setup(ExecutionContext& executionCtx) const
 
 void AggregationBuild::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Getting the operator handler from the local state
+    auto localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(this));
+    auto operatorHandler = localState->getOperatorHandler();
+
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
         getAggHashMapProxy,
-        ctx.getGlobalOperatorHandler(operatorHandlerIndex),
+        operatorHandler,
         timestamp,
         ctx.getWorkerThreadId(),
         nautilus::val<const AggregationBuild*>(this));

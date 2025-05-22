@@ -87,7 +87,7 @@ void NLJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
         +[](NLJOperatorHandler* opHandler, const WorkerThreadId workerThreadId, const QueryCompilation::JoinBuildSideType joinBuildSide)
         { return opHandler->getStartOfSliceCacheEntries(workerThreadId, joinBuildSide); },
         globalOperatorHandler,
-        executionCtx.getWorkerThreadId(),
+        executionCtx.workerThreadId,
         nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
     const auto hitsRef = startOfSliceEntries;
     const auto missesRef = hitsRef + nautilus::val<uint64_t>(sizeof(uint64_t));
@@ -108,6 +108,7 @@ void NLJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheFIFO>(
+                    globalOperatorHandler,
                     sliceCacheOptions.numberOfEntries,
                     sizeof(SliceCacheEntryFIFO),
                     sliceCacheEntries,
@@ -119,6 +120,7 @@ void NLJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheLRU>(
+                    globalOperatorHandler,
                     sliceCacheOptions.numberOfEntries,
                     sizeof(SliceCacheEntryLRU),
                     sliceCacheEntries,
@@ -130,6 +132,7 @@ void NLJBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& recordBuf
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheSecondChance>(
+                    globalOperatorHandler,
                     sliceCacheOptions.numberOfEntries,
                     sizeof(SliceCacheEntrySecondChance),
                     sliceCacheEntries,
@@ -176,9 +179,9 @@ void NLJBuildCache::execute(ExecutionContext& executionCtx, Record& record) cons
             return nautilus::invoke(
                 createNewNLJSliceProxy,
                 sliceCacheEntryToReplace,
-                globalOperatorHandler,
+                sliceCache->getOperatorHandler(),
                 timestamp,
-                executionCtx.getWorkerThreadId(),
+                executionCtx.workerThreadId,
                 nautilus::val<QueryCompilation::JoinBuildSideType>(joinBuildSide));
         });
 

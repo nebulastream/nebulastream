@@ -16,13 +16,13 @@
 #include <ranges>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/Streaming/HashMapSlice.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheFIFO.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheLRU.hpp>
 #include <Execution/Operators/SliceCache/SliceCacheSecondChance.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationBuildCache.hpp>
 #include <Execution/Operators/Streaming/Aggregation/AggregationOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/HashMapSlice.hpp>
 #include <Execution/Operators/Streaming/WindowOperatorBuild.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -91,7 +91,7 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
         numberOfEntries);
 
     /// Creating the cleanup function for the slice of current stream
-     nautilus::invoke(
+    nautilus::invoke(
         +[](AggregationOperatorHandler* operatorHandler, const AggregationBuildCache* buildOperator)
         {
             nautilus::engine::Options options;
@@ -99,26 +99,28 @@ void AggregationBuildCache::setup(ExecutionContext& executionCtx) const
             const nautilus::engine::NautilusEngine nautilusEngine(options);
             const auto cleanupStateNautilusFunction
                 = std::make_shared<AggregationOperatorHandler::NautilusCleanupExec>(nautilusEngine.registerFunction(
-                std::function(
-                    [copyOfFieldKeys = buildOperator->fieldKeys,
-                     copyOfFieldValues = buildOperator->fieldValues,
-                     copyOfEntriesPerPage = buildOperator->entriesPerPage,
-                     copyOfEntrySize = buildOperator->entrySize,
-                     copyOfAggregationFunctions = buildOperator->aggregationFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
-                    {
-                        const Interface::ChainedHashMapRef hashMapRef(
-                            hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
-                        for (const auto entry : hashMapRef)
+                    std::function(
+                        [copyOfFieldKeys = buildOperator->fieldKeys,
+                         copyOfFieldValues = buildOperator->fieldValues,
+                         copyOfEntriesPerPage = buildOperator->entriesPerPage,
+                         copyOfEntrySize = buildOperator->entrySize,
+                         copyOfAggregationFunctions
+                         = buildOperator->aggregationFunctions](nautilus::val<Nautilus::Interface::HashMap*> hashMap)
                         {
-                            const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, copyOfFieldKeys, copyOfFieldValues);
-                            auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
-                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                            const Interface::ChainedHashMapRef hashMapRef(
+                                hashMap, copyOfFieldKeys, copyOfFieldValues, copyOfEntriesPerPage, copyOfEntrySize);
+                            for (const auto entry : hashMapRef)
                             {
-                                aggFunction->cleanup(state);
-                                state = state + aggFunction->getSizeOfStateInBytes();
+                                const Interface::ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                                    entry, copyOfFieldKeys, copyOfFieldValues);
+                                auto state = static_cast<nautilus::val<Aggregation::AggregationState*>>(entryRefReset.getValueMemArea());
+                                for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                                {
+                                    aggFunction->cleanup(state);
+                                    state = state + aggFunction->getSizeOfStateInBytes();
+                                }
                             }
-                        }
-                    })));
+                        })));
             operatorHandler->cleanupStateNautilusFunction = std::move(cleanupStateNautilusFunction);
         },
         executionCtx.getGlobalOperatorHandler(operatorHandlerIndex),
@@ -155,6 +157,7 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheFIFO>(
+                    globalOperatorHandler,
                     sliceCacheOptions.numberOfEntries,
                     sizeof(SliceCacheEntryFIFO),
                     sliceCacheEntries,
@@ -166,6 +169,7 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheLRU>(
+                    globalOperatorHandler,
                     sliceCacheOptions.numberOfEntries,
                     sizeof(SliceCacheEntryLRU),
                     sliceCacheEntries,
@@ -177,6 +181,7 @@ void AggregationBuildCache::open(ExecutionContext& executionCtx, RecordBuffer& r
             executionCtx.setLocalOperatorState(
                 this,
                 std::make_unique<SliceCacheSecondChance>(
+                    globalOperatorHandler,
                     sliceCacheOptions.numberOfEntries,
                     sizeof(SliceCacheEntrySecondChance),
                     sliceCacheEntries,
@@ -199,7 +204,7 @@ int8_t* createNewAggregationSliceProxy(
     /// If a new aggregation slice is created, we need to set the cleanup function for the aggregation states
     auto wrappedCreateFunction(
         [createFunction = operatorHandler->getCreateNewSlicesFunction(),
-        cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction,
+         cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction,
          buildOperator](const SliceStart sliceStart, const SliceEnd sliceEnd)
         {
             const auto createdSlices = createFunction(sliceStart, sliceEnd);
@@ -221,10 +226,12 @@ int8_t* createNewAggregationSliceProxy(
 
     /// Updating the slice cache entry with the new slice
     const auto newAggregationSlice = std::dynamic_pointer_cast<HashMapSlice>(hashMap[0]);
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets};
+    const CreateNewHashMapSliceArgs hashMapSliceArgs{
+        buildOperator->keySize, buildOperator->valueSize, buildOperator->pageSize, buildOperator->numberOfBuckets};
     sliceCacheEntry->sliceStart = newAggregationSlice->getSliceStart();
     sliceCacheEntry->sliceEnd = newAggregationSlice->getSliceEnd();
-    sliceCacheEntry->dataStructure = reinterpret_cast<int8_t*>(newAggregationSlice->getHashMapPtrOrCreate(workerThreadId, hashMapSliceArgs));
+    sliceCacheEntry->dataStructure
+        = reinterpret_cast<int8_t*>(newAggregationSlice->getHashMapPtrOrCreate(workerThreadId, hashMapSliceArgs));
     return sliceCacheEntry->dataStructure;
 }
 
@@ -244,7 +251,7 @@ void AggregationBuildCache::execute(ExecutionContext& executionCtx, Record& reco
             return nautilus::invoke(
                 createNewAggregationSliceProxy,
                 sliceCacheEntryToReplace,
-                globalOperatorHandler,
+                sliceCache->getOperatorHandler(),
                 timestamp,
                 executionCtx.getWorkerThreadId(),
                 nautilus::val<const AggregationBuildCache*>(this));

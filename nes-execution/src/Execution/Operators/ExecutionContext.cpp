@@ -99,12 +99,6 @@ void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
     nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
 }
 
-
-nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId() const
-{
-    return workerThreadId;
-}
-
 Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op)
 {
     const auto stateEntry = localStateMap.find(op);
@@ -114,8 +108,7 @@ Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Opera
 
 void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state)
 {
-    INVARIANT(not localStateMap.contains(op), "Operators state already registered for operator");
-    localStateMap.emplace(op, std::move(state));
+    localStateMap.insert_or_assign(op, std::move(state));
 }
 
 OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const uint64_t index)

@@ -18,13 +18,14 @@
 namespace NES::Runtime::Execution
 {
 SliceCacheLRU::SliceCacheLRU(
+    const nautilus::val<OperatorHandler*>& operatorHandler,
     const uint64_t numberOfEntries,
     const uint64_t sizeOfEntry,
     const nautilus::val<int8_t*>& startOfEntries,
     const nautilus::val<int8_t*>& startOfDataEntry,
     const nautilus::val<uint64_t*>& hitsRef,
     const nautilus::val<uint64_t*>& missesRef)
-    : SliceCache(numberOfEntries, sizeOfEntry, startOfEntries, startOfDataEntry, hitsRef, missesRef)
+    : SliceCache(operatorHandler, numberOfEntries, sizeOfEntry, startOfEntries, startOfDataEntry, hitsRef, missesRef)
 {
 }
 

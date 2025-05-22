@@ -82,6 +82,10 @@ void WindowOperatorBuild::open(ExecutionContext& executionCtx, RecordBuffer& rec
 {
     /// Initializing the time function
     timeFunction->open(executionCtx, recordBuffer);
+
+    /// Creating the local state for the window operator build.
+    const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
+    executionCtx.setLocalOperatorState(this, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler));
 }
 
 void WindowOperatorBuild::terminate(ExecutionContext& executionCtx) const

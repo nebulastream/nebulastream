@@ -16,10 +16,8 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-/**
- * @brief Base class of all operator state.
- * Actual operators should inherit from this.
- */
+/// Base class for all local operator states. This state is valid for one pipeline invocations, i.e., over one tuple buffer
+/// One common use-case is to store / cache non-changing nautilus::val<> such that they must not be retrieved / computed for every execute()
 class OperatorState
 {
 public:

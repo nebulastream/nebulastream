@@ -17,7 +17,7 @@
 
 namespace NES::Runtime::Execution
 {
-struct SliceCacheEntrySecondChance : SliceCacheFIFO
+struct SliceCacheEntrySecondChance : SliceCacheEntryFIFO
 {
     /// Stores the second chance bit for each entry in the cache.
     bool secondChanceBit;
@@ -28,6 +28,7 @@ class SliceCacheSecondChance final : public SliceCacheFIFO
 {
 public:
     SliceCacheSecondChance(
+        const nautilus::val<OperatorHandler*>& operatorHandler,
         const uint64_t numberOfEntries,
         const uint64_t sizeOfEntry,
         const nautilus::val<int8_t*>& startOfEntries,
