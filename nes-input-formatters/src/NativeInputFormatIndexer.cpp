@@ -14,7 +14,6 @@
 
 #include <NativeInputFormatIndexer.hpp>
 
-
 #include <InputFormatIndexerRegistry.hpp>
 
 namespace NES::InputFormatters
@@ -23,7 +22,7 @@ namespace NES::InputFormatters
 InputFormatIndexerRegistryReturnType
 InputFormatIndexerGeneratedRegistrar::RegisterNativeInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
-    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer>({});
+    return arguments.createInputFormatterTaskPipeline<NativeInputFormatIndexer>({}, RawValueParser::QuotationType::NONE);
 }
 
 }
