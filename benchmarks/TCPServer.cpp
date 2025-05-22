@@ -40,21 +40,28 @@ public:
             /// define random distributions for degreeOfDisorder and ts delay
             std::random_device rd;
             std::mt19937 gen(rd());
-
             std::uniform_int_distribution valueDistrib(0, 10000);
 
-            auto lastSec = std::chrono::high_resolution_clock::now();
+            const auto interval = std::chrono::microseconds(ingestionRate != 0 ? 1000000 / ingestionRate : 0);
+            //std::cout << "Interval: " << static_cast<uint64_t>(interval.count()) << std::endl;
+            auto nextSendTime = std::chrono::high_resolution_clock::now();
+
             while (running && (countLimit == 0 || counter < countLimit))
             {
-                const auto now = std::chrono::high_resolution_clock::now();
-                //if (now.time_since_epoch())
-                (void)ingestionRate;
+                if (ingestionRate > 0)
+                {
+                    std::this_thread::sleep_until(nextSendTime);
+                    nextSendTime += interval;
+
+                    const auto now = std::chrono::high_resolution_clock::now();
+                    payload = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
+                }
 
                 value = valueDistrib(gen);
 
                 std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(payload) + ","
                     + std::to_string(timestamp) + "\n";
-                /// std::cout << "Sending message: " << message;
+                //std::cout << "Sending message: " << message;
                 send(clientSocket, message.c_str(), message.size(), 0);
 
                 timestamp += timeStep;

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#from concurrent.futures import ThreadPoolExecutor
-#from numpy.lib.format import BUFFER_SIZE
 
 import os
 import re
@@ -167,7 +165,6 @@ class PostProcessing:
         pipeline_txt_path = os.path.join(input_folder, self.pipeline_txt)
         with open(pipeline_txt_path, 'r') as file:
             interesting_pipelines = find_pipeline_number(file.read())
-
 
         pattern_worker_file = r"^worker_\d+\.txt$"
         pattern_task_details = (r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+).*?"

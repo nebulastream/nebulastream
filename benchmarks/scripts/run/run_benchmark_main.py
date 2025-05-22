@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import os
 import shutil
 import subprocess
@@ -19,10 +20,9 @@ import time
 import random
 import datetime
 import yaml
-import BenchmarkConfig
-import PostProcessing
 import pathlib
 import copy
+import BenchmarkConfig
 
 # Configuration for compilation
 BUILD_DIR = "cmake-build-relnologging"
@@ -33,17 +33,10 @@ TCP_SERVER = os.path.join(SOURCE_DIR, BUILD_DIR, "benchmarks/tcpserver")
 
 # Configuration for benchmark run
 WAIT_BEFORE_SIGKILL = 5
-MEASURE_INTERVAL = 5
+MEASURE_INTERVAL = 10
 WAIT_BETWEEN_COMMANDS = 2
-NUMBER_OF_TUPLES_GENERATE_PER_SOURCE = 1 * 1000 * 1000 * 1000  # 0 means the source will run indefinitely
 
 # Compilation for misc.
-COMBINED_CSV_FILE_WORKER_STATISTICS = "combined_worker_statistics.csv"
-COMBINED_CSV_FILE_EMIT_STATISTICS = "combined_worker_emit_statistics.csv"
-PIPELINE_TXT = "pipelines.txt"
-CACHE_HITS_MISSES_TXT = "cache_hits_and_misses.txt"
-WORKER_STATISTICS_CSV_PATH = f"/tmp/worker_statistics_{int(time.time())}.csv"
-CACHE_STATISTICS_CSV_PATH = f"/tmp/cache_statistics_{int(time.time())}.csv"
 WORKER_CONFIG = "worker"
 QUERY_CONFIG = "query"
 BENCHMARK_CONFIG_FILE = "benchmark_config.yaml"
@@ -78,10 +71,7 @@ def copy_and_modify_configs(output_folder, current_benchmark_config, tcp_server_
 
     # Query Compiler Configuration
     worker_config_yaml["worker"]["queryCompiler"]["nautilusBackend"] = current_benchmark_config.nautilus_backend
-    worker_config_yaml["worker"]["queryCompiler"]["pipelinesTxtFilePath"] = os.path.abspath(
-        os.path.join(output_folder, PIPELINE_TXT))
-    worker_config_yaml["worker"]["queryCompiler"]["cacheHitsAndMissesFilePath"] = os.path.abspath(
-        os.path.join(output_folder, CACHE_HITS_MISSES_TXT))
+    worker_config_yaml["worker"]["queryCompiler"]["pageSize"] = current_benchmark_config.page_size
 
     # Query Engine Configuration
     worker_config_yaml["worker"]["queryEngine"][
@@ -132,7 +122,7 @@ def start_tcp_servers(starting_ports, current_benchmark_config):
     for port in starting_ports:
         for i in range(benchmark_config.no_physical_sources_per_logical_source):
             for attempt in range(max_retries):
-                cmd = f"{TCP_SERVER} -p {port} -n {NUMBER_OF_TUPLES_GENERATE_PER_SOURCE} -t {current_benchmark_config.timestamp_increment} - i {current_benchmark_config.ingestion_rate}"
+                cmd = f"{TCP_SERVER} -p {port} -n {current_benchmark_config.num_tuples_to_generate} -t {current_benchmark_config.timestamp_increment} -i {current_benchmark_config.ingestion_rate}"
                 # print(f"Trying to start tcp server with {cmd}")
                 process = subprocess.Popen(cmd.split(" "), stdout=subprocess.DEVNULL)
                 time.sleep(WAIT_BETWEEN_COMMANDS)  # Allow server to start
@@ -287,10 +277,10 @@ if __name__ == "__main__":
             f"\033[96mIteration {i}/{total_iterations} completed. ETA: {eta}, Estimated Finish Time: {finish_time.strftime('%Y-%m-%d %H:%M:%S')}\033[0m\n")
 
     # Calling the postprocessing main
-    post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE,
-                                                    COMBINED_CSV_FILE_WORKER_STATISTICS, WORKER_STATISTICS_CSV_PATH,
-                                                    CACHE_STATISTICS_CSV_PATH, CACHE_HITS_MISSES_TXT, PIPELINE_TXT)
-    post_processing.main()
+    # post_processing = PostProcessing.PostProcessing(output_folders, BENCHMARK_CONFIG_FILE,
+    #                                                WORKER_STATISTICS_CSV_PATH,
+    #                                                CACHE_STATISTICS_CSV_PATH, PIPELINE_TXT)
+    # post_processing.main()
 
     # all_paths = " tower-en717:/home/nils/remote_server/nebulastream-public/".join(output_folders)
     # copy_command = f"rsync -avz --progress tower-en717:/home/nils/remote_server/nebulastream-public/{all_paths} /home/nils/Downloads/"
