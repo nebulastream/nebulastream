@@ -148,8 +148,8 @@ ParseFunctionSignature getParseFunction(const DataType::Type physicalType, const
 {
     if (physicalType == DataType::Type::VARSIZED)
     {
-        return getBasicTypeParseFunction(physicalType, quotationType);
+        return getStringParseFunction(quotationType);
     }
-    return getStringParseFunction(quotationType);
+    return getBasicTypeParseFunction(physicalType, quotationType);
 }
 }

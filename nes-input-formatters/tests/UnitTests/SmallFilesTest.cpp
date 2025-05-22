@@ -291,6 +291,50 @@ public:
     }
 };
 
+TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumns",
+        .formatterType = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096});
+}
+
+TEST_F(SmallFilesTest, testBimboDataJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "Bimbo",
+        .formatterType = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096});
+}
+
+TEST_F(SmallFilesTest, testFoodDataJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "Food",
+        .formatterType = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096});
+}
+
+TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
+{
+    runTest(TestConfig{
+        .testFileName = "Spacecraft_Telemetry",
+        .formatterType = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 4096});
+}
+
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
     runTest(TestConfig{
