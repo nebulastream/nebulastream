@@ -31,6 +31,7 @@
 #include <boost/system/detail/error_code.hpp>
 
 #include <ErrorHandling.hpp>
+#include <stop_token>
 
 namespace NES
 {
