@@ -396,7 +396,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
 
                     /// We are waiting if we have reached the maximum number of concurrent queries
                     runningQueryCount.fetch_add(1);
-                    while (runningQueryCount.load() <= numConcurrentQueries)
+                    while (runningQueryCount.load() >= numConcurrentQueries)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds(25));
                     }
@@ -408,29 +408,31 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
 
     while (not finishedProducing or runningQueryCount > 0)
     {
-        auto runningQueriesLock = runningQueries.wlock();
-        for (auto runningQueriesIter = runningQueriesLock->begin(); runningQueriesIter != runningQueriesLock->end();)
         {
-            const auto& runningQuery = *runningQueriesIter;
-            if (runningQuery and (client.status(runningQuery->queryId.getRawValue()).currentStatus == Runtime::Execution::QueryStatus::Stopped or client.status(runningQuery->queryId.getRawValue()).currentStatus == Runtime::Execution::QueryStatus::Failed))
+            auto runningQueriesLock = runningQueries.wlock();
+            for (auto runningQueriesIter = runningQueriesLock->begin(); runningQueriesIter != runningQueriesLock->end();)
             {
-                client.unregister(runningQuery->queryId.getRawValue());
-                runningQuery->querySummary = client.status(runningQuery->queryId.getRawValue());
-                auto errorMessage = checkResult(*runningQuery);
+                const auto& runningQuery = *runningQueriesIter;
+                if (runningQuery and (client.status(runningQuery->queryId.getRawValue()).currentStatus == Runtime::Execution::QueryStatus::Stopped or client.status(runningQuery->queryId.getRawValue()).currentStatus == Runtime::Execution::QueryStatus::Failed))
+                {
+                    client.unregister(runningQuery->queryId.getRawValue());
+                    runningQuery->querySummary = client.status(runningQuery->queryId.getRawValue());
+                    auto errorMessage = checkResult(*runningQuery);
                 runningQuery->passed = not errorMessage.has_value();
 
-                printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries, "");
-                if (errorMessage.has_value())
-                {
-                    failedQueries.wlock()->emplace_back(*runningQuery);
+                    printQueryResultToStdOut(*runningQuery, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries, "");
+                    if (errorMessage.has_value())
+                    {
+                        failedQueries.wlock()->emplace_back(*runningQuery);
+                    }
+                    runningQueriesIter = runningQueriesLock->erase(runningQueriesIter);
+                    runningQueryCount.fetch_sub(1);
+                    cv.notify_one();
                 }
-                runningQueriesIter = runningQueriesLock->erase(runningQueriesIter);
-                runningQueryCount.fetch_sub(1);
-                cv.notify_one();
-            }
-            else
-            {
-                ++runningQueriesIter;
+                else
+                {
+                    ++runningQueriesIter;
+                }
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
