@@ -15,16 +15,22 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <ranges>
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/OptionVisitor.hpp>
+#include <Configurations/ReadingVisitor.hpp>
+#include <Configurations/WritingVisitor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 
+
 namespace NES::Configurations
 {
+
+
 
 BaseConfiguration::BaseConfiguration(const std::string& name, const std::string& description) : BaseOption(name, description) { };
 
@@ -162,19 +168,42 @@ void BaseConfiguration::clear()
     }
 };
 
-void BaseConfiguration::accept(OptionVisitor& visitor)
+void BaseConfiguration::accept(ReadingVisitor& visitor) const
 {
-    if (!name.empty())
-    {
-        visitor.visitConcrete(getName(), getDescription(), "");
-    }
+    visitor.push(*this);
     for (auto& option : getOptions())
     {
-        visitor.push();
         option->accept(visitor);
-        visitor.pop();
     }
+    visitor.pop(*this);
 };
+
+void BaseConfiguration::accept(WritingVisitor& visitor)
+{
+    visitor.push(*this);
+    for (auto& option : getOptions())
+    {
+        option->accept(visitor);
+    }
+    visitor.pop(*this);
+}
+
+bool BaseConfiguration::operator==(const BaseOption& other) const
+{
+    if (const auto* otherBaseConfiguration = dynamic_cast<const BaseConfiguration*>(&other))
+    {
+        return std::ranges::equal(
+            getOptions(), otherBaseConfiguration->getOptions(), [](const auto& lhs, const auto& rhs) { return *lhs == *rhs; });
+    }
+    return false;
+};
+
+std::vector<const BaseOption*> BaseConfiguration::getOptions() const
+{
+    return const_cast<BaseConfiguration*>(this)->getOptions()
+        | std::views::transform([](const auto& ptr) -> const BaseOption* { return ptr; }) | ranges::to<std::vector>();
+}
+
 
 std::unordered_map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap()
 {
@@ -185,68 +214,6 @@ std::unordered_map<std::string, Configurations::BaseOption*> BaseConfiguration::
         optionMap[identifier] = option;
     }
     return optionMap;
-}
-
-bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath, WorkerId workerId, bool withOverwrite)
-{
-    std::ifstream configFile(yamlFilePath);
-    std::stringstream ss;
-    std::string searchKey = "workerId: ";
-
-    if (!withOverwrite)
-    {
-        std::string yamlValueAsString = workerId.toString();
-        std::string yamlConfigValue = "\n" + searchKey + yamlValueAsString;
-
-        if (!yamlFilePath.empty())
-        {
-            if (!std::filesystem::exists(yamlFilePath))
-            {
-                NES_WARNING("Worker.yaml was not found. Creating a new file.");
-            }
-            configFile >> ss.rdbuf();
-            try
-            {
-                std::ofstream output;
-                output.open(yamlFilePath, std::ios::app); /// append mode
-                output << yamlConfigValue;
-            }
-            catch (const std::exception& e)
-            {
-                throw InvalidConfigParameter("Exception while persisting in yaml file", e.what());
-            }
-        }
-        else
-        {
-            NES_ERROR("BaseConfiguration: yamlFilePath is empty.");
-            return false;
-        }
-    }
-    else
-    {
-        ss << configFile.rdbuf();
-        std::string yamlContent = ss.str();
-
-        size_t startPos = yamlContent.find(searchKey);
-        if (startPos != std::string::npos)
-        {
-            /// move the position to the start of the value
-            startPos += searchKey.size();
-            /// find the end of the line
-            size_t endPos = yamlContent.find('\n', startPos);
-            /// replace the old value with the new value for workerId
-            yamlContent.replace(startPos, endPos - startPos, workerId.toString());
-        }
-        else
-        {
-            return false;
-        }
-
-        std::ofstream output(yamlFilePath);
-        output << yamlContent;
-    }
-    configFile.close();
-    return true;
 }
 
 }
