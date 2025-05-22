@@ -141,8 +141,8 @@ public:
         std::string currentTestFilePath;
     };
 
-    size_t
-    getNumberOfExpectedBuffers(const TestConfig& testConfig, const std::filesystem::path& testFilePath, size_t sizeOfSchemaInBytes) const
+    size_t getNumberOfExpectedBuffers(
+        const TestConfig& testConfig, const std::filesystem::path& testFilePath, const size_t sizeOfSchemaInBytes) const
     {
         const auto sizeOfFormattedBuffers = WorkerConfiguration().bufferSizeInBytes.getValue();
         PRECONDITION(

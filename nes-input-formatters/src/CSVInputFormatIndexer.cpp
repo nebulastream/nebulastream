@@ -112,7 +112,7 @@ InputFormatIndexerRegistryReturnType
 RegisterCSVInputFormatIndexer(InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
     return arguments.createInputFormatterTaskPipeline(
-        CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()));
+        CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()), QuotationType::NONE);
 }
 
 std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj)
