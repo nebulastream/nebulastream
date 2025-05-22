@@ -30,8 +30,10 @@
 
 namespace
 {
+
+template <NES::InputFormatters::InputFormatIndexerType Formatter>
 void initializeIndexFunctionForTuple(
-    NES::InputFormatters::FieldOffsets& fieldOffsets,
+    typename Formatter::FieldIndexFunctionType& fieldOffsets,
     const std::string_view tuple,
     const NES::InputFormatters::FieldIndex startIdxOfTuple,
     const NES::ParserConfig& config,
@@ -67,7 +69,7 @@ CSVInputFormatIndexer::CSVInputFormatIndexer(ParserConfig config, const size_t n
 {
 }
 
-void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const
+void CSVInputFormatIndexer::indexRawBuffer(FieldIndexFunctionType& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const
 {
     fieldOffsets.startSetup(numberOfFieldsInSchema, this->config.fieldDelimiter.size());
 
@@ -94,7 +96,8 @@ void CSVInputFormatIndexer::indexRawBuffer(FieldOffsets& fieldOffsets, const Raw
         const auto nextTuple = rawBuffer.getBufferView().substr(startIdxOfNextTuple, sizeOfNextTuple);
 
         /// Determine the offsets to the individual fields of the next tuple, including the start of the first and the end of the last field
-        initializeIndexFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, this->config, this->numberOfFieldsInSchema);
+        initializeIndexFunctionForTuple<CSVInputFormatIndexer>(
+            fieldOffsets, nextTuple, startIdxOfNextTuple, this->config, this->numberOfFieldsInSchema);
         fieldOffsets.writeOffsetsOfNextTuple(); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
@@ -110,7 +113,8 @@ InputFormatIndexerRegistryReturnType InputFormatIndexerGeneratedRegistrar::Regis
     InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
     return arguments.createInputFormatterTaskPipeline(
-        CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()), RawValueParser::QuotationType::NONE);
+        CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()),
+        RawValueParser::QuotationType::NONE);
 }
 
 std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj)

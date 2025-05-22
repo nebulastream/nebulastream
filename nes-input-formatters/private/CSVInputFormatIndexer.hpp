@@ -43,12 +43,12 @@ public:
     static constexpr bool IsFormattingRequired = true;
     static constexpr bool HasSpanningTuple = true;
     using IndexerMetaData = CSVMetaData;
-    using FieldIndexFunctionType = FieldOffsets;
+    using FieldIndexFunctionType = FieldOffsets<NumRequiredOffsetsPerField::ONE>;
 
     explicit CSVInputFormatIndexer(ParserConfig config, size_t numberOfFieldsInSchema);
     ~CSVInputFormatIndexer() = default;
 
-    void indexRawBuffer(FieldOffsets& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const;
+    void indexRawBuffer(FieldIndexFunctionType& fieldOffsets, const RawTupleBuffer& rawBuffer, const IndexerMetaData&) const;
 
     friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
 

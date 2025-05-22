@@ -25,7 +25,6 @@
 #include <utility>
 
 #include <Configurations/Descriptor.hpp>
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -38,10 +37,11 @@
 
 namespace
 {
+
 void setupFieldAccessFunctionForTuple(
-    NES::InputFormatters::FieldOffsets<NES::InputFormatters::JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
+    NES::InputFormatters::FieldIndexFunctionType auto& fieldOffsets,
     const std::string_view tuple,
-    const NES::InputFormatters::FieldOffsetsType startIdxOfTuple,
+    const NES::InputFormatters::FieldIndex startIdxOfTuple,
     const size_t numberOfFieldsInSchema)
 {
     using JSONFormatter = NES::InputFormatters::JSONInputFormatter;
@@ -51,15 +51,15 @@ void setupFieldAccessFunctionForTuple(
     for (size_t nextFieldEnd = tuple.find(JSONFormatter::FIELD_DELIMITER, 0); nextFieldEnd != std::string_view::npos;
          nextFieldEnd = tuple.find(JSONFormatter::FIELD_DELIMITER, nextFieldStart))
     {
-        const NES::InputFormatters::FieldOffsetsType startOfFieldInBuffer = startIdxOfTuple + nextFieldStart;
-        const NES::InputFormatters::FieldOffsetsType endOfFieldInBuffer = startIdxOfTuple + nextFieldEnd;
+        const NES::InputFormatters::FieldIndex startOfFieldInBuffer = startIdxOfTuple + nextFieldStart;
+        const NES::InputFormatters::FieldIndex endOfFieldInBuffer = startIdxOfTuple + nextFieldEnd;
         fieldOffsets.writeOffsetAt({startOfFieldInBuffer, endOfFieldInBuffer}, fieldIdx);
         ++fieldIdx;
         nextFieldStart = tuple.find(JSONFormatter::KEY_VALUE_DELIMITER, nextFieldEnd) + 1;
     }
     /// The last delimiter is the size of the tuple itself, which allows the next phase to determine the last field without any extra calculations
-    const NES::InputFormatters::FieldOffsetsType startOfLastFieldInBuffer = startIdxOfTuple + nextFieldStart;
-    const NES::InputFormatters::FieldOffsetsType endOfLastFieldInBuffer = endIdxOfTuple - 1;
+    const NES::InputFormatters::FieldIndex startOfLastFieldInBuffer = startIdxOfTuple + nextFieldStart;
+    const NES::InputFormatters::FieldIndex endOfLastFieldInBuffer = endIdxOfTuple - 1;
     fieldOffsets.writeOffsetAt({startOfLastFieldInBuffer, endOfLastFieldInBuffer}, fieldIdx);
     if (fieldIdx + 1 != numberOfFieldsInSchema)
     {
@@ -77,16 +77,15 @@ JSONInputFormatter::JSONInputFormatter(const ParserConfig&, const size_t numberO
 {
 }
 
-void JSONInputFormatter::indexRawBuffer(
-    FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const JSONMetaData&) const
+void JSONInputFormatter::indexRawBuffer(FieldIndexFunctionType& fieldOffsets, const RawTupleBuffer& rawBuffer, const JSONMetaData&) const
 {
     fieldOffsets.startSetup(numberOfFieldsInSchema, FIELD_DELIMITER);
 
-    const auto offsetOfFirstTupleDelimiter = static_cast<FieldOffsetsType>(rawBuffer.getBufferView().find(TUPLE_DELIMITER));
+    const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(TUPLE_DELIMITER));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTupleDelimiter' to a value larger than the buffer size to tell
     /// the InputFormatterTask that there was no tuple delimiter in the buffer and return
-    if (offsetOfFirstTupleDelimiter == static_cast<FieldOffsetsType>(std::string::npos))
+    if (offsetOfFirstTupleDelimiter == static_cast<FieldIndex>(std::string::npos))
     {
         fieldOffsets.markNoTupleDelimiters();
         return;
@@ -116,23 +115,26 @@ void JSONInputFormatter::indexRawBuffer(
     fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
 }
 
-std::ostream& JSONInputFormatter::toString(std::ostream& os) const
+std::ostream& operator<<(std::ostream& os, const JSONInputFormatter&)
 {
-    return os << fmt::format("JSONInputFormatter(tupleDelimiter: {}, fieldDelimiter: {})", TUPLE_DELIMITER, FIELD_DELIMITER);
+    return os << fmt::format(
+               "JSONInputFormatter(tupleDelimiter: {}, fieldDelimiter: {})",
+               JSONInputFormatter::TUPLE_DELIMITER,
+               JSONInputFormatter::FIELD_DELIMITER);
 }
 
 
-NES::Configurations::DescriptorConfig::Config JSONInputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
+NES::DescriptorConfig::Config JSONInputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersJSON>(std::move(config), NAME);
+    return DescriptorConfig::validateAndFormat<ConfigParametersJSON>(std::move(config), NAME);
 }
 
 InputFormatIndexerRegistryReturnType
 InputFormatIndexerGeneratedRegistrar::RegisterJSONInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
-    auto inputFormatter = std::make_unique<JSONInputFormatter>(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema());
-    return arguments.createInputFormatterTaskPipeline<JSONInputFormatter, FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>, JSONMetaData, true>(
-        std::move(inputFormatter), RawValueParser::QuotationType::DOUBLE_QUOTE);
+    return arguments.createInputFormatterTaskPipeline<JSONInputFormatter>(
+        JSONInputFormatter(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()),
+        RawValueParser::QuotationType::DOUBLE_QUOTE);
 }
 
 }

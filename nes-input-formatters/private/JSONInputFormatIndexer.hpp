@@ -22,15 +22,13 @@
 #include <unordered_map>
 
 #include <Configurations/Descriptor.hpp>
-#include <InputFormatters/InputFormatIndexer.hpp>
 #include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <FieldOffsets.hpp>
+#include <InputFormatIndexer.hpp>
 
 namespace NES::InputFormatters
 {
-constexpr auto JSON_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::TWO;
-
 struct JSONMetaData
 {
     explicit JSONMetaData(const ParserConfig& config, Schema) : tupleDelimiter(config.tupleDelimiter) { };
@@ -41,10 +39,14 @@ private:
     std::string tupleDelimiter;
 };
 
-class JSONInputFormatter final
-    : public InputFormatIndexer<FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>, JSONMetaData, /* IsFormattingRequired */ true>
+class JSONInputFormatter final : public InputFormatIndexer<JSONInputFormatter>
 {
 public:
+    using FieldIndexFunctionType = FieldOffsets<NumRequiredOffsetsPerField::TWO>;
+    using IndexerMetaData = JSONMetaData;
+    static constexpr bool IsFormattingRequired = true;
+    static constexpr bool HasSpanningTuple = true;
+
     static constexpr std::string_view NAME = "JSON";
     static constexpr char DELIMITER_SIZE = sizeof(char);
     static constexpr char TUPLE_DELIMITER = '\n';
@@ -52,18 +54,11 @@ public:
     static constexpr char FIELD_DELIMITER = ',';
 
     explicit JSONInputFormatter(const ParserConfig& config, size_t numberOfFieldsInSchema);
-    ~JSONInputFormatter() override = default;
 
-    JSONInputFormatter(const JSONInputFormatter&) = delete;
-    JSONInputFormatter& operator=(const JSONInputFormatter&) = delete;
-    JSONInputFormatter(JSONInputFormatter&&) = delete;
-    JSONInputFormatter& operator=(JSONInputFormatter&&) = delete;
+    void indexRawBuffer(FieldIndexFunctionType& fieldOffsets, const RawTupleBuffer& rawBuffer, const IndexerMetaData&) const;
 
-    void indexRawBuffer(
-        FieldOffsets<JSON_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const JSONMetaData&) const override;
-
-    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
-    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    friend std::ostream& operator<<(std::ostream& os, const JSONInputFormatter& obj);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
 private:
     size_t numberOfFieldsInSchema;
@@ -71,7 +66,7 @@ private:
 
 struct ConfigParametersJSON
 {
-    static inline const std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap();
+    static inline const std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap();
 };
 }
