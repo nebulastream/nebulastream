@@ -15,7 +15,7 @@
 #pragma once
 #include <atomic>
 #include <cstdint>
-#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 
 namespace NES

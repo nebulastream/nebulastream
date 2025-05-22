@@ -214,6 +214,22 @@ SerializableOperator UnionLogicalOperator::serialize() const
     return serializableOperator;
 }
 
+LogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
+{
+    auto copy = *this;
+    INVARIANT(inputSchemas.size() == 2, "Expected 2 input schemas.");
+    copy.leftInputSchema.copyFields(inputSchemas[0]);
+    copy.rightInputSchema.copyFields(inputSchemas[1]);
+    return copy;
+}
+
+LogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputSchema) const
+{
+    auto copy = *this;
+    copy.outputSchema.copyFields(outputSchema);
+    return copy;
+}
+
 LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(NES::LogicalOperatorRegistryArguments arguments)
 {
     auto logicalOperator = UnionLogicalOperator();
@@ -221,9 +237,13 @@ LogicalOperator LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(
     {
         logicalOperator.id = *id;
     }
-    return logicalOperator.withInferredSchema(arguments.inputSchemas)
-        .withInputOriginIds(arguments.inputOriginIds)
-        .withOutputOriginIds(arguments.outputOriginIds);
+    auto logicalOp = logicalOperator.withInputOriginIds(arguments.inputOriginIds)
+                         .withOutputOriginIds(arguments.outputOriginIds)
+                         .get<UnionLogicalOperator>()
+                         .setInputSchemas(arguments.inputSchemas)
+                         .get<UnionLogicalOperator>()
+                         .setOutputSchema(arguments.outputSchema);
+    return logicalOp;
 }
 
 }

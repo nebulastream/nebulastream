@@ -29,7 +29,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/color.h>
@@ -43,6 +43,7 @@
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorker.hpp>
+#include <SingleNodeWorkerRPCService.pb.h>
 #include <SystestGrpc.hpp>
 #include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
@@ -222,9 +223,9 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
             config.query = query;
             auto plan = createFullySpecifiedQueryPlan(config);
             std::unordered_map<std::string, std::pair<std::filesystem::path, uint64_t>> sourceNamesToFilepathAndCountForQuery;
-            for (const auto& logicalSource : plan->getSourceOperators<SourceDescriptorLogicalOperator>())
+            for (const auto& logicalSource : NES::getOperatorByType<SourceDescriptorLogicalOperator>(*plan))
             {
-                const auto sourceName = logicalSource->getSourceDescriptor()->logicalSourceName;
+                const auto sourceName = logicalSource.getSourceDescriptor()->logicalSourceName;
                 if (sourceNamesToFilepath.contains(sourceName))
                 {
                     auto& entry = sourceNamesToFilepathAndCountForQuery[sourceName];
@@ -234,7 +235,7 @@ std::vector<LoadedQueryPlan> loadFromSLTFile(
                 throw CannotLoadConfig("SourceName {} does not exist in sourceNamesToFilepathAndCount!");
             }
             INVARIANT(not sourceNamesToFilepathAndCountForQuery.empty(), "sourceNamesToFilepathAndCountForQuery should not be empty!");
-            plans.emplace_back(plan, query, sinkNamesToSchema[sinkName], sourceNamesToFilepathAndCountForQuery);
+            plans.emplace_back(*plan, query, sinkNamesToSchema[sinkName], sourceNamesToFilepathAndCountForQuery);
         });
     try
     {
@@ -323,12 +324,12 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                     }
 
                     if (const auto queryStatus = querySummary->currentStatus;
-                        queryStatus == Runtime::Execution::QueryStatus::Stopped or queryStatus == Runtime::Execution::QueryStatus::Failed)
+                        queryStatus == QueryStatus::Stopped or queryStatus == QueryStatus::Failed)
                     {
                         worker.unregisterQuery(QueryId(runningQuery->queryId));
 
                         std::optional<std::string> errorMessage;
-                        if (queryStatus == Runtime::Execution::QueryStatus::Failed)
+                        if (queryStatus == QueryStatus::Failed)
                         {
                             errorMessage
                                 = querySummary->runs.back().error.transform([](auto ex) { return ex.what(); }).value_or("No Error Message");
@@ -389,7 +390,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
                         return;
                     }
 
-                    const auto queryId = client.registerQuery(*query.queryPlan);
+                    const auto queryId = client.registerQuery(query.queryPlan);
                     client.start(queryId);
                     auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                     runningQueries.wlock()->emplace_back(std::move(runningQueryPtr));
@@ -412,7 +413,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
         for (auto runningQueriesIter = runningQueriesLock->begin(); runningQueriesIter != runningQueriesLock->end();)
         {
             const auto& runningQuery = *runningQueriesIter;
-            if (runningQuery and (client.status(runningQuery->queryId.getRawValue()).currentStatus == Runtime::Execution::QueryStatus::Stopped or client.status(runningQuery->queryId.getRawValue()).currentStatus == Runtime::Execution::QueryStatus::Failed))
+            if (runningQuery and (client.status(runningQuery->queryId.getRawValue()).currentStatus == QueryStatus::Stopped or client.status(runningQuery->queryId.getRawValue()).currentStatus == QueryStatus::Failed))
             {
                 client.unregister(runningQuery->queryId.getRawValue());
                 runningQuery->querySummary = client.status(runningQuery->queryId.getRawValue());
@@ -459,7 +460,7 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
     return failedQueries;
 }
 
-Runtime::QuerySummary waitForQueryTermination(SingleNodeWorker& worker, QueryId queryId)
+QuerySummary waitForQueryTermination(SingleNodeWorker& worker, QueryId queryId)
 {
     while (true)
     {
@@ -467,7 +468,7 @@ Runtime::QuerySummary waitForQueryTermination(SingleNodeWorker& worker, QueryId 
         const auto summary = worker.getQuerySummary(queryId);
         if (summary)
         {
-            if (summary->currentStatus == Runtime::Execution::QueryStatus::Stopped)
+            if (summary->currentStatus == QueryStatus::Stopped)
             {
                 return *summary;
             }

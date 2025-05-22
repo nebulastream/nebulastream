@@ -105,8 +105,8 @@ SerializableFunction GreaterEqualsLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(right.serialize());
     serializedFunction.add_children()->CopyFrom(left.serialize());
+    serializedFunction.add_children()->CopyFrom(right.serialize());
     DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
     return serializedFunction;
 }

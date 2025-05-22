@@ -28,6 +28,7 @@
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Iterators/BFSIterator.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
@@ -137,55 +138,14 @@ getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::sha
         TimestampField::eventTime(timeStampFieldNameRight, windowType->getTimeCharacteristic().getTimeUnit())};
 }
 
-static void flattenAllChildrenHelper(
-    const LogicalFunction& node, std::vector<LogicalFunction>& allChildren, const LogicalFunction& excludedNode, bool allowDuplicate)
-{
-    for (const auto& currentNode : node.getChildren())
-    {
-        if (allowDuplicate)
-        {
-            allChildren.push_back(currentNode);
-            flattenAllChildrenHelper(currentNode, allChildren, excludedNode, allowDuplicate);
-        }
-        else if (currentNode != excludedNode && std::ranges::find(allChildren, currentNode) == allChildren.end())
-        {
-            allChildren.push_back(currentNode);
-            flattenAllChildrenHelper(currentNode, allChildren, excludedNode, allowDuplicate);
-        }
-    }
-}
-
-static std::vector<LogicalFunction> flattenAllChildren(const LogicalFunction& current, bool withDuplicateChildren)
-{
-    std::vector<LogicalFunction> allChildren;
-    flattenAllChildrenHelper(current, allChildren, current, withDuplicateChildren);
-    return allChildren;
-}
-
 static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
 {
-    std::vector<std::string> joinFieldNames;
-    std::vector<std::string> fieldNamesInJoinFunction;
-    std::ranges::for_each(
-        flattenAllChildren(joinFunction, false),
-        [&fieldNamesInJoinFunction](const LogicalFunction& child)
-        {
-            if (child.tryGet<FieldAccessLogicalFunction>())
-            {
-                fieldNamesInJoinFunction.push_back(child.get<FieldAccessLogicalFunction>().getFieldName());
-            }
-        });
-
-    for (const auto& field : inputSchema)
-    {
-        if (std::ranges::find(fieldNamesInJoinFunction, field.getName()) != fieldNamesInJoinFunction.end())
-        {
-            joinFieldNames.push_back(field.getName());
-        }
-    }
-    return joinFieldNames;
+    return NES::BFSRange(joinFunction)
+        | std::views::filter([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>().has_value(); })
+        | std::views::transform([](const auto& child) { return child.template tryGet<FieldAccessLogicalFunction>()->getFieldName(); })
+        | std::views::filter([&](const auto& fieldName) { return inputSchema.contains(fieldName); })
+        | std::ranges::to<std::vector<std::string>>();
 };
-
 
 RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOperator)
 {
