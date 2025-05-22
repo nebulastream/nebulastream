@@ -36,7 +36,7 @@ class QueryCompiler
 {
 public:
     QueryCompiler();
-    static std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
+    std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
 };
 
 }

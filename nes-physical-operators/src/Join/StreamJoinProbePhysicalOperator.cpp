@@ -21,6 +21,7 @@
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <WindowProbePhysicalOperator.hpp>
@@ -51,16 +52,16 @@ Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     joinedRecord.write(this->windowMetaData.windowStartFieldName, windowStart.convertToValue());
     joinedRecord.write(this->windowMetaData.windowEndFieldName, windowEnd.convertToValue());
 
-    /// Writing the leftSchema fields, expect the join schema to have the fields in the same order then the left schema
-    for (const auto& fieldName : nautilus::static_iterable(projectionsLeft))
-    {
-        joinedRecord.write(fieldName, leftRecord.read(fieldName));
-    }
-
     /// Writing the rightSchema fields, expect the join schema to have the fields in the same order then the right schema
     for (const auto& fieldName : nautilus::static_iterable(projectionsRight))
     {
         joinedRecord.write(fieldName, rightRecord.read(fieldName));
+    }
+
+    /// Writing the leftSchema fields, expect the join schema to have the fields in the same order then the left schema
+    for (const auto& fieldName : nautilus::static_iterable(projectionsLeft))
+    {
+        joinedRecord.write(fieldName, leftRecord.read(fieldName));
     }
 
     return joinedRecord;

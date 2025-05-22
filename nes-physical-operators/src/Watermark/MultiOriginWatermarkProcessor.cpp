@@ -35,7 +35,6 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
     return std::make_shared<MultiOriginWatermarkProcessor>(origins);
 }
 
-/// TODO #4177 use here the BufferMetaData class for the params
 Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const
 {
     bool found = false;

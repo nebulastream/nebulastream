@@ -144,7 +144,7 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
         }
         else if (summary.runs.back().error)
         {
-            summary.currentStatus = Execution::QueryStatus::Failed;
+            summary.currentStatus = QueryStatus::Failed;
         }
         else
         {

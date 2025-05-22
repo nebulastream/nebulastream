@@ -17,8 +17,8 @@
 #include <cstdint>
 #include <memory>
 #include <Aggregation/WindowAggregation.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 

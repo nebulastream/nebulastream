@@ -15,7 +15,6 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>

@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
